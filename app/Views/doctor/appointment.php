@@ -265,15 +265,15 @@
                 <?php if (!empty($medications)): ?>
                     <?php foreach ($medications as $med): ?>
                     <div class="prescription-card p-3 mb-3">
-                        <h6 class="text-primary"><?= htmlspecialchars($med['medication_name']) ?></h6>
+                        <h6 class="text-primary"><?= htmlspecialchars($med['drug_name']) ?></h6>
                         <p class="mb-1">
-                            <strong>Dosage:</strong> <?= htmlspecialchars($med['dosage']) ?><br>
+                            <strong>Dosage:</strong> <?= htmlspecialchars($med['dose']) ?><br>
                             <strong>Frequency:</strong> <?= htmlspecialchars($med['frequency']) ?><br>
                             <strong>Duration:</strong> <?= htmlspecialchars($med['duration']) ?>
                         </p>
-                        <?php if (!empty($med['instructions'])): ?>
+                        <?php if (!empty($med['notes'])): ?>
                             <p class="text-muted mb-0">
-                                <small><?= htmlspecialchars($med['instructions']) ?></small>
+                                <small><?= htmlspecialchars($med['notes']) ?></small>
                             </p>
                         <?php endif; ?>
                     </div>
@@ -374,8 +374,8 @@ function editConsultation(appointmentId) {
 }
 
 function addPrescription(appointmentId) {
-    // Show prescription modal or redirect
-    alert('Add prescription functionality will be implemented soon');
+    // Show prescription modal
+    showPrescriptionModal(appointmentId);
 }
 
 function printReport(appointmentId) {
@@ -385,7 +385,7 @@ function printReport(appointmentId) {
 
 function rescheduleAppointment(appointmentId) {
     // Show reschedule modal
-    alert('Reschedule appointment functionality will be implemented soon');
+    showRescheduleModal(appointmentId);
 }
 
 function addConsultationNotes(appointmentId) {
@@ -413,5 +413,159 @@ function viewPatient(patientId) {
 function printPrescription(appointmentId) {
     // Open prescription print view
     window.open(`/print/prescription/${appointmentId}`, '_blank');
+}
+
+function showPrescriptionModal(appointmentId) {
+    const modalHtml = `
+        <div class="modal fade" id="prescriptionModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">إضافة وصفة طبية</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="prescriptionForm" action="/api/prescriptions/meds" method="POST">
+                        <div class="modal-body">
+                            <input type="hidden" name="appointment_id" value="${appointmentId}">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">اسم الدواء</label>
+                                    <input type="text" class="form-control" name="drug_name" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">الجرعة</label>
+                                    <input type="text" class="form-control" name="dose" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">التكرار</label>
+                                    <input type="text" class="form-control" name="frequency" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">المدة</label>
+                                    <input type="text" class="form-control" name="duration" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">طريقة الإعطاء</label>
+                                    <select class="form-control" name="route">
+                                        <option value="Topical">موضعي</option>
+                                        <option value="Oral">فموي</option>
+                                        <option value="Injection">حقن</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <label class="form-label">ملاحظات</label>
+                                    <textarea class="form-control" name="notes" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                            <button type="submit" class="btn btn-primary">حفظ الوصفة</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('prescriptionModal'));
+    modal.show();
+    
+    // Handle form submission
+    document.getElementById('prescriptionForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch('/api/prescriptions/meds', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                modal.hide();
+                location.reload();
+            } else {
+                alert('خطأ: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('حدث خطأ في الاتصال');
+        });
+    });
+    
+    // Clean up modal on hide
+    document.getElementById('prescriptionModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+function showRescheduleModal(appointmentId) {
+    const modalHtml = `
+        <div class="modal fade" id="rescheduleModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">إعادة جدولة الموعد</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="rescheduleForm">
+                        <div class="modal-body">
+                            <input type="hidden" name="appointment_id" value="${appointmentId}">
+                            <div class="mb-3">
+                                <label class="form-label">التاريخ الجديد</label>
+                                <input type="date" class="form-control" name="new_date" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">الوقت الجديد</label>
+                                <input type="time" class="form-control" name="new_time" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">سبب إعادة الجدولة</label>
+                                <textarea class="form-control" name="reason" rows="3" required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                            <button type="submit" class="btn btn-warning">إعادة جدولة</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('rescheduleModal'));
+    modal.show();
+    
+    // Handle form submission
+    document.getElementById('rescheduleForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch('/api/appointments/' + appointmentId, {
+            method: 'PUT',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                modal.hide();
+                location.reload();
+            } else {
+                alert('خطأ: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('حدث خطأ في الاتصال');
+        });
+    });
+    
+    // Clean up modal on hide
+    document.getElementById('rescheduleModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
 }
 </script>

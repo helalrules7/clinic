@@ -276,4 +276,78 @@ class PrintController
             'tax_id' => 'Tax ID: 123-456-789'
         ];
     }
+
+    public function appointmentReport($id)
+    {
+        $appointment = $this->getAppointmentDetails($id);
+        if (!$appointment) {
+            http_response_code(404);
+            echo "Appointment not found";
+            return;
+        }
+
+        $consultationNotes = $this->getConsultationNotes($id);
+        $medications = $this->getMedicationPrescriptions($id);
+        $glasses = $this->getGlassesPrescriptions($id);
+        $clinic = $this->getClinicInfo();
+
+        $content = $this->view->render('print/appointment_report', [
+            'appointment' => $appointment,
+            'consultationNotes' => $consultationNotes,
+            'medications' => $medications,
+            'glasses' => $glasses,
+            'clinic' => $clinic
+        ], false);
+
+        echo $content;
+    }
+
+    private function getAppointmentDetails($id)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                a.*,
+                CONCAT(p.first_name, ' ', p.last_name) as patient_name,
+                p.dob, p.phone, p.national_id,
+                d.display_name as doctor_name,
+                u.name as booked_by_name
+            FROM appointments a
+            JOIN patients p ON a.patient_id = p.id
+            JOIN doctors d ON a.doctor_id = d.id
+            JOIN users u ON a.booked_by = u.id
+            WHERE a.id = ?
+        ");
+        $stmt->execute([$id]);
+        return $stmt->fetch();
+    }
+
+    private function getConsultationNotes($appointmentId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT cn.*, u.name as created_by_name
+            FROM consultation_notes cn
+            LEFT JOIN users u ON cn.created_by = u.id
+            WHERE cn.appointment_id = ?
+        ");
+        $stmt->execute([$appointmentId]);
+        return $stmt->fetch();
+    }
+
+    private function getMedicationPrescriptions($appointmentId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT * FROM prescriptions WHERE appointment_id = ?
+        ");
+        $stmt->execute([$appointmentId]);
+        return $stmt->fetchAll();
+    }
+
+    private function getGlassesPrescriptions($appointmentId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT * FROM glasses_prescriptions WHERE appointment_id = ?
+        ");
+        $stmt->execute([$appointmentId]);
+        return $stmt->fetch();
+    }
 }

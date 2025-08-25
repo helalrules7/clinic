@@ -65,6 +65,8 @@ try {
     $router->get('/doctor/patients', 'DoctorController@patients');
     $router->get('/doctor/patients/{id}', 'DoctorController@viewPatient');
     $router->get('/doctor/appointments/{id}', 'DoctorController@viewAppointment');
+    $router->get('/doctor/appointments/{id}/edit', 'DoctorController@editConsultation');
+    $router->post('/doctor/appointments/{id}/edit', 'DoctorController@updateConsultation');
     $router->get('/doctor/profile', 'DoctorController@profile');
     $router->post('/doctor/profile/change-password', 'DoctorController@changePassword');
     
@@ -88,6 +90,7 @@ try {
     $router->get('/print/glasses/{id}', 'PrintController@glassesPrescription');
     $router->get('/print/lab-tests/{id}', 'PrintController@labTests');
     $router->get('/print/invoice/{id}', 'PrintController@invoice');
+    $router->get('/print/appointment/{id}', 'PrintController@appointmentReport');
     
     // Admin routes
     $router->get('/admin/dashboard', 'AdminController@dashboard');

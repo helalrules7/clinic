@@ -401,6 +401,115 @@ class DoctorController
         $stmt->execute();
         return $stmt->fetchAll();
     }
+
+    public function editConsultation($id)
+    {
+        $doctorId = $_SESSION['user']['doctor_id'] ?? null;
+        if (!$doctorId) {
+            http_response_code(403);
+            echo "Access denied";
+            return;
+        }
+
+        $appointment = $this->getAppointment($id);
+        if (!$appointment || $appointment['doctor_id'] != $doctorId) {
+            http_response_code(404);
+            echo "Appointment not found";
+            return;
+        }
+
+        $consultationNotes = $this->getConsultationNotes($id);
+        $patient = $this->getPatient($appointment['patient_id']);
+
+        $content = $this->view->render('doctor/edit_consultation', [
+            'appointment' => $appointment,
+            'patient' => $patient,
+            'consultationNotes' => $consultationNotes
+        ]);
+
+        echo $content;
+    }
+
+    public function updateConsultation($id)
+    {
+        $doctorId = $_SESSION['user']['doctor_id'] ?? null;
+        if (!$doctorId) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Access denied']);
+            return;
+        }
+
+        $appointment = $this->getAppointment($id);
+        if (!$appointment || $appointment['doctor_id'] != $doctorId) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Appointment not found']);
+            return;
+        }
+
+        $data = [
+            'chief_complaint' => $_POST['chief_complaint'] ?? '',
+            'hx_present_illness' => $_POST['hx_present_illness'] ?? '',
+            'visual_acuity_right' => $_POST['visual_acuity_right'] ?? '',
+            'visual_acuity_left' => $_POST['visual_acuity_left'] ?? '',
+            'refraction_right' => $_POST['refraction_right'] ?? '',
+            'refraction_left' => $_POST['refraction_left'] ?? '',
+            'IOP_right' => !empty($_POST['IOP_right']) ? floatval($_POST['IOP_right']) : null,
+            'IOP_left' => !empty($_POST['IOP_left']) ? floatval($_POST['IOP_left']) : null,
+            'slit_lamp' => $_POST['slit_lamp'] ?? '',
+            'fundus' => $_POST['fundus'] ?? '',
+            'diagnosis' => $_POST['diagnosis'] ?? '',
+            'diagnosis_code' => $_POST['diagnosis_code'] ?? '',
+            'plan' => $_POST['plan'] ?? '',
+            'followup_days' => !empty($_POST['followup_days']) ? intval($_POST['followup_days']) : null,
+        ];
+
+        try {
+            $existingNotes = $this->getConsultationNotes($id);
+            
+            if ($existingNotes) {
+                // Update existing consultation notes
+                $stmt = $this->pdo->prepare("
+                    UPDATE consultation_notes SET
+                        chief_complaint = ?, hx_present_illness = ?, visual_acuity_right = ?,
+                        visual_acuity_left = ?, refraction_right = ?, refraction_left = ?,
+                        IOP_right = ?, IOP_left = ?, slit_lamp = ?, fundus = ?,
+                        diagnosis = ?, diagnosis_code = ?, plan = ?, followup_days = ?,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE appointment_id = ?
+                ");
+                $stmt->execute([
+                    $data['chief_complaint'], $data['hx_present_illness'], $data['visual_acuity_right'],
+                    $data['visual_acuity_left'], $data['refraction_right'], $data['refraction_left'],
+                    $data['IOP_right'], $data['IOP_left'], $data['slit_lamp'], $data['fundus'],
+                    $data['diagnosis'], $data['diagnosis_code'], $data['plan'], $data['followup_days'],
+                    $id
+                ]);
+            } else {
+                // Create new consultation notes
+                $stmt = $this->pdo->prepare("
+                    INSERT INTO consultation_notes (
+                        appointment_id, chief_complaint, hx_present_illness, visual_acuity_right,
+                        visual_acuity_left, refraction_right, refraction_left, IOP_right, IOP_left,
+                        slit_lamp, fundus, diagnosis, diagnosis_code, plan, followup_days, created_by
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ");
+                $stmt->execute([
+                    $id, $data['chief_complaint'], $data['hx_present_illness'], $data['visual_acuity_right'],
+                    $data['visual_acuity_left'], $data['refraction_right'], $data['refraction_left'],
+                    $data['IOP_right'], $data['IOP_left'], $data['slit_lamp'], $data['fundus'],
+                    $data['diagnosis'], $data['diagnosis_code'], $data['plan'], $data['followup_days'],
+                    $_SESSION['user']['id']
+                ]);
+            }
+
+            header('Location: /doctor/appointments/' . $id);
+            exit;
+
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+        }
+    }
     
 
 }
