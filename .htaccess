@@ -1,0 +1,43 @@
+# Protect sensitive files and directories
+<Files ".env">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "composer.json">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "composer.lock">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "README.md">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Protect storage directory
+<Directory "storage">
+    Order allow,deny
+    Deny from all
+</Directory>
+
+# Protect app directory
+<Directory "app">
+    Order allow,deny
+    Deny from all
+</Directory>
+
+# Protect sql directory
+<Directory "sql">
+    Order allow,deny
+    Deny from all
+</Directory>
+
+# Redirect all requests to public directory
+RewriteEngine On
+RewriteRule ^$ public/ [L]
+RewriteRule (.*) public/$1 [L]

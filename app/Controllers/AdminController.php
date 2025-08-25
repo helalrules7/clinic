@@ -1,0 +1,589 @@
+<?php
+
+namespace App\Controllers;
+
+use App\Lib\Auth;
+use App\Lib\View;
+use App\Config\Database;
+use App\Config\Constants;
+
+class AdminController
+{
+    private $auth;
+    private $view;
+    private $pdo;
+
+    public function __construct()
+    {
+        $this->auth = new Auth();
+        $this->view = new View();
+        $this->pdo = Database::getInstance()->getConnection();
+        
+        // Require admin authentication
+        $this->auth->requireRole('admin');
+    }
+
+    public function dashboard()
+    {
+        $user = $this->auth->user();
+        
+        // Get system statistics
+        $stats = $this->getSystemStats();
+        
+        // Get recent activities
+        $recentActivities = $this->getRecentActivities();
+        
+        // Get system health
+        $systemHealth = $this->getSystemHealth();
+        
+        $content = $this->view->render('admin/dashboard', [
+            'stats' => $stats,
+            'recentActivities' => $recentActivities,
+            'systemHealth' => $systemHealth
+        ]);
+        
+        echo $this->view->render('layouts/main', [
+            'title' => 'Admin Dashboard',
+            'pageTitle' => 'System Administration',
+            'pageSubtitle' => 'Welcome back, ' . $user['name'],
+            'content' => $content
+        ]);
+    }
+
+    public function users()
+    {
+        $user = $this->auth->user();
+        
+        // Get all users with pagination
+        $page = $_GET['page'] ?? 1;
+        $search = $_GET['search'] ?? '';
+        $role = $_GET['role'] ?? '';
+        $users = $this->getUsers($page, $search, $role);
+        
+        $content = $this->view->render('admin/users', [
+            'users' => $users,
+            'currentPage' => $page,
+            'search' => $search,
+            'role' => $role
+        ]);
+        
+        echo $this->view->render('layouts/main', [
+            'title' => 'User Management - Admin Dashboard',
+            'pageTitle' => 'User Management',
+            'pageSubtitle' => 'Manage system users and permissions',
+            'content' => $content
+        ]);
+    }
+
+    public function createUser()
+    {
+        try {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                throw new \Exception('Invalid request method');
+            }
+            
+            // Validate CSRF token
+            if (!$this->validateCsrfToken()) {
+                throw new \Exception('Invalid CSRF token');
+            }
+            
+            // Validate input
+            $rules = [
+                'name' => 'required|max:100',
+                'email' => 'required|email|unique:users,email',
+                'role' => 'required|in:doctor,secretary,admin',
+                'password' => 'required|min:8'
+            ];
+            
+            $data = $_POST;
+            if (!$this->view->validator->validate($data, $rules)) {
+                throw new \Exception('Validation failed');
+            }
+            
+            // Create user
+            $userId = $this->createUserRecord($data);
+            
+            if ($userId) {
+                // If doctor, create doctor record
+                if ($data['role'] === 'doctor') {
+                    $this->createDoctorRecord($userId, $data);
+                }
+                
+                header('Location: /admin/users?success=User created successfully');
+                exit;
+            } else {
+                throw new \Exception('Failed to create user');
+            }
+            
+        } catch (\Exception $e) {
+            header('Location: /admin/users?error=' . urlencode($e->getMessage()));
+            exit;
+        }
+    }
+
+    public function updateUser($id)
+    {
+        try {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                throw new \Exception('Invalid request method');
+            }
+            
+            // Validate CSRF token
+            if (!$this->validateCsrfToken()) {
+                throw new \Exception('Invalid CSRF token');
+            }
+            
+            // Validate input
+            $rules = [
+                'name' => 'required|max:100',
+                'email' => 'required|email',
+                'role' => 'required|in:doctor,secretary,admin',
+                'is_active' => 'boolean'
+            ];
+            
+            $data = $_POST;
+            if (!$this->view->validator->validate($data, $rules)) {
+                throw new \Exception('Validation failed');
+            }
+            
+            // Update user
+            $result = $this->updateUserRecord($id, $data);
+            
+            if ($result) {
+                header('Location: /admin/users?success=User updated successfully');
+                exit;
+            } else {
+                throw new \Exception('Failed to update user');
+            }
+            
+        } catch (\Exception $e) {
+            header('Location: /admin/users?error=' . urlencode($e->getMessage()));
+            exit;
+        }
+    }
+
+    public function deleteUser($id)
+    {
+        try {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                throw new \Exception('Invalid request method');
+            }
+            
+            // Validate CSRF token
+            if (!$this->validateCsrfToken()) {
+                throw new \Exception('Invalid CSRF token');
+            }
+            
+            // Check if user can be deleted
+            if (!$this->canDeleteUser($id)) {
+                throw new \Exception('User cannot be deleted (has associated records)');
+            }
+            
+            // Delete user
+            $result = $this->deleteUserRecord($id);
+            
+            if ($result) {
+                header('Location: /admin/users?success=User deleted successfully');
+                exit;
+            } else {
+                throw new \Exception('Failed to delete user');
+            }
+            
+        } catch (\Exception $e) {
+            header('Location: /admin/users?error=' . urlencode($e->getMessage()));
+            exit;
+        }
+    }
+
+    public function reports()
+    {
+        $user = $this->auth->user();
+        
+        // Get report parameters
+        $startDate = $_GET['start_date'] ?? date('Y-m-01');
+        $endDate = $_GET['end_date'] ?? date('Y-m-t');
+        $reportType = $_GET['type'] ?? 'revenue';
+        
+        // Generate report data
+        $reportData = $this->generateReport($reportType, $startDate, $endDate);
+        
+        $content = $this->view->render('admin/reports', [
+            'reportData' => $reportData,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'reportType' => $reportType
+        ]);
+        
+        echo $this->view->render('layouts/main', [
+            'title' => 'Reports - Admin Dashboard',
+            'pageTitle' => 'System Reports',
+            'pageSubtitle' => 'Generate and view system reports',
+            'content' => $content
+        ]);
+    }
+
+    public function exportReport()
+    {
+        try {
+            $reportType = $_GET['type'] ?? 'revenue';
+            $startDate = $_GET['start_date'] ?? date('Y-m-01');
+            $endDate = $_GET['end_date'] ?? date('Y-m-t');
+            $format = $_GET['format'] ?? 'csv';
+            
+            // Generate report data
+            $reportData = $this->generateReport($reportType, $startDate, $endDate);
+            
+            // Export based on format
+            if ($format === 'csv') {
+                $this->exportToCsv($reportData, $reportType, $startDate, $endDate);
+            } else {
+                throw new \Exception('Unsupported export format');
+            }
+            
+        } catch (\Exception $e) {
+            header('Location: /admin/reports?error=' . urlencode($e->getMessage()));
+            exit;
+        }
+    }
+
+    // Helper methods
+    private function getSystemStats()
+    {
+        $stats = [];
+        
+        // User statistics
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                COUNT(*) as total_users,
+                SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active_users,
+                SUM(CASE WHEN role = 'doctor' THEN 1 ELSE 0 END) as doctors,
+                SUM(CASE WHEN role = 'secretary' THEN 1 ELSE 0 END) as secretaries
+            FROM users
+        ");
+        $stmt->execute();
+        $stats['users'] = $stmt->fetch();
+        
+        // Patient statistics
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) as total_patients FROM patients");
+        $stmt->execute();
+        $stats['patients'] = $stmt->fetch();
+        
+        // Appointment statistics
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                COUNT(*) as total_appointments,
+                SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed,
+                SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) as cancelled
+            FROM appointments
+            WHERE date >= CURDATE() - INTERVAL 30 DAY
+        ");
+        $stmt->execute();
+        $stats['appointments'] = $stmt->fetch();
+        
+        // Financial statistics
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                SUM(amount) as total_revenue,
+                SUM(discount_amount) as total_discounts,
+                COUNT(*) as total_payments
+            FROM payments
+            WHERE DATE(created_at) >= CURDATE() - INTERVAL 30 DAY
+        ");
+        $stmt->execute();
+        $stats['financial'] = $stmt->fetch();
+        
+        return $stats;
+    }
+
+    private function getRecentActivities()
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT al.*, u.name as user_name
+            FROM audit_logs al
+            JOIN users u ON al.user_id = u.id
+            ORDER BY al.created_at DESC
+            LIMIT 20
+        ");
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    private function getSystemHealth()
+    {
+        $health = [];
+        
+        // Database connection
+        try {
+            $this->pdo->query('SELECT 1');
+            $health['database'] = 'Connected';
+        } catch (\Exception $e) {
+            $health['database'] = 'Error: ' . $e->getMessage();
+        }
+        
+        // Storage space
+        $storagePath = __DIR__ . '/../../storage';
+        $freeSpace = disk_free_space($storagePath);
+        $totalSpace = disk_total_space($storagePath);
+        $usedSpace = $totalSpace - $freeSpace;
+        $usagePercent = round(($usedSpace / $totalSpace) * 100, 2);
+        
+        $health['storage'] = [
+            'free' => $this->formatBytes($freeSpace),
+            'total' => $this->formatBytes($totalSpace),
+            'used' => $this->formatBytes($usedSpace),
+            'usage_percent' => $usagePercent
+        ];
+        
+        // PHP version
+        $health['php_version'] = PHP_VERSION;
+        
+        // Extensions
+        $requiredExtensions = ['pdo', 'pdo_mysql', 'json', 'mbstring'];
+        $health['extensions'] = [];
+        foreach ($requiredExtensions as $ext) {
+            $health['extensions'][$ext] = extension_loaded($ext) ? 'Loaded' : 'Missing';
+        }
+        
+        return $health;
+    }
+
+    private function getUsers($page = 1, $search = '', $role = '')
+    {
+        $limit = Constants::ITEMS_PER_PAGE;
+        $offset = ($page - 1) * $limit;
+        
+        $whereClause = '';
+        $params = [];
+        
+        if (!empty($search)) {
+            $whereClause .= "WHERE name LIKE ? OR email LIKE ?";
+            $searchTerm = "%{$search}%";
+            $params = [$searchTerm, $searchTerm];
+        }
+        
+        if (!empty($role)) {
+            $whereClause = empty($whereClause) ? "WHERE role = ?" : $whereClause . " AND role = ?";
+            $params[] = $role;
+        }
+        
+        $sql = "
+            SELECT u.*, 
+                   COUNT(DISTINCT a.id) as total_appointments,
+                   COUNT(DISTINCT p.id) as total_patients
+            FROM users u
+            LEFT JOIN appointments a ON u.id = a.doctor_id
+            LEFT JOIN patients p ON u.id = p.created_by
+            {$whereClause}
+            GROUP BY u.id
+            ORDER BY u.created_at DESC
+            LIMIT ? OFFSET ?
+        ";
+        
+        $params[] = $limit;
+        $params[] = $offset;
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    private function createUserRecord($data)
+    {
+        $stmt = $this->pdo->prepare("
+            INSERT INTO users (name, email, password_hash, role, is_active)
+            VALUES (?, ?, ?, ?, 1)
+        ");
+        
+        $passwordHash = password_hash($data['password'], PASSWORD_ARGON2ID);
+        
+        $stmt->execute([
+            $data['name'],
+            $data['email'],
+            $passwordHash,
+            $data['role']
+        ]);
+        
+        return $this->pdo->lastInsertId();
+    }
+
+    private function createDoctorRecord($userId, $data)
+    {
+        $stmt = $this->pdo->prepare("
+            INSERT INTO doctors (user_id, display_name, specialization, license_number)
+            VALUES (?, ?, ?, ?)
+        ");
+        
+        $stmt->execute([
+            $userId,
+            $data['name'],
+            $data['specialization'] ?? 'Ophthalmology',
+            $data['license_number'] ?? 'LIC-' . str_pad($userId, 6, '0', STR_PAD_LEFT)
+        ]);
+    }
+
+    private function updateUserRecord($id, $data)
+    {
+        $stmt = $this->pdo->prepare("
+            UPDATE users SET name = ?, email = ?, role = ?, is_active = ?, updated_at = NOW()
+            WHERE id = ?
+        ");
+        
+        return $stmt->execute([
+            $data['name'],
+            $data['email'],
+            $data['role'],
+            $data['is_active'] ?? 1,
+            $id
+        ]);
+    }
+
+    private function canDeleteUser($id)
+    {
+        // Check if user has associated records
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                (SELECT COUNT(*) FROM appointments WHERE doctor_id = ?) as appointments,
+                (SELECT COUNT(*) FROM payments WHERE received_by = ?) as payments
+        ");
+        $stmt->execute([$id, $id]);
+        $result = $stmt->fetch();
+        
+        return ($result['appointments'] == 0 && $result['payments'] == 0);
+    }
+
+    private function deleteUserRecord($id)
+    {
+        $stmt = $this->pdo->prepare("DELETE FROM users WHERE id = ?");
+        return $stmt->execute([$id]);
+    }
+
+    private function generateReport($type, $startDate, $endDate)
+    {
+        switch ($type) {
+            case 'revenue':
+                return $this->generateRevenueReport($startDate, $endDate);
+            case 'appointments':
+                return $this->generateAppointmentsReport($startDate, $endDate);
+            case 'patients':
+                return $this->generatePatientsReport($startDate, $endDate);
+            case 'doctors':
+                return $this->generateDoctorsReport($startDate, $endDate);
+            default:
+                return $this->generateRevenueReport($startDate, $endDate);
+        }
+    }
+
+    private function generateRevenueReport($startDate, $endDate)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                DATE(p.created_at) as date,
+                SUM(p.amount) as daily_revenue,
+                COUNT(*) as transactions,
+                SUM(p.discount_amount) as discounts
+            FROM payments p
+            WHERE DATE(p.created_at) BETWEEN ? AND ?
+            GROUP BY DATE(p.created_at)
+            ORDER BY date
+        ");
+        $stmt->execute([$startDate, $endDate]);
+        return $stmt->fetchAll();
+    }
+
+    private function generateAppointmentsReport($startDate, $endDate)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                DATE(a.date) as date,
+                COUNT(*) as total_appointments,
+                SUM(CASE WHEN a.status = 'Completed' THEN 1 ELSE 0 END) as completed,
+                SUM(CASE WHEN a.status = 'Cancelled' THEN 1 ELSE 0 END) as cancelled,
+                SUM(CASE WHEN a.status = 'NoShow' THEN 1 ELSE 0 END) as no_show
+            FROM appointments a
+            WHERE DATE(a.date) BETWEEN ? AND ?
+            GROUP BY DATE(a.date)
+            ORDER BY date
+        ");
+        $stmt->execute([$startDate, $endDate]);
+        return $stmt->fetchAll();
+    }
+
+    private function generatePatientsReport($startDate, $endDate)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                DATE(p.created_at) as date,
+                COUNT(*) as new_patients,
+                SUM(CASE WHEN p.gender = 'Male' THEN 1 ELSE 0 END) as male,
+                SUM(CASE WHEN p.gender = 'Female' THEN 1 ELSE 0 END) as female
+            FROM patients p
+            WHERE DATE(p.created_at) BETWEEN ? AND ?
+            GROUP BY DATE(p.created_at)
+            ORDER BY date
+        ");
+        $stmt->execute([$startDate, $endDate]);
+        return $stmt->fetchAll();
+    }
+
+    private function generateDoctorsReport($startDate, $endDate)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                d.display_name,
+                COUNT(a.id) as total_appointments,
+                SUM(CASE WHEN a.status = 'Completed' THEN 1 ELSE 0 END) as completed,
+                SUM(CASE WHEN a.status = 'Cancelled' THEN 1 ELSE 0 END) as cancelled,
+                AVG(CASE WHEN a.status = 'Completed' THEN 1 ELSE 0 END) * 100 as completion_rate
+            FROM doctors d
+            LEFT JOIN appointments a ON d.id = a.doctor_id AND DATE(a.date) BETWEEN ? AND ?
+            GROUP BY d.id, d.display_name
+            ORDER BY total_appointments DESC
+        ");
+        $stmt->execute([$startDate, $endDate]);
+        return $stmt->fetchAll();
+    }
+
+    private function exportToCsv($data, $type, $startDate, $endDate)
+    {
+        $filename = "{$type}_report_{$startDate}_to_{$endDate}.csv";
+        
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+        
+        $output = fopen('php://output', 'w');
+        
+        if (!empty($data)) {
+            // Write headers
+            fputcsv($output, array_keys($data[0]));
+            
+            // Write data
+            foreach ($data as $row) {
+                fputcsv($output, $row);
+            }
+        }
+        
+        fclose($output);
+        exit;
+    }
+
+    private function formatBytes($bytes, $precision = 2)
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        
+        for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
+            $bytes /= 1024;
+        }
+        
+        return round($bytes, $precision) . ' ' . $units[$i];
+    }
+
+    private function validateCsrfToken()
+    {
+        if (!isset($_POST['csrf_token']) || !isset($_SESSION['csrf_token'])) {
+            return false;
+        }
+        return hash_equals($_SESSION['csrf_token'], $_POST['csrf_token']);
+    }
+}

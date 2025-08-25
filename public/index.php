@@ -1,0 +1,113 @@
+<?php
+/**
+ * Ophthalmology Clinic Management System
+ * Main entry point
+ */
+
+// Set timezone
+date_default_timezone_set('Africa/Cairo');
+
+// Start session
+session_start();
+
+// Load Composer autoloader
+require_once __DIR__ . '/../vendor/autoload.php';
+
+// Load environment variables
+if (file_exists(__DIR__ . '/../.env')) {
+    $lines = file(__DIR__ . '/../.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
+            list($key, $value) = explode('=', $line, 2);
+            $_ENV[trim($key)] = trim($value);
+        }
+    }
+}
+
+// Set error reporting based on environment
+if (($_ENV['APP_ENV'] ?? 'local') === 'local') {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+} else {
+    error_reporting(0);
+    ini_set('display_errors', 0);
+}
+
+// Security headers
+header('X-Frame-Options: DENY');
+header('X-Content-Type-Options: nosniff');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+
+try {
+    // Initialize router
+    $router = new \App\Lib\Router();
+    
+    // Define routes
+    $router->get('/', 'AuthController@showLogin');
+    $router->get('/login', 'AuthController@showLogin');
+    $router->post('/login', 'AuthController@login');
+    $router->get('/logout', 'AuthController@logout');
+    
+    // Secretary routes
+    $router->get('/secretary/dashboard', 'SecretaryController@dashboard');
+    $router->get('/secretary/bookings', 'SecretaryController@bookings');
+    $router->get('/secretary/payments', 'SecretaryController@payments');
+    $router->get('/secretary/patients', 'SecretaryController@patients');
+    $router->get('/secretary/patients/new', 'SecretaryController@newPatient');
+    $router->post('/secretary/patients', 'SecretaryController@createPatient');
+    $router->get('/secretary/patients/{id}', 'SecretaryController@viewPatient');
+    $router->get('/secretary/invoices/{id}', 'SecretaryController@viewInvoice');
+    
+    // Doctor routes
+    $router->get('/doctor/dashboard', 'DoctorController@dashboard');
+    $router->get('/doctor/calendar', 'DoctorController@calendar');
+    $router->get('/doctor/patients/{id}', 'DoctorController@viewPatient');
+    $router->get('/doctor/appointments/{id}', 'DoctorController@viewAppointment');
+    $router->get('/doctor/profile', 'DoctorController@profile');
+    $router->post('/doctor/profile/change-password', 'DoctorController@changePassword');
+    
+    // API routes
+    $router->get('/api/calendar', 'ApiController@getCalendar');
+    $router->get('/api/appointments/{id}', 'ApiController@getAppointment');
+    $router->post('/api/appointments', 'ApiController@createAppointment');
+    $router->put('/api/appointments/{id}', 'ApiController@updateAppointment');
+    $router->post('/api/payments', 'ApiController@createPayment');
+    $router->get('/api/patients/search', 'ApiController@searchPatients');
+    $router->post('/api/patients', 'ApiController@createPatient');
+    $router->get('/api/patients/{id}/timeline', 'ApiController@getPatientTimeline');
+    $router->post('/api/consultations', 'ApiController@createConsultation');
+    $router->post('/api/prescriptions/meds', 'ApiController@createMedicationPrescription');
+    $router->post('/api/prescriptions/glasses', 'ApiController@createGlassesPrescription');
+    $router->post('/api/daily-closure/lock', 'ApiController@lockDailyClosure');
+    $router->post('/api/users/change-password', 'ApiController@changePassword');
+    
+    // Print routes
+    $router->get('/print/prescription/{id}', 'PrintController@medicationPrescription');
+    $router->get('/print/glasses/{id}', 'PrintController@glassesPrescription');
+    $router->get('/print/lab-tests/{id}', 'PrintController@labTests');
+    $router->get('/print/invoice/{id}', 'PrintController@invoice');
+    
+    // Admin routes
+    $router->get('/admin/dashboard', 'AdminController@dashboard');
+    $router->get('/admin/users', 'AdminController@users');
+    $router->get('/admin/reports', 'AdminController@reports');
+    
+    // Handle the request
+    $router->dispatch();
+    
+} catch (Exception $e) {
+    // Log error
+    error_log("Fatal error: " . $e->getMessage());
+    
+    // Show error page
+    if (($_ENV['APP_ENV'] ?? 'local') === 'local') {
+        echo "<h1>Error</h1>";
+        echo "<p>" . htmlspecialchars($e->getMessage()) . "</p>";
+        echo "<pre>" . htmlspecialchars($e->getTraceAsString()) . "</pre>";
+    } else {
+        http_response_code(500);
+        echo "<h1>Internal Server Error</h1>";
+        echo "<p>Something went wrong. Please try again later.</p>";
+    }
+}
