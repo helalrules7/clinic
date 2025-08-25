@@ -148,4 +148,46 @@ class View
         $token = $this->generateCsrfToken();
         return '<input type="hidden" name="csrf_token" value="' . $this->escape($token) . '">';
     }
+    
+    public function getTimelineEventColor($eventType)
+    {
+        $colors = [
+            'appointment_booked' => 'primary',
+            'consultation' => 'success',
+            'payment' => 'info',
+            'prescription' => 'warning',
+            'cancellation' => 'danger',
+            'default' => 'secondary'
+        ];
+        
+        return $colors[$eventType] ?? $colors['default'];
+    }
+    
+    public function getTimelineEventIcon($eventType)
+    {
+        $icons = [
+            'appointment_booked' => 'calendar-plus',
+            'consultation' => 'person-check',
+            'payment' => 'credit-card',
+            'prescription' => 'prescription2',
+            'cancellation' => 'x-circle',
+            'default' => 'circle'
+        ];
+        
+        return $icons[$eventType] ?? $icons['default'];
+    }
+    
+    public function getStatusColor($status)
+    {
+        $colors = [
+            'scheduled' => 'primary',
+            'confirmed' => 'info',
+            'in_progress' => 'warning',
+            'completed' => 'success',
+            'cancelled' => 'danger',
+            'no_show' => 'secondary',
+            'default' => 'secondary'
+        ];
+        return $colors[$status] ?? $colors['default'];
+    }
 }

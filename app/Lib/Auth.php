@@ -15,21 +15,21 @@ class Auth
         $this->pdo = Database::getInstance()->getConnection();
     }
 
-    public function login($email, $password)
+    public function login($username, $password)
     {
         // Check for login throttling
         if ($this->isThrottled()) {
             throw new \Exception('Too many login attempts. Please try again later.');
         }
 
-        // Get user by email
+        // Get user by username
         $stmt = $this->pdo->prepare("
             SELECT u.*, d.display_name as doctor_name, d.specialty 
             FROM users u 
             LEFT JOIN doctors d ON u.id = d.user_id 
-            WHERE u.email = ? AND u.is_active = 1
+            WHERE u.username = ? AND u.is_active = 1
         ");
-        $stmt->execute([$email]);
+        $stmt->execute([$username]);
         $user = $stmt->fetch();
 
         if (!$user) {

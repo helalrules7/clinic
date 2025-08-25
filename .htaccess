@@ -1,4 +1,13 @@
-# Protect sensitive files and directories
+RewriteEngine On
+
+# Redirect /public to the actual application
+RewriteRule ^public/?$ public/index.php [L]
+RewriteRule ^public/(.*)$ public/$1 [L]
+
+# Show index.html by default
+DirectoryIndex index.html index.php
+
+# Security - block access to sensitive files
 <Files ".env">
     Order allow,deny
     Deny from all
@@ -14,30 +23,7 @@
     Deny from all
 </Files>
 
-<Files "README.md">
+<FilesMatch "^\.">
     Order allow,deny
     Deny from all
-</Files>
-
-# Protect storage directory
-<Directory "storage">
-    Order allow,deny
-    Deny from all
-</Directory>
-
-# Protect app directory
-<Directory "app">
-    Order allow,deny
-    Deny from all
-</Directory>
-
-# Protect sql directory
-<Directory "sql">
-    Order allow,deny
-    Deny from all
-</Directory>
-
-# Redirect all requests to public directory
-RewriteEngine On
-RewriteRule ^$ public/ [L]
-RewriteRule (.*) public/$1 [L]
+</FilesMatch>

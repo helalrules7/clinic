@@ -1,292 +1,365 @@
-# Roaya Clinic Management System
+# نظام عيادة طب العيون - Roaya Clinic Management System
 
-A comprehensive PHP-based clinic management system designed specifically for ophthalmology practices. Features role-based access control, real-time calendar updates, patient management, and financial tracking.
+## نظرة عامة
 
-## 🌟 Features
+نظام شامل لإدارة عيادة طب العيون يدعم ثلاثة أدوار رئيسية:
+- **الطبيب**: إدارة المرضى، المواعيد، الوصفات، والفحوصات
+- **السكرتير**: إدارة الحجوزات، المدفوعات، وتسجيل المرضى
+- **المدير**: إدارة النظام، المستخدمين، والتقارير
 
-### **Two Role-Based Portals**
+## الميزات الرئيسية
 
-#### **Doctor Portal**
-- **Dashboard**: Search functionality, KPIs, recent timeline events
-- **Live Calendar**: Auto-refresh every 60 seconds with real-time updates
-- **Patient Profiles**: Complete patient history with timeline view
-- **Consultation Management**: Ophthalmology-specific fields (VA, Refraction, IOP, etc.)
-- **Prescriptions**: Medication and glasses prescriptions
-- **Financial Overrides**: Approve discounts and exemptions
-- **Daily Closure**: Lock daily operations with audit trail
+### 🏥 **إدارة المرضى**
+- تسجيل المرضى الجدد مع التاريخ الطبي
+- ملف طبي شامل مع الأحداث الزمنية
+- إرفاق الملفات والصور
+- البحث المتقدم والتصفية
 
-#### **Secretary Portal**
-- **Bookings**: Create walk-in/phone appointments
-- **Payments**: Collect and manage all payment types
-- **Patient Management**: Quick patient creation and search
-- **Invoice Generation**: Professional invoice creation
-- **Limited Permissions**: Can edit/reschedule but cannot delete
+### 📅 **إدارة المواعيد**
+- تقويم تفاعلي مع تحديث تلقائي كل 60 ثانية
+- فترات زمنية مدتها 15 دقيقة
+- ساعات العمل: 2:00 مساءً - 11:00 مساءً
+- إغلاق يوم الجمعة
+- جدول عمل منفصل لكل طبيب
 
-### **Core Functionality**
-- **15-minute time slots** with automatic conflict detection
-- **Friday closed** - enforced system-wide
-- **Separate doctor schedules** (e.g., Dr. Ahmed: Sun/Mon/Wed, Dr. Sara: Tue/Thu/Sat)
-- **Working hours**: 2:00 PM → 11:00 PM
-- **Timezone**: Africa/Cairo
-- **Dark mode** support with CSS variables
-- **Responsive design** for all devices
+### 💊 **الوصفات الطبية**
+- وصفات الأدوية مع التفاصيل الكاملة
+- وصفات النظارات مع القياسات الدقيقة
+- طلبات الفحوصات المخبرية
+- طباعة احترافية بتصميم RTL
 
-## 🛠️ Tech Stack
+### 💰 **إدارة المالية**
+- تسجيل المدفوعات بأنواع مختلفة
+- نظام الخصومات والإعفاءات
+- فواتير مفصلة مع التوازن
+- تقارير الإيرادات والمصروفات
 
-- **Backend**: PHP 8.2+ (no framework)
-- **Database**: MySQL 8.0+ (InnoDB, utf8mb4)
-- **Frontend**: Bootstrap 5, Bootstrap Icons, Vanilla JavaScript
-- **Security**: Password hashing, CSRF protection, RBAC, login throttling
-- **Autoloading**: PSR-4 with Composer
+### 📊 **التقارير والإحصائيات**
+- لوحات تحكم تفاعلية
+- تقارير مالية شاملة
+- إحصائيات المواعيد والمرضى
+- تصدير البيانات بصيغة CSV
 
-## 📁 Project Structure
+### 🔒 **الأمان والصلاحيات**
+- نظام مصادقة آمن
+- إدارة الأدوار والصلاحيات (RBAC)
+- حماية CSRF
+- تسجيل الأحداث والتدقيق
 
-```
-/public              # Web root (index.php, assets)
-/app
-  /Config           # Database, Auth, Constants
-  /Controllers      # All application controllers
-  /Models          # Data models and business logic
-  /Views           # Templates and layouts
-  /Lib             # Core libraries (Router, Auth, etc.)
-/storage            # Logs, uploads, exports
-/sql               # Database schema and seed data
-composer.json      # Dependencies and autoloading
-```
+## المتطلبات التقنية
 
-## 🚀 Installation
-
-### 1. Prerequisites
-- PHP 8.2 or higher
-- MySQL 8.0 or higher
+### **الخادم**
+- PHP 8.2 أو أحدث
+- MySQL 8.0 أو أحدث
+- Apache/Nginx مع mod_rewrite
 - Composer
-- Web server (Apache/Nginx)
 
-### 2. Clone and Setup
+### **ملحقات PHP المطلوبة**
+- ext-pdo
+- ext-json
+- ext-mbstring
+
+## التثبيت والإعداد
+
+### 1. **استنساخ المشروع**
 ```bash
 git clone <repository-url>
 cd clinic
+```
+
+### 2. **تثبيت التبعيات**
+```bash
 composer install
 ```
 
-### 3. Database Setup
+### 3. **إعداد قاعدة البيانات**
 ```bash
-# Create database
-mysql -u root -p
-CREATE DATABASE clinic_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'clinic_user'@'localhost' IDENTIFIED BY 'your_password';
-GRANT ALL PRIVILEGES ON clinic_db.* TO 'clinic_user'@'localhost';
-FLUSH PRIVILEGES;
-EXIT;
+# إنشاء قاعدة البيانات
+mysql -u root -pCarmen -e "CREATE DATABASE roaya CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
-# Import schema and data
-mysql -u clinic_user -p clinic_db < sql/schema.sql
-mysql -u clinic_user -p clinic_db < sql/seed.sql
+# استيراد مخطط قاعدة البيانات
+mysql -u root -pCarmen roaya < sql/schema.sql
+
+# استيراد البيانات الأولية (قد تظهر تحذيرات للبيانات المكررة - هذا طبيعي)
+mysql -u root -pCarmen roaya < sql/seed.sql
 ```
 
-### 4. Environment Configuration
+### 4. **تكوين البيئة**
 ```bash
-# Copy environment file
-cp env.example .env
-
-# Edit .env with your database credentials
+# إنشاء ملف .env
+cat > .env << 'EOF'
+# Database Configuration
 DB_HOST=localhost
-DB_NAME=clinic_db
-DB_USER=clinic_user
-DB_PASS=your_password
+DB_NAME=roaya
+DB_USER=root
+DB_PASS=Carmen
+
+# Application Configuration
 APP_ENV=local
-APP_KEY=generate-a-random-32-character-string
+APP_KEY=roaya-clinic-system-2024-secret-key-32
 TIMEZONE=Africa/Cairo
+
+# Security
+SESSION_SECRET=roaya-session-secret-key-2024-32-chars
+CSRF_SECRET=roaya-csrf-secret-key-2024-32-chars
+
+# Logging
+LOG_LEVEL=info
+LOG_FILE=storage/logs/app.log
+EOF
 ```
 
-### 5. Web Server Configuration
-Point your web server's document root to the `/public` directory.
+### 5. **إعداد خادم الويب**
 
-#### Apache (.htaccess already included)
+#### **Apache (.htaccess)**
 ```apache
-DocumentRoot /path/to/clinic/public
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
 ```
 
-#### Nginx
+#### **Nginx**
 ```nginx
-server {
-    listen 80;
-    server_name your-domain.com;
-    root /path/to/clinic/public;
-    index index.php;
-
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
+location / {
+    try_files $uri $uri/ /index.php?$query_string;
 }
 ```
 
-## 🔐 Default Login Credentials
-
-After running the seed data, you can login with:
-
-### Doctors
-- **Dr. Ahmed Hassan**: `dr.ahmed@clinic.com` / `password`
-- **Dr. Sara Mahmoud**: `dr.sara@clinic.com` / `password`
-
-### Secretary
-- **Fatima Ali**: `fatima@clinic.com` / `password`
-
-### Admin
-- **Admin User**: `admin@clinic.com` / `password`
-
-> ⚠️ **Important**: Change default passwords immediately after first login!
-
-## 📊 Database Schema
-
-The system includes comprehensive tables for:
-- **Users & Authentication**: Role-based access control
-- **Doctors & Schedules**: Working days and hours
-- **Patients & Medical History**: Complete patient records
-- **Appointments**: 15-minute slot management
-- **Consultations**: Ophthalmology-specific fields
-- **Prescriptions**: Medications and glasses
-- **Payments & Invoices**: Financial tracking
-- **Timeline Events**: Complete audit trail
-- **Daily Closures**: End-of-day operations
-
-## 🔄 Auto-Refresh Calendar
-
-The calendar automatically refreshes every 60 seconds using:
-```javascript
-const poll = () => fetch(`/api/calendar?doctor_id=${doctorId}&date=${selectedDate}`)
-  .then(r => r.json()).then(({data}) => renderCalendar(data));
-
-poll();
-setInterval(poll, 60 * 1000);
-```
-
-## 🖨️ Printable Templates
-
-### Medication Prescription (RTL)
-- **Paper width**: 24.5 cm
-- **Direction**: Right-to-Left
-- **Exact positioning** for Arabic text
-
-### Glasses Prescription
-- Standard A4 format
-- Complete optical measurements
-- Professional layout
-
-### Lab Tests Request
-- A5 format for efficiency
-- Clear test specifications
-
-## 🔒 Security Features
-
-- **Password Policy**: Minimum 8 characters, complexity requirements
-- **CSRF Protection**: All forms protected
-- **Session Management**: Secure session handling
-- **RBAC**: Role-based access control
-- **Login Throttling**: Prevents brute force attacks
-- **Audit Logging**: Complete action tracking
-- **Input Validation**: Server-side validation everywhere
-
-## 📱 Responsive Design
-
-- **Mobile-first** approach
-- **Dark mode** support
-- **CSS variables** for theming
-- **Bootstrap 5** components
-- **Touch-friendly** interface
-
-## 🚀 Performance Features
-
-- **Database indexing** on critical fields
-- **ETags** for API responses
-- **Efficient queries** with proper JOINs
-- **Caching** strategies for static data
-
-## 📈 Reporting
-
-Built-in reports for:
-- Daily revenue by type and doctor
-- Appointment status summaries
-- Patient visit analytics
-- Diagnosis statistics
-- Export to CSV
-
-## 🛠️ Development
-
-### Adding New Features
-1. Create controller in `/app/Controllers/`
-2. Add routes in `/public/index.php`
-3. Create views in `/app/Views/`
-4. Update database schema if needed
-
-### Code Style
-- PSR-4 autoloading
-- PSR-12 coding standards
-- Comprehensive error handling
-- Security-first approach
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-#### Database Connection
+### 6. **إعداد الصلاحيات**
 ```bash
-# Check MySQL service
-sudo systemctl status mysql
+# إنشاء المجلدات المطلوبة وتعيين الصلاحيات
+mkdir -p storage/logs storage/uploads storage/exports
+chmod -R 755 storage/
 
-# Verify credentials in .env
-# Test connection manually
-mysql -u clinic_user -p clinic_db
+# إعادة توليد autoloader
+composer dump-autoload
 ```
 
-#### Permission Issues
+### 7. **تشغيل النظام**
 ```bash
-# Set proper file permissions
-chmod -R 755 /path/to/clinic
-chmod -R 777 /path/to/clinic/storage
+# تشغيل خادم PHP المدمج مع الراوتر المخصص
+php -S localhost:8000 router.php
+
+# أو تشغيله في الخلفية
+php -S localhost:8000 router.php &
 ```
 
-#### Composer Issues
+**الوصول للنظام:**
+- **الصفحة الرئيسية**: `http://localhost:8000/`
+- **دخول النظام**: `http://localhost:8000/public/`
+- **تسجيل الدخول مباشرة**: `http://localhost:8000/public/login`
+
+**أو استخدام Apache/Nginx:**
+- وجه document root إلى مجلد المشروع الرئيسي
+- تأكد من وجود ملف `.htaccess` في المجلد الرئيسي
+- سيتم عرض صفحة ترحيبية مع رابط دخول النظام
+
+## بيانات تسجيل الدخول الافتراضية
+
+| الدور | اسم المستخدم | البريد الإلكتروني | كلمة المرور |
+|-------|-------------|------------------|-------------|
+| **Dr. Ahmed** | `dr_ahmed` | `dr.ahmed@roayaclinic.com` | `password` |
+| **Dr. Faramawy** | `dr_faramawy` | `dr.faramawy@roayaclinic.com` | `password` |
+| **Secretary** | `sec` | `sec@roayaclinic.com` | `password` |
+| **Admin** | `admin` | `admin@roayaclinic.com` | `password` |
+
+**ملاحظة مهمة:** النظام الآن يستخدم **اسم المستخدم** بدلاً من البريد الإلكتروني لتسجيل الدخول.
+
+## هيكل المشروع
+
+```
+clinic/
+├── app/
+│   ├── Config/          # ملفات الإعدادات
+│   ├── Controllers/     # وحدات التحكم
+│   ├── Lib/            # المكتبات الأساسية
+│   └── Views/          # قوالب الواجهة
+│       ├── admin/      # واجهة المدير
+│       ├── doctor/     # واجهة الطبيب
+│       ├── secretary/  # واجهة السكرتير
+│       └── print/      # قوالب الطباعة
+├── public/              # نقطة الدخول
+├── sql/                 # ملفات قاعدة البيانات
+├── storage/             # الملفات المخزنة
+│   ├── logs/           # سجلات النظام
+│   ├── uploads/        # الملفات المرفقة
+│   └── exports/        # التقارير المصدرة
+├── vendor/              # مكتبات Composer
+├── .env                 # إعدادات البيئة
+├── .env.example         # نموذج الإعدادات
+├── composer.json        # تبعيات المشروع
+└── README.md            # هذا الملف
+```
+
+## الاستخدام
+
+### **الطبيب**
+1. تسجيل الدخول باستخدام بيانات الطبيب
+2. عرض لوحة التحكم مع الإحصائيات
+3. إدارة التقويم والمواعيد
+4. عرض ملفات المرضى وإنشاء الوصفات
+5. إغلاق اليوم وإقفال الحسابات
+
+### **السكرتير**
+1. تسجيل الدخول باستخدام بيانات السكرتير
+2. إدارة الحجوزات والمواعيد
+3. تسجيل المرضى الجدد
+4. إدارة المدفوعات والفواتير
+5. البحث عن المرضى وعرض ملفاتهم
+
+### **المدير**
+1. تسجيل الدخول باستخدام بيانات المدير
+2. إدارة المستخدمين والصلاحيات
+3. عرض تقارير النظام
+4. مراقبة صحة النظام
+5. تصدير البيانات والتقارير
+
+## الطباعة
+
+### **الوصفة الطبية**
+- **المسار**: `/print/prescription/{id}`
+- **الحجم**: 24.5 سم عرض
+- **التصميم**: RTL للغة العربية
+- **المحتوى**: تفاصيل الدواء، الجرعة، التعليمات
+
+### **وصفة النظارات**
+- **المسار**: `/print/glasses/{id}`
+- **الحجم**: A4
+- **المحتوى**: قياسات العينين، نوع العدسة، المسافة بين الحدقتين
+
+### **طلب الفحوصات**
+- **المسار**: `/print/lab-tests/{id}`
+- **الحجم**: A5
+- **المحتوى**: فحوصات العين، التشخيص، خطة العلاج
+
+### **الفاتورة**
+- **المسار**: `/print/invoice/{id}`
+- **الحجم**: A4
+- **المحتوى**: تفاصيل المدفوعات، التوازن، الشروط
+
+## API
+
+### **النقاط النهائية الرئيسية**
+- `GET /api/calendar` - بيانات التقويم
+- `POST /api/appointments` - إنشاء موعد
+- `PUT /api/appointments/{id}` - تحديث موعد
+- `POST /api/payments` - تسجيل دفعة
+- `GET /api/patients/search` - البحث عن المرضى
+
+### **استجابة API**
+```json
+{
+    "ok": true,
+    "data": {...},
+    "error": null
+}
+```
+
+## الأمان
+
+### **حماية CSRF**
+- جميع طلبات POST/PUT تتطلب رمز CSRF
+- تجديد تلقائي للرموز
+
+### **إدارة الجلسات**
+- جلسات آمنة مع تجديد تلقائي
+- إلغاء الجلسات عند تغيير كلمة المرور
+
+### **التحقق من الصلاحيات**
+- نظام أدوار متقدم (RBAC)
+- التحقق من الصلاحيات لكل عملية
+
+## الأداء
+
+### **تحسين قاعدة البيانات**
+- فهارس محسنة للاستعلامات المتكررة
+- استعلامات محسنة مع JOIN
+
+### **التخزين المؤقت**
+- ETags للاستجابات
+- Last-Modified headers
+
+### **التحديث التلقائي**
+- التقويم: تحديث كل 60 ثانية
+- لوحة التحكم: تحديث كل 30 ثانية
+
+## استكشاف الأخطاء
+
+### **مشاكل قاعدة البيانات**
 ```bash
-# Clear composer cache
-composer clear-cache
-composer install --no-cache
+# فحص الاتصال
+mysql -u root -p -h localhost
+
+# فحص قاعدة البيانات
+SHOW DATABASES;
+USE roaya;
+SHOW TABLES;
 ```
 
-## 📞 Support
+### **مشاكل PHP**
+```bash
+# فحص إصدار PHP
+php -v
 
-For technical support or feature requests:
-- Create an issue in the repository
-- Contact the development team
-- Check the documentation
+# فحص الملحقات
+php -m | grep -E "(pdo|json|mbstring)"
+```
 
-## 📄 License
+### **مشاكل الصلاحيات**
+```bash
+# فحص صلاحيات المجلدات
+ls -la storage/
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+# إعادة تعيين الصلاحيات
+chmod -R 755 storage/
+```
 
-## 🤝 Contributing
+## التطوير
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+### **إضافة ميزات جديدة**
+1. إنشاء Controller جديد في `app/Controllers/`
+2. إضافة القوالب في `app/Views/`
+3. تحديث المسارات في `public/index.php`
+4. إضافة API endpoints إذا لزم الأمر
 
-## 🔄 Updates
+### **تخصيص التصميم**
+- تعديل CSS في `app/Views/layouts/main.php`
+- تخصيص قوالب الطباعة في `app/Views/print/`
+- إضافة JavaScript مخصص
 
-The system is actively maintained with regular updates for:
-- Security patches
-- New features
-- Performance improvements
-- Bug fixes
+## الدعم
+
+### **المساعدة**
+- فحص ملفات السجل في `storage/logs/`
+- مراجعة إعدادات قاعدة البيانات
+- التأكد من صحة ملف `.env`
+
+### **التحديثات**
+```bash
+# تحديث التبعيات
+composer update
+
+# تحديث قاعدة البيانات
+mysql -u root -p roaya < sql/migrations/new_migration.sql
+```
+
+## الترخيص
+
+هذا المشروع مرخص تحت رخصة MIT. راجع ملف `LICENSE` للتفاصيل.
+
+## المساهمة
+
+نرحب بالمساهمات! يرجى:
+1. Fork المشروع
+2. إنشاء فرع للميزة الجديدة
+3. إرسال Pull Request
+
+## الإصدار
+
+**الإصدار الحالي**: 1.0.0
+**آخر تحديث**: ديسمبر 2024
 
 ---
 
-**Built with ❤️ for the medical community**
+**ملاحظة**: تأكد من تغيير كلمات المرور الافتراضية في بيئة الإنتاج.

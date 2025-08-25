@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Ophthalmology Clinic</title>
+    <title>Login - Roaya Clinic</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Cairo Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -24,19 +29,19 @@
         
         .dark {
             --bg: #0b1220;
-            --text: #e5e7eb;
-            --card: #111827;
-            --muted: #9aa4b2;
+            --text: #f8fafc;
+            --card: #1e293b;
+            --muted: #cbd5e1;
             --accent: #38bdf8;
-            --success: #22c55e;
-            --danger: #f87171;
-            --border: #1f2937;
+            --success: #4ade80;
+            --danger: #fb7185;
+            --border: #334155;
         }
         
         body {
             background: var(--bg);
             color: var(--text);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -86,19 +91,28 @@
         }
         
         .form-control {
-            background: var(--bg);
-            border: 1px solid var(--border);
+            background: var(--card);
+            border: 2px solid var(--border);
             color: var(--text);
+            font-weight: 500;
         }
         
         .form-control:focus {
             background: var(--card);
             border-color: var(--accent);
-            box-shadow: 0 0 0 0.2rem rgba(14, 165, 233, 0.25);
+            box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25);
+            color: var(--text);
         }
         
         .form-floating label {
             color: var(--muted);
+            font-weight: 500;
+        }
+        
+        .form-floating > .form-control:focus ~ label,
+        .form-floating > .form-control:not(:placeholder-shown) ~ label {
+            color: var(--accent);
+            font-weight: 600;
         }
         
         .btn-primary {
@@ -170,7 +184,7 @@
         <div class="login-card">
             <div class="clinic-logo">
                 <i class="bi bi-eye"></i>
-                <div class="clinic-name">Ophthalmology Clinic</div>
+                <div class="clinic-name">Roaya Clinic</div>
                 <div class="clinic-subtitle">Professional Eye Care Management</div>
             </div>
 
@@ -185,9 +199,9 @@
                 <?= $this->csrfField() ?>
                 
                 <div class="form-floating">
-                    <input type="email" class="form-control" id="email" name="email" 
-                           placeholder="name@example.com" value="<?= htmlspecialchars($email ?? '') ?>" required>
-                    <label for="email">Email address</label>
+                    <input type="text" class="form-control" id="username" name="username" 
+                           placeholder="username" value="<?= htmlspecialchars($username ?? '') ?>" required>
+                    <label for="username">اسم المستخدم - Username</label>
                 </div>
 
                 <div class="form-floating">
@@ -214,6 +228,26 @@
                     <i class="bi bi-shield-check me-1"></i>
                     Secure login system
                 </small>
+            </div>
+            
+            <!-- Demo Credentials -->
+            <div class="mt-4 p-3" style="background: var(--bg); border: 1px solid #dee2e6; border-radius: 8px;">
+                <h6 class="text-muted mb-2 text-center">أسماء المستخدمين التجريبية - Demo Usernames</h6>
+                <div class="row text-sm">
+                    <div class="col-6">
+                        <strong style="color: var(--accent);">الأطباء - Doctors:</strong><br>
+                        <code style="background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">dr_ahmed</code><br>
+                        <code style="background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">dr_faramawy</code>
+                    </div>
+                    <div class="col-6">
+                        <strong style="color: var(--success);">الموظفون - Staff:</strong><br>
+                        <code style="background: var(--success); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">sec</code> (Secretary)<br>
+                        <code style="background: var(--danger); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">admin</code> (Admin)
+                    </div>
+                </div>
+                <div class="mt-2 text-center">
+                    <strong>كلمة المرور لجميع الحسابات:</strong> <code style="background: #6c757d; color: white; padding: 2px 8px; border-radius: 4px;">password</code>
+                </div>
             </div>
         </div>
     </div>
@@ -244,12 +278,18 @@
         
         // Form validation
         document.querySelector('form').addEventListener('submit', function(e) {
-            const email = document.getElementById('email').value.trim();
+            const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value.trim();
             
-            if (!email || !password) {
+            if (!username || !password) {
                 e.preventDefault();
                 alert('Please fill in all required fields');
+                return false;
+            }
+            
+            if (username.length < 3) {
+                e.preventDefault();
+                alert('Username must be at least 3 characters');
                 return false;
             }
         });

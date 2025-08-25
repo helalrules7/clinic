@@ -72,6 +72,23 @@ class DoctorController
             'content' => $content
         ]);
     }
+    
+    public function patients()
+    {
+        $user = $this->auth->user();
+        $patients = $this->getAllPatients();
+        
+        $content = $this->view->render('doctor/patients', [
+            'patients' => $patients
+        ]);
+        
+        echo $this->view->render('layouts/main', [
+            'title' => 'Patients - Doctor Dashboard',
+            'pageTitle' => 'Patients',
+            'pageSubtitle' => 'Manage patient records',
+            'content' => $content
+        ]);
+    }
 
     public function viewPatient($id)
     {
@@ -303,10 +320,10 @@ class DoctorController
     private function getMedicalHistory($patientId)
     {
         $stmt = $this->pdo->prepare("
-            SELECT * FROM medical_history WHERE patient_id = ?
+            SELECT * FROM medical_history WHERE patient_id = ? ORDER BY created_at DESC
         ");
         $stmt->execute([$patientId]);
-        return $stmt->fetch();
+        return $stmt->fetchAll();
     }
 
     private function getPatientAppointments($patientId, $doctorId)
@@ -369,4 +386,21 @@ class DoctorController
         }
         return hash_equals($_SESSION['csrf_token'], $_POST['csrf_token']);
     }
+    
+    private function getAllPatients()
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT p.*, 
+                   COUNT(DISTINCT a.id) as total_appointments,
+                   MAX(a.date) as last_visit
+            FROM patients p
+            LEFT JOIN appointments a ON p.id = a.patient_id
+            GROUP BY p.id
+            ORDER BY p.created_at DESC
+        ");
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+    
+
 }

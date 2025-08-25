@@ -1,6 +1,6 @@
 <?php
 /**
- * Ophthalmology Clinic Management System
+ * Roaya Clinic Management System
  * Main entry point
  */
 
@@ -62,6 +62,7 @@ try {
     // Doctor routes
     $router->get('/doctor/dashboard', 'DoctorController@dashboard');
     $router->get('/doctor/calendar', 'DoctorController@calendar');
+    $router->get('/doctor/patients', 'DoctorController@patients');
     $router->get('/doctor/patients/{id}', 'DoctorController@viewPatient');
     $router->get('/doctor/appointments/{id}', 'DoctorController@viewAppointment');
     $router->get('/doctor/profile', 'DoctorController@profile');

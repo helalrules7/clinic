@@ -40,12 +40,12 @@ class AuthController
 
             // Validate input
             $rules = [
-                'email' => 'required|email',
+                'username' => 'required|min:3',
                 'password' => 'required|min:1'
             ];
 
             $data = [
-                'email' => $_POST['email'] ?? '',
+                'username' => $_POST['username'] ?? '',
                 'password' => $_POST['password'] ?? ''
             ];
 
@@ -54,7 +54,7 @@ class AuthController
             }
 
             // Attempt login
-            $user = $this->auth->login($data['email'], $data['password']);
+            $user = $this->auth->login($data['username'], $data['password']);
 
             // Set remember me if requested
             if (isset($_POST['remember_me']) && $_POST['remember_me']) {
@@ -68,7 +68,7 @@ class AuthController
             $error = $e->getMessage();
             echo $this->view->render('auth/login', [
                 'error' => $error,
-                'email' => $_POST['email'] ?? ''
+                'username' => $_POST['username'] ?? ''
             ]);
         }
     }
@@ -76,12 +76,15 @@ class AuthController
     public function logout()
     {
         $this->auth->logout();
-        header('Location: /login');
+        header('Location: /public/login');
         exit;
     }
 
     private function redirectByRole($role)
     {
+        // Ensure session is saved before redirect
+        session_write_close();
+        
         switch ($role) {
             case 'doctor':
                 header('Location: /doctor/dashboard');

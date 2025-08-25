@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $title ?? 'Ophthalmology Clinic' ?></title>
+    <title><?= $title ?? 'Roaya Clinic' ?></title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Cairo Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -25,19 +30,19 @@
         
         .dark {
             --bg: #0b1220;
-            --text: #e5e7eb;
-            --card: #111827;
-            --muted: #9aa4b2;
+            --text: #f8fafc;
+            --card: #1e293b;
+            --muted: #cbd5e1;
             --accent: #38bdf8;
-            --success: #22c55e;
-            --danger: #f87171;
-            --border: #1f2937;
+            --success: #4ade80;
+            --danger: #fb7185;
+            --border: #334155;
         }
         
         body {
             background: var(--bg);
             color: var(--text);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
         
@@ -240,14 +245,28 @@
         
         .form-control, .form-select {
             background: var(--card);
-            border: 1px solid var(--border);
+            border: 2px solid var(--border);
             color: var(--text);
+            font-weight: 500;
         }
         
         .form-control:focus, .form-select:focus {
             background: var(--card);
             border-color: var(--accent);
-            box-shadow: 0 0 0 0.2rem rgba(14, 165, 233, 0.25);
+            color: var(--text);
+            box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25);
+            font-weight: 600;
+        }
+        
+        .form-control::placeholder {
+            color: var(--muted);
+            font-weight: 400;
+        }
+        
+        .form-label {
+            color: var(--text);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
         }
         
         .form-label {
@@ -291,9 +310,17 @@
             background: var(--accent);
             border: none;
             color: white;
-            padding: 0.5rem;
-            border-radius: 6px;
+            padding: 0.75rem;
+            border-radius: 8px;
             margin-right: 1rem;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .sidebar-toggle:hover {
+            background: var(--success);
+            transform: scale(1.05);
         }
         
         .overlay {

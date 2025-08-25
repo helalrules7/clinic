@@ -5,7 +5,7 @@ namespace App\Config;
 class Constants
 {
     // Application
-    const APP_NAME = 'Ophthalmology Clinic';
+    const APP_NAME = 'Roaya Ophthalmology Clinic';
     const APP_VERSION = '1.0.0';
     const TIMEZONE = 'Africa/Cairo';
     

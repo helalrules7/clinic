@@ -1,6 +1,6 @@
 {
     "name": "clinic/ophthalmology",
-    "description": "Ophthalmology Clinic Management System",
+    "description": "Roaya Clinic Management System",
     "type": "project",
     "require": {
         "php": ">=8.2",
