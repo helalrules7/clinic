@@ -8,9 +8,14 @@
         <p class="text-muted mb-0">Manage and view patient information</p>
     </div>
     <div class="col-md-4 text-end">
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#searchModal">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#searchModal" title="Press 'F' or 'ب' to search">
             <i class="bi bi-search me-2"></i>
             Search Patients
+            <span class="ms-2">
+                <kbd>F</kbd>
+                <span class="text-white-50 mx-1">or</span>
+                <kbd lang="ar">ب</kbd>
+            </span>
         </button>
     </div>
 </div>
@@ -152,11 +157,16 @@
 <div class="modal fade" id="searchModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header position-relative">
                 <h5 class="modal-title">
                     <i class="bi bi-search me-2"></i>
                     Search Patients
                 </h5>
+                <div class="keyboard-hint">
+                    <span>Press</span>
+                    <kbd>Esc</kbd>
+                    <span>to close</span>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -175,9 +185,14 @@
                             <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
-                    <div class="form-text">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Start typing to search automatically
+                    <div class="form-text d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="bi bi-info-circle me-1"></i>
+                            Start typing to search automatically
+                        </span>
+                        <small class="text-muted">
+                            <kbd>Ctrl</kbd>+<kbd>F</kbd> to focus search
+                        </small>
                     </div>
                 </div>
 
@@ -310,6 +325,53 @@
 #globalSearch:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
+}
+
+/* Keyboard shortcut styling */
+kbd {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    font-family: 'Courier New', 'Cairo', monospace;
+    color: rgba(0, 0, 0, 0.9);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    min-width: 20px;
+    text-align: center;
+    display: inline-block;
+}
+
+.btn-primary kbd {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Arabic keyboard shortcut styling */
+kbd[lang="ar"] {
+    font-family: 'Cairo', 'Courier New', monospace;
+    font-weight: 600;
+}
+
+/* Keyboard shortcut hint in modal */
+.keyboard-hint {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.keyboard-hint kbd {
+    background-color: var(--bg-alt);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.65rem;
+    padding: 1px 4px;
 }
 </style>
 
@@ -501,6 +563,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const globalSearch = document.getElementById('globalSearch');
     const clearSearch = document.getElementById('clearSearch');
     const searchModal = document.getElementById('searchModal');
+    const searchButton = document.querySelector('[data-bs-target="#searchModal"]');
     
     // Debounced search
     const debouncedSearch = debounce(searchPatients, 300);
@@ -533,6 +596,56 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('noResults').style.display = 'none';
         document.getElementById('searchResultsList').style.display = 'none';
     });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Debug keyboard input (remove in production)
+        if (e.key === 'ب' || e.key.toLowerCase() === 'f') {
+            console.log('Search key pressed:', {
+                key: e.key,
+                keyCode: e.keyCode,
+                code: e.code,
+                isInputFocused: isInputFocused(),
+                modalOpen: searchModal.classList.contains('show')
+            });
+        }
+        
+        // Open search modal with 'F' key or Arabic 'ب' key (only if no input is focused)
+        // Also support Arabic keyboard layout alternatives
+        const searchKeys = ['f', 'ب']; // F key and Arabic 'ba' (same position on keyboard)
+        const isSearchKey = searchKeys.includes(e.key.toLowerCase()) || searchKeys.includes(e.key);
+        
+        if (isSearchKey && !isInputFocused() && !searchModal.classList.contains('show')) {
+            e.preventDefault();
+            console.log('Opening search modal with key:', e.key);
+            searchButton.click();
+        }
+        
+        // Close search modal with 'Escape' key
+        if (e.key === 'Escape' && searchModal.classList.contains('show')) {
+            e.preventDefault();
+            bootstrap.Modal.getInstance(searchModal).hide();
+        }
+        
+        // Focus search input with 'Ctrl+F' or 'Cmd+F' when modal is open
+        // Also support Arabic layout
+        if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'f' || e.key === 'ب') && searchModal.classList.contains('show')) {
+            e.preventDefault();
+            globalSearch.focus();
+            globalSearch.select();
+        }
+    });
+    
+    // Helper function to check if any input is currently focused
+    function isInputFocused() {
+        const activeElement = document.activeElement;
+        return activeElement && (
+            activeElement.tagName === 'INPUT' || 
+            activeElement.tagName === 'TEXTAREA' || 
+            activeElement.tagName === 'SELECT' ||
+            activeElement.contentEditable === 'true'
+        );
+    }
 });
 
 // Auto-refresh every 30 seconds (pause when search modal is open)
