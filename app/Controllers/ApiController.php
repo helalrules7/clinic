@@ -65,6 +65,9 @@ class ApiController
             
             // Get available time slots
             $availableSlots = $this->getAvailableTimeSlots($doctorId, $date);
+            
+            // Get unavailable slots with doctor info
+            $unavailableSlots = $this->getUnavailableSlots($doctorId, $date);
 
             return $this->jsonResponse([
                 'ok' => true,
@@ -72,7 +75,8 @@ class ApiController
                     'date' => $date,
                     'is_friday' => false,
                     'appointments' => $appointments,
-                    'available_slots' => $availableSlots
+                    'available_slots' => $availableSlots,
+                    'unavailable_slots' => $unavailableSlots
                 ]
             ]);
 
@@ -658,6 +662,93 @@ class ApiController
         ");
         $stmt->execute([$doctorId, $date, $startTime]);
         return $stmt->fetchColumn() == 0;
+    }
+
+    private function getUnavailableSlots($doctorId, $date)
+    {
+        // Get all time slots that are unavailable for this doctor
+        $allSlots = $this->getAllTimeSlots($date);
+        $availableSlots = $this->getAvailableTimeSlots($doctorId, $date);
+        $unavailableSlots = [];
+        
+        foreach ($allSlots as $time) {
+            if (!in_array($time, $availableSlots)) {
+                // Check if there's ANY appointment at this time (any doctor)
+                $stmt = $this->pdo->prepare("
+                    SELECT a.start_time, a.doctor_id, d.display_name as doctor_name, u.name as user_name
+                    FROM appointments a
+                    JOIN doctors d ON a.doctor_id = d.id
+                    JOIN users u ON d.user_id = u.id
+                    WHERE a.date = ? AND a.start_time = ? 
+                    AND a.status NOT IN ('Cancelled', 'NoShow')
+                ");
+                $stmt->execute([$date, $time]);
+                $appointment = $stmt->fetch();
+                
+                if ($appointment) {
+                    // If it's the current doctor's appointment, it will show in appointments section
+                    // If it's another doctor's appointment, show as reserved
+                    if ($appointment['doctor_id'] != $doctorId) {
+                        $doctorDisplayName = $appointment['user_name'] ?? $appointment['doctor_name'];
+                        $unavailableSlots[] = [
+                            'time' => $time,
+                            'doctor_name' => $doctorDisplayName,
+                            'reason' => 'Reserved for ' . $doctorDisplayName
+                        ];
+                    }
+                } else {
+                    // Check if it's outside working hours for this doctor
+                    if ($this->isOutsideWorkingHours($doctorId, $date, $time)) {
+                        $unavailableSlots[] = [
+                            'time' => $time,
+                            'doctor_name' => null,
+                            'reason' => 'Outside working hours'
+                        ];
+                    }
+                }
+            }
+        }
+        
+        return $unavailableSlots;
+    }
+
+    private function getAllTimeSlots($date)
+    {
+        // Generate all possible time slots for the day (2 PM to 11 PM)
+        $slots = [];
+        $start = new \DateTime('14:00');
+        $end = new \DateTime('23:00');
+        $interval = new \DateInterval('PT15M');
+        
+        $current = clone $start;
+        while ($current < $end) {
+            $slots[] = $current->format('H:i');
+            $current->add($interval);
+        }
+        
+        return $slots;
+    }
+
+    private function isOutsideWorkingHours($doctorId, $date, $time)
+    {
+        // Get working hours for the doctor on this day
+        $weekday = (new \DateTime($date))->format('w');
+        $stmt = $this->pdo->prepare("
+            SELECT work_start, work_end FROM doctor_schedule 
+            WHERE doctor_id = ? AND weekday = ? AND is_working = 1
+        ");
+        $stmt->execute([$doctorId, $weekday]);
+        $schedule = $stmt->fetch();
+        
+        if (!$schedule) {
+            return true; // No working schedule = outside working hours
+        }
+
+        $timeObj = new \DateTime($time);
+        $workStart = new \DateTime($schedule['work_start']);
+        $workEnd = new \DateTime($schedule['work_end']);
+        
+        return $timeObj < $workStart || $timeObj >= $workEnd;
     }
 
     private function getAppointmentDetails($id)

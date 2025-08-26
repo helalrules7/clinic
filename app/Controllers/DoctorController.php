@@ -60,9 +60,18 @@ class DoctorController
         // Get available dates for this doctor
         $availableDates = $this->getAvailableDates($doctorId);
         
+        // Get patient_id from query string if provided
+        $patientId = $_GET['patient_id'] ?? null;
+        $patientInfo = null;
+        
+        if ($patientId) {
+            $patientInfo = $this->getPatientInfo($patientId);
+        }
+        
         $content = $this->view->render('doctor/calendar', [
             'doctorId' => $doctorId,
-            'availableDates' => $availableDates
+            'availableDates' => $availableDates,
+            'preselectedPatient' => $patientInfo
         ]);
         
         echo $this->view->render('layouts/main', [
@@ -537,5 +546,22 @@ class DoctorController
         }
     }
     
+    private function getPatientInfo($patientId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT id, first_name, last_name, phone, dob, gender,
+                   YEAR(CURDATE()) - YEAR(dob) as age
+            FROM patients 
+            WHERE id = ?
+        ");
+        $stmt->execute([$patientId]);
+        $patient = $stmt->fetch();
+        
+        if ($patient) {
+            $patient['full_name'] = $patient['first_name'] . ' ' . $patient['last_name'];
+        }
+        
+        return $patient;
+    }
 
 }

@@ -9,14 +9,20 @@
         </div>
     </div>
     <div class="col-md-6 text-end">
-        <div class="btn-group" role="group">
-            <button type="button" class="btn btn-outline-primary" id="todayBtn">Today</button>
-            <button type="button" class="btn btn-outline-primary" id="prevDayBtn">
-                <i class="bi bi-chevron-left"></i>
+        <div class="d-flex gap-2 justify-content-end">
+            <button type="button" class="btn btn-success" id="addAppointmentBtn">
+                <i class="bi bi-plus-circle me-2"></i>
+                Add Appointment
             </button>
-            <button type="button" class="btn btn-outline-primary" id="nextDayBtn">
-                <i class="bi bi-chevron-right"></i>
-            </button>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary" id="todayBtn">Today</button>
+                <button type="button" class="btn btn-outline-primary" id="prevDayBtn">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="nextDayBtn">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -109,10 +115,91 @@
     </div>
 </div>
 
+<!-- Add Appointment Modal -->
+<div class="modal fade" id="addAppointmentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Appointment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addAppointmentForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="patientSearch" class="form-label">
+                                    Patient * 
+                                    <span id="preselectedLabel" class="badge bg-info ms-2" style="display: none;">Pre-selected</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="patientSearch" 
+                                           placeholder="Search patient by name or phone..." required>
+                                    <button type="button" class="btn btn-outline-primary" id="newPatientBtn">
+                                        <i class="bi bi-person-plus"></i>
+                                    </button>
+                                </div>
+                                <input type="hidden" id="selectedPatientId" name="patient_id">
+                                <div id="patientSearchResults" class="search-results"></div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="appointmentDate" class="form-label">Date *</label>
+                                <input type="date" class="form-control" id="appointmentDate" name="date" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="appointmentTime" class="form-label">Time *</label>
+                                <select class="form-select" id="appointmentTime" name="start_time" required>
+                                    <option value="">Select time slot...</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="visitType" class="form-label">Visit Type *</label>
+                                <select class="form-select" id="visitType" name="visit_type" required>
+                                    <option value="">Select visit type...</option>
+                                    <option value="New">New Patient</option>
+                                    <option value="FollowUp">Follow Up</option>
+                                    <option value="Procedure">Procedure</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="appointmentSource" class="form-label">Source</label>
+                                <select class="form-select" id="appointmentSource" name="source">
+                                    <option value="Walk-in">Walk-in</option>
+                                    <option value="Phone">Phone</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="appointmentNotes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="appointmentNotes" name="notes" 
+                                          rows="3" placeholder="Any additional notes..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="saveAppointmentBtn">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Save Appointment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 let currentDate = new Date();
 let selectedAppointment = null;
 let refreshInterval;
+let preselectedPatient = <?= $preselectedPatient ? json_encode($preselectedPatient) : 'null' ?>;
 
 // Initialize calendar
 document.addEventListener('DOMContentLoaded', function() {
@@ -136,6 +223,31 @@ function setupEventListeners() {
     document.getElementById('nextDayBtn').addEventListener('click', () => {
         currentDate.setDate(currentDate.getDate() + 1);
         loadCalendar();
+    });
+    
+    // Add appointment button
+    document.getElementById('addAppointmentBtn').addEventListener('click', () => {
+        // Use current date being viewed in calendar
+        openAddAppointmentModal(null, currentDate.toISOString().split('T')[0]);
+    });
+    
+    // Patient search
+    document.getElementById('patientSearch').addEventListener('input', debounce(searchPatients, 300));
+    
+    // Date change - load available time slots
+    document.getElementById('appointmentDate').addEventListener('change', () => {
+        // Keep any preselected time when date changes
+        const currentSelectedTime = document.getElementById('appointmentTime').value;
+        loadAvailableTimeSlots(currentSelectedTime || null);
+    });
+    
+    // Add appointment form submission
+    document.getElementById('addAppointmentForm').addEventListener('submit', handleAddAppointment);
+    
+    // New patient button
+    document.getElementById('newPatientBtn').addEventListener('click', () => {
+        // Redirect to new patient page or open modal
+        window.open('/secretary/patients/new', '_blank');
     });
 }
 
@@ -175,6 +287,7 @@ function renderCalendar(data) {
     timeSlots.forEach(time => {
         const appointment = data.appointments.find(apt => apt.start_time === time);
         const isAvailable = data.available_slots.includes(time);
+        const unavailableSlot = data.unavailable_slots ? data.unavailable_slots.find(slot => slot.time === time) : null;
         
         html += '<div class="calendar-row">';
         html += `<div class="time-slot">${formatTime(time)}</div>`;
@@ -183,9 +296,23 @@ function renderCalendar(data) {
         if (appointment) {
             html += renderAppointmentSlot(appointment);
         } else if (isAvailable) {
-            html += '<div class="available-slot">Available</div>';
+            html += `<div class="available-slot" onclick="quickAddAppointment('${time}')" 
+                          title="Click to schedule appointment at ${formatTime(time)}">
+                        <i class="bi bi-plus-circle me-2"></i>Available - ${formatTime(time)}
+                     </div>`;
         } else {
-            html += '<div class="unavailable-slot">Unavailable</div>';
+            // Show detailed unavailable information
+            if (unavailableSlot && unavailableSlot.doctor_name) {
+                html += `<div class="unavailable-slot" title="${unavailableSlot.reason}">
+                           <i class="bi bi-person-fill-lock me-2"></i>Unavailable - ${unavailableSlot.reason}
+                         </div>`;
+            } else if (unavailableSlot && unavailableSlot.reason === 'Outside working hours') {
+                html += `<div class="unavailable-slot outside-hours" title="Outside working hours">
+                           <i class="bi bi-clock me-2"></i>Unavailable - Outside working hours
+                         </div>`;
+            } else {
+                html += '<div class="unavailable-slot">Unavailable</div>';
+            }
         }
         
         html += '</div>';
@@ -378,6 +505,310 @@ function formatDate(date) {
     });
 }
 
+// Add appointment functions
+function openAddAppointmentModal(preselectedTime = null, preselectedDate = null) {
+    // Set date - use preselected date or current date
+    const dateToUse = preselectedDate || currentDate.toISOString().split('T')[0];
+    document.getElementById('appointmentDate').value = dateToUse;
+    
+    // Clear form
+    document.getElementById('addAppointmentForm').reset();
+    document.getElementById('selectedPatientId').value = '';
+    document.getElementById('patientSearchResults').innerHTML = '';
+    
+    // Re-set the date after form reset
+    document.getElementById('appointmentDate').value = dateToUse;
+    
+    // Handle preselected patient
+    const patientSearchField = document.getElementById('patientSearch');
+    const newPatientBtn = document.getElementById('newPatientBtn');
+    const preselectedLabel = document.getElementById('preselectedLabel');
+    
+    if (preselectedPatient) {
+        // Fill patient info
+        document.getElementById('selectedPatientId').value = preselectedPatient.id;
+        patientSearchField.value = preselectedPatient.full_name;
+        
+        // Make patient field readonly
+        patientSearchField.readOnly = true;
+        patientSearchField.style.backgroundColor = 'var(--bg)';
+        patientSearchField.style.cursor = 'not-allowed';
+        
+        // Hide new patient button
+        newPatientBtn.style.display = 'none';
+        
+        // Show preselected label
+        preselectedLabel.style.display = 'inline-block';
+        
+        // Show patient info
+        document.getElementById('patientSearchResults').innerHTML = `
+            <div class="selected-patient-info alert alert-info">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong>Selected Patient:</strong> ${preselectedPatient.full_name}<br>
+                        <small>Phone: ${preselectedPatient.phone} • Age: ${preselectedPatient.age || 'N/A'}</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearPreselectedPatient()">
+                        Change Patient
+                    </button>
+                </div>
+            </div>
+        `;
+    } else {
+        // Enable patient search
+        patientSearchField.readOnly = false;
+        patientSearchField.style.backgroundColor = '';
+        patientSearchField.style.cursor = '';
+        newPatientBtn.style.display = 'block';
+        preselectedLabel.style.display = 'none';
+    }
+    
+    // Load available time slots for selected date
+    loadAvailableTimeSlots(preselectedTime);
+    
+    // If preselected time is provided, select it after slots are loaded
+    if (preselectedTime) {
+        setTimeout(() => {
+            const timeField = document.getElementById('appointmentTime');
+            timeField.value = preselectedTime;
+            timeField.classList.add('preselected-field');
+        }, 300);
+    }
+    
+    // Add styling to preselected date field if it's different from today
+    const dateField = document.getElementById('appointmentDate');
+    const today = new Date().toISOString().split('T')[0];
+    if (dateToUse !== today) {
+        dateField.classList.add('preselected-field');
+    }
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('addAppointmentModal'));
+    
+    // Clean up styling when modal is hidden
+    document.getElementById('addAppointmentModal').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('appointmentDate').classList.remove('preselected-field');
+        document.getElementById('appointmentTime').classList.remove('preselected-field');
+    });
+    
+    modal.show();
+}
+
+function quickAddAppointment(time) {
+    // Set the current date being viewed and the selected time
+    openAddAppointmentModal(time, currentDate.toISOString().split('T')[0]);
+}
+
+function searchPatients() {
+    // Don't search if patient is preselected
+    if (preselectedPatient) {
+        return;
+    }
+    
+    const query = document.getElementById('patientSearch').value.trim();
+    if (query.length < 2) {
+        document.getElementById('patientSearchResults').innerHTML = '';
+        return;
+    }
+    
+    fetch(`/api/patients/search?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                displayPatientSearchResults(data.data);
+            }
+        })
+        .catch(error => {
+            console.error('Error searching patients:', error);
+        });
+}
+
+function displayPatientSearchResults(patients) {
+    const resultsContainer = document.getElementById('patientSearchResults');
+    
+    if (patients.length === 0) {
+        resultsContainer.innerHTML = '<div class="search-result-item text-muted">No patients found</div>';
+        return;
+    }
+    
+    let html = '';
+    patients.forEach(patient => {
+        html += `
+            <div class="search-result-item" onclick="selectPatient(${patient.id}, '${patient.first_name} ${patient.last_name}')">
+                <div class="patient-name">${patient.first_name} ${patient.last_name}</div>
+                <div class="patient-details">${patient.phone} • Age: ${patient.age || 'N/A'}</div>
+            </div>
+        `;
+    });
+    
+    resultsContainer.innerHTML = html;
+}
+
+function selectPatient(patientId, patientName) {
+    document.getElementById('selectedPatientId').value = patientId;
+    document.getElementById('patientSearch').value = patientName;
+    document.getElementById('patientSearchResults').innerHTML = '';
+}
+
+function loadAvailableTimeSlots(preselectedTime = null) {
+    const date = document.getElementById('appointmentDate').value;
+    if (!date) return;
+    
+    const doctorId = <?= $doctorId ?>;
+    
+    fetch(`/api/calendar?doctor_id=${doctorId}&date=${date}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                populateTimeSlots(data.data.available_slots, preselectedTime);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading time slots:', error);
+        });
+}
+
+function populateTimeSlots(availableSlots, preselectedTime = null) {
+    const timeSelect = document.getElementById('appointmentTime');
+    timeSelect.innerHTML = '<option value="">Select time slot...</option>';
+    
+    console.log('Populating time slots:', { availableSlots, preselectedTime });
+    
+    // Add all available slots
+    availableSlots.forEach(time => {
+        const option = document.createElement('option');
+        option.value = time;
+        option.textContent = formatTime(time);
+        timeSelect.appendChild(option);
+    });
+    
+    // If there's a preselected time that's not in available slots, add it
+    if (preselectedTime && !availableSlots.includes(preselectedTime)) {
+        console.log('Adding preselected time not in available slots:', preselectedTime);
+        const option = document.createElement('option');
+        option.value = preselectedTime;
+        option.textContent = formatTime(preselectedTime) + ' (Selected)';
+        option.style.fontWeight = 'bold';
+        option.style.color = '#28a745';
+        option.style.backgroundColor = '#f8f9fa';
+        timeSelect.appendChild(option);
+    }
+    
+    // Sort all options by time (except the first "Select..." option)
+    const options = Array.from(timeSelect.options).slice(1); // Skip first "Select..." option
+    options.sort((a, b) => a.value.localeCompare(b.value));
+    
+    // Clear and re-add sorted options
+    timeSelect.innerHTML = '<option value="">Select time slot...</option>';
+    options.forEach(option => timeSelect.appendChild(option));
+    
+    console.log('Final time slots count:', timeSelect.options.length - 1);
+}
+
+function handleAddAppointment(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const appointmentData = Object.fromEntries(formData);
+    
+    // Validation
+    if (!appointmentData.patient_id) {
+        alert('Please select a patient');
+        return;
+    }
+    
+    // Add doctor_id
+    appointmentData.doctor_id = <?= $doctorId ?>;
+    
+    // Save appointment
+    fetch('/api/appointments', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(appointmentData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('addAppointmentModal')).hide();
+            
+            // Refresh calendar
+            loadCalendar();
+            
+            // Show success message
+            showNotification('Appointment added successfully!', 'success');
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error saving appointment:', error);
+        alert('Error saving appointment');
+    });
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.zIndex = '9999';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+function clearPreselectedPatient() {
+    // Clear preselected patient
+    preselectedPatient = null;
+    
+    // Clear form fields
+    document.getElementById('selectedPatientId').value = '';
+    document.getElementById('patientSearch').value = '';
+    document.getElementById('patientSearchResults').innerHTML = '';
+    
+    // Enable patient search
+    const patientSearchField = document.getElementById('patientSearch');
+    const newPatientBtn = document.getElementById('newPatientBtn');
+    const preselectedLabel = document.getElementById('preselectedLabel');
+    
+    patientSearchField.readOnly = false;
+    patientSearchField.style.backgroundColor = '';
+    patientSearchField.style.cursor = '';
+    patientSearchField.placeholder = 'Search patient by name or phone...';
+    
+    newPatientBtn.style.display = 'block';
+    preselectedLabel.style.display = 'none';
+    
+    // Focus on search field
+    patientSearchField.focus();
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {
     if (refreshInterval) {
@@ -495,16 +926,43 @@ window.addEventListener('beforeunload', () => {
 
 .available-slot {
     color: var(--success);
-    font-style: italic;
     text-align: center;
     width: 100%;
+    cursor: pointer;
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 2px dashed var(--success);
+    background: rgba(var(--success-rgb), 0.05);
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.available-slot:hover {
+    background: rgba(var(--success-rgb), 0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
 }
 
 .unavailable-slot {
-    color: var(--muted);
-    font-style: italic;
+    background: linear-gradient(135deg, #dc3545, #b02a37);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
     text-align: center;
+    font-size: 0.9em;
+    line-height: 1.3;
     width: 100%;
+}
+
+.unavailable-slot.outside-hours {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: #f8f9fa;
+}
+
+.unavailable-slot i {
+    font-size: 0.85em;
+    opacity: 0.9;
 }
 
 .refresh-indicator {
@@ -564,5 +1022,94 @@ window.addEventListener('beforeunload', () => {
         align-items: flex-start;
         gap: 0.25rem;
     }
+}
+
+/* Search Results Styles */
+.search-results {
+    position: relative;
+    z-index: 1000;
+}
+
+.search-result-item {
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-top: none;
+    background: var(--card);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.search-result-item:first-child {
+    border-top: 1px solid var(--border);
+    border-radius: 8px 8px 0 0;
+}
+
+.search-result-item:last-child {
+    border-radius: 0 0 8px 8px;
+}
+
+.search-result-item:only-child {
+    border-radius: 8px;
+}
+
+.search-result-item:hover {
+    background: var(--bg);
+}
+
+.patient-name {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+}
+
+.patient-details {
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+/* Modal improvements */
+.modal-content {
+    border-radius: 12px;
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.btn-group .btn {
+    border-radius: 6px !important;
+}
+
+/* Notification styles */
+.alert {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+}
+
+/* Selected patient info */
+.selected-patient-info {
+    margin-top: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid #b3d9ff;
+    background: rgba(13, 110, 253, 0.1);
+}
+
+/* Readonly field styling */
+input[readonly] {
+    background-color: var(--bg) !important;
+    cursor: not-allowed !important;
+    opacity: 0.8;
+}
+
+/* Preselected fields styling */
+.preselected-field {
+    background-color: rgba(var(--success-rgb), 0.1) !important;
+    border-color: var(--success) !important;
+    font-weight: 600;
+}
+
+.preselected-field:focus {
+    box-shadow: 0 0 0 0.2rem rgba(var(--success-rgb), 0.25) !important;
 }
 </style>
