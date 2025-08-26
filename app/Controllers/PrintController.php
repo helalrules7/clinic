@@ -19,10 +19,10 @@ class PrintController
         $this->view = new View();
         $this->pdo = Database::getInstance()->getConnection();
         
-        // Check authentication
+        // Check authentication for print pages
         if (!$this->auth->check()) {
             http_response_code(401);
-            echo "Unauthorized";
+            echo "<!DOCTYPE html><html><head><title>Unauthorized</title></head><body><h1>401 - Unauthorized</h1><p>Please log in to access this page.</p><script>window.close();</script></body></html>";
             exit;
         }
     }
@@ -286,7 +286,7 @@ class PrintController
             return;
         }
 
-        $consultationNotes = $this->getConsultationNotes($id);
+        $consultationNotes = $this->getConsultationNotesByAppointmentId($id);
         $medications = $this->getMedicationPrescriptions($id);
         $glasses = $this->getGlassesPrescriptions($id);
         $clinic = $this->getClinicInfo();
@@ -321,7 +321,7 @@ class PrintController
         return $stmt->fetch();
     }
 
-    private function getConsultationNotes($appointmentId)
+    private function getConsultationNotesByAppointmentId($appointmentId)
     {
         $stmt = $this->pdo->prepare("
             SELECT cn.*, u.name as created_by_name

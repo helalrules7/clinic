@@ -343,7 +343,10 @@ class DoctorController
     private function getAppointment($id, $doctorId)
     {
         $stmt = $this->pdo->prepare("
-            SELECT a.*, p.first_name, p.last_name, p.phone, p.dob, p.gender
+            SELECT a.*, 
+                   CONCAT(p.first_name, ' ', p.last_name) as patient_name,
+                   p.first_name, p.last_name, p.phone, p.dob, p.gender,
+                   YEAR(CURDATE()) - YEAR(p.dob) as patient_age
             FROM appointments a
             JOIN patients p ON a.patient_id = p.id
             WHERE a.id = ? AND a.doctor_id = ?
@@ -404,15 +407,26 @@ class DoctorController
 
     public function editConsultation($id)
     {
-        $doctorId = $_SESSION['user']['doctor_id'] ?? null;
-        if (!$doctorId) {
+        $userId = $_SESSION['user']['id'] ?? null;
+        if (!$userId) {
             http_response_code(403);
             echo "Access denied";
             return;
         }
 
-        $appointment = $this->getAppointment($id);
-        if (!$appointment || $appointment['doctor_id'] != $doctorId) {
+        // Get doctor ID from doctors table
+        $stmt = $this->pdo->prepare("SELECT id FROM doctors WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        $doctor = $stmt->fetch();
+        
+        if (!$doctor) {
+            http_response_code(403);
+            echo "Doctor not found";
+            return;
+        }
+
+        $appointment = $this->getAppointment($id, $doctor['id']);
+        if (!$appointment) {
             http_response_code(404);
             echo "Appointment not found";
             return;
@@ -421,26 +435,38 @@ class DoctorController
         $consultationNotes = $this->getConsultationNotes($id);
         $patient = $this->getPatient($appointment['patient_id']);
 
-        $content = $this->view->render('doctor/edit_consultation', [
-            'appointment' => $appointment,
-            'patient' => $patient,
-            'consultationNotes' => $consultationNotes
+        echo $this->view->render('layouts/main', [
+            'title' => 'Edit Consultation - ' . ($appointment['patient_name'] ?? ''),
+            'content' => $this->view->render('doctor/edit_consultation', [
+                'appointment' => $appointment,
+                'patient' => $patient,
+                'consultation' => $consultationNotes
+            ], false)
         ]);
-
-        echo $content;
     }
 
     public function updateConsultation($id)
     {
-        $doctorId = $_SESSION['user']['doctor_id'] ?? null;
-        if (!$doctorId) {
+        $userId = $_SESSION['user']['id'] ?? null;
+        if (!$userId) {
             http_response_code(403);
             echo json_encode(['success' => false, 'message' => 'Access denied']);
             return;
         }
 
-        $appointment = $this->getAppointment($id);
-        if (!$appointment || $appointment['doctor_id'] != $doctorId) {
+        // Get doctor ID from doctors table
+        $stmt = $this->pdo->prepare("SELECT id FROM doctors WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        $doctor = $stmt->fetch();
+        
+        if (!$doctor) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Access denied']);
+            return;
+        }
+
+        $appointment = $this->getAppointment($id, $doctor['id']);
+        if (!$appointment) {
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'Appointment not found']);
             return;

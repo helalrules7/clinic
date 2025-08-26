@@ -285,26 +285,6 @@
             }
         }
         
-        /* Mobile responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .sidebar.show {
-                transform: translateX(0);
-            }
-            
-            .main-content {
-                margin-left: 0;
-                padding: 1rem;
-            }
-            
-            .sidebar-toggle {
-                display: block;
-            }
-        }
-        
         .sidebar-toggle {
             display: none;
             background: var(--accent);
@@ -315,12 +295,84 @@
             margin-right: 1rem;
             font-size: 1.1rem;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+            z-index: 1001;
+            position: relative;
+            min-width: 44px;
+            min-height: 44px;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            /* Hide toggle button when sidebar is open */
+            .sidebar.show ~ .main-content .sidebar-toggle {
+                opacity: 0;
+                pointer-events: none;
+                transform: scale(0.8);
+                transition: opacity 0.2s ease, transform 0.2s ease;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            
+            .sidebar-toggle {
+                display: flex !important;
+                opacity: 1;
+                pointer-events: auto;
+                transform: scale(1);
+            }
         }
         
         .sidebar-toggle:hover {
             background: var(--success);
             transform: scale(1.05);
+        }
+        
+        .sidebar-toggle:active {
+            transform: scale(0.95);
+        }
+        
+        /* Ensure toggle button is visible on mobile devices */
+        @media (max-width: 992px) {
+            .sidebar-toggle {
+                display: flex !important;
+                opacity: 1;
+                pointer-events: auto;
+                transform: scale(1);
+            }
+            
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            /* Hide toggle button when sidebar is open */
+            .sidebar.show ~ .main-content .sidebar-toggle {
+                opacity: 0;
+                pointer-events: none;
+                transform: scale(0.8);
+                transition: opacity 0.2s ease, transform 0.2s ease;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
         }
         
         .overlay {
@@ -478,23 +530,29 @@
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('overlay');
         
-        sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('show');
-            overlay.classList.toggle('show');
-        });
-        
-        overlay.addEventListener('click', () => {
-            sidebar.classList.remove('show');
-            overlay.classList.remove('show');
-        });
-        
-        // Close sidebar on window resize
-        window.addEventListener('resize', () => {
-            if (window.innerWidth > 768) {
+        // Ensure elements exist before adding event listeners
+        if (sidebarToggle && sidebar && overlay) {
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('show');
+                overlay.classList.toggle('show');
+                console.log('Sidebar toggled'); // Debug log
+            });
+            
+            overlay.addEventListener('click', () => {
                 sidebar.classList.remove('show');
                 overlay.classList.remove('show');
-            }
-        });
+            });
+            
+            // Close sidebar on window resize
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 992) {
+                    sidebar.classList.remove('show');
+                    overlay.classList.remove('show');
+                }
+            });
+        } else {
+            console.error('Sidebar toggle elements not found');
+        }
     </script>
 </body>
 </html>

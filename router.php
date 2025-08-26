@@ -36,7 +36,7 @@ if (preg_match('/^\/public\/?(.*)$/', $path, $matches)) {
 }
 
 // Handle internal application redirects and API calls
-if (preg_match('/^\/(doctor|secretary|admin|login|api|logout)/', $path)) {
+if (preg_match('/^\/(doctor|secretary|admin|login|api|logout|print)/', $path)) {
     // Set up environment for the application
     $_SERVER['SCRIPT_NAME'] = '/public/index.php';
     $_SERVER['REQUEST_URI'] = $path;

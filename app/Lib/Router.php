@@ -41,6 +41,7 @@ class Router
         $method = $_SERVER['REQUEST_METHOD'];
         $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         
+        
         // Handle PUT/DELETE methods from forms
         if ($method === 'POST' && isset($_POST['_method'])) {
             $method = strtoupper($_POST['_method']);
@@ -61,7 +62,7 @@ class Router
         // Convert route parameters to regex pattern
         $pattern = preg_replace('/\{([^}]+)\}/', '([^/]+)', $routePath);
         $pattern = '#^' . $pattern . '$#';
-
+        
         if (preg_match($pattern, $uri, $matches)) {
             // Extract parameter values
             preg_match_all('/\{([^}]+)\}/', $routePath, $paramNames);
