@@ -255,10 +255,18 @@ function loadCalendar() {
     const dateStr = currentDate.toISOString().split('T')[0];
     const doctorId = <?= $doctorId ?>;
     
+    console.log('🔍 DEBUG: Loading calendar for doctor:', doctorId, 'date:', dateStr);
+    console.log('🔍 DEBUG: API URL:', `/api/calendar?doctor_id=${doctorId}&date=${dateStr}`);
+    
     fetch(`/api/calendar?doctor_id=${doctorId}&date=${dateStr}`)
-        .then(response => response.json())
+        .then(response => {
+            console.log('🔍 DEBUG: API Response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('🔍 DEBUG: API Response data:', data);
             if (data.ok) {
+                console.log('🔍 DEBUG: Unavailable slots:', data.data.unavailable_slots);
                 renderCalendar(data.data);
                 updateDateDisplay();
                 updateLastUpdate();
@@ -289,6 +297,18 @@ function renderCalendar(data) {
         const isAvailable = data.available_slots.includes(time);
         const unavailableSlot = data.unavailable_slots ? data.unavailable_slots.find(slot => slot.time === time) : null;
         
+        // Debug logging for time matching
+        if (time === '14:00') {
+            console.log('🔍 DEBUG Time 14:00:', {
+                time: time,
+                appointments: data.appointments,
+                appointmentFound: appointment,
+                appointmentTimes: data.appointments.map(apt => apt.start_time),
+                isAvailable: isAvailable,
+                unavailableSlot: unavailableSlot
+            });
+        }
+        
         html += '<div class="calendar-row">';
         html += `<div class="time-slot">${formatTime(time)}</div>`;
         html += '<div class="appointment-slot">';
@@ -303,15 +323,40 @@ function renderCalendar(data) {
         } else {
             // Show detailed unavailable information
             if (unavailableSlot && unavailableSlot.doctor_name) {
-                html += `<div class="unavailable-slot" title="${unavailableSlot.reason}">
-                           <i class="bi bi-person-fill-lock me-2"></i>Unavailable - ${unavailableSlot.reason}
+                const displayText = `Reserved for ${unavailableSlot.doctor_name} - ${unavailableSlot.patient_name} (${unavailableSlot.visit_type})`;
+                
+                html += `<div class="unavailable-slot reserved-slot" title="${displayText}">
+                           <i class="bi bi-person-fill-lock me-2"></i>
+                           <div class="slot-details">
+                               <div class="info-line"><span class="label">Dr Name:</span> ${unavailableSlot.doctor_name}</div>
+                               <div class="info-line"><span class="label">Patient:</span> ${unavailableSlot.patient_name || 'N/A'}</div>
+                               <div class="info-line"><span class="label">Type:</span> ${unavailableSlot.visit_type || 'N/A'}</div>
+                           </div>
                          </div>`;
             } else if (unavailableSlot && unavailableSlot.reason === 'Outside working hours') {
                 html += `<div class="unavailable-slot outside-hours" title="Outside working hours">
-                           <i class="bi bi-clock me-2"></i>Unavailable - Outside working hours
+                           <i class="bi bi-clock me-2"></i>Outside working hours
+                         </div>`;
+            } else if (unavailableSlot && unavailableSlot.reason) {
+                html += `<div class="unavailable-slot debug-slot" title="Debug: ${unavailableSlot.reason}">
+                           <i class="bi bi-exclamation-triangle me-2"></i>
+                           <div class="debug-info">
+                               <div>Debug Info:</div>
+                               <div>${unavailableSlot.reason}</div>
+                           </div>
                          </div>`;
             } else {
-                html += '<div class="unavailable-slot">Unavailable</div>';
+                // This should not happen - let's debug why
+                const debugInfo = unavailableSlot && unavailableSlot.debug_info ? unavailableSlot.debug_info : `No slot data - Time: ${time}`;
+                const reason = unavailableSlot && unavailableSlot.reason ? unavailableSlot.reason : 'No data available';
+                
+                html += `<div class="unavailable-slot debug-slot" title="Debug: ${reason}">
+                           <i class="bi bi-bug me-2"></i>
+                           <div class="debug-info">
+                               <div class="debug-title">🔍 Debug Info:</div>
+                               <div class="debug-details">${debugInfo}</div>
+                           </div>
+                         </div>`;
             }
         }
         
@@ -331,12 +376,12 @@ function renderAppointmentSlot(appointment) {
         <div class="appointment-card ${appointment.status.toLowerCase()}" 
              onclick="showAppointmentDetails(${appointment.id})">
             <div class="appointment-header">
-                <span class="patient-name">${appointment.patient_name}</span>
+                <div class="appointment-info">
+                    <div class="info-line"><span class="label">Patient:</span> ${appointment.patient_name}</div>
+                    <div class="info-line"><span class="label">Type:</span> ${appointment.visit_type}</div>
+                    <div class="info-line"><span class="label">Time:</span> ${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}</div>
+                </div>
                 <span class="${statusClass}">${appointment.status}</span>
-            </div>
-            <div class="appointment-details">
-                <span class="${visitTypeClass}">${appointment.visit_type}</span>
-                <span class="appointment-time">${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}</span>
             </div>
             <div class="appointment-notes">
                 ${appointment.notes ? appointment.notes.substring(0, 50) + '...' : 'No notes'}
@@ -720,14 +765,33 @@ function handleAddAppointment(e) {
     const formData = new FormData(e.target);
     const appointmentData = Object.fromEntries(formData);
     
+    console.log('Form Data:', appointmentData); // Debug log
+    
     // Validation
     if (!appointmentData.patient_id) {
         alert('Please select a patient');
         return;
     }
     
+    if (!appointmentData.date) {
+        alert('Please select a date');
+        return;
+    }
+    
+    if (!appointmentData.start_time) {
+        alert('Please select a time slot');
+        return;
+    }
+    
+    if (!appointmentData.visit_type) {
+        alert('Please select a visit type');
+        return;
+    }
+    
     // Add doctor_id
     appointmentData.doctor_id = <?= $doctorId ?>;
+    
+    console.log('Final appointment data:', appointmentData); // Debug log
     
     // Save appointment
     fetch('/api/appointments', {
@@ -739,6 +803,8 @@ function handleAddAppointment(e) {
     })
     .then(response => response.json())
     .then(data => {
+        console.log('API Response:', data); // Debug log
+        
         if (data.ok) {
             // Close modal
             bootstrap.Modal.getInstance(document.getElementById('addAppointmentModal')).hide();
@@ -749,12 +815,14 @@ function handleAddAppointment(e) {
             // Show success message
             showNotification('Appointment added successfully!', 'success');
         } else {
-            alert('Error: ' + data.message);
+            const errorMessage = data.message || data.error || 'Unknown error occurred';
+            console.error('API Error:', errorMessage);
+            alert('Error: ' + errorMessage);
         }
     })
     .catch(error => {
         console.error('Error saving appointment:', error);
-        alert('Error saving appointment');
+        alert('Error saving appointment: ' + error.message);
     });
 }
 
@@ -912,8 +980,26 @@ window.addEventListener('beforeunload', () => {
 .appointment-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 0.5rem;
+}
+
+.appointment-header .appointment-info {
+    flex: 1;
+}
+
+.appointment-header .appointment-info .info-line {
+    font-size: 0.85em;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+}
+
+.appointment-header .appointment-info .info-line .label {
+    font-weight: 600;
+    min-width: 55px;
+    margin-right: 4px;
+    color: var(--muted);
 }
 
 .patient-name {
@@ -956,12 +1042,15 @@ window.addEventListener('beforeunload', () => {
 .unavailable-slot {
     background: linear-gradient(135deg, #dc3545, #b02a37);
     color: white;
-    padding: 8px 12px;
+    padding: 10px 12px;
     border-radius: 6px;
     text-align: center;
-    font-size: 0.9em;
-    line-height: 1.3;
+    font-size: 0.85em;
+    line-height: 1.4;
     width: 100%;
+    font-weight: 500;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .unavailable-slot.outside-hours {
@@ -969,9 +1058,72 @@ window.addEventListener('beforeunload', () => {
     color: #f8f9fa;
 }
 
+.unavailable-slot.reserved-slot {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: white;
+    padding: 8px 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.unavailable-slot.reserved-slot .slot-details {
+    flex: 1;
+    text-align: left;
+    line-height: 1.3;
+}
+
+.unavailable-slot.reserved-slot .info-line {
+    font-size: 0.8em;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+}
+
+.unavailable-slot.reserved-slot .info-line .label {
+    font-weight: 600;
+    min-width: 60px;
+    margin-right: 4px;
+    opacity: 0.9;
+}
+
+.unavailable-slot.debug-slot {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+    color: #212529;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.unavailable-slot.debug-slot .debug-info {
+    flex: 1;
+    text-align: left;
+    font-size: 0.75em;
+    line-height: 1.3;
+}
+
+.unavailable-slot.debug-slot .debug-title {
+    font-weight: 600;
+    margin-bottom: 3px;
+    color: #212529;
+}
+
+.unavailable-slot.debug-slot .debug-details {
+    font-family: 'Courier New', monospace;
+    background: rgba(0, 0, 0, 0.1);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 0.7em;
+    word-break: break-all;
+    max-height: 60px;
+    overflow-y: auto;
+}
+
 .unavailable-slot i {
     font-size: 0.85em;
     opacity: 0.9;
+    flex-shrink: 0;
 }
 
 .refresh-indicator {
