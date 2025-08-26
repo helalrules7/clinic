@@ -566,15 +566,6 @@ function openAddAppointmentModal(preselectedTime = null, preselectedDate = null)
     // Load available time slots for selected date
     loadAvailableTimeSlots(preselectedTime);
     
-    // If preselected time is provided, select it after slots are loaded
-    if (preselectedTime) {
-        setTimeout(() => {
-            const timeField = document.getElementById('appointmentTime');
-            timeField.value = preselectedTime;
-            timeField.classList.add('preselected-field');
-        }, 300);
-    }
-    
     // Add styling to preselected date field if it's different from today
     const dateField = document.getElementById('appointmentDate');
     const today = new Date().toISOString().split('T')[0];
@@ -661,6 +652,19 @@ function loadAvailableTimeSlots(preselectedTime = null) {
         .then(data => {
             if (data.ok) {
                 populateTimeSlots(data.data.available_slots, preselectedTime);
+                
+                // Ensure preselected time is selected after population
+                if (preselectedTime) {
+                    setTimeout(() => {
+                        const timeField = document.getElementById('appointmentTime');
+                        if (timeField.value !== preselectedTime) {
+                            timeField.value = preselectedTime;
+                        }
+                        if (timeField.value === preselectedTime) {
+                            timeField.classList.add('preselected-field');
+                        }
+                    }, 100);
+                }
             }
         })
         .catch(error => {
@@ -672,8 +676,6 @@ function populateTimeSlots(availableSlots, preselectedTime = null) {
     const timeSelect = document.getElementById('appointmentTime');
     timeSelect.innerHTML = '<option value="">Select time slot...</option>';
     
-    console.log('Populating time slots:', { availableSlots, preselectedTime });
-    
     // Add all available slots
     availableSlots.forEach(time => {
         const option = document.createElement('option');
@@ -684,7 +686,6 @@ function populateTimeSlots(availableSlots, preselectedTime = null) {
     
     // If there's a preselected time that's not in available slots, add it
     if (preselectedTime && !availableSlots.includes(preselectedTime)) {
-        console.log('Adding preselected time not in available slots:', preselectedTime);
         const option = document.createElement('option');
         option.value = preselectedTime;
         option.textContent = formatTime(preselectedTime) + ' (Selected)';
@@ -702,7 +703,15 @@ function populateTimeSlots(availableSlots, preselectedTime = null) {
     timeSelect.innerHTML = '<option value="">Select time slot...</option>';
     options.forEach(option => timeSelect.appendChild(option));
     
-    console.log('Final time slots count:', timeSelect.options.length - 1);
+    // If preselected time exists, select it immediately
+    if (preselectedTime) {
+        setTimeout(() => {
+            timeSelect.value = preselectedTime;
+            if (timeSelect.value === preselectedTime) {
+                timeSelect.classList.add('preselected-field');
+            }
+        }, 50);
+    }
 }
 
 function handleAddAppointment(e) {
