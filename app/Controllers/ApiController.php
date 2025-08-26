@@ -831,16 +831,21 @@ class ApiController
     private function searchPatientsByQuery($query)
     {
         $stmt = $this->pdo->prepare("
-            SELECT id, first_name, last_name, phone, dob, gender,
-                   CONCAT(first_name, ' ', last_name) as full_name
-            FROM patients 
-            WHERE first_name LIKE ? OR last_name LIKE ? OR phone LIKE ?
-            ORDER BY last_name, first_name
+            SELECT p.id, p.first_name, p.last_name, p.phone, p.alt_phone, p.dob, p.gender, p.national_id,
+                   CONCAT(p.first_name, ' ', p.last_name) as full_name,
+                   COUNT(a.id) as total_appointments,
+                   MAX(a.date) as last_visit
+            FROM patients p
+            LEFT JOIN appointments a ON p.id = a.patient_id AND a.status NOT IN ('Cancelled', 'NoShow')
+            WHERE p.first_name LIKE ? OR p.last_name LIKE ? OR p.phone LIKE ? 
+               OR p.alt_phone LIKE ? OR p.national_id LIKE ?
+            GROUP BY p.id
+            ORDER BY p.last_name, p.first_name
             LIMIT 20
         ");
         
         $searchTerm = "%{$query}%";
-        $stmt->execute([$searchTerm, $searchTerm, $searchTerm]);
+        $stmt->execute([$searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm]);
         return $stmt->fetchAll();
     }
 
