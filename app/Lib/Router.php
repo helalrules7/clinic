@@ -48,6 +48,10 @@ class Router
         // Debug logging
         error_log("Router Debug - SCRIPT_NAME: $scriptName, REQUEST_URI: $requestUri, Original URI: $uri");
         
+
+        
+
+        
         // Remove base path if running in subdirectory or with alias
         if (strpos($scriptName, '/clinic/public/') !== false) {
             // Running via Apache alias /clinic/public

@@ -585,31 +585,29 @@ class ApiController
     {
         try {
             if (!$this->auth->check()) {
-                return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
 
             $user = $this->auth->user();
             if ($user['role'] !== 'doctor') {
-                return $this->jsonResponse(['success' => false, 'message' => 'Only doctors can create glasses prescriptions'], 403);
+                return $this->jsonResponse(['error' => 'Only doctors can create glasses prescriptions'], 403);
             }
 
-            // Validate input
+            // Validate input - Same pattern as medications
             $rules = [
                 'appointment_id' => 'required|integer',
                 'lens_type' => 'required|in:Single Vision,Bifocal,Progressive,Reading'
             ];
 
             $data = $_POST;
-            
             if (!$this->validator->validate($data, $rules)) {
                 return $this->jsonResponse([
-                    'success' => false,
-                    'message' => 'Validation failed: ' . $this->validator->getFirstError(),
+                    'error' => 'Validation failed',
                     'details' => $this->validator->getErrors()
                 ], 400);
             }
 
-            // Create glasses prescription
+            // Create glasses prescription - Same pattern as medications
             $prescriptionId = $this->createGlassesPrescriptionRecord($data);
             
             if ($prescriptionId) {
@@ -627,12 +625,11 @@ class ApiController
                     'message' => 'Glasses prescription created successfully'
                 ]);
             } else {
-                return $this->jsonResponse(['success' => false, 'message' => 'Failed to create glasses prescription'], 500);
-            }
+                            return $this->jsonResponse(['error' => 'Failed to create glasses prescription'], 500);
+        }
 
         } catch (\Exception $e) {
-            error_log("Exception in createGlassesPrescription: " . $e->getMessage());
-            return $this->jsonResponse(['success' => false, 'message' => 'Server error: ' . $e->getMessage()], 500);
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
     }
 
@@ -1157,50 +1154,36 @@ class ApiController
 
     private function createGlassesPrescriptionRecord($data)
     {
-        try {
-            $stmt = $this->pdo->prepare("
-                INSERT INTO glasses_prescriptions (appointment_id, distance_sphere_r, distance_cylinder_r, distance_axis_r,
-                                                 distance_sphere_l, distance_cylinder_l, distance_axis_l,
-                                                 near_sphere_r, near_cylinder_r, near_axis_r,
-                                                 near_sphere_l, near_cylinder_l, near_axis_l,
-                                                 PD_NEAR, PD_DISTANCE, lens_type, comments)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ");
-            
-            $params = [
-                $data['appointment_id'],
-                $data['distance_sphere_r'] ?? null,
-                $data['distance_cylinder_r'] ?? null,
-                $data['distance_axis_r'] ?? null,
-                $data['distance_sphere_l'] ?? null,
-                $data['distance_cylinder_l'] ?? null,
-                $data['distance_axis_l'] ?? null,
-                $data['near_sphere_r'] ?? null,
-                $data['near_cylinder_r'] ?? null,
-                $data['near_axis_r'] ?? null,
-                $data['near_sphere_l'] ?? null,
-                $data['near_cylinder_l'] ?? null,
-                $data['near_axis_l'] ?? null,
-                $data['PD_NEAR'] ?? null,
-                $data['PD_DISTANCE'] ?? null,
-                $data['lens_type'],
-                $data['comments'] ?? null
-            ];
-            
-            $result = $stmt->execute($params);
-            
-            if (!$result) {
-                error_log("Failed to execute glasses prescription insert: " . json_encode($stmt->errorInfo()));
-                return false;
-            }
-            
-            $insertId = $this->pdo->lastInsertId();
-            return $insertId;
-            
-        } catch (\Exception $e) {
-            error_log("Exception in createGlassesPrescriptionRecord: " . $e->getMessage());
-            return false;
-        }
+        $stmt = $this->pdo->prepare("
+            INSERT INTO glasses_prescriptions (appointment_id, distance_sphere_r, distance_cylinder_r, distance_axis_r,
+                                             distance_sphere_l, distance_cylinder_l, distance_axis_l,
+                                             near_sphere_r, near_cylinder_r, near_axis_r,
+                                             near_sphere_l, near_cylinder_l, near_axis_l,
+                                             PD_NEAR, PD_DISTANCE, lens_type, comments)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        
+        $stmt->execute([
+            $data['appointment_id'],
+            (!empty($data['distance_sphere_r']) ? $data['distance_sphere_r'] : null),
+            (!empty($data['distance_cylinder_r']) ? $data['distance_cylinder_r'] : null),
+            (!empty($data['distance_axis_r']) ? $data['distance_axis_r'] : null),
+            (!empty($data['distance_sphere_l']) ? $data['distance_sphere_l'] : null),
+            (!empty($data['distance_cylinder_l']) ? $data['distance_cylinder_l'] : null),
+            (!empty($data['distance_axis_l']) ? $data['distance_axis_l'] : null),
+            (!empty($data['near_sphere_r']) ? $data['near_sphere_r'] : null),
+            (!empty($data['near_cylinder_r']) ? $data['near_cylinder_r'] : null),
+            (!empty($data['near_axis_r']) ? $data['near_axis_r'] : null),
+            (!empty($data['near_sphere_l']) ? $data['near_sphere_l'] : null),
+            (!empty($data['near_cylinder_l']) ? $data['near_cylinder_l'] : null),
+            (!empty($data['near_axis_l']) ? $data['near_axis_l'] : null),
+            (!empty($data['PD_NEAR']) ? $data['PD_NEAR'] : null),
+            (!empty($data['PD_DISTANCE']) ? $data['PD_DISTANCE'] : null),
+            $data['lens_type'],
+            (!empty($data['comments']) ? $data['comments'] : null)
+        ]);
+        
+        return $this->pdo->lastInsertId();
     }
 
     private function isDateClosed($date)
@@ -1655,11 +1638,11 @@ class ApiController
     {
         try {
             if (!$this->auth->check()) {
-                return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
 
             if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
-                return $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+                return $this->jsonResponse(['error' => 'Method not allowed'], 405);
             }
 
             // Get glasses details before update
@@ -1670,23 +1653,19 @@ class ApiController
             $glasses = $stmt->fetch();
 
             if (!$glasses) {
-                return $this->jsonResponse(['success' => false, 'message' => 'Glasses prescription not found']);
+                return $this->jsonResponse(['error' => 'Glasses prescription not found'], 404);
             }
 
             // Check if user has permission (doctor or admin)
             $user = $this->auth->user();
             if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
-                return $this->jsonResponse(['success' => false, 'message' => 'Permission denied']);
+                return $this->jsonResponse(['error' => 'Permission denied'], 403);
             }
 
             // Parse PUT data
             $data = [];
-            if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
-                parse_str(file_get_contents('php://input'), $data);
-                if (empty($data) && !empty($_POST)) {
-                    $data = $_POST;
-                }
-            } else {
+            parse_str(file_get_contents('php://input'), $data);
+            if (empty($data) && !empty($_POST)) {
                 $data = $_POST;
             }
 
@@ -1696,11 +1675,9 @@ class ApiController
             ];
 
             if (!$this->validator->validate($data, $rules)) {
-                $errors = $this->validator->getErrors();
                 return $this->jsonResponse([
-                    'success' => false,
-                    'message' => 'Validation failed: ' . $this->validator->getFirstError(),
-                    'details' => $errors
+                    'error' => 'Validation failed',
+                    'details' => $this->validator->getErrors()
                 ], 400);
             }
 
@@ -1746,12 +1723,11 @@ class ApiController
 
                 return $this->jsonResponse(['success' => true, 'message' => 'Glasses prescription updated successfully']);
             } else {
-                return $this->jsonResponse(['success' => false, 'message' => 'Database error']);
+                return $this->jsonResponse(['error' => 'Database error'], 500);
             }
 
         } catch (Exception $e) {
-            error_log("Update glasses prescription error: " . $e->getMessage());
-            return $this->jsonResponse(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
     }
 
@@ -1759,11 +1735,11 @@ class ApiController
     {
         try {
             if (!$this->auth->check()) {
-                return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
 
             if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
-                return $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+                return $this->jsonResponse(['error' => 'Method not allowed'], 405);
             }
 
             // Get glasses details before deletion for timeline
@@ -1774,13 +1750,13 @@ class ApiController
             $glasses = $stmt->fetch();
 
             if (!$glasses) {
-                return $this->jsonResponse(['success' => false, 'message' => 'Glasses prescription not found']);
+                return $this->jsonResponse(['error' => 'Glasses prescription not found'], 404);
             }
 
             // Check if user has permission (doctor or admin)
             $user = $this->auth->user();
             if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
-                return $this->jsonResponse(['success' => false, 'message' => 'Permission denied']);
+                return $this->jsonResponse(['error' => 'Permission denied'], 403);
             }
 
             // Delete glasses prescription
@@ -1798,12 +1774,11 @@ class ApiController
 
                 return $this->jsonResponse(['success' => true, 'message' => 'Glasses prescription deleted successfully']);
             } else {
-                return $this->jsonResponse(['success' => false, 'message' => 'Database error']);
+                return $this->jsonResponse(['error' => 'Database error'], 500);
             }
 
         } catch (Exception $e) {
-            error_log("Delete glasses prescription error: " . $e->getMessage());
-            return $this->jsonResponse(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
     }
 }

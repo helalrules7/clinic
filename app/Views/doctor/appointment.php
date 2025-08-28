@@ -653,7 +653,8 @@ function showPrescriptionModal(appointmentId) {
         
         fetch('/api/prescriptions/meds', {
             method: 'POST',
-            body: formData
+            body: formData,
+            credentials: 'same-origin'
         })
         .then(response => response.json())
         .then(data => {
@@ -722,7 +723,8 @@ function showRescheduleModal(appointmentId) {
         
         fetch('/api/appointments/' + appointmentId, {
             method: 'PUT',
-            body: formData
+            body: formData,
+            credentials: 'same-origin'
         })
         .then(response => response.json())
         .then(data => {
@@ -970,7 +972,8 @@ function deleteAttachment(attachmentId) {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
-                }
+                },
+                credentials: 'same-origin'
             })
             .then(response => response.json())
             .then(data => {
@@ -1081,7 +1084,8 @@ function deleteMedication(medicationId) {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
-                }
+                },
+                credentials: 'same-origin'
             })
             .then(response => response.json())
             .then(data => {
@@ -1172,7 +1176,8 @@ function editMedication(medicationId, drugName, dose, frequency, duration, route
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: params.toString()
+            body: params.toString(),
+            credentials: 'same-origin'
         })
         .then(response => response.json())
         .then(data => {
@@ -1340,7 +1345,8 @@ function addGlassesPrescription(appointmentId) {
         
         fetch('/api/prescriptions/glasses', {
             method: 'POST',
-            body: formData
+            body: formData,
+            credentials: 'same-origin'
         })
         .then(response => {
             if (!response.ok) {
@@ -1354,7 +1360,7 @@ function addGlassesPrescription(appointmentId) {
                 showSuccessMessage('Glasses prescription added successfully');
                 setTimeout(() => location.reload(), 1000);
             } else {
-                showErrorMessage('Error: ' + (data.message || data.error || 'Unknown error occurred'));
+                showErrorMessage('Error: ' + (data.error || data.message || 'Unknown error occurred'));
             }
         })
         .catch(error => {
@@ -1520,7 +1526,8 @@ function editGlassesPrescription(glassesId, glassesData) {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: params.toString()
+            body: params.toString(),
+            credentials: 'same-origin'
         })
         .then(response => response.json())
         .then(data => {
@@ -1553,7 +1560,8 @@ function deleteGlassesPrescription(glassesId) {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
-                }
+                },
+                credentials: 'same-origin'
             })
             .then(response => response.json())
             .then(data => {
