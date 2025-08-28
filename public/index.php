@@ -79,11 +79,20 @@ try {
     $router->get('/api/patients/search', 'ApiController@searchPatients');
     $router->post('/api/patients', 'ApiController@createPatient');
     $router->get('/api/patients/{id}/timeline', 'ApiController@getPatientTimeline');
+    $router->put('/api/patients/{id}/emergency-contact', 'ApiController@updateEmergencyContact');
     $router->post('/api/consultations', 'ApiController@createConsultation');
     $router->post('/api/prescriptions/meds', 'ApiController@createMedicationPrescription');
+    $router->put('/api/prescriptions/meds/{id}', 'ApiController@updateMedication');
+    $router->delete('/api/prescriptions/meds/{id}', 'ApiController@deleteMedication');
     $router->post('/api/prescriptions/glasses', 'ApiController@createGlassesPrescription');
     $router->post('/api/daily-closure/lock', 'ApiController@lockDailyClosure');
     $router->post('/api/users/change-password', 'ApiController@changePassword');
+    
+    // Attachment API routes
+    $router->post('/api/attachments/upload', 'ApiController@uploadAttachment');
+    $router->get('/api/attachments/view/{id}', 'ApiController@viewAttachment');
+    $router->get('/api/attachments/download/{id}', 'ApiController@downloadAttachment');
+    $router->delete('/api/attachments/{id}', 'ApiController@deleteAttachment');
     
     // Print routes
     $router->get('/print/prescription/{id}', 'PrintController@medicationPrescription');

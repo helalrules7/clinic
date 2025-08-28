@@ -397,7 +397,7 @@
         <div class="sidebar-header">
             <div class="clinic-logo">
                 <i class="bi bi-eye"></i>
-                <div class="clinic-name">Ophthalmology</div>
+                <div class="clinic-name">Roaya</div>
             </div>
         </div>
         

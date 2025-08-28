@@ -94,17 +94,26 @@
                 <?php if ($patient['emergency_contact'] || $patient['emergency_phone']): ?>
                     <div class="row">
                         <div class="col-sm-4"><strong>Name:</strong></div>
-                        <div class="col-sm-8"><?= htmlspecialchars($patient['emergency_contact'] ?? 'N/A') ?></div>
+                        <div class="col-sm-8" id="emergencyContactName"><?= htmlspecialchars($patient['emergency_contact'] ?? 'N/A') ?></div>
                     </div>
                     <div class="row mt-2">
                         <div class="col-sm-4"><strong>Phone:</strong></div>
-                        <div class="col-sm-8"><?= htmlspecialchars($patient['emergency_phone'] ?? 'N/A') ?></div>
+                        <div class="col-sm-8" id="emergencyContactPhone"><?= htmlspecialchars($patient['emergency_phone'] ?? 'N/A') ?></div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="editEmergencyContact()">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </button>
+                        </div>
                     </div>
                 <?php else: ?>
-                    <p class="text-muted mb-0">No emergency contact information available</p>
-                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="addEmergencyContact()">
-                        <i class="bi bi-plus me-1"></i>Add Emergency Contact
-                    </button>
+                    <div id="noEmergencyContact">
+                        <p class="text-muted mb-0">No emergency contact information available</p>
+                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="addEmergencyContact()">
+                            <i class="bi bi-plus me-1"></i>Add Emergency Contact
+                        </button>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -304,6 +313,45 @@
 </div>
 <?php endif; ?>
 
+<!-- Emergency Contact Modal -->
+<div class="modal fade" id="emergencyContactModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="emergencyContactModalTitle">Add Emergency Contact</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="emergencyContactForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="emergencyContactNameInput" class="form-label">Contact Name *</label>
+                        <input type="text" class="form-control" id="emergencyContactNameInput" 
+                               name="emergency_contact" required maxlength="100" 
+                               placeholder="Enter contact name">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="emergencyContactPhoneInput" class="form-label">Contact Phone *</label>
+                        <input type="tel" class="form-control" id="emergencyContactPhoneInput" 
+                               name="emergency_phone" required 
+                               placeholder="Enter phone number (e.g., 01234567890)">
+                        <div class="invalid-feedback"></div>
+                        <small class="form-text text-muted">Please enter a valid Egyptian phone number</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveEmergencyContactBtn">
+                        <span class="spinner-border spinner-border-sm d-none" id="saveSpinner"></span>
+                        <i class="bi bi-check-circle me-2"></i>
+                        Save Contact
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <style>
 .avatar-circle-large {
     width: 80px;
@@ -397,12 +445,217 @@ function editPatient(patientId) {
 }
 
 function addEmergencyContact() {
-    // Show modal or redirect to edit patient
-    alert('Add emergency contact functionality will be implemented soon');
+    // Clear form and set title for adding
+    document.getElementById('emergencyContactModalTitle').textContent = 'Add Emergency Contact';
+    document.getElementById('emergencyContactForm').reset();
+    clearValidationErrors();
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('emergencyContactModal'));
+    modal.show();
+}
+
+function editEmergencyContact() {
+    // Set title for editing
+    document.getElementById('emergencyContactModalTitle').textContent = 'Edit Emergency Contact';
+    
+    // Fill form with current values
+    document.getElementById('emergencyContactNameInput').value = document.getElementById('emergencyContactName').textContent || '';
+    document.getElementById('emergencyContactPhoneInput').value = document.getElementById('emergencyContactPhone').textContent || '';
+    
+    clearValidationErrors();
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('emergencyContactModal'));
+    modal.show();
 }
 
 function addMedicalHistory() {
     // Show modal or redirect to add medical history
     alert('Add medical history functionality will be implemented soon');
+}
+
+// Emergency contact form handling
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('emergencyContactForm');
+    if (form) {
+        form.addEventListener('submit', handleEmergencyContactSubmit);
+    }
+});
+
+function handleEmergencyContactSubmit(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = {
+        emergency_contact: formData.get('emergency_contact').trim(),
+        emergency_phone: formData.get('emergency_phone').trim()
+    };
+    
+    // Clear previous validation errors
+    clearValidationErrors();
+    
+    // Basic validation
+    if (!data.emergency_contact) {
+        showFieldError('emergencyContactNameInput', 'Contact name is required');
+        return;
+    }
+    
+    if (!data.emergency_phone) {
+        showFieldError('emergencyContactPhoneInput', 'Phone number is required');
+        return;
+    }
+    
+    // Validate Egyptian phone number format
+    const phoneRegex = /^(\+20|0)?1[0-9]{9}$/;
+    if (!phoneRegex.test(data.emergency_phone)) {
+        showFieldError('emergencyContactPhoneInput', 'Please enter a valid Egyptian phone number');
+        return;
+    }
+    
+    // Show loading state
+    const submitBtn = document.getElementById('saveEmergencyContactBtn');
+    const spinner = document.getElementById('saveSpinner');
+    submitBtn.disabled = true;
+    spinner.classList.remove('d-none');
+    
+    // Get patient ID from URL
+    const patientId = window.location.pathname.split('/').pop();
+    
+    console.log('DEBUG: Sending emergency contact update', {
+        patientId: patientId,
+        data: data,
+        url: `/api/patients/${patientId}/emergency-contact`
+    });
+    
+    // Send API request
+    fetch(`/api/patients/${patientId}/emergency-contact`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        console.log('DEBUG: Response status:', response.status);
+        return response.json();
+    })
+    .then(result => {
+        console.log('DEBUG: Response data:', result);
+        if (result.ok) {
+            // Success - update the UI
+            updateEmergencyContactDisplay(data.emergency_contact, data.emergency_phone);
+            
+            // Hide modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('emergencyContactModal'));
+            modal.hide();
+            
+            // Show success message
+            showNotification('Emergency contact updated successfully!', 'success');
+        } else {
+            // Handle validation errors
+            if (result.details) {
+                Object.keys(result.details).forEach(field => {
+                    const fieldName = field === 'emergency_contact' ? 'emergencyContactNameInput' : 'emergencyContactPhoneInput';
+                    showFieldError(fieldName, result.details[field][0]);
+                });
+            } else {
+                showNotification(result.error || 'Failed to update emergency contact', 'error');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred. Please try again.', 'error');
+    })
+    .finally(() => {
+        // Hide loading state
+        submitBtn.disabled = false;
+        spinner.classList.add('d-none');
+    });
+}
+
+function updateEmergencyContactDisplay(name, phone) {
+    const nameElement = document.getElementById('emergencyContactName');
+    const phoneElement = document.getElementById('emergencyContactPhone');
+    const noContactDiv = document.getElementById('noEmergencyContact');
+    
+    if (nameElement && phoneElement) {
+        // Update existing display
+        nameElement.textContent = name;
+        phoneElement.textContent = phone;
+    } else if (noContactDiv) {
+        // Replace "no contact" message with contact info
+        noContactDiv.innerHTML = `
+            <div class="row">
+                <div class="col-sm-4"><strong>Name:</strong></div>
+                <div class="col-sm-8" id="emergencyContactName">${escapeHtml(name)}</div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-sm-4"><strong>Phone:</strong></div>
+                <div class="col-sm-8" id="emergencyContactPhone">${escapeHtml(phone)}</div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="editEmergencyContact()">
+                        <i class="bi bi-pencil me-1"></i>Edit
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function clearValidationErrors() {
+    document.querySelectorAll('.is-invalid').forEach(el => {
+        el.classList.remove('is-invalid');
+    });
+    document.querySelectorAll('.invalid-feedback').forEach(el => {
+        el.textContent = '';
+    });
+}
+
+function showFieldError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    const feedback = field.nextElementSibling;
+    
+    field.classList.add('is-invalid');
+    if (feedback && feedback.classList.contains('invalid-feedback')) {
+        feedback.textContent = message;
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.zIndex = '9999';
+    notification.style.minWidth = '300px';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 </script>

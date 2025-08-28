@@ -25,6 +25,10 @@ class ApiController
         
         // Set JSON response header
         header('Content-Type: application/json');
+        
+        // Suppress PHP errors for API responses
+        ini_set('display_errors', 0);
+        error_reporting(E_ERROR | E_PARSE);
     }
 
     public function getCalendar()
@@ -368,6 +372,108 @@ class ApiController
         }
     }
 
+    public function updateEmergencyContact($id)
+    {
+        try {
+            error_log("DEBUG: updateEmergencyContact called with ID: " . $id);
+            
+            if (!$this->auth->check()) {
+                error_log("DEBUG: Auth check failed");
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            if (!$id) {
+                error_log("DEBUG: No patient ID provided");
+                return $this->jsonResponse(['error' => 'Patient ID is required'], 400);
+            }
+
+            // Verify patient exists
+            $stmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
+            $stmt->execute([$id]);
+            if (!$stmt->fetch()) {
+                error_log("DEBUG: Patient not found with ID: " . $id);
+                return $this->jsonResponse(['error' => 'Patient not found'], 404);
+            }
+
+            // Get JSON input
+            $rawInput = file_get_contents('php://input');
+            error_log("DEBUG: Raw input: " . $rawInput);
+            
+            $input = json_decode($rawInput, true);
+            
+            if (!$input) {
+                error_log("DEBUG: Failed to decode JSON input");
+                return $this->jsonResponse(['error' => 'Invalid JSON input'], 400);
+            }
+
+            error_log("DEBUG: Parsed input: " . json_encode($input));
+
+            // Validate input
+            $rules = [
+                'emergency_contact' => 'required|max:100',
+                'emergency_phone' => 'required|phone'
+            ];
+
+            if (!$this->validator->validate($input, $rules)) {
+                error_log("DEBUG: Validation failed: " . json_encode($this->validator->getErrors()));
+                return $this->jsonResponse([
+                    'error' => 'Validation failed',
+                    'details' => $this->validator->getErrors()
+                ], 400);
+            }
+
+            // Update emergency contact
+            $stmt = $this->pdo->prepare("
+                UPDATE patients 
+                SET emergency_contact = ?, emergency_phone = ?
+                WHERE id = ?
+            ");
+            
+            error_log("DEBUG: Executing update with values: " . json_encode([
+                $input['emergency_contact'],
+                $input['emergency_phone'],
+                $id
+            ]));
+            
+            $success = $stmt->execute([
+                $input['emergency_contact'],
+                $input['emergency_phone'],
+                $id
+            ]);
+
+            error_log("DEBUG: Update success: " . ($success ? 'true' : 'false') . ", Rows affected: " . $stmt->rowCount());
+
+            if ($success) {
+                // Create timeline event
+                try {
+                    $this->createTimelineEvent(
+                        $id, 
+                        null,
+                        'Update', 
+                        'Emergency contact information updated'
+                    );
+                    error_log("DEBUG: Timeline event created successfully");
+                } catch (\Exception $e) {
+                    error_log("DEBUG: Timeline event failed: " . $e->getMessage());
+                    // Continue even if timeline fails
+                }
+                
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'message' => 'Emergency contact updated successfully'
+                ]);
+            } else {
+                error_log("DEBUG: Update failed");
+                return $this->jsonResponse(['error' => 'Failed to update emergency contact'], 500);
+            }
+
+        } catch (\Exception $e) {
+            error_log("Emergency contact update error: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return $this->jsonResponse(['error' => 'Server error: ' . $e->getMessage()], 500);
+        }
+    }
+
     public function createConsultation()
     {
         try {
@@ -463,7 +569,7 @@ class ApiController
                 );
                 
                 return $this->jsonResponse([
-                    'ok' => true,
+                    'success' => true,
                     'data' => ['id' => $prescriptionId],
                     'message' => 'Prescription created successfully'
                 ]);
@@ -1129,5 +1235,397 @@ class ApiController
             $eventType,
             $summary
         ]);
+    }
+
+    // Attachment Management Methods
+    public function uploadAttachment()
+    {
+        // Clean output buffer to prevent any previous output from corrupting JSON
+        if (ob_get_level()) {
+            ob_clean();
+        }
+        
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                return $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+            }
+
+            // Validate required fields
+            $appointmentId = $_POST['appointment_id'] ?? null;
+            $patientId = $_POST['patient_id'] ?? null;
+            $attachmentType = $_POST['attachment_type'] ?? null;
+            $description = $_POST['description'] ?? '';
+
+            if (!$appointmentId || !$patientId || !$attachmentType) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Missing required fields']);
+            }
+
+            // Check if file was uploaded
+            if (!isset($_FILES['attachment_file']) || $_FILES['attachment_file']['error'] !== UPLOAD_ERR_OK) {
+                return $this->jsonResponse(['success' => false, 'message' => 'No file uploaded or upload error']);
+            }
+
+            $file = $_FILES['attachment_file'];
+            
+            // Validate file size (2MB limit)
+            if ($file['size'] > 2 * 1024 * 1024) {
+                return $this->jsonResponse(['success' => false, 'message' => 'File size exceeds 2MB limit']);
+            }
+
+            // Validate file type
+            $allowedMimes = [
+                'image/jpeg', 'image/jpg', 'image/png', 'image/gif',
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'text/plain'
+            ];
+
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+
+            if (!in_array($mimeType, $allowedMimes)) {
+                return $this->jsonResponse(['success' => false, 'message' => 'File type not allowed']);
+            }
+
+            // Create uploads directory if it doesn't exist
+            $uploadDir = __DIR__ . '/../../storage/uploads/attachments/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            // Generate unique filename
+            $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $filename = uniqid('att_') . '.' . $extension;
+            $filePath = $uploadDir . $filename;
+
+            // Move uploaded file
+            if (!@move_uploaded_file($file['tmp_name'], $filePath)) {
+                // Check if directory exists and is writable
+                if (!is_dir($uploadDir)) {
+                    return $this->jsonResponse(['success' => false, 'message' => 'Upload directory does not exist']);
+                }
+                if (!is_writable($uploadDir)) {
+                    return $this->jsonResponse(['success' => false, 'message' => 'Upload directory is not writable']);
+                }
+                return $this->jsonResponse(['success' => false, 'message' => 'Failed to save file. Please check server permissions.']);
+            }
+
+            // Save to database
+            $stmt = $this->pdo->prepare("
+                INSERT INTO patient_attachments (patient_id, appointment_id, filename, original_filename, file_path, file_size, mime_type, uploaded_by, description)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+
+            $result = $stmt->execute([
+                $patientId,
+                $appointmentId,
+                $filename,
+                $file['name'],
+                'storage/uploads/attachments/' . $filename,
+                $file['size'],
+                $mimeType,
+                $this->auth->user()['id'],
+                $description
+            ]);
+
+            if ($result) {
+                // Create timeline event
+                $this->createTimelineEvent($patientId, $appointmentId, 'Attachment', 'Uploaded: ' . $file['name']);
+                
+                return $this->jsonResponse(['success' => true, 'message' => 'File uploaded successfully']);
+            } else {
+                // Delete file if database insert failed
+                unlink($filePath);
+                return $this->jsonResponse(['success' => false, 'message' => 'Database error']);
+            }
+
+        } catch (Exception $e) {
+            error_log("Upload attachment error: " . $e->getMessage());
+            return $this->jsonResponse(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+        }
+    }
+
+    public function viewAttachment($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                http_response_code(401);
+                return;
+            }
+
+            $stmt = $this->pdo->prepare("SELECT * FROM patient_attachments WHERE id = ?");
+            $stmt->execute([$id]);
+            $attachment = $stmt->fetch();
+
+            if (!$attachment) {
+                http_response_code(404);
+                return;
+            }
+
+            $filePath = __DIR__ . '/../../' . $attachment['file_path'];
+            
+            if (!file_exists($filePath)) {
+                http_response_code(404);
+                return;
+            }
+
+            // Set appropriate headers
+            header('Content-Type: ' . $attachment['mime_type']);
+            header('Content-Length: ' . filesize($filePath));
+            header('Content-Disposition: inline; filename="' . $attachment['original_filename'] . '"');
+
+            // Output file
+            readfile($filePath);
+
+        } catch (Exception $e) {
+            error_log("View attachment error: " . $e->getMessage());
+            http_response_code(500);
+        }
+    }
+
+    public function downloadAttachment($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                http_response_code(401);
+                return;
+            }
+
+            $stmt = $this->pdo->prepare("SELECT * FROM patient_attachments WHERE id = ?");
+            $stmt->execute([$id]);
+            $attachment = $stmt->fetch();
+
+            if (!$attachment) {
+                http_response_code(404);
+                return;
+            }
+
+            $filePath = __DIR__ . '/../../' . $attachment['file_path'];
+            
+            if (!file_exists($filePath)) {
+                http_response_code(404);
+                return;
+            }
+
+            // Set download headers
+            header('Content-Type: application/octet-stream');
+            header('Content-Length: ' . filesize($filePath));
+            header('Content-Disposition: attachment; filename="' . $attachment['original_filename'] . '"');
+
+            // Output file
+            readfile($filePath);
+
+        } catch (Exception $e) {
+            error_log("Download attachment error: " . $e->getMessage());
+            http_response_code(500);
+        }
+    }
+
+    public function deleteAttachment($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
+                return $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+            }
+
+            $stmt = $this->pdo->prepare("SELECT * FROM patient_attachments WHERE id = ?");
+            $stmt->execute([$id]);
+            $attachment = $stmt->fetch();
+
+            if (!$attachment) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Attachment not found']);
+            }
+
+            // Delete from database
+            $stmt = $this->pdo->prepare("DELETE FROM patient_attachments WHERE id = ?");
+            $result = $stmt->execute([$id]);
+
+            if ($result) {
+                // Delete physical file
+                $filePath = __DIR__ . '/../../' . $attachment['file_path'];
+                if (file_exists($filePath)) {
+                    unlink($filePath);
+                }
+
+                // Create timeline event
+                $this->createTimelineEvent(
+                    $attachment['patient_id'], 
+                    $attachment['appointment_id'], 
+                    'Attachment', 
+                    'Deleted: ' . $attachment['original_filename']
+                );
+
+                return $this->jsonResponse(['success' => true, 'message' => 'Attachment deleted successfully']);
+            } else {
+                return $this->jsonResponse(['success' => false, 'message' => 'Database error']);
+            }
+
+        } catch (Exception $e) {
+            error_log("Delete attachment error: " . $e->getMessage());
+            return $this->jsonResponse(['success' => false, 'message' => 'Server error']);
+        }
+    }
+
+    public function deleteMedication($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
+                return $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+            }
+
+            // Get medication details before deletion for timeline
+            $stmt = $this->pdo->prepare("SELECT p.*, a.patient_id FROM prescriptions p 
+                                       JOIN appointments a ON p.appointment_id = a.id 
+                                       WHERE p.id = ?");
+            $stmt->execute([$id]);
+            $medication = $stmt->fetch();
+
+            if (!$medication) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Medication not found']);
+            }
+
+            // Check if user has permission (doctor or admin)
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                return $this->jsonResponse(['success' => false, 'message' => 'Permission denied']);
+            }
+
+            // Delete medication
+            $stmt = $this->pdo->prepare("DELETE FROM prescriptions WHERE id = ?");
+            $result = $stmt->execute([$id]);
+
+            if ($result) {
+                // Create timeline event
+                $this->createTimelineEvent(
+                    $medication['patient_id'], 
+                    $medication['appointment_id'], 
+                    'Rx', 
+                    'Deleted medication: ' . $medication['drug_name']
+                );
+
+                return $this->jsonResponse(['success' => true, 'message' => 'Medication deleted successfully']);
+            } else {
+                return $this->jsonResponse(['success' => false, 'message' => 'Database error']);
+            }
+
+        } catch (Exception $e) {
+            error_log("Delete medication error: " . $e->getMessage());
+            return $this->jsonResponse(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+        }
+    }
+
+    public function updateMedication($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+                return $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+            }
+
+            // Get medication details before update
+            $stmt = $this->pdo->prepare("SELECT p.*, a.patient_id FROM prescriptions p 
+                                       JOIN appointments a ON p.appointment_id = a.id 
+                                       WHERE p.id = ?");
+            $stmt->execute([$id]);
+            $medication = $stmt->fetch();
+
+            if (!$medication) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Medication not found']);
+            }
+
+            // Check if user has permission (doctor or admin)
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                return $this->jsonResponse(['success' => false, 'message' => 'Permission denied']);
+            }
+
+            // Validate input
+            $rules = [
+                'drug_name' => 'required|max:120',
+                'dose' => 'required|max:60',
+                'frequency' => 'required|max:60',
+                'duration' => 'required|max:60',
+                'route' => 'max:60',
+                'notes' => 'max:500'
+            ];
+
+            // Parse PUT data
+            $data = [];
+            if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+                parse_str(file_get_contents('php://input'), $data);
+                // Also check for multipart/form-data
+                if (empty($data) && !empty($_POST)) {
+                    $data = $_POST;
+                }
+            } else {
+                $data = $_POST;
+            }
+            
+            error_log("Parsed data for validation: " . json_encode($data));
+            
+            if (!$this->validator->validate($data, $rules)) {
+                $errors = $this->validator->getErrors();
+                error_log("Validation errors: " . json_encode($errors));
+                error_log("POST data: " . json_encode($data));
+                
+                return $this->jsonResponse([
+                    'success' => false,
+                    'message' => 'Validation failed: ' . $this->validator->getFirstError(),
+                    'details' => $errors
+                ], 400);
+            }
+
+            // Update medication
+            $stmt = $this->pdo->prepare("
+                UPDATE prescriptions 
+                SET drug_name = ?, dose = ?, frequency = ?, duration = ?, route = ?, notes = ?
+                WHERE id = ?
+            ");
+
+            $result = $stmt->execute([
+                $data['drug_name'],
+                $data['dose'],
+                $data['frequency'],
+                $data['duration'],
+                $data['route'] ?? 'Topical',
+                $data['notes'] ?? null,
+                $id
+            ]);
+
+            if ($result) {
+                // Create timeline event
+                $this->createTimelineEvent(
+                    $medication['patient_id'], 
+                    $medication['appointment_id'], 
+                    'Rx', 
+                    'Updated medication: ' . $data['drug_name']
+                );
+
+                return $this->jsonResponse(['success' => true, 'message' => 'Medication updated successfully']);
+            } else {
+                return $this->jsonResponse(['success' => false, 'message' => 'Database error']);
+            }
+
+        } catch (Exception $e) {
+            error_log("Update medication error: " . $e->getMessage());
+            return $this->jsonResponse(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+        }
     }
 }

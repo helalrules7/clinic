@@ -160,12 +160,16 @@ class DoctorController
         $medications = $this->getMedicationPrescriptions($id);
         $glasses = $this->getGlassesPrescriptions($id);
         
+        // Get attachments
+        $attachments = $this->getAttachments($id);
+        
         $content = $this->view->render('doctor/appointment', [
             'appointment' => $appointment,
             'patient' => $patient,
             'consultationNotes' => $consultationNotes,
             'medications' => $medications,
             'glasses' => $glasses,
+            'attachments' => $attachments,
             'doctorId' => $doctorId
         ]);
         
@@ -386,6 +390,17 @@ class DoctorController
     {
         $stmt = $this->pdo->prepare("
             SELECT * FROM glasses_prescriptions WHERE appointment_id = ?
+        ");
+        $stmt->execute([$appointmentId]);
+        return $stmt->fetchAll();
+    }
+
+    private function getAttachments($appointmentId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT * FROM patient_attachments 
+            WHERE appointment_id = ? 
+            ORDER BY created_at DESC
         ");
         $stmt->execute([$appointmentId]);
         return $stmt->fetchAll();
