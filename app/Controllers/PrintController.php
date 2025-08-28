@@ -32,24 +32,31 @@ class PrintController
         try {
             $user = $this->auth->user();
             
-            // Get prescription details
-            $prescription = $this->getMedicationPrescription($id);
-            if (!$prescription) {
+            // Get appointment details first
+            $appointment = $this->getAppointment($id);
+            if (!$appointment) {
                 http_response_code(404);
-                echo "Prescription not found";
+                echo "Appointment not found";
                 return;
             }
             
-            // Get patient and appointment details
-            $patient = $this->getPatient($prescription['patient_id']);
-            $appointment = $this->getAppointment($prescription['appointment_id']);
+            // Get medication prescriptions for this appointment
+            $prescriptions = $this->getMedicationPrescriptions($id);
+            if (empty($prescriptions)) {
+                http_response_code(404);
+                echo "No medication prescriptions found for this appointment";
+                return;
+            }
+            
+            // Get patient and doctor details
+            $patient = $this->getPatient($appointment['patient_id']);
             $doctor = $this->getDoctor($appointment['doctor_id']);
             
             // Set print-specific headers
             header('Content-Type: text/html; charset=utf-8');
             
             echo $this->view->render('print/medication-prescription', [
-                'prescription' => $prescription,
+                'prescriptions' => $prescriptions,
                 'patient' => $patient,
                 'appointment' => $appointment,
                 'doctor' => $doctor,
@@ -67,17 +74,24 @@ class PrintController
         try {
             $user = $this->auth->user();
             
-            // Get glasses prescription details
-            $prescription = $this->getGlassesPrescription($id);
-            if (!$prescription) {
+            // Get appointment details first
+            $appointment = $this->getAppointment($id);
+            if (!$appointment) {
                 http_response_code(404);
-                echo "Glasses prescription not found";
+                echo "Appointment not found";
                 return;
             }
             
-            // Get patient and appointment details
-            $patient = $this->getPatient($prescription['patient_id']);
-            $appointment = $this->getAppointment($prescription['appointment_id']);
+            // Get glasses prescription for this appointment
+            $prescription = $this->getGlassesPrescriptions($id);
+            if (!$prescription) {
+                http_response_code(404);
+                echo "No glasses prescription found for this appointment";
+                return;
+            }
+            
+            // Get patient and doctor details
+            $patient = $this->getPatient($appointment['patient_id']);
             $doctor = $this->getDoctor($appointment['doctor_id']);
             
             // Set print-specific headers
@@ -212,7 +226,19 @@ class PrintController
             WHERE p.id = ?
         ");
         $stmt->execute([$id]);
-        return $stmt->fetch();
+        $patient = $stmt->fetch();
+        
+        // Calculate age if date of birth is available
+        if ($patient && $patient['dob']) {
+            $dob = new \DateTime($patient['dob']);
+            $now = new \DateTime();
+            $age = $dob->diff($now)->y;
+            $patient['age_computed'] = $age;
+        } else {
+            $patient['age_computed'] = null;
+        }
+        
+        return $patient;
     }
 
     private function getAppointment($id)

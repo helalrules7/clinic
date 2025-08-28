@@ -378,7 +378,15 @@
         <div class="patient-details">
             <h3>بيانات المريض - Patient Information</h3>
             <p><strong>الاسم:</strong> <?= $patient['first_name'] . ' ' . $patient['last_name'] ?></p>
-            <p><strong>العمر:</strong> <?= $patient['age_computed'] ?? 'N/A' ?> سنة</p>
+            <p><strong>العمر:</strong> 
+                <?php if ($patient['age_computed']): ?>
+                    <?= $patient['age_computed'] ?> سنة
+                <?php elseif ($patient['dob']): ?>
+                    <?= date_diff(date_create($patient['dob']), date_create('now'))->y ?> سنة
+                <?php else: ?>
+                    غير محدد
+                <?php endif; ?>
+            </p>
             <p><strong>الجنس:</strong> <?= $patient['gender'] ?? 'N/A' ?></p>
             <p><strong>رقم الهاتف:</strong> <?= $patient['phone'] ?></p>
             <?php if ($patient['allergies']): ?>
@@ -526,9 +534,10 @@
     <script>
         // Auto-print when page loads
         window.onload = function() {
-            if (window.location.search.includes('print=1')) {
+            // Wait a short moment for the page to fully render, then print
+            setTimeout(function() {
                 window.print();
-            }
+            }, 500);
         };
         
         // Print button functionality

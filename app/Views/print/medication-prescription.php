@@ -280,7 +280,7 @@
     </style>
 </head>
 <body>
-    <div class="prescription-number">Rx #<?= str_pad($prescription['id'], 6, '0', STR_PAD_LEFT) ?></div>
+    <div class="prescription-number">Rx #<?= str_pad($appointment['id'], 6, '0', STR_PAD_LEFT) ?></div>
     <div class="watermark"><?= $clinic['name'] ?></div>
     
     <!-- Header -->
@@ -299,7 +299,15 @@
         <div class="patient-details">
             <h3>بيانات المريض - Patient Information</h3>
             <p><strong>الاسم:</strong> <?= $patient['first_name'] . ' ' . $patient['last_name'] ?></p>
-            <p><strong>العمر:</strong> <?= $patient['age_computed'] ?? 'N/A' ?> سنة</p>
+            <p><strong>العمر:</strong> 
+                <?php if ($patient['age_computed']): ?>
+                    <?= $patient['age_computed'] ?> سنة
+                <?php elseif ($patient['dob']): ?>
+                    <?= date_diff(date_create($patient['dob']), date_create('now'))->y ?> سنة
+                <?php else: ?>
+                    غير محدد
+                <?php endif; ?>
+            </p>
             <p><strong>الجنس:</strong> <?= $patient['gender'] ?? 'N/A' ?></p>
             <p><strong>رقم الهاتف:</strong> <?= $patient['phone'] ?></p>
             <?php if ($patient['allergies']): ?>
@@ -309,7 +317,7 @@
         
         <div class="appointment-details">
             <h3>تفاصيل الموعد - Appointment Details</h3>
-            <p><strong>التاريخ:</strong> <?= date('d/m/Y', strtotime($appointment['appointment_date'])) ?></p>
+            <p><strong>التاريخ:</strong> <?= date('d/m/Y', strtotime($appointment['date'])) ?></p>
             <p><strong>الوقت:</strong> <?= date('H:i', strtotime($appointment['start_time'])) ?></p>
             <p><strong>نوع الزيارة:</strong> <?= $appointment['visit_type'] ?></p>
             <p><strong>الطبيب:</strong> <?= $doctor['display_name'] ?></p>
@@ -318,6 +326,7 @@
     
     <!-- Prescription Content -->
     <div class="prescription-content">
+        <?php foreach ($prescriptions as $prescription): ?>
         <div class="medication-item">
             <div class="medication-header">
                 <div class="drug-name"><?= $prescription['drug_name'] ?></div>
@@ -353,6 +362,7 @@
                 </div>
             <?php endif; ?>
         </div>
+        <?php endforeach; ?>
     </div>
     
     <!-- Footer -->
@@ -372,16 +382,17 @@
         
         <div class="date-section">
             <div class="date-label">تاريخ الوصفة - Prescription Date</div>
-            <div class="date-value"><?= date('d/m/Y', strtotime($prescription['created_at'] ?? 'now')) ?></div>
+            <div class="date-value"><?= date('d/m/Y') ?></div>
         </div>
     </div>
     
     <script>
         // Auto-print when page loads
         window.onload = function() {
-            if (window.location.search.includes('print=1')) {
+            // Wait a short moment for the page to fully render, then print
+            setTimeout(function() {
                 window.print();
-            }
+            }, 500);
         };
         
         // Print button functionality

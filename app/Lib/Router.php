@@ -134,7 +134,8 @@ class Router
             throw new \Exception("Method {$method} not found in {$controllerClass}");
         }
 
-        call_user_func_array([$controllerInstance, $method], $this->params);
+        // Convert associative array to indexed array for call_user_func_array
+        call_user_func_array([$controllerInstance, $method], array_values($this->params));
     }
 
     private function notFound()

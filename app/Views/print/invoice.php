@@ -486,9 +486,10 @@
     <script>
         // Auto-print when page loads
         window.onload = function() {
-            if (window.location.search.includes('print=1')) {
+            // Wait a short moment for the page to fully render, then print
+            setTimeout(function() {
                 window.print();
-            }
+            }, 500);
         };
         
         // Print button functionality

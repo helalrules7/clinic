@@ -371,10 +371,13 @@ class DoctorController
     private function getConsultationNotes($appointmentId)
     {
         $stmt = $this->pdo->prepare("
-            SELECT * FROM consultation_notes WHERE appointment_id = ?
+            SELECT * FROM consultation_notes WHERE appointment_id = ? ORDER BY created_at DESC
         ");
         $stmt->execute([$appointmentId]);
-        return $stmt->fetch();
+        $result = $stmt->fetch();
+        
+        // Return as array for consistency with view template  
+        return $result ? [$result] : [];
     }
 
     private function getMedicationPrescriptions($appointmentId)

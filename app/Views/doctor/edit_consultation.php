@@ -100,83 +100,138 @@
 
                     <!-- History of Present Illness -->
                     <div class="mb-3">
-                        <label for="history_of_present_illness" class="form-label">
+                        <label for="hx_present_illness" class="form-label">
                             <i class="bi bi-clock-history text-info"></i>
                             History of Present Illness
                         </label>
-                        <textarea class="form-control" id="history_of_present_illness" name="history_of_present_illness" rows="3"
-                            placeholder="Enter the history of present illness..."><?= htmlspecialchars($consultation['history_of_present_illness'] ?? '') ?></textarea>
+                        <textarea class="form-control" id="hx_present_illness" name="hx_present_illness" rows="3"
+                            placeholder="Enter the history of present illness..."><?= htmlspecialchars($consultation['hx_present_illness'] ?? '') ?></textarea>
                     </div>
 
-                    <!-- Past Medical History -->
-                    <div class="mb-3">
-                        <label for="past_medical_history" class="form-label">
-                            <i class="bi bi-file-medical text-secondary"></i>
-                            Past Medical History
-                        </label>
-                        <textarea class="form-control" id="past_medical_history" name="past_medical_history" rows="3"
-                            placeholder="Enter past medical history..."><?= htmlspecialchars($consultation['past_medical_history'] ?? '') ?></textarea>
+
+
+                    <!-- Visual Acuity -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="visual_acuity_right" class="form-label">
+                                <i class="bi bi-eye text-primary"></i>
+                                Visual Acuity - Right Eye
+                            </label>
+                            <input type="text" class="form-control" id="visual_acuity_right" name="visual_acuity_right"
+                                placeholder="e.g., 20/20" value="<?= htmlspecialchars($consultation['visual_acuity_right'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="visual_acuity_left" class="form-label">
+                                <i class="bi bi-eye text-primary"></i>
+                                Visual Acuity - Left Eye
+                            </label>
+                            <input type="text" class="form-control" id="visual_acuity_left" name="visual_acuity_left"
+                                placeholder="e.g., 20/20" value="<?= htmlspecialchars($consultation['visual_acuity_left'] ?? '') ?>">
+                        </div>
                     </div>
 
-                    <!-- Family History -->
-                    <div class="mb-3">
-                        <label for="family_history" class="form-label">
-                            <i class="bi bi-people text-primary"></i>
-                            Family History
-                        </label>
-                        <textarea class="form-control" id="family_history" name="family_history" rows="2"
-                            placeholder="Enter family history..."><?= htmlspecialchars($consultation['family_history'] ?? '') ?></textarea>
+                    <!-- Refraction -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="refraction_right" class="form-label">
+                                <i class="bi bi-eyeglasses text-info"></i>
+                                Refraction - Right Eye
+                            </label>
+                            <input type="text" class="form-control" id="refraction_right" name="refraction_right"
+                                placeholder="e.g., -2.00 -0.50 x 90" value="<?= htmlspecialchars($consultation['refraction_right'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="refraction_left" class="form-label">
+                                <i class="bi bi-eyeglasses text-info"></i>
+                                Refraction - Left Eye
+                            </label>
+                            <input type="text" class="form-control" id="refraction_left" name="refraction_left"
+                                placeholder="e.g., -2.00 -0.50 x 90" value="<?= htmlspecialchars($consultation['refraction_left'] ?? '') ?>">
+                        </div>
                     </div>
 
-                    <!-- Examination Findings -->
+                    <!-- IOP (Intraocular Pressure) -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="IOP_right" class="form-label">
+                                <i class="bi bi-speedometer text-warning"></i>
+                                IOP - Right Eye (mmHg)
+                            </label>
+                            <input type="number" step="0.1" class="form-control" id="IOP_right" name="IOP_right"
+                                placeholder="e.g., 15.0" value="<?= htmlspecialchars($consultation['IOP_right'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="IOP_left" class="form-label">
+                                <i class="bi bi-speedometer text-warning"></i>
+                                IOP - Left Eye (mmHg)
+                            </label>
+                            <input type="number" step="0.1" class="form-control" id="IOP_left" name="IOP_left"
+                                placeholder="e.g., 15.0" value="<?= htmlspecialchars($consultation['IOP_left'] ?? '') ?>">
+                        </div>
+                    </div>
+
+                    <!-- Slit Lamp Examination -->
                     <div class="mb-3">
-                        <label for="examination_findings" class="form-label">
+                        <label for="slit_lamp" class="form-label">
                             <i class="bi bi-search text-success"></i>
-                            Examination Findings
+                            Slit Lamp Examination
                         </label>
-                        <textarea class="form-control" id="examination_findings" name="examination_findings" rows="4"
-                            placeholder="Enter examination findings..."><?= htmlspecialchars($consultation['examination_findings'] ?? '') ?></textarea>
+                        <textarea class="form-control" id="slit_lamp" name="slit_lamp" rows="3"
+                            placeholder="Enter slit lamp examination findings..."><?= htmlspecialchars($consultation['slit_lamp'] ?? '') ?></textarea>
+                    </div>
+
+                    <!-- Fundus Examination -->
+                    <div class="mb-3">
+                        <label for="fundus" class="form-label">
+                            <i class="bi bi-circle text-danger"></i>
+                            Fundus Examination
+                        </label>
+                        <textarea class="form-control" id="fundus" name="fundus" rows="3"
+                            placeholder="Enter fundus examination findings..."><?= htmlspecialchars($consultation['fundus'] ?? '') ?></textarea>
                     </div>
 
                     <!-- Diagnosis -->
-                    <div class="mb-3">
-                        <label for="diagnosis" class="form-label">
-                            <i class="bi bi-clipboard2-check text-danger"></i>
-                            Diagnosis
-                        </label>
-                        <textarea class="form-control" id="diagnosis" name="diagnosis" rows="3"
-                            placeholder="Enter diagnosis..."><?= htmlspecialchars($consultation['diagnosis'] ?? '') ?></textarea>
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="diagnosis" class="form-label">
+                                <i class="bi bi-clipboard2-check text-danger"></i>
+                                Diagnosis
+                            </label>
+                            <textarea class="form-control" id="diagnosis" name="diagnosis" rows="3"
+                                placeholder="Enter diagnosis..."><?= htmlspecialchars($consultation['diagnosis'] ?? '') ?></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="diagnosis_code" class="form-label">
+                                <i class="bi bi-upc text-secondary"></i>
+                                Diagnosis Code (ICD-10)
+                            </label>
+                            <input type="text" class="form-control" id="diagnosis_code" name="diagnosis_code"
+                                placeholder="e.g., H25.9" value="<?= htmlspecialchars($consultation['diagnosis_code'] ?? '') ?>">
+                        </div>
                     </div>
 
                     <!-- Treatment Plan -->
                     <div class="mb-3">
-                        <label for="treatment_plan" class="form-label">
+                        <label for="plan" class="form-label">
                             <i class="bi bi-clipboard2-pulse text-primary"></i>
                             Treatment Plan
                         </label>
-                        <textarea class="form-control" id="treatment_plan" name="treatment_plan" rows="4"
-                            placeholder="Enter treatment plan..."><?= htmlspecialchars($consultation['treatment_plan'] ?? '') ?></textarea>
+                        <textarea class="form-control" id="plan" name="plan" rows="4"
+                            placeholder="Enter treatment plan..."><?= htmlspecialchars($consultation['plan'] ?? '') ?></textarea>
                     </div>
 
-                    <!-- Follow-up Instructions -->
+                    <!-- Follow-up Days -->
                     <div class="mb-3">
-                        <label for="follow_up_instructions" class="form-label">
+                        <label for="followup_days" class="form-label">
                             <i class="bi bi-calendar-check text-warning"></i>
-                            Follow-up Instructions
+                            Follow-up in Days
                         </label>
-                        <textarea class="form-control" id="follow_up_instructions" name="follow_up_instructions" rows="3"
-                            placeholder="Enter follow-up instructions..."><?= htmlspecialchars($consultation['follow_up_instructions'] ?? '') ?></textarea>
+                        <input type="number" class="form-control" id="followup_days" name="followup_days"
+                            placeholder="e.g., 7, 14, 30" value="<?= htmlspecialchars($consultation['followup_days'] ?? '') ?>">
+                        <div class="form-text">Number of days until next follow-up appointment</div>
                     </div>
 
-                    <!-- Notes -->
-                    <div class="mb-4">
-                        <label for="notes" class="form-label">
-                            <i class="bi bi-sticky text-info"></i>
-                            Additional Notes
-                        </label>
-                        <textarea class="form-control" id="notes" name="notes" rows="3"
-                            placeholder="Enter any additional notes..."><?= htmlspecialchars($consultation['notes'] ?? '') ?></textarea>
-                    </div>
+
 
                     <!-- Form Actions -->
                     <div class="d-flex justify-content-between">
@@ -206,22 +261,22 @@
 
     // Form validation
     document.querySelector('form').addEventListener('submit', function(e) {
-        const requiredFields = ['chief_complaint', 'examination_findings', 'diagnosis'];
+        const requiredFields = ['chief_complaint', 'diagnosis'];
         let isValid = true;
 
         requiredFields.forEach(fieldName => {
             const field = document.getElementById(fieldName);
-            if (!field.value.trim()) {
+            if (field && !field.value.trim()) {
                 field.classList.add('is-invalid');
                 isValid = false;
-            } else {
+            } else if (field) {
                 field.classList.remove('is-invalid');
             }
         });
 
         if (!isValid) {
             e.preventDefault();
-            alert('Please fill in all required fields');
+            alert('Please fill in required fields: Chief Complaint and Diagnosis');
         }
     });
 </script>

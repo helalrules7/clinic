@@ -189,10 +189,15 @@
         <?php if (!empty($consultationNotes)): ?>
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="bi bi-clipboard-pulse me-2"></i>
-                    Consultation Notes
-                </h5>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-pulse me-2"></i>
+                        Consultation Notes
+                    </h5>
+                    <button class="btn btn-sm btn-outline-primary" onclick="editConsultation(<?= $appointment['id'] ?>)">
+                        <i class="bi bi-pencil me-1"></i>Edit Notes
+                    </button>
+                </div>
             </div>
             <div class="card-body">
                 <?php foreach ($consultationNotes as $note): ?>
@@ -229,19 +234,84 @@
                         </div>
                         <?php endif; ?>
 
-                        <!-- Visual Acuity -->
-                        <?php if (!empty($note['visual_acuity'])): ?>
+                        <!-- History of Present Illness -->
+                        <?php if (!empty($note['hx_present_illness'])): ?>
                         <div class="mb-3">
-                            <h6 class="text-info">Visual Acuity</h6>
-                            <p><?= htmlspecialchars($note['visual_acuity']) ?></p>
+                            <h6 class="text-info">History of Present Illness</h6>
+                            <p><?= nl2br(htmlspecialchars($note['hx_present_illness'])) ?></p>
                         </div>
                         <?php endif; ?>
 
-                        <!-- Examination -->
-                        <?php if (!empty($note['examination'])): ?>
+                        <!-- Visual Acuity -->
+                        <?php if (!empty($note['visual_acuity_right']) || !empty($note['visual_acuity_left'])): ?>
                         <div class="mb-3">
-                            <h6 class="text-warning">Examination</h6>
-                            <p><?= nl2br(htmlspecialchars($note['examination'])) ?></p>
+                            <h6 class="text-primary">Visual Acuity</h6>
+                            <div class="row">
+                                <?php if (!empty($note['visual_acuity_right'])): ?>
+                                <div class="col-md-6">
+                                    <strong>Right Eye:</strong> <?= htmlspecialchars($note['visual_acuity_right']) ?>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (!empty($note['visual_acuity_left'])): ?>
+                                <div class="col-md-6">
+                                    <strong>Left Eye:</strong> <?= htmlspecialchars($note['visual_acuity_left']) ?>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- Refraction -->
+                        <?php if (!empty($note['refraction_right']) || !empty($note['refraction_left'])): ?>
+                        <div class="mb-3">
+                            <h6 class="text-info">Refraction</h6>
+                            <div class="row">
+                                <?php if (!empty($note['refraction_right'])): ?>
+                                <div class="col-md-6">
+                                    <strong>Right Eye:</strong> <?= htmlspecialchars($note['refraction_right']) ?>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (!empty($note['refraction_left'])): ?>
+                                <div class="col-md-6">
+                                    <strong>Left Eye:</strong> <?= htmlspecialchars($note['refraction_left']) ?>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- IOP -->
+                        <?php if (!empty($note['IOP_right']) || !empty($note['IOP_left'])): ?>
+                        <div class="mb-3">
+                            <h6 class="text-warning">Intraocular Pressure (IOP)</h6>
+                            <div class="row">
+                                <?php if (!empty($note['IOP_right'])): ?>
+                                <div class="col-md-6">
+                                    <strong>Right Eye:</strong> <?= htmlspecialchars($note['IOP_right']) ?> mmHg
+                                </div>
+                                <?php endif; ?>
+                                <?php if (!empty($note['IOP_left'])): ?>
+                                <div class="col-md-6">
+                                    <strong>Left Eye:</strong> <?= htmlspecialchars($note['IOP_left']) ?> mmHg
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- Slit Lamp Examination -->
+                        <?php if (!empty($note['slit_lamp'])): ?>
+                        <div class="mb-3">
+                            <h6 class="text-success">Slit Lamp Examination</h6>
+                            <p><?= nl2br(htmlspecialchars($note['slit_lamp'])) ?></p>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- Fundus Examination -->
+                        <?php if (!empty($note['fundus'])): ?>
+                        <div class="mb-3">
+                            <h6 class="text-danger">Fundus Examination</h6>
+                            <p><?= nl2br(htmlspecialchars($note['fundus'])) ?></p>
                         </div>
                         <?php endif; ?>
 
@@ -249,7 +319,11 @@
                         <?php if (!empty($note['diagnosis'])): ?>
                         <div class="mb-3">
                             <h6 class="text-danger">Diagnosis</h6>
-                            <p><?= htmlspecialchars($note['diagnosis']) ?></p>
+                            <p><?= htmlspecialchars($note['diagnosis']) ?>
+                            <?php if (!empty($note['diagnosis_code'])): ?>
+                                <span class="badge bg-secondary ms-2"><?= htmlspecialchars($note['diagnosis_code']) ?></span>
+                            <?php endif; ?>
+                            </p>
                         </div>
                         <?php endif; ?>
 
@@ -258,6 +332,14 @@
                         <div class="mb-3">
                             <h6 class="text-secondary">Treatment Plan</h6>
                             <p><?= nl2br(htmlspecialchars($note['plan'])) ?></p>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- Follow-up -->
+                        <?php if (!empty($note['followup_days'])): ?>
+                        <div class="mb-3">
+                            <h6 class="text-warning">Follow-up</h6>
+                            <p><i class="bi bi-calendar-check me-1"></i>Next appointment in <?= htmlspecialchars($note['followup_days']) ?> days</p>
                         </div>
                         <?php endif; ?>
 
@@ -445,10 +527,20 @@
         <!-- Medical Attachments -->
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="bi bi-paperclip me-2"></i>
-                Images & Attachements 
-                </h5>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-paperclip me-2"></i>
+                        Images & Attachments 
+                    </h5>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-sm btn-primary" onclick="showUploadModal(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)">
+                            <i class="bi bi-cloud-upload me-1"> Upload</i>
+                        </button>
+                        <button class="btn btn-sm btn-success" onclick="openCameraModal(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)">
+                            <i class="bi bi-camera me-1"> Take Photo</i>
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="card-body">
                 <?php if (!empty($attachments)): ?>
@@ -504,10 +596,17 @@
                     </div>
                 <?php endif; ?>
                 
-                <div class="d-grid mt-3">
-                    <button class="btn btn-primary" onclick="showUploadModal(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)">
-                        <i class="bi bi-cloud-upload me-2"></i>Upload New Attachment
-                    </button>
+                <div class="row g-2 mt-3">
+                    <div class="col-6">
+                        <button class="btn btn-primary w-100" onclick="showUploadModal(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)">
+                            <i class="bi bi-cloud-upload me-2"></i>Upload File
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-success w-100" onclick="openCameraModal(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)">
+                            <i class="bi bi-camera me-2"></i>Take Photo
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -533,6 +632,9 @@
                     </button>
                     <button class="btn btn-outline-warning" onclick="printPrescription(<?= $appointment['id'] ?>)">
                         <i class="bi bi-printer me-2"></i>Print Prescription
+                    </button>
+                    <button class="btn btn-outline-info" onclick="printGlassesPrescription(<?= $appointment['id'] ?>)">
+                        <i class="bi bi-eyeglasses me-2"></i>Print Glasses
                     </button>
                 </div>
             </div>
@@ -563,8 +665,8 @@ function rescheduleAppointment(appointmentId) {
 }
 
 function addConsultationNotes(appointmentId) {
-    // Redirect to add notes page
-    window.location.href = `/doctor/appointments/${appointmentId}/notes`;
+    // Redirect to edit consultation page (where notes can be added/edited)
+    window.location.href = `/doctor/appointments/${appointmentId}/edit`;
 }
 
 function markCompleted(appointmentId) {
@@ -587,6 +689,11 @@ function viewPatient(patientId) {
 function printPrescription(appointmentId) {
     // Open prescription print view
     window.open(`/print/prescription/${appointmentId}`, '_blank');
+}
+
+function printGlassesPrescription(appointmentId) {
+    // Open glasses prescription print view
+    window.open(`/print/glasses/${appointmentId}`, '_blank');
 }
 
 function showPrescriptionModal(appointmentId) {
@@ -744,6 +851,311 @@ function showRescheduleModal(appointmentId) {
     document.getElementById('rescheduleModal').addEventListener('hidden.bs.modal', function() {
         this.remove();
     });
+}
+
+// Camera Functions
+function openCameraModal(appointmentId, patientId) {
+    const modalHtml = `
+        <div class="modal fade" id="cameraModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-camera me-2"></i>Take Photo
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="cameraAppointmentId" value="${appointmentId}">
+                        <input type="hidden" id="cameraPatientId" value="${patientId}">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Photo Type</label>
+                            <select class="form-select" id="cameraAttachmentType" required>
+                                <option value="">Select Photo Type</option>
+                                <option value="xray">X-ray</option>
+                                <option value="ct_scan">CT Scan</option>
+                                <option value="mri">MRI</option>
+                                <option value="ultrasound">Ultrasound</option>
+                                <option value="photo">Photo</option>
+                                <option value="eye_photo">Eye Photo</option>
+                                <option value="retina_photo">Retina Photo</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Photo Description</label>
+                            <textarea class="form-control" id="cameraDescription" rows="2" 
+                                      placeholder="Add a description for the photo (optional)"></textarea>
+                        </div>
+                        
+                        <!-- Camera View -->
+                        <div class="text-center mb-3">
+                            <div id="cameraContainer" class="border rounded p-3" style="background: #f8f9fa; min-height: 300px;">
+                                <video id="cameraVideo" width="100%" height="300" style="max-width: 100%; border-radius: 8px; display: none;" autoplay playsinline></video>
+                                <canvas id="cameraCanvas" width="640" height="480" style="max-width: 100%; border-radius: 8px; display: none;"></canvas>
+                                <div id="cameraPlaceholder" class="d-flex flex-column align-items-center justify-content-center h-100" style="min-height: 300px;">
+                                    <i class="bi bi-camera text-muted" style="font-size: 4rem;"></i>
+                                    <p class="text-muted mt-2">Click "Start Camera" to begin</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Camera Controls -->
+                        <div class="d-flex justify-content-center gap-2 mb-3">
+                            <button type="button" class="btn btn-primary" id="startCameraBtn" onclick="startCamera()">
+                                <i class="bi bi-camera-video me-2"></i>Start Camera
+                            </button>
+                            <button type="button" class="btn btn-success" id="capturePhotoBtn" onclick="capturePhoto()" style="display: none;">
+                                <i class="bi bi-camera me-2"></i>Take Photo
+                            </button>
+                            <button type="button" class="btn btn-warning" id="retakePhotoBtn" onclick="retakePhoto()" style="display: none;">
+                                <i class="bi bi-arrow-clockwise me-2"></i>Retake
+                            </button>
+                            <button type="button" class="btn btn-danger" id="stopCameraBtn" onclick="stopCamera()" style="display: none;">
+                                <i class="bi bi-stop-circle me-2"></i>Stop Camera
+                            </button>
+                        </div>
+                        
+                        <div id="cameraProgress" class="mb-3" style="display: none;">
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <small class="text-muted">Uploading photo...</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-success" id="savePhotoBtn" onclick="savePhoto()" style="display: none;">
+                            <i class="bi bi-check-lg me-2"></i>Save Photo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('cameraModal'));
+    modal.show();
+    
+    // Clean up modal and stop camera on hide
+    document.getElementById('cameraModal').addEventListener('hidden.bs.modal', function() {
+        stopCamera();
+        this.remove();
+    });
+}
+
+let cameraStream = null;
+let capturedImageData = null;
+
+function startCamera() {
+    const video = document.getElementById('cameraVideo');
+    const placeholder = document.getElementById('cameraPlaceholder');
+    const startBtn = document.getElementById('startCameraBtn');
+    const captureBtn = document.getElementById('capturePhotoBtn');
+    const stopBtn = document.getElementById('stopCameraBtn');
+    
+    // Check if camera is supported
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showErrorMessage('Camera is not supported in this browser');
+        return;
+    }
+    
+    navigator.mediaDevices.getUserMedia({ 
+        video: { 
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: 'environment' // Use back camera on mobile
+        } 
+    })
+    .then(function(stream) {
+        cameraStream = stream;
+        video.srcObject = stream;
+        
+        // Show video, hide placeholder
+        placeholder.style.display = 'none';
+        video.style.display = 'block';
+        
+        // Update buttons
+        startBtn.style.display = 'none';
+        captureBtn.style.display = 'inline-block';
+        stopBtn.style.display = 'inline-block';
+        
+        showSuccessMessage('Camera started successfully');
+    })
+    .catch(function(error) {
+        console.error('Error accessing camera:', error);
+        showErrorMessage('Error accessing camera: ' + error.message);
+    });
+}
+
+function capturePhoto() {
+    const video = document.getElementById('cameraVideo');
+    const canvas = document.getElementById('cameraCanvas');
+    const context = canvas.getContext('2d');
+    const captureBtn = document.getElementById('capturePhotoBtn');
+    const retakeBtn = document.getElementById('retakePhotoBtn');
+    const saveBtn = document.getElementById('savePhotoBtn');
+    
+    // Set canvas size to match video
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    
+    // Draw the video frame to canvas
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Convert canvas to blob
+    canvas.toBlob(function(blob) {
+        capturedImageData = blob;
+        
+        // Hide video, show canvas
+        video.style.display = 'none';
+        canvas.style.display = 'block';
+        
+        // Update buttons
+        captureBtn.style.display = 'none';
+        retakeBtn.style.display = 'inline-block';
+        saveBtn.style.display = 'inline-block';
+        
+        showSuccessMessage('Photo captured! You can now save it or retake.');
+    }, 'image/jpeg', 0.8);
+}
+
+function retakePhoto() {
+    const video = document.getElementById('cameraVideo');
+    const canvas = document.getElementById('cameraCanvas');
+    const captureBtn = document.getElementById('capturePhotoBtn');
+    const retakeBtn = document.getElementById('retakePhotoBtn');
+    const saveBtn = document.getElementById('savePhotoBtn');
+    
+    // Clear captured image
+    capturedImageData = null;
+    
+    // Show video, hide canvas
+    canvas.style.display = 'none';
+    video.style.display = 'block';
+    
+    // Update buttons
+    retakeBtn.style.display = 'none';
+    saveBtn.style.display = 'none';
+    captureBtn.style.display = 'inline-block';
+}
+
+function stopCamera() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+    
+    const video = document.getElementById('cameraVideo');
+    const canvas = document.getElementById('cameraCanvas');
+    const placeholder = document.getElementById('cameraPlaceholder');
+    const startBtn = document.getElementById('startCameraBtn');
+    const captureBtn = document.getElementById('capturePhotoBtn');
+    const retakeBtn = document.getElementById('retakePhotoBtn');
+    const stopBtn = document.getElementById('stopCameraBtn');
+    const saveBtn = document.getElementById('savePhotoBtn');
+    
+    if (video) {
+        video.style.display = 'none';
+        video.srcObject = null;
+    }
+    
+    if (canvas) {
+        canvas.style.display = 'none';
+    }
+    
+    if (placeholder) {
+        placeholder.style.display = 'flex';
+    }
+    
+    // Reset buttons
+    if (startBtn) startBtn.style.display = 'inline-block';
+    if (captureBtn) captureBtn.style.display = 'none';
+    if (retakeBtn) retakeBtn.style.display = 'none';
+    if (stopBtn) stopBtn.style.display = 'none';
+    if (saveBtn) saveBtn.style.display = 'none';
+    
+    // Clear captured image
+    capturedImageData = null;
+}
+
+function savePhoto() {
+    if (!capturedImageData) {
+        showErrorMessage('No photo captured');
+        return;
+    }
+    
+    const appointmentId = document.getElementById('cameraAppointmentId').value;
+    const patientId = document.getElementById('cameraPatientId').value;
+    const attachmentType = document.getElementById('cameraAttachmentType').value;
+    const description = document.getElementById('cameraDescription').value;
+    
+    if (!attachmentType) {
+        showErrorMessage('Please select a photo type');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('appointment_id', appointmentId);
+    formData.append('patient_id', patientId);
+    formData.append('attachment_type', attachmentType);
+    formData.append('description', description);
+    formData.append('attachment_file', capturedImageData, 'camera_photo_' + Date.now() + '.jpg');
+    
+    const saveBtn = document.getElementById('savePhotoBtn');
+    const progressDiv = document.getElementById('cameraProgress');
+    const progressBar = progressDiv.querySelector('.progress-bar');
+    
+    // Show progress
+    saveBtn.disabled = true;
+    progressDiv.style.display = 'block';
+    
+    // Create XMLHttpRequest for progress tracking
+    const xhr = new XMLHttpRequest();
+    
+    xhr.upload.addEventListener('progress', function(e) {
+        if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            progressBar.style.width = percentComplete + '%';
+            progressBar.textContent = Math.round(percentComplete) + '%';
+        }
+    });
+    
+    xhr.addEventListener('load', function() {
+        saveBtn.disabled = false;
+        progressDiv.style.display = 'none';
+        
+        if (xhr.status === 200) {
+            try {
+                const response = JSON.parse(xhr.responseText);
+                if (response.success) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('cameraModal'));
+                    modal.hide();
+                    showSuccessMessage('Photo saved successfully');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showErrorMessage('Error: ' + (response.message || 'Save failed'));
+                }
+            } catch (parseError) {
+                console.error('Response parsing error:', parseError);
+                showErrorMessage('Server response error');
+            }
+        } else {
+            showErrorMessage('HTTP Error ' + xhr.status + ': ' + xhr.statusText);
+        }
+    });
+    
+    xhr.addEventListener('error', function() {
+        showErrorMessage('Error: ' + xhr.statusText);
+        saveBtn.disabled = false;
+        progressDiv.style.display = 'none';
+    });
+    
+    xhr.open('POST', '/api/attachments/upload');
+    xhr.send(formData);
 }
 
 // Medical Attachments Functions
