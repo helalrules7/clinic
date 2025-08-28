@@ -359,7 +359,7 @@
     </style>
 </head>
 <body>
-    <div class="prescription-number">Lab #<?= str_pad($consultation['id'], 6, '0', STR_PAD_LEFT) ?></div>
+    <div class="prescription-number">Appointment #<?= str_pad($appointment['id'], 6, '0', STR_PAD_LEFT) ?></div>
     <div class="watermark">LAB TESTS</div>
     
     <!-- Header -->

@@ -111,30 +111,71 @@ class PrintController
         }
     }
 
-    public function labTests($id)
+    public function singleLabTest($id)
     {
         try {
             $user = $this->auth->user();
             
-            // Get lab tests details (this would be from a lab_tests table)
-            // For now, we'll use consultation notes
-            $consultation = $this->getConsultationNotes($id);
-            if (!$consultation) {
+            // Get single lab test details
+            $stmt = $this->pdo->prepare("SELECT * FROM lab_tests WHERE id = ?");
+            $stmt->execute([$id]);
+            $labTest = $stmt->fetch();
+            
+            if (!$labTest) {
                 http_response_code(404);
-                echo "Consultation not found";
+                echo "Lab test not found";
                 return;
             }
             
             // Get patient and appointment details
-            $patient = $this->getPatient($consultation['patient_id']);
-            $appointment = $this->getAppointment($consultation['appointment_id']);
+            $patient = $this->getPatient($labTest['patient_id']);
+            $appointment = $this->getAppointment($labTest['appointment_id']);
             $doctor = $this->getDoctor($appointment['doctor_id']);
             
             // Set print-specific headers
             header('Content-Type: text/html; charset=utf-8');
             
-            echo $this->view->render('print/lab-tests', [
-                'consultation' => $consultation,
+            echo $this->view->render('print/single-lab-test', [
+                'labTest' => $labTest,
+                'patient' => $patient,
+                'appointment' => $appointment,
+                'doctor' => $doctor,
+                'clinic' => $this->getClinicInfo()
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Error in singleLabTest: " . $e->getMessage());
+            http_response_code(500);
+            echo "Error generating lab test print";
+        }
+    }
+
+    public function labTests($id)
+    {
+        try {
+            $user = $this->auth->user();
+            
+            // Get all lab tests for this appointment
+            $stmt = $this->pdo->prepare("SELECT * FROM lab_tests WHERE appointment_id = ? ORDER BY created_at ASC");
+            $stmt->execute([$id]);
+            $labTests = $stmt->fetchAll();
+            
+            if (empty($labTests)) {
+                http_response_code(404);
+                echo "No lab tests found for this appointment";
+                return;
+            }
+            
+            // Get patient and appointment details from first test
+            $patient = $this->getPatient($labTests[0]['patient_id']);
+            $appointment = $this->getAppointment($id);
+            $doctor = $this->getDoctor($appointment['doctor_id']);
+            
+            // Set print-specific headers
+            header('Content-Type: text/html; charset=utf-8');
+            
+            echo $this->view->render('print/lab-tests-new', [
+                'labTests' => $labTests,
                 'patient' => $patient,
                 'appointment' => $appointment,
                 'doctor' => $doctor,

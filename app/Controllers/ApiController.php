@@ -1786,16 +1786,19 @@ class ApiController
     public function createLabTest()
     {
         try {
-            $appointmentId = $this->request->getPost('appointment_id');
-            $testType = $this->request->getPost('test_type');
-            $testCategory = $this->request->getPost('test_category');
-            $testName = $this->request->getPost('test_name');
-            $priority = $this->request->getPost('priority') ?? 'normal';
-            $status = $this->request->getPost('status') ?? 'ordered';
-            $orderedDate = $this->request->getPost('ordered_date');
-            $expectedDate = $this->request->getPost('expected_date');
-            $notes = $this->request->getPost('notes');
-            $results = $this->request->getPost('results');
+            // Get JSON data from request body
+            $input = json_decode(file_get_contents('php://input'), true);
+            
+            $appointmentId = $input['appointment_id'] ?? $_POST['appointment_id'] ?? null;
+            $testType = $input['test_type'] ?? $_POST['test_type'] ?? null;
+            $testCategory = $input['test_category'] ?? $_POST['test_category'] ?? null;
+            $testName = $input['test_name'] ?? $_POST['test_name'] ?? null;
+            $priority = $input['priority'] ?? $_POST['priority'] ?? 'normal';
+            $status = $input['status'] ?? $_POST['status'] ?? 'ordered';
+            $orderedDate = $input['ordered_date'] ?? $_POST['ordered_date'] ?? null;
+            $expectedDate = $input['expected_date'] ?? $_POST['expected_date'] ?? null;
+            $notes = $input['notes'] ?? $_POST['notes'] ?? null;
+            $results = $input['results'] ?? $_POST['results'] ?? null;
 
             // Validation
             if (!$appointmentId || !$testType || !$testCategory || !$testName) {
@@ -1803,14 +1806,16 @@ class ApiController
             }
 
             // Get appointment details for patient_id
-            $appointment = $this->db->table('appointments')->where('id', $appointmentId)->get()->getRow();
+            $stmt = $this->pdo->prepare("SELECT * FROM appointments WHERE id = ?");
+            $stmt->execute([$appointmentId]);
+            $appointment = $stmt->fetch();
             if (!$appointment) {
                 return $this->jsonResponse(['error' => 'Appointment not found'], 404);
             }
 
             $data = [
                 'appointment_id' => $appointmentId,
-                'patient_id' => $appointment->patient_id,
+                'patient_id' => $appointment['patient_id'],
                 'test_type' => $testType,
                 'test_category' => $testCategory,
                 'test_name' => $testName,
@@ -1824,8 +1829,19 @@ class ApiController
                 'updated_at' => date('Y-m-d H:i:s')
             ];
 
-            $this->db->table('lab_tests')->insert($data);
-            $labTestId = $this->db->insertID();
+            $stmt = $this->pdo->prepare("
+                INSERT INTO lab_tests (appointment_id, patient_id, test_type, test_category, test_name, 
+                                     priority, status, ordered_date, expected_date, notes, results, 
+                                     created_at, updated_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            $stmt->execute([
+                $data['appointment_id'], $data['patient_id'], $data['test_type'], 
+                $data['test_category'], $data['test_name'], $data['priority'], 
+                $data['status'], $data['ordered_date'], $data['expected_date'], 
+                $data['notes'], $data['results'], $data['created_at'], $data['updated_at']
+            ]);
+            $labTestId = $this->pdo->lastInsertId();
 
             return $this->jsonResponse([
                 'success' => true,
@@ -1841,41 +1857,78 @@ class ApiController
     public function updateLabTest($testId)
     {
         try {
-            $testType = $this->request->getPost('test_type');
-            $testCategory = $this->request->getPost('test_category');
-            $testName = $this->request->getPost('test_name');
-            $priority = $this->request->getPost('priority');
-            $status = $this->request->getPost('status');
-            $orderedDate = $this->request->getPost('ordered_date');
-            $expectedDate = $this->request->getPost('expected_date');
-            $notes = $this->request->getPost('notes');
-            $results = $this->request->getPost('results');
+            // Get JSON data from request body
+            $input = json_decode(file_get_contents('php://input'), true);
+            
+            $testType = $input['test_type'] ?? $_POST['test_type'] ?? null;
+            $testCategory = $input['test_category'] ?? $_POST['test_category'] ?? null;
+            $testName = $input['test_name'] ?? $_POST['test_name'] ?? null;
+            $priority = $input['priority'] ?? $_POST['priority'] ?? null;
+            $status = $input['status'] ?? $_POST['status'] ?? null;
+            $orderedDate = $input['ordered_date'] ?? $_POST['ordered_date'] ?? null;
+            $expectedDate = $input['expected_date'] ?? $_POST['expected_date'] ?? null;
+            $notes = $input['notes'] ?? $_POST['notes'] ?? null;
+            $results = $input['results'] ?? $_POST['results'] ?? null;
 
             // Check if lab test exists
-            $labTest = $this->db->table('lab_tests')->where('id', $testId)->get()->getRow();
+            $stmt = $this->pdo->prepare("SELECT * FROM lab_tests WHERE id = ?");
+            $stmt->execute([$testId]);
+            $labTest = $stmt->fetch();
             if (!$labTest) {
                 return $this->jsonResponse(['error' => 'Lab test not found'], 404);
             }
 
-            $data = [
-                'test_type' => $testType,
-                'test_category' => $testCategory,
-                'test_name' => $testName,
-                'priority' => $priority,
-                'status' => $status,
-                'ordered_date' => $orderedDate,
-                'expected_date' => $expectedDate,
-                'notes' => $notes,
-                'results' => $results,
-                'updated_at' => date('Y-m-d H:i:s')
-            ];
-
-            // Remove empty values
-            $data = array_filter($data, function($value) {
-                return $value !== null && $value !== '';
-            });
-
-            $this->db->table('lab_tests')->where('id', $testId)->update($data);
+            // Build update query dynamically for non-null values
+            $updateFields = [];
+            $updateValues = [];
+            
+            if ($testType !== null) {
+                $updateFields[] = "test_type = ?";
+                $updateValues[] = $testType;
+            }
+            if ($testCategory !== null) {
+                $updateFields[] = "test_category = ?";
+                $updateValues[] = $testCategory;
+            }
+            if ($testName !== null) {
+                $updateFields[] = "test_name = ?";
+                $updateValues[] = $testName;
+            }
+            if ($priority !== null) {
+                $updateFields[] = "priority = ?";
+                $updateValues[] = $priority;
+            }
+            if ($status !== null) {
+                $updateFields[] = "status = ?";
+                $updateValues[] = $status;
+            }
+            if ($orderedDate !== null) {
+                $updateFields[] = "ordered_date = ?";
+                $updateValues[] = $orderedDate;
+            }
+            if ($expectedDate !== null) {
+                $updateFields[] = "expected_date = ?";
+                $updateValues[] = $expectedDate;
+            }
+            if ($notes !== null) {
+                $updateFields[] = "notes = ?";
+                $updateValues[] = $notes;
+            }
+            if ($results !== null) {
+                $updateFields[] = "results = ?";
+                $updateValues[] = $results;
+            }
+            
+            // Always update updated_at
+            $updateFields[] = "updated_at = ?";
+            $updateValues[] = date('Y-m-d H:i:s');
+            $updateValues[] = $testId; // for WHERE clause
+            
+            if (!empty($updateFields)) {
+                $sql = "UPDATE lab_tests SET " . implode(', ', $updateFields) . " WHERE id = ?";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute($updateValues);
+            }
 
             return $this->jsonResponse([
                 'success' => true,
@@ -1891,12 +1944,15 @@ class ApiController
     {
         try {
             // Check if lab test exists
-            $labTest = $this->db->table('lab_tests')->where('id', $testId)->get()->getRow();
+            $stmt = $this->pdo->prepare("SELECT * FROM lab_tests WHERE id = ?");
+            $stmt->execute([$testId]);
+            $labTest = $stmt->fetch();
             if (!$labTest) {
                 return $this->jsonResponse(['error' => 'Lab test not found'], 404);
             }
 
-            $this->db->table('lab_tests')->where('id', $testId)->delete();
+            $stmt = $this->pdo->prepare("DELETE FROM lab_tests WHERE id = ?");
+            $stmt->execute([$testId]);
 
             return $this->jsonResponse([
                 'success' => true,
@@ -1911,11 +1967,13 @@ class ApiController
     public function getLabTests($appointmentId)
     {
         try {
-            $labTests = $this->db->table('lab_tests')
-                ->where('appointment_id', $appointmentId)
-                ->orderBy('created_at', 'DESC')
-                ->get()
-                ->getResultArray();
+            $stmt = $this->pdo->prepare("
+                SELECT * FROM lab_tests 
+                WHERE appointment_id = ? 
+                ORDER BY created_at DESC
+            ");
+            $stmt->execute([$appointmentId]);
+            $labTests = $stmt->fetchAll();
 
             return $this->jsonResponse([
                 'success' => true,

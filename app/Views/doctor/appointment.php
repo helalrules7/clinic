@@ -2335,26 +2335,32 @@ function editLabTest(testId, testData) {
         e.preventDefault();
         const formData = new FormData(this);
         
-        // Convert FormData to URLSearchParams for PUT request
-        const params = new URLSearchParams();
+        // Convert FormData to JSON object
+        const data = {};
         for (let [key, value] of formData.entries()) {
-            params.append(key, value);
+            data[key] = value;
         }
+        
+        console.log('Updating lab test:', testId, 'with data:', data);
         
         fetch('/api/lab-tests/' + testId, {
             method: 'PUT',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
             },
-            body: params.toString(),
+            body: JSON.stringify(data),
             credentials: 'same-origin'
         })
         .then(response => response.json())
         .then(data => {
+            console.log('Edit response:', data);
             if (data.success) {
                 modal.hide();
                 showSuccessMessage('Lab test updated successfully');
-                setTimeout(() => location.reload(), 1000);
+                // Add a longer timeout and force reload without cache
+                setTimeout(() => {
+                    window.location.href = window.location.href + '?t=' + Date.now();
+                }, 1500);
             } else {
                 showErrorMessage('Error: ' + (data.message || 'Failed to update lab test'));
             }

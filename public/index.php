@@ -106,6 +106,7 @@ try {
     // Print routes
     $router->get('/print/prescription/{id}', 'PrintController@medicationPrescription');
     $router->get('/print/glasses/{id}', 'PrintController@glassesPrescription');
+    $router->get('/print/lab-test/{id}', 'PrintController@singleLabTest');
     $router->get('/print/lab-tests/{id}', 'PrintController@labTests');
     $router->get('/print/invoice/{id}', 'PrintController@invoice');
     $router->get('/print/appointment/{id}', 'PrintController@appointmentReport');
