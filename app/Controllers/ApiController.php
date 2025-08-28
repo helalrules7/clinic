@@ -1781,4 +1781,149 @@ class ApiController
             return $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
     }
+
+    // Lab Tests & Radiology Management
+    public function createLabTest()
+    {
+        try {
+            $appointmentId = $this->request->getPost('appointment_id');
+            $testType = $this->request->getPost('test_type');
+            $testCategory = $this->request->getPost('test_category');
+            $testName = $this->request->getPost('test_name');
+            $priority = $this->request->getPost('priority') ?? 'normal';
+            $status = $this->request->getPost('status') ?? 'ordered';
+            $orderedDate = $this->request->getPost('ordered_date');
+            $expectedDate = $this->request->getPost('expected_date');
+            $notes = $this->request->getPost('notes');
+            $results = $this->request->getPost('results');
+
+            // Validation
+            if (!$appointmentId || !$testType || !$testCategory || !$testName) {
+                return $this->jsonResponse(['error' => 'Missing required fields'], 400);
+            }
+
+            // Get appointment details for patient_id
+            $appointment = $this->db->table('appointments')->where('id', $appointmentId)->get()->getRow();
+            if (!$appointment) {
+                return $this->jsonResponse(['error' => 'Appointment not found'], 404);
+            }
+
+            $data = [
+                'appointment_id' => $appointmentId,
+                'patient_id' => $appointment->patient_id,
+                'test_type' => $testType,
+                'test_category' => $testCategory,
+                'test_name' => $testName,
+                'priority' => $priority,
+                'status' => $status,
+                'ordered_date' => $orderedDate ?: date('Y-m-d'),
+                'expected_date' => $expectedDate,
+                'notes' => $notes,
+                'results' => $results,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ];
+
+            $this->db->table('lab_tests')->insert($data);
+            $labTestId = $this->db->insertID();
+
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => 'Lab test added successfully',
+                'lab_test_id' => $labTestId
+            ]);
+
+        } catch (Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function updateLabTest($testId)
+    {
+        try {
+            $testType = $this->request->getPost('test_type');
+            $testCategory = $this->request->getPost('test_category');
+            $testName = $this->request->getPost('test_name');
+            $priority = $this->request->getPost('priority');
+            $status = $this->request->getPost('status');
+            $orderedDate = $this->request->getPost('ordered_date');
+            $expectedDate = $this->request->getPost('expected_date');
+            $notes = $this->request->getPost('notes');
+            $results = $this->request->getPost('results');
+
+            // Check if lab test exists
+            $labTest = $this->db->table('lab_tests')->where('id', $testId)->get()->getRow();
+            if (!$labTest) {
+                return $this->jsonResponse(['error' => 'Lab test not found'], 404);
+            }
+
+            $data = [
+                'test_type' => $testType,
+                'test_category' => $testCategory,
+                'test_name' => $testName,
+                'priority' => $priority,
+                'status' => $status,
+                'ordered_date' => $orderedDate,
+                'expected_date' => $expectedDate,
+                'notes' => $notes,
+                'results' => $results,
+                'updated_at' => date('Y-m-d H:i:s')
+            ];
+
+            // Remove empty values
+            $data = array_filter($data, function($value) {
+                return $value !== null && $value !== '';
+            });
+
+            $this->db->table('lab_tests')->where('id', $testId)->update($data);
+
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => 'Lab test updated successfully'
+            ]);
+
+        } catch (Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function deleteLabTest($testId)
+    {
+        try {
+            // Check if lab test exists
+            $labTest = $this->db->table('lab_tests')->where('id', $testId)->get()->getRow();
+            if (!$labTest) {
+                return $this->jsonResponse(['error' => 'Lab test not found'], 404);
+            }
+
+            $this->db->table('lab_tests')->where('id', $testId)->delete();
+
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => 'Lab test deleted successfully'
+            ]);
+
+        } catch (Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getLabTests($appointmentId)
+    {
+        try {
+            $labTests = $this->db->table('lab_tests')
+                ->where('appointment_id', $appointmentId)
+                ->orderBy('created_at', 'DESC')
+                ->get()
+                ->getResultArray();
+
+            return $this->jsonResponse([
+                'success' => true,
+                'lab_tests' => $labTests
+            ]);
+
+        } catch (Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
 }

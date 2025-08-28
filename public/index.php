@@ -87,6 +87,13 @@ try {
     $router->post('/api/prescriptions/glasses', 'ApiController@createGlassesPrescription');
     $router->put('/api/prescriptions/glasses/{id}', 'ApiController@updateGlassesPrescription');
     $router->delete('/api/prescriptions/glasses/{id}', 'ApiController@deleteGlassesPrescription');
+    
+    // Lab Tests & Radiology API routes
+    $router->post('/api/lab-tests', 'ApiController@createLabTest');
+    $router->put('/api/lab-tests/{id}', 'ApiController@updateLabTest');
+    $router->delete('/api/lab-tests/{id}', 'ApiController@deleteLabTest');
+    $router->get('/api/lab-tests/appointment/{id}', 'ApiController@getLabTests');
+    
     $router->post('/api/daily-closure/lock', 'ApiController@lockDailyClosure');
     $router->post('/api/users/change-password', 'ApiController@changePassword');
     

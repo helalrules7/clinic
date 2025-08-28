@@ -419,6 +419,80 @@
             </div>
         </div>
 
+        <!-- Lab Tests & Radiology -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-data me-2"></i>
+                        Lab Tests & Radiology
+                    </h5>
+                    <button class="btn btn-sm btn-primary" onclick="addLabTest(<?= $appointment['id'] ?>)">
+                        <i class="bi bi-plus me-1"></i>Add Lab/Radiology
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <?php if (!empty($labTests)): ?>
+                    <?php foreach ($labTests as $test): ?>
+                    <div class="prescription-card p-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="text-primary mb-0">
+                                <i class="bi bi-<?= $test['test_type'] === 'radiology' ? 'camera-reels' : 'clipboard-data' ?> me-1"></i>
+                                <?= htmlspecialchars($test['test_name']) ?>
+                            </h6>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-primary" onclick="editLabTest(<?= $test['id'] ?>, <?= htmlspecialchars(json_encode($test), ENT_QUOTES) ?>)" title="Edit Test">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-outline-success" onclick="printLabTest(<?= $test['id'] ?>)" title="Print Test">
+                                    <i class="bi bi-printer"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteLabTest(<?= $test['id'] ?>)" title="Delete Test">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="mb-1">
+                            <strong>Type:</strong> <?= ucfirst($test['test_type']) ?><br>
+                            <strong>Status:</strong> 
+                            <span class="badge bg-<?= $test['status'] === 'completed' ? 'success' : ($test['status'] === 'pending' ? 'warning' : 'secondary') ?>">
+                                <?= ucfirst($test['status']) ?>
+                            </span><br>
+                            <?php if (!empty($test['priority'])): ?>
+                                <strong>Priority:</strong> 
+                                <span class="badge bg-<?= $test['priority'] === 'urgent' ? 'danger' : ($test['priority'] === 'high' ? 'warning' : 'primary') ?>">
+                                    <?= ucfirst($test['priority']) ?>
+                                </span><br>
+                            <?php endif; ?>
+                            <?php if (!empty($test['ordered_date'])): ?>
+                                <strong>Ordered Date:</strong> <?= date('d/m/Y', strtotime($test['ordered_date'])) ?><br>
+                            <?php endif; ?>
+                            <?php if (!empty($test['expected_date'])): ?>
+                                <strong>Expected Date:</strong> <?= date('d/m/Y', strtotime($test['expected_date'])) ?>
+                            <?php endif; ?>
+                        </p>
+                        <?php if (!empty($test['notes'])): ?>
+                            <p class="text-muted mb-1">
+                                <small><strong>Notes:</strong> <?= htmlspecialchars($test['notes']) ?></small>
+                            </p>
+                        <?php endif; ?>
+                        <?php if (!empty($test['results'])): ?>
+                            <p class="text-success mb-0">
+                                <small><strong>Results:</strong> <?= htmlspecialchars($test['results']) ?></small>
+                            </p>
+                        <?php endif; ?>
+                    </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="text-center">
+                        <i class="bi bi-clipboard-data text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted mt-2 mb-0">No lab tests or radiology ordered</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
         <!-- Glasses Prescriptions -->
         <div class="card mb-4">
             <div class="card-header">
@@ -635,6 +709,9 @@
                     </button>
                     <button class="btn btn-outline-info" onclick="printGlassesPrescription(<?= $appointment['id'] ?>)">
                         <i class="bi bi-eyeglasses me-2"></i>Print Glasses
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="printLabTests(<?= $appointment['id'] ?>)">
+                        <i class="bi bi-clipboard-data me-2"></i>Print Lab Tests
                     </button>
                 </div>
             </div>
@@ -1989,5 +2066,395 @@ function deleteGlassesPrescription(glassesId) {
             });
         }
     );
+}
+
+// Lab Tests & Radiology Functions
+function addLabTest(appointmentId) {
+    const modalHtml = '<div class="modal fade" id="labTestModal" tabindex="-1">' +
+        '<div class="modal-dialog modal-lg">' +
+        '<div class="modal-content">' +
+        '<div class="modal-header">' +
+        '<h5 class="modal-title">' +
+        '<i class="bi bi-clipboard-data me-2"></i>Add Lab Test / Radiology' +
+        '</h5>' +
+        '<button type="button" class="btn-close" data-bs-dismiss="modal"></button>' +
+        '</div>' +
+        '<form id="labTestForm">' +
+        '<div class="modal-body">' +
+        '<input type="hidden" name="appointment_id" value="' + appointmentId + '">' +
+        '<div class="row">' +
+        '<div class="col-md-6 mb-3">' +
+        '<label class="form-label">Test Type</label>' +
+        '<select class="form-select" name="test_type" required onchange="updateTestCategories(this.value)">' +
+        '<option value="">Select Test Type</option>' +
+        '<option value="laboratory">Laboratory Test</option>' +
+        '<option value="radiology">Radiology</option>' +
+        '</select>' +
+        '</div>' +
+        '<div class="col-md-6 mb-3">' +
+        '<label class="form-label">Test Category</label>' +
+        '<select class="form-select" name="test_category" required id="testCategorySelect">' +
+        '<option value="">Select Category First</option>' +
+        '</select>' +
+        '</div>' +
+        '</div>' +
+        '<div class="mb-3">' +
+        '<label class="form-label">Test Name</label>' +
+        '<input type="text" class="form-control" name="test_name" required placeholder="Enter specific test name">' +
+        '</div>' +
+        '<div class="row">' +
+        '<div class="col-md-6 mb-3">' +
+        '<label class="form-label">Priority</label>' +
+        '<select class="form-select" name="priority">' +
+        '<option value="normal">Normal</option>' +
+        '<option value="high">High</option>' +
+        '<option value="urgent">Urgent</option>' +
+        '</select>' +
+        '</div>' +
+        '<div class="col-md-6 mb-3">' +
+        '<label class="form-label">Status</label>' +
+        '<select class="form-select" name="status">' +
+        '<option value="ordered">Ordered</option>' +
+        '<option value="pending">Pending</option>' +
+        '<option value="completed">Completed</option>' +
+        '<option value="cancelled">Cancelled</option>' +
+        '</select>' +
+        '</div>' +
+        '</div>' +
+        '<div class="row">' +
+        '<div class="col-md-6 mb-3">' +
+        '<label class="form-label">Ordered Date</label>' +
+        '<input type="date" class="form-control" name="ordered_date" value="' + new Date().toISOString().split('T')[0] + '">' +
+        '</div>' +
+        '<div class="col-md-6 mb-3">' +
+        '<label class="form-label">Expected Date</label>' +
+        '<input type="date" class="form-control" name="expected_date">' +
+        '</div>' +
+        '</div>' +
+        '<div class="mb-3">' +
+        '<label class="form-label">Clinical Notes</label>' +
+        '<textarea class="form-control" name="notes" rows="3" placeholder="Clinical indication, special instructions, etc."></textarea>' +
+        '</div>' +
+        '<div class="mb-3" id="resultsSection" style="display: none;">' +
+        '<label class="form-label">Results</label>' +
+        '<textarea class="form-control" name="results" rows="4" placeholder="Test results (if completed)"></textarea>' +
+        '</div>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+        '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>' +
+        '<button type="submit" class="btn btn-primary">' +
+        '<i class="bi bi-check-lg me-2"></i>Add Test' +
+        '</button>' +
+        '</div>' +
+        '</form>' +
+        '</div>' +
+        '</div>' +
+        '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('labTestModal'));
+    modal.show();
+    
+    // Handle status change to show/hide results section
+    document.querySelector('#labTestModal select[name="status"]').addEventListener('change', function() {
+        const resultsSection = document.getElementById('resultsSection');
+        if (this.value === 'completed') {
+            resultsSection.style.display = 'block';
+        } else {
+            resultsSection.style.display = 'none';
+        }
+    });
+    
+    // Handle form submission
+    document.getElementById('labTestForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch('/api/lab-tests', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                modal.hide();
+                showSuccessMessage('Lab test added successfully');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showErrorMessage('Error: ' + (data.message || 'Failed to add lab test'));
+            }
+        })
+        .catch(error => {
+            console.error('Lab test error:', error);
+            showErrorMessage('Error: ' + error.message);
+        });
+    });
+    
+    // Clean up modal on hide
+    document.getElementById('labTestModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+function updateTestCategories(testType) {
+    const categorySelect = document.getElementById('testCategorySelect');
+    categorySelect.innerHTML = '<option value="">Select Category</option>';
+    
+    if (testType === 'laboratory') {
+        const labCategories = [
+            'Hematology',
+            'Biochemistry', 
+            'Immunology',
+            'Microbiology',
+            'Hormones',
+            'Tumor Markers',
+            'Cardiac Markers',
+            'Coagulation',
+            'Urine Analysis',
+            'Stool Analysis'
+        ];
+        
+        labCategories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.toLowerCase().replace(/\s+/g, '_');
+            option.textContent = category;
+            categorySelect.appendChild(option);
+        });
+    } else if (testType === 'radiology') {
+        const radiologyCategories = [
+            'X-Ray',
+            'CT Scan',
+            'MRI',
+            'Ultrasound',
+            'Mammography',
+            'Fluoroscopy',
+            'Nuclear Medicine',
+            'PET Scan',
+            'Angiography'
+        ];
+        
+        radiologyCategories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.toLowerCase().replace(/\s+/g, '_');
+            option.textContent = category;
+            categorySelect.appendChild(option);
+        });
+    }
+}
+
+function editLabTest(testId, testData) {
+    const modalHtml = '<div class="modal fade" id="editLabTestModal" tabindex="-1">' +
+        '<div class="modal-dialog modal-lg">' +
+        '<div class="modal-content">' +
+        '<div class="modal-header">' +
+        '<h5 class="modal-title">' +
+        '<i class="bi bi-pencil me-2"></i>Edit Lab Test / Radiology' +
+        '</h5>' +
+        '<button type="button" class="btn-close" data-bs-dismiss="modal"></button>' +
+        '</div>' +
+        '<form id="editLabTestForm">' +
+        '<div class="modal-body">' +
+        '<div class="row">' +
+        '<div class="col-md-6 mb-3">' +
+        '<label class="form-label">Test Type</label>' +
+        '<select class="form-select" name="test_type" required onchange="updateEditTestCategories(this.value)">' +
+        '<option value="laboratory"' + (testData.test_type === 'laboratory' ? ' selected' : '') + '>Laboratory Test</option>' +
+        '<option value="radiology"' + (testData.test_type === 'radiology' ? ' selected' : '') + '>Radiology</option>' +
+        '</select>' +
+        '</div>' +
+        '<div class="col-md-6 mb-3">' +
+        '<label class="form-label">Test Category</label>' +
+        '<select class="form-select" name="test_category" required id="editTestCategorySelect">' +
+        '<option value="' + (testData.test_category || '') + '">' + (testData.test_category || 'Select Category') + '</option>' +
+        '</select>' +
+        '</div>' +
+        '</div>' +
+        '<div class="mb-3">' +
+        '<label class="form-label">Test Name</label>' +
+        '<input type="text" class="form-control" name="test_name" required value="' + (testData.test_name || '') + '" placeholder="Enter specific test name">' +
+        '</div>' +
+        '<div class="row">' +
+        '<div class="col-md-6 mb-3">' +
+        '<label class="form-label">Priority</label>' +
+        '<select class="form-select" name="priority">' +
+        '<option value="normal"' + (testData.priority === 'normal' ? ' selected' : '') + '>Normal</option>' +
+        '<option value="high"' + (testData.priority === 'high' ? ' selected' : '') + '>High</option>' +
+        '<option value="urgent"' + (testData.priority === 'urgent' ? ' selected' : '') + '>Urgent</option>' +
+        '</select>' +
+        '</div>' +
+        '<div class="col-md-6 mb-3">' +
+        '<label class="form-label">Status</label>' +
+        '<select class="form-select" name="status" onchange="toggleEditResultsSection(this.value)">' +
+        '<option value="ordered"' + (testData.status === 'ordered' ? ' selected' : '') + '>Ordered</option>' +
+        '<option value="pending"' + (testData.status === 'pending' ? ' selected' : '') + '>Pending</option>' +
+        '<option value="completed"' + (testData.status === 'completed' ? ' selected' : '') + '>Completed</option>' +
+        '<option value="cancelled"' + (testData.status === 'cancelled' ? ' selected' : '') + '>Cancelled</option>' +
+        '</select>' +
+        '</div>' +
+        '</div>' +
+        '<div class="row">' +
+        '<div class="col-md-6 mb-3">' +
+        '<label class="form-label">Ordered Date</label>' +
+        '<input type="date" class="form-control" name="ordered_date" value="' + (testData.ordered_date || '') + '">' +
+        '</div>' +
+        '<div class="col-md-6 mb-3">' +
+        '<label class="form-label">Expected Date</label>' +
+        '<input type="date" class="form-control" name="expected_date" value="' + (testData.expected_date || '') + '">' +
+        '</div>' +
+        '</div>' +
+        '<div class="mb-3">' +
+        '<label class="form-label">Clinical Notes</label>' +
+        '<textarea class="form-control" name="notes" rows="3" placeholder="Clinical indication, special instructions, etc.">' + (testData.notes || '') + '</textarea>' +
+        '</div>' +
+        '<div class="mb-3" id="editResultsSection" style="display: ' + (testData.status === 'completed' ? 'block' : 'none') + ';">' +
+        '<label class="form-label">Results</label>' +
+        '<textarea class="form-control" name="results" rows="4" placeholder="Test results">' + (testData.results || '') + '</textarea>' +
+        '</div>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+        '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>' +
+        '<button type="submit" class="btn btn-primary">' +
+        '<i class="bi bi-check-lg me-2"></i>Update Test' +
+        '</button>' +
+        '</div>' +
+        '</form>' +
+        '</div>' +
+        '</div>' +
+        '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('editLabTestModal'));
+    modal.show();
+    
+    // Initialize categories for the current test type
+    updateEditTestCategories(testData.test_type);
+    
+    // Handle form submission
+    document.getElementById('editLabTestForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        // Convert FormData to URLSearchParams for PUT request
+        const params = new URLSearchParams();
+        for (let [key, value] of formData.entries()) {
+            params.append(key, value);
+        }
+        
+        fetch('/api/lab-tests/' + testId, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: params.toString(),
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                modal.hide();
+                showSuccessMessage('Lab test updated successfully');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showErrorMessage('Error: ' + (data.message || 'Failed to update lab test'));
+            }
+        })
+        .catch(error => {
+            console.error('Lab test update error:', error);
+            showErrorMessage('Error: ' + error.message);
+        });
+    });
+    
+    // Clean up modal on hide
+    document.getElementById('editLabTestModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+function updateEditTestCategories(testType) {
+    const categorySelect = document.getElementById('editTestCategorySelect');
+    const currentValue = categorySelect.querySelector('option').value;
+    
+    categorySelect.innerHTML = '<option value="' + currentValue + '">' + (currentValue || 'Select Category') + '</option>';
+    
+    if (testType === 'laboratory') {
+        const labCategories = [
+            'Hematology', 'Biochemistry', 'Immunology', 'Microbiology',
+            'Hormones', 'Tumor Markers', 'Cardiac Markers', 'Coagulation',
+            'Urine Analysis', 'Stool Analysis'
+        ];
+        
+        labCategories.forEach(category => {
+            if (category.toLowerCase().replace(/\s+/g, '_') !== currentValue) {
+                const option = document.createElement('option');
+                option.value = category.toLowerCase().replace(/\s+/g, '_');
+                option.textContent = category;
+                categorySelect.appendChild(option);
+            }
+        });
+    } else if (testType === 'radiology') {
+        const radiologyCategories = [
+            'X-Ray', 'CT Scan', 'MRI', 'Ultrasound', 'Mammography',
+            'Fluoroscopy', 'Nuclear Medicine', 'PET Scan', 'Angiography'
+        ];
+        
+        radiologyCategories.forEach(category => {
+            if (category.toLowerCase().replace(/\s+/g, '_') !== currentValue) {
+                const option = document.createElement('option');
+                option.value = category.toLowerCase().replace(/\s+/g, '_');
+                option.textContent = category;
+                categorySelect.appendChild(option);
+            }
+        });
+    }
+}
+
+function toggleEditResultsSection(status) {
+    const resultsSection = document.getElementById('editResultsSection');
+    if (status === 'completed') {
+        resultsSection.style.display = 'block';
+    } else {
+        resultsSection.style.display = 'none';
+    }
+}
+
+function deleteLabTest(testId) {
+    showDeleteConfirmModal(
+        'Delete Lab Test',
+        'Are you sure you want to delete this lab test?',
+        'This action cannot be undone.',
+        () => {
+            fetch('/api/lab-tests/' + testId, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessMessage('Lab test deleted successfully');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showErrorMessage('Error: ' + (data.message || 'Failed to delete lab test'));
+                }
+            })
+            .catch(error => {
+                console.error('Lab test delete error:', error);
+                showErrorMessage('Error: ' + error.message);
+            });
+        }
+    );
+}
+
+function printLabTest(testId) {
+    // Open lab test print view
+    window.open('/print/lab-test/' + testId, '_blank');
+}
+
+function printLabTests(appointmentId) {
+    // Open all lab tests print view for this appointment
+    window.open('/print/lab-tests/' + appointmentId, '_blank');
 }
 </script>

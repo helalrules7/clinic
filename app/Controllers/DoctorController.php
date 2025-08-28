@@ -160,6 +160,9 @@ class DoctorController
         $medications = $this->getMedicationPrescriptions($id);
         $glasses = $this->getGlassesPrescriptions($id);
         
+        // Get lab tests
+        $labTests = $this->getLabTests($id);
+        
         // Get attachments
         $attachments = $this->getAttachments($id);
         
@@ -169,6 +172,7 @@ class DoctorController
             'consultationNotes' => $consultationNotes,
             'medications' => $medications,
             'glasses' => $glasses,
+            'labTests' => $labTests,
             'attachments' => $attachments,
             'doctorId' => $doctorId
         ]);
@@ -393,6 +397,17 @@ class DoctorController
     {
         $stmt = $this->pdo->prepare("
             SELECT * FROM glasses_prescriptions WHERE appointment_id = ?
+        ");
+        $stmt->execute([$appointmentId]);
+        return $stmt->fetchAll();
+    }
+
+    private function getLabTests($appointmentId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT * FROM lab_tests 
+            WHERE appointment_id = ? 
+            ORDER BY created_at DESC
         ");
         $stmt->execute([$appointmentId]);
         return $stmt->fetchAll();
