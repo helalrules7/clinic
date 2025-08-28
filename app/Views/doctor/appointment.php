@@ -500,7 +500,7 @@
                 <?php else: ?>
                     <div class="text-center py-4">
                         <i class="bi bi-paperclip text-muted" style="font-size: 3rem;"></i>
-                        <p class="text-muted mt-2 mb-0">No images or attachments fou</p>
+                        <p class="text-muted mt-2 mb-0">No images or attachments found</p>
                     </div>
                 <?php endif; ?>
                 

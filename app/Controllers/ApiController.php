@@ -1693,22 +1693,22 @@ class ApiController
             ");
 
             $result = $stmt->execute([
-                $data['distance_sphere_r'] ?? null,
-                $data['distance_cylinder_r'] ?? null,
-                $data['distance_axis_r'] ?? null,
-                $data['distance_sphere_l'] ?? null,
-                $data['distance_cylinder_l'] ?? null,
-                $data['distance_axis_l'] ?? null,
-                $data['near_sphere_r'] ?? null,
-                $data['near_cylinder_r'] ?? null,
-                $data['near_axis_r'] ?? null,
-                $data['near_sphere_l'] ?? null,
-                $data['near_cylinder_l'] ?? null,
-                $data['near_axis_l'] ?? null,
-                $data['PD_NEAR'] ?? null,
-                $data['PD_DISTANCE'] ?? null,
+                (!empty($data['distance_sphere_r']) ? $data['distance_sphere_r'] : null),
+                (!empty($data['distance_cylinder_r']) ? $data['distance_cylinder_r'] : null),
+                (!empty($data['distance_axis_r']) ? $data['distance_axis_r'] : null),
+                (!empty($data['distance_sphere_l']) ? $data['distance_sphere_l'] : null),
+                (!empty($data['distance_cylinder_l']) ? $data['distance_cylinder_l'] : null),
+                (!empty($data['distance_axis_l']) ? $data['distance_axis_l'] : null),
+                (!empty($data['near_sphere_r']) ? $data['near_sphere_r'] : null),
+                (!empty($data['near_cylinder_r']) ? $data['near_cylinder_r'] : null),
+                (!empty($data['near_axis_r']) ? $data['near_axis_r'] : null),
+                (!empty($data['near_sphere_l']) ? $data['near_sphere_l'] : null),
+                (!empty($data['near_cylinder_l']) ? $data['near_cylinder_l'] : null),
+                (!empty($data['near_axis_l']) ? $data['near_axis_l'] : null),
+                (!empty($data['PD_NEAR']) ? $data['PD_NEAR'] : null),
+                (!empty($data['PD_DISTANCE']) ? $data['PD_DISTANCE'] : null),
                 $data['lens_type'],
-                $data['comments'] ?? null,
+                (!empty($data['comments']) ? $data['comments'] : null),
                 $id
             ]);
 
