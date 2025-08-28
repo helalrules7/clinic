@@ -149,6 +149,11 @@ class View
         return '<input type="hidden" name="csrf_token" value="' . $this->escape($token) . '">';
     }
     
+    public function url($path = '')
+    {
+        return \App\Lib\UrlHelper::url($path);
+    }
+    
     public function getTimelineEventColor($eventType)
     {
         $colors = [

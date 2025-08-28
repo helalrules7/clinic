@@ -41,6 +41,43 @@ class Router
         $method = $_SERVER['REQUEST_METHOD'];
         $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         
+        // Handle different deployment scenarios
+        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+        $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+        
+        // Debug logging
+        error_log("Router Debug - SCRIPT_NAME: $scriptName, REQUEST_URI: $requestUri, Original URI: $uri");
+        
+        // Remove base path if running in subdirectory or with alias
+        if (strpos($scriptName, '/clinic/public/') !== false) {
+            // Running via Apache alias /clinic/public
+            $basePath = '/clinic/public';
+            if (strpos($uri, $basePath) === 0) {
+                $uri = substr($uri, strlen($basePath));
+            }
+        } elseif (strpos($uri, '/clinic/public') === 0) {
+            // Handle case where URI contains /clinic/public but script doesn't
+            $basePath = '/clinic/public';
+            $uri = substr($uri, strlen($basePath));
+        } else {
+            // Running with DocumentRoot = /clinic/public
+            $basePath = str_replace('/index.php', '', $scriptName);
+            if ($basePath !== '/' && strpos($uri, $basePath) === 0) {
+                $uri = substr($uri, strlen($basePath));
+            }
+        }
+        
+        // Ensure URI starts with /
+        if (empty($uri) || $uri === '') {
+            $uri = '/';
+        }
+        
+        error_log("Router Debug - Final URI: $uri, Method: $method");
+        
+        // Debug: Log the URI for troubleshooting (remove in production)
+        // if (($_ENV['APP_ENV'] ?? 'local') === 'local') {
+        //     error_log("Router Debug - Original URI: " . $_SERVER['REQUEST_URI'] . ", Processed URI: " . $uri . ", Method: " . $method);
+        // }
         
         // Handle PUT/DELETE methods from forms
         if ($method === 'POST' && isset($_POST['_method'])) {
@@ -49,7 +86,8 @@ class Router
 
         foreach ($this->routes as $route) {
             if ($route['method'] === $method && $this->matchRoute($route['path'], $uri)) {
-                return $this->executeHandler($route['handler']);
+                $this->executeHandler($route['handler']);
+                return; // Important: exit after executing handler
             }
         }
 
@@ -92,7 +130,7 @@ class Router
             throw new \Exception("Method {$method} not found in {$controllerClass}");
         }
 
-        return call_user_func_array([$controllerInstance, $method], $this->params);
+        call_user_func_array([$controllerInstance, $method], $this->params);
     }
 
     private function notFound()

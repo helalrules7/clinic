@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Lib\Auth;
 use App\Lib\View;
 use App\Lib\Validator;
+use App\Lib\UrlHelper;
 
 class AuthController
 {
@@ -76,8 +77,7 @@ class AuthController
     public function logout()
     {
         $this->auth->logout();
-        header('Location: /public/login');
-        exit;
+        UrlHelper::redirect('/login');
     }
 
     private function redirectByRole($role)
@@ -87,18 +87,17 @@ class AuthController
         
         switch ($role) {
             case 'doctor':
-                header('Location: /doctor/dashboard');
+                UrlHelper::redirect('/doctor/dashboard');
                 break;
             case 'secretary':
-                header('Location: /secretary/dashboard');
+                UrlHelper::redirect('/secretary/dashboard');
                 break;
             case 'admin':
-                header('Location: /admin/dashboard');
+                UrlHelper::redirect('/admin/dashboard');
                 break;
             default:
-                header('Location: /login');
+                UrlHelper::redirect('/login');
         }
-        exit;
     }
 
     private function validateCsrfToken()

@@ -59,7 +59,8 @@ class ApiController
                         'date' => $date,
                         'is_friday' => true,
                         'appointments' => [],
-                        'available_slots' => []
+                        'available_slots' => [],
+                        'unavailable_slots' => []
                     ]
                 ]);
             }

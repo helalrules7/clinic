@@ -103,8 +103,7 @@ class Auth
     public function requireAuth()
     {
         if (!$this->check()) {
-            header('Location: /login');
-            exit;
+            \App\Lib\UrlHelper::redirect('/login');
         }
     }
 

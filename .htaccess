@@ -1,29 +1,15 @@
 RewriteEngine On
 
-# Redirect /public to the actual application
-RewriteRule ^public/?$ public/index.php [L]
-RewriteRule ^public/(.*)$ public/$1 [L]
+# Redirect /clinic/public to root if DocumentRoot is /var/www/html/clinic/public
+RewriteCond %{HTTP_HOST} ^192\.168\.40\.128$
+RewriteCond %{REQUEST_URI} ^/clinic/public/(.*)$
+RewriteRule ^clinic/public/(.*)$ /$1 [R=301,L]
 
-# Show index.html by default
-DirectoryIndex index.html index.php
+# Handle requests to /clinic/public when not using alias
+RewriteCond %{REQUEST_URI} ^/clinic/public/
+RewriteCond %{DOCUMENT_ROOT}/clinic/public%{REQUEST_URI} -f [OR]
+RewriteCond %{DOCUMENT_ROOT}/clinic/public%{REQUEST_URI} -d
+RewriteRule ^clinic/public/(.*)$ /clinic/public/$1 [L]
 
-# Security - block access to sensitive files
-<Files ".env">
-    Order allow,deny
-    Deny from all
-</Files>
-
-<Files "composer.json">
-    Order allow,deny
-    Deny from all
-</Files>
-
-<Files "composer.lock">
-    Order allow,deny
-    Deny from all
-</Files>
-
-<FilesMatch "^\.">
-    Order allow,deny
-    Deny from all
-</FilesMatch>
+# Redirect /clinic to login page
+RewriteRule ^clinic/?$ /login [R=302,L]

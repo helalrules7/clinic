@@ -283,6 +283,10 @@ function renderCalendar(data) {
     const container = document.getElementById('calendarContainer');
     const timeSlots = generateTimeSlots();
     
+    // Check if it's Friday (official holiday)
+    const currentDateObj = new Date(currentDate);
+    const isFriday = currentDateObj.getDay() === 5; // 5 = Friday
+    
     let html = '<div class="calendar-grid">';
     
     // Header row
@@ -291,78 +295,96 @@ function renderCalendar(data) {
     html += '<div class="appointment-column">Appointments</div>';
     html += '</div>';
     
-    // Time slots
-    timeSlots.forEach(time => {
-        const appointment = data.appointments.find(apt => apt.start_time === time);
-        const isAvailable = data.available_slots.includes(time);
-        const unavailableSlot = data.unavailable_slots ? data.unavailable_slots.find(slot => slot.time === time) : null;
-        
-        // Debug logging for time matching
-        if (time === '14:00') {
-            console.log('🔍 DEBUG Time 14:00:', {
-                time: time,
-                appointments: data.appointments,
-                appointmentFound: appointment,
-                appointmentTimes: data.appointments.map(apt => apt.start_time),
-                isAvailable: isAvailable,
-                unavailableSlot: unavailableSlot
-            });
-        }
-        
-        html += '<div class="calendar-row">';
-        html += `<div class="time-slot">${formatTime(time)}</div>`;
-        html += '<div class="appointment-slot">';
-        
-        if (appointment) {
-            html += renderAppointmentSlot(appointment);
-        } else if (isAvailable) {
-            html += `<div class="available-slot" onclick="quickAddAppointment('${time}')" 
-                          title="Click to schedule appointment at ${formatTime(time)}">
-                        <i class="bi bi-plus-circle me-2"></i>Available - ${formatTime(time)}
+    // If it's Friday, show official holiday for all slots
+    if (isFriday || data.is_friday) {
+        timeSlots.forEach(time => {
+            html += '<div class="calendar-row">';
+            html += `<div class="time-slot">${formatTime(time)}</div>`;
+            html += '<div class="appointment-slot">';
+            html += `<div class="unavailable-slot official-holiday" title="Official Holiday - Friday">
+                       <i class="bi bi-calendar-x me-2"></i>
+                       <div class="holiday-info">
+                           <div class="holiday-title">Official Holiday</div>
+                           <div class="holiday-subtitle">Friday</div>
+                       </div>
                      </div>`;
-        } else {
-            // Show detailed unavailable information
-            if (unavailableSlot && unavailableSlot.doctor_name) {
-                const displayText = `Reserved for ${unavailableSlot.doctor_name} - ${unavailableSlot.patient_name} (${unavailableSlot.visit_type})`;
-                
-                html += `<div class="unavailable-slot reserved-slot" title="${displayText}">
-                           <i class="bi bi-person-fill-lock me-2"></i>
-                           <div class="slot-details">
-                               <div class="info-line"><span class="label">Dr Name:</span> ${unavailableSlot.doctor_name}</div>
-                               <div class="info-line"><span class="label">Patient:</span> ${unavailableSlot.patient_name || 'N/A'}</div>
-                               <div class="info-line"><span class="label">Type:</span> ${unavailableSlot.visit_type || 'N/A'}</div>
-                           </div>
-                         </div>`;
-            } else if (unavailableSlot && unavailableSlot.reason === 'Outside working hours') {
-                html += `<div class="unavailable-slot outside-hours" title="Outside working hours">
-                           <i class="bi bi-clock me-2"></i>Outside working hours
-                         </div>`;
-            } else if (unavailableSlot && unavailableSlot.reason) {
-                html += `<div class="unavailable-slot debug-slot" title="Debug: ${unavailableSlot.reason}">
-                           <i class="bi bi-exclamation-triangle me-2"></i>
-                           <div class="debug-info">
-                               <div>Debug Info:</div>
-                               <div>${unavailableSlot.reason}</div>
-                           </div>
+            html += '</div>';
+            html += '</div>';
+        });
+    } else {
+        // Normal day processing
+        timeSlots.forEach(time => {
+            const appointment = data.appointments.find(apt => apt.start_time === time);
+            const isAvailable = data.available_slots.includes(time);
+            const unavailableSlot = data.unavailable_slots ? data.unavailable_slots.find(slot => slot.time === time) : null;
+            
+            // Debug logging for time matching
+            if (time === '14:00') {
+                console.log('🔍 DEBUG Time 14:00:', {
+                    time: time,
+                    appointments: data.appointments,
+                    appointmentFound: appointment,
+                    appointmentTimes: data.appointments.map(apt => apt.start_time),
+                    isAvailable: isAvailable,
+                    unavailableSlot: unavailableSlot
+                });
+            }
+            
+            html += '<div class="calendar-row">';
+            html += `<div class="time-slot">${formatTime(time)}</div>`;
+            html += '<div class="appointment-slot">';
+            
+            if (appointment) {
+                html += renderAppointmentSlot(appointment);
+            } else if (isAvailable) {
+                html += `<div class="available-slot" onclick="quickAddAppointment('${time}')" 
+                              title="Click to schedule appointment at ${formatTime(time)}">
+                            <i class="bi bi-plus-circle me-2"></i>Available - ${formatTime(time)}
                          </div>`;
             } else {
-                // This should not happen - let's debug why
-                const debugInfo = unavailableSlot && unavailableSlot.debug_info ? unavailableSlot.debug_info : `No slot data - Time: ${time}`;
-                const reason = unavailableSlot && unavailableSlot.reason ? unavailableSlot.reason : 'No data available';
-                
-                html += `<div class="unavailable-slot debug-slot" title="Debug: ${reason}">
-                           <i class="bi bi-bug me-2"></i>
-                           <div class="debug-info">
-                               <div class="debug-title">🔍 Debug Info:</div>
-                               <div class="debug-details">${debugInfo}</div>
-                           </div>
-                         </div>`;
+                // Show detailed unavailable information
+                if (unavailableSlot && unavailableSlot.doctor_name) {
+                    const displayText = `Reserved for ${unavailableSlot.doctor_name} - ${unavailableSlot.patient_name} (${unavailableSlot.visit_type})`;
+                    
+                    html += `<div class="unavailable-slot reserved-slot" title="${displayText}">
+                               <i class="bi bi-person-fill-lock me-2"></i>
+                               <div class="slot-details">
+                                   <div class="info-line"><span class="label">Dr Name:</span> ${unavailableSlot.doctor_name}</div>
+                                   <div class="info-line"><span class="label">Patient:</span> ${unavailableSlot.patient_name || 'N/A'}</div>
+                                   <div class="info-line"><span class="label">Type:</span> ${unavailableSlot.visit_type || 'N/A'}</div>
+                               </div>
+                             </div>`;
+                } else if (unavailableSlot && unavailableSlot.reason === 'Outside working hours') {
+                    html += `<div class="unavailable-slot outside-hours" title="Outside working hours">
+                               <i class="bi bi-clock me-2"></i>Outside working hours
+                             </div>`;
+                } else if (unavailableSlot && unavailableSlot.reason) {
+                    html += `<div class="unavailable-slot debug-slot" title="Debug: ${unavailableSlot.reason}">
+                               <i class="bi bi-exclamation-triangle me-2"></i>
+                               <div class="debug-info">
+                                   <div>Debug Info:</div>
+                                   <div>${unavailableSlot.reason}</div>
+                               </div>
+                             </div>`;
+                } else {
+                    // This should not happen - let's debug why
+                    const debugInfo = unavailableSlot && unavailableSlot.debug_info ? unavailableSlot.debug_info : `No slot data - Time: ${time}`;
+                    const reason = unavailableSlot && unavailableSlot.reason ? unavailableSlot.reason : 'No data available';
+                    
+                    html += `<div class="unavailable-slot debug-slot" title="Debug: ${reason}">
+                               <i class="bi bi-bug me-2"></i>
+                               <div class="debug-info">
+                                   <div class="debug-title">🔍 Debug Info:</div>
+                                   <div class="debug-details">${debugInfo}</div>
+                               </div>
+                             </div>`;
+                }
             }
-        }
-        
-        html += '</div>';
-        html += '</div>';
-    });
+            
+            html += '</div>';
+            html += '</div>';
+        });
+    }
     
     html += '</div>';
     container.innerHTML = html;
@@ -1118,6 +1140,41 @@ window.addEventListener('beforeunload', () => {
     word-break: break-all;
     max-height: 60px;
     overflow-y: auto;
+}
+
+.unavailable-slot.official-holiday {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.unavailable-slot.official-holiday .holiday-info {
+    flex: 1;
+    text-align: left;
+}
+
+.unavailable-slot.official-holiday .holiday-title {
+    font-weight: 600;
+    font-size: 0.9em;
+    margin-bottom: 2px;
+    color: white;
+}
+
+.unavailable-slot.official-holiday .holiday-subtitle {
+    font-size: 0.75em;
+    opacity: 0.9;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.unavailable-slot.official-holiday i {
+    font-size: 1.1em;
+    opacity: 1;
+    color: white;
 }
 
 .unavailable-slot i {
