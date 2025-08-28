@@ -12,8 +12,8 @@ class Database
         $this->loadEnvironment();
         
         $host = $_ENV['DB_HOST'] ?? 'localhost';
-        $dbname = $_ENV['DB_NAME'] ?? 'clinic_db';
-        $username = $_ENV['DB_USER'] ?? 'clinic_user';
+        $dbname = $_ENV['DB_NAME'] ?? 'roaya';
+        $username = $_ENV['DB_USER'] ?? 'root';
         $password = $_ENV['DB_PASS'] ?? 'Carmen';
         
         $dsn = "mysql:host={$host};dbname={$dbname};charset=utf8mb4";
