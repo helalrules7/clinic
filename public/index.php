@@ -85,6 +85,8 @@ try {
     $router->put('/api/prescriptions/meds/{id}', 'ApiController@updateMedication');
     $router->delete('/api/prescriptions/meds/{id}', 'ApiController@deleteMedication');
     $router->post('/api/prescriptions/glasses', 'ApiController@createGlassesPrescription');
+    $router->put('/api/prescriptions/glasses/{id}', 'ApiController@updateGlassesPrescription');
+    $router->delete('/api/prescriptions/glasses/{id}', 'ApiController@deleteGlassesPrescription');
     $router->post('/api/daily-closure/lock', 'ApiController@lockDailyClosure');
     $router->post('/api/users/change-password', 'ApiController@changePassword');
     

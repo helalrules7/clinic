@@ -138,6 +138,9 @@
             <button type="button" class="btn btn-success" onclick="addPrescription(<?= $appointment['id'] ?>)">
                 <i class="bi bi-prescription2 me-1"></i>Add Prescription
             </button>
+            <button type="button" class="btn btn-danger" onclick="addGlassesPrescription(<?= $appointment['id'] ?>)">
+                <i class="bi bi-eyeglasses me-1"></i>Add Glasses
+            </button>
             <button type="button" class="btn btn-info" onclick="printReport(<?= $appointment['id'] ?>)">
                 <i class="bi bi-printer me-1"></i>Print Report
             </button>
@@ -337,41 +340,95 @@
         <!-- Glasses Prescriptions -->
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="bi bi-eyeglasses me-2"></i>
-                    Glasses Prescription
-                </h5>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-eyeglasses me-2"></i>
+                        Glasses Prescription
+                    </h5>
+                    <button class="btn btn-sm btn-primary" onclick="addGlassesPrescription(<?= $appointment['id'] ?>)">
+                        <i class="bi bi-plus me-1"></i>Add Glasses
+                    </button>
+                </div>
             </div>
             <div class="card-body">
                 <?php if (!empty($glasses)): ?>
                     <?php foreach ($glasses as $glass): ?>
                     <div class="prescription-card p-3 mb-3">
-                        <div class="row text-center">
-                            <div class="col-6">
-                                <h6 class="text-primary">Right Eye (OD)</h6>
-                                <p class="mb-1">
-                                    SPH: <?= htmlspecialchars($glass['od_sphere'] ?? 'N/A') ?><br>
-                                    CYL: <?= htmlspecialchars($glass['od_cylinder'] ?? 'N/A') ?><br>
-                                    AXIS: <?= htmlspecialchars($glass['od_axis'] ?? 'N/A') ?>
-                                </p>
-                            </div>
-                            <div class="col-6">
-                                <h6 class="text-primary">Left Eye (OS)</h6>
-                                <p class="mb-1">
-                                    SPH: <?= htmlspecialchars($glass['os_sphere'] ?? 'N/A') ?><br>
-                                    CYL: <?= htmlspecialchars($glass['os_cylinder'] ?? 'N/A') ?><br>
-                                    AXIS: <?= htmlspecialchars($glass['os_axis'] ?? 'N/A') ?>
-                                </p>
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="text-success mb-0">
+                                <i class="bi bi-eyeglasses me-1"></i>
+                                <?= ucfirst($glass['lens_type'] ?? 'Single Vision') ?>
+                            </h6>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-primary" onclick="editGlassesPrescription(<?= $glass['id'] ?>, <?= htmlspecialchars(json_encode($glass), ENT_QUOTES) ?>)" title="Edit Glasses">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteGlassesPrescription(<?= $glass['id'] ?>)" title="Delete Glasses">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </div>
                         </div>
-                        <?php if (!empty($glass['pd'])): ?>
+                        <!-- Distance Vision -->
+                        <div class="mb-3">
+                            <h6 class="text-success"><i class="bi bi-eye me-1"></i>Distance Vision</h6>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <h6 class="text-primary">Right Eye (OD)</h6>
+                                    <p class="mb-1">
+                                        SPH: <?= htmlspecialchars($glass['distance_sphere_r'] ?? 'N/A') ?><br>
+                                        CYL: <?= htmlspecialchars($glass['distance_cylinder_r'] ?? 'N/A') ?><br>
+                                        AXIS: <?= htmlspecialchars($glass['distance_axis_r'] ?? 'N/A') ?>
+                                    </p>
+                                </div>
+                                <div class="col-6">
+                                    <h6 class="text-primary">Left Eye (OS)</h6>
+                                    <p class="mb-1">
+                                        SPH: <?= htmlspecialchars($glass['distance_sphere_l'] ?? 'N/A') ?><br>
+                                        CYL: <?= htmlspecialchars($glass['distance_cylinder_l'] ?? 'N/A') ?><br>
+                                        AXIS: <?= htmlspecialchars($glass['distance_axis_l'] ?? 'N/A') ?>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Near Vision -->
+                        <?php if (!empty($glass['near_sphere_r']) || !empty($glass['near_sphere_l']) || !empty($glass['near_cylinder_r']) || !empty($glass['near_cylinder_l'])): ?>
+                        <div class="mb-3">
+                            <h6 class="text-info"><i class="bi bi-book me-1"></i>Near Vision</h6>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <h6 class="text-primary">Right Eye (OD)</h6>
+                                    <p class="mb-1">
+                                        SPH: <?= htmlspecialchars($glass['near_sphere_r'] ?? 'N/A') ?><br>
+                                        CYL: <?= htmlspecialchars($glass['near_cylinder_r'] ?? 'N/A') ?><br>
+                                        AXIS: <?= htmlspecialchars($glass['near_axis_r'] ?? 'N/A') ?>
+                                    </p>
+                                </div>
+                                <div class="col-6">
+                                    <h6 class="text-primary">Left Eye (OS)</h6>
+                                    <p class="mb-1">
+                                        SPH: <?= htmlspecialchars($glass['near_sphere_l'] ?? 'N/A') ?><br>
+                                        CYL: <?= htmlspecialchars($glass['near_cylinder_l'] ?? 'N/A') ?><br>
+                                        AXIS: <?= htmlspecialchars($glass['near_axis_l'] ?? 'N/A') ?>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                        <?php if (!empty($glass['PD_DISTANCE']) || !empty($glass['PD_NEAR'])): ?>
                             <div class="text-center mt-2">
-                                <strong>PD:</strong> <?= htmlspecialchars($glass['pd']) ?>mm
+                                <?php if (!empty($glass['PD_DISTANCE'])): ?>
+                                    <strong>PD Distance:</strong> <?= htmlspecialchars($glass['PD_DISTANCE']) ?>mm
+                                <?php endif; ?>
+                                <?php if (!empty($glass['PD_NEAR'])): ?>
+                                    <?php if (!empty($glass['PD_DISTANCE'])): ?> | <?php endif; ?>
+                                    <strong>PD Near:</strong> <?= htmlspecialchars($glass['PD_NEAR']) ?>mm
+                                <?php endif; ?>
                             </div>
                         <?php endif; ?>
-                        <?php if (!empty($glass['notes'])): ?>
+                        <?php if (!empty($glass['comments'])): ?>
                             <p class="text-muted mt-2 mb-0">
-                                <small><?= htmlspecialchars($glass['notes']) ?></small>
+                                <small><?= htmlspecialchars($glass['comments']) ?></small>
                             </p>
                         <?php endif; ?>
                     </div>
@@ -904,26 +961,31 @@ function downloadAttachment(attachmentId, filename) {
 }
 
 function deleteAttachment(attachmentId) {
-    if (confirm('Are you sure you want to delete this attachment?\nThis action cannot be undone.')) {
-        fetch(`/api/attachments/${attachmentId}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showSuccessMessage('Attachment deleted successfully');
-                setTimeout(() => location.reload(), 1000);
-            } else {
-                showErrorMessage('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            showErrorMessage('Error: ' + error.message);
-        });
-    }
+    showDeleteConfirmModal(
+        'Delete Attachment',
+        'Are you sure you want to delete this attachment?',
+        'This action cannot be undone.',
+        () => {
+            fetch(`/api/attachments/${attachmentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessMessage('Attachment deleted successfully');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showErrorMessage('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                showErrorMessage('Error: ' + error.message);
+            });
+        }
+    );
 }
 
 // Utility functions for notifications
@@ -965,28 +1027,76 @@ function showErrorMessage(message) {
     }, 5000);
 }
 
+// Delete Confirmation Modal
+function showDeleteConfirmModal(title, message, warning, onConfirm) {
+    const modalHtml = `
+        <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title text-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>${title}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-2">${message}</p>
+                        <p class="text-muted mb-0"><small><i class="bi bi-info-circle me-1"></i>${warning}</small></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                            <i class="bi bi-trash me-2"></i>Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+    modal.show();
+    
+    // Handle confirm button
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        modal.hide();
+        onConfirm();
+    });
+    
+    // Clean up modal on hide
+    document.getElementById('deleteConfirmModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
 // Delete Medication Function
 function deleteMedication(medicationId) {
-    if (confirm('Are you sure you want to delete this medication?\nThis action cannot be undone.')) {
-        fetch(`/api/prescriptions/meds/${medicationId}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showSuccessMessage('Medication deleted successfully');
-                setTimeout(() => location.reload(), 1000);
-            } else {
-                showErrorMessage('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            showErrorMessage('Error: ' + error.message);
-        });
-    }
+    showDeleteConfirmModal(
+        'Delete Medication',
+        'Are you sure you want to delete this medication?',
+        'This action cannot be undone.',
+        () => {
+            fetch(`/api/prescriptions/meds/${medicationId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessMessage('Medication deleted successfully');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showErrorMessage('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                showErrorMessage('Error: ' + error.message);
+            });
+        }
+    );
 }
 
 // Edit Medication Function
@@ -1083,5 +1193,381 @@ function editMedication(medicationId, drugName, dose, frequency, duration, route
     document.getElementById('editMedicationModal').addEventListener('hidden.bs.modal', function() {
         this.remove();
     });
+}
+
+// Glasses Prescription Functions
+function addGlassesPrescription(appointmentId) {
+    const modalHtml = `
+        <div class="modal fade" id="glassesModal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add Glasses Prescription</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="glassesForm">
+                        <div class="modal-body">
+                            <input type="hidden" name="appointment_id" value="${appointmentId}">
+                            
+                            <!-- PD and Lens Type Section -->
+                            <div class="row mb-3">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">PD Distance (PD)</label>
+                                    <input type="number" step="0.5" class="form-control" name="PD_DISTANCE" placeholder="62.0">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">PD Near (NPD)</label>
+                                    <input type="number" step="0.5" class="form-control" name="PD_NEAR" placeholder="58.0">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Lens Type</label>
+                                    <select class="form-control" name="lens_type">
+                                        <option value="Single Vision">Single Vision</option>
+                                        <option value="Bifocal">Bifocal</option>
+                                        <option value="Progressive">Progressive</option>
+                                        <option value="Reading">Reading</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <hr class="my-4">
+                            
+                            <!-- Distance Vision Section -->
+                            <h6 class="text-success mb-3"><i class="bi bi-eye me-2"></i>Distance Vision</h6>
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h6 class="text-primary">Right Eye (OD)</h6>
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">SPH</label>
+                                            <input type="number" step="0.25" class="form-control" name="distance_sphere_r" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">CYL</label>
+                                            <input type="number" step="0.25" class="form-control" name="distance_cylinder_r" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">AXIS</label>
+                                            <input type="number" min="0" max="180" class="form-control" name="distance_axis_r" placeholder="0">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 border-start">
+                                    <h6 class="text-primary ps-3">Left Eye (OS)</h6>
+                                    <div class="row ps-3">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">SPH</label>
+                                            <input type="number" step="0.25" class="form-control" name="distance_sphere_l" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">CYL</label>
+                                            <input type="number" step="0.25" class="form-control" name="distance_cylinder_l" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">AXIS</label>
+                                            <input type="number" min="0" max="180" class="form-control" name="distance_axis_l" placeholder="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr class="my-4">
+                            
+                            <!-- Near Vision Section -->
+                            <h6 class="text-info mb-3"><i class="bi bi-book me-2"></i>Near Vision</h6>
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h6 class="text-primary">Right Eye (OD)</h6>
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">SPH</label>
+                                            <input type="number" step="0.25" class="form-control" name="near_sphere_r" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">CYL</label>
+                                            <input type="number" step="0.25" class="form-control" name="near_cylinder_r" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">AXIS</label>
+                                            <input type="number" min="0" max="180" class="form-control" name="near_axis_r" placeholder="0">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 border-start">
+                                    <h6 class="text-primary ps-3">Left Eye (OS)</h6>
+                                    <div class="row ps-3">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">SPH</label>
+                                            <input type="number" step="0.25" class="form-control" name="near_sphere_l" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">CYL</label>
+                                            <input type="number" step="0.25" class="form-control" name="near_cylinder_l" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">AXIS</label>
+                                            <input type="number" min="0" max="180" class="form-control" name="near_axis_l" placeholder="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Comments</label>
+                                <textarea class="form-control" name="comments" rows="3" placeholder="Additional notes or instructions"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success">Save Glasses Prescription</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('glassesModal'));
+    modal.show();
+    
+    // Handle form submission
+    document.getElementById('glassesForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch('/api/prescriptions/glasses', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                modal.hide();
+                showSuccessMessage('Glasses prescription added successfully');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showErrorMessage('Error: ' + (data.message || data.error || 'Unknown error occurred'));
+            }
+        })
+        .catch(error => {
+            console.error('Glasses prescription error:', error);
+            showErrorMessage('Error: ' + error.message);
+        });
+    });
+    
+    // Clean up modal on hide
+    document.getElementById('glassesModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+function editGlassesPrescription(glassesId, glassesData) {
+    const modalHtml = `
+        <div class="modal fade" id="editGlassesModal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Glasses Prescription</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="editGlassesForm">
+                        <div class="modal-body">
+                            <!-- PD and Lens Type Section -->
+                            <div class="row mb-3">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">PD Distance (PD)</label>
+                                    <input type="number" step="0.5" class="form-control" name="PD_DISTANCE" value="${glassesData.PD_DISTANCE || ''}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">PD Near (NPD)</label>
+                                    <input type="number" step="0.5" class="form-control" name="PD_NEAR" value="${glassesData.PD_NEAR || ''}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Lens Type</label>
+                                    <select class="form-control" name="lens_type">
+                                        <option value="Single Vision" ${glassesData.lens_type === 'Single Vision' ? 'selected' : ''}>Single Vision</option>
+                                        <option value="Bifocal" ${glassesData.lens_type === 'Bifocal' ? 'selected' : ''}>Bifocal</option>
+                                        <option value="Progressive" ${glassesData.lens_type === 'Progressive' ? 'selected' : ''}>Progressive</option>
+                                        <option value="Reading" ${glassesData.lens_type === 'Reading' ? 'selected' : ''}>Reading</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <hr class="my-4">
+                            
+                            <!-- Distance Vision Section -->
+                            <h6 class="text-success mb-3"><i class="bi bi-eye me-2"></i>Distance Vision</h6>
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h6 class="text-primary">Right Eye (OD)</h6>
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">SPH</label>
+                                            <input type="number" step="0.25" class="form-control" name="distance_sphere_r" value="${glassesData.distance_sphere_r || ''}">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">CYL</label>
+                                            <input type="number" step="0.25" class="form-control" name="distance_cylinder_r" value="${glassesData.distance_cylinder_r || ''}">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">AXIS</label>
+                                            <input type="number" min="0" max="180" class="form-control" name="distance_axis_r" value="${glassesData.distance_axis_r || ''}">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 border-start">
+                                    <h6 class="text-primary ps-3">Left Eye (OS)</h6>
+                                    <div class="row ps-3">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">SPH</label>
+                                            <input type="number" step="0.25" class="form-control" name="distance_sphere_l" value="${glassesData.distance_sphere_l || ''}">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">CYL</label>
+                                            <input type="number" step="0.25" class="form-control" name="distance_cylinder_l" value="${glassesData.distance_cylinder_l || ''}">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">AXIS</label>
+                                            <input type="number" min="0" max="180" class="form-control" name="distance_axis_l" value="${glassesData.distance_axis_l || ''}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr class="my-4">
+                            
+                            <!-- Near Vision Section -->
+                            <h6 class="text-info mb-3"><i class="bi bi-book me-2"></i>Near Vision</h6>
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h6 class="text-primary">Right Eye (OD)</h6>
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">SPH</label>
+                                            <input type="number" step="0.25" class="form-control" name="near_sphere_r" value="${glassesData.near_sphere_r || ''}">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">CYL</label>
+                                            <input type="number" step="0.25" class="form-control" name="near_cylinder_r" value="${glassesData.near_cylinder_r || ''}">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">AXIS</label>
+                                            <input type="number" min="0" max="180" class="form-control" name="near_axis_r" value="${glassesData.near_axis_r || ''}">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 border-start">
+                                    <h6 class="text-primary ps-3">Left Eye (OS)</h6>
+                                    <div class="row ps-3">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">SPH</label>
+                                            <input type="number" step="0.25" class="form-control" name="near_sphere_l" value="${glassesData.near_sphere_l || ''}">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">CYL</label>
+                                            <input type="number" step="0.25" class="form-control" name="near_cylinder_l" value="${glassesData.near_cylinder_l || ''}">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">AXIS</label>
+                                            <input type="number" min="0" max="180" class="form-control" name="near_axis_l" value="${glassesData.near_axis_l || ''}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Comments</label>
+                                <textarea class="form-control" name="comments" rows="3">${glassesData.comments || ''}</textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success">Update Glasses Prescription</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('editGlassesModal'));
+    modal.show();
+    
+    // Handle form submission
+    document.getElementById('editGlassesForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        // Convert FormData to URLSearchParams for PUT request
+        const params = new URLSearchParams();
+        for (let [key, value] of formData.entries()) {
+            params.append(key, value);
+        }
+        
+        fetch(`/api/prescriptions/glasses/${glassesId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: params.toString()
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                modal.hide();
+                showSuccessMessage('Glasses prescription updated successfully');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showErrorMessage('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            showErrorMessage('Error: ' + error.message);
+        });
+    });
+    
+    // Clean up modal on hide
+    document.getElementById('editGlassesModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+function deleteGlassesPrescription(glassesId) {
+    showDeleteConfirmModal(
+        'Delete Glasses Prescription',
+        'Are you sure you want to delete this glasses prescription?',
+        'This action cannot be undone.',
+        () => {
+            fetch(`/api/prescriptions/glasses/${glassesId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessMessage('Glasses prescription deleted successfully');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showErrorMessage('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                showErrorMessage('Error: ' + error.message);
+            });
+        }
+    );
 }
 </script>

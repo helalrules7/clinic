@@ -3,7 +3,6 @@
 namespace App\Controllers;
 
 use App\Lib\Auth;
-use App\Lib\View;
 use App\Lib\Validator;
 use App\Config\Database;
 use App\Config\Constants;
@@ -12,23 +11,23 @@ use App\Lib\Helpers;
 class ApiController
 {
     private $auth;
-    private $view;
     private $validator;
     private $pdo;
 
     public function __construct()
     {
-        $this->auth = new Auth();
-        $this->view = new View();
-        $this->validator = new Validator();
-        $this->pdo = Database::getInstance()->getConnection();
-        
-        // Set JSON response header
-        header('Content-Type: application/json');
-        
-        // Suppress PHP errors for API responses
-        ini_set('display_errors', 0);
-        error_reporting(E_ERROR | E_PARSE);
+        try {
+            $this->auth = new Auth();
+            $this->validator = new Validator();
+            $this->pdo = Database::getInstance()->getConnection();
+            
+            // Suppress PHP errors for API responses
+            ini_set('display_errors', 0);
+            error_reporting(E_ERROR | E_PARSE);
+        } catch (\Exception $e) {
+            error_log("Exception in ApiController __construct: " . $e->getMessage());
+            throw $e;
+        }
     }
 
     public function getCalendar()
@@ -586,12 +585,12 @@ class ApiController
     {
         try {
             if (!$this->auth->check()) {
-                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+                return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
             }
 
             $user = $this->auth->user();
             if ($user['role'] !== 'doctor') {
-                return $this->jsonResponse(['error' => 'Only doctors can create glasses prescriptions'], 403);
+                return $this->jsonResponse(['success' => false, 'message' => 'Only doctors can create glasses prescriptions'], 403);
             }
 
             // Validate input
@@ -601,9 +600,11 @@ class ApiController
             ];
 
             $data = $_POST;
+            
             if (!$this->validator->validate($data, $rules)) {
                 return $this->jsonResponse([
-                    'error' => 'Validation failed',
+                    'success' => false,
+                    'message' => 'Validation failed: ' . $this->validator->getFirstError(),
                     'details' => $this->validator->getErrors()
                 ], 400);
             }
@@ -621,16 +622,17 @@ class ApiController
                 );
                 
                 return $this->jsonResponse([
-                    'ok' => true,
+                    'success' => true,
                     'data' => ['id' => $prescriptionId],
                     'message' => 'Glasses prescription created successfully'
                 ]);
             } else {
-                return $this->jsonResponse(['error' => 'Failed to create glasses prescription'], 500);
+                return $this->jsonResponse(['success' => false, 'message' => 'Failed to create glasses prescription'], 500);
             }
 
         } catch (\Exception $e) {
-            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+            error_log("Exception in createGlassesPrescription: " . $e->getMessage());
+            return $this->jsonResponse(['success' => false, 'message' => 'Server error: ' . $e->getMessage()], 500);
         }
     }
 
@@ -1155,30 +1157,50 @@ class ApiController
 
     private function createGlassesPrescriptionRecord($data)
     {
-        $stmt = $this->pdo->prepare("
-            INSERT INTO glasses_prescriptions (appointment_id, distance_sphere_r, distance_cylinder_r, distance_axis_r,
-                                             distance_sphere_l, distance_cylinder_l, distance_axis_l, add_power_r, add_power_l,
-                                             PD_NEAR, PD_DISTANCE, lens_type, comments)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
-        
-        $stmt->execute([
-            $data['appointment_id'],
-            $data['distance_sphere_r'] ?? null,
-            $data['distance_cylinder_r'] ?? null,
-            $data['distance_axis_r'] ?? null,
-            $data['distance_sphere_l'] ?? null,
-            $data['distance_cylinder_l'] ?? null,
-            $data['distance_axis_l'] ?? null,
-            $data['add_power_r'] ?? null,
-            $data['add_power_l'] ?? null,
-            $data['PD_NEAR'] ?? null,
-            $data['PD_DISTANCE'] ?? null,
-            $data['lens_type'],
-            $data['comments'] ?? null
-        ]);
-        
-        return $this->pdo->lastInsertId();
+        try {
+            $stmt = $this->pdo->prepare("
+                INSERT INTO glasses_prescriptions (appointment_id, distance_sphere_r, distance_cylinder_r, distance_axis_r,
+                                                 distance_sphere_l, distance_cylinder_l, distance_axis_l,
+                                                 near_sphere_r, near_cylinder_r, near_axis_r,
+                                                 near_sphere_l, near_cylinder_l, near_axis_l,
+                                                 PD_NEAR, PD_DISTANCE, lens_type, comments)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            
+            $params = [
+                $data['appointment_id'],
+                $data['distance_sphere_r'] ?? null,
+                $data['distance_cylinder_r'] ?? null,
+                $data['distance_axis_r'] ?? null,
+                $data['distance_sphere_l'] ?? null,
+                $data['distance_cylinder_l'] ?? null,
+                $data['distance_axis_l'] ?? null,
+                $data['near_sphere_r'] ?? null,
+                $data['near_cylinder_r'] ?? null,
+                $data['near_axis_r'] ?? null,
+                $data['near_sphere_l'] ?? null,
+                $data['near_cylinder_l'] ?? null,
+                $data['near_axis_l'] ?? null,
+                $data['PD_NEAR'] ?? null,
+                $data['PD_DISTANCE'] ?? null,
+                $data['lens_type'],
+                $data['comments'] ?? null
+            ];
+            
+            $result = $stmt->execute($params);
+            
+            if (!$result) {
+                error_log("Failed to execute glasses prescription insert: " . json_encode($stmt->errorInfo()));
+                return false;
+            }
+            
+            $insertId = $this->pdo->lastInsertId();
+            return $insertId;
+            
+        } catch (\Exception $e) {
+            error_log("Exception in createGlassesPrescriptionRecord: " . $e->getMessage());
+            return false;
+        }
     }
 
     private function isDateClosed($date)
@@ -1625,6 +1647,162 @@ class ApiController
 
         } catch (Exception $e) {
             error_log("Update medication error: " . $e->getMessage());
+            return $this->jsonResponse(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+        }
+    }
+
+    public function updateGlassesPrescription($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+                return $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+            }
+
+            // Get glasses details before update
+            $stmt = $this->pdo->prepare("SELECT g.*, a.patient_id FROM glasses_prescriptions g 
+                                       JOIN appointments a ON g.appointment_id = a.id 
+                                       WHERE g.id = ?");
+            $stmt->execute([$id]);
+            $glasses = $stmt->fetch();
+
+            if (!$glasses) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Glasses prescription not found']);
+            }
+
+            // Check if user has permission (doctor or admin)
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                return $this->jsonResponse(['success' => false, 'message' => 'Permission denied']);
+            }
+
+            // Parse PUT data
+            $data = [];
+            if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+                parse_str(file_get_contents('php://input'), $data);
+                if (empty($data) && !empty($_POST)) {
+                    $data = $_POST;
+                }
+            } else {
+                $data = $_POST;
+            }
+
+            // Validate input
+            $rules = [
+                'lens_type' => 'required|in:Single Vision,Bifocal,Progressive,Reading'
+            ];
+
+            if (!$this->validator->validate($data, $rules)) {
+                $errors = $this->validator->getErrors();
+                return $this->jsonResponse([
+                    'success' => false,
+                    'message' => 'Validation failed: ' . $this->validator->getFirstError(),
+                    'details' => $errors
+                ], 400);
+            }
+
+            // Update glasses prescription
+            $stmt = $this->pdo->prepare("
+                UPDATE glasses_prescriptions 
+                SET distance_sphere_r = ?, distance_cylinder_r = ?, distance_axis_r = ?,
+                    distance_sphere_l = ?, distance_cylinder_l = ?, distance_axis_l = ?,
+                    near_sphere_r = ?, near_cylinder_r = ?, near_axis_r = ?,
+                    near_sphere_l = ?, near_cylinder_l = ?, near_axis_l = ?,
+                    PD_NEAR = ?, PD_DISTANCE = ?, lens_type = ?, comments = ?
+                WHERE id = ?
+            ");
+
+            $result = $stmt->execute([
+                $data['distance_sphere_r'] ?? null,
+                $data['distance_cylinder_r'] ?? null,
+                $data['distance_axis_r'] ?? null,
+                $data['distance_sphere_l'] ?? null,
+                $data['distance_cylinder_l'] ?? null,
+                $data['distance_axis_l'] ?? null,
+                $data['near_sphere_r'] ?? null,
+                $data['near_cylinder_r'] ?? null,
+                $data['near_axis_r'] ?? null,
+                $data['near_sphere_l'] ?? null,
+                $data['near_cylinder_l'] ?? null,
+                $data['near_axis_l'] ?? null,
+                $data['PD_NEAR'] ?? null,
+                $data['PD_DISTANCE'] ?? null,
+                $data['lens_type'],
+                $data['comments'] ?? null,
+                $id
+            ]);
+
+            if ($result) {
+                // Create timeline event
+                $this->createTimelineEvent(
+                    $glasses['patient_id'], 
+                    $glasses['appointment_id'], 
+                    'GlassesRx', 
+                    'Updated glasses prescription: ' . $data['lens_type']
+                );
+
+                return $this->jsonResponse(['success' => true, 'message' => 'Glasses prescription updated successfully']);
+            } else {
+                return $this->jsonResponse(['success' => false, 'message' => 'Database error']);
+            }
+
+        } catch (Exception $e) {
+            error_log("Update glasses prescription error: " . $e->getMessage());
+            return $this->jsonResponse(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+        }
+    }
+
+    public function deleteGlassesPrescription($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
+                return $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+            }
+
+            // Get glasses details before deletion for timeline
+            $stmt = $this->pdo->prepare("SELECT g.*, a.patient_id FROM glasses_prescriptions g 
+                                       JOIN appointments a ON g.appointment_id = a.id 
+                                       WHERE g.id = ?");
+            $stmt->execute([$id]);
+            $glasses = $stmt->fetch();
+
+            if (!$glasses) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Glasses prescription not found']);
+            }
+
+            // Check if user has permission (doctor or admin)
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                return $this->jsonResponse(['success' => false, 'message' => 'Permission denied']);
+            }
+
+            // Delete glasses prescription
+            $stmt = $this->pdo->prepare("DELETE FROM glasses_prescriptions WHERE id = ?");
+            $result = $stmt->execute([$id]);
+
+            if ($result) {
+                // Create timeline event
+                $this->createTimelineEvent(
+                    $glasses['patient_id'], 
+                    $glasses['appointment_id'], 
+                    'GlassesRx', 
+                    'Deleted glasses prescription: ' . $glasses['lens_type']
+                );
+
+                return $this->jsonResponse(['success' => true, 'message' => 'Glasses prescription deleted successfully']);
+            } else {
+                return $this->jsonResponse(['success' => false, 'message' => 'Database error']);
+            }
+
+        } catch (Exception $e) {
+            error_log("Delete glasses prescription error: " . $e->getMessage());
             return $this->jsonResponse(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
         }
     }

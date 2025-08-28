@@ -14,7 +14,7 @@ class Database
         $host = $_ENV['DB_HOST'] ?? 'localhost';
         $dbname = $_ENV['DB_NAME'] ?? 'clinic_db';
         $username = $_ENV['DB_USER'] ?? 'clinic_user';
-        $password = $_ENV['DB_PASS'] ?? '';
+        $password = $_ENV['DB_PASS'] ?? 'Carmen';
         
         $dsn = "mysql:host={$host};dbname={$dbname};charset=utf8mb4";
         

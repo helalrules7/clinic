@@ -353,6 +353,8 @@
     <div class="section">
         <div class="section-title">وصفة النظارة</div>
         <div class="glasses-prescription">
+            <!-- Distance Vision -->
+            <h4 style="color: #28a745; margin-bottom: 10px;">الرؤية البعيدة (Distance Vision)</h4>
             <table class="glasses-table">
                 <thead>
                     <tr>
@@ -360,7 +362,6 @@
                         <th>المجال (Sphere)</th>
                         <th>الأسطوانة (Cylinder)</th>
                         <th>المحور (Axis)</th>
-                        <th>القراءة (Add)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -369,17 +370,44 @@
                         <td><?= $glasses['distance_sphere_r'] ?? '-' ?></td>
                         <td><?= $glasses['distance_cylinder_r'] ?? '-' ?></td>
                         <td><?= $glasses['distance_axis_r'] ?? '-' ?></td>
-                        <td><?= $glasses['add_power_r'] ?? '-' ?></td>
                     </tr>
                     <tr>
                         <td>اليسرى</td>
                         <td><?= $glasses['distance_sphere_l'] ?? '-' ?></td>
                         <td><?= $glasses['distance_cylinder_l'] ?? '-' ?></td>
                         <td><?= $glasses['distance_axis_l'] ?? '-' ?></td>
-                        <td><?= $glasses['add_power_l'] ?? '-' ?></td>
                     </tr>
                 </tbody>
             </table>
+            
+            <!-- Near Vision -->
+            <?php if ($glasses['near_sphere_r'] || $glasses['near_sphere_l'] || $glasses['near_cylinder_r'] || $glasses['near_cylinder_l']): ?>
+            <h4 style="color: #17a2b8; margin: 20px 0 10px 0;">الرؤية القريبة (Near Vision)</h4>
+            <table class="glasses-table">
+                <thead>
+                    <tr>
+                        <th>العين</th>
+                        <th>المجال (Sphere)</th>
+                        <th>الأسطوانة (Cylinder)</th>
+                        <th>المحور (Axis)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>اليمنى</td>
+                        <td><?= $glasses['near_sphere_r'] ?? '-' ?></td>
+                        <td><?= $glasses['near_cylinder_r'] ?? '-' ?></td>
+                        <td><?= $glasses['near_axis_r'] ?? '-' ?></td>
+                    </tr>
+                    <tr>
+                        <td>اليسرى</td>
+                        <td><?= $glasses['near_sphere_l'] ?? '-' ?></td>
+                        <td><?= $glasses['near_cylinder_l'] ?? '-' ?></td>
+                        <td><?= $glasses['near_axis_l'] ?? '-' ?></td>
+                    </tr>
+                </tbody>
+            </table>
+            <?php endif; ?>
             
             <?php if ($glasses['PD_DISTANCE'] || $glasses['PD_NEAR']): ?>
             <div style="margin-top: 10px;">
