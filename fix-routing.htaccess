@@ -1,0 +1,39 @@
+# ضع هذا في /var/www/html/clinic/public/.htaccess
+RewriteEngine On
+
+# Handle Authorization Header
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Redirect Trailing Slashes If Not A Folder
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} (.+)/$
+RewriteRule ^ %1 [L,R=301]
+
+# Send ALL requests to index.php (Front Controller)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ index.php [L,QSA]
+
+# Explicitly handle common routes
+RewriteRule ^login$ index.php [L,QSA]
+RewriteRule ^logout$ index.php [L,QSA]
+RewriteRule ^admin(.*)$ index.php [L,QSA]
+RewriteRule ^doctor(.*)$ index.php [L,QSA]
+RewriteRule ^secretary(.*)$ index.php [L,QSA]
+RewriteRule ^api(.*)$ index.php [L,QSA]
+RewriteRule ^print(.*)$ index.php [L,QSA]
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Prevent access to sensitive files
+<Files ".env">
+    Order allow,deny
+    Deny from all
+</Files>
