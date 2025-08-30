@@ -337,9 +337,15 @@ class SecretaryController
         $params = [];
         
         if (!empty($search)) {
-            $whereClause = "WHERE first_name LIKE ? OR last_name LIKE ? OR phone LIKE ?";
-            $searchTerm = "%{$search}%";
-            $params = [$searchTerm, $searchTerm, $searchTerm];
+            // Check if search looks like a phone number
+            if ($this->isPhoneNumberSearch($search)) {
+                $whereClause = "WHERE " . $this->buildPhoneSearchWhereClause($search);
+                $params = $this->buildPhoneSearchParams($search);
+            } else {
+                $whereClause = "WHERE first_name LIKE ? OR last_name LIKE ? OR phone LIKE ?";
+                $searchTerm = "%{$search}%";
+                $params = [$searchTerm, $searchTerm, $searchTerm];
+            }
         }
         
         $sql = "
@@ -428,6 +434,126 @@ class SecretaryController
         ");
         $stmt->execute([$id]);
         return $stmt->fetch();
+    }
+
+    /**
+     * Check if the search query looks like a phone number
+     * This method detects Egyptian mobile numbers in various formats:
+     * - 01234567890 (with 0 prefix)
+     * - +201234567890 (with +20 prefix)
+     * - 1234567890 (clean number)
+     */
+    private function isPhoneNumberSearch($query)
+    {
+        // Remove common phone prefixes and check if it's mostly digits
+        $cleanQuery = preg_replace('/^(\+20|0)/', '', $query);
+        $cleanQuery = preg_replace('/[^0-9]/', '', $cleanQuery);
+        
+        // If it's 9-11 digits, it's likely a phone number
+        // Also check if it starts with 1 (Egyptian mobile numbers)
+        return strlen($cleanQuery) >= 9 && strlen($cleanQuery) <= 11 && substr($cleanQuery, 0, 1) === '1';
+    }
+
+    /**
+     * Build WHERE clause for phone search
+     * This creates a comprehensive search that covers:
+     * - Primary phone numbers
+     * - Alternative phone numbers
+     * - Names and national IDs (for fallback results)
+     */
+    private function buildPhoneSearchWhereClause($query)
+    {
+        $cleanQuery = $this->normalizePhoneNumber($query);
+        $searchPatterns = $this->generatePhoneSearchPatterns($cleanQuery);
+        
+        $conditions = [];
+        foreach ($searchPatterns as $pattern) {
+            $conditions[] = "p.phone LIKE ? OR p.alt_phone LIKE ?";
+        }
+        
+        // Also search in names and national ID for comprehensive results
+        // This ensures we don't miss patients if phone search fails
+        $conditions[] = "p.first_name LIKE ? OR p.last_name LIKE ? OR p.national_id LIKE ?";
+        
+        return implode(' OR ', $conditions);
+    }
+
+    /**
+     * Build parameters for phone search
+     * This method ensures all search patterns are properly mapped to SQL parameters
+     */
+    private function buildPhoneSearchParams($query)
+    {
+        $cleanQuery = $this->normalizePhoneNumber($query);
+        $searchPatterns = $this->generatePhoneSearchPatterns($cleanQuery);
+        
+        $params = [];
+        
+        // Add phone search parameters (each pattern needs 2 parameters for phone and alt_phone)
+        foreach ($searchPatterns as $pattern) {
+            $params[] = $pattern; // for p.phone
+            $params[] = $pattern; // for p.alt_phone
+        }
+        
+        // Add name and national ID search parameters
+        // These provide fallback search capabilities
+        $nameSearchTerm = "%{$query}%";
+        $params[] = $nameSearchTerm; // for first_name
+        $params[] = $nameSearchTerm; // for last_name
+        $params[] = $nameSearchTerm; // for national_id
+        
+        return $params;
+    }
+
+    /**
+     * Normalize phone number by removing common prefixes and formatting
+     * This method handles various phone number formats:
+     * - +201234567890 -> 1234567890
+     * - 01234567890 -> 1234567890
+     * - 201234567890 -> 1234567890
+     */
+    private function normalizePhoneNumber($phone)
+    {
+        // Remove +20, 0, spaces, dashes, etc.
+        $phone = preg_replace('/^(\+20|0)/', '', $phone);
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+        return $phone;
+    }
+
+    /**
+     * Generate multiple search patterns for phone number search
+     * This creates patterns for different phone number formats:
+     * - 01234567890 (with 0 prefix)
+     * - +201234567890 (with +20 prefix)
+     * - 201234567890 (with 20 prefix)
+     * - 1234567890 (clean number)
+     */
+    private function generatePhoneSearchPatterns($cleanQuery)
+    {
+        $patterns = [];
+        
+        // Add the clean query as is
+        $patterns[] = "%{$cleanQuery}%";
+        
+        // Add with +20 prefix
+        $patterns[] = "%+20{$cleanQuery}%";
+        
+        // Add with 0 prefix
+        $patterns[] = "%0{$cleanQuery}%";
+        
+        // Add with 20 prefix (without +)
+        $patterns[] = "%20{$cleanQuery}%";
+        
+        // If query starts with 1, also search for it without the 1
+        // This allows searching with '01' to find '+201234567890'
+        if (substr($cleanQuery, 0, 1) === '1' && strlen($cleanQuery) > 9) {
+            $patterns[] = "%" . substr($cleanQuery, 1) . "%";
+            $patterns[] = "%+20" . substr($cleanQuery, 1) . "%";
+            $patterns[] = "%0" . substr($cleanQuery, 1) . "%";
+            $patterns[] = "%20" . substr($cleanQuery, 1) . "%";
+        }
+        
+        return $patterns;
     }
 
     private function getInvoiceItems($invoiceId)

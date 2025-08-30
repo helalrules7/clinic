@@ -1044,8 +1044,74 @@ class ApiController
         return $this->pdo->lastInsertId();
     }
 
+    /**
+     * Main search function that intelligently routes to appropriate search method
+     * - If query looks like a phone number, uses enhanced phone search
+     * - Otherwise, uses regular text search for names and other fields
+     */
     private function searchPatientsByQuery($query)
     {
+        // Check if query looks like a phone number
+        $isPhoneSearch = $this->isPhoneNumberSearch($query);
+        
+        if ($isPhoneSearch) {
+            // Use enhanced phone search for better phone number matching
+            return $this->searchPatientsByPhone($query);
+        } else {
+            // Use regular search for names and other fields
+            $stmt = $this->pdo->prepare("
+                SELECT p.id, p.first_name, p.last_name, p.phone, p.alt_phone, p.dob, p.gender, p.national_id,
+                       CONCAT(p.first_name, ' ', p.last_name) as full_name,
+                       COUNT(a.id) as total_appointments,
+                       MAX(a.date) as last_visit
+                FROM patients p
+                LEFT JOIN appointments a ON p.id = a.patient_id AND a.status NOT IN ('Cancelled', 'NoShow')
+                WHERE p.first_name LIKE ? OR p.last_name LIKE ? OR p.phone LIKE ? 
+                   OR p.alt_phone LIKE ? OR p.national_id LIKE ?
+                GROUP BY p.id
+                ORDER BY p.last_name, p.first_name
+                LIMIT 20
+            ");
+            
+            $searchTerm = "%{$query}%";
+            $stmt->execute([$searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm]);
+            return $stmt->fetchAll();
+        }
+    }
+
+    /**
+     * Check if the search query looks like a phone number
+     * This method detects Egyptian mobile numbers in various formats:
+     * - 01234567890 (with 0 prefix)
+     * - +201234567890 (with +20 prefix)
+     * - 1234567890 (clean number)
+     */
+    private function isPhoneNumberSearch($query)
+    {
+        // Remove common phone prefixes and check if it's mostly digits
+        $cleanQuery = preg_replace('/^(\+20|0)/', '', $query);
+        $cleanQuery = preg_replace('/[^0-9]/', '', $cleanQuery);
+        
+        // If it's 9-11 digits, it's likely a phone number
+        // Also check if it starts with 1 (Egyptian mobile numbers)
+        return strlen($cleanQuery) >= 9 && strlen($cleanQuery) <= 11 && substr($cleanQuery, 0, 1) === '1';
+    }
+
+    /**
+     * Enhanced phone number search that handles different formats
+     * This allows users to search with '01' instead of '+201234567890'
+     */
+    private function searchPatientsByPhone($query)
+    {
+        // Clean the search query (remove +20, 0, etc.)
+        $cleanQuery = $this->normalizePhoneNumber($query);
+        
+        // Create multiple search patterns for different phone formats
+        $searchPatterns = $this->generatePhoneSearchPatterns($cleanQuery);
+        
+        // Build the complete parameter array for execution
+        $executionParams = $this->buildExecutionParams($searchPatterns, $query);
+        
         $stmt = $this->pdo->prepare("
             SELECT p.id, p.first_name, p.last_name, p.phone, p.alt_phone, p.dob, p.gender, p.national_id,
                    CONCAT(p.first_name, ' ', p.last_name) as full_name,
@@ -1053,16 +1119,111 @@ class ApiController
                    MAX(a.date) as last_visit
             FROM patients p
             LEFT JOIN appointments a ON p.id = a.patient_id AND a.status NOT IN ('Cancelled', 'NoShow')
-            WHERE p.first_name LIKE ? OR p.last_name LIKE ? OR p.phone LIKE ? 
-               OR p.alt_phone LIKE ? OR p.national_id LIKE ?
+            WHERE " . $this->buildPhoneSearchWhereClause($searchPatterns) . "
             GROUP BY p.id
             ORDER BY p.last_name, p.first_name
             LIMIT 20
         ");
         
-        $searchTerm = "%{$query}%";
-        $stmt->execute([$searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm]);
+        $stmt->execute($executionParams);
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Normalize phone number by removing common prefixes and formatting
+     * This method handles various phone number formats:
+     * - +201234567890 -> 1234567890
+     * - 01234567890 -> 1234567890
+     * - 201234567890 -> 1234567890
+     */
+    private function normalizePhoneNumber($phone)
+    {
+        // Remove +20, 0, spaces, dashes, etc.
+        $phone = preg_replace('/^(\+20|0)/', '', $phone);
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+        return $phone;
+    }
+
+    /**
+     * Generate multiple search patterns for phone number search
+     * This creates patterns for different phone number formats:
+     * - 01234567890 (with 0 prefix)
+     * - +201234567890 (with +20 prefix)
+     * - 201234567890 (with 20 prefix)
+     * - 1234567890 (clean number)
+     */
+    private function generatePhoneSearchPatterns($cleanQuery)
+    {
+        $patterns = [];
+        
+        // Add the clean query as is
+        $patterns[] = "%{$cleanQuery}%";
+        
+        // Add with +20 prefix
+        $patterns[] = "%+20{$cleanQuery}%";
+        
+        // Add with 0 prefix
+        $patterns[] = "%0{$cleanQuery}%";
+        
+        // Add with 20 prefix (without +)
+        $patterns[] = "%20{$cleanQuery}%";
+        
+        // If query starts with 1, also search for it without the 1
+        // This allows searching with '01' to find '+201234567890'
+        if (substr($cleanQuery, 0, 1) === '1' && strlen($cleanQuery) > 9) {
+            $patterns[] = "%" . substr($cleanQuery, 1) . "%";
+            $patterns[] = "%+20" . substr($cleanQuery, 1) . "%";
+            $patterns[] = "%0" . substr($cleanQuery, 1) . "%";
+            $patterns[] = "%20" . substr($cleanQuery, 1) . "%";
+        }
+        
+        return $patterns;
+    }
+
+    /**
+     * Build WHERE clause for phone search with multiple patterns
+     * This creates a comprehensive search that covers:
+     * - Primary phone numbers
+     * - Alternative phone numbers
+     * - Names and national IDs (for fallback results)
+     */
+    private function buildPhoneSearchWhereClause($searchPatterns)
+    {
+        $conditions = [];
+        
+        foreach ($searchPatterns as $index => $pattern) {
+            $conditions[] = "p.phone LIKE ? OR p.alt_phone LIKE ?";
+        }
+        
+        // Also search in names and national ID for comprehensive results
+        // This ensures we don't miss patients if phone search fails
+        $conditions[] = "p.first_name LIKE ? OR p.last_name LIKE ? OR p.national_id LIKE ?";
+        
+        return implode(' OR ', $conditions);
+    }
+
+    /**
+     * Build the complete parameter array for SQL execution
+     * This method ensures all search patterns are properly mapped to SQL parameters
+     */
+    private function buildExecutionParams($searchPatterns, $originalQuery)
+    {
+        $params = [];
+        
+        // Add phone search parameters (each pattern needs 2 parameters for phone and alt_phone)
+        foreach ($searchPatterns as $pattern) {
+            $params[] = $pattern; // for p.phone
+            $params[] = $pattern; // for p.alt_phone
+        }
+        
+        // Add name and national ID search parameters
+        // These provide fallback search capabilities
+        $nameSearchTerm = "%{$originalQuery}%";
+        $params[] = $nameSearchTerm; // for first_name
+        $params[] = $nameSearchTerm; // for last_name
+        $params[] = $nameSearchTerm; // for national_id
+        
+        return $params;
     }
 
     private function createPatientRecord($data)

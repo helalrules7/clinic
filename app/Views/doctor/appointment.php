@@ -621,41 +621,142 @@
                     <div class="row">
                         <?php foreach ($attachments as $attachment): ?>
                         <div class="col-md-6 mb-3">
-                            <div class="attachment-card p-3 border rounded">
-                                <div class="d-flex align-items-center mb-2">
+                            <div class="attachment-card p-2 border rounded" style="min-height: 140px; display: flex; flex-direction: column;">
+                                <div class="d-flex align-items-center mb-2 flex-grow-1">
                                     <?php
                                     $fileExt = strtolower(pathinfo($attachment['original_filename'], PATHINFO_EXTENSION));
+                                    $fileName = strtolower($attachment['original_filename']);
+                                    $description = strtolower($attachment['description'] ?? '');
+                                    
+                                    // تحديد نوع الملف والأيقونة والـ badge
                                     $iconClass = 'bi-file-earmark';
-                                    if (in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif'])) {
+                                    $fileType = 'Document';
+                                    $badgeClass = 'bg-secondary';
+                                    
+                                    if (in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'])) {
                                         $iconClass = 'bi-image';
+                                        // تحديد نوع الصورة بناءً على الاسم أو الوصف
+                                        if (strpos($fileName, 'xray') !== false || strpos($fileName, 'x-ray') !== false || 
+                                            strpos($description, 'xray') !== false || strpos($description, 'x-ray') !== false ||
+                                            strpos($description, 'أشعة') !== false || strpos($description, 'راديو') !== false) {
+                                            $fileType = 'X-Ray';
+                                            $badgeClass = 'bg-info';
+                                        } elseif (strpos($fileName, 'scan') !== false || strpos($fileName, 'ct') !== false || 
+                                                  strpos($fileName, 'mri') !== false || strpos($description, 'scan') !== false ||
+                                                  strpos($description, 'مسح') !== false || strpos($description, 'رنين') !== false) {
+                                            $fileType = 'Scan';
+                                            $badgeClass = 'bg-primary';
+                                        } elseif (strpos($fileName, 'lab') !== false || strpos($fileName, 'test') !== false ||
+                                                  strpos($fileName, 'blood') !== false || strpos($fileName, 'urine') !== false ||
+                                                  strpos($description, 'lab') !== false || strpos($description, 'تحليل') !== false ||
+                                                  strpos($description, 'فحص') !== false || strpos($description, 'دم') !== false ||
+                                                  strpos($description, 'بول') !== false || strpos($description, 'معمل') !== false) {
+                                            $fileType = 'Lab Result';
+                                            $badgeClass = 'bg-success';
+                                        } elseif (strpos($fileName, 'echo') !== false || strpos($fileName, 'ultrasound') !== false ||
+                                                  strpos($description, 'echo') !== false || strpos($description, 'سونار') !== false ||
+                                                  strpos($description, 'موجات') !== false) {
+                                            $fileType = 'Ultrasound';
+                                            $badgeClass = 'bg-info';
+                                        } elseif (strpos($fileName, 'fundus') !== false || strpos($fileName, 'retina') !== false ||
+                                                  strpos($description, 'fundus') !== false || strpos($description, 'قاع العين') !== false ||
+                                                  strpos($description, 'شبكية') !== false) {
+                                            $fileType = 'Fundus Photo';
+                                            $badgeClass = 'bg-primary';
+                                        } else {
+                                            $fileType = 'Photo';
+                                            $badgeClass = 'bg-warning text-dark';
+                                        }
                                     } elseif ($fileExt == 'pdf') {
                                         $iconClass = 'bi-file-earmark-pdf';
+                                        if (strpos($fileName, 'report') !== false || strpos($fileName, 'result') !== false ||
+                                            strpos($description, 'report') !== false || strpos($description, 'تقرير') !== false ||
+                                            strpos($description, 'نتيجة') !== false) {
+                                            $fileType = 'Report';
+                                            $badgeClass = 'bg-success';
+                                        } elseif (strpos($fileName, 'prescription') !== false || strpos($fileName, 'rx') !== false ||
+                                                  strpos($description, 'prescription') !== false || strpos($description, 'روشتة') !== false ||
+                                                  strpos($description, 'وصفة') !== false) {
+                                            $fileType = 'Prescription';
+                                            $badgeClass = 'bg-danger';
+                                        } elseif (strpos($fileName, 'invoice') !== false || strpos($fileName, 'bill') !== false ||
+                                                  strpos($description, 'invoice') !== false || strpos($description, 'فاتورة') !== false ||
+                                                  strpos($description, 'حساب') !== false) {
+                                            $fileType = 'Invoice';
+                                            $badgeClass = 'bg-warning text-dark';
+                                        } else {
+                                            $fileType = 'PDF Document';
+                                            $badgeClass = 'bg-danger';
+                                        }
                                     } elseif (in_array($fileExt, ['doc', 'docx'])) {
                                         $iconClass = 'bi-file-earmark-word';
+                                        $fileType = 'Word Document';
+                                        $badgeClass = 'bg-primary';
+                                    } elseif (in_array($fileExt, ['xls', 'xlsx'])) {
+                                        $iconClass = 'bi-file-earmark-excel';
+                                        $fileType = 'Excel Sheet';
+                                        $badgeClass = 'bg-success';
+                                    } elseif (in_array($fileExt, ['txt'])) {
+                                        $iconClass = 'bi-file-earmark-text';
+                                        $fileType = 'Text File';
+                                        $badgeClass = 'bg-secondary';
                                     }
                                     ?>
-                                    <i class="bi <?= $iconClass ?> text-primary me-2" style="font-size: 1.5rem;"></i>
+                                    <i class="bi <?= $iconClass ?> text-primary me-2" style="font-size: 1.2rem; flex-shrink: 0;"></i>
                                     <div class="flex-grow-1">
-                                        <h6 class="mb-1"><?= htmlspecialchars($attachment['original_filename']) ?></h6>
-                                        <small class="text-muted">
+                                        <?php 
+                                        $originalName = $attachment['original_filename'];
+                                        $displayName = strlen($originalName) > 20 ? substr($originalName, 0, 10) . '...' : $originalName;
+                                        ?>
+                                        <div class="d-flex align-items-center justify-content-between mb-1">
+                                            <h6 class="mb-0" style="font-size: 0.8rem; line-height: 1.1; word-wrap: break-word; overflow-wrap: break-word; flex-grow: 1;" 
+                                                title="<?= htmlspecialchars($originalName) ?>"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top">
+                                                <?= htmlspecialchars($displayName) ?>
+                                            </h6>
+                                            <span class="badge <?= $badgeClass ?> ms-2" style="font-size: 0.6rem; flex-shrink: 0; font-weight: 500; border-radius: 8px;">
+                                                <?= $fileType ?>
+                                            </span>
+                                        </div>
+                                        <small class="text-muted d-block" style="font-size: 0.65rem; line-height: 1.1;">
                                             <?= number_format($attachment['file_size'] / 1024, 1) ?> KB
-                                            • <?= date('d/m/Y H:i', strtotime($attachment['created_at'])) ?>
+                                        </small>
+                                        <small class="text-muted d-block" style="font-size: 0.65rem; line-height: 1.1;">
+                                            <?= date('d/m/Y H:i', strtotime($attachment['created_at'])) ?>
                                         </small>
                                     </div>
                                 </div>
                                 
-                                <?php if (!empty($attachment['description'])): ?>
-                                <p class="text-muted mb-2 small"><?= htmlspecialchars($attachment['description']) ?></p>
-                                <?php endif; ?>
                                 
-                                <div class="btn-group btn-group-sm w-100" role="group">
-                                    <button class="btn btn-outline-primary" onclick="viewAttachment(<?= $attachment['id'] ?>, '<?= $attachment['file_path'] ?>', '<?= $fileExt ?>')">
+                                <!-- Description section with flex-grow to push buttons down -->
+                                <div class="flex-grow-1">
+                                    <?php if (!empty($attachment['description'])): ?>
+                                    <?php 
+                                    $description = $attachment['description'];
+                                    $shortDescription = strlen($description) > 40 ? substr($description, 0, 37) . '...' : $description;
+                                    ?>
+                                    <p class="text-muted mb-1 small" style="font-size: 0.7rem; line-height: 1.2;"
+                                       title="<?= htmlspecialchars($description) ?>"
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-placement="bottom">
+                                       <?= htmlspecialchars($shortDescription) ?>
+                                    </p>
+                                    <?php endif; ?>
+                                </div>
+                                
+                                <!-- Buttons fixed at bottom -->
+                                <div class="btn-group btn-group-sm w-100 mt-auto" role="group">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="viewAttachment(<?= $attachment['id'] ?>, '<?= $attachment['file_path'] ?>', '<?= $fileExt ?>')" 
+                                            style="font-size: 0.7rem; padding: 0.3rem 0.4rem; flex: 1;">
                                         <i class="bi bi-eye me-1"></i>View
                                     </button>
-                                    <button class="btn btn-outline-success" onclick="downloadAttachment(<?= $attachment['id'] ?>, '<?= $attachment['original_filename'] ?>')">
+                                    <button class="btn btn-outline-success btn-sm" onclick="downloadAttachment(<?= $attachment['id'] ?>, '<?= $attachment['original_filename'] ?>')"
+                                            style="font-size: 0.7rem; padding: 0.3rem 0.4rem; flex: 1;">
                                         <i class="bi bi-download me-1"></i>Download
                                     </button>
-                                    <button class="btn btn-outline-danger" onclick="deleteAttachment(<?= $attachment['id'] ?>)">
+                                    <button class="btn btn-outline-danger btn-sm" onclick="deleteAttachment(<?= $attachment['id'] ?>)"
+                                            style="font-size: 0.7rem; padding: 0.3rem 0.4rem; flex: 1;">
                                         <i class="bi bi-trash me-1"></i>Delete
                                     </button>
                                 </div>
@@ -2463,4 +2564,28 @@ function printLabTests(appointmentId) {
     // Open all lab tests print view for this appointment
     window.open('/print/lab-tests/' + appointmentId, '_blank');
 }
+
+// Initialize tooltips for file attachments
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Add hover effects to attachment cards
+    const attachmentCards = document.querySelectorAll('.attachment-card');
+    attachmentCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+            this.style.transform = 'translateY(-2px)';
+            this.style.transition = 'all 0.2s ease';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.boxShadow = '';
+            this.style.transform = '';
+        });
+    });
+});
 </script>
