@@ -99,7 +99,8 @@ class DoctorController
         ]);
     }
 
-    public function viewPatient($id)
+    // ✅ FIXED: إضافة method showPatient المطلوب
+    public function showPatient($id)
     {
         $user = $this->auth->user();
         $doctorId = $this->getDoctorId($user['id']);
@@ -108,7 +109,7 @@ class DoctorController
         $patient = $this->getPatient($id);
         if (!$patient) {
             http_response_code(404);
-            echo "Patient not found";
+            echo "<h1>Patient not found</h1><p>The requested patient could not be found.</p>";
             return;
         }
         
@@ -146,7 +147,7 @@ class DoctorController
         $appointment = $this->getAppointment($id, $doctorId);
         if (!$appointment) {
             http_response_code(404);
-            echo "Appointment not found";
+            echo "<h1>Appointment not found</h1><p>The requested appointment could not be found.</p>";
             return;
         }
         
@@ -201,47 +202,166 @@ class DoctorController
         ]);
     }
 
-    public function changePassword()
+    public function editConsultation($id)
     {
+        $user = $this->auth->user();
+        $doctorId = $this->getDoctorId($user['id']);
+        
+        // Get appointment details
+        $appointment = $this->getAppointment($id, $doctorId);
+        if (!$appointment) {
+            http_response_code(404);
+            echo "<h1>Appointment not found</h1><p>The requested appointment could not be found.</p>";
+            return;
+        }
+        
+        // Get patient details
+        $patient = $this->getPatient($appointment['patient_id']);
+        
+        // Get consultation notes if exists
+        $consultationNotes = $this->getConsultationNotes($id);
+        
+        $content = $this->view->render('doctor/edit_consultation', [
+            'appointment' => $appointment,
+            'patient' => $patient,
+            'consultationNotes' => $consultationNotes,
+            'doctorId' => $doctorId
+        ]);
+        
+        echo $this->view->render('layouts/main', [
+            'title' => 'Edit Consultation - Doctor Dashboard',
+            'pageTitle' => 'Edit Consultation',
+            'pageSubtitle' => 'Update consultation notes',
+            'content' => $content
+        ]);
+    }
+
+    public function updateConsultation($id)
+    {
+        $user = $this->auth->user();
+        $doctorId = $this->getDoctorId($user['id']);
+        
+        // Verify appointment belongs to this doctor
+        $appointment = $this->getAppointment($id, $doctorId);
+        if (!$appointment) {
+            http_response_code(404);
+            echo "<h1>Appointment not found</h1><p>The requested appointment could not be found.</p>";
+            return;
+        }
+        
         try {
-            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-                throw new \Exception('Invalid request method');
-            }
+            // Update consultation notes
+            $stmt = $this->pdo->prepare("
+                INSERT INTO consultation_notes (appointment_id, chief_complaint, hx_present_illness, 
+                visual_acuity_right, visual_acuity_left, refraction_right, refraction_left, 
+                IOP_right, IOP_left, slit_lamp, fundus, diagnosis, diagnosis_code, plan, 
+                followup_days, created_by) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE 
+                chief_complaint = VALUES(chief_complaint),
+                hx_present_illness = VALUES(hx_present_illness),
+                visual_acuity_right = VALUES(visual_acuity_right),
+                visual_acuity_left = VALUES(visual_acuity_left),
+                refraction_right = VALUES(refraction_right),
+                refraction_left = VALUES(refraction_left),
+                IOP_right = VALUES(IOP_right),
+                IOP_left = VALUES(IOP_left),
+                slit_lamp = VALUES(slit_lamp),
+                fundus = VALUES(fundus),
+                diagnosis = VALUES(diagnosis),
+                diagnosis_code = VALUES(diagnosis_code),
+                plan = VALUES(plan),
+                followup_days = VALUES(followup_days),
+                updated_at = CURRENT_TIMESTAMP
+            ");
             
-            $user = $this->auth->user();
+            $stmt->execute([
+                $id,
+                $_POST['chief_complaint'] ?? '',
+                $_POST['hx_present_illness'] ?? '',
+                $_POST['visual_acuity_right'] ?? '',
+                $_POST['visual_acuity_left'] ?? '',
+                $_POST['refraction_right'] ?? '',
+                $_POST['refraction_left'] ?? '',
+                $_POST['IOP_right'] ?? null,
+                $_POST['IOP_left'] ?? null,
+                $_POST['slit_lamp'] ?? '',
+                $_POST['fundus'] ?? '',
+                $_POST['diagnosis'] ?? '',
+                $_POST['diagnosis_code'] ?? '',
+                $_POST['plan'] ?? '',
+                $_POST['followup_days'] ?? null,
+                $user['id']
+            ]);
             
-            // Validate CSRF token
-            if (!$this->validateCsrfToken()) {
-                throw new \Exception('Invalid CSRF token');
-            }
-            
-            $currentPassword = $_POST['current_password'] ?? '';
-            $newPassword = $_POST['new_password'] ?? '';
-            $confirmPassword = $_POST['confirm_password'] ?? '';
-            
-            // Validate input
-            if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
-                throw new \Exception('All fields are required');
-            }
-            
-            if ($newPassword !== $confirmPassword) {
-                throw new \Exception('New passwords do not match');
-            }
-            
-            // Change password
-            $this->auth->changePassword($user['id'], $currentPassword, $newPassword);
-            
-            // Redirect to login with success message
-            header('Location: /login?message=Password changed successfully. Please login again.');
+            // Redirect back to appointment view
+            header('Location: /doctor/appointments/' . $id . '?success=1');
             exit;
             
         } catch (\Exception $e) {
-            // Redirect back with error
-            header('Location: /doctor/profile?error=' . urlencode($e->getMessage()));
+            error_log("Error updating consultation: " . $e->getMessage());
+            header('Location: /doctor/appointments/' . $id . '/edit?error=' . urlencode($e->getMessage()));
             exit;
         }
     }
 
+    public function changePassword()
+    {
+        $user = $this->auth->user();
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo "Method not allowed";
+            return;
+        }
+        
+        $currentPassword = $_POST['current_password'] ?? '';
+        $newPassword = $_POST['new_password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
+        
+        // Validate input
+        if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
+            header('Location: /doctor/profile?error=All fields are required');
+            exit;
+        }
+        
+        if ($newPassword !== $confirmPassword) {
+            header('Location: /doctor/profile?error=New passwords do not match');
+            exit;
+        }
+        
+        if (strlen($newPassword) < 8) {
+            header('Location: /doctor/profile?error=Password must be at least 8 characters');
+            exit;
+        }
+        
+        try {
+            // Verify current password
+            $stmt = $this->pdo->prepare("SELECT password FROM users WHERE id = ?");
+            $stmt->execute([$user['id']]);
+            $userData = $stmt->fetch();
+            
+            if (!$userData || !password_verify($currentPassword, $userData['password'])) {
+                header('Location: /doctor/profile?error=Current password is incorrect');
+                exit;
+            }
+            
+            // Update password
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+            $stmt = $this->pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
+            $stmt->execute([$hashedPassword, $user['id']]);
+            
+            header('Location: /doctor/profile?success=Password updated successfully');
+            exit;
+            
+        } catch (\Exception $e) {
+            error_log("Error changing password: " . $e->getMessage());
+            header('Location: /doctor/profile?error=Failed to update password');
+            exit;
+        }
+    }
+
+    // Private helper methods
     private function getDoctorId($userId)
     {
         $stmt = $this->pdo->prepare("SELECT id FROM doctors WHERE user_id = ?");
@@ -423,14 +543,6 @@ class DoctorController
         $stmt->execute([$appointmentId]);
         return $stmt->fetchAll();
     }
-
-    private function validateCsrfToken()
-    {
-        if (!isset($_POST['csrf_token']) || !isset($_SESSION['csrf_token'])) {
-            return false;
-        }
-        return hash_equals($_SESSION['csrf_token'], $_POST['csrf_token']);
-    }
     
     private function getAllPatients()
     {
@@ -445,138 +557,6 @@ class DoctorController
         ");
         $stmt->execute();
         return $stmt->fetchAll();
-    }
-
-    public function editConsultation($id)
-    {
-        $userId = $_SESSION['user']['id'] ?? null;
-        if (!$userId) {
-            http_response_code(403);
-            echo "Access denied";
-            return;
-        }
-
-        // Get doctor ID from doctors table
-        $stmt = $this->pdo->prepare("SELECT id FROM doctors WHERE user_id = ?");
-        $stmt->execute([$userId]);
-        $doctor = $stmt->fetch();
-        
-        if (!$doctor) {
-            http_response_code(403);
-            echo "Doctor not found";
-            return;
-        }
-
-        $appointment = $this->getAppointment($id, $doctor['id']);
-        if (!$appointment) {
-            http_response_code(404);
-            echo "Appointment not found";
-            return;
-        }
-
-        $consultationNotes = $this->getConsultationNotes($id);
-        $patient = $this->getPatient($appointment['patient_id']);
-
-        echo $this->view->render('layouts/main', [
-            'title' => 'Edit Consultation - ' . ($appointment['patient_name'] ?? ''),
-            'content' => $this->view->render('doctor/edit_consultation', [
-                'appointment' => $appointment,
-                'patient' => $patient,
-                'consultation' => $consultationNotes
-            ], false)
-        ]);
-    }
-
-    public function updateConsultation($id)
-    {
-        $userId = $_SESSION['user']['id'] ?? null;
-        if (!$userId) {
-            http_response_code(403);
-            echo json_encode(['success' => false, 'message' => 'Access denied']);
-            return;
-        }
-
-        // Get doctor ID from doctors table
-        $stmt = $this->pdo->prepare("SELECT id FROM doctors WHERE user_id = ?");
-        $stmt->execute([$userId]);
-        $doctor = $stmt->fetch();
-        
-        if (!$doctor) {
-            http_response_code(403);
-            echo json_encode(['success' => false, 'message' => 'Access denied']);
-            return;
-        }
-
-        $appointment = $this->getAppointment($id, $doctor['id']);
-        if (!$appointment) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'message' => 'Appointment not found']);
-            return;
-        }
-
-        $data = [
-            'chief_complaint' => $_POST['chief_complaint'] ?? '',
-            'hx_present_illness' => $_POST['hx_present_illness'] ?? '',
-            'visual_acuity_right' => $_POST['visual_acuity_right'] ?? '',
-            'visual_acuity_left' => $_POST['visual_acuity_left'] ?? '',
-            'refraction_right' => $_POST['refraction_right'] ?? '',
-            'refraction_left' => $_POST['refraction_left'] ?? '',
-            'IOP_right' => !empty($_POST['IOP_right']) ? floatval($_POST['IOP_right']) : null,
-            'IOP_left' => !empty($_POST['IOP_left']) ? floatval($_POST['IOP_left']) : null,
-            'slit_lamp' => $_POST['slit_lamp'] ?? '',
-            'fundus' => $_POST['fundus'] ?? '',
-            'diagnosis' => $_POST['diagnosis'] ?? '',
-            'diagnosis_code' => $_POST['diagnosis_code'] ?? '',
-            'plan' => $_POST['plan'] ?? '',
-            'followup_days' => !empty($_POST['followup_days']) ? intval($_POST['followup_days']) : null,
-        ];
-
-        try {
-            $existingNotes = $this->getConsultationNotes($id);
-            
-            if ($existingNotes) {
-                // Update existing consultation notes
-                $stmt = $this->pdo->prepare("
-                    UPDATE consultation_notes SET
-                        chief_complaint = ?, hx_present_illness = ?, visual_acuity_right = ?,
-                        visual_acuity_left = ?, refraction_right = ?, refraction_left = ?,
-                        IOP_right = ?, IOP_left = ?, slit_lamp = ?, fundus = ?,
-                        diagnosis = ?, diagnosis_code = ?, plan = ?, followup_days = ?,
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE appointment_id = ?
-                ");
-                $stmt->execute([
-                    $data['chief_complaint'], $data['hx_present_illness'], $data['visual_acuity_right'],
-                    $data['visual_acuity_left'], $data['refraction_right'], $data['refraction_left'],
-                    $data['IOP_right'], $data['IOP_left'], $data['slit_lamp'], $data['fundus'],
-                    $data['diagnosis'], $data['diagnosis_code'], $data['plan'], $data['followup_days'],
-                    $id
-                ]);
-            } else {
-                // Create new consultation notes
-                $stmt = $this->pdo->prepare("
-                    INSERT INTO consultation_notes (
-                        appointment_id, chief_complaint, hx_present_illness, visual_acuity_right,
-                        visual_acuity_left, refraction_right, refraction_left, IOP_right, IOP_left,
-                        slit_lamp, fundus, diagnosis, diagnosis_code, plan, followup_days, created_by
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ");
-                $stmt->execute([
-                    $id, $data['chief_complaint'], $data['hx_present_illness'], $data['visual_acuity_right'],
-                    $data['visual_acuity_left'], $data['refraction_right'], $data['refraction_left'],
-                    $data['IOP_right'], $data['IOP_left'], $data['slit_lamp'], $data['fundus'],
-                    $data['diagnosis'], $data['diagnosis_code'], $data['plan'], $data['followup_days'],
-                    $_SESSION['user']['id']
-                ]);
-            }
-
-            header('Location: /doctor/appointments/' . $id);
-            exit;
-
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
-        }
     }
     
     private function getPatientInfo($patientId)
@@ -596,5 +576,4 @@ class DoctorController
         
         return $patient;
     }
-
 }

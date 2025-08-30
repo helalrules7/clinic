@@ -1,38 +1,3 @@
-#!/bin/bash
-
-echo "🚀 إعداد roaya.ahmedhelal.dev مع قاعدة البيانات الصحيحة"
-echo "================================================="
-
-# تحديد المسار الصحيح للسيرفر
-TARGET_PATH="/home/AhmedHelal/web/roaya.ahmedhelal.dev/public_html"
-
-echo "📁 إنشاء ملف .env بإعدادات قاعدة البيانات الصحيحة..."
-
-cat > "$TARGET_PATH/.env" << 'ENV_END'
-APP_ENV=production
-APP_DEBUG=false
-
-DB_HOST=localhost
-DB_NAME=AhmedHelal_roaya
-DB_USER=AhmedHelal_roaya
-DB_PASS=Carmen@1230
-
-SESSION_SECRET=roaya-session-secret-key-2024-32-chars
-CSRF_SECRET=roaya-csrf-secret-key-2024-32-chars
-
-APP_KEY=roaya-clinic-system-2024-secret-key-32
-TIMEZONE=Africa/Cairo
-
-LOG_LEVEL=info
-LOG_FILE=storage/logs/app.log
-ENV_END
-
-echo "✅ تم إنشاء ملف .env"
-
-echo ""
-echo "📁 إنشاء index.php في الجذر..."
-
-cat > "$TARGET_PATH/index.php" << 'INDEX_END'
 <?php
 /**
  * Roaya Clinic Management System
@@ -154,8 +119,8 @@ try {
     $router->get('/print/invoice/{id}', 'PrintController@invoice');
     $router->get('/print/appointment/{id}', 'PrintController@appointmentReport');
     
-    // Handle the request
-    $router->handle();
+    // Handle the request - استخدم dispatch() بدلاً من handle()
+    $router->dispatch();
     
 } catch (Exception $e) {
     error_log("Application Error: " . $e->getMessage());
@@ -170,84 +135,3 @@ try {
         echo "<p>Please try again later.</p>";
     }
 }
-INDEX_END
-
-echo "✅ تم إنشاء index.php"
-
-echo ""
-echo "📁 إنشاء .htaccess..."
-
-cat > "$TARGET_PATH/.htaccess" << 'HTACCESS_END'
-RewriteEngine On
-
-# Handle Authorization Header
-RewriteCond %{HTTP:Authorization} .
-RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-
-# Send ALL requests to index.php
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^(.*)$ index.php [L,QSA]
-
-# Security Headers
-<IfModule mod_headers.c>
-    Header always set X-Content-Type-Options nosniff
-    Header always set X-Frame-Options DENY
-    Header always set X-XSS-Protection "1; mode=block"
-    Header always set Referrer-Policy "strict-origin-when-cross-origin"
-</IfModule>
-
-# Prevent access to sensitive files
-<Files ".env">
-    Order allow,deny
-    Deny from all
-</Files>
-
-<Files "composer.json">
-    Order allow,deny
-    Deny from all
-</Files>
-
-<Files "composer.lock">
-    Order allow,deny
-    Deny from all
-</Files>
-HTACCESS_END
-
-echo "✅ تم إنشاء .htaccess"
-
-echo ""
-echo "🔒 ضبط الصلاحيات..."
-
-chmod 755 "$TARGET_PATH"
-chmod 644 "$TARGET_PATH/index.php"
-chmod 644 "$TARGET_PATH/.htaccess"
-chmod 600 "$TARGET_PATH/.env"
-
-# إنشاء مجلدات storage إذا لم تكن موجودة
-mkdir -p "$TARGET_PATH/storage/logs"
-mkdir -p "$TARGET_PATH/storage/uploads"
-mkdir -p "$TARGET_PATH/storage/exports"
-chmod -R 755 "$TARGET_PATH/storage"
-
-echo "✅ تم ضبط الصلاحيات"
-
-echo ""
-echo "🎉 تم الانتهاء من الإعداد!"
-echo "========================="
-echo ""
-echo "📋 ملخص الإعدادات:"
-echo "- المسار: $TARGET_PATH"
-echo "- قاعدة البيانات: AhmedHelal_roaya"
-echo "- المستخدم: AhmedHelal_roaya"
-echo "- البيئة: production"
-echo ""
-echo "🔗 اختبر الموقع:"
-echo "- https://roaya.ahmedhelal.dev/"
-echo "- https://roaya.ahmedhelal.dev/login"
-echo ""
-echo "📊 إذا لم يعمل، تحقق من:"
-echo "- tail -f /home/AhmedHelal/web/roaya.ahmedhelal.dev/logs/roaya.ahmedhelal.dev.error.log"
-echo "- وجود جميع ملفات المشروع (app/, vendor/, sql/)"
-echo "- إعدادات قاعدة البيانات"
-echo ""

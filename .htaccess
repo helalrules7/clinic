@@ -1,15 +1,27 @@
 RewriteEngine On
 
-# Redirect /clinic/public to root if DocumentRoot is /var/www/html/clinic/public
-RewriteCond %{HTTP_HOST} ^192\.168\.40\.128$
-RewriteCond %{REQUEST_URI} ^/clinic/public/(.*)$
-RewriteRule ^clinic/public/(.*)$ /$1 [R=301,L]
+# Redirect all requests to public/index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ public/index.php [QSA,L]
 
-# Handle requests to /clinic/public when not using alias
-RewriteCond %{REQUEST_URI} ^/clinic/public/
-RewriteCond %{DOCUMENT_ROOT}/clinic/public%{REQUEST_URI} -f [OR]
-RewriteCond %{DOCUMENT_ROOT}/clinic/public%{REQUEST_URI} -d
-RewriteRule ^clinic/public/(.*)$ /clinic/public/$1 [L]
+# Security: Block access to sensitive files
+<Files ".env">
+    Require all denied
+</Files>
 
-# Redirect /clinic to login page
-RewriteRule ^clinic/?$ /login [R=302,L]
+<Files "composer.*">
+    Require all denied
+</Files>
+
+<Files "*.md">
+    Require all denied
+</Files>
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
