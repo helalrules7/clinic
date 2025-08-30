@@ -270,6 +270,8 @@ function loadCalendar() {
                 renderCalendar(data.data);
                 updateDateDisplay();
                 updateLastUpdate();
+                // Initialize tooltips after calendar is loaded
+                initializeTooltips();
             } else {
                 console.error('Error loading calendar:', data.error);
             }
@@ -394,9 +396,61 @@ function renderAppointmentSlot(appointment) {
     const statusClass = getStatusBadgeClass(appointment.status);
     const visitTypeClass = getVisitTypeBadgeClass(appointment.visit_type);
     
+    // Create detailed tooltip content
+    const tooltipContent = `
+        <div class="appointment-tooltip">
+            <div class="tooltip-header">
+                <strong>Appointment Details</strong>
+            </div>
+            <div class="tooltip-body">
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Patient:</span>
+                    <span class="tooltip-value">${appointment.patient_name}</span>
+                </div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Phone:</span>
+                    <span class="tooltip-value">${appointment.phone || 'N/A'}</span>
+                </div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Age:</span>
+                    <span class="tooltip-value">${calculateAge(appointment.dob) || 'N/A'}</span>
+                </div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Visit Type:</span>
+                    <span class="tooltip-value">${appointment.visit_type}</span>
+                </div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Time:</span>
+                    <span class="tooltip-value">${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}</span>
+                </div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Status:</span>
+                    <span class="tooltip-value">${appointment.status}</span>
+                </div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Source:</span>
+                    <span class="tooltip-value">${appointment.source || 'Unavailable'}</span>
+                </div>
+                ${appointment.notes ? `
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Notes:</span>
+                    <span class="tooltip-value">${appointment.notes}</span>
+                </div>
+                ` : ''}
+            </div>
+            <div class="tooltip-footer">
+                <small>Click to navigate to appointment page</small>
+            </div>
+        </div>
+    `.replace(/\n\s+/g, ' ').trim();
+    
     return `
         <div class="appointment-card ${appointment.status.toLowerCase()}" 
-             onclick="showAppointmentDetails(${appointment.id})">
+             onclick="navigateToAppointment(${appointment.id})"
+             data-bs-toggle="tooltip" 
+             data-bs-placement="right" 
+             data-bs-html="true"
+             data-bs-title="${tooltipContent.replace(/"/g, '&quot;')}">
             <div class="appointment-header">
                 <div class="appointment-info">
                     <div class="info-line"><span class="label">Patient:</span> ${appointment.patient_name}</div>
@@ -428,6 +482,56 @@ function generateTimeSlots() {
     }
     
     return slots;
+}
+
+function navigateToAppointment(appointmentId) {
+    // Navigate to appointment page
+    window.location.href = `/doctor/appointments/${appointmentId}`;
+}
+
+function calculateAge(dob) {
+    if (!dob) return null;
+    
+    try {
+        const birthDate = new Date(dob);
+        const today = new Date();
+        
+        if (isNaN(birthDate.getTime())) return null;
+        
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        
+        return age > 0 ? `${age} years` : null;
+    } catch (error) {
+        console.error('Error calculating age:', error);
+        return null;
+    }
+}
+
+function initializeTooltips() {
+    // Dispose existing tooltips first
+    const existingTooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    existingTooltips.forEach(element => {
+        const tooltip = bootstrap.Tooltip.getInstance(element);
+        if (tooltip) {
+            tooltip.dispose();
+        }
+    });
+    
+    // Initialize new tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl, {
+            html: true,
+            trigger: 'hover focus',
+            delay: { show: 300, hide: 100 },
+            container: 'body'
+        });
+    });
 }
 
 function showAppointmentDetails(appointmentId) {
@@ -1329,5 +1433,69 @@ input[readonly] {
 
 .preselected-field:focus {
     box-shadow: 0 0 0 0.2rem rgba(var(--success-rgb), 0.25) !important;
+}
+
+/* Custom Tooltip Styling */
+.tooltip {
+    font-size: 0.875rem;
+    max-width: 350px;
+}
+
+.tooltip-inner {
+    background-color: #2c3e50;
+    color: #ffffff;
+    border-radius: 8px;
+    padding: 12px 16px;
+    text-align: left;
+    direction: ltr;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.appointment-tooltip {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.appointment-tooltip .tooltip-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+}
+
+.appointment-tooltip .tooltip-body {
+    line-height: 1.5;
+}
+
+.appointment-tooltip .tooltip-row {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 6px;
+    align-items: flex-start;
+}
+
+.appointment-tooltip .tooltip-label {
+    font-weight: 600;
+    color: #bdc3c7;
+    min-width: 80px;
+    margin-right: 8px;
+}
+
+.appointment-tooltip .tooltip-value {
+    color: #ffffff;
+    text-align: left;
+    flex: 1;
+    word-break: break-word;
+}
+
+.appointment-tooltip .tooltip-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding-top: 8px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.appointment-tooltip .tooltip-footer small {
+    color: #95a5a6;
+    font-style: italic;
 }
 </style>
