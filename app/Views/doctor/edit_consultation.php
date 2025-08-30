@@ -84,7 +84,7 @@
                     </div>
                 <?php endif; ?>
 
-                <form method="POST" action="/doctor/appointments/<?= $appointment['id'] ?? '' ?>/edit">
+                <form method="POST" action="/doctor/appointments/<?= $appointment['id'] ?? '' ?>/consultation" id="consultationForm">
                     <!-- CSRF Token -->
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
                     
@@ -278,5 +278,23 @@
             e.preventDefault();
             alert('Please fill in required fields: Chief Complaint and Diagnosis');
         }
+    });
+
+    // Auto-detect correct form action based on available routes
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('consultationForm');
+        const appointmentId = '<?= $appointment['id'] ?? '' ?>';
+        
+        // Test if /edit endpoint exists, otherwise use /consultation
+        fetch(`/doctor/appointments/${appointmentId}/edit`, {
+            method: 'HEAD'
+        }).then(response => {
+            if (response.ok || response.status === 405) { // 405 means method not allowed but route exists
+                form.action = `/doctor/appointments/${appointmentId}/edit`;
+            }
+            // If 404, keep the default /consultation action
+        }).catch(() => {
+            // Keep default /consultation action on error
+        });
     });
 </script>

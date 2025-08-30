@@ -256,7 +256,7 @@ class DoctorController
                 visual_acuity_right, visual_acuity_left, refraction_right, refraction_left, 
                 IOP_right, IOP_left, slit_lamp, fundus, diagnosis, diagnosis_code, plan, 
                 followup_days, created_by) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE 
                 chief_complaint = VALUES(chief_complaint),
                 hx_present_illness = VALUES(hx_present_illness),
@@ -275,22 +275,32 @@ class DoctorController
                 updated_at = CURRENT_TIMESTAMP
             ");
             
+            // Process and validate input data
+            $iopRight = (!empty($_POST['IOP_right']) && is_numeric($_POST['IOP_right'])) ? (float)$_POST['IOP_right'] : null;
+            $iopLeft = (!empty($_POST['IOP_left']) && is_numeric($_POST['IOP_left'])) ? (float)$_POST['IOP_left'] : null;
+            $followupDays = (!empty($_POST['followup_days']) && is_numeric($_POST['followup_days'])) ? (int)$_POST['followup_days'] : null;
+            
+            // Helper function to handle empty strings
+            $processTextField = function($value) {
+                return !empty(trim($value ?? '')) ? trim($value) : null;
+            };
+            
             $stmt->execute([
                 $id,
-                $_POST['chief_complaint'] ?? '',
-                $_POST['hx_present_illness'] ?? '',
-                $_POST['visual_acuity_right'] ?? '',
-                $_POST['visual_acuity_left'] ?? '',
-                $_POST['refraction_right'] ?? '',
-                $_POST['refraction_left'] ?? '',
-                $_POST['IOP_right'] ?? null,
-                $_POST['IOP_left'] ?? null,
-                $_POST['slit_lamp'] ?? '',
-                $_POST['fundus'] ?? '',
-                $_POST['diagnosis'] ?? '',
-                $_POST['diagnosis_code'] ?? '',
-                $_POST['plan'] ?? '',
-                $_POST['followup_days'] ?? null,
+                $processTextField($_POST['chief_complaint']),
+                $processTextField($_POST['hx_present_illness']),
+                $processTextField($_POST['visual_acuity_right']),
+                $processTextField($_POST['visual_acuity_left']),
+                $processTextField($_POST['refraction_right']),
+                $processTextField($_POST['refraction_left']),
+                $iopRight,
+                $iopLeft,
+                $processTextField($_POST['slit_lamp']),
+                $processTextField($_POST['fundus']),
+                $processTextField($_POST['diagnosis']),
+                $processTextField($_POST['diagnosis_code']),
+                $processTextField($_POST['plan']),
+                $followupDays,
                 $user['id']
             ]);
             
@@ -575,5 +585,11 @@ class DoctorController
         }
         
         return $patient;
+    }
+    
+    public function saveConsultation($id)
+    {
+        // This is an alias for updateConsultation to maintain compatibility with different route configurations
+        return $this->updateConsultation($id);
     }
 }

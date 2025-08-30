@@ -121,9 +121,16 @@
             </p>
         </div>
         <div class="col-md-4 text-end">
-            <span class="status-badge bg-<?= $this->getStatusColor($appointment['status']) ?>">
-                <?= ucfirst($appointment['status']) ?>
-            </span>
+            <div class="d-flex flex-column align-items-end gap-2">
+                <span class="status-badge bg-<?= $this->getStatusColor($appointment['status']) ?>">
+                    <?= ucfirst($appointment['status']) ?>
+                </span>
+                <?php if ($appointment['status'] !== 'completed'): ?>
+                <button class="btn btn-light btn-sm" onclick="markCompleted(<?= $appointment['id'] ?>)">
+                    <i class="bi bi-check-circle me-1"></i> Mark as Completed
+                </button>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 </div>
@@ -796,9 +803,7 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <button class="btn btn-outline-primary" onclick="markCompleted(<?= $appointment['id'] ?>)">
-                        <i class="bi bi-check-circle me-2"></i>Mark as Completed
-                    </button>
+
                     <button class="btn btn-outline-success" onclick="scheduleFollowUp(<?= $appointment['id'] ?>)">
                         <i class="bi bi-calendar-plus me-2"></i>Schedule Follow-up
                     </button>
@@ -848,15 +853,88 @@ function addConsultationNotes(appointmentId) {
 }
 
 function markCompleted(appointmentId) {
-    if (confirm('Mark this appointment as completed?')) {
-        // API call to update status
-        alert('Mark completed functionality will be implemented soon');
-    }
+    // Show confirmation modal instead of simple confirm
+    showCompletionConfirmModal(appointmentId);
+}
+
+function confirmMarkCompleted(appointmentId) {
+    // Hide the modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('completionConfirmModal'));
+    modal.hide();
+    
+    // Show loading state
+    const button = document.querySelector(`button[onclick="markCompleted(${appointmentId})"]`);
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>جاري التحديث...';
+    button.disabled = true;
+    
+    // API call to update status
+    fetch(`/api/appointments/${appointmentId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+            status: 'Completed'
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.ok) {
+            // Update UI to show completed status
+            const statusBadge = document.querySelector('.status-badge');
+            statusBadge.className = 'status-badge bg-success';
+            statusBadge.textContent = 'Completed';
+            
+            // Hide the complete button
+            button.style.display = 'none';
+            
+            // Show success message
+            showNotification('Appointment marked as completed successfully!', 'success');
+        } else {
+            throw new Error(data.error || data.message || 'Error updating appointment');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error updating appointment: ' + error.message, 'error');
+        
+        // Restore button state
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
 }
 
 function scheduleFollowUp(appointmentId) {
     // Show follow-up scheduling modal
     alert('Schedule follow-up functionality will be implemented soon');
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Add to body
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
 }
 
 function viewPatient(patientId) {
@@ -2588,4 +2666,57 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
-</script>
+
+// Show completion confirmation modal
+function showCompletionConfirmModal(appointmentId) {
+    const modalHtml = `
+        <div class="modal fade" id="completionConfirmModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">
+                            <i class="bi bi-check-circle me-2"></i>Confirm Appointment Completion
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <div class="mb-4">
+                            <i class="bi bi-question-circle-fill text-warning" style="font-size: 4rem;"></i>
+                        </div>
+                        <h6 class="mb-3">Are you sure you want to mark this appointment as completed?</h6>
+                        <p class="text-muted mb-0">
+                            This will update the appointment status to "completed" and cannot be undone.
+                        </p>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-1"></i>Cancel
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="confirmMarkCompleted(${appointmentId})">
+                            <i class="bi bi-check-circle me-1"></i>Confirm Completion
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('completionConfirmModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('completionConfirmModal'));
+    modal.show();
+    
+    // Clean up modal after hide
+    document.getElementById('completionConfirmModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+    </script>
