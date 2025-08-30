@@ -154,7 +154,7 @@
                 <span class="status-badge bg-<?= $this->getStatusColor($appointment['status']) ?>">
                     <?= ucfirst($appointment['status']) ?>
                 </span>
-                <?php if ($appointment['status'] !== 'completed'): ?>
+                <?php if ($appointment['status'] !== 'Completed'): ?>
                 <button class="btn btn-light btn-sm" onclick="markCompleted(<?= $appointment['id'] ?>)">
                     <i class="bi bi-check-circle me-1"></i> Mark as Completed
                 </button>

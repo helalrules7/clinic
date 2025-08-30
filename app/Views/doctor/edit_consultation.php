@@ -48,8 +48,8 @@
                         <p class="mb-1"><strong>Date:</strong> <?= htmlspecialchars($appointment['date'] ?? '') ?></p>
                         <p class="mb-1"><strong>Time:</strong> <?= htmlspecialchars($appointment['start_time'] ?? '') ?> - <?= htmlspecialchars($appointment['end_time'] ?? '') ?></p>
                         <p class="mb-1"><strong>Status:</strong> 
-                            <span class="badge bg-<?= $appointment['status'] === 'completed' ? 'success' : ($appointment['status'] === 'cancelled' ? 'danger' : 'warning') ?>">
-                                <?= htmlspecialchars($appointment['status'] === 'completed' ? 'Completed' : ($appointment['status'] === 'cancelled' ? 'Cancelled' : 'Confirmed')) ?>
+                            <span class="badge bg-<?= $appointment['status'] === 'Completed' ? 'success' : ($appointment['status'] === 'Cancelled' ? 'danger' : 'warning') ?>">
+                                <?= htmlspecialchars($appointment['status'] === 'Completed' ? 'Completed' : ($appointment['status'] === 'Cancelled' ? 'Cancelled' : 'Confirmed')) ?>
                             </span>
                         </p>
                     </div>

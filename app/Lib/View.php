@@ -185,6 +185,13 @@ class View
     public function getStatusColor($status)
     {
         $colors = [
+            'Booked' => 'primary',
+            'CheckedIn' => 'info', 
+            'InProgress' => 'warning',
+            'Completed' => 'success',
+            'Cancelled' => 'danger',
+            'NoShow' => 'secondary',
+            'Rescheduled' => 'info',
             'scheduled' => 'primary',
             'confirmed' => 'info',
             'in_progress' => 'warning',
