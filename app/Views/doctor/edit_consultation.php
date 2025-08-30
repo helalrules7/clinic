@@ -59,6 +59,50 @@
     </div>
 </div>
 
+<!-- Previous Consultation Notes -->
+<?php if (!empty($consultationNotes) && count($consultationNotes) > 1): ?>
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-clock-history"></i>
+                    Previous Consultation Notes
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <?php foreach (array_slice($consultationNotes, 1) as $note): ?>
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-secondary">
+                            <div class="card-header bg-light">
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar me-1"></i>
+                                    <?= date('M j, Y \a\t g:i A', strtotime($note['created_at'])) ?>
+                                </small>
+                                <a href="/doctor/appointments/<?= $appointment['id'] ?>/edit?note_id=<?= $note['id'] ?>" 
+                                   class="btn btn-sm btn-outline-primary float-end">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </a>
+                            </div>
+                            <div class="card-body">
+                                <?php if (!empty($note['chief_complaint'])): ?>
+                                <p><strong>Chief Complaint:</strong> <?= htmlspecialchars(substr($note['chief_complaint'], 0, 100)) ?><?= strlen($note['chief_complaint']) > 100 ? '...' : '' ?></p>
+                                <?php endif; ?>
+                                <?php if (!empty($note['diagnosis'])): ?>
+                                <p><strong>Diagnosis:</strong> <?= htmlspecialchars(substr($note['diagnosis'], 0, 100)) ?><?= strlen($note['diagnosis']) > 100 ? '...' : '' ?></p>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Edit Consultation Form -->
 <div class="row">
     <div class="col-12">
@@ -84,9 +128,33 @@
                     </div>
                 <?php endif; ?>
 
-                <form method="POST" action="/doctor/appointments/<?= $appointment['id'] ?? '' ?>/consultation" id="consultationForm">
+                <?php 
+                // Get the latest consultation note for editing, or prepare for new one
+                $consultation = !empty($consultationNotes) ? $consultationNotes[0] : [];
+                $isEditing = !empty($consultation);
+                ?>
+                
+                <form method="POST" action="/doctor/appointments/<?= $appointment['id'] ?? '' ?>/edit" id="consultationForm">
                     <!-- CSRF Token -->
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                    
+                    <?php if ($isEditing): ?>
+                    <!-- Note ID for updating existing note -->
+                    <input type="hidden" name="note_id" value="<?= $consultation['id'] ?>">
+                    
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        You are editing an existing consultation note from <?= date('M j, Y \a\t g:i A', strtotime($consultation['created_at'])) ?>.
+                        <a href="/doctor/appointments/<?= $appointment['id'] ?>/edit/new" class="btn btn-sm btn-outline-primary ms-2">
+                            <i class="bi bi-plus me-1"></i>Add New Note Instead
+                        </a>
+                    </div>
+                    <?php else: ?>
+                    <div class="alert alert-success mb-3">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Creating a new consultation note for this appointment.
+                    </div>
+                    <?php endif; ?>
                     
                     <!-- Chief Complaint -->
                     <div class="mb-3">
@@ -280,21 +348,5 @@
         }
     });
 
-    // Auto-detect correct form action based on available routes
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('consultationForm');
-        const appointmentId = '<?= $appointment['id'] ?? '' ?>';
-        
-        // Test if /edit endpoint exists, otherwise use /consultation
-        fetch(`/doctor/appointments/${appointmentId}/edit`, {
-            method: 'HEAD'
-        }).then(response => {
-            if (response.ok || response.status === 405) { // 405 means method not allowed but route exists
-                form.action = `/doctor/appointments/${appointmentId}/edit`;
-            }
-            // If 404, keep the default /consultation action
-        }).catch(() => {
-            // Keep default /consultation action on error
-        });
-    });
+
 </script>

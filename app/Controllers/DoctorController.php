@@ -221,6 +221,26 @@ class DoctorController
         // Get consultation notes if exists
         $consultationNotes = $this->getConsultationNotes($id);
         
+        // Check if editing specific note
+        $noteId = $_GET['note_id'] ?? null;
+        if ($noteId && !empty($consultationNotes)) {
+            // Find the specific note and move it to the front
+            foreach ($consultationNotes as $index => $note) {
+                if ($note['id'] == $noteId) {
+                    // Move this note to the front
+                    $selectedNote = $consultationNotes[$index];
+                    unset($consultationNotes[$index]);
+                    array_unshift($consultationNotes, $selectedNote);
+                    break;
+                }
+            }
+        }
+        
+        // Generate CSRF token
+        if (!isset($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        
         $content = $this->view->render('doctor/edit_consultation', [
             'appointment' => $appointment,
             'patient' => $patient,
@@ -232,6 +252,45 @@ class DoctorController
             'title' => 'Edit Consultation - Doctor Dashboard',
             'pageTitle' => 'Edit Consultation',
             'pageSubtitle' => 'Update consultation notes',
+            'content' => $content
+        ]);
+    }
+
+    public function newConsultation($id)
+    {
+        $user = $this->auth->user();
+        $doctorId = $this->getDoctorId($user['id']);
+        
+        // Get appointment details
+        $appointment = $this->getAppointment($id, $doctorId);
+        if (!$appointment) {
+            http_response_code(404);
+            echo "<h1>Appointment not found</h1><p>The requested appointment could not be found.</p>";
+            return;
+        }
+        
+        // Get patient details
+        $patient = $this->getPatient($appointment['patient_id']);
+        
+        // Force empty consultation notes for new note
+        $consultationNotes = [];
+        
+        // Generate CSRF token
+        if (!isset($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        
+        $content = $this->view->render('doctor/edit_consultation', [
+            'appointment' => $appointment,
+            'patient' => $patient,
+            'consultationNotes' => $consultationNotes,
+            'doctorId' => $doctorId
+        ]);
+        
+        echo $this->view->render('layouts/main', [
+            'title' => 'New Consultation - Doctor Dashboard',
+            'pageTitle' => 'New Consultation',
+            'pageSubtitle' => 'Add new consultation notes',
             'content' => $content
         ]);
     }
@@ -249,31 +308,36 @@ class DoctorController
             return;
         }
         
+        // CSRF Protection
+        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
+            http_response_code(403);
+            header('Location: /doctor/appointments/' . $id . '/edit?error=' . urlencode('Invalid CSRF token'));
+            exit;
+        }
+        
         try {
-            // Update consultation notes
-            $stmt = $this->pdo->prepare("
-                INSERT INTO consultation_notes (appointment_id, chief_complaint, hx_present_illness, 
-                visual_acuity_right, visual_acuity_left, refraction_right, refraction_left, 
-                IOP_right, IOP_left, slit_lamp, fundus, diagnosis, diagnosis_code, plan, 
-                followup_days, created_by) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE 
-                chief_complaint = VALUES(chief_complaint),
-                hx_present_illness = VALUES(hx_present_illness),
-                visual_acuity_right = VALUES(visual_acuity_right),
-                visual_acuity_left = VALUES(visual_acuity_left),
-                refraction_right = VALUES(refraction_right),
-                refraction_left = VALUES(refraction_left),
-                IOP_right = VALUES(IOP_right),
-                IOP_left = VALUES(IOP_left),
-                slit_lamp = VALUES(slit_lamp),
-                fundus = VALUES(fundus),
-                diagnosis = VALUES(diagnosis),
-                diagnosis_code = VALUES(diagnosis_code),
-                plan = VALUES(plan),
-                followup_days = VALUES(followup_days),
-                updated_at = CURRENT_TIMESTAMP
-            ");
+            // Check if we're updating existing note or creating new one
+            $noteId = $_POST['note_id'] ?? null;
+            
+            if ($noteId) {
+                // Update existing consultation note
+                $stmt = $this->pdo->prepare("
+                    UPDATE consultation_notes SET 
+                    chief_complaint = ?, hx_present_illness = ?, visual_acuity_right = ?, visual_acuity_left = ?,
+                    refraction_right = ?, refraction_left = ?, IOP_right = ?, IOP_left = ?, slit_lamp = ?,
+                    fundus = ?, diagnosis = ?, diagnosis_code = ?, plan = ?, followup_days = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ? AND appointment_id = ?
+                ");
+            } else {
+                // Create new consultation note
+                $stmt = $this->pdo->prepare("
+                    INSERT INTO consultation_notes (appointment_id, chief_complaint, hx_present_illness, 
+                    visual_acuity_right, visual_acuity_left, refraction_right, refraction_left, 
+                    IOP_right, IOP_left, slit_lamp, fundus, diagnosis, diagnosis_code, plan, 
+                    followup_days, created_by) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ");
+            }
             
             // Process and validate input data
             $iopRight = (!empty($_POST['IOP_right']) && is_numeric($_POST['IOP_right'])) ? (float)$_POST['IOP_right'] : null;
@@ -285,31 +349,55 @@ class DoctorController
                 return !empty(trim($value ?? '')) ? trim($value) : null;
             };
             
-            $stmt->execute([
-                $id,
-                $processTextField($_POST['chief_complaint']),
-                $processTextField($_POST['hx_present_illness']),
-                $processTextField($_POST['visual_acuity_right']),
-                $processTextField($_POST['visual_acuity_left']),
-                $processTextField($_POST['refraction_right']),
-                $processTextField($_POST['refraction_left']),
-                $iopRight,
-                $iopLeft,
-                $processTextField($_POST['slit_lamp']),
-                $processTextField($_POST['fundus']),
-                $processTextField($_POST['diagnosis']),
-                $processTextField($_POST['diagnosis_code']),
-                $processTextField($_POST['plan']),
-                $followupDays,
-                $user['id']
-            ]);
+            if ($noteId) {
+                // Execute UPDATE query
+                $stmt->execute([
+                    $processTextField($_POST['chief_complaint']),
+                    $processTextField($_POST['hx_present_illness']),
+                    $processTextField($_POST['visual_acuity_right']),
+                    $processTextField($_POST['visual_acuity_left']),
+                    $processTextField($_POST['refraction_right']),
+                    $processTextField($_POST['refraction_left']),
+                    $iopRight,
+                    $iopLeft,
+                    $processTextField($_POST['slit_lamp']),
+                    $processTextField($_POST['fundus']),
+                    $processTextField($_POST['diagnosis']),
+                    $processTextField($_POST['diagnosis_code']),
+                    $processTextField($_POST['plan']),
+                    $followupDays,
+                    $noteId,
+                    $id
+                ]);
+            } else {
+                // Execute INSERT query
+                $stmt->execute([
+                    $id,
+                    $processTextField($_POST['chief_complaint']),
+                    $processTextField($_POST['hx_present_illness']),
+                    $processTextField($_POST['visual_acuity_right']),
+                    $processTextField($_POST['visual_acuity_left']),
+                    $processTextField($_POST['refraction_right']),
+                    $processTextField($_POST['refraction_left']),
+                    $iopRight,
+                    $iopLeft,
+                    $processTextField($_POST['slit_lamp']),
+                    $processTextField($_POST['fundus']),
+                    $processTextField($_POST['diagnosis']),
+                    $processTextField($_POST['diagnosis_code']),
+                    $processTextField($_POST['plan']),
+                    $followupDays,
+                    $user['id']
+                ]);
+            }
             
             // Redirect back to appointment view
             header('Location: /doctor/appointments/' . $id . '?success=1');
             exit;
             
         } catch (\Exception $e) {
-            error_log("Error updating consultation: " . $e->getMessage());
+            error_log("Error updating consultation for appointment $id: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             header('Location: /doctor/appointments/' . $id . '/edit?error=' . urlencode($e->getMessage()));
             exit;
         }
@@ -508,10 +596,7 @@ class DoctorController
             SELECT * FROM consultation_notes WHERE appointment_id = ? ORDER BY created_at DESC
         ");
         $stmt->execute([$appointmentId]);
-        $result = $stmt->fetch();
-        
-        // Return as array for consistency with view template  
-        return $result ? [$result] : [];
+        return $stmt->fetchAll();
     }
 
     private function getMedicationPrescriptions($appointmentId)

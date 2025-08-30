@@ -70,21 +70,31 @@ try {
     $router->get('/doctor/patients/{id}', 'DoctorController@showPatient');
     $router->get('/doctor/appointments/{id}', 'DoctorController@viewAppointment');
     $router->get('/doctor/appointments/{id}/edit', 'DoctorController@editConsultation');
+    $router->get('/doctor/appointments/{id}/edit/new', 'DoctorController@newConsultation');
+    $router->post('/doctor/appointments/{id}/edit', 'DoctorController@updateConsultation');
     $router->post('/doctor/appointments/{id}/consultation', 'DoctorController@saveConsultation');
     $router->get('/doctor/profile', 'DoctorController@profile');
-    $router->post('/doctor/profile', 'DoctorController@updateProfile');
+    $router->post('/doctor/profile/change-password', 'DoctorController@changePassword');
     
     $router->get('/secretary/dashboard', 'SecretaryController@dashboard');
     $router->get('/secretary/bookings', 'SecretaryController@bookings');
+    $router->get('/secretary/payments', 'SecretaryController@payments');
+    $router->get('/secretary/patients', 'SecretaryController@patients');
+    $router->get('/secretary/patients/new', 'SecretaryController@newPatient');
+    $router->post('/secretary/patients', 'SecretaryController@createPatient');
+    $router->get('/secretary/patients/{id}', 'SecretaryController@viewPatient');
+    $router->get('/secretary/invoices/{id}', 'SecretaryController@viewInvoice');
     $router->post('/secretary/bookings', 'SecretaryController@createBooking');
     $router->put('/secretary/bookings/{id}', 'SecretaryController@updateBooking');
     $router->delete('/secretary/bookings/{id}', 'SecretaryController@deleteBooking');
     
     // API routes
     $router->get('/api/calendar', 'ApiController@getCalendar');
+    $router->get('/api/appointments/{id}', 'ApiController@getAppointment');
     $router->post('/api/appointments', 'ApiController@createAppointment');
     $router->put('/api/appointments/{id}', 'ApiController@updateAppointment');
     $router->delete('/api/appointments/{id}', 'ApiController@deleteAppointment');
+    $router->post('/api/payments', 'ApiController@createPayment');
     $router->get('/api/patients/search', 'ApiController@searchPatients');
     $router->post('/api/patients', 'ApiController@createPatient');
     $router->get('/api/patients/{id}/timeline', 'ApiController@getPatientTimeline');

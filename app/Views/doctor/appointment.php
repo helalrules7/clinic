@@ -100,6 +100,35 @@
     color: white;
     font-size: 1.5rem;
 }
+
+.consultation-note-header {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.note-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.consultation-section.border-top {
+    border-top: 2px solid #dee2e6 !important;
+}
+
+.collapse {
+    transition: all 0.3s ease;
+}
+
+.collapse.show {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 </style>
 
 <!-- Appointment Header -->
@@ -200,15 +229,58 @@
                     <h5 class="mb-0">
                         <i class="bi bi-clipboard-pulse me-2"></i>
                         Consultation Notes
+                        <span class="badge bg-primary ms-2"><?= count($consultationNotes) ?> Note<?= count($consultationNotes) > 1 ? 's' : '' ?></span>
                     </h5>
-                    <button class="btn btn-sm btn-outline-primary" onclick="editConsultation(<?= $appointment['id'] ?>)">
-                        <i class="bi bi-pencil me-1"></i>Edit Notes
-                    </button>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-outline-primary" onclick="editConsultation(<?= $appointment['id'] ?>)">
+                            <i class="bi bi-pencil me-1"></i>Edit Latest
+                        </button>
+                        <button class="btn btn-outline-success" onclick="window.location.href='/doctor/appointments/<?= $appointment['id'] ?>/edit/new'">
+                            <i class="bi bi-plus me-1"></i>Add New
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
-                <?php foreach ($consultationNotes as $note): ?>
-                    <div class="consultation-section">
+                <?php foreach ($consultationNotes as $index => $note): ?>
+                    <div class="consultation-section <?= $index > 0 ? 'border-top pt-4 mt-4' : '' ?>">
+                        
+                        <!-- Note Header -->
+                        <div class="consultation-note-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-<?= $index === 0 ? 'success' : 'secondary' ?> note-badge me-2">
+                                        <?= $index === 0 ? 'Latest' : 'Note #' . (count($consultationNotes) - $index) ?>
+                                    </span>
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar me-1"></i>
+                                        <?= date('M j, Y \a\t g:i A', strtotime($note['created_at'])) ?>
+                                    </small>
+                                    <?php if (!empty($note['diagnosis'])): ?>
+                                    <span class="badge bg-info ms-2" style="font-size: 0.7rem;">
+                                        <?= htmlspecialchars(substr($note['diagnosis'], 0, 30)) ?><?= strlen($note['diagnosis']) > 30 ? '...' : '' ?>
+                                    </span>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button class="btn btn-outline-primary btn-sm" 
+                                            onclick="window.location.href='/doctor/appointments/<?= $appointment['id'] ?>/edit?note_id=<?= $note['id'] ?>'"
+                                            title="Edit this note">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <?php if ($index > 0): ?>
+                                    <button class="btn btn-outline-info btn-sm" 
+                                            onclick="toggleNoteDetails('note-<?= $note['id'] ?>')"
+                                            title="Show details">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Note Content (Collapsible for older notes) -->
+                        <div id="note-<?= $note['id'] ?>" class="<?= $index > 0 ? 'collapse' : '' ?>">
                         
                         <!-- Chief Complaint -->
                         <?php if (!empty($note['chief_complaint'])): ?>
@@ -350,6 +422,7 @@
                         </div>
                         <?php endif; ?>
 
+                        </div> <!-- End collapsible content -->
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -2666,6 +2739,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// Toggle consultation note details
+function toggleNoteDetails(noteId) {
+    const noteElement = document.getElementById(noteId);
+    const button = document.querySelector(`button[onclick="toggleNoteDetails('${noteId}')"]`);
+    const icon = button.querySelector('i');
+    
+    if (noteElement.classList.contains('show')) {
+        // Hide details
+        noteElement.classList.remove('show');
+        icon.className = 'bi bi-eye';
+        button.title = 'Show details';
+    } else {
+        // Show details
+        noteElement.classList.add('show');
+        icon.className = 'bi bi-eye-slash';
+        button.title = 'Hide details';
+    }
+}
 
 // Show completion confirmation modal
 function showCompletionConfirmModal(appointmentId) {

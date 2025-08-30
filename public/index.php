@@ -49,6 +49,18 @@ try {
     $router->post('/login', 'AuthController@login');
     $router->get('/logout', 'AuthController@logout');
     
+    // Admin routes
+    $router->get('/admin/dashboard', 'AdminController@dashboard');
+    $router->get('/admin/users', 'AdminController@users');
+    $router->get('/admin/reports', 'AdminController@reports');
+    $router->get('/admin/settings', 'AdminController@settings');
+    $router->post('/admin/settings', 'AdminController@updateSettings');
+    $router->get('/admin/users/create', 'AdminController@createUser');
+    $router->post('/admin/users', 'AdminController@storeUser');
+    $router->get('/admin/users/{id}/edit', 'AdminController@editUser');
+    $router->put('/admin/users/{id}', 'AdminController@updateUser');
+    $router->delete('/admin/users/{id}', 'AdminController@deleteUser');
+    
     // Secretary routes
     $router->get('/secretary/dashboard', 'SecretaryController@dashboard');
     $router->get('/secretary/bookings', 'SecretaryController@bookings');
@@ -66,7 +78,9 @@ try {
     $router->get('/doctor/patients/{id}', 'DoctorController@showPatient');
     $router->get('/doctor/appointments/{id}', 'DoctorController@viewAppointment');
     $router->get('/doctor/appointments/{id}/edit', 'DoctorController@editConsultation');
+    $router->get('/doctor/appointments/{id}/edit/new', 'DoctorController@newConsultation');
     $router->post('/doctor/appointments/{id}/edit', 'DoctorController@updateConsultation');
+    $router->post('/doctor/appointments/{id}/consultation', 'DoctorController@saveConsultation');
     $router->get('/doctor/profile', 'DoctorController@profile');
     $router->post('/doctor/profile/change-password', 'DoctorController@changePassword');
     
