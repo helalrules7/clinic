@@ -350,3 +350,189 @@
 
 
 </script>
+
+<style>
+/* CSS Variables for Dark Mode */
+:root {
+    --bg: #f8fafc;
+    --text: #0f172a;
+    --card: #ffffff;
+    --muted: #475569;
+    --accent: #0ea5e9;
+    --success: #10b981;
+    --danger: #ef4444;
+    --border: #e2e8f0;
+    --shadow: rgba(0, 0, 0, 0.1);
+}
+
+.dark {
+    --bg: #0b1220;
+    --text: #f8fafc;
+    --card: #1e293b;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --success: #4ade80;
+    --danger: #fb7185;
+    --border: #334155;
+    --shadow: rgba(0, 0, 0, 0.3);
+}
+
+/* Dark Mode Styles */
+.dark .card {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .card-header {
+    background-color: var(--bg) !important;
+    border-bottom-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .card-body {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+.dark .text-muted {
+    color: var(--muted) !important;
+}
+
+.dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+    color: var(--text) !important;
+}
+
+.dark p {
+    color: var(--text) !important;
+}
+
+.dark small {
+    color: var(--muted) !important;
+}
+
+/* Dark Mode Form Styles */
+.dark .form-control {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .form-control:focus {
+    background-color: var(--card) !important;
+    border-color: var(--accent) !important;
+    color: var(--text) !important;
+    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25) !important;
+}
+
+.dark .form-select {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .form-select:focus {
+    background-color: var(--card) !important;
+    border-color: var(--accent) !important;
+    color: var(--text) !important;
+}
+
+.dark .form-label {
+    color: var(--text) !important;
+}
+
+/* Dark Mode Alert Styles */
+.dark .alert {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .alert-success {
+    background-color: rgba(74, 222, 128, 0.1) !important;
+    border-color: var(--success) !important;
+    color: var(--text) !important;
+}
+
+.dark .alert-danger {
+    background-color: rgba(251, 113, 133, 0.1) !important;
+    border-color: var(--danger) !important;
+    color: var(--text) !important;
+}
+
+.dark .alert-info {
+    background-color: rgba(56, 189, 248, 0.1) !important;
+    border-color: var(--accent) !important;
+    color: var(--text) !important;
+}
+
+/* Breadcrumb Styles */
+.breadcrumb-item a {
+    color: dodgerblue !important;
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    color: #1e90ff !important;
+    text-decoration: underline;
+}
+
+.breadcrumb-item.active {
+    color: var(--text) !important;
+    font-weight: 600;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    color: var(--muted) !important;
+    content: ">" !important;
+}
+
+/* Dark Mode Breadcrumb */
+.dark .breadcrumb-item a {
+    color: dodgerblue !important;
+}
+
+.dark .breadcrumb-item a:hover {
+    color: #87ceeb !important;
+}
+
+.dark .breadcrumb-item.active {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.dark .breadcrumb-item + .breadcrumb-item::before {
+    color: var(--muted) !important;
+}
+
+/* Icon Circle Dark Mode */
+.dark .icon-circle {
+    background-color: var(--accent) !important;
+    color: white !important;
+}
+
+/* Button Dark Mode */
+.dark .btn-secondary {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .btn-secondary:hover {
+    background-color: var(--bg) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .row.mb-3 {
+        margin-bottom: 1rem !important;
+    }
+}
+</style>
+

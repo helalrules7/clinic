@@ -2699,7 +2699,7 @@ class ApiController
 
             // Insert medical history
             $stmt = $this->pdo->prepare("
-                INSERT INTO medical_history_entries_entries (patient_id, condition_name, diagnosis_date, status, notes, category, created_by, created_at) 
+                INSERT INTO medical_history_entries (patient_id, condition_name, diagnosis_date, status, notes, category, created_by, created_at) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
             ");
 
@@ -2719,7 +2719,7 @@ class ApiController
                 // Get the created record
                 $stmt = $this->pdo->prepare("
                     SELECT mh.*, u.name as created_by_name 
-                    FROM medical_history_entries_entries mh 
+                    FROM medical_history_entries mh 
                     LEFT JOIN users u ON mh.created_by = u.id 
                     WHERE mh.id = ?
                 ");
@@ -2874,6 +2874,46 @@ class ApiController
             error_log("Error deleting medical history: " . $e->getMessage());
             error_log("Stack trace: " . $e->getTraceAsString());
             return $this->jsonResponse(['error' => 'Internal server error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function getMedicalHistoryEntry($patientId, $historyId)
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            // Validate patient exists
+            $stmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
+            $stmt->execute([$patientId]);
+            if (!$stmt->fetch()) {
+                return $this->jsonResponse(['error' => 'Patient not found'], 404);
+            }
+
+            // Get medical history entry
+            $stmt = $this->pdo->prepare("
+                SELECT mhe.*, u.name as created_by_name 
+                FROM medical_history_entries mhe 
+                LEFT JOIN users u ON mhe.created_by = u.id 
+                WHERE mhe.id = ? AND mhe.patient_id = ?
+            ");
+            $stmt->execute([$historyId, $patientId]);
+            $entry = $stmt->fetch();
+
+            if (!$entry) {
+                return $this->jsonResponse(['error' => 'Medical history entry not found'], 404);
+            }
+
+            return $this->jsonResponse([
+                'success' => true,
+                'data' => $entry
+            ]);
+
+        } catch (\Exception $e) {
+            error_log("Error fetching medical history entry: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Internal server error'], 500);
         }
     }
 

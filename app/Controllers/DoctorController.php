@@ -684,11 +684,59 @@ class DoctorController
 
     private function getMedicalHistory($patientId)
     {
+        // Get medical history from the main table (old format)
         $stmt = $this->pdo->prepare("
-            SELECT * FROM medical_history WHERE patient_id = ? ORDER BY created_at DESC
+            SELECT *, 'old_format' as entry_type FROM medical_history 
+            WHERE patient_id = ? 
+            ORDER BY created_at DESC
         ");
         $stmt->execute([$patientId]);
-        return $stmt->fetchAll();
+        $oldHistory = $stmt->fetchAll();
+        
+        // Get medical history entries from the new table
+        $stmt = $this->pdo->prepare("
+            SELECT mhe.*, u.name as doctor_name, 'new_format' as entry_type
+            FROM medical_history_entries mhe 
+            LEFT JOIN users u ON mhe.created_by = u.id 
+            WHERE mhe.patient_id = ? 
+            ORDER BY mhe.created_at DESC
+        ");
+        $stmt->execute([$patientId]);
+        $newEntries = $stmt->fetchAll();
+        
+        // Convert new format entries to match old format structure
+        $convertedEntries = [];
+        foreach ($newEntries as $entry) {
+            $converted = [
+                'id' => $entry['id'],
+                'patient_id' => $entry['patient_id'],
+                'allergies' => ($entry['category'] === 'allergy') ? $entry['notes'] : null,
+                'medications' => ($entry['category'] === 'medication') ? $entry['notes'] : null,
+                'systemic_history' => ($entry['category'] === 'general') ? $entry['notes'] : null,
+                'ocular_history' => ($entry['category'] === 'general' && strpos(strtolower($entry['condition_name']), 'eye') !== false) ? $entry['notes'] : null,
+                'prior_surgeries' => ($entry['category'] === 'surgery') ? $entry['notes'] : null,
+                'family_history' => ($entry['category'] === 'family_history') ? $entry['notes'] : null,
+                'created_at' => $entry['created_at'],
+                'updated_at' => $entry['updated_at'],
+                'doctor_name' => $entry['doctor_name'],
+                'condition_name' => $entry['condition_name'],
+                'diagnosis_date' => $entry['diagnosis_date'],
+                'status' => $entry['status'],
+                'category' => $entry['category'],
+                'entry_type' => 'new_format'
+            ];
+            $convertedEntries[] = $converted;
+        }
+        
+        // Merge all entries
+        $allEntries = array_merge($oldHistory, $convertedEntries);
+        
+        // Sort by created_at descending
+        usort($allEntries, function($a, $b) {
+            return strtotime($b['created_at']) - strtotime($a['created_at']);
+        });
+        
+        return $allEntries;
     }
 
     private function getPatientAppointments($patientId, $doctorId)

@@ -91,6 +91,7 @@ try {
 
         // Medical History routes
         $router->post('/api/patients/{id}/medical-history', 'ApiController@createMedicalHistory');
+        $router->get('/api/patients/{id}/medical-history/{historyId}', 'ApiController@getMedicalHistoryEntry');
         $router->put('/api/patients/{id}/medical-history/{historyId}', 'ApiController@updateMedicalHistory');
         $router->delete('/api/patients/{id}/medical-history/{historyId}', 'ApiController@deleteMedicalHistory');
         

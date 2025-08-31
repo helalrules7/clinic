@@ -151,109 +151,295 @@
 </div>
 
 <!-- Medical History -->
-<?php if (!empty($medicalHistory)): ?>
-<div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">
-            <i class="bi bi-clipboard-heart me-2"></i>
-            Medical History
-        </h5>
-        <button class="btn btn-primary btn-sm" 
-                onclick="addMedicalHistory()"
-                data-bs-toggle="tooltip" 
-                data-bs-placement="top" 
-                data-bs-title="Add a new medical history entry for this patient">
-            <i class="bi bi-plus me-1"></i>Add Entry
-        </button>
-    </div>
-    <div class="card-body">
-        <?php foreach ($medicalHistory as $history): ?>
-            <div class="row">
-                <?php if (!empty($history['allergies'])): ?>
-                <div class="col-md-6 mb-3">
-                    <h6 class="text-danger">
-                        <i class="bi bi-exclamation-triangle me-1"></i>
-                        Allergies
-                    </h6>
-                    <p><?= htmlspecialchars($history['allergies']) ?></p>
-                </div>
-                <?php endif; ?>
-                
-                <?php if (!empty($history['medications'])): ?>
-                <div class="col-md-6 mb-3">
-                    <h6 class="text-primary">
-                        <i class="bi bi-capsule me-1"></i>
-                        Current Medications
-                    </h6>
-                    <p><?= htmlspecialchars($history['medications']) ?></p>
-                </div>
-                <?php endif; ?>
-                
-                <?php if (!empty($history['systemic_history'])): ?>
-                <div class="col-md-6 mb-3">
-                    <h6 class="text-info">
-                        <i class="bi bi-heart-pulse me-1"></i>
-                        Systemic History
-                    </h6>
-                    <p><?= htmlspecialchars($history['systemic_history']) ?></p>
-                </div>
-                <?php endif; ?>
-                
-                <?php if (!empty($history['ocular_history'])): ?>
-                <div class="col-md-6 mb-3">
-                    <h6 class="text-success">
-                        <i class="bi bi-eye me-1"></i>
-                        Ocular History
-                    </h6>
-                    <p><?= htmlspecialchars($history['ocular_history']) ?></p>
-                </div>
-                <?php endif; ?>
-                
-                <?php if (!empty($history['prior_surgeries'])): ?>
-                <div class="col-md-6 mb-3">
-                    <h6 class="text-warning">
-                        <i class="bi bi-scissors me-1"></i>
-                        Prior Surgeries
-                    </h6>
-                    <p><?= htmlspecialchars($history['prior_surgeries']) ?></p>
-                </div>
-                <?php endif; ?>
-                
-                <?php if (!empty($history['family_history'])): ?>
-                <div class="col-md-6 mb-3">
-                    <h6 class="text-secondary">
-                        <i class="bi bi-people me-1"></i>
-                        Family History
-                    </h6>
-                    <p><?= htmlspecialchars($history['family_history']) ?></p>
-                </div>
-                <?php endif; ?>
-            </div>
-            <hr class="my-3">
-        <?php endforeach; ?>
-    </div>
-</div>
-<?php else: ?>
 <div class="card mb-4">
     <div class="card-header">
-        <h5 class="mb-0">
-            <i class="bi bi-clipboard-heart me-2"></i>
-            Medical History
-        </h5>
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-clipboard-heart me-2"></i>
+                Medical History
+                <?php if (!empty($medicalHistory)): ?>
+                    <span class="badge bg-primary ms-2"><?= count($medicalHistory) ?></span>
+                <?php endif; ?>
+            </h5>
+            <div class="d-flex gap-2">
+                <!-- View Toggle Buttons -->
+                <?php if (!empty($medicalHistory)): ?>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-secondary active" id="timelineViewBtn" onclick="switchMedicalHistoryView('timeline')">
+                        <i class="bi bi-clock-history me-1"></i>Timeline
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="detailsViewBtn" onclick="switchMedicalHistoryView('details')">
+                        <i class="bi bi-list-ul me-1"></i>Details
+                    </button>
+                </div>
+                <?php endif; ?>
+                <button class="btn btn-primary btn-sm" onclick="addMedicalHistory()">
+                    <i class="bi bi-plus me-1"></i>Add Entry
+                </button>
+            </div>
+        </div>
     </div>
-    <div class="card-body text-center">
-        <i class="bi bi-clipboard-heart text-muted" style="font-size: 3rem;"></i>
-        <p class="text-muted mt-2 mb-0">No medical history recorded</p>
-        <button class="btn btn-outline-primary mt-3" 
-                onclick="addMedicalHistory()"
-                data-bs-toggle="tooltip" 
-                data-bs-placement="top" 
-                data-bs-title="Add medical history entry for this patient">
-            <i class="bi bi-plus me-2"></i>Add Medical History
-        </button>
+    <div class="card-body">
+        <?php if (!empty($medicalHistory)): ?>
+            <!-- Timeline View -->
+            <div id="timelineView" class="medical-history-view">
+                <div class="timeline">
+                    <?php foreach ($medicalHistory as $index => $history): ?>
+                        <div class="timeline-item" data-entry-type="<?= $history['entry_type'] ?>">
+                            <div class="timeline-marker bg-primary">
+                                <i class="bi bi-clipboard-heart text-white"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-header d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">
+                                            <?php if (!empty($history['condition_name'])): ?>
+                                                <?= htmlspecialchars($history['condition_name']) ?>
+                                            <?php else: ?>
+                                                Medical Record #<?= $history['id'] ?>
+                                            <?php endif; ?>
+                                            <?php if (!empty($history['status'])): ?>
+                                                <span class="badge bg-<?= $history['status'] === 'active' ? 'success' : ($history['status'] === 'resolved' ? 'info' : 'secondary') ?> ms-2">
+                                                    <?= ucfirst($history['status']) ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        </h6>
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar me-1"></i>
+                                            <?php if (!empty($history['diagnosis_date'])): ?>
+                                                <?= date('M d, Y', strtotime($history['diagnosis_date'])) ?>
+                                            <?php else: ?>
+                                                <?= date('M d, Y', strtotime($history['created_at'])) ?>
+                                            <?php endif; ?>
+                                            <?php if (!empty($history['doctor_name'])): ?>
+                                                • by <?= htmlspecialchars($history['doctor_name']) ?>
+                                            <?php endif; ?>
+                                        </small>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" onclick="viewMedicalHistory(<?= $history['id'] ?>)">
+                                                <i class="bi bi-eye me-2"></i>View Details
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="editMedicalHistory(<?= $history['id'] ?>)">
+                                                <i class="bi bi-pencil me-2"></i>Edit
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteMedicalHistory(<?= $history['id'] ?>)">
+                                                <i class="bi bi-trash me-2"></i>Delete
+                                            </a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="timeline-body mt-2">
+                                    <?php if (!empty($history['category'])): ?>
+                                        <span class="badge bg-light text-dark me-2 mb-2">
+                                            <i class="bi bi-tag me-1"></i><?= ucfirst(str_replace('_', ' ', $history['category'])) ?>
+                                        </span>
+                                    <?php endif; ?>
+                                    
+                                    <!-- Display content based on entry type -->
+                                    <?php if ($history['entry_type'] === 'new_format'): ?>
+                                        <?php if (!empty($history['notes'])): ?>
+                                            <p class="mb-0"><?= nl2br(htmlspecialchars($history['notes'])) ?></p>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <!-- Old format display -->
+                                        <?php if (!empty($history['allergies'])): ?>
+                                            <div class="mb-2">
+                                                <strong class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Allergies:</strong>
+                                                <span><?= htmlspecialchars($history['allergies']) ?></span>
+                                            </div>
+                                        <?php endif; ?>
+                                        <?php if (!empty($history['medications'])): ?>
+                                            <div class="mb-2">
+                                                <strong class="text-primary"><i class="bi bi-capsule me-1"></i>Medications:</strong>
+                                                <span><?= htmlspecialchars($history['medications']) ?></span>
+                                            </div>
+                                        <?php endif; ?>
+                                        <?php if (!empty($history['systemic_history'])): ?>
+                                            <div class="mb-2">
+                                                <strong class="text-info"><i class="bi bi-heart-pulse me-1"></i>Systemic:</strong>
+                                                <span><?= htmlspecialchars($history['systemic_history']) ?></span>
+                                            </div>
+                                        <?php endif; ?>
+                                        <?php if (!empty($history['ocular_history'])): ?>
+                                            <div class="mb-2">
+                                                <strong class="text-success"><i class="bi bi-eye me-1"></i>Ocular:</strong>
+                                                <span><?= htmlspecialchars($history['ocular_history']) ?></span>
+                                            </div>
+                                        <?php endif; ?>
+                                        <?php if (!empty($history['prior_surgeries'])): ?>
+                                            <div class="mb-2">
+                                                <strong class="text-warning"><i class="bi bi-scissors me-1"></i>Surgeries:</strong>
+                                                <span><?= htmlspecialchars($history['prior_surgeries']) ?></span>
+                                            </div>
+                                        <?php endif; ?>
+                                        <?php if (!empty($history['family_history'])): ?>
+                                            <div class="mb-2">
+                                                <strong class="text-secondary"><i class="bi bi-people me-1"></i>Family:</strong>
+                                                <span><?= htmlspecialchars($history['family_history']) ?></span>
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <!-- Details View -->
+            <div id="detailsView" class="medical-history-view" style="display: none;">
+                <div class="accordion" id="medicalHistoryAccordion">
+                    <?php foreach ($medicalHistory as $index => $history): ?>
+                        <div class="accordion-item" data-entry-type="<?= $history['entry_type'] ?>">
+                            <h2 class="accordion-header" id="heading<?= $index ?>">
+                                <button class="accordion-button <?= $index !== 0 ? 'collapsed' : '' ?>" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#collapse<?= $index ?>" 
+                                        aria-expanded="<?= $index === 0 ? 'true' : 'false' ?>" aria-controls="collapse<?= $index ?>">
+                                    <div class="d-flex align-items-center w-100">
+                                        <div class="me-auto">
+                                            <strong>
+                                                <?php if (!empty($history['condition_name'])): ?>
+                                                    <?= htmlspecialchars($history['condition_name']) ?>
+                                                <?php else: ?>
+                                                    Medical Record #<?= $history['id'] ?>
+                                                <?php endif; ?>
+                                            </strong>
+                                            <small class="text-muted ms-2">
+                                                <?php if (!empty($history['diagnosis_date'])): ?>
+                                                    <?= date('M d, Y', strtotime($history['diagnosis_date'])) ?>
+                                                <?php else: ?>
+                                                    <?= date('M d, Y', strtotime($history['created_at'])) ?>
+                                                <?php endif; ?>
+                                            </small>
+                                        </div>
+                                        <?php if (!empty($history['status'])): ?>
+                                            <span class="badge bg-<?= $history['status'] === 'active' ? 'success' : ($history['status'] === 'resolved' ? 'info' : 'secondary') ?> me-3">
+                                                <?= ucfirst($history['status']) ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="collapse<?= $index ?>" class="accordion-collapse collapse <?= $index === 0 ? 'show' : '' ?>" 
+                                 aria-labelledby="heading<?= $index ?>" data-bs-parent="#medicalHistoryAccordion">
+                                <div class="accordion-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div>
+                                            <?php if (!empty($history['category'])): ?>
+                                                <span class="badge bg-light text-dark me-2">
+                                                    <i class="bi bi-tag me-1"></i><?= ucfirst(str_replace('_', ' ', $history['category'])) ?>
+                                                </span>
+                                            <?php endif; ?>
+                                            <?php if (!empty($history['doctor_name'])): ?>
+                                                <small class="text-muted">Added by <?= htmlspecialchars($history['doctor_name']) ?></small>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" onclick="editMedicalHistory(<?= $history['id'] ?>)">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="deleteMedicalHistory(<?= $history['id'] ?>)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Content based on entry type -->
+                                    <?php if ($history['entry_type'] === 'new_format'): ?>
+                                        <?php if (!empty($history['notes'])): ?>
+                                            <div class="mb-3">
+                                                <h6><i class="bi bi-file-text me-2"></i>Notes</h6>
+                                                <p><?= nl2br(htmlspecialchars($history['notes'])) ?></p>
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <!-- Old format detailed display -->
+                                        <div class="row">
+                                            <?php if (!empty($history['allergies'])): ?>
+                                            <div class="col-md-6 mb-3">
+                                                <h6 class="text-danger">
+                                                    <i class="bi bi-exclamation-triangle me-1"></i>Allergies
+                                                </h6>
+                                                <p><?= htmlspecialchars($history['allergies']) ?></p>
+                                            </div>
+                                            <?php endif; ?>
+                                            
+                                            <?php if (!empty($history['medications'])): ?>
+                                            <div class="col-md-6 mb-3">
+                                                <h6 class="text-primary">
+                                                    <i class="bi bi-capsule me-1"></i>Current Medications
+                                                </h6>
+                                                <p><?= htmlspecialchars($history['medications']) ?></p>
+                                            </div>
+                                            <?php endif; ?>
+                                            
+                                            <?php if (!empty($history['systemic_history'])): ?>
+                                            <div class="col-md-6 mb-3">
+                                                <h6 class="text-info">
+                                                    <i class="bi bi-heart-pulse me-1"></i>Systemic History
+                                                </h6>
+                                                <p><?= htmlspecialchars($history['systemic_history']) ?></p>
+                                            </div>
+                                            <?php endif; ?>
+                                            
+                                            <?php if (!empty($history['ocular_history'])): ?>
+                                            <div class="col-md-6 mb-3">
+                                                <h6 class="text-success">
+                                                    <i class="bi bi-eye me-1"></i>Ocular History
+                                                </h6>
+                                                <p><?= htmlspecialchars($history['ocular_history']) ?></p>
+                                            </div>
+                                            <?php endif; ?>
+                                            
+                                            <?php if (!empty($history['prior_surgeries'])): ?>
+                                            <div class="col-md-6 mb-3">
+                                                <h6 class="text-warning">
+                                                    <i class="bi bi-scissors me-1"></i>Prior Surgeries
+                                                </h6>
+                                                <p><?= htmlspecialchars($history['prior_surgeries']) ?></p>
+                                            </div>
+                                            <?php endif; ?>
+                                            
+                                            <?php if (!empty($history['family_history'])): ?>
+                                            <div class="col-md-6 mb-3">
+                                                <h6 class="text-secondary">
+                                                    <i class="bi bi-people me-1"></i>Family History
+                                                </h6>
+                                                <p><?= htmlspecialchars($history['family_history']) ?></p>
+                                            </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                    
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock me-1"></i>
+                                        Last updated: <?= date('M d, Y \a\t g:i A', strtotime($history['updated_at'])) ?>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php else: ?>
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <i class="bi bi-clipboard-heart text-muted" style="font-size: 4rem;"></i>
+                <h6 class="text-muted mt-3 mb-2">No Medical History</h6>
+                <p class="text-muted mb-4">Start building this patient's medical history by adding their first entry.</p>
+                <button class="btn btn-primary" onclick="addMedicalHistory()">
+                    <i class="bi bi-plus me-2"></i>Add First Entry
+                </button>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
-<?php endif; ?>
 
 <!-- Recent Appointments -->
 <div class="card mb-4">
@@ -960,6 +1146,348 @@ div.form-text {
 .modal-body p.text-muted {
     color: var(--muted) !important;
 }
+
+/* Medical History Timeline Styles */
+.timeline {
+    position: relative;
+    padding: 0;
+    margin: 0;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+    z-index: 1;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 60px;
+    margin-bottom: 2rem;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    border: 3px solid var(--bg);
+    box-shadow: 0 2px 4px var(--shadow);
+}
+
+.timeline-content {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px var(--shadow);
+    position: relative;
+}
+
+.timeline-content::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 15px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 8px 8px 8px 0;
+    border-color: transparent var(--border) transparent transparent;
+}
+
+.timeline-content::after {
+    content: '';
+    position: absolute;
+    left: -7px;
+    top: 15px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 8px 8px 8px 0;
+    border-color: transparent var(--card) transparent transparent;
+}
+
+.timeline-header h6 {
+    color: var(--text);
+    margin-bottom: 0.25rem;
+}
+
+.timeline-body {
+    color: var(--text);
+}
+
+/* Medical History View Toggle */
+.medical-history-view {
+    transition: all 0.3s ease;
+}
+
+/* Badge Styles for Medical History */
+.badge.bg-light.text-dark {
+    background-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+/* Dark Mode Timeline Adjustments */
+.dark .timeline::before {
+    background: var(--border);
+}
+
+.dark .timeline-marker {
+    border-color: var(--bg);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dark .timeline-content {
+    background: var(--card);
+    border-color: var(--border);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dark .timeline-content::before {
+    border-color: transparent var(--border) transparent transparent;
+}
+
+.dark .timeline-content::after {
+    border-color: transparent var(--card) transparent transparent;
+}
+
+/* Accordion Dark Mode */
+.dark .accordion-item {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+}
+
+.dark .accordion-button {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+.dark .accordion-button:not(.collapsed) {
+    background-color: var(--bg) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+    box-shadow: none !important;
+}
+
+.dark .accordion-button::after {
+    filter: invert(1);
+}
+
+.dark .accordion-body {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+/* Status Badge Colors */
+.badge.bg-success {
+    background-color: var(--success) !important;
+}
+
+.badge.bg-info {
+    background-color: var(--accent) !important;
+}
+
+.badge.bg-secondary {
+    background-color: var(--muted) !important;
+}
+
+/* Dropdown Dark Mode */
+.dark .dropdown-menu {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+}
+
+.dark .dropdown-item {
+    color: var(--text) !important;
+}
+
+.dark .dropdown-item:hover,
+.dark .dropdown-item:focus {
+    background-color: var(--bg) !important;
+    color: var(--text) !important;
+}
+
+.dark .dropdown-divider {
+    border-color: var(--border) !important;
+}
+
+/* Button Group Dark Mode */
+.dark .btn-group .btn-outline-secondary {
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+.dark .btn-group .btn-outline-secondary:hover {
+    background-color: var(--bg) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .btn-group .btn-outline-secondary.active {
+    background-color: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: white !important;
+}
+
+/* Empty State Dark Mode */
+.dark .text-center i.text-muted {
+    color: var(--muted) !important;
+}
+
+.dark .text-center h6.text-muted {
+    color: var(--muted) !important;
+}
+
+.dark .text-center p.text-muted {
+    color: var(--muted) !important;
+}
+
+/* Delete Confirmation Modal Dark Mode */
+.dark #deleteConfirmationModal .modal-content {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+}
+
+.dark #deleteConfirmationModal .modal-header {
+    border-bottom-color: var(--border) !important;
+}
+
+.dark #deleteConfirmationModal .modal-footer {
+    border-top-color: var(--border) !important;
+}
+
+.dark #deleteConfirmationModal .modal-title {
+    color: var(--danger) !important;
+}
+
+.dark #deleteConfirmationModal .modal-body {
+    color: var(--text) !important;
+}
+
+.dark #deleteConfirmationModal .text-muted {
+    color: var(--muted) !important;
+}
+
+/* Add Medical History Modal Dark Mode */
+.dark #addMedicalHistoryModal .modal-content {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+}
+
+.dark #addMedicalHistoryModal .modal-header {
+    border-bottom-color: var(--border) !important;
+}
+
+.dark #addMedicalHistoryModal .modal-footer {
+    border-top-color: var(--border) !important;
+}
+
+.dark #addMedicalHistoryModal .modal-title {
+    color: var(--text) !important;
+}
+
+.dark #addMedicalHistoryModal .modal-body {
+    color: var(--text) !important;
+}
+
+.dark #addMedicalHistoryModal .form-label {
+    color: var(--text) !important;
+}
+
+.dark #addMedicalHistoryModal .form-control {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark #addMedicalHistoryModal .form-control:focus {
+    background-color: var(--card) !important;
+    border-color: var(--accent) !important;
+    color: var(--text) !important;
+    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25) !important;
+}
+
+.dark #addMedicalHistoryModal .form-select {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark #addMedicalHistoryModal .form-select:focus {
+    background-color: var(--card) !important;
+    border-color: var(--accent) !important;
+    color: var(--text) !important;
+}
+
+/* General Delete Confirmation Modal Dark Mode */
+.dark .modal-content {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+}
+
+.dark .modal-header {
+    border-bottom-color: var(--border) !important;
+}
+
+.dark .modal-footer {
+    border-top-color: var(--border) !important;
+}
+
+.dark .modal-title {
+    color: var(--text) !important;
+}
+
+.dark .modal-body {
+    color: var(--text) !important;
+}
+
+.dark .modal-body p {
+    color: var(--text) !important;
+}
+
+/* Responsive Timeline */
+@media (max-width: 768px) {
+    .timeline::before {
+        left: 15px;
+    }
+    
+    .timeline-item {
+        padding-left: 50px;
+    }
+    
+    .timeline-marker {
+        width: 30px;
+        height: 30px;
+        left: 0;
+    }
+    
+    .timeline-content::before,
+    .timeline-content::after {
+        left: -6px;
+        border-width: 6px 6px 6px 0;
+    }
+    
+    .timeline-content::after {
+        left: -5px;
+    }
+}
 </style>
 
 <script>
@@ -1012,6 +1540,138 @@ function editEmergencyContact() {
 function addMedicalHistory() {
     const patientId = <?= $patient['id'] ?>;
     showAddMedicalHistoryModal(patientId);
+}
+
+function showAddMedicalHistoryModal(patientId) {
+    const modalId = 'addMedicalHistoryModal';
+    let existingModal = document.getElementById(modalId);
+    
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const modalHtml = `
+        <div class="modal fade" id="${modalId}" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Add Medical History Entry
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addMedicalHistoryForm">
+                            <input type="hidden" id="addPatientId" value="${patientId}">
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <label for="addConditionName" class="form-label">Condition Name *</label>
+                                    <input type="text" class="form-control" id="addConditionName" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="addDiagnosisDate" class="form-label">Date</label>
+                                    <input type="date" class="form-control" id="addDiagnosisDate">
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="addCategory" class="form-label">Category</label>
+                                    <select class="form-select" id="addCategory">
+                                        <option value="general">General</option>
+                                        <option value="allergy">Allergy</option>
+                                        <option value="medication">Medication</option>
+                                        <option value="surgery">Surgery</option>
+                                        <option value="family_history">Family History</option>
+                                        <option value="social_history">Social History</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="addStatus" class="form-label">Status</label>
+                                    <select class="form-select" id="addStatus">
+                                        <option value="active">Active</option>
+                                        <option value="resolved">Resolved</option>
+                                        <option value="chronic">Chronic</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="addNotes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="addNotes" rows="4"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x me-1"></i>Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="saveNewMedicalHistory()">
+                            <i class="bi bi-check me-1"></i>Add Entry
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    modal.show();
+    
+    // Clean up when modal is hidden
+    document.getElementById(modalId).addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+function saveNewMedicalHistory() {
+    const patientId = document.getElementById('addPatientId').value;
+    const formData = {
+        condition: document.getElementById('addConditionName').value,
+        diagnosis_date: document.getElementById('addDiagnosisDate').value,
+        category: document.getElementById('addCategory').value,
+        status: document.getElementById('addStatus').value,
+        notes: document.getElementById('addNotes').value
+    };
+    
+    // Validate required fields
+    if (!formData.condition.trim()) {
+        showNotification('Condition name is required', 'danger');
+        return;
+    }
+    
+    fetch(`/api/patients/${patientId}/medical-history`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showNotification('Medical history added successfully', 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addMedicalHistoryModal'));
+            modal.hide();
+            // Reload page to show updated data
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification('Error adding medical history: ' + (data.error || 'Unknown error'), 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error adding medical history: ' + error.message, 'danger');
+    });
 }
 
 // Emergency contact form handling
@@ -1646,31 +2306,43 @@ function downloadPatientAttachment(attachmentId, filename) {
 }
 
 function deletePatientAttachment(attachmentId) {
-    showDeleteConfirmationModal(
-        'Delete File',
-        'Are you sure you want to delete this file? This action cannot be undone.',
-        'Delete File',
-        () => {
-            fetch(`/api/patients/files/${attachmentId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showNotification('File deleted successfully', 'success');
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showNotification('Error: ' + data.message, 'error');
-                }
-            })
-            .catch(error => {
-                showNotification('Error: ' + error.message, 'error');
-            });
+    // Hide all tooltips first to prevent conflicts
+    const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltips.forEach(element => {
+        const tooltip = bootstrap.Tooltip.getInstance(element);
+        if (tooltip) {
+            tooltip.hide();
         }
-    );
+    });
+    
+    // Wait a bit for tooltips to hide, then show modal
+    setTimeout(() => {
+        showGeneralDeleteConfirmationModal(
+            'Delete File',
+            'Are you sure you want to delete this file? This action cannot be undone.',
+            'Delete File',
+            () => {
+                fetch(`/api/patients/files/${attachmentId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('File deleted successfully', 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showNotification('Error: ' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    showNotification('Error: ' + error.message, 'error');
+                });
+            }
+        );
+    }, 100);
 }
 
 // Patient Notes Functions
@@ -1852,35 +2524,47 @@ function editPatientNote(noteId, title, content) {
 }
 
 function deletePatientNote(noteId) {
-    showDeleteConfirmationModal(
-        'Delete Note',
-        'Are you sure you want to delete this medical note? This action cannot be undone.',
-        'Delete Note',
-        () => {
-            fetch(`/api/patients/notes/${noteId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showNotification('Note deleted successfully', 'success');
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showNotification('Error: ' + data.message, 'error');
-                }
-            })
-            .catch(error => {
-                showNotification('Error: ' + error.message, 'error');
-            });
+    // Hide all tooltips first to prevent conflicts
+    const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltips.forEach(element => {
+        const tooltip = bootstrap.Tooltip.getInstance(element);
+        if (tooltip) {
+            tooltip.hide();
         }
-    );
+    });
+    
+    // Wait a bit for tooltips to hide, then show modal
+    setTimeout(() => {
+        showGeneralDeleteConfirmationModal(
+            'Delete Note',
+            'Are you sure you want to delete this medical note? This action cannot be undone.',
+            'Delete Note',
+            () => {
+                fetch(`/api/patients/notes/${noteId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Note deleted successfully', 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showNotification('Error: ' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    showNotification('Error: ' + error.message, 'error');
+                });
+            }
+        );
+    }, 100);
 }
 
 // Confirmation Modal Functions
-function showDeleteConfirmationModal(title, message, buttonText, onConfirm) {
+function showGeneralDeleteConfirmationModal(title, message, buttonText, onConfirm) {
     const modalId = 'deleteConfirmationModal';
     const existingModal = document.getElementById(modalId);
     if (existingModal) {
@@ -2036,161 +2720,329 @@ document.addEventListener('shown.bs.modal', function() {
 });
 
 // Medical History Functions
-function showAddMedicalHistoryModal(patientId) {
+function switchMedicalHistoryView(viewType) {
+    const timelineView = document.getElementById('timelineView');
+    const detailsView = document.getElementById('detailsView');
+    const timelineBtn = document.getElementById('timelineViewBtn');
+    const detailsBtn = document.getElementById('detailsViewBtn');
+    
+    if (viewType === 'timeline') {
+        timelineView.style.display = 'block';
+        detailsView.style.display = 'none';
+        timelineBtn.classList.add('active');
+        detailsBtn.classList.remove('active');
+    } else {
+        timelineView.style.display = 'none';
+        detailsView.style.display = 'block';
+        timelineBtn.classList.remove('active');
+        detailsBtn.classList.add('active');
+    }
+}
+
+function viewMedicalHistory(historyId) {
+    const patientId = <?= $patient['id'] ?>;
+    
+    // Check if this is an old format entry (from medical_history table)
+    // Old format entries don't have individual API endpoints, so we'll handle them differently
+    const historyElement = document.querySelector(`[onclick*="viewMedicalHistory(${historyId})"]`);
+    if (historyElement) {
+        const timelineItem = historyElement.closest('.timeline-item, .accordion-item');
+        if (timelineItem && timelineItem.querySelector('[data-entry-type="old_format"]')) {
+            showNotification('Viewing old format medical history is not supported yet. Please use the Details view to see all information.', 'info');
+            return;
+        }
+    }
+    
+    // Fetch and display medical history details in a modal
+    fetch(`/api/patients/${patientId}/medical-history/${historyId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showMedicalHistoryModal(data.data, 'view');
+            } else {
+                showNotification('Error loading medical history details: ' + (data.error || 'Unknown error'), 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error loading medical history details: ' + error.message, 'danger');
+        });
+}
+
+function editMedicalHistory(historyId) {
+    const patientId = <?= $patient['id'] ?>;
+    
+    // Check if this is an old format entry (from medical_history table)
+    // Old format entries don't have individual API endpoints, so we'll handle them differently
+    const historyElement = document.querySelector(`[onclick*="editMedicalHistory(${historyId})"]`);
+    if (historyElement) {
+        const timelineItem = historyElement.closest('.timeline-item, .accordion-item');
+        if (timelineItem && timelineItem.querySelector('[data-entry-type="old_format"]')) {
+            showNotification('Editing old format medical history is not supported yet. Please create a new entry with the updated information.', 'info');
+            return;
+        }
+    }
+    
+    // Fetch and display medical history for editing
+    fetch(`/api/patients/${patientId}/medical-history/${historyId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showMedicalHistoryModal(data.data, 'edit');
+            } else {
+                showNotification('Error loading medical history details: ' + (data.error || 'Unknown error'), 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error loading medical history details: ' + error.message, 'danger');
+        });
+}
+
+function showMedicalHistoryModal(data, mode) {
+    // Create and show modal for viewing/editing medical history
+    const modalId = 'medicalHistoryModal';
+    let existingModal = document.getElementById(modalId);
+    
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const isEdit = mode === 'edit';
+    const isView = mode === 'view';
+    
     const modalHtml = `
-        <div class="modal fade" id="medicalHistoryModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal fade" id="${modalId}" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">
                             <i class="bi bi-clipboard-heart me-2"></i>
-                            Add Medical History
+                            ${isEdit ? 'Edit' : 'View'} Medical History
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <form id="medicalHistoryForm">
-                        <div class="modal-body">
-                            <div id="medicalHistoryMessage" class="alert d-none" role="alert"></div>
+                    <div class="modal-body">
+                        <form id="medicalHistoryForm">
+                            <input type="hidden" id="historyId" value="${data.id}">
                             
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="medicalCondition" class="form-label">Medical Condition <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" id="medicalCondition" name="condition" required maxlength="255">
-                                        <div class="form-text">Enter the medical condition or diagnosis</div>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="diagnosisDate" class="form-label">Diagnosis Date</label>
-                                        <input type="date" class="form-control" id="diagnosisDate" name="diagnosis_date">
-                                        <div class="form-text">When was this condition diagnosed (optional)</div>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="medicalStatus" class="form-label">Status <span class="text-danger">*</span></label>
-                                        <select class="form-select" id="medicalStatus" name="status" required>
-                                            <option value="active">Active</option>
-                                            <option value="chronic">Chronic</option>
-                                            <option value="resolved">Resolved</option>
-                                            <option value="inactive">Inactive</option>
-                                        </select>
-                                        <div class="form-text">Current status of this condition</div>
-                                    </div>
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <label for="conditionName" class="form-label">Condition Name</label>
+                                    <input type="text" class="form-control" id="conditionName" 
+                                           value="${data.condition_name || ''}" ${isView ? 'readonly' : ''}>
                                 </div>
-                                
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="medicalCategory" class="form-label">Category</label>
-                                        <select class="form-select" id="medicalCategory" name="category">
-                                            <option value="general">General</option>
-                                            <option value="allergy">Allergy</option>
-                                            <option value="medication">Medication</option>
-                                            <option value="surgery">Surgery</option>
-                                            <option value="family_history">Family History</option>
-                                            <option value="social_history">Social History</option>
-                                        </select>
-                                        <div class="form-text">Category of medical history</div>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="medicalNotes" class="form-label">Notes</label>
-                                        <textarea class="form-control" id="medicalNotes" name="notes" rows="5" maxlength="1000"></textarea>
-                                        <div class="form-text">Additional notes or details (optional)</div>
-                                    </div>
+                                <div class="col-md-4">
+                                    <label for="diagnosisDate" class="form-label">Date</label>
+                                    <input type="date" class="form-control" id="diagnosisDate" 
+                                           value="${data.diagnosis_date || ''}" ${isView ? 'readonly' : ''}>
                                 </div>
                             </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary" id="saveMedicalHistoryBtn">
-                                <i class="bi bi-check-lg me-2"></i>Save Medical History
-                                <span class="spinner-border spinner-border-sm d-none ms-2" role="status"></span>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="category" class="form-label">Category</label>
+                                    <select class="form-select" id="category" ${isView ? 'disabled' : ''}>
+                                        <option value="general" ${data.category === 'general' ? 'selected' : ''}>General</option>
+                                        <option value="allergy" ${data.category === 'allergy' ? 'selected' : ''}>Allergy</option>
+                                        <option value="medication" ${data.category === 'medication' ? 'selected' : ''}>Medication</option>
+                                        <option value="surgery" ${data.category === 'surgery' ? 'selected' : ''}>Surgery</option>
+                                        <option value="family_history" ${data.category === 'family_history' ? 'selected' : ''}>Family History</option>
+                                        <option value="social_history" ${data.category === 'social_history' ? 'selected' : ''}>Social History</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="status" class="form-label">Status</label>
+                                    <select class="form-select" id="status" ${isView ? 'disabled' : ''}>
+                                        <option value="active" ${data.status === 'active' ? 'selected' : ''}>Active</option>
+                                        <option value="resolved" ${data.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+                                        <option value="chronic" ${data.status === 'chronic' ? 'selected' : ''}>Chronic</option>
+                                        <option value="inactive" ${data.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="notes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="notes" rows="4" ${isView ? 'readonly' : ''}>${data.notes || ''}</textarea>
+                            </div>
+                            
+                            ${data.created_at ? `
+                                <div class="text-muted small">
+                                    <i class="bi bi-clock me-1"></i>
+                                    Created: ${new Date(data.created_at).toLocaleDateString()}
+                                    ${data.doctor_name ? ` by ${data.doctor_name}` : ''}
+                                </div>
+                            ` : ''}
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            ${isView ? 'Close' : 'Cancel'}
+                        </button>
+                        ${isEdit ? `
+                            <button type="button" class="btn btn-primary" onclick="saveEditMedicalHistory()">
+                                <i class="bi bi-check me-1"></i>Save Changes
                             </button>
-                        </div>
-                    </form>
+                        ` : ''}
+                    </div>
                 </div>
             </div>
         </div>
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('medicalHistoryModal'));
+    const modal = new bootstrap.Modal(document.getElementById(modalId));
     modal.show();
     
-    // Handle form submission
-    document.getElementById('medicalHistoryForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        saveMedicalHistory(patientId);
-    });
-    
-    // Clean up modal on hide
-    document.getElementById('medicalHistoryModal').addEventListener('hidden.bs.modal', function() {
+    // Clean up when modal is hidden
+    document.getElementById(modalId).addEventListener('hidden.bs.modal', function() {
         this.remove();
     });
 }
 
-function saveMedicalHistory(patientId) {
-    const form = document.getElementById('medicalHistoryForm');
-    const formData = new FormData(form);
-    const saveBtn = document.getElementById('saveMedicalHistoryBtn');
-    const spinner = saveBtn.querySelector('.spinner-border');
-    const messageDiv = document.getElementById('medicalHistoryMessage');
-    
-    // Show loading state
-    saveBtn.disabled = true;
-    spinner.classList.remove('d-none');
-    
-    // Prepare data
-    const data = {
-        condition: formData.get('condition'),
-        diagnosis_date: formData.get('diagnosis_date'),
-        status: formData.get('status'),
-        notes: formData.get('notes'),
-        category: formData.get('category')
+function saveEditMedicalHistory() {
+    const patientId = <?= $patient['id'] ?>;
+    const historyId = document.getElementById('historyId').value;
+    const formData = {
+        condition: document.getElementById('conditionName').value,
+        diagnosis_date: document.getElementById('diagnosisDate').value,
+        category: document.getElementById('category').value,
+        status: document.getElementById('status').value,
+        notes: document.getElementById('notes').value
     };
     
-    // Send request
-    fetch(`/api/patients/${patientId}/medical-history`, {
-        method: 'POST',
+    fetch(`/api/patients/${patientId}/medical-history/${historyId}`, {
+        method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(formData)
     })
-    .then(response => response.json())
-    .then(result => {
-        saveBtn.disabled = false;
-        spinner.classList.add('d-none');
-        
-        if (result.success) {
-            showMessage(messageDiv, 'Medical history added successfully!', 'success');
-            
-            // Reset form
-            form.reset();
-            
-            // Close modal after delay and refresh page
-            setTimeout(() => {
-                const modal = bootstrap.Modal.getInstance(document.getElementById('medicalHistoryModal'));
-                modal.hide();
-                window.location.reload();
-            }, 1500);
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showNotification('Medical history updated successfully', 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('medicalHistoryModal'));
+            modal.hide();
+            // Reload page to show updated data
+            setTimeout(() => location.reload(), 1000);
         } else {
-            showMessage(messageDiv, result.error || 'Failed to add medical history', 'danger');
+            showNotification('Error updating medical history: ' + (data.error || 'Unknown error'), 'danger');
         }
     })
     .catch(error => {
-        saveBtn.disabled = false;
-        spinner.classList.add('d-none');
-        console.error('Error saving medical history:', error);
-        showMessage(messageDiv, 'An error occurred. Please try again.', 'danger');
+        console.error('Error:', error);
+        showNotification('Error updating medical history: ' + error.message, 'danger');
     });
 }
 
-function showMessage(element, message, type) {
-    element.className = `alert alert-${type}`;
-    element.textContent = message;
-    element.classList.remove('d-none');
+function deleteMedicalHistory(historyId) {
+    // Check if this is an old format entry (from medical_history table)
+    const historyElement = document.querySelector(`[onclick*="deleteMedicalHistory(${historyId})"]`);
+    if (historyElement) {
+        const timelineItem = historyElement.closest('.timeline-item, .accordion-item');
+        if (timelineItem && timelineItem.querySelector('[data-entry-type="old_format"]')) {
+            showNotification('Deleting old format medical history is not supported yet. Please contact administrator for assistance.', 'warning');
+            return;
+        }
+    }
+    
+    showDeleteConfirmationModal(historyId);
+}
+
+function showDeleteConfirmationModal(historyId) {
+    const modalId = 'deleteConfirmationModal';
+    let existingModal = document.getElementById(modalId);
+    
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const modalHtml = `
+        <div class="modal fade" id="${modalId}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title text-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Confirm Deletion
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center">
+                            <i class="bi bi-trash text-danger" style="font-size: 3rem;"></i>
+                            <h6 class="mt-3 mb-2">Delete Medical History Entry</h6>
+                            <p class="text-muted">Are you sure you want to delete this medical history entry? This action cannot be undone.</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x me-1"></i>Cancel
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="confirmDeleteMedicalHistory(${historyId})">
+                            <i class="bi bi-trash me-1"></i>Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    modal.show();
+    
+    // Clean up when modal is hidden
+    document.getElementById(modalId).addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+function confirmDeleteMedicalHistory(historyId) {
+    const patientId = <?= $patient['id'] ?>;
+    
+    fetch(`/api/patients/${patientId}/medical-history/${historyId}`, {
+        method: 'DELETE'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showNotification('Medical history deleted successfully', 'success');
+            // Hide the confirmation modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
+            modal.hide();
+            // Reload page to show updated data
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification('Error deleting medical history: ' + (data.error || 'Unknown error'), 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error deleting medical history: ' + error.message, 'danger');
+    });
 }
 
 </script>
