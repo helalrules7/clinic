@@ -18,7 +18,10 @@
     </div>
     <div class="col-md-4 text-end">
         <div class="btn-group" role="group">
-            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addPatientModal" title="Add new patient - Press 'N' or 'ى' or 'Ctrl+N'">
+            <button class="btn btn-success" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#addPatientModal" 
+                    title="Use N or ى or Ctrl+N to add a new patient">
                 <i class="bi bi-person-plus me-2"></i>
                 Add Patient
                 <span class="ms-2">
@@ -27,7 +30,10 @@
                     <kbd lang="ar">ى</kbd>
                 </span>
             </button>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#searchModal" title="Press 'F' or 'ب' to search">
+        <button class="btn btn-primary" 
+                data-bs-toggle="modal" 
+                data-bs-target="#searchModal" 
+                title="Use F or ب to search for patients">
             <i class="bi bi-search me-2"></i>
             Search Patients
             <span class="ms-2">
@@ -156,13 +162,25 @@
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group">
-                                        <a href="/doctor/patients/<?= $patient['id'] ?>" class="btn btn-sm btn-outline-primary" title="View Patient">
+                                        <a href="/doctor/patients/<?= $patient['id'] ?>" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top" 
+                                           data-bs-title="View full patient details and medical history">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <button class="btn btn-sm btn-outline-success" onclick="bookAppointment(<?= $patient['id'] ?>)" title="Book Appointment">
+                                        <button class="btn btn-sm btn-outline-success" 
+                                                onclick="bookAppointment(<?= $patient['id'] ?>)" 
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" 
+                                                data-bs-title="Book a new appointment for this patient">
                                             <i class="bi bi-calendar-plus"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-outline-danger" onclick="deletePatient(<?= $patient['id'] ?>, '<?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name'], ENT_QUOTES) ?>')" title="Delete Patient">
+                                        <button class="btn btn-sm btn-outline-danger" 
+                                                onclick="deletePatient(<?= $patient['id'] ?>, '<?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name'], ENT_QUOTES) ?>')" 
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" 
+                                                data-bs-title="Delete patient permanently from the system (cannot be undone)">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </div>
@@ -1169,6 +1187,66 @@ kbd[lang="ar"] {
     border-color: rgba(13, 110, 253, 0.2) !important;
     color: #212529 !important;
 }
+
+/* Custom Tooltip Styling */
+.tooltip {
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.85rem;
+    z-index: 9999;
+}
+
+.tooltip .tooltip-inner {
+    background-color: rgba(33, 37, 41, 0.95);
+    color: #ffffff;
+    border-radius: 8px;
+    padding: 8px 12px;
+    max-width: 280px;
+    text-align: center;
+    line-height: 1.4;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Dark mode tooltip styling */
+.dark .tooltip .tooltip-inner {
+    background-color: rgba(248, 250, 252, 0.95);
+    color: #1e293b;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+/* Tooltip arrow styling */
+.tooltip .tooltip-arrow::before {
+    border-top-color: rgba(33, 37, 41, 0.95) !important;
+    border-bottom-color: rgba(33, 37, 41, 0.95) !important;
+    border-left-color: rgba(33, 37, 41, 0.95) !important;
+    border-right-color: rgba(33, 37, 41, 0.95) !important;
+}
+
+.dark .tooltip .tooltip-arrow::before {
+    border-top-color: rgba(248, 250, 252, 0.95) !important;
+    border-bottom-color: rgba(248, 250, 252, 0.95) !important;
+    border-left-color: rgba(248, 250, 252, 0.95) !important;
+    border-right-color: rgba(248, 250, 252, 0.95) !important;
+}
+
+/* Improved button hover states with tooltips */
+.btn:hover[data-bs-toggle="tooltip"] {
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+}
+
+.btn-outline-primary:hover[data-bs-toggle="tooltip"] {
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+.btn-outline-success:hover[data-bs-toggle="tooltip"] {
+    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+}
+
+.btn-outline-danger:hover[data-bs-toggle="tooltip"] {
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
 </style>
 
 <script>
@@ -1300,13 +1378,25 @@ function displaySearchResults(patients, searchTerm) {
                     </div>
                     <div class="search-result-actions ms-3">
                         <div class="btn-group-vertical">
-                            <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); viewPatient(${patient.id})">
+                            <button class="btn btn-sm btn-outline-primary" 
+                                    onclick="event.stopPropagation(); viewPatient(${patient.id})"
+                                    data-bs-toggle="tooltip" 
+                                    data-bs-placement="top" 
+                                    data-bs-title="View full patient details and medical history">
                                 <i class="bi bi-eye me-1"></i>View
                             </button>
-                            <button class="btn btn-sm btn-outline-success" onclick="event.stopPropagation(); bookAppointment(${patient.id})">
+                            <button class="btn btn-sm btn-outline-success" 
+                                    onclick="event.stopPropagation(); bookAppointment(${patient.id})"
+                                    data-bs-toggle="tooltip" 
+                                    data-bs-placement="top" 
+                                    data-bs-title="Book a new appointment for this patient">
                                 <i class="bi bi-calendar-plus me-1"></i>Book
                             </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); deletePatient(${patient.id}, '${patient.first_name} ${patient.last_name}')">
+                            <button class="btn btn-sm btn-outline-danger" 
+                                    onclick="event.stopPropagation(); deletePatient(${patient.id}, '${patient.first_name} ${patient.last_name}')"
+                                    data-bs-toggle="tooltip" 
+                                    data-bs-placement="top" 
+                                    data-bs-title="Delete patient permanently from the system (cannot be undone)">
                                 <i class="bi bi-trash me-1"></i>Delete
                             </button>
                         </div>
@@ -1984,6 +2074,64 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 500);
     };
 });
+
+// Initialize Bootstrap Tooltips
+function initializeTooltips() {
+    // Initialize tooltips for elements with data-bs-toggle="tooltip"
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl, {
+        boundary: 'viewport',
+        fallbackPlacements: ['top', 'bottom', 'left', 'right'],
+        sanitize: false, // Allow Arabic text
+        html: false,
+        delay: { show: 500, hide: 100 },
+        trigger: 'hover focus'
+    }));
+    
+    // Initialize tooltips for elements with title attribute (including modal trigger buttons)
+    const titleElements = document.querySelectorAll('[title]:not([data-bs-toggle="tooltip"])');
+    const titleTooltipList = [...titleElements].map(titleEl => new bootstrap.Tooltip(titleEl, {
+        boundary: 'viewport',
+        fallbackPlacements: ['top', 'bottom', 'left', 'right'],
+        sanitize: false,
+        html: false,
+        delay: { show: 500, hide: 100 },
+        trigger: 'hover focus'
+    }));
+    
+    return [...tooltipList, ...titleTooltipList];
+}
+
+// Function to refresh tooltips for dynamically added content
+function refreshTooltips() {
+    // Dispose of existing tooltips
+    const existingTooltips = document.querySelectorAll('[data-bs-toggle="tooltip"], [title]');
+    existingTooltips.forEach(element => {
+        const tooltip = bootstrap.Tooltip.getInstance(element);
+        if (tooltip) {
+            tooltip.dispose();
+        }
+    });
+    
+    // Reinitialize all tooltips
+    initializeTooltips();
+}
+
+// Initialize tooltips when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initializeTooltips();
+});
+
+// Override displaySearchResults to include tooltip initialization
+const originalDisplaySearchResults = displaySearchResults;
+displaySearchResults = function(patients, searchTerm) {
+    originalDisplaySearchResults(patients, searchTerm);
+    
+    // Initialize tooltips for newly added search result buttons
+    setTimeout(() => {
+        refreshTooltips();
+    }, 100);
+};
 
 // Auto-refresh every 30 seconds (pause when modals are open)
 setInterval(() => {
