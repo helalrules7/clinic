@@ -389,6 +389,19 @@
         .overlay.show {
             display: block;
         }
+        
+        .sidebar-footer {
+            border-top: 1px solid var(--border) !important;
+        }
+        
+        .sidebar-footer a {
+            color: var(--accent);
+            transition: color 0.2s ease;
+        }
+        
+        .sidebar-footer a:hover {
+            color: var(--success);
+        }
     </style>
 </head>
 <body>
@@ -464,13 +477,53 @@
                         Patients
                     </a>
                 </div>
+            <?php elseif ($this->getCurrentUser()['role'] === 'admin'): ?>
+                <div class="nav-item">
+                    <a href="/admin/dashboard" class="nav-link <?= $this->isActiveRoute('/admin/dashboard') ? 'active' : '' ?>">
+                        <i class="bi bi-speedometer2"></i>
+                        Dashboard
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/users" class="nav-link <?= $this->isActiveRoute('/admin/users') ? 'active' : '' ?>">
+                        <i class="bi bi-people"></i>
+                        Users
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/reports" class="nav-link <?= $this->isActiveRoute('/admin/reports') ? 'active' : '' ?>">
+                        <i class="bi bi-graph-up"></i>
+                        Reports
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/settings" class="nav-link <?= $this->isActiveRoute('/admin/settings') ? 'active' : '' ?>">
+                        <i class="bi bi-gear"></i>
+                        Settings
+                    </a>
+                </div>
             <?php endif; ?>
+            
+            <div class="nav-item mt-4">
+                <a href="/about" class="nav-link <?= $this->isActiveRoute('/about') ? 'active' : '' ?>">
+                    <i class="bi bi-info-circle"></i>
+                    About
+                </a>
+            </div>
             
             <div class="nav-item mt-auto">
                 <a href="/logout" class="nav-link text-danger">
                     <i class="bi bi-box-arrow-right"></i>
                     Logout
                 </a>
+            </div>
+            
+            <!-- Version info -->
+            <div class="sidebar-footer p-3 text-center border-top">
+                <small class="text-muted">
+                    <div class="mb-1">Roaya Clinic v1.0 Beta</div>
+                    <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none">Ahmed Helal</a></div>
+                </small>
             </div>
         </nav>
     </div>

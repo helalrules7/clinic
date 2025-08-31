@@ -85,6 +85,9 @@ try {
     $router->post('/doctor/profile/change-password', 'DoctorController@changePassword');
     $router->post('/doctor/profile/update', 'DoctorController@updateProfile');
     
+    // General routes
+    $router->get('/about', 'GeneralController@about');
+    
     // API routes
     $router->get('/api/calendar', 'ApiController@getCalendar');
     $router->get('/api/appointments/{id}', 'ApiController@getAppointment');
