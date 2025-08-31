@@ -47,12 +47,13 @@ header('X-XSS-Protection: 1; mode=block');
 try {
     $router = new \App\Lib\Router();
     
-    // Routes
+    // Define routes
     $router->get('/', 'AuthController@showLogin');
     $router->get('/login', 'AuthController@showLogin');
     $router->post('/login', 'AuthController@login');
     $router->get('/logout', 'AuthController@logout');
     
+    // Admin routes
     $router->get('/admin/dashboard', 'AdminController@dashboard');
     $router->get('/admin/users', 'AdminController@users');
     $router->get('/admin/reports', 'AdminController@reports');
@@ -64,6 +65,17 @@ try {
     $router->put('/admin/users/{id}', 'AdminController@updateUser');
     $router->delete('/admin/users/{id}', 'AdminController@deleteUser');
     
+    // Secretary routes
+    $router->get('/secretary/dashboard', 'SecretaryController@dashboard');
+    $router->get('/secretary/bookings', 'SecretaryController@bookings');
+    $router->get('/secretary/payments', 'SecretaryController@payments');
+    $router->get('/secretary/patients', 'SecretaryController@patients');
+    $router->get('/secretary/patients/new', 'SecretaryController@newPatient');
+    $router->post('/secretary/patients', 'SecretaryController@createPatient');
+    $router->get('/secretary/patients/{id}', 'SecretaryController@viewPatient');
+    $router->get('/secretary/invoices/{id}', 'SecretaryController@viewInvoice');
+    
+    // Doctor routes
     $router->get('/doctor/dashboard', 'DoctorController@dashboard');
     $router->get('/doctor/calendar', 'DoctorController@calendar');
     $router->get('/doctor/patients', 'DoctorController@patients');
@@ -76,24 +88,11 @@ try {
     $router->get('/doctor/profile', 'DoctorController@profile');
     $router->post('/doctor/profile/change-password', 'DoctorController@changePassword');
     
-    $router->get('/secretary/dashboard', 'SecretaryController@dashboard');
-    $router->get('/secretary/bookings', 'SecretaryController@bookings');
-    $router->get('/secretary/payments', 'SecretaryController@payments');
-    $router->get('/secretary/patients', 'SecretaryController@patients');
-    $router->get('/secretary/patients/new', 'SecretaryController@newPatient');
-    $router->post('/secretary/patients', 'SecretaryController@createPatient');
-    $router->get('/secretary/patients/{id}', 'SecretaryController@viewPatient');
-    $router->get('/secretary/invoices/{id}', 'SecretaryController@viewInvoice');
-    $router->post('/secretary/bookings', 'SecretaryController@createBooking');
-    $router->put('/secretary/bookings/{id}', 'SecretaryController@updateBooking');
-    $router->delete('/secretary/bookings/{id}', 'SecretaryController@deleteBooking');
-    
     // API routes
     $router->get('/api/calendar', 'ApiController@getCalendar');
     $router->get('/api/appointments/{id}', 'ApiController@getAppointment');
     $router->post('/api/appointments', 'ApiController@createAppointment');
     $router->put('/api/appointments/{id}', 'ApiController@updateAppointment');
-    $router->delete('/api/appointments/{id}', 'ApiController@deleteAppointment');
     $router->post('/api/payments', 'ApiController@createPayment');
     $router->get('/api/patients/search', 'ApiController@searchPatients');
     $router->post('/api/patients', 'ApiController@createPatient');
@@ -107,6 +106,7 @@ try {
     $router->put('/api/prescriptions/glasses/{id}', 'ApiController@updateGlassesPrescription');
     $router->delete('/api/prescriptions/glasses/{id}', 'ApiController@deleteGlassesPrescription');
     
+    // Lab Tests & Radiology API routes
     $router->post('/api/lab-tests', 'ApiController@createLabTest');
     $router->put('/api/lab-tests/{id}', 'ApiController@updateLabTest');
     $router->delete('/api/lab-tests/{id}', 'ApiController@deleteLabTest');
@@ -115,17 +115,35 @@ try {
     $router->post('/api/daily-closure/lock', 'ApiController@lockDailyClosure');
     $router->post('/api/users/change-password', 'ApiController@changePassword');
     
+    // Attachment API routes
     $router->post('/api/attachments/upload', 'ApiController@uploadAttachment');
     $router->get('/api/attachments/view/{id}', 'ApiController@viewAttachment');
     $router->get('/api/attachments/download/{id}', 'ApiController@downloadAttachment');
     $router->delete('/api/attachments/{id}', 'ApiController@deleteAttachment');
     
+    // Patient Files API routes
+    $router->post('/api/patients/files/upload', 'ApiController@uploadPatientFile');
+    $router->get('/api/patients/files/view/{id}', 'ApiController@viewPatientFile');
+    $router->get('/api/patients/files/download/{id}', 'ApiController@downloadPatientFile');
+    $router->delete('/api/patients/files/{id}', 'ApiController@deletePatientFile');
+    
+    // Patient Notes API routes
+    $router->post('/api/patients/notes', 'ApiController@createPatientNote');
+    $router->put('/api/patients/notes/{id}', 'ApiController@updatePatientNote');
+    $router->delete('/api/patients/notes/{id}', 'ApiController@deletePatientNote');
+    
+    // Print routes
     $router->get('/print/prescription/{id}', 'PrintController@medicationPrescription');
     $router->get('/print/glasses/{id}', 'PrintController@glassesPrescription');
     $router->get('/print/lab-test/{id}', 'PrintController@singleLabTest');
     $router->get('/print/lab-tests/{id}', 'PrintController@labTests');
     $router->get('/print/invoice/{id}', 'PrintController@invoice');
     $router->get('/print/appointment/{id}', 'PrintController@appointmentReport');
+    
+    // Admin routes
+    $router->get('/admin/dashboard', 'AdminController@dashboard');
+    $router->get('/admin/users', 'AdminController@users');
+    $router->get('/admin/reports', 'AdminController@reports');
     
     // ✅ FIXED: استخدام dispatch() بدلاً من handle()
     $router->dispatch();

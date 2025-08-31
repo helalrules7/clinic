@@ -122,11 +122,19 @@ class DoctorController
         // Get recent appointments
         $recentAppointments = $this->getPatientAppointments($id, $doctorId);
         
+        // Get patient files
+        $patientAttachments = $this->getPatientFiles($id);
+        
+        // Get patient notes
+        $patientNotes = $this->getPatientNotes($id);
+        
         $content = $this->view->render('doctor/patient', [
             'patient' => $patient,
             'timeline' => $timeline,
             'medicalHistory' => $medicalHistory,
             'recentAppointments' => $recentAppointments,
+            'patientAttachments' => $patientAttachments,
+            'patientNotes' => $patientNotes,
             'doctorId' => $doctorId
         ]);
         
@@ -676,5 +684,31 @@ class DoctorController
     {
         // This is an alias for updateConsultation to maintain compatibility with different route configurations
         return $this->updateConsultation($id);
+    }
+    
+    private function getPatientFiles($patientId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT pf.*, u.name as uploaded_by_name
+            FROM patient_files pf
+            LEFT JOIN users u ON pf.uploaded_by = u.id
+            WHERE pf.patient_id = ?
+            ORDER BY pf.created_at DESC
+        ");
+        $stmt->execute([$patientId]);
+        return $stmt->fetchAll();
+    }
+    
+    private function getPatientNotes($patientId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT pn.*, u.name as doctor_name
+            FROM patient_notes pn
+            LEFT JOIN users u ON pn.doctor_id = u.id
+            WHERE pn.patient_id = ?
+            ORDER BY pn.created_at DESC
+        ");
+        $stmt->execute([$patientId]);
+        return $stmt->fetchAll();
     }
 }

@@ -117,6 +117,17 @@ try {
     $router->get('/api/attachments/download/{id}', 'ApiController@downloadAttachment');
     $router->delete('/api/attachments/{id}', 'ApiController@deleteAttachment');
     
+    // Patient Files API routes
+    $router->post('/api/patients/files/upload', 'ApiController@uploadPatientFile');
+    $router->get('/api/patients/files/view/{id}', 'ApiController@viewPatientFile');
+    $router->get('/api/patients/files/download/{id}', 'ApiController@downloadPatientFile');
+    $router->delete('/api/patients/files/{id}', 'ApiController@deletePatientFile');
+    
+    // Patient Notes API routes
+    $router->post('/api/patients/notes', 'ApiController@createPatientNote');
+    $router->put('/api/patients/notes/{id}', 'ApiController@updatePatientNote');
+    $router->delete('/api/patients/notes/{id}', 'ApiController@deletePatientNote');
+    
     // Print routes
     $router->get('/print/prescription/{id}', 'PrintController@medicationPrescription');
     $router->get('/print/glasses/{id}', 'PrintController@glassesPrescription');

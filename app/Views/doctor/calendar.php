@@ -145,7 +145,12 @@
                             
                             <div class="mb-3">
                                 <label for="appointmentDate" class="form-label">Date *</label>
-                                <input type="date" class="form-control" id="appointmentDate" name="date" required>
+                                <input type="date" class="form-control" id="appointmentDate" name="date" 
+                                       min="<?= date('Y-m-d') ?>" required>
+                                <div class="form-text text-muted">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Cannot select a date before today (Local timezone: Egypt)
+                                </div>
                             </div>
                             
                             <div class="mb-3">
@@ -196,6 +201,18 @@
 </div>
 
 <script>
+// Get server time for Egypt timezone
+<?php
+date_default_timezone_set('Africa/Cairo');
+$serverDate = date('Y-m-d');
+$serverDateTime = date('Y-m-d H:i:s');
+$serverTimestamp = time();
+?>
+
+const SERVER_DATE = '<?= $serverDate ?>';
+const SERVER_DATETIME = '<?= $serverDateTime ?>';
+const SERVER_TIMESTAMP = <?= $serverTimestamp ?>;
+
 let currentDate = new Date();
 let selectedAppointment = null;
 let refreshInterval;
@@ -235,7 +252,18 @@ function setupEventListeners() {
     document.getElementById('patientSearch').addEventListener('input', debounce(searchPatients, 300));
     
     // Date change - load available time slots
-    document.getElementById('appointmentDate').addEventListener('change', () => {
+    document.getElementById('appointmentDate').addEventListener('change', (e) => {
+        const selectedDate = e.target.value;
+        
+        // Validate selected date
+        const validation = validateDateSelection(selectedDate);
+        if (!validation.valid) {
+            showErrorMessage(validation.message);
+            // Reset to server date
+            e.target.value = SERVER_DATE;
+            return;
+        }
+        
         // Keep any preselected time when date changes
         const currentSelectedTime = document.getElementById('appointmentTime').value;
         loadAvailableTimeSlots(currentSelectedTime || null);
@@ -680,6 +708,14 @@ function formatDate(date) {
 function openAddAppointmentModal(preselectedTime = null, preselectedDate = null) {
     // Set date - use preselected date or current date
     const dateToUse = preselectedDate || currentDate.toISOString().split('T')[0];
+    
+    // Validate date before opening modal
+    const validation = validateDateSelection(dateToUse);
+    if (!validation.valid) {
+        showErrorMessage(validation.message);
+        return;
+    }
+    
     document.getElementById('appointmentDate').value = dateToUse;
     
     // Clear form
@@ -757,8 +793,44 @@ function openAddAppointmentModal(preselectedTime = null, preselectedDate = null)
 }
 
 function quickAddAppointment(time) {
+    const selectedDate = currentDate.toISOString().split('T')[0];
+    
+    // Check if selected date is in the past
+    if (isDateInPast(selectedDate)) {
+        showErrorMessage('Cannot add appointment on a past date. Please select today or a future date.');
+        return;
+    }
+    
     // Set the current date being viewed and the selected time
-    openAddAppointmentModal(time, currentDate.toISOString().split('T')[0]);
+    openAddAppointmentModal(time, selectedDate);
+}
+
+// Function to check if date is in the past based on server time
+function isDateInPast(dateString) {
+    return dateString < SERVER_DATE;
+}
+
+// Function to validate date selection
+function validateDateSelection(dateString) {
+    if (isDateInPast(dateString)) {
+        return {
+            valid: false,
+            message: 'Cannot select a date before today. Current date (Egypt timezone): ' + formatDateArabic(SERVER_DATE)
+        };
+    }
+    return { valid: true };
+}
+
+// Format date in English
+function formatDateArabic(dateString) {
+    const date = new Date(dateString + 'T00:00:00');
+    const options = { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        weekday: 'long'
+    };
+    return date.toLocaleDateString('en-US', options);
 }
 
 function searchPatients() {
@@ -895,22 +967,29 @@ function handleAddAppointment(e) {
     
     // Validation
     if (!appointmentData.patient_id) {
-        alert('Please select a patient');
+        showErrorMessage('Please select a patient');
         return;
     }
     
     if (!appointmentData.date) {
-        alert('Please select a date');
+        showErrorMessage('Please select a date');
+        return;
+    }
+    
+    // Final validation: Check if date is in the past
+    const validation = validateDateSelection(appointmentData.date);
+    if (!validation.valid) {
+        showErrorMessage(validation.message);
         return;
     }
     
     if (!appointmentData.start_time) {
-        alert('Please select a time slot');
+        showErrorMessage('Please select an appointment time');
         return;
     }
     
     if (!appointmentData.visit_type) {
-        alert('Please select a visit type');
+        showErrorMessage('Please select a visit type');
         return;
     }
     
@@ -956,12 +1035,13 @@ function showNotification(message, type = 'info') {
     // Create notification element
     const notification = document.createElement('div');
     notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    notification.style.top = '20px';
-    notification.style.right = '20px';
-    notification.style.zIndex = '9999';
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
     notification.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="d-flex align-items-center">
+            <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+            <div class="flex-grow-1">${message}</div>
+            <button type="button" class="btn-close ms-2" data-bs-dismiss="alert"></button>
+        </div>
     `;
     
     document.body.appendChild(notification);
@@ -972,6 +1052,16 @@ function showNotification(message, type = 'info') {
             notification.remove();
         }
     }, 5000);
+}
+
+// Enhanced error message function
+function showErrorMessage(message) {
+    showNotification(message, 'danger');
+}
+
+// Enhanced success message function  
+function showSuccessMessage(message) {
+    showNotification(message, 'success');
 }
 
 function clearPreselectedPatient() {
@@ -1021,10 +1111,39 @@ window.addEventListener('beforeunload', () => {
 </script>
 
 <style>
+/* CSS Variables for Dark Mode */
+:root {
+    --bg: #f8fafc;
+    --text: #0f172a;
+    --card: #ffffff;
+    --muted: #475569;
+    --accent: #0ea5e9;
+    --success: #10b981;
+    --danger: #ef4444;
+    --border: #e2e8f0;
+    --shadow: rgba(0, 0, 0, 0.1);
+    --success-rgb: 16, 185, 129;
+}
+
+.dark {
+    --bg: #0b1220;
+    --text: #f8fafc;
+    --card: #1e293b;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --success: #4ade80;
+    --danger: #fb7185;
+    --border: #334155;
+    --shadow: rgba(0, 0, 0, 0.3);
+    --success-rgb: 74, 222, 128;
+}
+
+/* Calendar Grid Styles */
 .calendar-grid {
     border: 1px solid var(--border);
     border-radius: 8px;
     overflow: hidden;
+    background: var(--card);
 }
 
 .calendar-header {
@@ -1038,6 +1157,18 @@ window.addEventListener('beforeunload', () => {
 .calendar-header > div {
     padding: 1rem;
     border-right: 1px solid var(--border);
+    color: var(--text);
+}
+
+/* Dark Mode Calendar Styles */
+.dark .calendar-header {
+    background: var(--bg);
+    color: var(--text);
+}
+
+.dark .calendar-grid {
+    background: var(--card);
+    border-color: var(--border);
 }
 
 .calendar-row {
@@ -1075,6 +1206,18 @@ window.addEventListener('beforeunload', () => {
     transition: all 0.2s ease;
     border: 1px solid var(--border);
     background: var(--card);
+    color: var(--text);
+}
+
+/* Dark Mode Appointment Cards */
+.dark .appointment-card {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark .appointment-card:hover {
+    box-shadow: 0 4px 12px var(--shadow);
 }
 
 .appointment-card:hover {
@@ -1133,6 +1276,19 @@ window.addEventListener('beforeunload', () => {
     color: var(--text);
 }
 
+/* Dark Mode Text Colors */
+.dark .patient-name {
+    color: var(--text);
+}
+
+.dark .appointment-header .appointment-info .info-line .label {
+    color: var(--muted);
+}
+
+.dark .appointment-notes {
+    color: var(--muted);
+}
+
 .appointment-details {
     display: flex;
     gap: 0.5rem;
@@ -1163,6 +1319,19 @@ window.addEventListener('beforeunload', () => {
     border-color: var(--accent);
     color: var(--accent);
     transform: translateY(-1px);
+}
+
+/* Dark Mode Available Slots */
+.dark .available-slot {
+    color: var(--success);
+    border-color: var(--success);
+    background: rgba(var(--success-rgb), 0.1);
+}
+
+.dark .available-slot:hover {
+    background: rgba(var(--success-rgb), 0.2);
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 .unavailable-slot {
@@ -1304,12 +1473,48 @@ window.addEventListener('beforeunload', () => {
 .modal-content {
     border-radius: 12px;
     border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
 }
 
 .modal-header {
     background: var(--bg);
     border-bottom: 1px solid var(--border);
     border-radius: 12px 12px 0 0;
+    color: var(--text);
+}
+
+.modal-body {
+    background: var(--card);
+    color: var(--text);
+}
+
+.modal-footer {
+    background: var(--card);
+    border-top: 1px solid var(--border);
+}
+
+/* Dark Mode Modal Styles */
+.dark .modal-content {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark .modal-header {
+    background: var(--bg);
+    border-bottom-color: var(--border);
+    color: var(--text);
+}
+
+.dark .modal-body {
+    background: var(--card);
+    color: var(--text);
+}
+
+.dark .modal-footer {
+    background: var(--card);
+    border-top-color: var(--border);
 }
 
 .btn-group .btn {
@@ -1378,6 +1583,21 @@ window.addEventListener('beforeunload', () => {
     background: var(--bg);
 }
 
+/* Dark Mode Search Results */
+.dark .search-result-item {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark .search-result-item:hover {
+    background: var(--bg);
+}
+
+.dark .patient-details {
+    color: var(--muted);
+}
+
 .patient-name {
     font-weight: 600;
     color: var(--text);
@@ -1399,14 +1619,86 @@ window.addEventListener('beforeunload', () => {
     color: var(--text);
 }
 
+/* Form Controls Dark Mode */
+.form-control {
+    background: var(--card);
+    border: 2px solid var(--border);
+    color: var(--text);
+}
+
+.form-control:focus {
+    background: var(--card);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25);
+    color: var(--text);
+}
+
+.form-select {
+    background: var(--card);
+    border: 2px solid var(--border);
+    color: var(--text);
+}
+
+.form-select:focus {
+    background: var(--card);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25);
+    color: var(--text);
+}
+
+.dark .form-control {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark .form-control:focus {
+    background: var(--card);
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.dark .form-select {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark .form-select:focus {
+    background: var(--card);
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.dark .form-label {
+    color: var(--text);
+}
+
 .btn-group .btn {
     border-radius: 6px !important;
 }
 
 /* Notification styles */
 .alert {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px var(--shadow);
     border-radius: 8px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+/* Dark Mode Alert Styles */
+.dark .alert {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+    box-shadow: 0 4px 12px var(--shadow);
+}
+
+.dark .alert-info {
+    background: rgba(56, 189, 248, 0.1);
+    border-color: var(--accent);
+    color: var(--text);
 }
 
 /* Selected patient info */
@@ -1422,6 +1714,14 @@ input[readonly] {
     background-color: var(--bg) !important;
     cursor: not-allowed !important;
     opacity: 0.8;
+    color: var(--text) !important;
+}
+
+/* Dark Mode Readonly Fields */
+.dark input[readonly] {
+    background-color: var(--bg) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
 }
 
 /* Preselected fields styling */
@@ -1448,7 +1748,15 @@ input[readonly] {
     padding: 12px 16px;
     text-align: left;
     direction: ltr;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px var(--shadow);
+}
+
+/* Dark Mode Tooltips */
+.dark .tooltip-inner {
+    background-color: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 12px var(--shadow);
 }
 
 .appointment-tooltip {
@@ -1497,5 +1805,108 @@ input[readonly] {
 .appointment-tooltip .tooltip-footer small {
     color: #95a5a6;
     font-style: italic;
+}
+
+/* Dark Mode Buttons */
+.dark .btn-outline-primary {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.dark .btn-outline-primary:hover {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: #0b1220;
+}
+
+.dark .btn-success {
+    background-color: var(--success);
+    border-color: var(--success);
+    color: #0b1220;
+}
+
+.dark .btn-success:hover {
+    background-color: #059669;
+    border-color: #059669;
+}
+
+.dark .btn-secondary {
+    background-color: #64748b;
+    border-color: #64748b;
+    color: white;
+}
+
+.dark .btn-secondary:hover {
+    background-color: #475569;
+    border-color: #475569;
+}
+
+.dark .btn-danger {
+    background-color: var(--danger);
+    border-color: var(--danger);
+    color: white;
+}
+
+.dark .btn-warning {
+    background-color: #f59e0b;
+    border-color: #f59e0b;
+    color: #0b1220;
+}
+
+/* Dark Mode Cards */
+.dark .card {
+    background-color: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark .card-header {
+    background-color: var(--bg);
+    border-bottom-color: var(--border);
+    color: var(--text);
+}
+
+.dark .card-body {
+    background-color: var(--card);
+    color: var(--text);
+}
+
+/* Dark Mode Badge Styles */
+.dark .badge {
+    color: white;
+}
+
+.dark .badge.bg-success {
+    background-color: var(--success) !important;
+}
+
+.dark .badge.bg-primary {
+    background-color: var(--accent) !important;
+}
+
+.dark .badge.bg-info {
+    background-color: #0ea5e9 !important;
+}
+
+.dark .badge.bg-warning {
+    background-color: #f59e0b !important;
+    color: #0b1220 !important;
+}
+
+.dark .badge.bg-danger {
+    background-color: var(--danger) !important;
+}
+
+/* Dark Mode Text Colors */
+.dark h4, .dark h5, .dark h6 {
+    color: var(--text);
+}
+
+.dark .text-muted {
+    color: var(--muted) !important;
+}
+
+.dark small {
+    color: var(--muted);
 }
 </style>

@@ -2145,4 +2145,329 @@ class ApiController
             return $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
     }
+
+    // Patient Files Methods
+    public function uploadPatientFile()
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $patientId = $_POST['patient_id'] ?? null;
+            $fileType = $_POST['file_type'] ?? null;
+            $description = $_POST['description'] ?? '';
+
+            if (!$patientId || !$fileType) {
+                return $this->jsonResponse(['error' => 'Patient ID and file type are required'], 400);
+            }
+
+            // Check if file was uploaded
+            if (!isset($_FILES['patient_file']) || $_FILES['patient_file']['error'] !== UPLOAD_ERR_OK) {
+                return $this->jsonResponse(['error' => 'No file uploaded or upload error'], 400);
+            }
+
+            $file = $_FILES['patient_file'];
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+            
+            if (!in_array($file['type'], $allowedTypes)) {
+                return $this->jsonResponse(['error' => 'File type not allowed'], 400);
+            }
+
+            // Check file size (5MB max)
+            if ($file['size'] > 5 * 1024 * 1024) {
+                return $this->jsonResponse(['error' => 'File size too large (max 5MB)'], 400);
+            }
+
+            // Create uploads directory if it doesn't exist
+            $uploadDir = __DIR__ . '/../../uploads/patients/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            // Generate unique filename
+            $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $filename = 'patient_' . $patientId . '_' . time() . '_' . uniqid() . '.' . $extension;
+            $filePath = $uploadDir . $filename;
+
+            // Move uploaded file
+            if (!move_uploaded_file($file['tmp_name'], $filePath)) {
+                return $this->jsonResponse(['error' => 'Failed to save file'], 500);
+            }
+
+            // Save file info to database
+            $stmt = $this->pdo->prepare("
+                INSERT INTO patient_files (patient_id, original_filename, file_path, file_type, file_size, description, uploaded_by, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+            ");
+            
+            $stmt->execute([
+                $patientId,
+                $file['name'],
+                'uploads/patients/' . $filename,
+                $fileType,
+                $file['size'],
+                $description,
+                $this->auth->user()['id']
+            ]);
+
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => 'File uploaded successfully',
+                'file_id' => $this->pdo->lastInsertId()
+            ]);
+
+        } catch (Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function viewPatientFile($fileId)
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $stmt = $this->pdo->prepare("SELECT * FROM patient_files WHERE id = ?");
+            $stmt->execute([$fileId]);
+            $file = $stmt->fetch();
+
+            if (!$file) {
+                return $this->jsonResponse(['error' => 'File not found'], 404);
+            }
+
+            $filePath = __DIR__ . '/../../' . $file['file_path'];
+            
+            if (!file_exists($filePath)) {
+                return $this->jsonResponse(['error' => 'File not found on disk'], 404);
+            }
+
+            // Set appropriate headers
+            $mimeType = mime_content_type($filePath);
+            header('Content-Type: ' . $mimeType);
+            header('Content-Length: ' . filesize($filePath));
+            header('Cache-Control: private, max-age=3600');
+            
+            // Output file
+            readfile($filePath);
+            exit;
+
+        } catch (Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function downloadPatientFile($fileId)
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $stmt = $this->pdo->prepare("SELECT * FROM patient_files WHERE id = ?");
+            $stmt->execute([$fileId]);
+            $file = $stmt->fetch();
+
+            if (!$file) {
+                return $this->jsonResponse(['error' => 'File not found'], 404);
+            }
+
+            $filePath = __DIR__ . '/../../' . $file['file_path'];
+            
+            if (!file_exists($filePath)) {
+                return $this->jsonResponse(['error' => 'File not found on disk'], 404);
+            }
+
+            // Set download headers
+            header('Content-Type: application/octet-stream');
+            header('Content-Disposition: attachment; filename="' . $file['original_filename'] . '"');
+            header('Content-Length: ' . filesize($filePath));
+            header('Cache-Control: private');
+            
+            // Output file
+            readfile($filePath);
+            exit;
+
+        } catch (Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function deletePatientFile($fileId)
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $stmt = $this->pdo->prepare("SELECT * FROM patient_files WHERE id = ?");
+            $stmt->execute([$fileId]);
+            $file = $stmt->fetch();
+
+            if (!$file) {
+                return $this->jsonResponse(['error' => 'File not found'], 404);
+            }
+
+            // Delete file from disk
+            $filePath = __DIR__ . '/../../' . $file['file_path'];
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
+
+            // Delete from database
+            $stmt = $this->pdo->prepare("DELETE FROM patient_files WHERE id = ?");
+            $stmt->execute([$fileId]);
+
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => 'File deleted successfully'
+            ]);
+
+        } catch (Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    // Patient Notes Methods
+    public function createPatientNote()
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $patientId = $_POST['patient_id'] ?? null;
+            $title = $_POST['title'] ?? null;
+            $content = $_POST['content'] ?? null;
+
+            if (!$patientId || !$title || !$content) {
+                return $this->jsonResponse(['error' => 'Patient ID, title, and content are required'], 400);
+            }
+
+            $stmt = $this->pdo->prepare("
+                INSERT INTO patient_notes (patient_id, title, content, doctor_id, created_at) 
+                VALUES (?, ?, ?, ?, NOW())
+            ");
+            
+            $stmt->execute([
+                $patientId,
+                $title,
+                $content,
+                $this->auth->user()['id']
+            ]);
+
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => 'Note created successfully',
+                'note_id' => $this->pdo->lastInsertId()
+            ]);
+
+        } catch (Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function updatePatientNote($noteId)
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            // Handle PUT request data
+            $input = [];
+            if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+                // Parse PUT data
+                $putData = file_get_contents('php://input');
+                parse_str($putData, $input);
+            } else {
+                $input = $_POST;
+            }
+
+            $title = $input['title'] ?? null;
+            $content = $input['content'] ?? null;
+
+            // Debug logging
+            error_log("DEBUG updatePatientNote: " . json_encode([
+                'noteId' => $noteId,
+                'method' => $_SERVER['REQUEST_METHOD'],
+                'input' => $input,
+                'title' => $title,
+                'content' => $content
+            ]));
+
+            if (!$title || !$content) {
+                return $this->jsonResponse([
+                    'error' => 'Title and content are required',
+                    'debug' => [
+                        'received_title' => $title,
+                        'received_content' => $content,
+                        'input_data' => $input
+                    ]
+                ], 400);
+            }
+
+            // Check if note exists
+            $stmt = $this->pdo->prepare("SELECT * FROM patient_notes WHERE id = ?");
+            $stmt->execute([$noteId]);
+            $note = $stmt->fetch();
+
+            if (!$note) {
+                return $this->jsonResponse(['error' => 'Note not found'], 404);
+            }
+
+            $stmt = $this->pdo->prepare("
+                UPDATE patient_notes 
+                SET title = ?, content = ?, updated_at = NOW() 
+                WHERE id = ?
+            ");
+            
+            $stmt->execute([$title, $content, $noteId]);
+
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => 'Note updated successfully'
+            ]);
+
+        } catch (Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function deletePatientNote($noteId)
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            // Check if note exists
+            $stmt = $this->pdo->prepare("SELECT * FROM patient_notes WHERE id = ?");
+            $stmt->execute([$noteId]);
+            $note = $stmt->fetch();
+
+            if (!$note) {
+                return $this->jsonResponse(['error' => 'Note not found'], 404);
+            }
+
+            $stmt = $this->pdo->prepare("DELETE FROM patient_notes WHERE id = ?");
+            $stmt->execute([$noteId]);
+
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => 'Note deleted successfully'
+            ]);
+
+        } catch (Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
 }

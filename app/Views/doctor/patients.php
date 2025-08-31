@@ -71,7 +71,7 @@
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
-                <thead class="table-light">
+                <thead class="table-dark">
                     <tr>
                         <th>Patient Info</th>
                         <th>Contact</th>
@@ -247,14 +247,54 @@
     font-size: 0.9rem;
 }
 
+.card {
+    background-color: var(--bg);
+    border-color: var(--border);
+    color: var(--text);
+}
+
 .card:hover {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     transform: translateY(-1px);
     transition: all 0.2s ease;
 }
 
+.card-header {
+    background-color: var(--bg-alt);
+    border-bottom-color: var(--border);
+    color: var(--text);
+}
+
+.table {
+    background-color: var(--bg-dark);
+    color: var(--text);
+}
+
+.table thead th {
+    background-color: var(--bg-dark) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.table-dark th {
+    background-color: var(--bg-dark) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.table tbody tr {
+    background-color: var(--bg-dark);
+    border-color: var(--border);
+}
+
 .table tbody tr:hover {
-    background-color: var(--bg);
+    background-color: var(--bg-alt);
+}
+
+.table td {
+    background-color: var(--bg-dark);
+    border-color: var(--border);
+    color: var(--text);
 }
 
 .btn-group .btn {
@@ -262,6 +302,42 @@
 }
 
 /* Search Modal Styles */
+.modal-content {
+    background-color: var(--bg);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.modal-header {
+    background-color: var(--bg-alt);
+    border-bottom-color: var(--border);
+    color: var(--text);
+}
+
+.modal-footer {
+    background-color: var(--bg-alt);
+    border-top-color: var(--border);
+}
+
+.form-control {
+    background-color: var(--bg);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.form-control:focus {
+    background-color: var(--bg);
+    border-color: var(--accent);
+    color: var(--text);
+    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
+}
+
+.input-group-text {
+    background-color: var(--bg-alt);
+    border-color: var(--border);
+    color: var(--text);
+}
+
 .search-results-container {
     max-height: 400px;
     overflow-y: auto;
@@ -308,6 +384,7 @@
 
 .search-result-info .text-muted {
     font-size: 0.9rem;
+    color: var(--muted) !important;
 }
 
 .search-result-actions .btn {
@@ -327,15 +404,61 @@
     box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
 }
 
+/* Button styling for dark mode */
+.btn-outline-primary {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.btn-outline-success {
+    color: #28a745;
+    border-color: #28a745;
+}
+
+.btn-outline-success:hover {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.btn-outline-secondary {
+    color: var(--muted);
+    border-color: var(--border);
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--bg-alt);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.btn-secondary {
+    background-color: var(--bg-alt);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.btn-secondary:hover {
+    background-color: var(--border);
+    border-color: var(--border);
+    color: var(--text);
+}
+
 /* Keyboard shortcut styling */
 kbd {
-    background-color: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background-color: var(--bg-alt);
+    border: 1px solid var(--border);
     border-radius: 4px;
     padding: 2px 6px;
     font-size: 0.75rem;
     font-family: 'Courier New', 'Cairo', monospace;
-    color: rgba(0, 0, 0, 0.9);
+    color: var(--text);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     min-width: 20px;
     text-align: center;
@@ -372,6 +495,27 @@ kbd[lang="ar"] {
     color: var(--text);
     font-size: 0.65rem;
     padding: 1px 4px;
+}
+
+/* Badge styling for dark mode */
+.badge.bg-primary {
+    background-color: var(--accent) !important;
+    color: white;
+}
+
+.badge.bg-success {
+    background-color: #28a745 !important;
+    color: white;
+}
+
+.badge.bg-secondary {
+    background-color: var(--muted) !important;
+    color: white;
+}
+
+/* Text muted styling */
+.text-muted {
+    color: var(--muted) !important;
 }
 </style>
 

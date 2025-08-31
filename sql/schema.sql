@@ -24,6 +24,41 @@ CREATE TABLE users (
     INDEX idx_active (is_active)
 ) ENGINE=InnoDB;
 
+
+-- Patient Files Table
+CREATE TABLE IF NOT EXISTS patient_files (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    patient_id BIGINT UNSIGNED NOT NULL,
+    original_filename VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    file_type VARCHAR(50) NOT NULL,
+    file_size INT NOT NULL,
+    description TEXT,
+    uploaded_by BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+    FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_patient_files_patient_id (patient_id),
+    INDEX idx_patient_files_created_at (created_at)
+);
+
+-- Patient Notes Table
+CREATE TABLE IF NOT EXISTS patient_notes (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    patient_id BIGINT UNSIGNED NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    doctor_id BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+    FOREIGN KEY (doctor_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_patient_notes_patient_id (patient_id),
+    INDEX idx_patient_notes_doctor_id (doctor_id),
+    INDEX idx_patient_notes_created_at (created_at)
+);
+
 -- Doctors table
 CREATE TABLE doctors (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

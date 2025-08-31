@@ -9,6 +9,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
     <!-- Cairo Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -115,6 +117,46 @@
             font-weight: 600;
         }
         
+        .password-toggle-container {
+            position: relative;
+        }
+        
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            z-index: 10;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+        }
+        
+        .password-toggle-btn:hover {
+            color: var(--accent);
+        }
+        
+        .password-toggle-btn:focus {
+            outline: none;
+            color: var(--accent);
+        }
+        
+        .secure-login-text {
+            color: var(--muted);
+        }
+        
+        .dark .secure-login-text {
+            color: #94a3b8;
+        }
+        
         .btn-primary {
             background: var(--accent);
             border: none;
@@ -201,13 +243,16 @@
                 <div class="form-floating">
                     <input type="text" class="form-control" id="username" name="username" 
                            placeholder="username" value="<?= htmlspecialchars($username ?? '') ?>" required>
-                    <label for="username">اسم المستخدم - Username</label>
+                    <label for="username">Username</label>
                 </div>
 
-                <div class="form-floating">
+                <div class="form-floating password-toggle-container">
                     <input type="password" class="form-control" id="password" name="password" 
                            placeholder="Password" required>
                     <label for="password">Password</label>
+                    <button type="button" class="password-toggle-btn" id="passwordToggle" aria-label="Toggle password visibility">
+                        <i class="fas fa-eye" id="passwordToggleIcon"></i>
+                    </button>
                 </div>
 
                 <div class="form-check mb-3">
@@ -224,31 +269,13 @@
             </form>
 
             <div class="text-center mt-3">
-                <small class="text-muted">
+                <small class="secure-login-text">
                     <i class="bi bi-shield-check me-1"></i>
                     Secure login system
                 </small>
             </div>
             
             <!-- Demo Credentials -->
-            <div class="mt-4 p-3" style="background: var(--bg); border: 1px solid #dee2e6; border-radius: 8px;">
-                <h6 class="text-muted mb-2 text-center">أسماء المستخدمين التجريبية - Demo Usernames</h6>
-                <div class="row text-sm">
-                    <div class="col-6">
-                        <strong style="color: var(--accent);">الأطباء - Doctors:</strong><br>
-                        <code style="background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">dr_ahmed</code><br>
-                        <code style="background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">dr_faramawy</code>
-                    </div>
-                    <div class="col-6">
-                        <strong style="color: var(--success);">الموظفون - Staff:</strong><br>
-                        <code style="background: var(--success); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">sec</code> (Secretary)<br>
-                        <code style="background: var(--danger); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">admin</code> (Admin)
-                    </div>
-                </div>
-                <div class="mt-2 text-center">
-                    <strong>كلمة المرور لجميع الحسابات:</strong> <code style="background: #6c757d; color: white; padding: 2px 8px; border-radius: 4px;">password</code>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -275,6 +302,20 @@
         // Update initial icon
         const icon = document.querySelector('#themeToggle i');
         icon.className = saved === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+        
+        // Password toggle functionality
+        document.getElementById('passwordToggle').addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const passwordIcon = document.getElementById('passwordToggleIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordIcon.className = 'fas fa-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                passwordIcon.className = 'fas fa-eye';
+            }
+        });
         
         // Form validation
         document.querySelector('form').addEventListener('submit', function(e) {

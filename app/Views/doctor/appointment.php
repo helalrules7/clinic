@@ -1,10 +1,78 @@
 <style>
+/* CSS Variables for Dark Mode */
+:root {
+    --bg: #f8fafc;
+    --text: #0f172a;
+    --card: #ffffff;
+    --muted: #475569;
+    --accent: #0ea5e9;
+    --success: #10b981;
+    --danger: #ef4444;
+    --border: #e2e8f0;
+    --shadow: rgba(0, 0, 0, 0.1);
+}
+
+.dark {
+    --bg: #0b1220;
+    --text: #f8fafc;
+    --card: #1e293b;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --success: #4ade80;
+    --danger: #fb7185;
+    --border: #334155;
+    --shadow: rgba(0, 0, 0, 0.3);
+}
+
 .appointment-header {
     background: linear-gradient(135deg, var(--accent), var(--success));
     color: white;
     padding: 2rem;
     border-radius: 12px;
     margin-bottom: 2rem;
+}
+
+/* Doctor Warning Badge */
+.doctor-warning-badge {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1050;
+    max-width: 90%;
+    animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.doctor-warning-content {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.doctor-warning-icon {
+    font-size: 1.5rem;
+    margin-right: 0.75rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
 }
 
 .status-badge {
@@ -129,7 +197,250 @@
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* Dark Mode Styles */
+.dark .card {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .card-header {
+    background-color: var(--bg) !important;
+    border-bottom-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .card-body {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+.dark .text-muted {
+    color: var(--muted) !important;
+}
+
+.dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+    color: var(--text) !important;
+}
+
+.dark p {
+    color: var(--text) !important;
+}
+
+.dark small {
+    color: var(--muted) !important;
+}
+
+/* Dark Mode Form Styles */
+.dark .form-control {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .form-control:focus {
+    background-color: var(--card) !important;
+    border-color: var(--accent) !important;
+    color: var(--text) !important;
+    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25) !important;
+}
+
+.dark .form-select {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .form-select:focus {
+    background-color: var(--card) !important;
+    border-color: var(--accent) !important;
+    color: var(--text) !important;
+}
+
+.dark .form-label {
+    color: var(--text) !important;
+}
+
+/* Dark Mode Modal Styles */
+.dark .modal-content {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .modal-header {
+    background-color: var(--bg) !important;
+    border-bottom-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .modal-body {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+.dark .modal-footer {
+    background-color: var(--card) !important;
+    border-top-color: var(--border) !important;
+}
+
+/* Dark Mode Button Styles */
+.dark .btn-outline-primary {
+    color: var(--accent) !important;
+    border-color: var(--accent) !important;
+}
+
+.dark .btn-outline-primary:hover {
+    background-color: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: #0b1220 !important;
+}
+
+.dark .btn-outline-success {
+    color: var(--success) !important;
+    border-color: var(--success) !important;
+}
+
+.dark .btn-outline-success:hover {
+    background-color: var(--success) !important;
+    border-color: var(--success) !important;
+    color: #0b1220 !important;
+}
+
+.dark .btn-outline-danger {
+    color: var(--danger) !important;
+    border-color: var(--danger) !important;
+}
+
+.dark .btn-outline-danger:hover {
+    background-color: var(--danger) !important;
+    border-color: var(--danger) !important;
+    color: white !important;
+}
+
+.dark .btn-outline-info {
+    color: #0ea5e9 !important;
+    border-color: #0ea5e9 !important;
+}
+
+.dark .btn-outline-info:hover {
+    background-color: #0ea5e9 !important;
+    border-color: #0ea5e9 !important;
+    color: #0b1220 !important;
+}
+
+.dark .btn-outline-warning {
+    color: #f59e0b !important;
+    border-color: #f59e0b !important;
+}
+
+.dark .btn-outline-warning:hover {
+    background-color: #f59e0b !important;
+    border-color: #f59e0b !important;
+    color: #0b1220 !important;
+}
+
+.dark .btn-outline-secondary {
+    color: #64748b !important;
+    border-color: #64748b !important;
+}
+
+.dark .btn-outline-secondary:hover {
+    background-color: #64748b !important;
+    border-color: #64748b !important;
+    color: white !important;
+}
+
+/* Dark Mode Alert Styles */
+.dark .alert {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .alert-success {
+    background-color: rgba(74, 222, 128, 0.1) !important;
+    border-color: var(--success) !important;
+    color: var(--text) !important;
+}
+
+.dark .alert-danger {
+    background-color: rgba(251, 113, 133, 0.1) !important;
+    border-color: var(--danger) !important;
+    color: var(--text) !important;
+}
+
+.dark .alert-info {
+    background-color: rgba(56, 189, 248, 0.1) !important;
+    border-color: var(--accent) !important;
+    color: var(--text) !important;
+}
+
+/* Dark Mode Badge Styles */
+.dark .badge {
+    color: white !important;
+}
+
+.dark .badge.bg-primary {
+    background-color: var(--accent) !important;
+}
+
+.dark .badge.bg-success {
+    background-color: var(--success) !important;
+}
+
+.dark .badge.bg-danger {
+    background-color: var(--danger) !important;
+}
+
+.dark .badge.bg-warning {
+    background-color: #f59e0b !important;
+    color: #0b1220 !important;
+}
+
+.dark .badge.bg-info {
+    background-color: #0ea5e9 !important;
+}
+
+.dark .badge.bg-secondary {
+    background-color: #64748b !important;
+}
 </style>
+
+<!-- Doctor Warning Badge (if accessing another doctor's appointment) -->
+<?php 
+$currentDoctorId = $_SESSION['user_id'] ?? null;
+$appointmentDoctorId = $appointment['doctor_id'] ?? null;
+$appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
+$currentDoctorName = $_SESSION['user_name'] ?? 'Current Doctor';
+
+if ($currentDoctorId && $appointmentDoctorId && $currentDoctorId != $appointmentDoctorId): 
+?>
+<div class="doctor-warning-badge" id="doctorWarningBadge">
+    <div class="doctor-warning-content">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill doctor-warning-icon"></i>
+            <div class="flex-grow-1">
+                <div class="fw-bold mb-1">
+                    <i class="bi bi-shield-exclamation me-2"></i>
+                    Accessing Another Doctor's Appointment
+                </div>
+                <div class="small">
+                    This appointment belongs to <strong>Dr. <?= htmlspecialchars($appointmentDoctorName) ?></strong>. 
+                    You are currently logged in as <strong>Dr. <?= htmlspecialchars($currentDoctorName) ?></strong>.
+                    <br>
+                    <small class="text-warning-light">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Please ensure you have permission to access this patient's records.
+                    </small>
+                </div>
+            </div>
+            <button type="button" class="btn-close btn-close-white ms-3" onclick="closeDoctorWarning()"></button>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- Appointment Header -->
 <div class="appointment-header">
@@ -138,6 +449,12 @@
             <h2 class="mb-2">
                 <i class="bi bi-calendar-event me-2"></i>
                 Appointment #<?= $appointment['id'] ?>
+                <?php if ($currentDoctorId && $appointmentDoctorId && $currentDoctorId != $appointmentDoctorId): ?>
+                    <span class="badge bg-danger ms-2 fs-6">
+                        <i class="bi bi-person-exclamation me-1"></i>
+                        Dr. <?= htmlspecialchars($appointmentDoctorName) ?>'s Patient
+                    </span>
+                <?php endif; ?>
             </h2>
             <p class="mb-2">
                 <i class="bi bi-person me-2"></i>
@@ -2811,4 +3128,41 @@ function showCompletionConfirmModal(appointmentId) {
         this.remove();
     });
 }
+// Close doctor warning badge
+function closeDoctorWarning() {
+    const warningBadge = document.getElementById('doctorWarningBadge');
+    if (warningBadge) {
+        warningBadge.style.animation = 'slideUp 0.3s ease-out forwards';
+        setTimeout(() => {
+            warningBadge.remove();
+        }, 300);
+    }
+}
+
+// Add slideUp animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideUp {
+        from {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+        }
+    }
+`;
+document.head.appendChild(style);
+
+// Auto-hide doctor warning after 10 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    const warningBadge = document.getElementById('doctorWarningBadge');
+    if (warningBadge) {
+        setTimeout(() => {
+            closeDoctorWarning();
+        }, 10000); // Auto-hide after 10 seconds
+    }
+});
+
     </script>
