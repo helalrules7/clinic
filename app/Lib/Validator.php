@@ -140,6 +140,20 @@ class Validator
                     $this->addError($field, 'The ' . $field . ' field must be a valid national ID');
                 }
                 break;
+                
+            case 'min_value':
+                $min = (int) $params[0];
+                if (!empty($value) && is_numeric($value) && floatval($value) < $min) {
+                    $this->addError($field, 'The ' . $field . ' field must be at least ' . $min);
+                }
+                break;
+                
+            case 'max_value':
+                $max = (int) $params[0];
+                if (!empty($value) && is_numeric($value) && floatval($value) > $max) {
+                    $this->addError($field, 'The ' . $field . ' field must not exceed ' . $max);
+                }
+                break;
         }
     }
 
@@ -206,8 +220,16 @@ class Validator
 
     private function isValidPhone($phone)
     {
-        // Basic phone validation for Egyptian numbers
-        return preg_match('/^(\+20|0)?1[0-9]{9}$/', $phone);
+        // More flexible phone validation
+        // Accepts Egyptian numbers, international numbers, and other formats
+        $phone = preg_replace('/[\s\-\(\)]/', '', $phone); // Remove spaces, dashes, parentheses
+        
+        // Check if it's a valid phone pattern:
+        // - Egyptian mobile: 01xxxxxxxxx or +201xxxxxxxxx
+        // - Egyptian landline: 0xxxxxxxx or +20xxxxxxxx  
+        // - International: +countrycode followed by digits
+        // - Local: sequence of 7-15 digits
+        return preg_match('/^(\+\d{1,3})?\d{7,15}$/', $phone);
     }
 
     private function isValidNationalId($id)

@@ -321,7 +321,14 @@ class ApiController
                 'first_name' => 'required|max:50',
                 'last_name' => 'required|max:50',
                 'phone' => 'required|phone',
-                'gender' => 'in:Male,Female,Other'
+                'gender' => 'required|in:Male,Female',
+                'dob' => 'date',
+                'age' => 'integer|min_value:0|max_value:150',
+                'alt_phone' => 'max:20',
+                'address' => 'max:500',
+                'national_id' => 'max:20',
+                'emergency_contact' => 'max:100',
+                'emergency_phone' => 'max:20'
             ];
 
             $data = $_POST;
@@ -332,6 +339,28 @@ class ApiController
                 ], 400);
             }
 
+            // Ensure gender is properly set
+            if (empty($data['gender']) || !in_array($data['gender'], ['Male', 'Female'])) {
+                return $this->jsonResponse([
+                    'error' => 'Gender is required and must be either Male or Female'
+                ], 400);
+            }
+            
+            // Process age and date of birth
+            if (!empty($data['age']) && is_numeric($data['age'])) {
+                // Convert age to date of birth
+                $age = intval($data['age']);
+                if ($age > 0 && $age <= 150) {
+                    $birthYear = date('Y') - $age;
+                    $data['dob'] = date('Y-m-d', mktime(0, 0, 0, date('m'), date('d'), $birthYear));
+                }
+            }
+            
+            // Process date of birth - use today's date if still empty
+            if (empty($data['dob']) || $data['dob'] === '') {
+                $data['dob'] = date('Y-m-d'); // Use today's date as default
+            }
+            
             // Create patient
             $patientId = $this->createPatientRecord($data);
             
@@ -349,6 +378,154 @@ class ApiController
 
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function deletePatient($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            if (!$id) {
+                return $this->jsonResponse(['error' => 'Patient ID is required'], 400);
+            }
+
+            // Check if user is doctor or admin (security check)
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                return $this->jsonResponse(['error' => 'Insufficient permissions'], 403);
+            }
+
+            // Verify patient exists
+            $stmt = $this->pdo->prepare("SELECT id, first_name, last_name FROM patients WHERE id = ?");
+            $stmt->execute([$id]);
+            $patient = $stmt->fetch();
+            
+            if (!$patient) {
+                return $this->jsonResponse(['error' => 'Patient not found'], 404);
+            }
+
+            // Begin transaction for complete deletion
+            $this->pdo->beginTransaction();
+
+            try {
+                // Delete all patient-related data in the correct order (respecting foreign key constraints)
+                
+                // 1. Delete timeline events
+                $stmt = $this->pdo->prepare("DELETE FROM timeline_events WHERE patient_id = ?");
+                $stmt->execute([$id]);
+                
+                // 2. Delete patient attachments (and their files)
+                $stmt = $this->pdo->prepare("SELECT file_path FROM patient_attachments WHERE patient_id = ?");
+                $stmt->execute([$id]);
+                $attachments = $stmt->fetchAll();
+                
+                foreach ($attachments as $attachment) {
+                    $filePath = __DIR__ . '/../../storage/uploads/' . $attachment['file_path'];
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
+                    }
+                }
+                
+                $stmt = $this->pdo->prepare("DELETE FROM patient_attachments WHERE patient_id = ?");
+                $stmt->execute([$id]);
+                
+                // 3. Delete medication prescriptions
+                $stmt = $this->pdo->prepare("DELETE FROM prescriptions WHERE appointment_id IN (SELECT id FROM appointments WHERE patient_id = ?)");
+                $stmt->execute([$id]);
+                
+                // 4. Delete glasses prescriptions
+                $stmt = $this->pdo->prepare("DELETE FROM glasses_prescriptions WHERE appointment_id IN (SELECT id FROM appointments WHERE patient_id = ?)");
+                $stmt->execute([$id]);
+                
+                // 5. Delete lab tests
+                $stmt = $this->pdo->prepare("DELETE FROM lab_tests WHERE appointment_id IN (SELECT id FROM appointments WHERE patient_id = ?)");
+                $stmt->execute([$id]);
+                
+                // 6. Delete radiology tests (if table exists)
+                try {
+                    $stmt = $this->pdo->prepare("DELETE FROM radiology_tests WHERE appointment_id IN (SELECT id FROM appointments WHERE patient_id = ?)");
+                    $stmt->execute([$id]);
+                } catch (\PDOException $e) {
+                    // Ignore if table doesn't exist
+                    error_log("Radiology tests table not found: " . $e->getMessage());
+                }
+                
+                // 7. Delete consultation notes
+                $stmt = $this->pdo->prepare("DELETE FROM consultation_notes WHERE appointment_id IN (SELECT id FROM appointments WHERE patient_id = ?)");
+                $stmt->execute([$id]);
+                
+                // 8. Delete payments
+                $stmt = $this->pdo->prepare("DELETE FROM payments WHERE appointment_id IN (SELECT id FROM appointments WHERE patient_id = ?)");
+                $stmt->execute([$id]);
+                
+                // 9. Delete patient files (and their physical files)
+                $stmt = $this->pdo->prepare("SELECT file_path FROM patient_files WHERE patient_id = ?");
+                $stmt->execute([$id]);
+                $patientFiles = $stmt->fetchAll();
+                
+                foreach ($patientFiles as $file) {
+                    $filePath = __DIR__ . '/../../storage/uploads/' . $file['file_path'];
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
+                    }
+                }
+                
+                $stmt = $this->pdo->prepare("DELETE FROM patient_files WHERE patient_id = ?");
+                $stmt->execute([$id]);
+                
+                // 10. Delete patient notes
+                $stmt = $this->pdo->prepare("DELETE FROM patient_notes WHERE patient_id = ?");
+                $stmt->execute([$id]);
+                
+                // 11. Delete medical history
+                $stmt = $this->pdo->prepare("DELETE FROM medical_history WHERE patient_id = ?");
+                $stmt->execute([$id]);
+                
+                // 12. Delete appointments
+                $stmt = $this->pdo->prepare("DELETE FROM appointments WHERE patient_id = ?");
+                $stmt->execute([$id]);
+                
+                // 13. Finally, delete the patient record
+                $stmt = $this->pdo->prepare("DELETE FROM patients WHERE id = ?");
+                $stmt->execute([$id]);
+                
+                // Commit transaction
+                $this->pdo->commit();
+                
+                // Log the deletion with details
+                $deletionSummary = [
+                    'patient_id' => $id,
+                    'patient_name' => "{$patient['first_name']} {$patient['last_name']}",
+                    'deleted_by' => "{$user['name']} (ID: {$user['id']})",
+                    'attachments_deleted' => count($attachments),
+                    'patient_files_deleted' => count($patientFiles),
+                    'timestamp' => date('Y-m-d H:i:s')
+                ];
+                
+                error_log("Patient deletion completed: " . json_encode($deletionSummary));
+                
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'message' => 'Patient and all related data deleted successfully',
+                    'data' => [
+                        'patient_name' => "{$patient['first_name']} {$patient['last_name']}",
+                        'attachments_deleted' => count($attachments),
+                        'files_deleted' => count($patientFiles)
+                    ]
+                ]);
+                
+            } catch (\Exception $e) {
+                // Rollback transaction on error
+                $this->pdo->rollback();
+                throw $e;
+            }
+
+        } catch (\Exception $e) {
+            error_log("Error deleting patient: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Failed to delete patient: ' . $e->getMessage()], 500);
         }
     }
 
@@ -1229,19 +1406,21 @@ class ApiController
     private function createPatientRecord($data)
     {
         $stmt = $this->pdo->prepare("
-            INSERT INTO patients (first_name, last_name, dob, gender, phone, alt_phone, address, national_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO patients (first_name, last_name, dob, gender, phone, alt_phone, address, national_id, emergency_contact, emergency_phone)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
         $stmt->execute([
             $data['first_name'],
             $data['last_name'],
-            $data['dob'] ?? null,
-            $data['gender'] ?? null,
+            $data['dob'], // Always has a valid date (today's date if originally empty)
+            $data['gender'], // Always has a valid value (Male or Female)
             $data['phone'],
             $data['alt_phone'] ?? null,
             $data['address'] ?? null,
-            $data['national_id'] ?? null
+            $data['national_id'] ?? null,
+            $data['emergency_contact'] ?? null,
+            $data['emergency_phone'] ?? null
         ]);
         
         return $this->pdo->lastInsertId();

@@ -6,17 +6,37 @@
             Patient Records
         </h4>
         <p class="text-muted mb-0">Manage and view patient information</p>
+        <div class="mt-2">
+            <small class="text-muted">
+                <i class="bi bi-keyboard me-1"></i>
+                Shortcuts: 
+                • Add Patient <kbd class="me-1">N</kbd> or <kbd class="me-1">ى</kbd> or <kbd class="me-1">Ctrl+N</kbd> 
+                • Search <kbd class="me-1">F</kbd> or <kbd class="me-1">ب</kbd>
+                <kbd>Esc</kbd> Close
+            </small>
+        </div>
     </div>
     <div class="col-md-4 text-end">
+        <div class="btn-group" role="group">
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addPatientModal" title="Add new patient - Press 'N' or 'ى' or 'Ctrl+N'">
+                <i class="bi bi-person-plus me-2"></i>
+                Add Patient
+                <span class="ms-2">
+                    <kbd>N</kbd>
+                    <span class="text-white-50 mx-1">/</span>
+                    <kbd lang="ar">ى</kbd>
+                </span>
+            </button>
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#searchModal" title="Press 'F' or 'ب' to search">
             <i class="bi bi-search me-2"></i>
             Search Patients
             <span class="ms-2">
                 <kbd>F</kbd>
-                <span class="text-white-50 mx-1">or</span>
+                <span class="text-white-50 mx-1">/</span>
                 <kbd lang="ar">ب</kbd>
             </span>
         </button>
+        </div>
     </div>
 </div>
 
@@ -136,11 +156,14 @@
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group">
-                                        <a href="/doctor/patients/<?= $patient['id'] ?>" class="btn btn-sm btn-outline-primary">
+                                        <a href="/doctor/patients/<?= $patient['id'] ?>" class="btn btn-sm btn-outline-primary" title="View Patient">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <button class="btn btn-sm btn-outline-success" onclick="bookAppointment(<?= $patient['id'] ?>)">
+                                        <button class="btn btn-sm btn-outline-success" onclick="bookAppointment(<?= $patient['id'] ?>)" title="Book Appointment">
                                             <i class="bi bi-calendar-plus"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deletePatient(<?= $patient['id'] ?>, '<?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name'], ENT_QUOTES) ?>')" title="Delete Patient">
+                                            <i class="bi bi-trash"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -185,12 +208,12 @@
                             <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
-                    <div class="form-text d-flex justify-content-between align-items-center">
-                        <span>
+                    <div class="form-text d-flex justify-content-between align-items-center search-help-text">
+                        <span class="search-instruction">
                             <i class="bi bi-info-circle me-1"></i>
                             Start typing to search automatically
                         </span>
-                        <small class="text-muted">
+                        <small class="search-shortcut">
                             <kbd>Ctrl</kbd>+<kbd>F</kbd> to focus search
                         </small>
                     </div>
@@ -228,6 +251,274 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Patient Modal -->
+<div class="modal fade" id="addPatientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header position-relative">
+                <h5 class="modal-title">
+                    <i class="bi bi-person-plus me-2"></i>
+                    Add New Patient
+                </h5>
+                <div class="keyboard-hint">
+                    <span>Press</span>
+                    <kbd>Esc</kbd>
+                    <span>to close</span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addPatientForm">
+                <div class="modal-body">
+                    <!-- Success/Error Messages -->
+                    <div id="addPatientMessage" class="alert d-none" role="alert"></div>
+                    
+                    <div class="row">
+                        <!-- Basic Information -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="bi bi-person me-1"></i>
+                                Basic Information
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="firstName" name="first_name" required maxlength="50">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="lastName" name="last_name" required maxlength="50">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="age" class="form-label">Age (Years)</label>
+                                <input type="number" class="form-control" id="age" name="age" min="0" max="150" placeholder="Enter age in years">
+                                <div class="form-text">Alternative: Enter age to automatically calculate date of birth</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="dob" class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" id="dob" name="dob">
+                                <div class="form-text">Patient's date of birth (if empty, today's date will be used)</div>
+                            </div>
+                            
+
+                            
+                            <div class="mb-3">
+                                <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
+                                <select class="form-select" id="gender" name="gender" required>
+                                    <option value="">-- Please select gender --</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                                <div class="form-text text-danger"><strong>Required:</strong> Please select the patient's gender</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="nationalId" class="form-label">National ID</label>
+                                <input type="text" class="form-control" id="nationalId" name="national_id" maxlength="20">
+                                <div class="form-text">Government issued ID number (optional)</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Contact Information -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="bi bi-telephone me-1"></i>
+                                Contact Information
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="phone" name="phone" required maxlength="20">
+                                <div class="invalid-feedback"></div>
+                                <div class="form-text">Primary contact number</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="altPhone" class="form-label">Alternative Phone</label>
+                                <input type="tel" class="form-control" id="altPhone" name="alt_phone" maxlength="20">
+                                <div class="form-text">Secondary contact number (optional)</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="address" class="form-label">Address</label>
+                                <textarea class="form-control" id="address" name="address" rows="3" maxlength="500"></textarea>
+                                <div class="form-text">Home address (optional)</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="emergencyContact" class="form-label">Emergency Contact</label>
+                                <input type="text" class="form-control" id="emergencyContact" name="emergency_contact" maxlength="100">
+                                <div class="form-text">Emergency contact person name</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="emergencyPhone" class="form-label">Emergency Phone</label>
+                                <input type="tel" class="form-control" id="emergencyPhone" name="emergency_phone" maxlength="20">
+                                <div class="form-text">Emergency contact phone number</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="addPatientSubmit" title="Save patient - Press 'Ctrl+S'">
+                        <i class="bi bi-person-plus me-1"></i>
+                        <span class="btn-text">Add Patient</span>
+                        <small class="ms-2 text-white-50">
+                            <kbd style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); font-size: 0.7rem;">Ctrl+S</kbd>
+                        </small>
+                        <span class="spinner-border spinner-border-sm d-none ms-2" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Patient Warning Modal -->
+<div class="modal fade" id="deletePatientModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Warining: Delete Patient
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger d-flex align-items-start" role="alert">
+                    <i class="bi bi-shield-exclamation fs-3 me-3"></i>
+                    <div>
+                        <h6 class="alert-heading mb-2">Important Warning!</h6>
+                        <p class="mb-0">You are about to delete the patient permanently from the system. This action <strong>cannot be undone</strong>.</p>
+                    </div>
+                </div>
+                
+                <div class="patient-delete-info mb-4">
+                    <h6 class="text-danger mb-3">
+                        <i class="bi bi-person-x me-2"></i>
+                        Patient Data to be Deleted:
+                    </h6>
+                    <div class="card border-warning">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle me-3" id="deletePatientAvatar"></div>
+                                <div>
+                                    <h6 class="mb-1" id="deletePatientName"></h6>
+                                    <small class="text-muted">Patient ID: #<span id="deletePatientId"></span></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="deletion-consequences">
+                    <h6 class="text-danger mb-3">
+                        <i class="bi bi-list-check me-2"></i>
+                        The following data will be deleted permanently:
+                    </h6>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-person text-danger me-2"></i>
+                            <span>All patient personal data</span>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-calendar-event text-danger me-2"></i>
+                            <span>All appointments and previous visits</span>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-file-medical text-danger me-2"></i>
+                            <span>Medical history and diagnoses</span>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-receipt text-danger me-2"></i>
+                            <span>All invoices and payments</span>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-file-earmark text-danger me-2"></i>
+                            <span>All files and attachments</span>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-chat-left-text text-danger me-2"></i>
+                            <span>All notes and reports</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-warning mt-4" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Note:</strong> It is recommended to take a backup of important data before proceeding.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-warning" onclick="showDeleteConfirmation()">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    I understand the risks, proceed
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Patient Confirmation Modal -->
+<div class="modal fade" id="deletePatientConfirmModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-shield-exclamation me-2"></i>
+                    Final Confirmation
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 4rem;"></i>
+                    <h5 class="text-danger mt-3">Final Confirmation Required</h5>
+                    <p class="text-muted">This is the final warning before the final deletion</p>
+                </div>
+                
+                <div class="alert alert-danger" role="alert">
+                    <strong>To proceed and delete finally:</strong><br>
+                    Type the word <kbd>DELETE</kbd> or <kbd>DEL</kbd> in the field below
+                </div>
+                
+                <div class="mb-3">
+                    <label for="deleteConfirmationText" class="form-label">Confirmation Word:</label>
+                    <input type="text" 
+                           class="form-control form-control-lg text-center" 
+                           id="deleteConfirmationText" 
+                           placeholder="Type DELETE or DEL"
+                           autocomplete="off">
+                    <div class="form-text text-center delete-help-text">The confirmation word must be typed in uppercase English letters</div>
+                </div>
+                
+                <div id="deleteConfirmationMessage" class="alert d-none" role="alert"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="backToDeleteWarning()">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Back
+                </button>
+                <button type="button" class="btn btn-danger" id="finalDeleteButton" onclick="confirmPatientDeletion()" disabled>
+                    <i class="bi bi-trash me-1"></i>
+                    <span class="btn-text">Final Delete</span>
+                    <span class="spinner-border spinner-border-sm d-none ms-2" role="status"></span>
+                </button>
             </div>
         </div>
     </div>
@@ -471,6 +762,12 @@ kbd {
     color: rgba(255, 255, 255, 0.9);
 }
 
+.btn-success kbd {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.9);
+}
+
 /* Arabic keyboard shortcut styling */
 kbd[lang="ar"] {
     font-family: 'Cairo', 'Courier New', monospace;
@@ -516,6 +813,361 @@ kbd[lang="ar"] {
 /* Text muted styling */
 .text-muted {
     color: var(--muted) !important;
+}
+
+/* Add Patient Modal Styling */
+#addPatientModal .modal-content {
+    background-color: var(--bg);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+#addPatientModal .modal-header {
+    background-color: var(--bg-alt);
+    border-bottom-color: var(--border);
+    color: var(--text);
+}
+
+#addPatientModal .modal-footer {
+    background-color: var(--bg-alt);
+    border-top-color: var(--border);
+}
+
+#addPatientModal .form-label {
+    color: var(--text);
+    font-weight: 500;
+}
+
+#addPatientModal .form-control,
+#addPatientModal .form-select {
+    background-color: var(--bg);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+#addPatientModal .form-control:focus,
+#addPatientModal .form-select:focus {
+    background-color: var(--bg);
+    border-color: var(--accent);
+    color: var(--text);
+    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
+}
+
+#addPatientModal .form-text {
+    color: var(--muted);
+    font-size: 0.875rem;
+}
+
+#addPatientModal .text-primary {
+    color: var(--accent) !important;
+}
+
+#addPatientModal .text-danger {
+    color: #dc3545 !important;
+}
+
+#addPatientModal .invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875rem;
+}
+
+#addPatientModal .form-control.is-invalid,
+#addPatientModal .form-select.is-invalid {
+    border-color: #dc3545;
+}
+
+#addPatientModal .alert {
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+#addPatientModal .alert-success {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-color: #28a745;
+    color: #155724;
+}
+
+#addPatientModal .alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+/* Button styling for add patient modal */
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+    color: white;
+}
+
+.btn-success:disabled {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+    opacity: 0.65;
+}
+
+/* Form validation styling */
+.was-validated .form-control:valid {
+    border-color: #28a745;
+}
+
+.was-validated .form-control:invalid {
+    border-color: #dc3545;
+}
+
+.was-validated .form-select:valid {
+    border-color: #28a745;
+}
+
+.was-validated .form-select:invalid {
+    border-color: #dc3545;
+}
+
+/* Spinner styling */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.1em;
+}
+
+/* Search help text styling for dark mode */
+.search-help-text {
+    background: rgba(var(--accent-rgb), 0.05);
+    border: 1px solid rgba(var(--accent-rgb), 0.15);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-top: 8px;
+    transition: all 0.2s ease;
+}
+
+.search-help-text:hover {
+    background: rgba(var(--accent-rgb), 0.08);
+    border-color: rgba(var(--accent-rgb), 0.2);
+}
+
+.search-help-text .search-instruction {
+    color: var(--text);
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.search-help-text .search-instruction i {
+    color: var(--accent);
+    opacity: 0.8;
+    margin-right: 4px;
+}
+
+.search-help-text .search-shortcut {
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+
+.search-help-text kbd {
+    background-color: var(--bg-alt);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    margin: 0 1px;
+    border-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    font-family: 'Courier New', 'Cairo', monospace;
+}
+
+/* Delete Patient Modal Styles */
+#deletePatientModal .modal-content,
+#deletePatientConfirmModal .modal-content {
+    background-color: var(--bg);
+    color: var(--text);
+}
+
+#deletePatientModal .modal-header,
+#deletePatientConfirmModal .modal-header {
+    background-color: #dc3545 !important;
+    border-bottom-color: #dc3545;
+}
+
+#deletePatientModal .modal-footer,
+#deletePatientConfirmModal .modal-footer {
+    background-color: var(--bg-alt);
+    border-top-color: var(--border);
+}
+
+#deletePatientModal .alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+[data-bs-theme="dark"] #deletePatientModal .alert-danger {
+    background-color: rgba(220, 53, 69, 0.15);
+    color: #f5c6cb;
+}
+
+#deletePatientModal .alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-color: #ffc107;
+    color: #856404;
+}
+
+[data-bs-theme="dark"] #deletePatientModal .alert-warning {
+    background-color: rgba(255, 193, 7, 0.15);
+    color: #ffeaa7;
+}
+
+#deletePatientModal .list-group-item {
+    background-color: var(--bg);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+#deletePatientModal .card {
+    background-color: var(--bg);
+    border-color: #ffc107;
+}
+
+#deletePatientModal .card-body {
+    background-color: var(--bg-alt);
+}
+
+.btn-outline-danger {
+    color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-outline-danger:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #212529;
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
+    border-color: #d39e00;
+    color: #212529;
+}
+
+#deleteConfirmationText {
+    background-color: var(--bg);
+    border-color: var(--border);
+    color: var(--text);
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+#deleteConfirmationText:focus {
+    background-color: var(--bg);
+    border-color: #dc3545;
+    color: var(--text);
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+#deleteConfirmationText.is-valid {
+    border-color: #28a745;
+    background-color: var(--bg);
+}
+
+#deleteConfirmationText.is-invalid {
+    border-color: #dc3545;
+    background-color: var(--bg);
+}
+
+/* Arabic text styling for delete messages */
+#deleteConfirmationMessage {
+    font-family: 'Cairo', Arial, sans-serif;
+    text-align: right;
+    direction: rtl;
+}
+
+#deleteConfirmationMessage.alert-success {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-color: #28a745;
+    color: #155724;
+}
+
+[data-bs-theme="dark"] #deleteConfirmationMessage.alert-success {
+    background-color: rgba(40, 167, 69, 0.15);
+    color: #d4edda;
+}
+
+#deleteConfirmationMessage.alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-color: #ffc107;
+    color: #856404;
+}
+
+[data-bs-theme="dark"] #deleteConfirmationMessage.alert-warning {
+    background-color: rgba(255, 193, 7, 0.15);
+    color: #fff3cd;
+}
+
+#deleteConfirmationMessage.alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+[data-bs-theme="dark"] #deleteConfirmationMessage.alert-danger {
+    background-color: rgba(220, 53, 69, 0.15);
+    color: #f8d7da;
+}
+
+/* Keyboard shortcuts info styling */
+.text-muted kbd {
+    background-color: var(--bg-alt);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.7rem;
+    padding: 1px 4px;
+    margin: 0 1px;
+    border-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    font-family: 'Courier New', 'Cairo', monospace;
+}
+
+[data-bs-theme="dark"] .text-muted kbd {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Delete help text styling for better visibility */
+.delete-help-text {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+    border: 1px solid rgba(13, 110, 253, 0.2) !important;
+    border-radius: 6px !important;
+    padding: 8px 12px !important;
+    margin-top: 8px !important;
+    color: var(--text) !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+}
+
+[data-bs-theme="dark"] .delete-help-text {
+    background-color: rgba(13, 110, 253, 0.15) !important;
+    border-color: rgba(13, 110, 253, 0.3) !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="light"] .delete-help-text {
+    background-color: rgba(13, 110, 253, 0.08) !important;
+    border-color: rgba(13, 110, 253, 0.2) !important;
+    color: #212529 !important;
 }
 </style>
 
@@ -654,6 +1306,9 @@ function displaySearchResults(patients, searchTerm) {
                             <button class="btn btn-sm btn-outline-success" onclick="event.stopPropagation(); bookAppointment(${patient.id})">
                                 <i class="bi bi-calendar-plus me-1"></i>Book
                             </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); deletePatient(${patient.id}, '${patient.first_name} ${patient.last_name}')">
+                                <i class="bi bi-trash me-1"></i>Delete
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -765,10 +1420,32 @@ document.addEventListener('DOMContentLoaded', function() {
             searchButton.click();
         }
         
-        // Close search modal with 'Escape' key
-        if (e.key === 'Escape' && searchModal.classList.contains('show')) {
+        // Open add patient modal with 'Ctrl+N' or 'N' key or Arabic 'ى' key
+        const addPatientKeys = ['n', 'ى']; // N key and Arabic 'ya' (same position on keyboard)
+        const isAddPatientKey = addPatientKeys.includes(e.key.toLowerCase()) || addPatientKeys.includes(e.key);
+        const isCtrlN = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n';
+        
+        if ((isAddPatientKey || isCtrlN) && !isInputFocused() && !document.querySelector('.modal.show')) {
             e.preventDefault();
-            bootstrap.Modal.getInstance(searchModal).hide();
+            console.log('Opening add patient modal with key:', e.key, 'Ctrl pressed:', e.ctrlKey);
+            document.querySelector('[data-bs-target="#addPatientModal"]').click();
+        }
+        
+        // Close modals with 'Escape' key
+        if (e.key === 'Escape') {
+            if (searchModal.classList.contains('show')) {
+                e.preventDefault();
+                bootstrap.Modal.getInstance(searchModal).hide();
+            } else if (document.getElementById('addPatientModal').classList.contains('show')) {
+                e.preventDefault();
+                bootstrap.Modal.getInstance(document.getElementById('addPatientModal')).hide();
+            } else if (document.getElementById('deletePatientModal').classList.contains('show')) {
+                e.preventDefault();
+                bootstrap.Modal.getInstance(document.getElementById('deletePatientModal')).hide();
+            } else if (document.getElementById('deletePatientConfirmModal').classList.contains('show')) {
+                e.preventDefault();
+                bootstrap.Modal.getInstance(document.getElementById('deletePatientConfirmModal')).hide();
+            }
         }
         
         // Focus search input with 'Ctrl+F' or 'Cmd+F' when modal is open
@@ -777,6 +1454,15 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             globalSearch.focus();
             globalSearch.select();
+        }
+        
+        // Save patient with 'Ctrl+S' when add patient modal is open
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's' && document.getElementById('addPatientModal').classList.contains('show')) {
+            e.preventDefault();
+            const submitButton = document.getElementById('addPatientSubmit');
+            if (!submitButton.disabled) {
+                submitButton.click();
+            }
         }
     });
     
@@ -790,12 +1476,526 @@ document.addEventListener('DOMContentLoaded', function() {
             activeElement.contentEditable === 'true'
         );
     }
+    
+    // Initialize Add Patient Modal
+    initializeAddPatientModal();
 });
 
-// Auto-refresh every 30 seconds (pause when search modal is open)
+// Add Patient functionality
+function initializeAddPatientModal() {
+    const addPatientForm = document.getElementById('addPatientForm');
+    const addPatientModal = document.getElementById('addPatientModal');
+    const addPatientSubmit = document.getElementById('addPatientSubmit');
+    const addPatientMessage = document.getElementById('addPatientMessage');
+    
+    // Reset form when modal opens
+    addPatientModal.addEventListener('show.bs.modal', function() {
+        addPatientForm.reset();
+        addPatientForm.classList.remove('was-validated');
+        hideMessage();
+        resetSubmitButton();
+        
+        // Focus on first name field
+        setTimeout(() => {
+            document.getElementById('firstName').focus();
+        }, 300);
+    });
+    
+    // Handle form submission
+    addPatientForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate form
+        if (!addPatientForm.checkValidity()) {
+            addPatientForm.classList.add('was-validated');
+            showMessage('Please fill in all required fields correctly.', 'error');
+            return;
+        }
+        
+        // Additional validation
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const gender = document.getElementById('gender').value;
+        
+        if (!firstName || !lastName || !phone) {
+            showMessage('First name, last name, and phone number are required.', 'error');
+            return;
+        }
+        
+        if (!gender) {
+            showMessage('Please select the patient\'s gender.', 'error');
+            document.getElementById('gender').focus();
+            return;
+        }
+        
+        // Validate phone number format (more flexible validation)
+        const cleanPhone = phone.replace(/[\s\-\(\)]/g, ''); // Remove spaces, dashes, parentheses
+        const phoneRegex = /^(\+\d{1,3})?\d{7,15}$/;
+        if (!phoneRegex.test(cleanPhone)) {
+            showMessage('Please enter a valid phone number (7-15 digits, optionally with country code).', 'error');
+            return;
+        }
+        
+        // Submit form
+        submitPatientForm();
+    });
+    
+    function submitPatientForm() {
+        const formData = new FormData(addPatientForm);
+        
+        // Show loading state
+        setSubmitButtonLoading(true);
+        hideMessage();
+        
+        // Send AJAX request
+        fetch('/api/patients', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            setSubmitButtonLoading(false);
+            
+            if (data.ok) {
+                // Success
+                showMessage('Patient added successfully!', 'success');
+                
+                // Reset form
+                addPatientForm.reset();
+                addPatientForm.classList.remove('was-validated');
+                
+                // Close modal after delay
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(addPatientModal).hide();
+                    
+                    // Refresh page to show new patient
+                    window.location.reload();
+                }, 1500);
+                
+            } else {
+                // Error from server
+                const errorMsg = data.error || data.message || 'Failed to add patient. Please try again.';
+                showMessage(errorMsg, 'error');
+                
+                // Show validation errors if available
+                if (data.details) {
+                    showValidationErrors(data.details);
+                }
+            }
+        })
+        .catch(error => {
+            setSubmitButtonLoading(false);
+            console.error('Error adding patient:', error);
+            showMessage('An error occurred while adding the patient. Please try again.', 'error');
+        });
+    }
+    
+    function showMessage(message, type) {
+        addPatientMessage.className = `alert alert-${type === 'error' ? 'danger' : type}`;
+        addPatientMessage.textContent = message;
+        addPatientMessage.classList.remove('d-none');
+    }
+    
+    function hideMessage() {
+        addPatientMessage.classList.add('d-none');
+    }
+    
+    function setSubmitButtonLoading(loading) {
+        const btnText = addPatientSubmit.querySelector('.btn-text');
+        const spinner = addPatientSubmit.querySelector('.spinner-border');
+        
+        if (loading) {
+            addPatientSubmit.disabled = true;
+            btnText.textContent = 'Adding...';
+            spinner.classList.remove('d-none');
+        } else {
+            addPatientSubmit.disabled = false;
+            btnText.textContent = 'Add Patient';
+            spinner.classList.add('d-none');
+        }
+    }
+    
+    function resetSubmitButton() {
+        setSubmitButtonLoading(false);
+    }
+    
+    function showValidationErrors(errors) {
+        // Clear previous validation errors
+        document.querySelectorAll('.invalid-feedback').forEach(el => {
+            el.textContent = '';
+        });
+        
+        // Show new validation errors
+        Object.keys(errors).forEach(field => {
+            const input = document.querySelector(`[name="${field}"]`);
+            if (input) {
+                input.classList.add('is-invalid');
+                const feedback = input.parentNode.querySelector('.invalid-feedback');
+                if (feedback) {
+                    feedback.textContent = errors[field];
+                }
+            }
+        });
+    }
+    
+    // Clear validation errors on input
+    addPatientForm.addEventListener('input', function(e) {
+        if (e.target.classList.contains('is-invalid')) {
+            e.target.classList.remove('is-invalid');
+            const feedback = e.target.parentNode.querySelector('.invalid-feedback');
+            if (feedback) {
+                feedback.textContent = '';
+            }
+        }
+    });
+    
+    // Age and Date of Birth conversion
+    const dobInput = document.getElementById('dob');
+    const ageInput = document.getElementById('age');
+    
+    // Convert age to date of birth
+    ageInput.addEventListener('input', function() {
+        const age = parseInt(this.value);
+        if (age && age > 0 && age <= 150) {
+            const today = new Date();
+            const birthYear = today.getFullYear() - age;
+            const birthDate = new Date(birthYear, today.getMonth(), today.getDate());
+            dobInput.value = birthDate.toISOString().split('T')[0];
+            
+            // Clear age field after conversion to avoid confusion
+            setTimeout(() => {
+                this.value = '';
+            }, 1000);
+        }
+    });
+    
+    // Convert date of birth to age (when user changes date)
+    dobInput.addEventListener('change', function() {
+        if (this.value) {
+            const birthDate = new Date(this.value);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            
+            if (age >= 0 && age <= 150) {
+                // Show calculated age in placeholder temporarily
+                ageInput.placeholder = `Calculated age: ${age} years`;
+                setTimeout(() => {
+                    ageInput.placeholder = 'Enter age in years';
+                }, 3000);
+            }
+        }
+    });
+}
+
+// Delete Patient functionality - use window object for global scope
+window.currentPatientToDelete = null;
+
+function deletePatient(patientId, patientName) {
+    console.log('deletePatient called with:', { patientId, patientName });
+    
+    window.currentPatientToDelete = {
+        id: patientId,
+        name: patientName
+    };
+    
+    // Store in localStorage as backup
+    localStorage.setItem('deletePatientData', JSON.stringify(window.currentPatientToDelete));
+    
+    console.log('window.currentPatientToDelete set to:', window.currentPatientToDelete);
+    
+    // Set patient info in modal
+    document.getElementById('deletePatientId').textContent = patientId;
+    document.getElementById('deletePatientName').textContent = patientName;
+    
+    // Set avatar initials
+    const nameParts = patientName.split(' ');
+    const initials = nameParts.length >= 2 ? 
+        nameParts[0].charAt(0).toUpperCase() + nameParts[1].charAt(0).toUpperCase() :
+        nameParts[0].charAt(0).toUpperCase() + nameParts[0].charAt(1).toUpperCase();
+    document.getElementById('deletePatientAvatar').textContent = initials;
+    
+    // Show warning modal
+    const deleteModal = new bootstrap.Modal(document.getElementById('deletePatientModal'));
+    deleteModal.show();
+}
+
+function showDeleteConfirmation() {
+    console.log('showDeleteConfirmation called, window.currentPatientToDelete:', window.currentPatientToDelete);
+    
+    // Hide warning modal
+    const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deletePatientModal'));
+    deleteModal.hide();
+    
+    // Reset confirmation modal
+    resetDeleteConfirmation();
+    
+    // Show confirmation modal
+    const confirmModal = new bootstrap.Modal(document.getElementById('deletePatientConfirmModal'));
+    confirmModal.show();
+    
+    // Focus on text input
+    setTimeout(() => {
+        document.getElementById('deleteConfirmationText').focus();
+    }, 300);
+}
+
+function backToDeleteWarning() {
+    // Hide confirmation modal
+    const confirmModal = bootstrap.Modal.getInstance(document.getElementById('deletePatientConfirmModal'));
+    confirmModal.hide();
+    
+    // Show warning modal again
+    setTimeout(() => {
+        const deleteModal = new bootstrap.Modal(document.getElementById('deletePatientModal'));
+        deleteModal.show();
+    }, 300);
+}
+
+function resetDeleteConfirmation() {
+    const confirmText = document.getElementById('deleteConfirmationText');
+    const finalButton = document.getElementById('finalDeleteButton');
+    const message = document.getElementById('deleteConfirmationMessage');
+    
+    confirmText.value = '';
+    confirmText.classList.remove('is-valid', 'is-invalid');
+    finalButton.disabled = true;
+    message.classList.add('d-none');
+}
+
+function confirmPatientDeletion() {
+    console.log('confirmPatientDeletion called, window.currentPatientToDelete:', window.currentPatientToDelete);
+    
+    // Try to recover from localStorage if main variable is lost
+    if (!window.currentPatientToDelete) {
+        const savedData = localStorage.getItem('deletePatientData');
+        if (savedData) {
+            try {
+                window.currentPatientToDelete = JSON.parse(savedData);
+                console.log('Recovered patient data from localStorage:', window.currentPatientToDelete);
+            } catch (e) {
+                console.error('Failed to parse saved patient data:', e);
+            }
+        }
+    }
+    
+    if (!window.currentPatientToDelete) {
+        console.error('window.currentPatientToDelete is null or undefined');
+        showDeleteMessage('Error: The patient was not selected for deletion', 'error');
+        return;
+    }
+    
+    const confirmText = document.getElementById('deleteConfirmationText');
+    const enteredText = confirmText.value.trim().toUpperCase();
+    
+    if (enteredText !== 'DELETE' && enteredText !== 'DEL') {
+        showDeleteMessage('The word (DELETE or DEL) must be typed in uppercase English letters', 'error');
+        confirmText.focus();
+        return;
+    }
+    
+    // Show loading state
+    setDeleteButtonLoading(true);
+    
+    // Send delete request
+    fetch(`/api/patients/${window.currentPatientToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        setDeleteButtonLoading(false);
+        
+        if (data.ok) {
+            // Success
+            let successMsg = '✅ The patient was deleted successfully';
+            if (data.data) {
+                const attachments = data.data.attachments_deleted || 0;
+                const files = data.data.files_deleted || 0;
+                if (attachments > 0 || files > 0) {
+                    successMsg += `\n📁 Deleted: ${attachments} attachments, ${files} files`;
+                }
+            }
+            showDeleteMessage(successMsg, 'success');
+            
+            // Clean up data
+            window.currentPatientToDelete = null;
+            localStorage.removeItem('deletePatientData');
+            
+            // Close modal after delay and refresh page
+            setTimeout(() => {
+                const confirmModal = bootstrap.Modal.getInstance(document.getElementById('deletePatientConfirmModal'));
+                confirmModal.hide();
+                
+                // Refresh page to update patient list
+                window.location.reload();
+            }, 1500);
+            
+        } else {
+            // Error from server
+            const errorMsg = data.error || data.message || 'Failed to delete the patient. Please try again.';
+            showDeleteMessage(errorMsg, 'error');
+        }
+    })
+    .catch(error => {
+        setDeleteButtonLoading(false);
+        console.error('Error deleting patient:', error);
+        showDeleteMessage('An error occurred while deleting the patient. Please try again.', 'error');
+    });
+}
+
+function showDeleteMessage(message, type) {
+    const messageEl = document.getElementById('deleteConfirmationMessage');
+    messageEl.className = `alert alert-${type === 'error' ? 'danger' : type}`;
+    
+    // Handle multi-line messages
+    if (message.includes('\n')) {
+        messageEl.innerHTML = message.split('\n').map(line => 
+            line.trim() ? `<div>${line}</div>` : ''
+        ).join('');
+    } else {
+        messageEl.textContent = message;
+    }
+    
+    messageEl.classList.remove('d-none');
+}
+
+function setDeleteButtonLoading(loading) {
+    const finalButton = document.getElementById('finalDeleteButton');
+    const btnText = finalButton.querySelector('.btn-text');
+    const spinner = finalButton.querySelector('.spinner-border');
+    
+    if (loading) {
+        finalButton.disabled = true;
+        btnText.textContent = 'Deleting...';
+        spinner.classList.remove('d-none');
+    } else {
+        finalButton.disabled = false;
+        btnText.textContent = 'Final Delete';
+        spinner.classList.add('d-none');
+    }
+}
+
+// Initialize delete confirmation functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteConfirmationText = document.getElementById('deleteConfirmationText');
+    const finalDeleteButton = document.getElementById('finalDeleteButton');
+    
+    // Validate confirmation text input
+    deleteConfirmationText.addEventListener('input', function() {
+        const value = this.value.trim().toUpperCase();
+        const isValid = value === 'DELETE' || value === 'DEL';
+        
+        if (value) {
+            if (isValid) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+                finalDeleteButton.disabled = false;
+                showDeleteMessage('✓ The confirmation word is correct', 'success');
+            } else {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+                finalDeleteButton.disabled = true;
+                showDeleteMessage('The word (DELETE or DEL) must be typed in uppercase English letters', 'warning');
+            }
+        } else {
+            this.classList.remove('is-valid', 'is-invalid');
+            finalDeleteButton.disabled = true;
+            document.getElementById('deleteConfirmationMessage').classList.add('d-none');
+        }
+    });
+    
+    // Handle Enter key in confirmation input
+    deleteConfirmationText.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !finalDeleteButton.disabled) {
+            e.preventDefault();
+            confirmPatientDeletion();
+        }
+    });
+    
+    // Track modal states to prevent data loss during transitions
+    let isTransitioning = false;
+    
+    // Reset confirmation when modal is hidden
+    document.getElementById('deletePatientConfirmModal').addEventListener('hidden.bs.modal', function() {
+        console.log('deletePatientConfirmModal hidden');
+        resetDeleteConfirmation();
+        
+        // Reset patient data only if not transitioning back to warning modal
+        if (!isTransitioning) {
+            console.log('Resetting window.currentPatientToDelete from confirm modal');
+            window.currentPatientToDelete = null;
+            localStorage.removeItem('deletePatientData');
+        }
+    });
+    
+    // Reset patient data when warning modal is hidden
+    document.getElementById('deletePatientModal').addEventListener('hidden.bs.modal', function() {
+        console.log('deletePatientModal hidden');
+        
+        // Don't reset if we're transitioning to confirmation modal
+        setTimeout(() => {
+            if (!document.getElementById('deletePatientConfirmModal').classList.contains('show')) {
+                console.log('Resetting window.currentPatientToDelete from warning modal');
+                window.currentPatientToDelete = null;
+                localStorage.removeItem('deletePatientData');
+            }
+        }, 100); // Reduced timeout for faster response
+    });
+    
+    // Override showDeleteConfirmation to prevent data loss
+    const originalShowDeleteConfirmation = window.showDeleteConfirmation;
+    window.showDeleteConfirmation = function() {
+        isTransitioning = true;
+        console.log('Starting transition to confirmation modal');
+        
+        originalShowDeleteConfirmation();
+        
+        // Reset transition flag after modal is shown
+        setTimeout(() => {
+            isTransitioning = false;
+            console.log('Transition completed');
+        }, 500);
+    };
+    
+    // Override backToDeleteWarning to prevent data loss
+    const originalBackToDeleteWarning = window.backToDeleteWarning;
+    window.backToDeleteWarning = function() {
+        isTransitioning = true;
+        console.log('Starting transition back to warning modal');
+        
+        originalBackToDeleteWarning();
+        
+        // Reset transition flag after modal is shown
+        setTimeout(() => {
+            isTransitioning = false;
+            console.log('Back transition completed');
+        }, 500);
+    };
+});
+
+// Auto-refresh every 30 seconds (pause when modals are open)
 setInterval(() => {
     const searchModal = document.getElementById('searchModal');
-    if (!searchModal.classList.contains('show')) {
+    const addPatientModal = document.getElementById('addPatientModal');
+    const deleteModal = document.getElementById('deletePatientModal');
+    const deleteConfirmModal = document.getElementById('deletePatientConfirmModal');
+    
+    if (!searchModal.classList.contains('show') && 
+        !addPatientModal.classList.contains('show') &&
+        !deleteModal.classList.contains('show') &&
+        !deleteConfirmModal.classList.contains('show')) {
         window.location.reload();
     }
 }, 30000);

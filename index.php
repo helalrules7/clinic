@@ -96,6 +96,7 @@ try {
     $router->post('/api/payments', 'ApiController@createPayment');
     $router->get('/api/patients/search', 'ApiController@searchPatients');
     $router->post('/api/patients', 'ApiController@createPatient');
+    $router->delete('/api/patients/{id}', 'ApiController@deletePatient');
     $router->get('/api/patients/{id}/timeline', 'ApiController@getPatientTimeline');
     $router->put('/api/patients/{id}/emergency-contact', 'ApiController@updateEmergencyContact');
     $router->post('/api/consultations', 'ApiController@createConsultation');
