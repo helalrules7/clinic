@@ -85,6 +85,11 @@ try {
     $router->post('/doctor/profile/change-password', 'DoctorController@changePassword');
     $router->post('/doctor/profile/update', 'DoctorController@updateProfile');
     
+    // Medical History routes
+    $router->post('/api/patients/{id}/medical-history', 'ApiController@createMedicalHistory');
+    $router->put('/api/patients/{id}/medical-history/{historyId}', 'ApiController@updateMedicalHistory');
+    $router->delete('/api/patients/{id}/medical-history/{historyId}', 'ApiController@deleteMedicalHistory');
+    
     // General routes
     $router->get('/about', 'GeneralController@about');
     

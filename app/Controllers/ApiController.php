@@ -481,7 +481,7 @@ class ApiController
                 $stmt->execute([$id]);
                 
                 // 11. Delete medical history
-                $stmt = $this->pdo->prepare("DELETE FROM medical_history WHERE patient_id = ?");
+                $stmt = $this->pdo->prepare("DELETE FROM medical_history_entries WHERE patient_id = ?");
                 $stmt->execute([$id]);
                 
                 // 12. Delete appointments
@@ -892,6 +892,7 @@ class ApiController
     // Helper methods
     private function jsonResponse($data, $statusCode = 200)
     {
+        header('Content-Type: application/json');
         http_response_code($statusCode);
         echo json_encode($data);
         exit;
@@ -2648,5 +2649,237 @@ class ApiController
         } catch (Exception $e) {
             return $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
+    }
+
+    public function createMedicalHistory($patientId)
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            // Validate patient exists
+            $stmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
+            $stmt->execute([$patientId]);
+            if (!$stmt->fetch()) {
+                return $this->jsonResponse(['error' => 'Patient not found'], 404);
+            }
+
+            // Get input data
+            $input = json_decode(file_get_contents('php://input'), true);
+            
+            $condition = trim($input['condition'] ?? '');
+            $diagnosis_date = trim($input['diagnosis_date'] ?? '');
+            $status = trim($input['status'] ?? 'active');
+            $notes = trim($input['notes'] ?? '');
+            $category = trim($input['category'] ?? 'general');
+
+            // Validate required fields
+            if (empty($condition)) {
+                return $this->jsonResponse(['error' => 'Medical condition is required'], 400);
+            }
+
+            // Validate date format if provided
+            if (!empty($diagnosis_date) && !$this->validateDate($diagnosis_date)) {
+                return $this->jsonResponse(['error' => 'Invalid date format. Use YYYY-MM-DD'], 400);
+            }
+
+            // Validate status
+            $validStatuses = ['active', 'resolved', 'chronic', 'inactive'];
+            if (!in_array($status, $validStatuses)) {
+                return $this->jsonResponse(['error' => 'Invalid status. Must be: active, resolved, chronic, or inactive'], 400);
+            }
+
+            // Validate category
+            $validCategories = ['general', 'allergy', 'medication', 'surgery', 'family_history', 'social_history'];
+            if (!in_array($category, $validCategories)) {
+                return $this->jsonResponse(['error' => 'Invalid category'], 400);
+            }
+
+            // Insert medical history
+            $stmt = $this->pdo->prepare("
+                INSERT INTO medical_history_entries_entries (patient_id, condition_name, diagnosis_date, status, notes, category, created_by, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+            ");
+
+            $result = $stmt->execute([
+                $patientId,
+                $condition,
+                !empty($diagnosis_date) ? $diagnosis_date : null,
+                $status,
+                !empty($notes) ? $notes : null,
+                $category,
+                $this->auth->user()['id']
+            ]);
+
+            if ($result) {
+                $historyId = $this->pdo->lastInsertId();
+                
+                // Get the created record
+                $stmt = $this->pdo->prepare("
+                    SELECT mh.*, u.name as created_by_name 
+                    FROM medical_history_entries_entries mh 
+                    LEFT JOIN users u ON mh.created_by = u.id 
+                    WHERE mh.id = ?
+                ");
+                $stmt->execute([$historyId]);
+                $history = $stmt->fetch();
+
+                return $this->jsonResponse([
+                    'success' => true,
+                    'message' => 'Medical history created successfully',
+                    'data' => $history
+                ]);
+            } else {
+                return $this->jsonResponse(['error' => 'Failed to create medical history'], 500);
+            }
+
+        } catch (\Exception $e) {
+            error_log("Error creating medical history: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return $this->jsonResponse(['error' => 'Internal server error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function updateMedicalHistory($patientId, $historyId)
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            // Validate patient and history exist
+            $stmt = $this->pdo->prepare("
+                SELECT mh.* FROM medical_history_entries mh 
+                WHERE mh.id = ? AND mh.patient_id = ?
+            ");
+            $stmt->execute([$historyId, $patientId]);
+            $existingHistory = $stmt->fetch();
+
+            if (!$existingHistory) {
+                return $this->jsonResponse(['error' => 'Medical history record not found'], 404);
+            }
+
+            // Get input data
+            $input = json_decode(file_get_contents('php://input'), true);
+            
+            $condition = trim($input['condition'] ?? '');
+            $diagnosis_date = trim($input['diagnosis_date'] ?? '');
+            $status = trim($input['status'] ?? 'active');
+            $notes = trim($input['notes'] ?? '');
+            $category = trim($input['category'] ?? 'general');
+
+            // Validate required fields
+            if (empty($condition)) {
+                return $this->jsonResponse(['error' => 'Medical condition is required'], 400);
+            }
+
+            // Validate date format if provided
+            if (!empty($diagnosis_date) && !$this->validateDate($diagnosis_date)) {
+                return $this->jsonResponse(['error' => 'Invalid date format. Use YYYY-MM-DD'], 400);
+            }
+
+            // Validate status
+            $validStatuses = ['active', 'resolved', 'chronic', 'inactive'];
+            if (!in_array($status, $validStatuses)) {
+                return $this->jsonResponse(['error' => 'Invalid status. Must be: active, resolved, chronic, or inactive'], 400);
+            }
+
+            // Validate category
+            $validCategories = ['general', 'allergy', 'medication', 'surgery', 'family_history', 'social_history'];
+            if (!in_array($category, $validCategories)) {
+                return $this->jsonResponse(['error' => 'Invalid category'], 400);
+            }
+
+            // Update medical history
+            $stmt = $this->pdo->prepare("
+                UPDATE medical_history_entries 
+                SET condition_name = ?, diagnosis_date = ?, status = ?, notes = ?, category = ?, updated_at = NOW()
+                WHERE id = ? AND patient_id = ?
+            ");
+
+            $result = $stmt->execute([
+                $condition,
+                !empty($diagnosis_date) ? $diagnosis_date : null,
+                $status,
+                !empty($notes) ? $notes : null,
+                $category,
+                $historyId,
+                $patientId
+            ]);
+
+            if ($result) {
+                // Get the updated record
+                $stmt = $this->pdo->prepare("
+                    SELECT mh.*, u.name as created_by_name 
+                    FROM medical_history_entries mh 
+                    LEFT JOIN users u ON mh.created_by = u.id 
+                    WHERE mh.id = ?
+                ");
+                $stmt->execute([$historyId]);
+                $history = $stmt->fetch();
+
+                return $this->jsonResponse([
+                    'success' => true,
+                    'message' => 'Medical history updated successfully',
+                    'data' => $history
+                ]);
+            } else {
+                return $this->jsonResponse(['error' => 'Failed to update medical history'], 500);
+            }
+
+        } catch (\Exception $e) {
+            error_log("Error updating medical history: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return $this->jsonResponse(['error' => 'Internal server error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function deleteMedicalHistory($patientId, $historyId)
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            // Validate patient and history exist
+            $stmt = $this->pdo->prepare("
+                SELECT mh.* FROM medical_history_entries mh 
+                WHERE mh.id = ? AND mh.patient_id = ?
+            ");
+            $stmt->execute([$historyId, $patientId]);
+            $existingHistory = $stmt->fetch();
+
+            if (!$existingHistory) {
+                return $this->jsonResponse(['error' => 'Medical history record not found'], 404);
+            }
+
+            // Delete medical history
+            $stmt = $this->pdo->prepare("DELETE FROM medical_history_entries WHERE id = ? AND patient_id = ?");
+            $result = $stmt->execute([$historyId, $patientId]);
+
+            if ($result) {
+                return $this->jsonResponse([
+                    'success' => true,
+                    'message' => 'Medical history deleted successfully'
+                ]);
+            } else {
+                return $this->jsonResponse(['error' => 'Failed to delete medical history'], 500);
+            }
+
+        } catch (\Exception $e) {
+            error_log("Error deleting medical history: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return $this->jsonResponse(['error' => 'Internal server error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    private function validateDate($date)
+    {
+        $d = \DateTime::createFromFormat('Y-m-d', $date);
+        return $d && $d->format('Y-m-d') === $date;
     }
 }

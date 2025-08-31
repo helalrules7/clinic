@@ -19,23 +19,45 @@
         </div>
     </div>
     <div class="col-md-4 text-end">
-        <button class="btn btn-primary me-2" onclick="bookNewAppointment(<?= $patient['id'] ?>)">
+        <button class="btn btn-primary me-2" 
+                onclick="bookNewAppointment(<?= $patient['id'] ?>)"
+                data-bs-toggle="tooltip" 
+                data-bs-placement="bottom" 
+                data-bs-title="Schedule a new appointment for this patient">
             <i class="bi bi-calendar-plus me-2"></i>
             Book Appointment
         </button>
         <div class="dropdown d-inline">
-            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" 
+                    type="button" 
+                    data-bs-toggle="dropdown"
+                    title="More patient actions and options">
                 <i class="bi bi-three-dots"></i>
             </button>
             <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#" onclick="printPatientSummary()">
+                <li><a class="dropdown-item" 
+                       href="#" 
+                       onclick="printPatientSummary()"
+                       data-bs-toggle="tooltip" 
+                       data-bs-placement="left" 
+                       data-bs-title="Print patient summary report">
                     <i class="bi bi-printer me-2"></i>Print Summary
                 </a></li>
-                <li><a class="dropdown-item" href="#" onclick="exportPatientData()">
+                <li><a class="dropdown-item" 
+                       href="#" 
+                       onclick="exportPatientData()"
+                       data-bs-toggle="tooltip" 
+                       data-bs-placement="left" 
+                       data-bs-title="Export patient data to file">
                     <i class="bi bi-download me-2"></i>Export Data
                 </a></li>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#" onclick="editPatient(<?= $patient['id'] ?>)">
+                <li><a class="dropdown-item" 
+                       href="#" 
+                       onclick="editPatient(<?= $patient['id'] ?>)"
+                       data-bs-toggle="tooltip" 
+                       data-bs-placement="left" 
+                       data-bs-title="Edit patient information and details">
                     <i class="bi bi-pencil me-2"></i>Edit Patient
                 </a></li>
             </ul>
@@ -102,7 +124,11 @@
                     </div>
                     <div class="row mt-3">
                         <div class="col-12">
-                            <button class="btn btn-sm btn-outline-secondary" onclick="editEmergencyContact()">
+                            <button class="btn btn-sm btn-outline-secondary" 
+                                    onclick="editEmergencyContact()"
+                                    data-bs-toggle="tooltip" 
+                                    data-bs-placement="top" 
+                                    data-bs-title="Edit emergency contact information">
                                 <i class="bi bi-pencil me-1"></i>Edit
                             </button>
                         </div>
@@ -110,7 +136,11 @@
                 <?php else: ?>
                     <div id="noEmergencyContact">
                         <p class="text-muted mb-0">No emergency contact information available</p>
-                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="addEmergencyContact()">
+                        <button class="btn btn-sm btn-outline-primary mt-2" 
+                                onclick="addEmergencyContact()"
+                                data-bs-toggle="tooltip" 
+                                data-bs-placement="top" 
+                                data-bs-title="Add emergency contact information for this patient">
                             <i class="bi bi-plus me-1"></i>Add Emergency Contact
                         </button>
                     </div>
@@ -123,11 +153,18 @@
 <!-- Medical History -->
 <?php if (!empty($medicalHistory)): ?>
 <div class="card mb-4">
-    <div class="card-header">
+    <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
             <i class="bi bi-clipboard-heart me-2"></i>
             Medical History
         </h5>
+        <button class="btn btn-primary btn-sm" 
+                onclick="addMedicalHistory()"
+                data-bs-toggle="tooltip" 
+                data-bs-placement="top" 
+                data-bs-title="Add a new medical history entry for this patient">
+            <i class="bi bi-plus me-1"></i>Add Entry
+        </button>
     </div>
     <div class="card-body">
         <?php foreach ($medicalHistory as $history): ?>
@@ -207,7 +244,11 @@
     <div class="card-body text-center">
         <i class="bi bi-clipboard-heart text-muted" style="font-size: 3rem;"></i>
         <p class="text-muted mt-2 mb-0">No medical history recorded</p>
-        <button class="btn btn-outline-primary mt-3" onclick="addMedicalHistory()">
+        <button class="btn btn-outline-primary mt-3" 
+                onclick="addMedicalHistory()"
+                data-bs-toggle="tooltip" 
+                data-bs-placement="top" 
+                data-bs-title="Add medical history entry for this patient">
             <i class="bi bi-plus me-2"></i>Add Medical History
         </button>
     </div>
@@ -228,7 +269,11 @@
             <div class="p-4 text-center">
                 <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
                 <p class="text-muted mt-2 mb-0">No appointments found</p>
-                <button class="btn btn-primary mt-3" onclick="bookNewAppointment(<?= $patient['id'] ?>)">
+                <button class="btn btn-primary mt-3" 
+                        onclick="bookNewAppointment(<?= $patient['id'] ?>)"
+                        data-bs-toggle="tooltip" 
+                        data-bs-placement="top" 
+                        data-bs-title="Schedule the first appointment for this patient">
                     <i class="bi bi-calendar-plus me-2"></i>Book First Appointment
                 </button>
             </div>
@@ -286,10 +331,18 @@
                 Patient Files & Documents
             </h5>
             <div class="btn-group btn-group-sm" role="group">
-                <button class="btn btn-primary" onclick="showPatientUploadModal(<?= $patient['id'] ?>)">
+                <button class="btn btn-primary" 
+                        onclick="showPatientUploadModal(<?= $patient['id'] ?>)"
+                        data-bs-toggle="tooltip" 
+                        data-bs-placement="top" 
+                        data-bs-title="Upload files and documents for this patient">
                     <i class="bi bi-cloud-upload me-1"></i>Upload File
                 </button>
-                <button class="btn btn-success" onclick="openPatientCameraModal(<?= $patient['id'] ?>)">
+                <button class="btn btn-success" 
+                        onclick="openPatientCameraModal(<?= $patient['id'] ?>)"
+                        data-bs-toggle="tooltip" 
+                        data-bs-placement="top" 
+                        data-bs-title="Take a photo using camera for this patient">
                     <i class="bi bi-camera me-1"></i>Take Photo
                 </button>
             </div>
@@ -371,16 +424,28 @@
                         </div>
                         
                         <div class="btn-group btn-group-sm w-100 mt-auto" role="group">
-                            <button class="btn btn-outline-primary btn-sm" onclick="viewPatientAttachment(<?= $attachment['id'] ?>, '<?= $attachment['file_path'] ?>', '<?= $fileExt ?>')" 
-                                    style="font-size: 0.7rem; padding: 0.3rem 0.4rem; flex: 1;">
+                            <button class="btn btn-outline-primary btn-sm" 
+                                    onclick="viewPatientAttachment(<?= $attachment['id'] ?>, '<?= $attachment['file_path'] ?>', '<?= $fileExt ?>')" 
+                                    style="font-size: 0.7rem; padding: 0.3rem 0.4rem; flex: 1;"
+                                    data-bs-toggle="tooltip" 
+                                    data-bs-placement="top" 
+                                    data-bs-title="View this file or image">
                                 <i class="bi bi-eye me-1"></i>View
                             </button>
-                            <button class="btn btn-outline-success btn-sm" onclick="downloadPatientAttachment(<?= $attachment['id'] ?>, '<?= $attachment['original_filename'] ?>')"
-                                    style="font-size: 0.7rem; padding: 0.3rem 0.4rem; flex: 1;">
+                            <button class="btn btn-outline-success btn-sm" 
+                                    onclick="downloadPatientAttachment(<?= $attachment['id'] ?>, '<?= $attachment['original_filename'] ?>')"
+                                    style="font-size: 0.7rem; padding: 0.3rem 0.4rem; flex: 1;"
+                                    data-bs-toggle="tooltip" 
+                                    data-bs-placement="top" 
+                                    data-bs-title="Download this file to your device">
                                 <i class="bi bi-download me-1"></i>Download
                             </button>
-                            <button class="btn btn-outline-danger btn-sm" onclick="deletePatientAttachment(<?= $attachment['id'] ?>)"
-                                    style="font-size: 0.7rem; padding: 0.3rem 0.4rem; flex: 1;">
+                            <button class="btn btn-outline-danger btn-sm" 
+                                    onclick="deletePatientAttachment(<?= $attachment['id'] ?>)"
+                                    style="font-size: 0.7rem; padding: 0.3rem 0.4rem; flex: 1;"
+                                    data-bs-toggle="tooltip" 
+                                    data-bs-placement="top" 
+                                    data-bs-title="Delete this file permanently">
                                 <i class="bi bi-trash me-1"></i>Delete
                             </button>
                         </div>
@@ -405,7 +470,11 @@
                 <i class="bi bi-journal-medical me-2"></i>
                 Medical Notes
             </h5>
-            <button class="btn btn-primary btn-sm" onclick="showAddPatientNoteModal(<?= $patient['id'] ?>)">
+            <button class="btn btn-primary btn-sm" 
+                    onclick="showAddPatientNoteModal(<?= $patient['id'] ?>)"
+                    data-bs-toggle="tooltip" 
+                    data-bs-placement="top" 
+                    data-bs-title="Add a new medical note for this patient">
                 <i class="bi bi-plus me-1"></i>Add Note
             </button>
         </div>
@@ -435,10 +504,17 @@
                                     <button class="btn btn-outline-primary edit-note-btn" 
                                             data-note-id="<?= $note['id'] ?>" 
                                             data-note-title="<?= htmlspecialchars($note['title'], ENT_QUOTES, 'UTF-8') ?>" 
-                                            data-note-content="<?= htmlspecialchars($note['content'], ENT_QUOTES, 'UTF-8') ?>">
+                                            data-note-content="<?= htmlspecialchars($note['content'], ENT_QUOTES, 'UTF-8') ?>"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-placement="top" 
+                                            data-bs-title="Edit this medical note">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button class="btn btn-outline-danger" onclick="deletePatientNote(<?= $note['id'] ?>)">
+                                    <button class="btn btn-outline-danger" 
+                                            onclick="deletePatientNote(<?= $note['id'] ?>)"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-placement="top" 
+                                            data-bs-title="Delete this medical note permanently">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
@@ -934,8 +1010,8 @@ function editEmergencyContact() {
 }
 
 function addMedicalHistory() {
-    // Show modal or redirect to add medical history
-    showInfoModal('Add Medical History', 'Add medical history functionality will be implemented soon. This feature will allow you to add comprehensive medical history including allergies, medications, and past surgeries.');
+    const patientId = <?= $patient['id'] ?>;
+    showAddMedicalHistoryModal(patientId);
 }
 
 // Emergency contact form handling
@@ -1894,4 +1970,227 @@ function showInfoModal(title, message) {
         this.remove();
     });
 }
+// Initialize Bootstrap Tooltips
+function initializeTooltips() {
+    // Initialize tooltips for elements with data-bs-toggle="tooltip"
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl, {
+        boundary: 'viewport',
+        fallbackPlacements: ['top', 'bottom', 'left', 'right'],
+        sanitize: false,
+        html: false,
+        delay: { show: 500, hide: 100 },
+        trigger: 'hover focus'
+    }));
+    
+    // Initialize tooltips for elements with title attribute (including dropdown triggers)
+    const titleElements = document.querySelectorAll('[title]:not([data-bs-toggle="tooltip"]):not([data-bs-toggle="dropdown"])');
+    const titleTooltipList = [...titleElements].map(titleEl => new bootstrap.Tooltip(titleEl, {
+        boundary: 'viewport',
+        fallbackPlacements: ['top', 'bottom', 'left', 'right'],
+        sanitize: false,
+        html: false,
+        delay: { show: 500, hide: 100 },
+        trigger: 'hover focus'
+    }));
+    
+    // Initialize tooltips for dropdown buttons with title
+    const dropdownTitleElements = document.querySelectorAll('[data-bs-toggle="dropdown"][title]');
+    const dropdownTooltipList = [...dropdownTitleElements].map(dropdownEl => new bootstrap.Tooltip(dropdownEl, {
+        boundary: 'viewport',
+        fallbackPlacements: ['top', 'bottom', 'left', 'right'],
+        sanitize: false,
+        html: false,
+        delay: { show: 500, hide: 100 },
+        trigger: 'hover focus'
+    }));
+    
+    return [...tooltipList, ...titleTooltipList, ...dropdownTooltipList];
+}
+
+// Function to refresh tooltips for dynamically added content
+function refreshTooltips() {
+    // Dispose of existing tooltips
+    const existingTooltips = document.querySelectorAll('[data-bs-toggle="tooltip"], [title]');
+    existingTooltips.forEach(element => {
+        const tooltip = bootstrap.Tooltip.getInstance(element);
+        if (tooltip) {
+            tooltip.dispose();
+        }
+    });
+    
+    // Reinitialize all tooltips
+    initializeTooltips();
+}
+
+// Initialize tooltips when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initializeTooltips();
+});
+
+// Refresh tooltips when modals are shown
+document.addEventListener('shown.bs.modal', function() {
+    setTimeout(() => {
+        refreshTooltips();
+    }, 100);
+});
+
+// Medical History Functions
+function showAddMedicalHistoryModal(patientId) {
+    const modalHtml = `
+        <div class="modal fade" id="medicalHistoryModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-clipboard-heart me-2"></i>
+                            Add Medical History
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="medicalHistoryForm">
+                        <div class="modal-body">
+                            <div id="medicalHistoryMessage" class="alert d-none" role="alert"></div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="medicalCondition" class="form-label">Medical Condition <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="medicalCondition" name="condition" required maxlength="255">
+                                        <div class="form-text">Enter the medical condition or diagnosis</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="diagnosisDate" class="form-label">Diagnosis Date</label>
+                                        <input type="date" class="form-control" id="diagnosisDate" name="diagnosis_date">
+                                        <div class="form-text">When was this condition diagnosed (optional)</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="medicalStatus" class="form-label">Status <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="medicalStatus" name="status" required>
+                                            <option value="active">Active</option>
+                                            <option value="chronic">Chronic</option>
+                                            <option value="resolved">Resolved</option>
+                                            <option value="inactive">Inactive</option>
+                                        </select>
+                                        <div class="form-text">Current status of this condition</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="medicalCategory" class="form-label">Category</label>
+                                        <select class="form-select" id="medicalCategory" name="category">
+                                            <option value="general">General</option>
+                                            <option value="allergy">Allergy</option>
+                                            <option value="medication">Medication</option>
+                                            <option value="surgery">Surgery</option>
+                                            <option value="family_history">Family History</option>
+                                            <option value="social_history">Social History</option>
+                                        </select>
+                                        <div class="form-text">Category of medical history</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="medicalNotes" class="form-label">Notes</label>
+                                        <textarea class="form-control" id="medicalNotes" name="notes" rows="5" maxlength="1000"></textarea>
+                                        <div class="form-text">Additional notes or details (optional)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="saveMedicalHistoryBtn">
+                                <i class="bi bi-check-lg me-2"></i>Save Medical History
+                                <span class="spinner-border spinner-border-sm d-none ms-2" role="status"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('medicalHistoryModal'));
+    modal.show();
+    
+    // Handle form submission
+    document.getElementById('medicalHistoryForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveMedicalHistory(patientId);
+    });
+    
+    // Clean up modal on hide
+    document.getElementById('medicalHistoryModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+function saveMedicalHistory(patientId) {
+    const form = document.getElementById('medicalHistoryForm');
+    const formData = new FormData(form);
+    const saveBtn = document.getElementById('saveMedicalHistoryBtn');
+    const spinner = saveBtn.querySelector('.spinner-border');
+    const messageDiv = document.getElementById('medicalHistoryMessage');
+    
+    // Show loading state
+    saveBtn.disabled = true;
+    spinner.classList.remove('d-none');
+    
+    // Prepare data
+    const data = {
+        condition: formData.get('condition'),
+        diagnosis_date: formData.get('diagnosis_date'),
+        status: formData.get('status'),
+        notes: formData.get('notes'),
+        category: formData.get('category')
+    };
+    
+    // Send request
+    fetch(`/api/patients/${patientId}/medical-history`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        saveBtn.disabled = false;
+        spinner.classList.add('d-none');
+        
+        if (result.success) {
+            showMessage(messageDiv, 'Medical history added successfully!', 'success');
+            
+            // Reset form
+            form.reset();
+            
+            // Close modal after delay and refresh page
+            setTimeout(() => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('medicalHistoryModal'));
+                modal.hide();
+                window.location.reload();
+            }, 1500);
+        } else {
+            showMessage(messageDiv, result.error || 'Failed to add medical history', 'danger');
+        }
+    })
+    .catch(error => {
+        saveBtn.disabled = false;
+        spinner.classList.add('d-none');
+        console.error('Error saving medical history:', error);
+        showMessage(messageDiv, 'An error occurred. Please try again.', 'danger');
+    });
+}
+
+function showMessage(element, message, type) {
+    element.className = `alert alert-${type}`;
+    element.textContent = message;
+    element.classList.remove('d-none');
+}
+
 </script>

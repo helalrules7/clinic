@@ -114,7 +114,7 @@ CREATE TABLE patients (
     INDEX idx_dob (dob)
 ) ENGINE=InnoDB;
 
--- Medical history
+-- Medical history (Old format - for backward compatibility)
 CREATE TABLE medical_history (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     patient_id BIGINT UNSIGNED NOT NULL,
@@ -129,6 +129,27 @@ CREATE TABLE medical_history (
     
     FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
     INDEX idx_patient_id (patient_id)
+) ENGINE=InnoDB;
+
+-- Medical history entries (New detailed format)
+CREATE TABLE medical_history_entries (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    patient_id BIGINT UNSIGNED NOT NULL,
+    condition_name VARCHAR(255) NOT NULL,
+    diagnosis_date DATE NULL,
+    status ENUM('active', 'resolved', 'chronic', 'inactive') DEFAULT 'active',
+    notes TEXT NULL,
+    category ENUM('general', 'allergy', 'medication', 'surgery', 'family_history', 'social_history') DEFAULT 'general',
+    created_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_patient_id (patient_id),
+    INDEX idx_created_by (created_by),
+    INDEX idx_status (status),
+    INDEX idx_category (category)
 ) ENGINE=InnoDB;
 
 -- Appointments table
