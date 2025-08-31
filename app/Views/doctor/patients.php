@@ -121,7 +121,17 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="avatar-circle me-3">
-                                            <?= strtoupper(substr($patient['first_name'], 0, 1) . substr($patient['last_name'], 0, 1)) ?>
+                                            <?php
+                                            $firstName = $patient['first_name'];
+                                            $lastName = $patient['last_name'];
+                                            
+                                            // Handle Arabic and English names properly
+                                            $firstChar = mb_substr($firstName, 0, 1, 'UTF-8');
+                                            $lastChar = mb_substr($lastName, 0, 1, 'UTF-8');
+                                            
+                                            // Convert to uppercase using mb_strtoupper for proper UTF-8 handling
+                                            echo mb_strtoupper($firstChar . '.' . $lastChar, 'UTF-8');
+                                            ?>
                                         </div>
                                         <div>
                                             <h6 class="mb-1"><?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></h6>
@@ -1344,9 +1354,9 @@ function displaySearchResults(patients, searchTerm) {
         html += `
             <div class="search-result-item" onclick="selectSearchResult(${patient.id})">
                 <div class="d-flex align-items-center">
-                    <div class="search-result-avatar me-3">
-                        ${patient.first_name.charAt(0).toUpperCase()}${patient.last_name.charAt(0).toUpperCase()}
-                    </div>
+                                                        <div class="search-result-avatar me-3">
+                                        ${getAvatarInitials(patient.first_name, patient.last_name)}
+                                    </div>
                     <div class="search-result-info flex-grow-1">
                         <h6 class="mb-1">${highlightedName}</h6>
                         <div class="row">
@@ -1421,6 +1431,19 @@ function highlightSearchTerm(text, searchTerm) {
     
     const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
     return text.replace(regex, '<span class="search-highlight">$1</span>');
+}
+
+// Get avatar initials with proper UTF-8 support for Arabic names
+function getAvatarInitials(firstName, lastName) {
+    if (!firstName || !lastName) {
+        return '?.?';
+    }
+    
+    // Get first character of each name using proper Unicode handling
+    const firstChar = firstName.charAt(0).toUpperCase();
+    const lastChar = lastName.charAt(0).toUpperCase();
+    
+    return firstChar + '.' + lastChar;
 }
 
 // Calculate age
@@ -1808,9 +1831,16 @@ function deletePatient(patientId, patientName) {
     
     // Set avatar initials
     const nameParts = patientName.split(' ');
-    const initials = nameParts.length >= 2 ? 
-        nameParts[0].charAt(0).toUpperCase() + nameParts[1].charAt(0).toUpperCase() :
-        nameParts[0].charAt(0).toUpperCase() + nameParts[0].charAt(1).toUpperCase();
+    let initials;
+    if (nameParts.length >= 2) {
+        initials = getAvatarInitials(nameParts[0], nameParts[1]);
+    } else {
+        // If only one name, use first two characters with dot
+        const name = nameParts[0];
+        const firstChar = name.charAt(0).toUpperCase();
+        const secondChar = name.length > 1 ? name.charAt(1).toUpperCase() : '?';
+        initials = firstChar + '.' + secondChar;
+    }
     document.getElementById('deletePatientAvatar').textContent = initials;
     
     // Show warning modal

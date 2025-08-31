@@ -3,7 +3,17 @@
     <div class="col-md-8">
         <div class="d-flex align-items-center">
             <div class="avatar-circle-large me-3">
-                <?= strtoupper(substr($patient['first_name'], 0, 1) . substr($patient['last_name'], 0, 1)) ?>
+                <?php
+                $firstName = $patient['first_name'];
+                $lastName = $patient['last_name'];
+                
+                // Handle Arabic and English names properly
+                $firstChar = mb_substr($firstName, 0, 1, 'UTF-8');
+                $lastChar = mb_substr($lastName, 0, 1, 'UTF-8');
+                
+                // Convert to uppercase using mb_strtoupper for proper UTF-8 handling
+                echo mb_strtoupper($firstChar . '.' . $lastChar, 'UTF-8');
+                ?>
             </div>
             <div>
                 <h2 class="text-primary mb-1"><?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></h2>
