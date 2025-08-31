@@ -83,6 +83,7 @@ try {
     $router->post('/doctor/appointments/{id}/consultation', 'DoctorController@saveConsultation');
     $router->get('/doctor/profile', 'DoctorController@profile');
     $router->post('/doctor/profile/change-password', 'DoctorController@changePassword');
+    $router->post('/doctor/profile/update', 'DoctorController@updateProfile');
     
     // API routes
     $router->get('/api/calendar', 'ApiController@getCalendar');

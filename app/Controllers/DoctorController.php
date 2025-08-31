@@ -198,8 +198,18 @@ class DoctorController
     {
         $user = $this->auth->user();
         
+        // Get doctor-specific information
+        $stmt = $this->pdo->prepare("
+            SELECT u.*, d.display_name as doctor_name, d.specialty 
+            FROM users u 
+            LEFT JOIN doctors d ON u.id = d.user_id 
+            WHERE u.id = ?
+        ");
+        $stmt->execute([$user['id']]);
+        $userWithDoctorInfo = $stmt->fetch();
+        
         $content = $this->view->render('doctor/profile', [
-            'user' => $user
+            'user' => $userWithDoctorInfo ?: $user
         ]);
         
         echo $this->view->render('layouts/main', [
@@ -421,12 +431,11 @@ class DoctorController
             return;
         }
         
-        $currentPassword = $_POST['current_password'] ?? '';
         $newPassword = $_POST['new_password'] ?? '';
         $confirmPassword = $_POST['confirm_password'] ?? '';
         
         // Validate input
-        if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
+        if (empty($newPassword) || empty($confirmPassword)) {
             header('Location: /doctor/profile?error=All fields are required');
             exit;
         }
@@ -441,20 +450,16 @@ class DoctorController
             exit;
         }
         
+        // Password complexity validation
+        if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/', $newPassword)) {
+            header('Location: /doctor/profile?error=Password must contain uppercase, lowercase, and numbers');
+            exit;
+        }
+        
         try {
-            // Verify current password
-            $stmt = $this->pdo->prepare("SELECT password FROM users WHERE id = ?");
-            $stmt->execute([$user['id']]);
-            $userData = $stmt->fetch();
-            
-            if (!$userData || !password_verify($currentPassword, $userData['password'])) {
-                header('Location: /doctor/profile?error=Current password is incorrect');
-                exit;
-            }
-            
             // Update password
             $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-            $stmt = $this->pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
+            $stmt = $this->pdo->prepare("UPDATE users SET password_hash = ?, updated_at = NOW() WHERE id = ?");
             $stmt->execute([$hashedPassword, $user['id']]);
             
             header('Location: /doctor/profile?success=Password updated successfully');
@@ -467,7 +472,124 @@ class DoctorController
         }
     }
 
+    public function updateProfile()
+    {
+        $user = $this->auth->user();
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo "Method not allowed";
+            return;
+        }
+        
+        // Validate CSRF token
+        if (!$this->validateCsrfToken()) {
+            header('Location: /doctor/profile?error=Invalid security token');
+            exit;
+        }
+        
+        $name = trim($_POST['name'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $phone = trim($_POST['phone'] ?? '');
+        $doctorName = trim($_POST['doctor_name'] ?? '');
+        $specialty = trim($_POST['specialty'] ?? 'Ophthalmology');
+        
+        // Validate input
+        if (empty($name)) {
+            header('Location: /doctor/profile?error=Full name is required');
+            exit;
+        }
+        
+        if (empty($email)) {
+            header('Location: /doctor/profile?error=Email is required');
+            exit;
+        }
+        
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            header('Location: /doctor/profile?error=Please enter a valid email address');
+            exit;
+        }
+        
+        try {
+            // Check if email is already taken by another user
+            $stmt = $this->pdo->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
+            $stmt->execute([$email, $user['id']]);
+            if ($stmt->fetch()) {
+                header('Location: /doctor/profile?error=Email is already taken by another user');
+                exit;
+            }
+            
+            // Start transaction
+            $this->pdo->beginTransaction();
+            
+            // Update user table
+            $stmt = $this->pdo->prepare("
+                UPDATE users 
+                SET name = ?, email = ?, phone = ?, updated_at = NOW() 
+                WHERE id = ?
+            ");
+            $stmt->execute([$name, $email, $phone, $user['id']]);
+            
+            // Update doctor table if doctor-specific fields are provided
+            if (!empty($doctorName) || !empty($specialty)) {
+                $doctorId = $this->getDoctorId($user['id']);
+                if ($doctorId) {
+                    $stmt = $this->pdo->prepare("
+                        UPDATE doctors 
+                        SET display_name = ?, specialty = ?, updated_at = NOW() 
+                        WHERE user_id = ?
+                    ");
+                    $stmt->execute([$doctorName ?: $name, $specialty, $user['id']]);
+                }
+            }
+            
+            // Commit transaction
+            $this->pdo->commit();
+            
+            // Update session data with all new information
+            $_SESSION['user']['name'] = $name;
+            $_SESSION['user']['email'] = $email;
+            $_SESSION['user']['phone'] = $phone;
+            
+            // Add doctor-specific data to session if available
+            if (!empty($doctorName)) {
+                $_SESSION['user']['doctor_name'] = $doctorName;
+            }
+            if (!empty($specialty)) {
+                $_SESSION['user']['specialty'] = $specialty;
+            }
+            
+            header('Location: /doctor/profile?success=Profile updated successfully&updated=1');
+            exit;
+            
+        } catch (\Exception $e) {
+            // Rollback transaction
+            $this->pdo->rollBack();
+            error_log("Error updating profile for user {$user['id']}: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            
+            // More specific error message for debugging
+            $errorMsg = 'Failed to update profile';
+            if (strpos($e->getMessage(), 'Unknown column') !== false) {
+                $errorMsg = 'Database column error - please contact support';
+            } elseif (strpos($e->getMessage(), 'Duplicate entry') !== false) {
+                $errorMsg = 'Email already exists';
+            }
+            
+            header('Location: /doctor/profile?error=' . urlencode($errorMsg));
+            exit;
+        }
+    }
+
     // Private helper methods
+    private function validateCsrfToken()
+    {
+        if (!isset($_POST['csrf_token']) || !isset($_SESSION['csrf_token'])) {
+            return false;
+        }
+        return hash_equals($_SESSION['csrf_token'], $_POST['csrf_token']);
+    }
+
     private function getDoctorId($userId)
     {
         $stmt = $this->pdo->prepare("SELECT id FROM doctors WHERE user_id = ?");

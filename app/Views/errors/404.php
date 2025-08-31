@@ -21,7 +21,7 @@
             --border: #e2e8f0;
         }
         
-        .dark {
+        [data-theme="dark"] {
             --bg: #0b1220;
             --text: #e5e7eb;
             --card: #111827;
@@ -80,11 +80,68 @@
             transform: translateY(-1px);
         }
         
+        .btn-outline-secondary {
+            color: var(--muted);
+            border-color: var(--border);
+            padding: 0.75rem 2rem;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-outline-secondary:hover {
+            background: var(--muted);
+            border-color: var(--muted);
+            color: var(--bg);
+            transform: translateY(-1px);
+        }
+        
         .theme-toggle {
             position: fixed;
             top: 20px;
             right: 20px;
             z-index: 1000;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            transition: all 0.2s ease;
+        }
+        
+        .theme-toggle:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        /* Dark mode specific styles */
+        [data-theme="dark"] .btn-outline-secondary {
+            color: var(--text);
+            border-color: var(--border);
+        }
+        
+        [data-theme="dark"] .btn-outline-secondary:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+        
+        [data-theme="dark"] .theme-toggle {
+            background: var(--card);
+            border-color: var(--border);
+            color: var(--text);
+        }
+        
+        [data-theme="dark"] .theme-toggle:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
         }
         
         @keyframes fadeUp {
@@ -143,24 +200,44 @@
     
     <script>
         // Theme toggle functionality
-        const apply = mode => document.documentElement.classList.toggle('dark', mode === 'dark');
+        const apply = mode => {
+            document.documentElement.setAttribute('data-theme', mode);
+        };
+        
         const saved = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         
         apply(saved);
         
         document.getElementById('themeToggle').onclick = () => {
-            const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
             apply(next);
             localStorage.setItem('theme', next);
             
-            // Update icon
+            // Update icon with smooth transition
             const icon = document.querySelector('#themeToggle i');
-            icon.className = next === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+            icon.style.transform = 'scale(0)';
+            
+            setTimeout(() => {
+                icon.className = next === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+                icon.style.transform = 'scale(1)';
+            }, 100);
         };
         
         // Update initial icon
         const icon = document.querySelector('#themeToggle i');
         icon.className = saved === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+        icon.style.transition = 'transform 0.2s ease';
+        
+        // Add smooth page transition
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.style.opacity = '0';
+            document.body.style.transition = 'opacity 0.3s ease';
+            
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+            }, 100);
+        });
     </script>
 </body>
 </html>
