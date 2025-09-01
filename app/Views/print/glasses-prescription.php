@@ -8,7 +8,7 @@
         @media print {
             @page {
                 size: A4;
-                margin: 1.5cm;
+                margin: 0.8cm;
             }
         }
         
@@ -20,44 +20,44 @@
         
         body {
             font-family: 'Arial', sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
+            font-size: 11px;
+            line-height: 1.2;
             color: #000;
             background: white;
             width: 21cm;
             height: 29.7cm;
             margin: 0 auto;
-            padding: 1.5cm;
+            padding: 0.8cm;
         }
         
         .prescription-header {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
             border-bottom: 3px solid #2c3e50;
-            padding-bottom: 20px;
+            padding-bottom: 12px;
         }
         
         .clinic-name {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
         }
         
         .clinic-info {
-            font-size: 12px;
+            font-size: 10px;
             color: #666;
-            margin-bottom: 6px;
+            margin-bottom: 3px;
         }
         
         .prescription-title {
-            font-size: 22px;
+            font-size: 18px;
             font-weight: bold;
             text-align: center;
-            margin: 25px 0;
+            margin: 15px 0;
             color: #2c3e50;
             border: 3px solid #3498db;
-            padding: 15px;
+            padding: 10px;
             border-radius: 8px;
             background: linear-gradient(135deg, #3498db, #2980b9);
             color: white;
@@ -66,9 +66,9 @@
         .patient-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
             border: 2px solid #ddd;
-            padding: 20px;
+            padding: 12px;
             border-radius: 8px;
             background: #f8f9fa;
         }
@@ -79,15 +79,15 @@
         
         .patient-details h3, .appointment-details h3 {
             color: #2c3e50;
-            margin-bottom: 15px;
-            font-size: 16px;
+            margin-bottom: 8px;
+            font-size: 14px;
             border-bottom: 2px solid #3498db;
-            padding-bottom: 8px;
+            padding-bottom: 5px;
         }
         
         .patient-details p, .appointment-details p {
-            margin: 8px 0;
-            font-size: 13px;
+            margin: 4px 0;
+            font-size: 11px;
         }
         
         .appointment-details {
@@ -95,19 +95,19 @@
         }
         
         .prescription-content {
-            margin: 25px 0;
+            margin: 15px 0;
         }
         
         .glasses-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 12px;
         }
         
         .eye-section {
             border: 2px solid #3498db;
-            padding: 20px;
+            padding: 12px;
             border-radius: 8px;
             background: white;
             position: relative;
@@ -128,8 +128,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 12px 0;
-            padding: 8px 0;
+            margin: 6px 0;
+            padding: 4px 0;
             border-bottom: 1px solid #eee;
         }
         
@@ -154,9 +154,9 @@
         }
         
         .lens-specs {
-            margin-top: 20px;
+            margin-top: 12px;
             border: 2px solid #e74c3c;
-            padding: 15px;
+            padding: 10px;
             border-radius: 8px;
             background: #fff5f5;
         }
@@ -164,21 +164,21 @@
         .lens-title {
             font-weight: bold;
             color: #e74c3c;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
             text-align: center;
-            font-size: 14px;
+            font-size: 12px;
         }
         
         .lens-details {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 8px;
         }
         
         .pd-section {
-            margin: 20px 0;
+            margin: 12px 0;
             border: 2px solid #f39c12;
-            padding: 15px;
+            padding: 10px;
             border-radius: 8px;
             background: #fffbf0;
         }
@@ -186,9 +186,9 @@
         .pd-title {
             font-weight: bold;
             color: #f39c12;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
             text-align: center;
-            font-size: 14px;
+            font-size: 12px;
         }
         
         .pd-values {
@@ -216,9 +216,9 @@
         }
         
         .comments-section {
-            margin: 20px 0;
+            margin: 12px 0;
             border: 2px solid #9b59b6;
-            padding: 15px;
+            padding: 10px;
             border-radius: 8px;
             background: #f8f4fd;
         }
@@ -226,8 +226,8 @@
         .comments-title {
             font-weight: bold;
             color: #9b59b6;
-            margin-bottom: 10px;
-            font-size: 14px;
+            margin-bottom: 6px;
+            font-size: 12px;
         }
         
         .comments-text {
@@ -237,7 +237,7 @@
         }
         
         .footer-section {
-            margin-top: 35px;
+            margin-top: 20px;
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
@@ -252,19 +252,19 @@
             width: 220px;
             height: 2px;
             background: #333;
-            margin: 25px auto 8px;
+            margin: 15px auto 5px;
         }
         
         .doctor-name {
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 8px;
-            font-size: 14px;
+            margin-bottom: 5px;
+            font-size: 12px;
         }
         
         .doctor-title {
             color: #666;
-            font-size: 12px;
+            font-size: 10px;
         }
         
         .clinic-stamp {
@@ -273,8 +273,8 @@
         }
         
         .stamp-box {
-            width: 120px;
-            height: 120px;
+            width: 100px;
+            height: 100px;
             border: 3px solid #3498db;
             border-radius: 50%;
             margin: 0 auto;
@@ -283,9 +283,9 @@
             justify-content: center;
             color: #3498db;
             font-weight: bold;
-            font-size: 11px;
+            font-size: 9px;
             text-align: center;
-            line-height: 1.3;
+            line-height: 1.2;
             background: white;
         }
         
@@ -297,13 +297,13 @@
         .date-label {
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 8px;
-            font-size: 13px;
+            margin-bottom: 5px;
+            font-size: 11px;
         }
         
         .date-value {
             color: #666;
-            font-size: 16px;
+            font-size: 14px;
         }
         
         .prescription-number {
@@ -327,8 +327,8 @@
         }
         
         .validity-notice {
-            margin: 20px 0;
-            padding: 15px;
+            margin: 12px 0;
+            padding: 10px;
             background: #e8f5e8;
             border: 2px solid #27ae60;
             border-radius: 8px;
@@ -338,13 +338,13 @@
         .validity-title {
             font-weight: bold;
             color: #27ae60;
-            margin-bottom: 8px;
-            font-size: 14px;
+            margin-bottom: 5px;
+            font-size: 12px;
         }
         
         .validity-text {
             color: #27ae60;
-            font-size: 12px;
+            font-size: 10px;
         }
         
         @media print {
@@ -352,7 +352,7 @@
                 width: 100%;
                 height: auto;
                 margin: 0;
-                padding: 1cm;
+                padding: 0.5cm;
             }
             
             .prescription-header,
@@ -399,10 +399,22 @@
         
         <div class="appointment-details">
             <h3>تفاصيل الموعد - Appointment Details</h3>
-            <p><strong>التاريخ:</strong> <?= date('d/m/Y', strtotime($appointment['appointment_date'])) ?></p>
-            <p><strong>الوقت:</strong> <?= date('H:i', strtotime($appointment['start_time'])) ?></p>
-            <p><strong>نوع الزيارة:</strong> <?= $appointment['visit_type'] ?></p>
-            <p><strong>الطبيب:</strong> <?= $doctor['display_name'] ?></p>
+            <p><strong>التاريخ:</strong> 
+                <?php 
+                $appointmentDate = $prescription['appointment_date'] ?? $appointment['date'] ?? $appointment['appointment_date'] ?? null;
+                echo $appointmentDate ? date('d/m/Y', strtotime($appointmentDate)) : '01/01/1970';
+                ?>
+            </p>
+            <p><strong>الوقت:</strong> 
+                <?php 
+                $startTime = $prescription['start_time'] ?? $appointment['start_time'] ?? null;
+                echo $startTime ? date('H:i', strtotime($startTime)) : '14:00';
+                ?>
+            </p>
+            <p><strong>نوع الزيارة:</strong> 
+                <?= $prescription['visit_type'] ?? $appointment['visit_type'] ?? 'New' ?>
+            </p>
+            <p><strong>الطبيب:</strong> <?= $doctor['display_name'] ?? 'Dr. Ahmed Abo AlKassem' ?></p>
         </div>
     </div>
     

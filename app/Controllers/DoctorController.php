@@ -128,6 +128,9 @@ class DoctorController
         // Get patient notes
         $patientNotes = $this->getPatientNotes($id);
         
+        // Get patient glasses prescriptions
+        $glassesPrescriptions = $this->getPatientGlassesPrescriptions($id);
+        
         $content = $this->view->render('doctor/patient', [
             'patient' => $patient,
             'timeline' => $timeline,
@@ -135,6 +138,7 @@ class DoctorController
             'recentAppointments' => $recentAppointments,
             'patientAttachments' => $patientAttachments,
             'patientNotes' => $patientNotes,
+            'glassesPrescriptions' => $glassesPrescriptions,
             'doctorId' => $doctorId
         ]);
         
@@ -803,6 +807,24 @@ class DoctorController
             ORDER BY created_at DESC
         ");
         $stmt->execute([$appointmentId]);
+        return $stmt->fetchAll();
+    }
+
+    private function getPatientGlassesPrescriptions($patientId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT g.*, 
+                   a.id as appointment_id,
+                   a.date as appointment_date,
+                   a.start_time as appointment_time,
+                   CONCAT(d.display_name) as doctor_name
+            FROM glasses_prescriptions g
+            JOIN appointments a ON g.appointment_id = a.id
+            JOIN doctors d ON a.doctor_id = d.id
+            WHERE a.patient_id = ?
+            ORDER BY g.created_at DESC
+        ");
+        $stmt->execute([$patientId]);
         return $stmt->fetchAll();
     }
 

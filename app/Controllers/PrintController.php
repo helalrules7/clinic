@@ -74,19 +74,19 @@ class PrintController
         try {
             $user = $this->auth->user();
             
-            // Get appointment details first
-            $appointment = $this->getAppointment($id);
-            if (!$appointment) {
+            // Get glasses prescription by its ID (not appointment ID)
+            $prescription = $this->getGlassesPrescription($id);
+            if (!$prescription) {
                 http_response_code(404);
-                echo "Appointment not found";
+                echo "No glasses prescription found with ID: " . $id;
                 return;
             }
             
-            // Get glasses prescription for this appointment
-            $prescription = $this->getGlassesPrescriptions($id);
-            if (!$prescription) {
+            // Get appointment details using the appointment_id from prescription
+            $appointment = $this->getAppointment($prescription['appointment_id']);
+            if (!$appointment) {
                 http_response_code(404);
-                echo "No glasses prescription found for this appointment";
+                echo "Associated appointment not found";
                 return;
             }
             
@@ -237,7 +237,7 @@ class PrintController
     private function getGlassesPrescription($id)
     {
         $stmt = $this->pdo->prepare("
-            SELECT gp.*, a.patient_id, a.date as appointment_date
+            SELECT gp.*, a.patient_id, a.date as appointment_date, a.start_time, a.visit_type
             FROM glasses_prescriptions gp
             JOIN appointments a ON gp.appointment_id = a.id
             WHERE gp.id = ?

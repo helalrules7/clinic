@@ -2917,6 +2917,75 @@ class ApiController
         }
     }
 
+    public function getPatientAppointments($patientId)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                return $this->jsonResponse(['error' => 'Permission denied'], 403);
+            }
+
+            $stmt = $this->pdo->prepare("
+                SELECT a.id, a.date, a.start_time, a.end_time, a.visit_type, a.status
+                FROM appointments a
+                WHERE a.patient_id = ?
+                ORDER BY a.date DESC, a.start_time DESC
+                LIMIT 20
+            ");
+            $stmt->execute([$patientId]);
+            $appointments = $stmt->fetchAll();
+
+            return $this->jsonResponse([
+                'success' => true,
+                'data' => $appointments
+            ]);
+
+        } catch (\Exception $e) {
+            error_log("Error fetching patient appointments: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Internal server error'], 500);
+        }
+    }
+
+    public function getGlassesPrescription($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                return $this->jsonResponse(['error' => 'Permission denied'], 403);
+            }
+
+            $stmt = $this->pdo->prepare("
+                SELECT g.*, a.patient_id, a.date as appointment_date
+                FROM glasses_prescriptions g
+                JOIN appointments a ON g.appointment_id = a.id
+                WHERE g.id = ?
+            ");
+            $stmt->execute([$id]);
+            $prescription = $stmt->fetch();
+
+            if (!$prescription) {
+                return $this->jsonResponse(['error' => 'Glasses prescription not found'], 404);
+            }
+
+            return $this->jsonResponse([
+                'success' => true,
+                'data' => $prescription
+            ]);
+
+        } catch (\Exception $e) {
+            error_log("Error fetching glasses prescription: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Internal server error'], 500);
+        }
+    }
+
     private function validateDate($date)
     {
         $d = \DateTime::createFromFormat('Y-m-d', $date);

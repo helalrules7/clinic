@@ -734,6 +734,174 @@
     </div>
 </div>
 
+<!-- Glasses Prescriptions -->
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-eyeglasses me-2"></i>
+                Glasses Prescriptions
+                <?php if (!empty($glassesPrescriptions)): ?>
+                    <span class="badge bg-primary ms-2"><?= count($glassesPrescriptions) ?></span>
+                <?php endif; ?>
+            </h5>
+            <button class="btn btn-primary btn-sm" 
+                    onclick="showAddGlassesPrescriptionModal(<?= $patient['id'] ?>)"
+                    data-bs-toggle="tooltip" 
+                    data-bs-placement="top" 
+                    data-bs-title="Add a new glasses prescription for this patient">
+                <i class="bi bi-plus me-1"></i>Add Prescription
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <?php if (!empty($glassesPrescriptions)): ?>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Date</th>
+                            <th>Visit</th>
+                            <th>Lens Type</th>
+                            <th>Distance Vision</th>
+                            <th>Near Vision</th>
+                            <th>PD</th>
+                            <th>Doctor</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($glassesPrescriptions as $prescription): ?>
+                            <tr>
+                                <td>
+                                    <div>
+                                        <strong><?= date('M j, Y', strtotime($prescription['created_at'])) ?></strong>
+                                    </div>
+                                    <small class="text-muted">
+                                        <?= date('g:i A', strtotime($prescription['created_at'])) ?>
+                                    </small>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong><?= date('M j, Y', strtotime($prescription['appointment_date'])) ?></strong>
+                                    </div>
+                                    <small class="text-muted">
+                                        Visit #<?= $prescription['appointment_id'] ?>
+                                        <?php if (!empty($prescription['appointment_time'])): ?>
+                                            at <?= date('g:i A', strtotime($prescription['appointment_time'])) ?>
+                                        <?php endif; ?>
+                                    </small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info"><?= htmlspecialchars($prescription['lens_type']) ?></span>
+                                </td>
+                                <td>
+                                    <div class="prescription-values">
+                                        <?php if ($prescription['distance_sphere_r'] !== null || $prescription['distance_sphere_l'] !== null): ?>
+                                            <div><strong>R:</strong> 
+                                                <?= $prescription['distance_sphere_r'] ? sprintf('%+.2f', $prescription['distance_sphere_r']) : '0.00' ?>
+                                                <?= $prescription['distance_cylinder_r'] ? sprintf(' %+.2f', $prescription['distance_cylinder_r']) : '' ?>
+                                                <?= $prescription['distance_axis_r'] ? ' x ' . $prescription['distance_axis_r'] : '' ?>
+                                            </div>
+                                            <div><strong>L:</strong> 
+                                                <?= $prescription['distance_sphere_l'] ? sprintf('%+.2f', $prescription['distance_sphere_l']) : '0.00' ?>
+                                                <?= $prescription['distance_cylinder_l'] ? sprintf(' %+.2f', $prescription['distance_cylinder_l']) : '' ?>
+                                                <?= $prescription['distance_axis_l'] ? ' x ' . $prescription['distance_axis_l'] : '' ?>
+                                            </div>
+                                        <?php else: ?>
+                                            <small class="text-muted">Not specified</small>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="prescription-values">
+                                        <?php if ($prescription['near_sphere_r'] !== null || $prescription['near_sphere_l'] !== null): ?>
+                                            <div><strong>R:</strong> 
+                                                <?= $prescription['near_sphere_r'] ? sprintf('%+.2f', $prescription['near_sphere_r']) : '0.00' ?>
+                                                <?= $prescription['near_cylinder_r'] ? sprintf(' %+.2f', $prescription['near_cylinder_r']) : '' ?>
+                                                <?= $prescription['near_axis_r'] ? ' x ' . $prescription['near_axis_r'] : '' ?>
+                                            </div>
+                                            <div><strong>L:</strong> 
+                                                <?= $prescription['near_sphere_l'] ? sprintf('%+.2f', $prescription['near_sphere_l']) : '0.00' ?>
+                                                <?= $prescription['near_cylinder_l'] ? sprintf(' %+.2f', $prescription['near_cylinder_l']) : '' ?>
+                                                <?= $prescription['near_axis_l'] ? ' x ' . $prescription['near_axis_l'] : '' ?>
+                                            </div>
+                                        <?php else: ?>
+                                            <small class="text-muted">Not specified</small>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                                <td>
+                                    <?php if ($prescription['PD_DISTANCE'] || $prescription['PD_NEAR']): ?>
+                                        <div>
+                                            <?php if ($prescription['PD_DISTANCE']): ?>
+                                                <div><strong>Dist:</strong> <?= $prescription['PD_DISTANCE'] ?>mm</div>
+                                            <?php endif; ?>
+                                            <?php if ($prescription['PD_NEAR']): ?>
+                                                <div><strong>Near:</strong> <?= $prescription['PD_NEAR'] ?>mm</div>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <small class="text-muted">Not specified</small>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <small><?= htmlspecialchars($prescription['doctor_name']) ?></small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button class="btn btn-outline-primary" 
+                                                onclick="viewGlassesPrescription(<?= $prescription['id'] ?>)"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" 
+                                                data-bs-title="View prescription details">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <button class="btn btn-outline-warning" 
+                                                onclick="editGlassesPrescription(<?= $prescription['id'] ?>)"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" 
+                                                data-bs-title="Edit this prescription">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-outline-success" 
+                                                onclick="printGlassesPrescription(<?= $prescription['id'] ?>)"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" 
+                                                data-bs-title="Print this prescription">
+                                            <i class="bi bi-printer"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger" 
+                                                onclick="deleteGlassesPrescription(<?= $prescription['id'] ?>)"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" 
+                                                data-bs-title="Delete this prescription">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php else: ?>
+            <div class="text-center py-5">
+                <i class="bi bi-eyeglasses text-muted" style="font-size: 4rem;"></i>
+                <h6 class="text-muted mt-3 mb-2">No Glasses Prescriptions</h6>
+                <p class="text-muted mb-4">No glasses prescriptions have been recorded for this patient yet.</p>
+                <button class="btn btn-primary" 
+                        onclick="showAddGlassesPrescriptionModal(<?= $patient['id'] ?>)"
+                        data-bs-toggle="tooltip" 
+                        data-bs-placement="top" 
+                        data-bs-title="Add the first glasses prescription for this patient">
+                    <i class="bi bi-plus me-2"></i>Add First Prescription
+                </button>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
 <!-- Patient Timeline -->
 <?php if (!empty($timeline)): ?>
 <div class="card">
@@ -1470,6 +1638,41 @@ div.form-text {
 
 .dark .modal-body p {
     color: var(--text) !important;
+}
+
+/* Glasses Prescriptions Table Styles */
+.prescription-values {
+    font-size: 0.85rem;
+    line-height: 1.3;
+}
+
+.prescription-values div {
+    margin-bottom: 2px;
+}
+
+.prescription-values strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* Glasses Prescriptions Dark Mode */
+.dark .prescription-values strong {
+    color: var(--text) !important;
+}
+
+.dark .prescription-values {
+    color: var(--text) !important;
+}
+
+/* Table responsive adjustments for glasses prescriptions */
+@media (max-width: 768px) {
+    .prescription-values {
+        font-size: 0.8rem;
+    }
+    
+    .prescription-values div {
+        margin-bottom: 1px;
+    }
 }
 
 /* Responsive Timeline */
@@ -3054,5 +3257,685 @@ function confirmDeleteMedicalHistory(historyId) {
         showNotification('Error deleting medical history: ' + error.message, 'danger');
     });
 }
+
+// Glasses Prescriptions Functions
+function showAddGlassesPrescriptionModal(patientId) {
+    const modalId = 'addGlassesPrescriptionModal';
+    let existingModal = document.getElementById(modalId);
+    
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const modalHtml = `
+        <div class="modal fade" id="${modalId}" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-eyeglasses me-2"></i>
+                            Add Glasses Prescription
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addGlassesPrescriptionForm">
+                            <input type="hidden" id="glassesPatientId" value="${patientId}">
+                            
+                            <!-- Lens Type and Appointment Selection -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="glassesAppointmentId" class="form-label">Select Appointment *</label>
+                                    <select class="form-select" id="glassesAppointmentId" required>
+                                        <option value="">Loading appointments...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="glassesLensType" class="form-label">Lens Type *</label>
+                                    <select class="form-select" id="glassesLensType" required>
+                                        <option value="Single Vision">Single Vision</option>
+                                        <option value="Bifocal">Bifocal</option>
+                                        <option value="Progressive">Progressive</option>
+                                        <option value="Reading">Reading</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Distance Vision Section -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="bi bi-eye me-2"></i>Distance Vision</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-primary">Right Eye (OD)</h6>
+                                            <div class="row">
+                                                <div class="col-4">
+                                                    <label class="form-label">Sphere</label>
+                                                    <input type="number" class="form-control" id="distanceSphereR" 
+                                                           step="0.25" min="-30" max="30" placeholder="0.00">
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label">Cylinder</label>
+                                                    <input type="number" class="form-control" id="distanceCylinderR" 
+                                                           step="0.25" min="-10" max="10" placeholder="0.00">
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label">Axis</label>
+                                                    <input type="number" class="form-control" id="distanceAxisR" 
+                                                           min="1" max="180" placeholder="0">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-primary">Left Eye (OS)</h6>
+                                            <div class="row">
+                                                <div class="col-4">
+                                                    <label class="form-label">Sphere</label>
+                                                    <input type="number" class="form-control" id="distanceSphereL" 
+                                                           step="0.25" min="-30" max="30" placeholder="0.00">
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label">Cylinder</label>
+                                                    <input type="number" class="form-control" id="distanceCylinderL" 
+                                                           step="0.25" min="-10" max="10" placeholder="0.00">
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label">Axis</label>
+                                                    <input type="number" class="form-control" id="distanceAxisL" 
+                                                           min="1" max="180" placeholder="0">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Near Vision Section -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="bi bi-book me-2"></i>Near Vision</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-success">Right Eye (OD)</h6>
+                                            <div class="row">
+                                                <div class="col-4">
+                                                    <label class="form-label">Sphere</label>
+                                                    <input type="number" class="form-control" id="nearSphereR" 
+                                                           step="0.25" min="-30" max="30" placeholder="0.00">
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label">Cylinder</label>
+                                                    <input type="number" class="form-control" id="nearCylinderR" 
+                                                           step="0.25" min="-10" max="10" placeholder="0.00">
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label">Axis</label>
+                                                    <input type="number" class="form-control" id="nearAxisR" 
+                                                           min="1" max="180" placeholder="0">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-success">Left Eye (OS)</h6>
+                                            <div class="row">
+                                                <div class="col-4">
+                                                    <label class="form-label">Sphere</label>
+                                                    <input type="number" class="form-control" id="nearSphereL" 
+                                                           step="0.25" min="-30" max="30" placeholder="0.00">
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label">Cylinder</label>
+                                                    <input type="number" class="form-control" id="nearCylinderL" 
+                                                           step="0.25" min="-10" max="10" placeholder="0.00">
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label">Axis</label>
+                                                    <input type="number" class="form-control" id="nearAxisL" 
+                                                           min="1" max="180" placeholder="0">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- PD and Comments -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="pdDistance" class="form-label">PD Distance (mm)</label>
+                                    <input type="number" class="form-control" id="pdDistance" 
+                                           step="0.5" min="40" max="80" placeholder="62.0">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="pdNear" class="form-label">PD Near (mm)</label>
+                                    <input type="number" class="form-control" id="pdNear" 
+                                           step="0.5" min="40" max="80" placeholder="60.0">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="glassesComments" class="form-label">Comments</label>
+                                <textarea class="form-control" id="glassesComments" rows="3" 
+                                          placeholder="Additional notes or comments about the prescription..."></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x me-1"></i>Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="saveGlassesPrescription()">
+                            <i class="bi bi-check me-1"></i>Add Prescription
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    modal.show();
+    
+    // Load patient appointments
+    loadPatientAppointments(patientId);
+    
+    // Clean up when modal is hidden
+    document.getElementById(modalId).addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+function loadPatientAppointments(patientId) {
+    const select = document.getElementById('glassesAppointmentId');
+    
+    fetch(`/api/patients/${patientId}/appointments`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data) {
+                select.innerHTML = '<option value="">Select an appointment</option>';
+                data.data.forEach(appointment => {
+                    const option = document.createElement('option');
+                    option.value = appointment.id;
+                    option.textContent = `${appointment.date} at ${appointment.start_time} - ${appointment.visit_type}`;
+                    select.appendChild(option);
+                });
+            } else {
+                select.innerHTML = '<option value="">No appointments available</option>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading appointments:', error);
+            select.innerHTML = '<option value="">Error loading appointments</option>';
+        });
+}
+
+function saveGlassesPrescription() {
+    const formData = {
+        appointment_id: document.getElementById('glassesAppointmentId').value,
+        lens_type: document.getElementById('glassesLensType').value,
+        distance_sphere_r: document.getElementById('distanceSphereR').value || null,
+        distance_cylinder_r: document.getElementById('distanceCylinderR').value || null,
+        distance_axis_r: document.getElementById('distanceAxisR').value || null,
+        distance_sphere_l: document.getElementById('distanceSphereL').value || null,
+        distance_cylinder_l: document.getElementById('distanceCylinderL').value || null,
+        distance_axis_l: document.getElementById('distanceAxisL').value || null,
+        near_sphere_r: document.getElementById('nearSphereR').value || null,
+        near_cylinder_r: document.getElementById('nearCylinderR').value || null,
+        near_axis_r: document.getElementById('nearAxisR').value || null,
+        near_sphere_l: document.getElementById('nearSphereL').value || null,
+        near_cylinder_l: document.getElementById('nearCylinderL').value || null,
+        near_axis_l: document.getElementById('nearAxisL').value || null,
+        PD_DISTANCE: document.getElementById('pdDistance').value || null,
+        PD_NEAR: document.getElementById('pdNear').value || null,
+        comments: document.getElementById('glassesComments').value || null
+    };
+    
+    // Validate required fields
+    if (!formData.appointment_id) {
+        showNotification('Please select an appointment', 'danger');
+        return;
+    }
+    
+    if (!formData.lens_type) {
+        showNotification('Please select a lens type', 'danger');
+        return;
+    }
+    
+    // Convert FormData to URLSearchParams for POST request
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(formData)) {
+        if (value !== null && value !== '') {
+            params.append(key, value);
+        }
+    }
+    
+    fetch('/api/prescriptions/glasses', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params.toString()
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Glasses prescription added successfully', 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addGlassesPrescriptionModal'));
+            modal.hide();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification('Error: ' + (data.error || data.message || 'Failed to add prescription'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error: ' + error.message, 'error');
+    });
+}
+
+function viewGlassesPrescription(prescriptionId) {
+    const url = `/api/prescriptions/glasses/${prescriptionId}?t=${Date.now()}`;
+    
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+        },
+        cache: 'no-cache'
+    })
+        .then(response => {
+            console.log('View Response status:', response.status);
+            console.log('View Response URL:', response.url);
+            if (!response.ok) {
+                // Log the response text for debugging
+                return response.text().then(text => {
+                    console.log('Error response text:', text);
+                    throw new Error(`HTTP error! status: ${response.status} - ${text.substring(0, 100)}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('View Response data:', data);
+            if (data.success) {
+                showGlassesPrescriptionModal(data.data, 'view');
+            } else {
+                showNotification('Error loading prescription details: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('View Error:', error);
+            showNotification('Error: ' + error.message, 'error');
+        });
+}
+
+function editGlassesPrescription(prescriptionId) {
+    const url = `/api/prescriptions/glasses/${prescriptionId}?t=${Date.now()}`;
+    
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+        },
+        cache: 'no-cache'
+    })
+        .then(response => {
+            console.log('Edit Response status:', response.status);
+            console.log('Edit Response URL:', response.url);
+            if (!response.ok) {
+                // Log the response text for debugging
+                return response.text().then(text => {
+                    console.log('Edit Error response text:', text);
+                    throw new Error(`HTTP error! status: ${response.status} - ${text.substring(0, 100)}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Edit Response data:', data);
+            if (data.success) {
+                showGlassesPrescriptionModal(data.data, 'edit');
+            } else {
+                showNotification('Error loading prescription details: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Edit Error:', error);
+            showNotification('Error: ' + error.message, 'error');
+        });
+}
+
+function showGlassesPrescriptionModal(data, mode) {
+    const modalId = 'viewEditGlassesPrescriptionModal';
+    let existingModal = document.getElementById(modalId);
+    
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const isEdit = mode === 'edit';
+    const isView = mode === 'view';
+    const readonly = isView ? 'readonly' : '';
+    const disabled = isView ? 'disabled' : '';
+    
+    const modalHtml = `
+        <div class="modal fade" id="${modalId}" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-eyeglasses me-2"></i>
+                            ${isEdit ? 'Edit' : 'View'} Glasses Prescription
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editGlassesPrescriptionForm">
+                            <input type="hidden" id="editPrescriptionId" value="${data.id}">
+                            
+                            <!-- Lens Type -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Lens Type</label>
+                                    <select class="form-select" id="editLensType" ${disabled}>
+                                        <option value="Single Vision" ${data.lens_type === 'Single Vision' ? 'selected' : ''}>Single Vision</option>
+                                        <option value="Bifocal" ${data.lens_type === 'Bifocal' ? 'selected' : ''}>Bifocal</option>
+                                        <option value="Progressive" ${data.lens_type === 'Progressive' ? 'selected' : ''}>Progressive</option>
+                                        <option value="Reading" ${data.lens_type === 'Reading' ? 'selected' : ''}>Reading</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Created Date</label>
+                                    <input type="text" class="form-control" value="${new Date(data.created_at).toLocaleString()}" readonly>
+                                </div>
+                            </div>
+                            
+                            <!-- Distance Vision Section -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="bi bi-eye me-2"></i>Distance Vision</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-primary">Right Eye (OD)</h6>
+                                            <div class="row">
+                                                <div class="col-4">
+                                                    <label class="form-label">Sphere</label>
+                                                    <input type="number" class="form-control" id="editDistanceSphereR" 
+                                                           step="0.25" min="-30" max="30" value="${data.distance_sphere_r || ''}" ${readonly}>
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label">Cylinder</label>
+                                                    <input type="number" class="form-control" id="editDistanceCylinderR" 
+                                                           step="0.25" min="-10" max="10" value="${data.distance_cylinder_r || ''}" ${readonly}>
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label">Axis</label>
+                                                    <input type="number" class="form-control" id="editDistanceAxisR" 
+                                                           min="1" max="180" value="${data.distance_axis_r || ''}" ${readonly}>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-primary">Left Eye (OS)</h6>
+                                            <div class="row">
+                                                <div class="col-4">
+                                                    <label class="form-label">Sphere</label>
+                                                    <input type="number" class="form-control" id="editDistanceSphereL" 
+                                                           step="0.25" min="-30" max="30" value="${data.distance_sphere_l || ''}" ${readonly}>
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label">Cylinder</label>
+                                                    <input type="number" class="form-control" id="editDistanceCylinderL" 
+                                                           step="0.25" min="-10" max="10" value="${data.distance_cylinder_l || ''}" ${readonly}>
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label">Axis</label>
+                                                    <input type="number" class="form-control" id="editDistanceAxisL" 
+                                                           min="1" max="180" value="${data.distance_axis_l || ''}" ${readonly}>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Near Vision Section -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="bi bi-book me-2"></i>Near Vision</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-success">Right Eye (OD)</h6>
+                                            <div class="row">
+                                                <div class="col-4">
+                                                    <label class="form-label">Sphere</label>
+                                                    <input type="number" class="form-control" id="editNearSphereR" 
+                                                           step="0.25" min="-30" max="30" value="${data.near_sphere_r || ''}" ${readonly}>
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label">Cylinder</label>
+                                                    <input type="number" class="form-control" id="editNearCylinderR" 
+                                                           step="0.25" min="-10" max="10" value="${data.near_cylinder_r || ''}" ${readonly}>
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label">Axis</label>
+                                                    <input type="number" class="form-control" id="editNearAxisR" 
+                                                           min="1" max="180" value="${data.near_axis_r || ''}" ${readonly}>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-success">Left Eye (OS)</h6>
+                                            <div class="row">
+                                                <div class="col-4">
+                                                    <label class="form-label">Sphere</label>
+                                                    <input type="number" class="form-control" id="editNearSphereL" 
+                                                           step="0.25" min="-30" max="30" value="${data.near_sphere_l || ''}" ${readonly}>
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label">Cylinder</label>
+                                                    <input type="number" class="form-control" id="editNearCylinderL" 
+                                                           step="0.25" min="-10" max="10" value="${data.near_cylinder_l || ''}" ${readonly}>
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label">Axis</label>
+                                                    <input type="number" class="form-control" id="editNearAxisL" 
+                                                           min="1" max="180" value="${data.near_axis_l || ''}" ${readonly}>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- PD and Comments -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">PD Distance (mm)</label>
+                                    <input type="number" class="form-control" id="editPdDistance" 
+                                           step="0.5" min="40" max="80" value="${data.PD_DISTANCE || ''}" ${readonly}>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">PD Near (mm)</label>
+                                    <input type="number" class="form-control" id="editPdNear" 
+                                           step="0.5" min="40" max="80" value="${data.PD_NEAR || ''}" ${readonly}>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Comments</label>
+                                <textarea class="form-control" id="editGlassesComments" rows="3" ${readonly}>${data.comments || ''}</textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            ${isView ? 'Close' : 'Cancel'}
+                        </button>
+                        ${isEdit ? `
+                            <button type="button" class="btn btn-primary" onclick="updateGlassesPrescription()">
+                                <i class="bi bi-check me-1"></i>Save Changes
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    modal.show();
+    
+    // Clean up when modal is hidden
+    document.getElementById(modalId).addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+function updateGlassesPrescription() {
+    const prescriptionId = document.getElementById('editPrescriptionId').value;
+    const formData = {
+        lens_type: document.getElementById('editLensType').value,
+        distance_sphere_r: document.getElementById('editDistanceSphereR').value || null,
+        distance_cylinder_r: document.getElementById('editDistanceCylinderR').value || null,
+        distance_axis_r: document.getElementById('editDistanceAxisR').value || null,
+        distance_sphere_l: document.getElementById('editDistanceSphereL').value || null,
+        distance_cylinder_l: document.getElementById('editDistanceCylinderL').value || null,
+        distance_axis_l: document.getElementById('editDistanceAxisL').value || null,
+        near_sphere_r: document.getElementById('editNearSphereR').value || null,
+        near_cylinder_r: document.getElementById('editNearCylinderR').value || null,
+        near_axis_r: document.getElementById('editNearAxisR').value || null,
+        near_sphere_l: document.getElementById('editNearSphereL').value || null,
+        near_cylinder_l: document.getElementById('editNearCylinderL').value || null,
+        near_axis_l: document.getElementById('editNearAxisL').value || null,
+        PD_DISTANCE: document.getElementById('editPdDistance').value || null,
+        PD_NEAR: document.getElementById('editPdNear').value || null,
+        comments: document.getElementById('editGlassesComments').value || null
+    };
+    
+    // Convert FormData to URLSearchParams for PUT request
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(formData)) {
+        if (value !== null && value !== '') {
+            params.append(key, value);
+        }
+    }
+    
+    fetch(`/api/prescriptions/glasses/${prescriptionId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params.toString()
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Glasses prescription updated successfully', 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('viewEditGlassesPrescriptionModal'));
+            modal.hide();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification('Error: ' + (data.error || data.message || 'Failed to update prescription'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error: ' + error.message, 'error');
+    });
+}
+
+function deleteGlassesPrescription(prescriptionId) {
+    // Hide all tooltips first to prevent conflicts
+    const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltips.forEach(element => {
+        const tooltip = bootstrap.Tooltip.getInstance(element);
+        if (tooltip) {
+            tooltip.hide();
+        }
+    });
+    
+    // Wait a bit for tooltips to hide, then show modal
+    setTimeout(() => {
+        showGeneralDeleteConfirmationModal(
+            'Delete Glasses Prescription',
+            'Are you sure you want to delete this glasses prescription? This action cannot be undone.',
+            'Delete Prescription',
+            () => {
+                fetch(`/api/prescriptions/glasses/${prescriptionId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Glasses prescription deleted successfully', 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showNotification('Error: ' + (data.error || data.message), 'error');
+                    }
+                })
+                .catch(error => {
+                    showNotification('Error: ' + error.message, 'error');
+                });
+            }
+        );
+    }, 100);
+}
+
+function printGlassesPrescription(prescriptionId) {
+    const printUrl = `/print/glasses-prescription/${prescriptionId}?t=${Date.now()}`;
+    console.log('Opening print URL:', printUrl);
+    window.open(printUrl, '_blank');
+}
+
+// Helper function to clear browser cache for specific URLs
+function clearApiCache() {
+    if ('caches' in window) {
+        caches.keys().then(function(names) {
+            for (let name of names) {
+                caches.delete(name);
+            }
+        });
+    }
+}
+
+// Call this when the page loads to ensure fresh data
+document.addEventListener('DOMContentLoaded', function() {
+    // Clear any cached API responses
+    clearApiCache();
+    
+    // Add a refresh handler for the glasses prescriptions section
+    const glassesSection = document.querySelector('.card:has(h5:contains("Glasses Prescriptions"))');
+    if (glassesSection) {
+        // Add a small refresh button to the glasses prescriptions header
+        const header = glassesSection.querySelector('.card-header .d-flex');
+        if (header && !header.querySelector('.refresh-glasses-btn')) {
+            const refreshBtn = document.createElement('button');
+            refreshBtn.className = 'btn btn-outline-secondary btn-sm me-2 refresh-glasses-btn';
+            refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+            refreshBtn.title = 'Refresh glasses prescriptions';
+            refreshBtn.onclick = function() {
+                clearApiCache();
+                location.reload();
+            };
+            header.appendChild(refreshBtn);
+        }
+    }
+});
 
 </script>

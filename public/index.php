@@ -139,9 +139,16 @@ try {
     $router->put('/api/patients/notes/{id}', 'ApiController@updatePatientNote');
     $router->delete('/api/patients/notes/{id}', 'ApiController@deletePatientNote');
     
+    // Patient Appointments API routes
+    $router->get('/api/patients/{id}/appointments', 'ApiController@getPatientAppointments');
+    
+    // Individual Glasses Prescription API routes
+    $router->get('/api/prescriptions/glasses/{id}', 'ApiController@getGlassesPrescription');
+    
     // Print routes
     $router->get('/print/prescription/{id}', 'PrintController@medicationPrescription');
     $router->get('/print/glasses/{id}', 'PrintController@glassesPrescription');
+    $router->get('/print/glasses-prescription/{id}', 'PrintController@glassesPrescription');
     $router->get('/print/lab-test/{id}', 'PrintController@singleLabTest');
     $router->get('/print/lab-tests/{id}', 'PrintController@labTests');
     $router->get('/print/invoice/{id}', 'PrintController@invoice');
