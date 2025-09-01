@@ -13,6 +13,7 @@ class ApiController
     private $auth;
     private $validator;
     private $pdo;
+    private $tempImagesToCleanup = [];
 
     public function __construct()
     {
@@ -2950,6 +2951,83 @@ class ApiController
         }
     }
 
+    public function checkExportAccess($patientId)
+    {
+        try {
+            if (!$this->auth->check()) {
+                http_response_code(401);
+                exit;
+            }
+
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                http_response_code(403);
+                exit;
+            }
+
+            // Check if patient exists
+            $stmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
+            $stmt->execute([$patientId]);
+            $patient = $stmt->fetch();
+            
+            if (!$patient) {
+                http_response_code(404);
+                exit;
+            }
+
+            // If we reach here, access is allowed
+            http_response_code(200);
+            exit;
+
+        } catch (\Exception $e) {
+            error_log("Error checking export access: " . $e->getMessage());
+            http_response_code(500);
+            exit;
+        }
+    }
+
+    public function exportPatientData($patientId)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                return $this->jsonResponse(['error' => 'Permission denied'], 403);
+            }
+
+            // Get patient data
+            $patientData = $this->getPatientDataForExport($patientId);
+            
+            if (!$patientData) {
+                return $this->jsonResponse(['error' => 'Patient not found'], 404);
+            }
+
+            // Generate Word document
+            $filename = $this->generatePatientWordDocument($patientData);
+            
+            // Set headers for file download
+            header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+            header('Content-Disposition: attachment; filename="Patient_' . $patientData['patient']['id'] . '_' . date('Y-m-d') . '.docx"');
+            header('Content-Length: ' . filesize($filename));
+            
+            // Output the file
+            readfile($filename);
+            
+            // Clean up temporary files
+            unlink($filename);
+            $this->cleanupTempImages();
+            
+            exit;
+
+        } catch (\Exception $e) {
+            error_log("Error exporting patient data: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Internal server error: ' . $e->getMessage()], 500);
+        }
+    }
+
     public function getGlassesPrescription($id)
     {
         try {
@@ -2984,6 +3062,653 @@ class ApiController
             error_log("Error fetching glasses prescription: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Internal server error'], 500);
         }
+    }
+
+    private function getPatientDataForExport($patientId)
+    {
+        try {
+            // Get patient basic information
+            $stmt = $this->pdo->prepare("SELECT * FROM patients WHERE id = ?");
+            $stmt->execute([$patientId]);
+            $patient = $stmt->fetch();
+            
+            if (!$patient) {
+                return null;
+            }
+
+            // Get medical history
+            $stmt = $this->pdo->prepare("
+                SELECT mhe.*, u.name as doctor_name
+                FROM medical_history_entries mhe
+                LEFT JOIN users u ON mhe.created_by = u.id
+                WHERE mhe.patient_id = ?
+                ORDER BY mhe.created_at DESC
+            ");
+            $stmt->execute([$patientId]);
+            $medicalHistory = $stmt->fetchAll();
+
+            // Get old format medical history if exists
+            $stmt = $this->pdo->prepare("SELECT * FROM medical_history WHERE patient_id = ? ORDER BY created_at DESC");
+            $stmt->execute([$patientId]);
+            $oldMedicalHistory = $stmt->fetchAll();
+
+            // Get recent appointments
+            $stmt = $this->pdo->prepare("
+                SELECT a.*, u.name as doctor_name
+                FROM appointments a
+                LEFT JOIN users u ON a.doctor_id = u.id
+                WHERE a.patient_id = ?
+                ORDER BY a.date DESC, a.start_time DESC
+                LIMIT 10
+            ");
+            $stmt->execute([$patientId]);
+            $appointments = $stmt->fetchAll();
+
+            // Get patient notes
+            $stmt = $this->pdo->prepare("
+                SELECT pn.*, u.name as doctor_name
+                FROM patient_notes pn
+                LEFT JOIN users u ON pn.doctor_id = u.id
+                WHERE pn.patient_id = ?
+                ORDER BY pn.created_at DESC
+            ");
+            $stmt->execute([$patientId]);
+            $notes = $stmt->fetchAll();
+
+            // Get glasses prescriptions
+            $stmt = $this->pdo->prepare("
+                SELECT gp.*, a.date as appointment_date, u.name as doctor_name
+                FROM glasses_prescriptions gp
+                JOIN appointments a ON gp.appointment_id = a.id
+                LEFT JOIN users u ON a.doctor_id = u.id
+                WHERE a.patient_id = ?
+                ORDER BY gp.created_at DESC
+            ");
+            $stmt->execute([$patientId]);
+            $glassesPrescriptions = $stmt->fetchAll();
+
+            // Get patient attachments
+            $stmt = $this->pdo->prepare("
+                SELECT * FROM patient_attachments
+                WHERE patient_id = ?
+                ORDER BY created_at DESC
+            ");
+            $stmt->execute([$patientId]);
+            $attachments = $stmt->fetchAll();
+
+            return [
+                'patient' => $patient,
+                'medical_history' => $medicalHistory,
+                'old_medical_history' => $oldMedicalHistory,
+                'appointments' => $appointments,
+                'notes' => $notes,
+                'glasses_prescriptions' => $glassesPrescriptions,
+                'attachments' => $attachments
+            ];
+
+        } catch (\Exception $e) {
+            error_log("Error getting patient data: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    private function generatePatientWordDocument($data)
+    {
+        require_once __DIR__ . '/../../vendor/autoload.php';
+        
+        $phpWord = new \PhpOffice\PhpWord\PhpWord();
+        $phpWord->setDefaultFontName('Arial');
+        $phpWord->setDefaultFontSize(12);
+
+        // Create document properties
+        $properties = $phpWord->getDocInfo();
+        $properties->setCreator('Roaya Clinic Management System');
+        $properties->setCompany('Roaya Clinic');
+        $properties->setTitle('Patient Data Export - ' . $data['patient']['first_name'] . ' ' . $data['patient']['last_name']);
+        $properties->setDescription('Complete patient data export including medical history, notes, and files');
+
+        // Add a section
+        $section = $phpWord->addSection([
+            'marginLeft' => 720,   // 0.5 inch
+            'marginRight' => 720,
+            'marginTop' => 720,
+            'marginBottom' => 720
+        ]);
+
+        // Header styles
+        $headerStyle = ['name' => 'Arial', 'size' => 16, 'bold' => true, 'color' => '2E74B5'];
+        $subHeaderStyle = ['name' => 'Arial', 'size' => 14, 'bold' => true, 'color' => '1F497D'];
+        $normalStyle = ['name' => 'Arial', 'size' => 11];
+        $tableHeaderStyle = ['bold' => true, 'color' => '000000'];
+
+        // Title
+        $section->addText('PATIENT DATA EXPORT', $headerStyle, ['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER]);
+        $section->addText('Roaya Clinic Management System', $normalStyle, ['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER]);
+        $section->addText('Export Date: ' . date('F j, Y'), $normalStyle, ['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER]);
+        $section->addTextBreak(2);
+
+        // Patient Information
+        $section->addText('PATIENT INFORMATION', $subHeaderStyle);
+        $section->addTextBreak();
+
+        $patientTable = $section->addTable([
+            'borderSize' => 6,
+            'borderColor' => '1F497D',
+            'cellMargin' => 80
+        ]);
+
+        $this->addTableRow($patientTable, 'Patient ID', '#' . $data['patient']['id'], $tableHeaderStyle);
+        $fullName = trim(($data['patient']['first_name'] ?? '') . ' ' . ($data['patient']['last_name'] ?? ''));
+        $this->addTableRow($patientTable, 'Full Name', $fullName, $tableHeaderStyle);
+        $this->addTableRow($patientTable, 'Date of Birth', $data['patient']['dob'] ? date('F j, Y', strtotime($data['patient']['dob'])) : 'Not specified', $tableHeaderStyle);
+        
+        if ($data['patient']['dob']) {
+            $age = date_diff(date_create($data['patient']['dob']), date_create('now'))->y;
+            $this->addTableRow($patientTable, 'Age', $age . ' years old', $tableHeaderStyle);
+        }
+        
+        $this->addTableRow($patientTable, 'Gender', ucfirst($data['patient']['gender'] ?? 'Not specified'), $tableHeaderStyle);
+        $this->addTableRow($patientTable, 'Phone', $data['patient']['phone'] ?? 'Not specified', $tableHeaderStyle);
+        
+        if ($data['patient']['alt_phone']) {
+            $this->addTableRow($patientTable, 'Alternative Phone', $data['patient']['alt_phone'], $tableHeaderStyle);
+        }
+        
+        if ($data['patient']['address']) {
+            $this->addTableRow($patientTable, 'Address', $data['patient']['address'], $tableHeaderStyle);
+        }
+        
+        if ($data['patient']['national_id']) {
+            $this->addTableRow($patientTable, 'National ID', $data['patient']['national_id'], $tableHeaderStyle);
+        }
+        
+        if ($data['patient']['emergency_contact']) {
+            $this->addTableRow($patientTable, 'Emergency Contact', $data['patient']['emergency_contact'], $tableHeaderStyle);
+        }
+        
+        if ($data['patient']['emergency_phone']) {
+            $this->addTableRow($patientTable, 'Emergency Phone', $data['patient']['emergency_phone'], $tableHeaderStyle);
+        }
+
+        $section->addTextBreak(2);
+
+        // Medical History
+        if (!empty($data['medical_history']) || !empty($data['old_medical_history'])) {
+            $section->addText('MEDICAL HISTORY', $subHeaderStyle);
+            $section->addTextBreak();
+
+            // New format medical history
+            if (!empty($data['medical_history'])) {
+                foreach ($data['medical_history'] as $history) {
+                    $historyTable = $section->addTable([
+                        'borderSize' => 6,
+                        'borderColor' => '28A745',
+                        'cellMargin' => 80
+                    ]);
+
+                    $this->addTableRow($historyTable, 'Condition', $history['condition_name'] ?? 'Not specified', $tableHeaderStyle);
+                    $this->addTableRow($historyTable, 'Category', ucfirst(str_replace('_', ' ', $history['category'] ?? 'general')), $tableHeaderStyle);
+                    $this->addTableRow($historyTable, 'Status', ucfirst($history['status'] ?? 'active'), $tableHeaderStyle);
+                    
+                    if ($history['diagnosis_date']) {
+                        $this->addTableRow($historyTable, 'Diagnosis Date', date('F j, Y', strtotime($history['diagnosis_date'])), $tableHeaderStyle);
+                    }
+                    
+                    if ($history['notes']) {
+                        $this->addTableRow($historyTable, 'Notes', $history['notes'], $tableHeaderStyle);
+                    }
+                    
+                    if ($history['doctor_name']) {
+                        $this->addTableRow($historyTable, 'Added By', 'Dr. ' . $history['doctor_name'], $tableHeaderStyle);
+                    }
+                    
+                    $this->addTableRow($historyTable, 'Date Added', date('F j, Y', strtotime($history['created_at'])), $tableHeaderStyle);
+                    
+                    $section->addTextBreak();
+                }
+            }
+
+            // Old format medical history
+            if (!empty($data['old_medical_history'])) {
+                foreach ($data['old_medical_history'] as $history) {
+                    $historyTable = $section->addTable([
+                        'borderSize' => 6,
+                        'borderColor' => 'FFC107',
+                        'cellMargin' => 80
+                    ]);
+
+                    if ($history['allergies']) {
+                        $this->addTableRow($historyTable, 'Allergies', $history['allergies'], $tableHeaderStyle);
+                    }
+                    if ($history['medications']) {
+                        $this->addTableRow($historyTable, 'Medications', $history['medications'], $tableHeaderStyle);
+                    }
+                    if ($history['systemic_history']) {
+                        $this->addTableRow($historyTable, 'Systemic History', $history['systemic_history'], $tableHeaderStyle);
+                    }
+                    if ($history['ocular_history']) {
+                        $this->addTableRow($historyTable, 'Ocular History', $history['ocular_history'], $tableHeaderStyle);
+                    }
+                    if ($history['prior_surgeries']) {
+                        $this->addTableRow($historyTable, 'Prior Surgeries', $history['prior_surgeries'], $tableHeaderStyle);
+                    }
+                    if ($history['family_history']) {
+                        $this->addTableRow($historyTable, 'Family History', $history['family_history'], $tableHeaderStyle);
+                    }
+                    
+                    $this->addTableRow($historyTable, 'Date Added', date('F j, Y', strtotime($history['created_at'])), $tableHeaderStyle);
+                    
+                    $section->addTextBreak();
+                }
+            }
+        }
+
+        // Recent Appointments
+        if (!empty($data['appointments'])) {
+            $section->addText('RECENT APPOINTMENTS', $subHeaderStyle);
+            $section->addTextBreak();
+
+            foreach ($data['appointments'] as $appointment) {
+                $appointmentTable = $section->addTable([
+                    'borderSize' => 6,
+                    'borderColor' => '17A2B8',
+                    'cellMargin' => 80
+                ]);
+
+                $this->addTableRow($appointmentTable, 'Date', date('F j, Y', strtotime($appointment['date'])), $tableHeaderStyle);
+                $this->addTableRow($appointmentTable, 'Time', date('g:i A', strtotime($appointment['start_time'])) . ' - ' . date('g:i A', strtotime($appointment['end_time'])), $tableHeaderStyle);
+                $this->addTableRow($appointmentTable, 'Visit Type', $appointment['visit_type'] ?? 'Not specified', $tableHeaderStyle);
+                $this->addTableRow($appointmentTable, 'Status', ucfirst($appointment['status'] ?? 'unknown'), $tableHeaderStyle);
+                
+                if ($appointment['doctor_name']) {
+                    $this->addTableRow($appointmentTable, 'Doctor', 'Dr. ' . $appointment['doctor_name'], $tableHeaderStyle);
+                }
+                
+                $section->addTextBreak();
+            }
+        }
+
+        // Patient Notes
+        if (!empty($data['notes'])) {
+            $section->addText('MEDICAL NOTES', $subHeaderStyle);
+            $section->addTextBreak();
+
+            foreach ($data['notes'] as $note) {
+                $noteTable = $section->addTable([
+                    'borderSize' => 6,
+                    'borderColor' => '6C757D',
+                    'cellMargin' => 80
+                ]);
+
+                $this->addTableRow($noteTable, 'Title', $note['title'], $tableHeaderStyle);
+                $this->addTableRow($noteTable, 'Content', $note['content'], $tableHeaderStyle);
+                
+                if ($note['doctor_name']) {
+                    $this->addTableRow($noteTable, 'Added By', 'Dr. ' . $note['doctor_name'], $tableHeaderStyle);
+                }
+                
+                $this->addTableRow($noteTable, 'Date Added', date('F j, Y g:i A', strtotime($note['created_at'])), $tableHeaderStyle);
+                
+                $section->addTextBreak();
+            }
+        }
+
+        // Glasses Prescriptions
+        if (!empty($data['glasses_prescriptions'])) {
+            $section->addText('GLASSES PRESCRIPTIONS', $subHeaderStyle);
+            $section->addTextBreak();
+
+            foreach ($data['glasses_prescriptions'] as $prescription) {
+                $prescriptionTable = $section->addTable([
+                    'borderSize' => 6,
+                    'borderColor' => 'DC3545',
+                    'cellMargin' => 80
+                ]);
+
+                $this->addTableRow($prescriptionTable, 'Date', date('F j, Y', strtotime($prescription['created_at'])), $tableHeaderStyle);
+                $this->addTableRow($prescriptionTable, 'Appointment Date', date('F j, Y', strtotime($prescription['appointment_date'])), $tableHeaderStyle);
+                $this->addTableRow($prescriptionTable, 'Lens Type', $prescription['lens_type'], $tableHeaderStyle);
+
+                // Distance Vision
+                if ($prescription['distance_sphere_r'] !== null || $prescription['distance_sphere_l'] !== null) {
+                    $distanceR = sprintf('%+.2f', $prescription['distance_sphere_r'] ?? 0);
+                    if ($prescription['distance_cylinder_r']) {
+                        $distanceR .= sprintf(' %+.2f', $prescription['distance_cylinder_r']);
+                    }
+                    if ($prescription['distance_axis_r']) {
+                        $distanceR .= ' x ' . $prescription['distance_axis_r'];
+                    }
+
+                    $distanceL = sprintf('%+.2f', $prescription['distance_sphere_l'] ?? 0);
+                    if ($prescription['distance_cylinder_l']) {
+                        $distanceL .= sprintf(' %+.2f', $prescription['distance_cylinder_l']);
+                    }
+                    if ($prescription['distance_axis_l']) {
+                        $distanceL .= ' x ' . $prescription['distance_axis_l'];
+                    }
+
+                    $this->addTableRow($prescriptionTable, 'Distance Vision (R)', $distanceR, $tableHeaderStyle);
+                    $this->addTableRow($prescriptionTable, 'Distance Vision (L)', $distanceL, $tableHeaderStyle);
+                }
+
+                // Near Vision
+                if ($prescription['near_sphere_r'] !== null || $prescription['near_sphere_l'] !== null) {
+                    $nearR = sprintf('%+.2f', $prescription['near_sphere_r'] ?? 0);
+                    if ($prescription['near_cylinder_r']) {
+                        $nearR .= sprintf(' %+.2f', $prescription['near_cylinder_r']);
+                    }
+                    if ($prescription['near_axis_r']) {
+                        $nearR .= ' x ' . $prescription['near_axis_r'];
+                    }
+
+                    $nearL = sprintf('%+.2f', $prescription['near_sphere_l'] ?? 0);
+                    if ($prescription['near_cylinder_l']) {
+                        $nearL .= sprintf(' %+.2f', $prescription['near_cylinder_l']);
+                    }
+                    if ($prescription['near_axis_l']) {
+                        $nearL .= ' x ' . $prescription['near_axis_l'];
+                    }
+
+                    $this->addTableRow($prescriptionTable, 'Near Vision (R)', $nearR, $tableHeaderStyle);
+                    $this->addTableRow($prescriptionTable, 'Near Vision (L)', $nearL, $tableHeaderStyle);
+                }
+
+                // PD
+                if ($prescription['PD_DISTANCE'] || $prescription['PD_NEAR']) {
+                    if ($prescription['PD_DISTANCE']) {
+                        $this->addTableRow($prescriptionTable, 'PD Distance', $prescription['PD_DISTANCE'] . 'mm', $tableHeaderStyle);
+                    }
+                    if ($prescription['PD_NEAR']) {
+                        $this->addTableRow($prescriptionTable, 'PD Near', $prescription['PD_NEAR'] . 'mm', $tableHeaderStyle);
+                    }
+                }
+
+                if ($prescription['comments']) {
+                    $this->addTableRow($prescriptionTable, 'Comments', $prescription['comments'], $tableHeaderStyle);
+                }
+                
+                if ($prescription['doctor_name']) {
+                    $this->addTableRow($prescriptionTable, 'Prescribed By', 'Dr. ' . $prescription['doctor_name'], $tableHeaderStyle);
+                }
+                
+                $section->addTextBreak();
+            }
+        }
+
+        // Patient Files/Attachments
+        if (!empty($data['attachments'])) {
+            $section->addText('PATIENT FILES AND ATTACHMENTS', $subHeaderStyle);
+            $section->addTextBreak();
+
+            foreach ($data['attachments'] as $attachment) {
+                $attachmentTable = $section->addTable([
+                    'borderSize' => 6,
+                    'borderColor' => 'FD7E14',
+                    'cellMargin' => 80
+                ]);
+
+                $this->addTableRow($attachmentTable, 'File Name', $attachment['original_filename'], $tableHeaderStyle);
+                $this->addTableRow($attachmentTable, 'File Type', ucfirst(str_replace('_', ' ', $attachment['file_type'] ?? 'document')), $tableHeaderStyle);
+                $this->addTableRow($attachmentTable, 'File Size', number_format($attachment['file_size'] / 1024, 1) . ' KB', $tableHeaderStyle);
+                
+                if ($attachment['description']) {
+                    $this->addTableRow($attachmentTable, 'Description', $attachment['description'], $tableHeaderStyle);
+                }
+                
+                $this->addTableRow($attachmentTable, 'Upload Date', date('F j, Y g:i A', strtotime($attachment['created_at'])), $tableHeaderStyle);
+
+                // Add image if it's an image file and not too large
+                $fileExt = strtolower(pathinfo($attachment['original_filename'], PATHINFO_EXTENSION));
+                $isImageFile = in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif', 'bmp']) || 
+                              (isset($attachment['mime_type']) && strpos($attachment['mime_type'], 'image/') === 0);
+                
+                if ($isImageFile && $attachment['file_size'] < 5000000) { // Less than 5MB
+                    // Build correct path to the image file
+                    $imagePath = __DIR__ . '/../../' . $attachment['file_path'];
+                    if (file_exists($imagePath) && is_readable($imagePath)) {
+                        try {
+                            error_log("Processing image: $imagePath");
+                            
+                            // Get image info
+                            $imageInfo = getimagesize($imagePath);
+                            if (!$imageInfo) {
+                                throw new \Exception("Cannot get image information");
+                            }
+                            
+                            $originalWidth = $imageInfo[0];
+                            $originalHeight = $imageInfo[1];
+                            $mimeType = $imageInfo['mime'];
+                            
+                            error_log("Original image: {$originalWidth}x{$originalHeight}, MIME: $mimeType");
+                            
+                            // Create a copy in temp directory with proper permissions
+                            $tempImagePath = sys_get_temp_dir() . '/export_image_' . time() . '_' . mt_rand(1000, 9999) . '.jpg';
+                            
+                            // Always convert to JPEG for maximum Word compatibility
+                            $this->convertImageToJpeg($imagePath, $tempImagePath, 400, 400);
+                            
+                            if (file_exists($tempImagePath)) {
+                                error_log("Created temp JPEG image: $tempImagePath");
+                                
+                                $section->addTextBreak();
+                                
+                                // Add image label
+                                $section->addText('Image Preview:', ['bold' => true, 'size' => 11]);
+                                $section->addTextBreak();
+                                
+                                // Calculate display size while maintaining aspect ratio
+                                $ratio = min(200 / $originalWidth, 200 / $originalHeight);
+                                $displayWidth = intval($originalWidth * $ratio);
+                                $displayHeight = intval($originalHeight * $ratio);
+                                
+                                // Add the image using the most basic method
+                                $section->addImage($tempImagePath, [
+                                    'width' => $displayWidth,
+                                    'height' => $displayHeight
+                                ]);
+                                
+                                $section->addTextBreak();
+                                error_log("Image successfully added to document: {$displayWidth}x{$displayHeight}");
+                                
+                                // Don't delete the temp image yet - PHPWord may need it during save
+                                // We'll clean it up after the document is generated
+                                $this->tempImagesToCleanup[] = $tempImagePath;
+                                
+                            } else {
+                                throw new \Exception("Failed to create temporary image file");
+                            }
+                        } catch (\Exception $e) {
+                            error_log("Error adding image to document: " . $e->getMessage());
+                            error_log("Image path was: $imagePath");
+                            // Add note that image couldn't be loaded
+                            $section->addTextBreak();
+                            $section->addText('Note: Image could not be embedded in document. (' . $attachment['original_filename'] . ')', ['italic' => true, 'color' => '666666']);
+                            $section->addTextBreak();
+                        }
+                    } else {
+                        error_log("Image file not accessible: $imagePath");
+                    }
+                }
+                
+                $section->addTextBreak();
+            }
+        }
+
+        // Footer
+        $section->addTextBreak(2);
+        $section->addText('Generated by Roaya Clinic Management System on ' . date('F j, Y \a\t g:i A'), $normalStyle, ['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER]);
+
+        // Save to temporary file
+        $tempPath = sys_get_temp_dir() . '/patient_export_' . $data['patient']['id'] . '_' . time() . '.docx';
+        $objWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
+        $objWriter->save($tempPath);
+
+        return $tempPath;
+    }
+
+    private function addTableRow($table, $label, $value, $headerStyle)
+    {
+        $row = $table->addRow();
+        $row->addCell(3000)->addText($label, $headerStyle, ['bgColor' => '1F497D']);
+        $row->addCell(6000)->addText($value, ['name' => 'Arial', 'size' => 11]);
+    }
+
+    private function resizeImage($sourcePath, $maxWidth, $maxHeight)
+    {
+        if (!extension_loaded('gd')) {
+            error_log("GD extension not loaded, returning original image path");
+            return $sourcePath; // Return original if GD not available
+        }
+
+        if (!file_exists($sourcePath)) {
+            error_log("Image file not found: " . $sourcePath);
+            return false;
+        }
+
+        $imageInfo = getimagesize($sourcePath);
+        if (!$imageInfo) {
+            error_log("Cannot get image info for: " . $sourcePath);
+            return $sourcePath;
+        }
+
+        list($originalWidth, $originalHeight, $imageType) = $imageInfo;
+
+        // Check if resize is needed
+        if ($originalWidth <= $maxWidth && $originalHeight <= $maxHeight) {
+            return $sourcePath;
+        }
+
+        // Calculate new dimensions maintaining aspect ratio
+        $ratio = min($maxWidth / $originalWidth, $maxHeight / $originalHeight);
+        $newWidth = intval($originalWidth * $ratio);
+        $newHeight = intval($originalHeight * $ratio);
+
+        // Create source image
+        switch ($imageType) {
+            case IMAGETYPE_JPEG:
+                $sourceImage = imagecreatefromjpeg($sourcePath);
+                break;
+            case IMAGETYPE_PNG:
+                $sourceImage = imagecreatefrompng($sourcePath);
+                break;
+            case IMAGETYPE_GIF:
+                $sourceImage = imagecreatefromgif($sourcePath);
+                break;
+            default:
+                return $sourcePath;
+        }
+
+        if (!$sourceImage) {
+            return $sourcePath;
+        }
+
+        // Create new image
+        $newImage = imagecreatetruecolor($newWidth, $newHeight);
+        
+        // Preserve transparency for PNG and GIF
+        if ($imageType == IMAGETYPE_PNG || $imageType == IMAGETYPE_GIF) {
+            imagealphablending($newImage, false);
+            imagesavealpha($newImage, true);
+            $transparent = imagecolorallocatealpha($newImage, 255, 255, 255, 127);
+            imagefill($newImage, 0, 0, $transparent);
+        }
+
+        // Resize
+        imagecopyresampled($newImage, $sourceImage, 0, 0, 0, 0, $newWidth, $newHeight, $originalWidth, $originalHeight);
+
+        // Save to temporary file - always save as JPEG for consistency in Word
+        $tempPath = sys_get_temp_dir() . '/resized_' . basename($sourcePath, '.' . pathinfo($sourcePath, PATHINFO_EXTENSION)) . '_' . time() . '.jpg';
+        
+        // Always save as JPEG for better Word compatibility
+        $saved = imagejpeg($newImage, $tempPath, 85);
+
+        // Clean up
+        imagedestroy($sourceImage);
+        imagedestroy($newImage);
+
+        if ($saved && file_exists($tempPath)) {
+            error_log("Successfully created resized image: $tempPath");
+            return $tempPath;
+        } else {
+            error_log("Failed to create resized image, returning original: $sourcePath");
+            return $sourcePath;
+        }
+    }
+
+    private function convertImageToJpeg($sourcePath, $outputPath, $maxWidth, $maxHeight)
+    {
+        if (!extension_loaded('gd')) {
+            error_log("GD extension not loaded");
+            return copy($sourcePath, $outputPath);
+        }
+
+        $imageInfo = getimagesize($sourcePath);
+        if (!$imageInfo) {
+            error_log("Cannot get image info for: $sourcePath");
+            return copy($sourcePath, $outputPath);
+        }
+
+        list($originalWidth, $originalHeight, $imageType) = $imageInfo;
+
+        // Calculate new dimensions maintaining aspect ratio
+        $ratio = min($maxWidth / $originalWidth, $maxHeight / $originalHeight, 1);
+        $newWidth = intval($originalWidth * $ratio);
+        $newHeight = intval($originalHeight * $ratio);
+
+        // Create source image
+        switch ($imageType) {
+            case IMAGETYPE_JPEG:
+                $sourceImage = imagecreatefromjpeg($sourcePath);
+                break;
+            case IMAGETYPE_PNG:
+                $sourceImage = imagecreatefrompng($sourcePath);
+                break;
+            case IMAGETYPE_GIF:
+                $sourceImage = imagecreatefromgif($sourcePath);
+                break;
+            default:
+                error_log("Unsupported image type: $imageType");
+                return copy($sourcePath, $outputPath);
+        }
+
+        if (!$sourceImage) {
+            error_log("Failed to create source image from: $sourcePath");
+            return copy($sourcePath, $outputPath);
+        }
+
+        // Create new image with white background (important for Word)
+        $newImage = imagecreatetruecolor($newWidth, $newHeight);
+        $white = imagecolorallocate($newImage, 255, 255, 255);
+        imagefill($newImage, 0, 0, $white);
+
+        // Resize and copy
+        imagecopyresampled($newImage, $sourceImage, 0, 0, 0, 0, $newWidth, $newHeight, $originalWidth, $originalHeight);
+
+        // Save as JPEG with high quality
+        $saved = imagejpeg($newImage, $outputPath, 90);
+
+        // Clean up
+        imagedestroy($sourceImage);
+        imagedestroy($newImage);
+
+        if ($saved && file_exists($outputPath)) {
+            error_log("Successfully converted image to JPEG: $outputPath ({$newWidth}x{$newHeight})");
+            return true;
+        } else {
+            error_log("Failed to save JPEG image: $outputPath");
+            return false;
+        }
+    }
+    
+    private function cleanupTempImages()
+    {
+        foreach ($this->tempImagesToCleanup as $tempPath) {
+            if (file_exists($tempPath)) {
+                unlink($tempPath);
+                error_log("Cleaned up temp image: $tempPath");
+            }
+        }
+        $this->tempImagesToCleanup = [];
     }
 
     private function validateDate($date)

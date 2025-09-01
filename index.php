@@ -83,6 +83,8 @@ try {
     $router->get('/doctor/appointments/{id}', 'DoctorController@viewAppointment');
     $router->get('/doctor/appointments/{id}/edit', 'DoctorController@editConsultation');
     $router->get('/doctor/appointments/{id}/edit/new', 'DoctorController@newConsultation');
+    $router->get('/doctor/patients/{id}/edit', 'DoctorController@editPatient');
+    $router->put('/doctor/patients/{id}', 'DoctorController@updatePatient');
     $router->post('/doctor/appointments/{id}/edit', 'DoctorController@updateConsultation');
     $router->post('/doctor/appointments/{id}/consultation', 'DoctorController@saveConsultation');
     $router->get('/doctor/profile', 'DoctorController@profile');
@@ -133,6 +135,11 @@ try {
     $router->get('/api/attachments/download/{id}', 'ApiController@downloadAttachment');
     $router->delete('/api/attachments/{id}', 'ApiController@deleteAttachment');
     
+    // Patient Export API routes
+    $router->get('/api/patients/{id}/export', 'ApiController@exportPatientData');
+    $router->head('/api/patients/{id}/export', 'ApiController@checkExportAccess');
+        
+
     // Patient Files API routes
     $router->post('/api/patients/files/upload', 'ApiController@uploadPatientFile');
     $router->get('/api/patients/files/view/{id}', 'ApiController@viewPatientFile');

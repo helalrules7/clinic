@@ -11,7 +11,7 @@
                     <h1 class="display-4 fw-bold mb-3">Roaya Clinic</h1>
                     <h2 class="h4 mb-4 opacity-90">Management System</h2>
                     <div class="badge bg-white text-dark px-4 py-2 fs-6 fw-semibold">
-                        Version <?= $version ?>
+                        Version 1.2
                     </div>
                 </div>
             </div>
@@ -35,7 +35,7 @@
                                 <h5 class="text-muted mb-2">
                                     <i class="bi bi-tag me-2"></i>Version
                                 </h5>
-                                <p class="h4 text-primary fw-bold"><?= $version ?></p>
+                                <p class="h4 text-primary fw-bold">1.2</p>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -155,6 +155,45 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-purple text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #6f42c1 !important;">
+                                        <i class="bi bi-download"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">Patient Data Export</h5>
+                                        <p class="text-muted mb-0">Export comprehensive patient data including medical history, notes, and files to Word documents with embedded images.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-teal text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #20c997 !important;">
+                                        <i class="bi bi-eyeglasses"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">Glasses Prescriptions</h5>
+                                        <p class="text-muted mb-0">Complete glasses prescription management with distance/near vision settings, PD measurements, and print functionality.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-orange text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #fd7e14 !important;">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">Patient Editing</h5>
+                                        <p class="text-muted mb-0">Full patient information editing with comprehensive forms, validation, and secure update functionality.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -207,6 +246,35 @@
                                 </div>
                                 <h6 class="fw-bold">Vanilla JS</h6>
                                 <small class="text-muted">Interactive</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row text-center mt-4">
+                        <div class="col-md-4 mb-3">
+                            <div class="tech-item">
+                                <div class="tech-icon text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #6f42c1;">
+                                    <i class="bi bi-file-earmark-word"></i>
+                                </div>
+                                <h6 class="fw-bold">PHPWord</h6>
+                                <small class="text-muted">Document Export</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="tech-item">
+                                <div class="tech-icon text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #20c997;">
+                                    <i class="bi bi-image"></i>
+                                </div>
+                                <h6 class="fw-bold">GD Library</h6>
+                                <small class="text-muted">Image Processing</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="tech-item">
+                                <div class="tech-icon text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #fd7e14;">
+                                    <i class="bi bi-gear"></i>
+                                </div>
+                                <h6 class="fw-bold">Composer</h6>
+                                <small class="text-muted">Dependencies</small>
                             </div>
                         </div>
                     </div>
@@ -266,52 +334,74 @@
                 <div class="card-header">
                     <h3 class="card-title mb-0">
                         <i class="bi bi-lightning text-warning me-2"></i>
-                        What's New in Beta 1.0
+                        What's New in Version 1.2
                     </h3>
                 </div>
                 <div class="card-body">
                     <div class="timeline">
                         <div class="timeline-item mb-4">
                             <div class="d-flex">
-                                <div class="timeline-marker bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px;">
-                                    <i class="bi bi-plus" style="font-size: 0.8rem;"></i>
+                                <div class="timeline-marker bg-purple text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #6f42c1 !important;">
+                                    <i class="bi bi-download" style="font-size: 0.8rem;"></i>
                                 </div>
                                 <div>
-                                    <h6 class="fw-bold mb-1">Enhanced Patient Management</h6>
-                                    <p class="text-muted mb-0">Advanced search functionality, patient deletion with comprehensive data cleanup, and improved patient records interface.</p>
+                                    <h6 class="fw-bold mb-1">Patient Data Export to Word</h6>
+                                    <p class="text-muted mb-0">Complete patient data export functionality with Word document generation, embedded images, and comprehensive medical records export using PHPWord library.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px;">
+                                    <i class="bi bi-eyeglasses" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Glasses Prescriptions Management</h6>
+                                    <p class="text-muted mb-0">Full glasses prescription system with distance/near vision settings, cylinder and axis values, PD measurements, and professional print functionality.</p>
                                 </div>
                             </div>
                         </div>
                         <div class="timeline-item mb-4">
                             <div class="d-flex">
                                 <div class="timeline-marker bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px;">
-                                    <i class="bi bi-keyboard" style="font-size: 0.8rem;"></i>
+                                    <i class="bi bi-pencil-square" style="font-size: 0.8rem;"></i>
                                 </div>
                                 <div>
-                                    <h6 class="fw-bold mb-1">Keyboard Shortcuts</h6>
-                                    <p class="text-muted mb-0">Added comprehensive keyboard shortcuts for faster navigation including Ctrl+N for new patient, F for search, and more.</p>
+                                    <h6 class="fw-bold mb-1">Patient Information Editing</h6>
+                                    <p class="text-muted mb-0">Comprehensive patient editing interface with form validation, responsive design, and secure update functionality for all patient data fields.</p>
                                 </div>
                             </div>
                         </div>
                         <div class="timeline-item mb-4">
                             <div class="d-flex">
                                 <div class="timeline-marker bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px;">
-                                    <i class="bi bi-moon" style="font-size: 0.8rem;"></i>
+                                    <i class="bi bi-image" style="font-size: 0.8rem;"></i>
                                 </div>
                                 <div>
-                                    <h6 class="fw-bold mb-1">Dark Mode Enhancement</h6>
-                                    <p class="text-muted mb-0">Improved dark mode support with better contrast, accessibility, and visual consistency across all components.</p>
+                                    <h6 class="fw-bold mb-1">Enhanced Image Processing</h6>
+                                    <p class="text-muted mb-0">Advanced image embedding in Word exports with automatic JPEG conversion, white background processing, and optimized compression for document compatibility.</p>
                                 </div>
                             </div>
                         </div>
                         <div class="timeline-item mb-4">
                             <div class="d-flex">
                                 <div class="timeline-marker bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px;">
-                                    <i class="bi bi-shield-check" style="font-size: 0.8rem;"></i>
+                                    <i class="bi bi-ui-checks" style="font-size: 0.8rem;"></i>
                                 </div>
                                 <div>
-                                    <h6 class="fw-bold mb-1">Security Improvements</h6>
-                                    <p class="text-muted mb-0">Enhanced security measures, improved authentication, and comprehensive audit logging for sensitive operations.</p>
+                                    <h6 class="fw-bold mb-1">Improved User Interface</h6>
+                                    <p class="text-muted mb-0">Replaced dropdown menus with individual action buttons, improved button layouts, and enhanced responsive design for better user experience.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-danger text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px;">
+                                    <i class="bi bi-bug" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Bug Fixes & Optimizations</h6>
+                                    <p class="text-muted mb-0">Fixed routing issues, corrected SQL queries, improved error handling, and enhanced authentication checks for better system stability.</p>
                                 </div>
                             </div>
                         </div>

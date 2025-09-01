@@ -6,7 +6,10 @@
         "php": ">=8.2",
         "ext-pdo": "*",
         "ext-json": "*",
-        "ext-mbstring": "*"
+        "ext-mbstring": "*",
+        "phpoffice/phpword": "^1.2",
+        "ext-gd": "*",
+        "ext-zip": "*"
     },
     "autoload": {
         "psr-4": {

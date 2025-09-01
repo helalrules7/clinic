@@ -6,5 +6,7 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    'PhpOffice\\PhpWord\\' => array($vendorDir . '/phpoffice/phpword/src/PhpWord'),
+    'PhpOffice\\Math\\' => array($vendorDir . '/phpoffice/math/src/Math'),
     'App\\' => array($baseDir . '/app'),
 );

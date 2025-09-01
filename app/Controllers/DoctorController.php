@@ -903,4 +903,88 @@ class DoctorController
         $stmt->execute([$patientId]);
         return $stmt->fetchAll();
     }
+    
+    public function editPatient($id)
+    {
+        $user = $this->auth->user();
+        
+        // Get patient details
+        $patient = $this->getPatient($id);
+        if (!$patient) {
+            http_response_code(404);
+            echo "<h1>Patient not found</h1><p>The requested patient could not be found.</p>";
+            return;
+        }
+        
+        $content = $this->view->render('doctor/edit_patient', [
+            'patient' => $patient
+        ]);
+        
+        echo $this->view->render('layouts/main', [
+            'title' => 'Edit Patient - Doctor Dashboard',
+            'pageTitle' => 'Edit Patient',
+            'pageSubtitle' => $patient['first_name'] . ' ' . $patient['last_name'],
+            'content' => $content
+        ]);
+    }
+    
+    public function updatePatient($id)
+    {
+        try {
+            $user = $this->auth->user();
+            
+            // Validate input
+            $requiredFields = ['first_name', 'last_name', 'phone'];
+            foreach ($requiredFields as $field) {
+                if (empty($_POST[$field])) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => "Field {$field} is required"]);
+                    return;
+                }
+            }
+            
+            // Prepare update query
+            $stmt = $this->pdo->prepare("
+                UPDATE patients SET 
+                    first_name = ?, 
+                    last_name = ?, 
+                    phone = ?,
+                    alt_phone = ?,
+                    address = ?,
+                    national_id = ?,
+                    dob = ?,
+                    emergency_contact = ?,
+                    emergency_phone = ?,
+                    updated_at = NOW()
+                WHERE id = ?
+            ");
+            
+            $result = $stmt->execute([
+                $_POST['first_name'],
+                $_POST['last_name'],
+                $_POST['phone'],
+                $_POST['alt_phone'] ?? null,
+                $_POST['address'] ?? null,
+                $_POST['national_id'] ?? null,
+                $_POST['dob'] ?? null,
+                $_POST['emergency_contact'] ?? null,
+                $_POST['emergency_phone'] ?? null,
+                $id
+            ]);
+            
+            if ($result) {
+                // Redirect back to patient profile
+                header("Location: /doctor/patients/{$id}");
+                exit;
+            } else {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'error' => 'Failed to update patient']);
+            }
+            
+        } catch (Exception $e) {
+            error_log("Error updating patient: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Server error']);
+        }
+    }
 }

@@ -29,48 +29,43 @@
         </div>
     </div>
     <div class="col-md-4 text-end">
-        <button class="btn btn-primary me-2" 
-                onclick="bookNewAppointment(<?= $patient['id'] ?>)"
-                data-bs-toggle="tooltip" 
-                data-bs-placement="bottom" 
-                data-bs-title="Schedule a new appointment for this patient">
-            <i class="bi bi-calendar-plus me-2"></i>
-            Book Appointment
-        </button>
-        <div class="dropdown d-inline">
-            <button class="btn btn-outline-secondary dropdown-toggle" 
-                    type="button" 
-                    data-bs-toggle="dropdown"
-                    title="More patient actions and options">
-                <i class="bi bi-three-dots"></i>
+        <div class="btn-group-responsive d-flex flex-wrap justify-content-end gap-2">
+            <button class="btn btn-primary" 
+                    onclick="bookNewAppointment(<?= $patient['id'] ?>)"
+                    data-bs-toggle="tooltip" 
+                    data-bs-placement="bottom" 
+                    data-bs-title="Schedule a new appointment for this patient">
+                <i class="bi bi-calendar-plus me-2"></i>
+                <span class="d-none d-lg-inline">Book Appointment</span>
+                <span class="d-lg-none">Book</span>
             </button>
-            <ul class="dropdown-menu">
-                <li><a class="dropdown-item" 
-                       href="#" 
-                       onclick="printPatientSummary()"
-                       data-bs-toggle="tooltip" 
-                       data-bs-placement="left" 
-                       data-bs-title="Print patient summary report">
-                    <i class="bi bi-printer me-2"></i>Print Summary
-                </a></li>
-                <li><a class="dropdown-item" 
-                       href="#" 
-                       onclick="exportPatientData()"
-                       data-bs-toggle="tooltip" 
-                       data-bs-placement="left" 
-                       data-bs-title="Export patient data to file">
-                    <i class="bi bi-download me-2"></i>Export Data
-                </a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" 
-                       href="#" 
-                       onclick="editPatient(<?= $patient['id'] ?>)"
-                       data-bs-toggle="tooltip" 
-                       data-bs-placement="left" 
-                       data-bs-title="Edit patient information and details">
-                    <i class="bi bi-pencil me-2"></i>Edit Patient
-                </a></li>
-            </ul>
+            <button class="btn btn-success" 
+                    onclick="printPatientSummary()"
+                    data-bs-toggle="tooltip" 
+                    data-bs-placement="bottom" 
+                    data-bs-title="Print patient summary report">
+                <i class="bi bi-printer me-2"></i>
+                <span class="d-none d-lg-inline">Print Summary</span>
+                <span class="d-lg-none">Print</span>
+            </button>
+            <button class="btn btn-info" 
+                    onclick="exportPatientData()"
+                    data-bs-toggle="tooltip" 
+                    data-bs-placement="bottom" 
+                    data-bs-title="Export patient data to file">
+                <i class="bi bi-download me-2"></i>
+                <span class="d-none d-lg-inline">Export Data</span>
+                <span class="d-lg-none">Export</span>
+            </button>
+            <button class="btn btn-outline-secondary" 
+                    onclick="editPatient(<?= $patient['id'] ?>)"
+                    data-bs-toggle="tooltip" 
+                    data-bs-placement="bottom" 
+                    data-bs-title="Edit patient information and details">
+                <i class="bi bi-pencil me-2"></i>
+                <span class="d-none d-lg-inline">Edit Patient</span>
+                <span class="d-lg-none">Edit</span>
+            </button>
         </div>
     </div>
 </div>
@@ -1675,6 +1670,53 @@ div.form-text {
     }
 }
 
+/* Button Group Responsive Styles */
+.btn-group-responsive {
+    max-width: 100%;
+}
+
+.btn-group-responsive .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+/* Responsive button sizing */
+@media (max-width: 1199px) {
+    .btn-group-responsive .btn {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .btn-group-responsive .btn i {
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 991px) {
+    .btn-group-responsive {
+        justify-content: center !important;
+        margin-top: 1rem;
+    }
+    
+    .btn-group-responsive .btn {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.6rem;
+    }
+}
+
+@media (max-width: 575px) {
+    .btn-group-responsive {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem !important;
+    }
+    
+    .btn-group-responsive .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 /* Responsive Timeline */
 @media (max-width: 768px) {
     .timeline::before {
@@ -1715,8 +1757,145 @@ function printPatientSummary() {
 }
 
 function exportPatientData() {
-    // Export patient data functionality
-    showInfoModal('Export Patient Data', 'Export functionality will be implemented soon. This feature will allow you to export all patient data including medical history, notes, and files.');
+    // Get patient ID from URL
+    const patientId = window.location.pathname.split('/').pop();
+    
+    // Show loading notification
+    showNotification('Preparing patient data export...', 'info');
+    
+    // Create a temporary loading overlay
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.id = 'exportLoadingOverlay';
+    loadingOverlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    `;
+    
+    const loadingContent = document.createElement('div');
+    loadingContent.style.cssText = `
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    `;
+    
+    loadingContent.innerHTML = `
+        <div class="spinner-border text-primary mb-3" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h5>Exporting Patient Data</h5>
+        <p class="text-muted mb-0">Generating Word document with all patient information...</p>
+    `;
+    
+    loadingOverlay.appendChild(loadingContent);
+    document.body.appendChild(loadingOverlay);
+    
+    // First, test if the user is authenticated by making a fetch request
+    fetch(`/api/patients/${patientId}/export`, {
+        method: 'HEAD', // Use HEAD to test without downloading
+        credentials: 'same-origin' // Include cookies
+    })
+    .then(response => {
+        if (response.status === 401 || response.status === 403) {
+            // User not authenticated or not authorized
+            document.body.removeChild(loadingOverlay);
+            showNotification('You must be logged in to export patient data. Please refresh the page and try again.', 'warning');
+            return;
+        }
+        
+        if (!response.ok && response.status !== 200) {
+            // Other error
+            document.body.removeChild(loadingOverlay);
+            showNotification('Error accessing export function. Please try again.', 'error');
+            return;
+        }
+        
+        // User is authenticated, proceed with download
+        downloadPatientData(patientId, loadingOverlay);
+    })
+    .catch(error => {
+        console.error('Error testing export access:', error);
+        document.body.removeChild(loadingOverlay);
+        showNotification('Network error. Please check your connection and try again.', 'error');
+    });
+}
+
+function downloadPatientData(patientId, loadingOverlay) {
+    // Create download link and trigger export
+    const downloadLink = document.createElement('a');
+    downloadLink.href = `/api/patients/${patientId}/export`;
+    downloadLink.download = `Patient_${patientId}_${new Date().toISOString().split('T')[0]}.docx`;
+    downloadLink.style.display = 'none';
+    document.body.appendChild(downloadLink);
+    
+    // Handle download completion/error
+    let downloadCompleted = false;
+    
+    // Set a timeout to remove loading overlay in case of issues
+    const timeoutId = setTimeout(() => {
+        if (!downloadCompleted) {
+            if (document.body.contains(loadingOverlay)) {
+                document.body.removeChild(loadingOverlay);
+            }
+            downloadCompleted = true;
+            showNotification('Export completed! Check your downloads folder.', 'success');
+        }
+    }, 8000); // 8 seconds timeout (increased for larger files)
+    
+    // Listen for window focus to detect download completion
+    const handleWindowFocus = () => {
+        if (!downloadCompleted) {
+            setTimeout(() => {
+                if (!downloadCompleted) {
+                    if (document.body.contains(loadingOverlay)) {
+                        document.body.removeChild(loadingOverlay);
+                    }
+                    downloadCompleted = true;
+                    clearTimeout(timeoutId);
+                    showNotification('Export completed! Check your downloads folder.', 'success');
+                }
+            }, 1500);
+        }
+        window.removeEventListener('focus', handleWindowFocus);
+    };
+    
+    window.addEventListener('focus', handleWindowFocus);
+    
+    // Trigger the download
+    try {
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        
+        // For immediate feedback
+        setTimeout(() => {
+            if (!downloadCompleted) {
+                showNotification('Download started. Generating your document...', 'info');
+            }
+        }, 1000);
+        
+    } catch (error) {
+        console.error('Error triggering download:', error);
+        if (!downloadCompleted) {
+            if (document.body.contains(loadingOverlay)) {
+                document.body.removeChild(loadingOverlay);
+            }
+            downloadCompleted = true;
+            clearTimeout(timeoutId);
+        }
+        showNotification('Error starting export. Please try again.', 'error');
+        if (document.body.contains(downloadLink)) {
+            document.body.removeChild(downloadLink);
+        }
+    }
 }
 
 function editPatient(patientId) {

@@ -76,6 +76,8 @@ try {
     $router->get('/doctor/calendar', 'DoctorController@calendar');
     $router->get('/doctor/patients', 'DoctorController@patients');
     $router->get('/doctor/patients/{id}', 'DoctorController@showPatient');
+    $router->get('/doctor/patients/{id}/edit', 'DoctorController@editPatient');
+    $router->put('/doctor/patients/{id}', 'DoctorController@updatePatient');
     $router->get('/doctor/appointments/{id}', 'DoctorController@viewAppointment');
     $router->get('/doctor/appointments/{id}/edit', 'DoctorController@editConsultation');
     $router->get('/doctor/appointments/{id}/edit/new', 'DoctorController@newConsultation');
@@ -141,6 +143,10 @@ try {
     
     // Patient Appointments API routes
     $router->get('/api/patients/{id}/appointments', 'ApiController@getPatientAppointments');
+    
+    // Patient Export API routes
+    $router->get('/api/patients/{id}/export', 'ApiController@exportPatientData');
+    $router->head('/api/patients/{id}/export', 'ApiController@checkExportAccess');
     
     // Individual Glasses Prescription API routes
     $router->get('/api/prescriptions/glasses/{id}', 'ApiController@getGlassesPrescription');
