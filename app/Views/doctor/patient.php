@@ -2,7 +2,7 @@
 <div class="row mb-4">
     <div class="col-md-8">
         <div class="d-flex align-items-center">
-            <div class="avatar-circle-large me-3">
+            <div class="avatar-circle-large <?= $patient['gender'] === 'Female' ? 'avatar-large-female' : 'avatar-large-male' ?> me-3">
                 <?php
                 $firstName = $patient['first_name'];
                 $lastName = $patient['last_name'];
@@ -1026,13 +1026,43 @@
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: var(--accent);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
     font-size: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+/* Gender-based avatar colors for large avatar */
+.avatar-large-male {
+    background: #3498db; /* Sky blue for males */
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+.avatar-large-female {
+    background: rgb(255, 85, 224); /* Pink for females */
+    box-shadow: 0 2px 8px rgba(255, 85, 224, 0.3);
+}
+
+/* Hover effects for large avatar */
+.avatar-large-male:hover {
+    background: #2980b9;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+}
+
+.avatar-large-female:hover {
+    background: rgb(255, 85, 224); /* Pink for females */
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(255, 85, 224, 0.4);
+}
+
+/* Default fallback for unknown gender */
+.avatar-circle-large:not(.avatar-large-male):not(.avatar-large-female) {
+    background: var(--accent);
+    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
 }
 
 .timeline {

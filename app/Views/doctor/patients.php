@@ -89,10 +89,48 @@
 <!-- Patients Table -->
 <div class="card">
     <div class="card-header">
-        <h5 class="mb-0">
-            <i class="bi bi-table me-2"></i>
-            Patient List
-        </h5>
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h5 class="mb-0">
+                    <i class="bi bi-table me-2"></i>
+                    Patient List
+                </h5>
+            </div>
+            <div class="col-md-6 text-end">
+                <div class="d-flex align-items-center justify-content-end gap-3">
+                    <!-- Quick Search -->
+                    <div class="d-flex align-items-center">
+                        <div class="input-group input-group-sm" style="width: 200px;">
+                            <span class="input-group-text">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="quickSearch" 
+                                   placeholder="Quick search..."
+                                   autocomplete="off">
+                            <button class="btn btn-outline-secondary" type="button" id="clearQuickSearch">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Items per page -->
+                    <div class="d-flex align-items-center">
+                        <label for="paginationLimit" class="form-label mb-0 me-2 text-muted">View:</label>
+                        <select class="form-select form-select-sm" id="paginationLimit" style="width: auto;">
+                            <option value="10">10</option>
+                            <option value="20" selected>20</option>
+                            <option value="30">30</option>
+                            <option value="50">50</option>
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    <div class="text-muted">
+                        <small>Total: <span id="totalPatientsCount"><?= count($patients) ?></span> patients</small>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -107,99 +145,30 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <?php if (empty($patients)): ?>
-                        <tr>
-                            <td colspan="6" class="text-center py-4">
-                                <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
-                                <p class="text-muted mt-2 mb-0">No patients found</p>
-                            </td>
-                        </tr>
-                    <?php else: ?>
-                        <?php foreach ($patients as $patient): ?>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="avatar-circle me-3">
-                                            <?php
-                                            $firstName = $patient['first_name'];
-                                            $lastName = $patient['last_name'];
-                                            
-                                            // Handle Arabic and English names properly
-                                            $firstChar = mb_substr($firstName, 0, 1, 'UTF-8');
-                                            $lastChar = mb_substr($lastName, 0, 1, 'UTF-8');
-                                            
-                                            // Convert to uppercase using mb_strtoupper for proper UTF-8 handling
-                                            echo mb_strtoupper($firstChar . '.' . $lastChar, 'UTF-8');
-                                            ?>
-                                        </div>
-                                        <div>
-                                            <h6 class="mb-1"><?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></h6>
-                                            <small class="text-muted">ID: #<?= $patient['id'] ?></small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div>
-                                        <i class="bi bi-telephone me-1"></i>
-                                        <?= htmlspecialchars($patient['phone'] ?? 'N/A') ?>
-                                    </div>
-                                    <?php if (!empty($patient['alt_phone'])): ?>
-                                        <div class="mt-1">
-                                            <i class="bi bi-telephone-plus me-1"></i>
-                                            <small class="text-muted"><?= htmlspecialchars($patient['alt_phone']) ?></small>
-                                        </div>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <?php if ($patient['dob']): ?>
-                                        <?= date_diff(date_create($patient['dob']), date_create('now'))->y ?> years
-                                    <?php else: ?>
-                                        <span class="text-muted">N/A</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <?php if ($patient['last_visit']): ?>
-                                        <span class="badge bg-success">
-                                            <?= date('M j, Y', strtotime($patient['last_visit'])) ?>
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="badge bg-secondary">Never</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <span class="badge bg-primary"><?= $patient['total_appointments'] ?></span>
-                                </td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <a href="/doctor/patients/<?= $patient['id'] ?>" 
-                                           class="btn btn-sm btn-outline-primary" 
-                                           data-bs-toggle="tooltip" 
-                                           data-bs-placement="top" 
-                                           data-bs-title="View full patient details and medical history">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <button class="btn btn-sm btn-outline-success" 
-                                                onclick="bookAppointment(<?= $patient['id'] ?>)" 
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-placement="top" 
-                                                data-bs-title="Book a new appointment for this patient">
-                                            <i class="bi bi-calendar-plus"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger" 
-                                                onclick="deletePatient(<?= $patient['id'] ?>, '<?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name'], ENT_QUOTES) ?>')" 
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-placement="top" 
-                                                data-bs-title="Delete patient permanently from the system (cannot be undone)">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                <tbody id="patientsTableBody">
+                    <!-- Patients will be rendered here by JavaScript -->
                 </tbody>
             </table>
+        </div>
+    </div>
+    <!-- Pagination Controls -->
+    <div class="card-footer" id="paginationContainer">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <div class="pagination-info text-muted">
+                    <small>
+                        View <span id="showingFrom">1</span> to <span id="showingTo">20</span> 
+                        of <span id="totalPatients"><?= count($patients) ?></span> patients
+                    </small>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <nav aria-label="Patients pagination">
+                    <ul class="pagination pagination-sm justify-content-end mb-0" id="paginationNav">
+                        <!-- Pagination items will be generated here -->
+                    </ul>
+                </nav>
+            </div>
         </div>
     </div>
 </div>
@@ -557,13 +526,43 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: var(--accent);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
     font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+/* Gender-based avatar colors */
+.avatar-male {
+    background: #3498db; /* Sky blue for males */
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+.avatar-female {
+    background:rgb(255, 85, 224); /* Pink for females */
+    box-shadow: 0 2px 8px rgba(233, 30, 99, 0.3);
+}
+
+/* Hover effects */
+.avatar-male:hover {
+    background: #2980b9;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+}
+
+.avatar-female:hover {
+    background:rgb(255, 85, 224); /* Pink for females */
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.4);
+}
+
+/* Default fallback for unknown gender */
+.avatar-circle:not(.avatar-male):not(.avatar-female) {
+    background: var(--accent);
+    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
 }
 
 .card {
@@ -687,13 +686,29 @@
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background: var(--accent);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
     font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+/* Apply gender colors to search result avatars */
+.search-result-avatar.avatar-male {
+    background: #3498db;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+.search-result-avatar.avatar-female {
+    background: #e91e63;
+    box-shadow: 0 2px 8px rgba(233, 30, 99, 0.3);
+}
+
+.search-result-avatar:not(.avatar-male):not(.avatar-female) {
+    background: var(--accent);
+    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
 }
 
 .search-result-info h6 {
@@ -1198,6 +1213,210 @@ kbd[lang="ar"] {
     color: #212529 !important;
 }
 
+/* Pagination Styling */
+.card-footer {
+    background-color: var(--bg-alt);
+    border-top-color: var(--border);
+    color: var(--text);
+}
+
+.pagination-info {
+    font-family: 'Cairo', Arial, sans-serif;
+}
+
+.pagination {
+    margin-bottom: 0;
+}
+
+.pagination .page-link {
+    background-color: var(--bg);
+    border-color: var(--border);
+    color: var(--text);
+    font-family: 'Cairo', Arial, sans-serif;
+    padding: 0.375rem 0.75rem;
+    margin: 0 2px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.pagination .page-link:hover {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.4);
+}
+
+.pagination .page-item.disabled .page-link {
+    background-color: var(--bg-alt);
+    border-color: var(--border);
+    color: var(--muted);
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.pagination .page-item:first-child .page-link,
+.pagination .page-item:last-child .page-link {
+    border-radius: 6px;
+}
+
+.pagination-sm .page-link {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Show/Hide pagination based on content */
+#paginationContainer.d-none {
+    display: none !important;
+}
+
+/* Pagination limit select styling */
+#paginationLimit {
+    background-color: var(--bg);
+    border-color: var(--border);
+    color: var(--text);
+    font-family: 'Cairo', Arial, sans-serif;
+    font-size: 0.875rem;
+    min-width: 80px;
+}
+
+#paginationLimit:focus {
+    background-color: var(--bg);
+    border-color: var(--accent);
+    color: var(--text);
+    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
+}
+
+/* Quick search styling */
+#quickSearch {
+    background-color: var(--bg);
+    border-color: var(--border);
+    color: var(--text);
+    font-family: 'Cairo', Arial, sans-serif;
+    font-size: 0.875rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+}
+
+#quickSearch:focus {
+    background-color: var(--bg);
+    border-color: var(--accent);
+    color: var(--text);
+    box-shadow: none;
+    z-index: 3;
+}
+
+#quickSearch::placeholder {
+    color: var(--muted);
+    font-style: italic;
+}
+
+.input-group-sm .input-group-text {
+    background-color: var(--bg-alt);
+    border-color: var(--border);
+    color: var(--text);
+    font-size: 0.875rem;
+    border-right: 1px solid var(--border);
+}
+
+.input-group-sm .btn-outline-secondary {
+    border-color: var(--border);
+    color: var(--muted);
+    font-size: 0.875rem;
+    border-left: 1px solid var(--border);
+}
+
+.input-group-sm .btn-outline-secondary:hover {
+    background-color: var(--bg-alt);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+/* Quick search focus state */
+#quickSearch:focus + .btn-outline-secondary {
+    border-color: var(--accent);
+}
+
+.input-group:focus-within .input-group-text {
+    border-color: var(--accent);
+}
+
+/* Table header gap adjustments */
+.card-header .gap-3 {
+    gap: 1rem !important;
+}
+
+@media (max-width: 768px) {
+    .card-header .d-flex.gap-3 {
+        flex-direction: column;
+        gap: 0.5rem !important;
+        align-items: stretch !important;
+    }
+    
+    .card-header .input-group {
+        width: 100% !important;
+    }
+    
+    .card-header .justify-content-end {
+        justify-content: stretch !important;
+    }
+}
+
+/* Loading state for table */
+.table-loading {
+    position: relative;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.table-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid var(--border);
+    border-top: 3px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 10;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Responsive pagination */
+@media (max-width: 768px) {
+    .pagination-info {
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    .pagination {
+        justify-content: center !important;
+    }
+    
+    .pagination .page-link {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        margin: 0 1px;
+    }
+}
+
 /* Custom Tooltip Styling */
 .tooltip {
     font-family: 'Cairo', sans-serif;
@@ -1263,6 +1482,15 @@ kbd[lang="ar"] {
 let searchTimeout;
 let currentSearchRequest;
 
+// Pagination state
+let paginationState = {
+    currentPage: 1,
+    itemsPerPage: 20,
+    totalItems: 0,
+    allPatients: [],
+    filteredPatients: []
+};
+
 // Debounce function
 function debounce(func, wait) {
     return function executedFunction(...args) {
@@ -1286,7 +1514,352 @@ function viewPatient(patientId) {
     window.location.href = `/doctor/patients/${patientId}`;
 }
 
-// Search patients function
+// Initialize pagination with PHP data
+function initializePagination() {
+    // Get patients data from PHP
+    const patientsData = <?= json_encode($patients, JSON_UNESCAPED_UNICODE) ?>;
+    
+    paginationState.allPatients = patientsData;
+    paginationState.filteredPatients = [...patientsData];
+    paginationState.totalItems = patientsData.length;
+    
+    // Render initial page
+    renderPatientsTable();
+    updatePaginationInfo();
+    renderPaginationNav();
+    
+    console.log('Pagination initialized with', paginationState.totalItems, 'patients');
+}
+
+// Render patients table with current page data
+function renderPatientsTable() {
+    const tableBody = document.getElementById('patientsTableBody');
+    const { currentPage, itemsPerPage, filteredPatients } = paginationState;
+    
+    // Add loading state
+    tableBody.parentElement.classList.add('table-loading');
+    
+    // Calculate pagination
+    let startIndex, endIndex, patientsToShow;
+    
+    if (itemsPerPage === 'all') {
+        startIndex = 0;
+        endIndex = filteredPatients.length;
+        patientsToShow = filteredPatients;
+    } else {
+        startIndex = (currentPage - 1) * itemsPerPage;
+        endIndex = Math.min(startIndex + itemsPerPage, filteredPatients.length);
+        patientsToShow = filteredPatients.slice(startIndex, endIndex);
+    }
+    
+    // Clear table
+    tableBody.innerHTML = '';
+    
+    // Add delay for smooth transition
+    setTimeout(() => {
+        if (patientsToShow.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-2 mb-0">No patients to display</p>
+                    </td>
+                </tr>
+            `;
+        } else {
+            let html = '';
+            
+            patientsToShow.forEach(patient => {
+                const age = patient.dob ? calculateAge(patient.dob) : 'Not specified';
+                const lastVisit = patient.last_visit ? formatDate(patient.last_visit) : 'Not visited yet';
+                
+                // Handle Arabic and English names properly
+                const firstName = patient.first_name || '';
+                const lastName = patient.last_name || '';
+                const fullName = `${firstName} ${lastName}`.trim();
+                
+                // Get avatar initials and gender-based styling
+                const firstChar = firstName.charAt(0).toUpperCase();
+                const lastChar = lastName.charAt(0).toUpperCase();
+                const avatarInitials = firstChar && lastChar ? `${firstChar}.${lastChar}` : '?.?';
+                
+                // Gender-based avatar color
+                const avatarClass = patient.gender === 'Female' ? 'avatar-circle avatar-female me-3' : 'avatar-circle avatar-male me-3';
+                
+                html += `
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="${avatarClass}">
+                                    ${avatarInitials}
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">${escapeHtml(fullName)}</h6>
+                                    <small class="text-muted">ID: #${patient.id}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <i class="bi bi-telephone me-1"></i>
+                                ${escapeHtml(patient.phone || 'Not available')}
+                            </div>
+                            ${patient.alt_phone ? `<div class="mt-1">
+                                <i class="bi bi-telephone-plus me-1"></i>
+                                <small class="text-muted">${escapeHtml(patient.alt_phone)}</small>
+                            </div>` : ''}
+                        </td>
+                        <td>
+                            ${age !== 'Not specified' ? `${age} years` : '<span class="text-muted">Not specified</span>'}
+                        </td>
+                        <td>
+                            ${patient.last_visit ? 
+                                `<span class="badge bg-success">${lastVisit}</span>` : 
+                                '<span class="badge bg-secondary">Not visited yet</span>'
+                            }
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">${patient.total_appointments || 0}</span>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="/doctor/patients/${patient.id}" 
+                                   class="btn btn-sm btn-outline-primary" 
+                                   data-bs-toggle="tooltip" 
+                                   data-bs-placement="top" 
+                                   data-bs-title="View patient details and medical history">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-success" 
+                                        onclick="bookAppointment(${patient.id})" 
+                                        data-bs-toggle="tooltip" 
+                                        data-bs-placement="top" 
+                                        data-bs-title="Book a new appointment for this patient">
+                                    <i class="bi bi-calendar-plus"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" 
+                                        onclick="deletePatient(${patient.id}, '${escapeHtml(fullName).replace(/'/g, '\\\'')}')" 
+                                        data-bs-toggle="tooltip" 
+                                        data-bs-placement="top" 
+                                        data-bs-title="Delete the patient from the system (cannot be undone)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = html;
+            
+            // Refresh tooltips for new content
+            setTimeout(() => {
+                refreshTooltips();
+            }, 100);
+        }
+        
+        // Remove loading state
+        tableBody.parentElement.classList.remove('table-loading');
+        
+    }, 150); // Short delay for smooth transition
+}
+
+// Update pagination information
+function updatePaginationInfo() {
+    const { currentPage, itemsPerPage, filteredPatients } = paginationState;
+    
+    document.getElementById('totalPatientsCount').textContent = filteredPatients.length;
+    document.getElementById('totalPatients').textContent = filteredPatients.length;
+    
+    if (itemsPerPage === 'all') {
+        document.getElementById('showingFrom').textContent = filteredPatients.length > 0 ? '1' : '0';
+        document.getElementById('showingTo').textContent = filteredPatients.length;
+        
+        // Hide pagination nav when showing all
+        document.getElementById('paginationContainer').style.display = 'block';
+        document.getElementById('paginationNav').style.display = 'none';
+    } else {
+        const startIndex = (currentPage - 1) * itemsPerPage + 1;
+        const endIndex = Math.min(currentPage * itemsPerPage, filteredPatients.length);
+        
+        document.getElementById('showingFrom').textContent = filteredPatients.length > 0 ? startIndex : '0';
+        document.getElementById('showingTo').textContent = endIndex;
+        
+        // Show pagination nav
+        document.getElementById('paginationNav').style.display = 'flex';
+    }
+}
+
+// Render pagination navigation
+function renderPaginationNav() {
+    const paginationNav = document.getElementById('paginationNav');
+    const { currentPage, itemsPerPage, filteredPatients } = paginationState;
+    
+    if (itemsPerPage === 'all') {
+        paginationNav.innerHTML = '';
+        return;
+    }
+    
+    const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
+    
+    if (totalPages <= 1) {
+        paginationNav.innerHTML = '';
+        return;
+    }
+    
+    let html = '';
+    
+    // Previous button
+    html += `
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage - 1})" aria-label="Previous">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+    `;
+    
+    // Page numbers with smart pagination
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+    
+    // Adjust if we're near the beginning or end
+    if (currentPage <= 3) {
+        startPage = 1;
+        endPage = Math.min(5, totalPages);
+    } else if (currentPage >= totalPages - 2) {
+        startPage = Math.max(1, totalPages - 4);
+        endPage = totalPages;
+    }
+    
+    // First page and ellipsis
+    if (startPage > 1) {
+        html += `
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="changePage(1)">1</a>
+            </li>
+        `;
+        if (startPage > 2) {
+            html += `
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            `;
+        }
+    }
+    
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+        html += `
+            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+            </li>
+        `;
+    }
+    
+    // Last page and ellipsis
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            html += `
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            `;
+        }
+        html += `
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="changePage(${totalPages})">${totalPages}</a>
+            </li>
+        `;
+    }
+    
+    // Next button
+    html += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage + 1})" aria-label="Next">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
+    `;
+    
+    paginationNav.innerHTML = html;
+}
+
+// Change page function
+function changePage(page) {
+    const { itemsPerPage, filteredPatients } = paginationState;
+    
+    if (itemsPerPage === 'all') return;
+    
+    const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
+    
+    if (page < 1 || page > totalPages) return;
+    
+    paginationState.currentPage = page;
+    
+    renderPatientsTable();
+    updatePaginationInfo();
+    renderPaginationNav();
+    
+    // Smooth scroll to table top
+    document.querySelector('.card').scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+    });
+}
+
+// Change items per page
+function changeItemsPerPage(newLimit) {
+    paginationState.itemsPerPage = newLimit === 'all' ? 'all' : parseInt(newLimit);
+    paginationState.currentPage = 1; // Reset to first page
+    
+    renderPatientsTable();
+    updatePaginationInfo();
+    renderPaginationNav();
+    
+    console.log('Items per page changed to:', newLimit);
+}
+
+// Escape HTML function
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text ? text.replace(/[&<>"']/g, function(m) { return map[m]; }) : '';
+}
+
+// Filter patients locally (for main table pagination)
+function filterPatientsLocally(query) {
+    if (!query || query.trim().length < 2) {
+        paginationState.filteredPatients = [...paginationState.allPatients];
+    } else {
+        const searchTerm = query.trim().toLowerCase();
+        paginationState.filteredPatients = paginationState.allPatients.filter(patient => {
+            const fullName = `${patient.first_name} ${patient.last_name}`.toLowerCase();
+            const phone = (patient.phone || '').toLowerCase();
+            const altPhone = (patient.alt_phone || '').toLowerCase();
+            const nationalId = (patient.national_id || '').toLowerCase();
+            
+            return fullName.includes(searchTerm) || 
+                   phone.includes(searchTerm) || 
+                   altPhone.includes(searchTerm) || 
+                   nationalId.includes(searchTerm);
+        });
+    }
+    
+    // Reset to first page after filtering
+    paginationState.currentPage = 1;
+    
+    // Update display
+    renderPatientsTable();
+    updatePaginationInfo();
+    renderPaginationNav();
+}
+
+// Search patients function (for modal)
 function searchPatients(query) {
     const searchLoading = document.getElementById('searchLoading');
     const searchInitial = document.getElementById('searchInitial');
@@ -1354,7 +1927,7 @@ function displaySearchResults(patients, searchTerm) {
         html += `
             <div class="search-result-item" onclick="selectSearchResult(${patient.id})">
                 <div class="d-flex align-items-center">
-                                                        <div class="search-result-avatar me-3">
+                                                        <div class="search-result-avatar ${patient.gender === 'Female' ? 'avatar-female' : 'avatar-male'} me-3">
                                         ${getAvatarInitials(patient.first_name, patient.last_name)}
                                     </div>
                     <div class="search-result-info flex-grow-1">
@@ -1470,8 +2043,83 @@ function formatDate(dateString) {
     });
 }
 
-// Initialize search functionality
+// Initialize search functionality  
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize pagination first
+    initializePagination();
+    
+    // Setup pagination limit selector
+    const paginationLimitSelect = document.getElementById('paginationLimit');
+    if (paginationLimitSelect) {
+        paginationLimitSelect.addEventListener('change', function() {
+            changeItemsPerPage(this.value);
+        });
+    }
+    
+    // Setup quick search
+    const quickSearch = document.getElementById('quickSearch');
+    const clearQuickSearch = document.getElementById('clearQuickSearch');
+    
+    if (quickSearch) {
+        // Debounced search for main table
+        const debouncedQuickSearch = debounce(filterPatientsLocally, 300);
+        
+        quickSearch.addEventListener('input', function() {
+            debouncedQuickSearch(this.value);
+        });
+        
+        // Clear search
+        if (clearQuickSearch) {
+            clearQuickSearch.addEventListener('click', function() {
+                quickSearch.value = '';
+                filterPatientsLocally('');
+                quickSearch.focus();
+            });
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            const isModalOpen = document.querySelector('.modal.show');
+            const isInputFocused = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || 
+                                 e.target.contentEditable === 'true';
+            
+            // Quick search shortcut (Ctrl+F when not in modal)
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && !isModalOpen) {
+                e.preventDefault();
+                quickSearch.focus();
+                quickSearch.select();
+                return;
+            }
+            
+            // Pagination shortcuts (only when not typing in inputs and no modal is open)
+            if (!isInputFocused && !isModalOpen && paginationState.itemsPerPage !== 'all') {
+                const totalPages = Math.ceil(paginationState.filteredPatients.length / paginationState.itemsPerPage);
+                
+                switch(e.key) {
+                    case 'ArrowLeft':
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        if (e.key === 'ArrowLeft' && paginationState.currentPage < totalPages) {
+                            changePage(paginationState.currentPage + 1);
+                        } else if (e.key === 'ArrowRight' && paginationState.currentPage > 1) {
+                            changePage(paginationState.currentPage - 1);
+                        }
+                        break;
+                        
+                    case 'Home':
+                        e.preventDefault();
+                        changePage(1);
+                        break;
+                        
+                    case 'End':
+                        e.preventDefault();
+                        changePage(totalPages);
+                        break;
+                }
+            }
+        });
+    }
+    
     const globalSearch = document.getElementById('globalSearch');
     const clearSearch = document.getElementById('clearSearch');
     const searchModal = document.getElementById('searchModal');
@@ -1841,7 +2489,19 @@ function deletePatient(patientId, patientName) {
         const secondChar = name.length > 1 ? name.charAt(1).toUpperCase() : '?';
         initials = firstChar + '.' + secondChar;
     }
-    document.getElementById('deletePatientAvatar').textContent = initials;
+    
+    // Find patient gender for avatar color
+    const patient = paginationState.allPatients.find(p => p.id == patientId);
+    const avatarElement = document.getElementById('deletePatientAvatar');
+    avatarElement.textContent = initials;
+    
+    // Apply gender-based class
+    avatarElement.className = 'avatar-circle';
+    if (patient && patient.gender === 'Female') {
+        avatarElement.classList.add('avatar-female');
+    } else if (patient && patient.gender === 'Male') {
+        avatarElement.classList.add('avatar-male');
+    }
     
     // Show warning modal
     const deleteModal = new bootstrap.Modal(document.getElementById('deletePatientModal'));
@@ -2163,17 +2823,25 @@ displaySearchResults = function(patients, searchTerm) {
     }, 100);
 };
 
-// Auto-refresh every 30 seconds (pause when modals are open)
+// Auto-refresh every 30 seconds (pause when modals are open or user is interacting)
 setInterval(() => {
     const searchModal = document.getElementById('searchModal');
     const addPatientModal = document.getElementById('addPatientModal');
     const deleteModal = document.getElementById('deletePatientModal');
     const deleteConfirmModal = document.getElementById('deletePatientConfirmModal');
+    const quickSearch = document.getElementById('quickSearch');
+    
+    // Don't refresh if user is actively using the page
+    const isUserActive = document.activeElement === quickSearch || 
+                        quickSearch.value.trim().length > 0 ||
+                        paginationState.currentPage > 1 ||
+                        paginationState.itemsPerPage !== 20;
     
     if (!searchModal.classList.contains('show') && 
         !addPatientModal.classList.contains('show') &&
         !deleteModal.classList.contains('show') &&
-        !deleteConfirmModal.classList.contains('show')) {
+        !deleteConfirmModal.classList.contains('show') &&
+        !isUserActive) {
         window.location.reload();
     }
 }, 30000);
