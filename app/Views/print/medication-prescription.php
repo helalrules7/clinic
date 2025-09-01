@@ -8,7 +8,7 @@
         @media print {
             @page {
                 size: A4;
-                margin: 1cm;
+                margin: 0.7cm;
             }
         }
         
@@ -20,52 +20,52 @@
         
         body {
             font-family: 'Arial', sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
+            font-size: 11px;
+            line-height: 1.2;
             color: #000;
             background: white;
             width: 24.5cm;
             margin: 0 auto;
-            padding: 1cm;
+            padding: 0.7cm;
         }
         
         .prescription-header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             border-bottom: 2px solid #333;
-            padding-bottom: 15px;
+            padding-bottom: 10px;
         }
         
         .clinic-name {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
         
         .clinic-info {
-            font-size: 11px;
+            font-size: 9px;
             color: #666;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
         
         .prescription-title {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             text-align: center;
-            margin: 20px 0;
+            margin: 15px 0;
             color: #2c3e50;
             border: 2px solid #3498db;
-            padding: 10px;
+            padding: 8px;
             border-radius: 5px;
         }
         
         .patient-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             border: 1px solid #ddd;
-            padding: 15px;
+            padding: 10px;
             border-radius: 5px;
             background: #f8f9fa;
         }
@@ -76,13 +76,13 @@
         
         .patient-details h3 {
             color: #2c3e50;
-            margin-bottom: 10px;
-            font-size: 14px;
+            margin-bottom: 8px;
+            font-size: 12px;
         }
         
         .patient-details p {
-            margin: 5px 0;
-            font-size: 12px;
+            margin: 3px 0;
+            font-size: 10px;
         }
         
         .appointment-details {
@@ -92,23 +92,23 @@
         
         .appointment-details h3 {
             color: #2c3e50;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-        
-        .appointment-details p {
-            margin: 5px 0;
+            margin-bottom: 8px;
             font-size: 12px;
         }
         
+        .appointment-details p {
+            margin: 3px 0;
+            font-size: 10px;
+        }
+        
         .prescription-content {
-            margin: 20px 0;
+            margin: 15px 0;
         }
         
         .medication-item {
             border: 1px solid #ddd;
-            margin-bottom: 15px;
-            padding: 15px;
+            margin-bottom: 10px;
+            padding: 10px;
             border-radius: 5px;
             background: white;
         }
@@ -117,19 +117,19 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
             border-bottom: 1px solid #eee;
         }
         
         .drug-name {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             color: #2c3e50;
         }
         
         .rx-symbol {
-            font-size: 24px;
+            font-size: 20px;
             color: #e74c3c;
             font-weight: bold;
         }
@@ -137,8 +137,8 @@
         .medication-details {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 10px;
+            gap: 10px;
+            margin-bottom: 8px;
         }
         
         .detail-group {
@@ -149,18 +149,20 @@
         .detail-label {
             font-weight: bold;
             color: #666;
-            min-width: 80px;
-            margin-left: 10px;
+            min-width: 70px;
+            margin-left: 8px;
+            font-size: 10px;
         }
         
         .detail-value {
             color: #2c3e50;
             font-weight: 500;
+            font-size: 10px;
         }
         
         .notes-section {
-            margin-top: 10px;
-            padding: 10px;
+            margin-top: 8px;
+            padding: 8px;
             background: #fff3cd;
             border: 1px solid #ffeaa7;
             border-radius: 5px;
@@ -169,16 +171,18 @@
         .notes-label {
             font-weight: bold;
             color: #856404;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
+            font-size: 10px;
         }
         
         .notes-text {
             color: #856404;
             font-style: italic;
+            font-size: 9px;
         }
         
         .footer-section {
-            margin-top: 30px;
+            margin-top: 20px;
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
@@ -190,21 +194,22 @@
         }
         
         .signature-line {
-            width: 200px;
+            width: 180px;
             height: 1px;
             background: #333;
-            margin: 20px auto 5px;
+            margin: 15px auto 3px;
         }
         
         .doctor-name {
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
+            font-size: 11px;
         }
         
         .doctor-title {
             color: #666;
-            font-size: 11px;
+            font-size: 9px;
         }
         
         .clinic-stamp {
@@ -213,8 +218,8 @@
         }
         
         .stamp-box {
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             border: 2px solid #3498db;
             border-radius: 50%;
             margin: 0 auto;
@@ -223,9 +228,9 @@
             justify-content: center;
             color: #3498db;
             font-weight: bold;
-            font-size: 10px;
+            font-size: 8px;
             text-align: center;
-            line-height: 1.2;
+            line-height: 1.1;
         }
         
         .date-section {
@@ -236,12 +241,13 @@
         .date-label {
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
+            font-size: 10px;
         }
         
         .date-value {
             color: #666;
-            font-size: 14px;
+            font-size: 12px;
         }
         
         .prescription-number {
@@ -268,7 +274,7 @@
             body {
                 width: 100%;
                 margin: 0;
-                padding: 0.5cm;
+                padding: 0.4cm;
             }
             
             .prescription-header,

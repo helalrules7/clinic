@@ -8,7 +8,7 @@
         @media print {
             @page {
                 size: A4;
-                margin: 0.3cm 0.2cm 0.3cm 0.8cm;
+                margin: 0.2cm 0.1cm 0.2cm 0.6cm;
             }
         }
         
@@ -20,45 +20,45 @@
         
         body {
             font-family: 'Arial', sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
+            font-size: 10px;
+            line-height: 1.2;
             color: #000;
             background: white;
             width: 21cm;
             height: 29.7cm;
             margin: 0 auto;
-            padding: 0.3cm 0.2cm 0.3cm 0.8cm;
+            padding: 0.2cm 0.1cm 0.2cm 0.6cm;
             direction: rtl;
         }
         
         .lab-header {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             border-bottom: 3px solid #2c3e50;
-            padding-bottom: 10px;
+            padding-bottom: 6px;
         }
         
         .clinic-name {
-            font-size: 22px;
+            font-size: 16px;
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 6px;
+            margin-bottom: 3px;
         }
         
         .clinic-info {
-            font-size: 10px;
+            font-size: 8px;
             color: #666;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
         
         .document-title {
-            font-size: 16px;
+            font-size: 12px;
             font-weight: bold;
             text-align: center;
-            margin: 12px 0;
+            margin: 8px 0;
             color: white;
             border: 3px solid #3498db;
-            padding: 8px;
+            padding: 5px;
             border-radius: 8px;
             background: linear-gradient(135deg, #3498db, #2980b9);
         }
@@ -66,9 +66,9 @@
         .patient-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             border: 2px solid #ddd;
-            padding: 8px 12px;
+            padding: 5px 8px;
             border-radius: 8px;
             background: #f8f9fa;
             width: 100%;
@@ -82,15 +82,15 @@
         
         .patient-details h3, .appointment-details h3 {
             color: #2c3e50;
-            margin-bottom: 8px;
-            font-size: 12px;
+            margin-bottom: 5px;
+            font-size: 10px;
             border-bottom: 1px solid #ddd;
-            padding-bottom: 3px;
+            padding-bottom: 2px;
         }
         
         .patient-details p, .appointment-details p {
-            margin: 4px 0;
-            font-size: 10px;
+            margin: 2px 0;
+            font-size: 8px;
         }
         
         .info-label {
@@ -99,33 +99,34 @@
             display: inline-block;
             width: 35%;
             min-width: fit-content;
+            font-size: 7px;
         }
         
         .test-details {
             border: 2px solid #3498db;
             border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
+            padding: 8px;
+            margin-bottom: 10px;
             background: #f8f9fa;
-            padding-bottom: 2cm;
+            padding-bottom: 1.5cm;
         }
         
         .test-name {
-            font-size: 16px;
+            font-size: 12px;
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             text-align: center;
-            padding: 0 10px;
+            padding: 0 6px;
         }
         
         .test-info {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 12px;
+            gap: 5px;
+            margin-bottom: 8px;
             background: white;
-            padding: 8px;
+            padding: 5px;
             border-radius: 5px;
             border: 1px solid #e0e0e0;
             width: 100%;
@@ -134,17 +135,17 @@
         .test-type {
             background: #3498db;
             color: white;
-            padding: 3px 8px;
+            padding: 2px 6px;
             border-radius: 3px;
-            font-size: 8px;
+            font-size: 6px;
             text-align: center;
             display: inline-block;
         }
         
         .test-status {
-            padding: 3px 8px;
+            padding: 2px 6px;
             border-radius: 3px;
-            font-size: 8px;
+            font-size: 6px;
             color: white;
             text-align: center;
             display: inline-block;
@@ -156,9 +157,9 @@
         .status-cancelled { background: #e74c3c; }
         
         .priority {
-            padding: 3px 8px;
+            padding: 2px 6px;
             border-radius: 3px;
-            font-size: 8px;
+            font-size: 6px;
             color: white;
             text-align: center;
             display: inline-block;
@@ -171,31 +172,31 @@
         .notes-section, .results-section {
             border: 1px solid #ddd;
             border-radius: 5px;
-            padding: 8px;
-            margin-bottom: 8px;
+            padding: 5px;
+            margin-bottom: 5px;
             background: white;
-            font-size: 11px;
+            font-size: 8px;
         }
         
         .section-title {
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 5px;
-            font-size: 12px;
+            margin-bottom: 3px;
+            font-size: 9px;
             border-bottom: 1px solid #eee;
-            padding-bottom: 3px;
+            padding-bottom: 2px;
         }
         
         .footer {
             position: fixed;
-            bottom: 0.2cm;
-            left: 0.8cm;
-            right: 0.2cm;
+            bottom: 0.1cm;
+            left: 0.6cm;
+            right: 0.1cm;
             text-align: center;
-            font-size: 8px;
+            font-size: 6px;
             color: #666;
             border-top: 1px solid #ddd;
-            padding-top: 5px;
+            padding-top: 3px;
             background: white;
         }
         

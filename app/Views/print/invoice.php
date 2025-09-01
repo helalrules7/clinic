@@ -8,7 +8,7 @@
         @media print {
             @page {
                 size: A4;
-                margin: 1cm;
+                margin: 0.7cm;
             }
         }
         
@@ -20,43 +20,43 @@
         
         body {
             font-family: 'Arial', sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
+            font-size: 11px;
+            line-height: 1.2;
             color: #000;
             background: white;
             width: 21cm;
             margin: 0 auto;
-            padding: 1cm;
+            padding: 0.7cm;
         }
         
         .invoice-header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             border-bottom: 3px solid #2c3e50;
-            padding-bottom: 15px;
+            padding-bottom: 10px;
         }
         
         .clinic-name {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
         
         .clinic-info {
-            font-size: 11px;
+            font-size: 9px;
             color: #666;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
         
         .invoice-title {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: bold;
             text-align: center;
-            margin: 20px 0;
+            margin: 15px 0;
             color: #2c3e50;
             border: 2px solid #27ae60;
-            padding: 10px;
+            padding: 8px;
             border-radius: 5px;
             background: #f0fff4;
         }
@@ -64,9 +64,9 @@
         .invoice-details {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             border: 1px solid #ddd;
-            padding: 15px;
+            padding: 10px;
             border-radius: 5px;
             background: #f8f9fa;
         }
@@ -77,15 +77,15 @@
         
         .invoice-info h3, .patient-info h3 {
             color: #2c3e50;
-            margin-bottom: 10px;
-            font-size: 14px;
+            margin-bottom: 8px;
+            font-size: 12px;
             border-bottom: 1px solid #27ae60;
-            padding-bottom: 5px;
+            padding-bottom: 3px;
         }
         
         .invoice-info p, .patient-info p {
-            margin: 5px 0;
-            font-size: 12px;
+            margin: 3px 0;
+            font-size: 10px;
         }
         
         .patient-info {
@@ -95,23 +95,23 @@
         .invoice-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin: 15px 0;
             border: 2px solid #ddd;
         }
         
         .invoice-table th {
             background: #2c3e50;
             color: white;
-            padding: 12px;
+            padding: 8px;
             text-align: right;
             font-weight: 600;
-            font-size: 12px;
+            font-size: 10px;
         }
         
         .invoice-table td {
-            padding: 10px;
+            padding: 6px;
             border-bottom: 1px solid #eee;
-            font-size: 11px;
+            font-size: 9px;
         }
         
         .invoice-table tr:nth-child(even) {
@@ -138,9 +138,9 @@
         }
         
         .totals-section {
-            margin: 20px 0;
+            margin: 15px 0;
             border: 2px solid #27ae60;
-            padding: 15px;
+            padding: 10px;
             border-radius: 5px;
             background: #f0fff4;
         }
@@ -148,21 +148,22 @@
         .totals-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 15px;
         }
         
         .total-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 0;
+            padding: 5px 0;
             border-bottom: 1px solid #d4edda;
+            font-size: 10px;
         }
         
         .total-row:last-child {
             border-bottom: none;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 12px;
             color: #27ae60;
         }
         
@@ -177,12 +178,12 @@
         }
         
         .payment-status {
-            margin: 20px 0;
-            padding: 15px;
+            margin: 15px 0;
+            padding: 10px;
             border-radius: 5px;
             text-align: center;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 12px;
         }
         
         .status-paid {
@@ -204,7 +205,7 @@
         }
         
         .footer-section {
-            margin-top: 30px;
+            margin-top: 20px;
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
@@ -216,8 +217,8 @@
         }
         
         .stamp-box {
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             border: 3px solid #27ae60;
             border-radius: 50%;
             margin: 0 auto;
@@ -226,9 +227,9 @@
             justify-content: center;
             color: #27ae60;
             font-weight: bold;
-            font-size: 10px;
+            font-size: 8px;
             text-align: center;
-            line-height: 1.2;
+            line-height: 1.1;
             background: white;
         }
         
@@ -240,14 +241,14 @@
         .terms-title {
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 10px;
-            font-size: 12px;
+            margin-bottom: 6px;
+            font-size: 10px;
         }
         
         .terms-text {
             color: #666;
-            font-size: 10px;
-            line-height: 1.4;
+            font-size: 8px;
+            line-height: 1.3;
         }
         
         .date-section {
@@ -258,13 +259,13 @@
         .date-label {
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 5px;
-            font-size: 11px;
+            margin-bottom: 3px;
+            font-size: 9px;
         }
         
         .date-value {
             color: #666;
-            font-size: 12px;
+            font-size: 10px;
         }
         
         .invoice-number {
@@ -320,7 +321,7 @@
             body {
                 width: 100%;
                 margin: 0;
-                padding: 0.5cm;
+                padding: 0.4cm;
             }
             
             .invoice-header,

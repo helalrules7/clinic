@@ -8,7 +8,7 @@
         @media print {
             @page {
                 size: A4;
-                margin: 0.3cm 0.2cm 0.3cm 0.8cm;
+                margin: 0.2cm 0.1cm 0.2cm 0.6cm;
             }
         }
         
@@ -20,45 +20,45 @@
         
         body {
             font-family: 'Arial', sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
+            font-size: 10px;
+            line-height: 1.2;
             color: #000;
             background: white;
             width: 21cm;
             height: 29.7cm;
             margin: 0 auto;
-            padding: 0.3cm 0.2cm 0.3cm 0.8cm;
+            padding: 0.2cm 0.1cm 0.2cm 0.6cm;
             direction: rtl;
         }
         
         .lab-header {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             border-bottom: 3px solid #2c3e50;
-            padding-bottom: 10px;
+            padding-bottom: 6px;
         }
         
         .clinic-name {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 6px;
+            margin-bottom: 3px;
         }
         
         .clinic-info {
-            font-size: 10px;
+            font-size: 8px;
             color: #666;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
         
         .document-title {
-            font-size: 18px;
+            font-size: 14px;
             font-weight: bold;
             text-align: center;
-            margin: 15px 0;
+            margin: 8px 0;
             color: white;
             border: 3px solid #3498db;
-            padding: 10px;
+            padding: 6px;
             border-radius: 8px;
             background: linear-gradient(135deg, #3498db, #2980b9);
         }
@@ -66,9 +66,9 @@
         .patient-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             border: 2px solid #ddd;
-            padding: 8px 12px;
+            padding: 5px 8px;
             border-radius: 8px;
             background: #f8f9fa;
             width: 100%;
@@ -82,15 +82,15 @@
         
         .patient-details h3, .appointment-details h3 {
             color: #2c3e50;
-            margin-bottom: 8px;
-            font-size: 13px;
+            margin-bottom: 5px;
+            font-size: 10px;
             border-bottom: 1px solid #ddd;
-            padding-bottom: 3px;
+            padding-bottom: 2px;
         }
         
         .patient-details p, .appointment-details p {
-            margin: 4px 0;
-            font-size: 10px;
+            margin: 2px 0;
+            font-size: 8px;
         }
         
         .info-label {
@@ -99,15 +99,15 @@
         }
         
         .tests-container {
-            margin-bottom: 20px;
-            padding-bottom: 2cm;
+            margin-bottom: 12px;
+            padding-bottom: 1.5cm;
         }
         
         .test-card {
             border: 2px solid #3498db;
             border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
+            padding: 8px;
+            margin-bottom: 8px;
             background: #f8f9fa;
             page-break-inside: avoid;
             overflow: hidden;
@@ -115,35 +115,35 @@
         
         .test-header {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             border-bottom: 1px solid #ddd;
-            padding-bottom: 10px;
+            padding-bottom: 5px;
         }
         
         .test-name {
-            font-size: 14px;
+            font-size: 11px;
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 5px;
-            padding: 0 8px;
+            margin-bottom: 3px;
+            padding: 0 5px;
         }
         
         .test-type {
             background: #3498db;
             color: white;
-            padding: 4px 12px;
+            padding: 2px 8px;
             border-radius: 4px;
-            font-size: 10px;
+            font-size: 7px;
             text-transform: uppercase;
         }
         
         .test-details {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            margin-bottom: 10px;
+            gap: 4px;
+            margin-bottom: 6px;
             background: white;
-            padding: 6px;
+            padding: 4px;
             border-radius: 5px;
             border: 1px solid #e0e0e0;
             width: 100%;
@@ -153,8 +153,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 4px 0;
-            font-size: 11px;
+            padding: 2px 0;
+            font-size: 8px;
         }
         
         .detail-label {
@@ -163,9 +163,9 @@
         }
         
         .status-badge {
-            padding: 2px 8px;
+            padding: 1px 5px;
             border-radius: 3px;
-            font-size: 10px;
+            font-size: 7px;
             color: white;
             text-align: center;
         }
@@ -176,9 +176,9 @@
         .status-cancelled { background: #e74c3c; }
         
         .priority-badge {
-            padding: 2px 8px;
+            padding: 1px 5px;
             border-radius: 3px;
-            font-size: 10px;
+            font-size: 7px;
             color: white;
             text-align: center;
         }
@@ -190,36 +190,36 @@
         .notes-section, .results-section {
             border: 1px solid #ddd;
             border-radius: 5px;
-            padding: 8px;
-            margin-bottom: 8px;
+            padding: 5px;
+            margin-bottom: 5px;
             background: white;
-            font-size: 10px;
+            font-size: 8px;
         }
         
         .section-title {
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 5px;
-            font-size: 11px;
+            margin-bottom: 3px;
+            font-size: 8px;
             border-bottom: 1px solid #eee;
-            padding-bottom: 3px;
+            padding-bottom: 2px;
         }
         
         .section-content {
-            line-height: 1.4;
-            font-size: 10px;
+            line-height: 1.2;
+            font-size: 7px;
         }
         
         .footer {
             position: fixed;
-            bottom: 0.2cm;
-            left: 0.8cm;
-            right: 0.2cm;
+            bottom: 0.1cm;
+            left: 0.6cm;
+            right: 0.1cm;
             text-align: center;
-            font-size: 8px;
+            font-size: 6px;
             color: #666;
             border-top: 1px solid #ddd;
-            padding-top: 5px;
+            padding-top: 3px;
             background: white;
         }
         

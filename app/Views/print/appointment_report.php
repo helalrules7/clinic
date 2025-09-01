@@ -14,8 +14,8 @@
         
         body {
             font-family: 'Cairo', sans-serif;
-            font-size: 14px;
-            line-height: 1.6;
+            font-size: 12px;
+            line-height: 1.3;
             color: #333;
             background: white;
         }
@@ -23,35 +23,35 @@
         .header {
             text-align: center;
             border-bottom: 3px solid #0066cc;
-            padding: 20px 0;
-            margin-bottom: 30px;
+            padding: 12px 0;
+            margin-bottom: 20px;
         }
         
         .clinic-name {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
             color: #0066cc;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
         
         .clinic-info {
-            font-size: 12px;
+            font-size: 10px;
             color: #666;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
         
         .report-title {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
             color: #333;
-            margin-top: 15px;
+            margin-top: 10px;
         }
         
         .patient-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 30px;
-            padding: 15px;
+            margin-bottom: 20px;
+            padding: 10px;
             background: #f8f9fa;
             border-radius: 8px;
         }
@@ -61,41 +61,43 @@
         }
         
         .section {
-            margin-bottom: 25px;
+            margin-bottom: 15px;
             page-break-inside: avoid;
         }
         
         .section-title {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             color: #0066cc;
             border-bottom: 2px solid #e9ecef;
-            padding-bottom: 8px;
-            margin-bottom: 15px;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
         }
         
         .field {
-            margin-bottom: 10px;
+            margin-bottom: 6px;
         }
         
         .field-label {
             font-weight: 600;
             color: #555;
             display: inline-block;
-            width: 150px;
+            width: 130px;
             vertical-align: top;
+            font-size: 11px;
         }
         
         .field-value {
             display: inline-block;
-            width: calc(100% - 160px);
+            width: calc(100% - 140px);
             vertical-align: top;
+            font-size: 11px;
         }
         
         .prescription-item {
             background: #f8f9fa;
-            padding: 12px;
-            margin-bottom: 10px;
+            padding: 8px;
+            margin-bottom: 6px;
             border-radius: 6px;
             border-left: 4px solid #28a745;
         }
@@ -103,18 +105,18 @@
         .prescription-name {
             font-weight: 600;
             color: #28a745;
-            font-size: 15px;
-            margin-bottom: 5px;
+            font-size: 13px;
+            margin-bottom: 3px;
         }
         
         .prescription-details {
-            font-size: 13px;
+            font-size: 11px;
             color: #666;
         }
         
         .glasses-prescription {
             background: #f8f9fa;
-            padding: 15px;
+            padding: 10px;
             border-radius: 6px;
             border-left: 4px solid #17a2b8;
         }
@@ -128,8 +130,9 @@
         .glasses-table th,
         .glasses-table td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 5px;
             text-align: center;
+            font-size: 10px;
         }
         
         .glasses-table th {
@@ -138,36 +141,36 @@
         }
         
         .footer {
-            margin-top: 40px;
-            padding-top: 20px;
+            margin-top: 25px;
+            padding-top: 15px;
             border-top: 1px solid #e9ecef;
             text-align: center;
-            font-size: 12px;
+            font-size: 10px;
             color: #666;
         }
         
         .signature-section {
             display: flex;
             justify-content: space-between;
-            margin-top: 40px;
-            padding-top: 20px;
+            margin-top: 25px;
+            padding-top: 15px;
         }
         
         .signature-box {
             text-align: center;
-            width: 200px;
+            width: 160px;
         }
         
         .signature-line {
             border-bottom: 1px solid #333;
-            margin-bottom: 5px;
-            height: 50px;
+            margin-bottom: 3px;
+            height: 35px;
         }
         
         @media print {
             body {
                 margin: 0;
-                padding: 20px;
+                padding: 12px;
             }
             
             .page-break {

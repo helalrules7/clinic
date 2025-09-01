@@ -8,7 +8,7 @@
         @media print {
             @page {
                 size: A5;
-                margin: 1cm;
+                margin: 0.6cm;
             }
         }
         
@@ -20,44 +20,44 @@
         
         body {
             font-family: 'Arial', sans-serif;
-            font-size: 10px;
-            line-height: 1.3;
+            font-size: 9px;
+            line-height: 1.2;
             color: #000;
             background: white;
             width: 14.8cm;
             height: 21cm;
             margin: 0 auto;
-            padding: 1cm;
+            padding: 0.6cm;
         }
         
         .lab-header {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             border-bottom: 2px solid #2c3e50;
-            padding-bottom: 10px;
+            padding-bottom: 6px;
         }
         
         .clinic-name {
-            font-size: 18px;
+            font-size: 15px;
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 5px;
-        }
-        
-        .clinic-info {
-            font-size: 9px;
-            color: #666;
             margin-bottom: 3px;
         }
         
+        .clinic-info {
+            font-size: 7px;
+            color: #666;
+            margin-bottom: 2px;
+        }
+        
         .lab-title {
-            font-size: 16px;
+            font-size: 12px;
             font-weight: bold;
             text-align: center;
-            margin: 15px 0;
+            margin: 8px 0;
             color: #2c3e50;
             border: 2px solid #e74c3c;
-            padding: 8px;
+            padding: 5px;
             border-radius: 5px;
             background: #fff5f5;
         }
@@ -65,9 +65,9 @@
         .patient-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             border: 1px solid #ddd;
-            padding: 10px;
+            padding: 6px;
             border-radius: 5px;
             background: #f8f9fa;
         }
@@ -78,15 +78,15 @@
         
         .patient-details h3, .appointment-details h3 {
             color: #2c3e50;
-            margin-bottom: 8px;
-            font-size: 11px;
+            margin-bottom: 5px;
+            font-size: 9px;
             border-bottom: 1px solid #e74c3c;
-            padding-bottom: 3px;
+            padding-bottom: 2px;
         }
         
         .patient-details p, .appointment-details p {
-            margin: 3px 0;
-            font-size: 9px;
+            margin: 2px 0;
+            font-size: 7px;
         }
         
         .appointment-details {
@@ -94,13 +94,13 @@
         }
         
         .lab-content {
-            margin: 15px 0;
+            margin: 10px 0;
         }
         
         .test-section {
             border: 1px solid #e74c3c;
-            margin-bottom: 12px;
-            padding: 10px;
+            margin-bottom: 8px;
+            padding: 6px;
             border-radius: 5px;
             background: white;
         }
@@ -108,45 +108,45 @@
         .test-title {
             font-weight: bold;
             color: #e74c3c;
-            margin-bottom: 8px;
-            font-size: 11px;
+            margin-bottom: 5px;
+            font-size: 9px;
             text-align: center;
             border-bottom: 1px solid #e74c3c;
-            padding-bottom: 5px;
+            padding-bottom: 3px;
         }
         
         .test-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 6px;
         }
         
         .test-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 3px 0;
+            padding: 2px 0;
             border-bottom: 1px solid #eee;
         }
         
         .test-label {
             font-weight: bold;
             color: #666;
-            font-size: 9px;
+            font-size: 7px;
         }
         
         .test-value {
             color: #2c3e50;
             font-weight: 500;
-            font-size: 9px;
+            font-size: 7px;
             text-align: center;
-            min-width: 60px;
+            min-width: 50px;
         }
         
         .diagnosis-section {
-            margin: 15px 0;
+            margin: 10px 0;
             border: 1px solid #27ae60;
-            padding: 10px;
+            padding: 6px;
             border-radius: 5px;
             background: #f0fff4;
         }
@@ -154,21 +154,21 @@
         .diagnosis-title {
             font-weight: bold;
             color: #27ae60;
-            margin-bottom: 8px;
-            font-size: 11px;
+            margin-bottom: 5px;
+            font-size: 9px;
             text-align: center;
         }
         
         .diagnosis-content {
             color: #27ae60;
-            font-size: 9px;
-            line-height: 1.4;
+            font-size: 7px;
+            line-height: 1.2;
         }
         
         .plan-section {
-            margin: 15px 0;
+            margin: 10px 0;
             border: 1px solid #f39c12;
-            padding: 10px;
+            padding: 6px;
             border-radius: 5px;
             background: #fffbf0;
         }
@@ -176,21 +176,21 @@
         .plan-title {
             font-weight: bold;
             color: #f39c12;
-            margin-bottom: 8px;
-            font-size: 11px;
+            margin-bottom: 5px;
+            font-size: 9px;
             text-align: center;
         }
         
         .plan-content {
             color: #f39c12;
-            font-size: 9px;
-            line-height: 1.4;
+            font-size: 7px;
+            line-height: 1.2;
         }
         
         .followup-section {
-            margin: 15px 0;
+            margin: 10px 0;
             border: 1px solid #9b59b6;
-            padding: 10px;
+            padding: 6px;
             border-radius: 5px;
             background: #f8f4fd;
         }
@@ -198,19 +198,19 @@
         .followup-title {
             font-weight: bold;
             color: #9b59b6;
-            margin-bottom: 8px;
-            font-size: 11px;
+            margin-bottom: 5px;
+            font-size: 9px;
             text-align: center;
         }
         
         .followup-content {
             color: #9b59b6;
-            font-size: 9px;
+            font-size: 7px;
             text-align: center;
         }
         
         .footer-section {
-            margin-top: 20px;
+            margin-top: 12px;
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
@@ -222,22 +222,22 @@
         }
         
         .signature-line {
-            width: 120px;
+            width: 100px;
             height: 1px;
             background: #333;
-            margin: 15px auto 3px;
+            margin: 10px auto 2px;
         }
         
         .doctor-name {
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 3px;
-            font-size: 10px;
+            margin-bottom: 2px;
+            font-size: 8px;
         }
         
         .doctor-title {
             color: #666;
-            font-size: 8px;
+            font-size: 6px;
         }
         
         .clinic-stamp {
@@ -246,8 +246,8 @@
         }
         
         .stamp-box {
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             border: 2px solid #e74c3c;
             border-radius: 50%;
             margin: 0 auto;
@@ -256,9 +256,9 @@
             justify-content: center;
             color: #e74c3c;
             font-weight: bold;
-            font-size: 7px;
+            font-size: 5px;
             text-align: center;
-            line-height: 1.2;
+            line-height: 1.1;
             background: white;
         }
         
@@ -270,13 +270,13 @@
         .date-label {
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 3px;
-            font-size: 9px;
+            margin-bottom: 2px;
+            font-size: 7px;
         }
         
         .date-value {
             color: #666;
-            font-size: 11px;
+            font-size: 9px;
         }
         
         .prescription-number {
@@ -300,8 +300,8 @@
         }
         
         .urgency-notice {
-            margin: 15px 0;
-            padding: 8px;
+            margin: 10px 0;
+            padding: 5px;
             background: #ffe6e6;
             border: 1px solid #e74c3c;
             border-radius: 5px;
@@ -311,18 +311,18 @@
         .urgency-title {
             font-weight: bold;
             color: #e74c3c;
-            margin-bottom: 3px;
-            font-size: 9px;
+            margin-bottom: 2px;
+            font-size: 7px;
         }
         
         .urgency-text {
             color: #e74c3c;
-            font-size: 8px;
+            font-size: 6px;
         }
         
         .test-notes {
-            margin: 10px 0;
-            padding: 8px;
+            margin: 6px 0;
+            padding: 5px;
             background: #f0f8ff;
             border: 1px solid #3498db;
             border-radius: 5px;
@@ -331,14 +331,14 @@
         .notes-title {
             font-weight: bold;
             color: #3498db;
-            margin-bottom: 5px;
-            font-size: 9px;
+            margin-bottom: 3px;
+            font-size: 7px;
         }
         
         .notes-text {
             color: #3498db;
-            font-size: 8px;
-            line-height: 1.3;
+            font-size: 6px;
+            line-height: 1.2;
         }
         
         @media print {
@@ -346,7 +346,7 @@
                 width: 100%;
                 height: auto;
                 margin: 0;
-                padding: 0.5cm;
+                padding: 0.3cm;
             }
             
             .lab-header,
