@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $title ?? 'Roaya Clinic' ?></title>
     
+    <!-- Favicons -->
+    <link id="favicon" rel="icon" type="image/x-icon" href="/assets/fav/Light.ico">
+    <link id="favicon-dark" rel="icon" type="image/x-icon" href="/assets/fav/Dark.ico" media="(prefers-color-scheme: dark)">
+    
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -584,6 +588,12 @@
             if (logo) {
                 logo.src = next === 'dark' ? '/assets/images/Dark.png' : '/assets/images/Light.png';
             }
+            
+            // Update favicon
+            const favicon = document.getElementById('favicon');
+            if (favicon) {
+                favicon.href = next === 'dark' ? '/assets/fav/Dark.ico' : '/assets/fav/Light.ico';
+            }
         };
         
         // Update initial icon and logo
@@ -593,6 +603,12 @@
         const logo = document.getElementById('clinicLogo');
         if (logo) {
             logo.src = saved === 'dark' ? '/assets/images/Dark.png' : '/assets/images/Light.png';
+        }
+        
+        // Update initial favicon
+        const favicon = document.getElementById('favicon');
+        if (favicon) {
+            favicon.href = saved === 'dark' ? '/assets/fav/Dark.ico' : '/assets/fav/Light.ico';
         }
         
         // Mobile sidebar toggle
