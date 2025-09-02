@@ -89,7 +89,10 @@ try {
     $router->post('/doctor/appointments/{id}/consultation', 'DoctorController@saveConsultation');
     $router->get('/doctor/profile', 'DoctorController@profile');
     $router->post('/doctor/profile/change-password', 'DoctorController@changePassword');
+    $router->get('/doctor/reports', 'DoctorController@reports');
+    $router->get('/doctor/reports/export', 'DoctorController@exportDoctorReport');
     
+
 
         // Medical History routes
         $router->post('/api/patients/{id}/medical-history', 'ApiController@createMedicalHistory');

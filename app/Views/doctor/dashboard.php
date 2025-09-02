@@ -112,7 +112,7 @@
                         </a>
                     </div>
                     <div class="col-md-3 mb-3">
-                        <a href="/admin/reports" class="btn btn-outline-warning quick-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                        <a href="/doctor/reports" class="btn btn-outline-warning quick-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
                             <i class="bi bi-graph-up fa-2x mb-2"></i>
                             <span>Reports</span>
                         </a>

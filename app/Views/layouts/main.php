@@ -447,6 +447,12 @@
                     </a>
                 </div>
                 <div class="nav-item">
+                    <a href="/doctor/reports" class="nav-link <?= $this->isActiveRoute('/doctor/reports') ? 'active' : '' ?>">
+                        <i class="bi bi-graph-up"></i>
+                        Reports
+                    </a>
+                </div>
+                <div class="nav-item">
                     <a href="/doctor/profile" class="nav-link <?= $this->isActiveRoute('/doctor/profile') ? 'active' : '' ?>">
                         <i class="bi bi-person-circle"></i>
                         Profile

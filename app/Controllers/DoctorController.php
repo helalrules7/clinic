@@ -987,4 +987,153 @@ class DoctorController
             echo json_encode(['success' => false, 'error' => 'Server error']);
         }
     }
+
+    public function reports()
+    {
+        $user = $this->auth->user();
+        $doctorId = $this->getDoctorId($user['id']);
+        
+        // Get report parameters
+        $startDate = $_GET['start_date'] ?? date('Y-m-01');
+        $endDate = $_GET['end_date'] ?? date('Y-m-t');
+        $reportType = $_GET['type'] ?? 'appointments';
+        
+        // Generate report data specific to this doctor
+        $reportData = $this->generateDoctorReport($doctorId, $reportType, $startDate, $endDate);
+        
+        $content = $this->view->render('doctor/reports', [
+            'reportData' => $reportData,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'reportType' => $reportType,
+            'doctorId' => $doctorId
+        ]);
+        
+        echo $this->view->render('layouts/main', [
+            'title' => 'Reports - Doctor Dashboard',
+            'pageTitle' => 'Medical Reports',
+            'pageSubtitle' => 'View your practice reports',
+            'content' => $content
+        ]);
+    }
+
+    public function exportDoctorReport()
+    {
+        try {
+            $user = $this->auth->user();
+            $doctorId = $this->getDoctorId($user['id']);
+            
+            $reportType = $_GET['type'] ?? 'appointments';
+            $startDate = $_GET['start_date'] ?? date('Y-m-01');
+            $endDate = $_GET['end_date'] ?? date('Y-m-t');
+            $format = $_GET['format'] ?? 'csv';
+            
+            // Generate report data
+            $reportData = $this->generateDoctorReport($doctorId, $reportType, $startDate, $endDate);
+            
+            // Export based on format
+            if ($format === 'csv') {
+                $this->exportToCsv($reportData, $reportType, $startDate, $endDate);
+            } else {
+                throw new \Exception('Unsupported export format');
+            }
+            
+        } catch (\Exception $e) {
+            header('Location: /doctor/reports?error=' . urlencode($e->getMessage()));
+            exit;
+        }
+    }
+
+    private function generateDoctorReport($doctorId, $type, $startDate, $endDate)
+    {
+        switch ($type) {
+            case 'appointments':
+                return $this->generateDoctorAppointmentsReport($doctorId, $startDate, $endDate);
+            case 'patients':
+                return $this->generateDoctorPatientsReport($doctorId, $startDate, $endDate);
+            case 'revenue':
+                return $this->generateDoctorRevenueReport($doctorId, $startDate, $endDate);
+            default:
+                return $this->generateDoctorAppointmentsReport($doctorId, $startDate, $endDate);
+        }
+    }
+
+    private function generateDoctorAppointmentsReport($doctorId, $startDate, $endDate)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                DATE(a.date) as date,
+                COUNT(*) as total_appointments,
+                SUM(CASE WHEN a.status = 'Completed' THEN 1 ELSE 0 END) as completed,
+                SUM(CASE WHEN a.status = 'Cancelled' THEN 1 ELSE 0 END) as cancelled,
+                SUM(CASE WHEN a.status = 'NoShow' THEN 1 ELSE 0 END) as no_show
+            FROM appointments a
+            WHERE a.doctor_id = ? AND DATE(a.date) BETWEEN ? AND ?
+            GROUP BY DATE(a.date)
+            ORDER BY date
+        ");
+        $stmt->execute([$doctorId, $startDate, $endDate]);
+        return $stmt->fetchAll();
+    }
+
+    private function generateDoctorPatientsReport($doctorId, $startDate, $endDate)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                DATE(p.created_at) as date,
+                COUNT(DISTINCT p.id) as new_patients,
+                SUM(CASE WHEN p.gender = 'Male' THEN 1 ELSE 0 END) as male,
+                SUM(CASE WHEN p.gender = 'Female' THEN 1 ELSE 0 END) as female
+            FROM patients p
+            JOIN appointments a ON p.id = a.patient_id
+            WHERE a.doctor_id = ? AND DATE(p.created_at) BETWEEN ? AND ?
+            GROUP BY DATE(p.created_at)
+            ORDER BY date
+        ");
+        $stmt->execute([$doctorId, $startDate, $endDate]);
+        return $stmt->fetchAll();
+    }
+
+    private function generateDoctorRevenueReport($doctorId, $startDate, $endDate)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                DATE(p.created_at) as date,
+                SUM(p.amount) as daily_revenue,
+                COUNT(*) as transactions,
+                SUM(p.discount_amount) as discounts
+            FROM payments p
+            JOIN appointments a ON p.appointment_id = a.id
+            WHERE a.doctor_id = ? AND DATE(p.created_at) BETWEEN ? AND ?
+            GROUP BY DATE(p.created_at)
+            ORDER BY date
+        ");
+        $stmt->execute([$doctorId, $startDate, $endDate]);
+        return $stmt->fetchAll();
+    }
+
+    private function exportToCsv($data, $type, $startDate, $endDate)
+    {
+        $filename = "doctor_{$type}_report_{$startDate}_to_{$endDate}.csv";
+        
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+        
+        $output = fopen('php://output', 'w');
+        
+        if (!empty($data)) {
+            // Write headers
+            fputcsv($output, array_keys($data[0]));
+            
+            // Write data
+            foreach ($data as $row) {
+                fputcsv($output, $row);
+            }
+        }
+        
+        fclose($output);
+        exit;
+    }
 }
