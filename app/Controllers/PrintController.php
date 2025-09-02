@@ -335,12 +335,10 @@ class PrintController
     {
         return [
             'name' => Constants::APP_NAME,
-            'address' => '123 Medical Center St., Cairo, Egypt',
-            'phone' => '+20 2 1234 5678',
-            'email' => 'info@ophthalmology-clinic.com',
-            'website' => 'www.ophthalmology-clinic.com',
-            'license' => 'Medical License #12345',
-            'tax_id' => 'Tax ID: 123-456-789'
+            'address' => 'كفر الشيخ - عمارات الأوقاف - امام البنك الأهلي',
+            'phone' => '٠١٠٢٧٢٢٥١٩٧',
+            'email' => 'info@roaya-clinic.com',
+            'website' => 'www.roaya-clinic.com'
         ];
     }
 

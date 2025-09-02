@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lab Test - <?= $patient['first_name'] . ' ' . $patient['last_name'] ?></title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         @media print {
             @page {
                 size: A4;
-                margin: 0.2cm 0.1cm 0.2cm 0.6cm;
+                margin: 0.8cm;
             }
         }
         
@@ -19,78 +20,103 @@
         }
         
         body {
-            font-family: 'Arial', sans-serif;
-            font-size: 10px;
+            font-family: 'Cairo', 'Arial', sans-serif;
+            font-size: 11px;
             line-height: 1.2;
             color: #000;
             background: white;
             width: 21cm;
             height: 29.7cm;
             margin: 0 auto;
-            padding: 0.2cm 0.1cm 0.2cm 0.6cm;
-            direction: rtl;
+            padding: 0.8cm;
         }
         
-        .lab-header {
+        .prescription-header {
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             border-bottom: 3px solid #2c3e50;
-            padding-bottom: 6px;
+            padding-bottom: 12px;
+        }
+        
+        .logo-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .clinic-logo {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 8px;
         }
         
         .clinic-name {
-            font-size: 16px;
+            font-size: 18px;
+            font-family: 'Cairo', sans-serif;
             font-weight: bold;
             color: #2c3e50;
             margin-bottom: 3px;
         }
         
-        .clinic-info {
-            font-size: 8px;
+        .clinic-name-ar {
+            font-size: 16px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
             color: #666;
-            margin-bottom: 2px;
+            margin-bottom: 8px;
         }
         
-        .document-title {
-            font-size: 12px;
+        .clinic-info {
+            font-size: 10px;
+            font-family: 'Cairo', sans-serif;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        
+        .prescription-title {
+            font-size: 18px;
+            font-family: 'Cairo', sans-serif;
             font-weight: bold;
             text-align: center;
-            margin: 8px 0;
-            color: white;
+            margin: 15px 0;
+            color: #2c3e50;
             border: 3px solid #3498db;
-            padding: 5px;
+            padding: 10px;
             border-radius: 8px;
             background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
         }
         
         .patient-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             border: 2px solid #ddd;
-            padding: 5px 8px;
+            padding: 12px;
             border-radius: 8px;
             background: #f8f9fa;
-            width: 100%;
         }
         
         .patient-details, .appointment-details {
             flex: 1;
-            margin: 0 5px;
-            min-width: 0;
+            text-align: right;
+            direction: rtl;
         }
         
         .patient-details h3, .appointment-details h3 {
             color: #2c3e50;
-            margin-bottom: 5px;
-            font-size: 10px;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 2px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+            text-align: right;
         }
         
         .patient-details p, .appointment-details p {
-            margin: 2px 0;
-            font-size: 8px;
+            margin: 4px 0;
+            font-size: 11px;
+            text-align: right;
         }
         
         .info-label {
@@ -99,53 +125,76 @@
             display: inline-block;
             width: 35%;
             min-width: fit-content;
-            font-size: 7px;
+            font-size: 10px;
         }
         
         .test-details {
             border: 2px solid #3498db;
-            border-radius: 8px;
-            padding: 8px;
-            margin-bottom: 10px;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
             background: #f8f9fa;
-            padding-bottom: 1.5cm;
+            page-break-inside: avoid;
         }
         
         .test-name {
-            font-size: 12px;
+            font-size: 16px;
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
             text-align: center;
-            padding: 0 6px;
+            padding: 8px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #3498db;
         }
         
         .test-info {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 5px;
-            margin-bottom: 8px;
+            gap: 10px;
+            margin-bottom: 12px;
             background: white;
-            padding: 5px;
-            border-radius: 5px;
+            padding: 10px;
+            border-radius: 8px;
             border: 1px solid #e0e0e0;
             width: 100%;
+        }
+        
+        .test-info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .test-info-label {
+            font-weight: bold;
+            color: #495057;
+            font-size: 10px;
+        }
+        
+        .test-info-value {
+            color: #2c3e50;
+            font-weight: 500;
+            font-size: 10px;
         }
         
         .test-type {
             background: #3498db;
             color: white;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 6px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 8px;
             text-align: center;
             display: inline-block;
         }
         
         .test-status {
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 6px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 8px;
             color: white;
             text-align: center;
             display: inline-block;
@@ -157,9 +206,9 @@
         .status-cancelled { background: #e74c3c; }
         
         .priority {
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 6px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 8px;
             color: white;
             text-align: center;
             display: inline-block;
@@ -170,119 +219,238 @@
         .priority-urgent { background: #e74c3c; }
         
         .notes-section, .results-section {
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 5px;
-            margin-bottom: 5px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
             background: white;
-            font-size: 8px;
+            font-size: 11px;
         }
         
         .section-title {
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 3px;
-            font-size: 9px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 2px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
         }
         
-        .footer {
+        .watermark {
             position: fixed;
-            bottom: 0.1cm;
-            left: 0.6cm;
-            right: 0.1cm;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .watermark img {
+            width: 250px;
+            height: auto;
+        }
+        
+        .footer-section {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        
+        .doctor-signature {
             text-align: center;
-            font-size: 6px;
+            flex: 1;
+        }
+        
+        .signature-line {
+            width: 180px;
+            height: 1px;
+            background: #333;
+            margin: 15px auto 3px;
+        }
+        
+        .doctor-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 3px;
+            font-size: 11px;
+        }
+        
+        .doctor-title {
             color: #666;
-            border-top: 1px solid #ddd;
-            padding-top: 3px;
-            background: white;
+            font-size: 9px;
+        }
+        
+        .clinic-stamp {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .stamp-box {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #3498db;
+            border-radius: 50%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3498db;
+            font-weight: bold;
+            font-size: 8px;
+            text-align: center;
+            line-height: 1.1;
+        }
+        
+        .date-section {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .date-label {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 3px;
+            font-size: 10px;
+        }
+        
+        .date-value {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .prescription-number {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            font-size: 11px;
+            color: #999;
         }
         
         @media print {
-            body { print-color-adjust: exact; }
-            .no-print { display: none; }
+            body {
+                width: 100%;
+                height: auto;
+                margin: 0;
+                padding: 0.5cm;
+            }
+            
+            .prescription-header,
+            .patient-info,
+            .test-details {
+                break-inside: avoid;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="lab-header">
-        <div class="clinic-name"><?= htmlspecialchars($clinic['name']) ?></div>
+    <div class="prescription-number">Lab Test #<?= str_pad($labTest['id'] ?? '1', 6, '0', STR_PAD_LEFT) ?></div>
+    <div class="watermark">
+        <img src="/assets/images/Light.png" alt="Watermark">
+    </div>
+    
+    <!-- Header -->
+    <div class="prescription-header">
+        <div class="logo-section">
+            <img src="/assets/images/Light.png" alt="Roaya Clinic Logo" class="clinic-logo">
+            <div class="clinic-name">Roaya Ophthalmology Clinic</div>
+            <div class="clinic-name-ar">رؤية لطب وجراحة العيون</div>
+        </div>
         <div class="clinic-info"><?= htmlspecialchars($clinic['address']) ?></div>
         <div class="clinic-info">Tel: <?= htmlspecialchars($clinic['phone']) ?> | <?= htmlspecialchars($clinic['email']) ?></div>
-        <div class="document-title">Lab Test Report</div>
     </div>
-
+    
+    <!-- Title -->
+    <div class="prescription-title">طلب تحليل مخبري - Lab Test Request</div>
+    
+    <!-- Patient and Appointment Info -->
     <div class="patient-info">
-        <div class="patient-details">
-            <h3>Patient Information</h3>
-            <p><span class="info-label">Name:</span> <?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></p>
-            <p><span class="info-label">Phone:</span> <?= htmlspecialchars($patient['phone']) ?></p>
-            <p><span class="info-label">Birth Date:</span> <?= date('d/m/Y', strtotime($patient['dob'])) ?></p>
+        <div class="patient-details" dir="rtl">
+            <h3>بيانات المريض - Patient Details</h3>
+            <p><span class="info-label">الاسم:</span> <?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></p>
+            <p><span class="info-label">رقم الهاتف:</span> <?= htmlspecialchars($patient['phone']) ?></p>
+            <p><span class="info-label">تاريخ الميلاد:</span> <?= date('d/m/Y', strtotime($patient['dob'])) ?></p>
         </div>
-        <div class="appointment-details">
-            <h3>Appointment Information</h3>
-            <p><span class="info-label">Date:</span> <?= date('d/m/Y', strtotime($appointment['date'])) ?></p>
-            <p><span class="info-label">Doctor:</span> <?= htmlspecialchars($doctor['display_name']) ?></p>
-            <p><span class="info-label">Test Date:</span> <?= date('d/m/Y') ?></p>
+        <div class="appointment-details" dir="rtl">
+            <h3>معلومات الموعد - Appointment Details</h3>
+            <p><span class="info-label">التاريخ:</span> <?= date('d/m/Y', strtotime($appointment['date'])) ?></p>
+            <p><span class="info-label">الطبيب:</span> <?= htmlspecialchars($doctor['display_name']) ?></p>
+            <p><span class="info-label">تاريخ التحليل:</span> <?= date('d/m/Y') ?></p>
         </div>
     </div>
 
+    <!-- Test Details -->
     <div class="test-details">
         <div class="test-name"><?= htmlspecialchars($labTest['test_name']) ?></div>
         
         <div class="test-info">
-            <div>
-                <strong>Type:</strong> 
+            <div class="test-info-item">
+                <span class="test-info-label">النوع:</span>
                 <span class="test-type"><?= ucfirst($labTest['test_type']) ?></span>
             </div>
-            <div>
-                <strong>Category:</strong> 
-                <?= htmlspecialchars(ucfirst(str_replace('_', ' ', $labTest['test_category']))) ?>
+            <div class="test-info-item">
+                <span class="test-info-label">التصنيف:</span>
+                <span class="test-info-value"><?= htmlspecialchars(ucfirst(str_replace('_', ' ', $labTest['test_category']))) ?></span>
             </div>
-            <div>
-                <strong>Status:</strong> 
+            <div class="test-info-item">
+                <span class="test-info-label">الحالة:</span>
                 <span class="test-status status-<?= $labTest['status'] ?>">
                     <?= ucfirst($labTest['status']) ?>
                 </span>
             </div>
-            <div>
-                <strong>Priority:</strong> 
+            <div class="test-info-item">
+                <span class="test-info-label">الأولوية:</span>
                 <span class="priority priority-<?= $labTest['priority'] ?>">
                     <?= ucfirst($labTest['priority']) ?>
                 </span>
             </div>
-            <div>
-                <strong>Ordered Date:</strong> 
-                <?= date('d/m/Y', strtotime($labTest['ordered_date'])) ?>
+            <div class="test-info-item">
+                <span class="test-info-label">تاريخ الطلب:</span>
+                <span class="test-info-value"><?= date('d/m/Y', strtotime($labTest['ordered_date'])) ?></span>
             </div>
             <?php if (!empty($labTest['expected_date'])): ?>
-            <div>
-                <strong>Expected Date:</strong> 
-                <?= date('d/m/Y', strtotime($labTest['expected_date'])) ?>
+            <div class="test-info-item">
+                <span class="test-info-label">التاريخ المتوقع:</span>
+                <span class="test-info-value"><?= date('d/m/Y', strtotime($labTest['expected_date'])) ?></span>
             </div>
             <?php endif; ?>
         </div>
 
         <?php if (!empty($labTest['notes'])): ?>
         <div class="notes-section">
-            <div class="section-title">Notes:</div>
+            <div class="section-title">ملاحظات - Notes:</div>
             <div><?= nl2br(htmlspecialchars($labTest['notes'])) ?></div>
         </div>
         <?php endif; ?>
 
         <?php if (!empty($labTest['results'])): ?>
         <div class="results-section">
-            <div class="section-title">Results:</div>
+            <div class="section-title">النتائج - Results:</div>
             <div><?= nl2br(htmlspecialchars($labTest['results'])) ?></div>
         </div>
         <?php endif; ?>
     </div>
-
-    <div class="footer">
-        <div>Report Generated: <?= date('d/m/Y H:i') ?></div>
-        <div><?= htmlspecialchars($clinic['name']) ?> - Lab Test Report</div>
+    
+    <!-- Footer -->
+    <div class="footer-section">
+        <div class="doctor-signature">
+            <div class="signature-line"></div>
+            <div class="doctor-name"><?= htmlspecialchars($doctor['display_name']) ?></div>
+            <div class="doctor-title">طبيب عيون - Ophthalmologist</div>
+            <div class="doctor-title"><?= htmlspecialchars($clinic['name']) ?></div>
+        </div>
+        
+        <div class="clinic-stamp">
+            <div class="stamp-box">
+                <?= htmlspecialchars($clinic['name']) ?>
+            </div>
+        </div>
+        
+        <div class="date-section">
+            <div class="date-label">تاريخ التقرير - Report Date</div>
+            <div class="date-value"><?= date('d/m/Y H:i') ?></div>
+        </div>
     </div>
 
     <script>

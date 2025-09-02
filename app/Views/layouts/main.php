@@ -409,7 +409,7 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="clinic-logo">
-                <i class="bi bi-eye"></i>
+                <img id="clinicLogo" src="/assets/images/Light.png" alt="Roaya" style="width: 32px; height: 32px; margin-right: 0.75rem;">
                 <div class="clinic-name">Roaya</div>
             </div>
         </div>
@@ -578,11 +578,22 @@
             // Update icon
             const icon = document.querySelector('#themeToggle i');
             icon.className = next === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+            
+            // Update logo
+            const logo = document.getElementById('clinicLogo');
+            if (logo) {
+                logo.src = next === 'dark' ? '/assets/images/Dark.png' : '/assets/images/Light.png';
+            }
         };
         
-        // Update initial icon
+        // Update initial icon and logo
         const icon = document.querySelector('#themeToggle i');
         icon.className = saved === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+        
+        const logo = document.getElementById('clinicLogo');
+        if (logo) {
+            logo.src = saved === 'dark' ? '/assets/images/Dark.png' : '/assets/images/Light.png';
+        }
         
         // Mobile sidebar toggle
         const sidebarToggle = document.getElementById('sidebarToggle');

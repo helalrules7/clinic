@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تقرير الموعد - <?= htmlspecialchars($appointment['patient_name']) ?></title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -25,13 +25,34 @@
             border-bottom: 3px solid #0066cc;
             padding: 12px 0;
             margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .logo-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .clinic-logo {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 8px;
         }
         
         .clinic-name {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 700;
             color: #0066cc;
             margin-bottom: 3px;
+        }
+        
+        .clinic-name-ar {
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 8px;
         }
         
         .clinic-info {
@@ -167,6 +188,21 @@
             height: 35px;
         }
         
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .watermark img {
+            width: 200px;
+            height: auto;
+        }
+        
         @media print {
             body {
                 margin: 0;
@@ -181,17 +217,21 @@
 </head>
 <body>
     <div class="header">
-        <div class="clinic-name"><?= htmlspecialchars($clinic['name']) ?></div>
+        <div class="logo-section">
+            <img src="/assets/images/Light.png" alt="Roaya Clinic Logo" class="clinic-logo">
+            <div class="clinic-name">Roaya Ophthalmology Clinic</div>
+            <div class="clinic-name-ar">رؤية لطب وجراحة العيون</div>
+        </div>
         <div class="clinic-info">
             <?= htmlspecialchars($clinic['address']) ?> | 
             <?= htmlspecialchars($clinic['phone']) ?> | 
             <?= htmlspecialchars($clinic['email']) ?>
         </div>
-        <div class="clinic-info">
-            <?= htmlspecialchars($clinic['license']) ?> | 
-            <?= htmlspecialchars($clinic['tax_id']) ?>
-        </div>
-        <div class="report-title">تقرير الموعد الطبي</div>
+        <div class="report-title">تقرير زيارة</div>
+    </div>
+    
+    <div class="watermark">
+        <img src="/assets/images/Light.png" alt="Watermark">
     </div>
 
     <div class="patient-info">

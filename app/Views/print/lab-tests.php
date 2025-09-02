@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lab Tests - <?= $patient['first_name'] . ' ' . $patient['last_name'] ?></title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         @media print {
             @page {
-                size: A5;
-                margin: 0.6cm;
+                size: A4;
+                margin: 0.8cm;
             }
         }
         
@@ -19,198 +20,240 @@
         }
         
         body {
-            font-family: 'Arial', sans-serif;
-            font-size: 9px;
+            font-family: 'Cairo', 'Arial', sans-serif;
+            font-size: 11px;
             line-height: 1.2;
             color: #000;
             background: white;
-            width: 14.8cm;
-            height: 21cm;
+            width: 21cm;
+            height: 29.7cm;
             margin: 0 auto;
-            padding: 0.6cm;
+            padding: 0.8cm;
         }
         
-        .lab-header {
+        .prescription-header {
             text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 3px solid #2c3e50;
+            padding-bottom: 12px;
+        }
+        
+        .logo-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             margin-bottom: 10px;
-            border-bottom: 2px solid #2c3e50;
-            padding-bottom: 6px;
+        }
+        
+        .clinic-logo {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 8px;
         }
         
         .clinic-name {
-            font-size: 15px;
+            font-size: 18px;
+            font-family: 'Cairo', sans-serif;
             font-weight: bold;
             color: #2c3e50;
             margin-bottom: 3px;
         }
         
-        .clinic-info {
-            font-size: 7px;
+        .clinic-name-ar {
+            font-size: 16px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
             color: #666;
-            margin-bottom: 2px;
+            margin-bottom: 8px;
         }
         
-        .lab-title {
-            font-size: 12px;
+        .clinic-info {
+            font-size: 10px;
+            font-family: 'Cairo', sans-serif;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        
+        .prescription-title {
+            font-size: 18px;
+            font-family: 'Cairo', sans-serif;
             font-weight: bold;
             text-align: center;
-            margin: 8px 0;
+            margin: 15px 0;
             color: #2c3e50;
-            border: 2px solid #e74c3c;
-            padding: 5px;
-            border-radius: 5px;
-            background: #fff5f5;
+            border: 3px solid #e74c3c;
+            padding: 10px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
         }
         
         .patient-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            padding: 6px;
-            border-radius: 5px;
+            margin-bottom: 15px;
+            border: 2px solid #ddd;
+            padding: 12px;
+            border-radius: 8px;
             background: #f8f9fa;
         }
         
         .patient-details, .appointment-details {
             flex: 1;
+            text-align: right;
+            direction: rtl;
         }
         
         .patient-details h3, .appointment-details h3 {
             color: #2c3e50;
-            margin-bottom: 5px;
-            font-size: 9px;
-            border-bottom: 1px solid #e74c3c;
-            padding-bottom: 2px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            border-bottom: 2px solid #e74c3c;
+            padding-bottom: 5px;
+            text-align: right;
         }
         
         .patient-details p, .appointment-details p {
-            margin: 2px 0;
-            font-size: 7px;
+            margin: 4px 0;
+            font-size: 11px;
+            text-align: right;
         }
         
-        .appointment-details {
-            text-align: left;
-        }
-        
-        .lab-content {
-            margin: 10px 0;
+        .prescription-content {
+            margin: 15px 0;
         }
         
         .test-section {
-            border: 1px solid #e74c3c;
-            margin-bottom: 8px;
-            padding: 6px;
-            border-radius: 5px;
-            background: white;
+            border: 2px solid #e74c3c;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: #fff5f5;
+            page-break-inside: avoid;
         }
         
         .test-title {
             font-weight: bold;
             color: #e74c3c;
-            margin-bottom: 5px;
-            font-size: 9px;
+            margin-bottom: 8px;
+            font-size: 14px;
             text-align: center;
-            border-bottom: 1px solid #e74c3c;
-            padding-bottom: 3px;
+            border-bottom: 2px solid #e74c3c;
+            padding-bottom: 5px;
         }
         
         .test-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 6px;
+            gap: 8px;
+            margin-bottom: 8px;
         }
         
         .test-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 2px 0;
+            padding: 4px 0;
             border-bottom: 1px solid #eee;
         }
         
         .test-label {
             font-weight: bold;
             color: #666;
-            font-size: 7px;
+            font-size: 10px;
         }
         
         .test-value {
             color: #2c3e50;
             font-weight: 500;
-            font-size: 7px;
+            font-size: 10px;
             text-align: center;
-            min-width: 50px;
+            min-width: 60px;
         }
         
         .diagnosis-section {
-            margin: 10px 0;
-            border: 1px solid #27ae60;
-            padding: 6px;
-            border-radius: 5px;
+            margin: 12px 0;
+            border: 2px solid #27ae60;
+            padding: 10px;
+            border-radius: 8px;
             background: #f0fff4;
         }
         
         .diagnosis-title {
             font-weight: bold;
             color: #27ae60;
-            margin-bottom: 5px;
-            font-size: 9px;
+            margin-bottom: 8px;
+            font-size: 12px;
             text-align: center;
         }
         
         .diagnosis-content {
             color: #27ae60;
-            font-size: 7px;
-            line-height: 1.2;
+            font-size: 10px;
+            line-height: 1.4;
         }
         
         .plan-section {
-            margin: 10px 0;
-            border: 1px solid #f39c12;
-            padding: 6px;
-            border-radius: 5px;
+            margin: 12px 0;
+            border: 2px solid #f39c12;
+            padding: 10px;
+            border-radius: 8px;
             background: #fffbf0;
         }
         
         .plan-title {
             font-weight: bold;
             color: #f39c12;
-            margin-bottom: 5px;
-            font-size: 9px;
+            margin-bottom: 8px;
+            font-size: 12px;
             text-align: center;
         }
         
         .plan-content {
             color: #f39c12;
-            font-size: 7px;
-            line-height: 1.2;
+            font-size: 10px;
+            line-height: 1.4;
         }
         
         .followup-section {
-            margin: 10px 0;
-            border: 1px solid #9b59b6;
-            padding: 6px;
-            border-radius: 5px;
+            margin: 12px 0;
+            border: 2px solid #9b59b6;
+            padding: 10px;
+            border-radius: 8px;
             background: #f8f4fd;
         }
         
         .followup-title {
             font-weight: bold;
             color: #9b59b6;
-            margin-bottom: 5px;
-            font-size: 9px;
+            margin-bottom: 8px;
+            font-size: 12px;
             text-align: center;
         }
         
         .followup-content {
             color: #9b59b6;
-            font-size: 7px;
+            font-size: 10px;
             text-align: center;
         }
         
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .watermark img {
+            width: 250px;
+            height: auto;
+        }
+        
         .footer-section {
-            margin-top: 12px;
+            margin-top: 20px;
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
@@ -222,22 +265,22 @@
         }
         
         .signature-line {
-            width: 100px;
+            width: 180px;
             height: 1px;
             background: #333;
-            margin: 10px auto 2px;
+            margin: 15px auto 3px;
         }
         
         .doctor-name {
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 2px;
-            font-size: 8px;
+            margin-bottom: 3px;
+            font-size: 11px;
         }
         
         .doctor-title {
             color: #666;
-            font-size: 6px;
+            font-size: 9px;
         }
         
         .clinic-stamp {
@@ -246,8 +289,8 @@
         }
         
         .stamp-box {
-            width: 50px;
-            height: 50px;
+            width: 80px;
+            height: 80px;
             border: 2px solid #e74c3c;
             border-radius: 50%;
             margin: 0 auto;
@@ -256,10 +299,9 @@
             justify-content: center;
             color: #e74c3c;
             font-weight: bold;
-            font-size: 5px;
+            font-size: 8px;
             text-align: center;
             line-height: 1.1;
-            background: white;
         }
         
         .date-section {
@@ -270,59 +312,47 @@
         .date-label {
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 2px;
-            font-size: 7px;
+            margin-bottom: 3px;
+            font-size: 10px;
         }
         
         .date-value {
             color: #666;
-            font-size: 9px;
+            font-size: 12px;
         }
         
         .prescription-number {
             position: absolute;
-            top: 15px;
-            left: 15px;
-            font-size: 8px;
+            top: 25px;
+            left: 25px;
+            font-size: 11px;
             color: #999;
         }
         
-        .watermark {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 32px;
-            color: rgba(231, 76, 60, 0.08);
-            font-weight: bold;
-            pointer-events: none;
-            z-index: -1;
-        }
-        
         .urgency-notice {
-            margin: 10px 0;
-            padding: 5px;
+            margin: 12px 0;
+            padding: 10px;
             background: #ffe6e6;
-            border: 1px solid #e74c3c;
-            border-radius: 5px;
+            border: 2px solid #e74c3c;
+            border-radius: 8px;
             text-align: center;
         }
         
         .urgency-title {
             font-weight: bold;
             color: #e74c3c;
-            margin-bottom: 2px;
-            font-size: 7px;
+            margin-bottom: 5px;
+            font-size: 10px;
         }
         
         .urgency-text {
             color: #e74c3c;
-            font-size: 6px;
+            font-size: 9px;
         }
         
         .test-notes {
-            margin: 6px 0;
-            padding: 5px;
+            margin: 8px 0;
+            padding: 8px;
             background: #f0f8ff;
             border: 1px solid #3498db;
             border-radius: 5px;
@@ -331,14 +361,14 @@
         .notes-title {
             font-weight: bold;
             color: #3498db;
-            margin-bottom: 3px;
-            font-size: 7px;
+            margin-bottom: 5px;
+            font-size: 9px;
         }
         
         .notes-text {
             color: #3498db;
-            font-size: 6px;
-            line-height: 1.2;
+            font-size: 8px;
+            line-height: 1.3;
         }
         
         @media print {
@@ -346,10 +376,10 @@
                 width: 100%;
                 height: auto;
                 margin: 0;
-                padding: 0.3cm;
+                padding: 0.5cm;
             }
             
-            .lab-header,
+            .prescription-header,
             .patient-info,
             .test-section,
             .diagnosis-section {
@@ -360,22 +390,27 @@
 </head>
 <body>
     <div class="prescription-number">Appointment #<?= str_pad($appointment['id'], 6, '0', STR_PAD_LEFT) ?></div>
-    <div class="watermark">LAB TESTS</div>
+    <div class="watermark">
+        <img src="/assets/images/Light.png" alt="Watermark">
+    </div>
     
     <!-- Header -->
-    <div class="lab-header">
-        <div class="clinic-name"><?= $clinic['name'] ?></div>
+    <div class="prescription-header">
+        <div class="logo-section">
+            <img src="/assets/images/Light.png" alt="Roaya Clinic Logo" class="clinic-logo">
+            <div class="clinic-name">Roaya Ophthalmology Clinic</div>
+            <div class="clinic-name-ar">رؤية لطب وجراحة العيون</div>
+        </div>
         <div class="clinic-info"><?= $clinic['address'] ?></div>
         <div class="clinic-info">هاتف: <?= $clinic['phone'] ?> | <?= $clinic['email'] ?></div>
-        <div class="clinic-info"><?= $clinic['license'] ?> | <?= $clinic['tax_id'] ?></div>
     </div>
     
     <!-- Title -->
-    <div class="lab-title">طلب فحوصات مخبرية - Laboratory Test Request</div>
+    <div class="prescription-title">طلب فحوصات مخبرية - Laboratory Test Request</div>
     
     <!-- Patient and Appointment Info -->
     <div class="patient-info">
-        <div class="patient-details">
+        <div class="patient-details" dir="rtl">
             <h3>بيانات المريض - Patient Information</h3>
             <p><strong>الاسم:</strong> <?= $patient['first_name'] . ' ' . $patient['last_name'] ?></p>
             <p><strong>العمر:</strong> 
@@ -394,7 +429,7 @@
             <?php endif; ?>
         </div>
         
-        <div class="appointment-details">
+        <div class="appointment-details" dir="rtl">
             <h3>تفاصيل الموعد - Appointment Details</h3>
             <p><strong>التاريخ:</strong> <?= date('d/m/Y', strtotime($appointment['appointment_date'])) ?></p>
             <p><strong>الوقت:</strong> <?= date('H:i', strtotime($appointment['start_time'])) ?></p>
@@ -404,7 +439,7 @@
     </div>
     
     <!-- Lab Tests Content -->
-    <div class="lab-content">
+    <div class="prescription-content">
         <!-- Visual Acuity Tests -->
         <div class="test-section">
             <div class="test-title">فحص حدة البصر - Visual Acuity Tests</div>

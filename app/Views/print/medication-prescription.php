@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Medical Prescription - <?= $patient['first_name'] . ' ' . $patient['last_name'] ?></title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         @media print {
             @page {
@@ -19,7 +20,7 @@
         }
         
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Cairo', 'Arial', sans-serif;
             font-size: 11px;
             line-height: 1.2;
             color: #000;
@@ -36,11 +37,31 @@
             padding-bottom: 10px;
         }
         
+        .logo-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .clinic-logo {
+            width: 55px;
+            height: 55px;
+            margin-bottom: 8px;
+        }
+        
         .clinic-name {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: bold;
             color: #2c3e50;
             margin-bottom: 3px;
+        }
+        
+        .clinic-name-ar {
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 8px;
         }
         
         .clinic-info {
@@ -259,15 +280,18 @@
         }
         
         .watermark {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 48px;
-            color: rgba(52, 152, 219, 0.1);
-            font-weight: bold;
+            opacity: 0.05;
             pointer-events: none;
             z-index: -1;
+        }
+        
+        .watermark img {
+            width: 220px;
+            height: auto;
         }
         
         @media print {
@@ -287,14 +311,19 @@
 </head>
 <body>
     <div class="prescription-number">Rx #<?= str_pad($appointment['id'], 6, '0', STR_PAD_LEFT) ?></div>
-    <div class="watermark"><?= $clinic['name'] ?></div>
+    <div class="watermark">
+        <img src="/assets/images/Light.png" alt="Watermark">
+    </div>
     
     <!-- Header -->
     <div class="prescription-header">
-        <div class="clinic-name"><?= $clinic['name'] ?></div>
+        <div class="logo-section">
+            <img src="/assets/images/Light.png" alt="Roaya Clinic Logo" class="clinic-logo">
+            <div class="clinic-name">Roaya Ophthalmology Clinic</div>
+            <div class="clinic-name-ar">رؤية لطب وجراحة العيون</div>
+        </div>
         <div class="clinic-info"><?= $clinic['address'] ?></div>
         <div class="clinic-info">هاتف: <?= $clinic['phone'] ?> | <?= $clinic['email'] ?></div>
-        <div class="clinic-info"><?= $clinic['license'] ?> | <?= $clinic['tax_id'] ?></div>
     </div>
     
     <!-- Title -->

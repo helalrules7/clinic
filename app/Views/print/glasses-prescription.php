@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Glasses Prescription - <?= $patient['first_name'] . ' ' . $patient['last_name'] ?></title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
         @media print {
             @page {
@@ -19,7 +21,7 @@
         }
         
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Cairo', 'Arial', sans-serif;
             font-size: 11px;
             line-height: 1.2;
             color: #000;
@@ -37,21 +39,45 @@
             padding-bottom: 12px;
         }
         
+        .logo-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .clinic-logo {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 8px;
+        }
+        
         .clinic-name {
-            font-size: 24px;
+            font-size: 18px;
+            font-family: 'Cairo', sans-serif;
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
+        }
+        
+        .clinic-name-ar {
+            font-size: 16px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 8px;
         }
         
         .clinic-info {
             font-size: 10px;
+            font-family: 'Cairo', sans-serif;
             color: #666;
             margin-bottom: 3px;
         }
         
         .prescription-title {
             font-size: 18px;
+            font-family: 'Cairo', sans-serif;
             font-weight: bold;
             text-align: center;
             margin: 15px 0;
@@ -75,6 +101,8 @@
         
         .patient-details, .appointment-details {
             flex: 1;
+            text-align: right;
+            direction: rtl;
         }
         
         .patient-details h3, .appointment-details h3 {
@@ -83,16 +111,16 @@
             font-size: 14px;
             border-bottom: 2px solid #3498db;
             padding-bottom: 5px;
+            text-align: right;
         }
         
         .patient-details p, .appointment-details p {
             margin: 4px 0;
             font-size: 11px;
+            text-align: right;
         }
         
-        .appointment-details {
-            text-align: left;
-        }
+
         
         .prescription-content {
             margin: 15px 0;
@@ -315,15 +343,18 @@
         }
         
         .watermark {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 56px;
-            color: rgba(52, 152, 219, 0.08);
-            font-weight: bold;
+            opacity: 0.05;
             pointer-events: none;
             z-index: -1;
+        }
+        
+        .watermark img {
+            width: 250px;
+            height: auto;
         }
         
         .validity-notice {
@@ -366,14 +397,19 @@
 </head>
 <body>
     <div class="prescription-number">Glasses Rx #<?= str_pad($prescription['id'], 6, '0', STR_PAD_LEFT) ?></div>
-    <div class="watermark"><?= $clinic['name'] ?></div>
+    <div class="watermark">
+        <img src="/assets/images/Light.png" alt="Watermark">
+    </div>
     
     <!-- Header -->
     <div class="prescription-header">
-        <div class="clinic-name"><?= $clinic['name'] ?></div>
+        <div class="logo-section">
+            <img src="/assets/images/Light.png" alt="Roaya Clinic Logo" class="clinic-logo">
+            <div class="clinic-name">Roaya Ophthalmology Clinic</div>
+            <div class="clinic-name-ar">رؤية لطب وجراحة العيون</div>
+        </div>
         <div class="clinic-info"><?= $clinic['address'] ?></div>
         <div class="clinic-info">هاتف: <?= $clinic['phone'] ?> | <?= $clinic['email'] ?></div>
-        <div class="clinic-info"><?= $clinic['license'] ?> | <?= $clinic['tax_id'] ?></div>
     </div>
     
     <!-- Title -->
@@ -381,7 +417,7 @@
     
     <!-- Patient and Appointment Info -->
     <div class="patient-info">
-        <div class="patient-details">
+        <div class="patient-details" dir="rtl">
             <h3>بيانات المريض - Patient Information</h3>
             <p><strong>الاسم:</strong> <?= $patient['first_name'] . ' ' . $patient['last_name'] ?></p>
             <p><strong>العمر:</strong> 
@@ -390,14 +426,14 @@
                 <?php elseif ($patient['dob']): ?>
                     <?= date_diff(date_create($patient['dob']), date_create('now'))->y ?> سنة
                 <?php else: ?>
-                    غير محدد
+                    غير محدد 
                 <?php endif; ?>
             </p>
             <p><strong>الجنس:</strong> <?= $patient['gender'] ?? 'N/A' ?></p>
             <p><strong>رقم الهاتف:</strong> <?= $patient['phone'] ?></p>
         </div>
         
-        <div class="appointment-details">
+        <div class="appointment-details" dir="rtl">
             <h3>تفاصيل الموعد - Appointment Details</h3>
             <p><strong>التاريخ:</strong> 
                 <?php 
