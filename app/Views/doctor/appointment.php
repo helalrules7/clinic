@@ -32,8 +32,8 @@
     margin-bottom: 2rem;
 }
 
-/* Doctor Warning Badge */
-.doctor-warning-badge {
+/* Doctor Info Badge */
+.doctor-info-badge {
     position: fixed;
     top: 20px;
     left: 50%;
@@ -54,16 +54,16 @@
     }
 }
 
-.doctor-warning-content {
-    background: linear-gradient(135deg, #dc3545, #c82333);
+.doctor-info-content {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
     color: white;
     padding: 1rem 1.5rem;
     border-radius: 12px;
-    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+    box-shadow: 0 8px 25px rgba(14, 165, 233, 0.3);
     border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
-.doctor-warning-icon {
+.doctor-info-icon {
     font-size: 1.5rem;
     margin-right: 0.75rem;
     animation: pulse 2s infinite;
@@ -408,39 +408,32 @@
 }
 </style>
 
-<!-- Doctor Warning Badge (if accessing another doctor's appointment) -->
+<!-- Doctor Info Badge (showing appointment doctor info) -->
 <?php 
-$currentDoctorId = $_SESSION['user_id'] ?? null;
-$appointmentDoctorId = $appointment['doctor_id'] ?? null;
 $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
-$currentDoctorName = $_SESSION['user_name'] ?? 'Current Doctor';
-
-if ($currentDoctorId && $appointmentDoctorId && $currentDoctorId != $appointmentDoctorId): 
 ?>
-<div class="doctor-warning-badge" id="doctorWarningBadge">
-    <div class="doctor-warning-content">
+<div class="doctor-info-badge" id="doctorInfoBadge">
+    <div class="doctor-info-content">
         <div class="d-flex align-items-center">
-            <i class="bi bi-exclamation-triangle-fill doctor-warning-icon"></i>
+            <i class="bi bi-person-badge-fill doctor-info-icon"></i>
             <div class="flex-grow-1">
                 <div class="fw-bold mb-1">
-                    <i class="bi bi-shield-exclamation me-2"></i>
-                    Accessing Another Doctor's Appointment
+                    <i class="bi bi-info-circle me-2"></i>
+                    Appointment Information
                 </div>
                 <div class="small">
-                    This appointment belongs to <strong>Dr. <?= htmlspecialchars($appointmentDoctorName) ?></strong>. 
-                    You are currently logged in as <strong>Dr. <?= htmlspecialchars($currentDoctorName) ?></strong>.
+                    This appointment is managed by <strong>Dr. <?= htmlspecialchars($appointmentDoctorName) ?></strong>.
                     <br>
-                    <small class="text-warning-light">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Please ensure you have permission to access this patient's records.
+                    <small class="text-info-light">
+                        <i class="bi bi-check-circle me-1"></i>
+                        All doctors have access to view and manage patient records.
                     </small>
                 </div>
             </div>
-            <button type="button" class="btn-close btn-close-white ms-3" onclick="closeDoctorWarning()"></button>
+            <button type="button" class="btn-close btn-close-white ms-3" onclick="closeDoctorInfo()"></button>
         </div>
     </div>
 </div>
-<?php endif; ?>
 
 <!-- Appointment Header -->
 <div class="appointment-header">
@@ -449,12 +442,10 @@ if ($currentDoctorId && $appointmentDoctorId && $currentDoctorId != $appointment
             <h2 class="mb-2">
                 <i class="bi bi-calendar-event me-2"></i>
                 Appointment #<?= $appointment['id'] ?>
-                <?php if ($currentDoctorId && $appointmentDoctorId && $currentDoctorId != $appointmentDoctorId): ?>
-                    <span class="badge bg-danger ms-2 fs-6">
-                        <i class="bi bi-person-exclamation me-1"></i>
-                        Dr. <?= htmlspecialchars($appointmentDoctorName) ?>'s Patient
-                    </span>
-                <?php endif; ?>
+                <span class="badge bg-info ms-2 fs-6">
+                    <i class="bi bi-person-check me-1"></i>
+                    Dr. <?= htmlspecialchars($appointmentDoctorName) ?>'s Patient
+                </span>
             </h2>
             <p class="mb-2">
                 <i class="bi bi-person me-2"></i>
@@ -3137,13 +3128,13 @@ function showCompletionConfirmModal(appointmentId) {
         this.remove();
     });
 }
-// Close doctor warning badge
-function closeDoctorWarning() {
-    const warningBadge = document.getElementById('doctorWarningBadge');
-    if (warningBadge) {
-        warningBadge.style.animation = 'slideUp 0.3s ease-out forwards';
+// Close doctor info badge
+function closeDoctorInfo() {
+    const infoBadge = document.getElementById('doctorInfoBadge');
+    if (infoBadge) {
+        infoBadge.style.animation = 'slideUp 0.3s ease-out forwards';
         setTimeout(() => {
-            warningBadge.remove();
+            infoBadge.remove();
         }, 300);
     }
 }
@@ -3164,12 +3155,12 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Auto-hide doctor warning after 10 seconds
+// Auto-hide doctor info after 10 seconds
 document.addEventListener('DOMContentLoaded', function() {
-    const warningBadge = document.getElementById('doctorWarningBadge');
-    if (warningBadge) {
+    const infoBadge = document.getElementById('doctorInfoBadge');
+    if (infoBadge) {
         setTimeout(() => {
-            closeDoctorWarning();
+            closeDoctorInfo();
         }, 10000); // Auto-hide after 10 seconds
     }
 });

@@ -69,14 +69,14 @@ class ApiController
                 ]);
             }
 
-            // Get appointments for the date
-            $appointments = $this->getAppointmentsForDate($doctorId, $date);
+            // Get ALL appointments for the date (any doctor)
+            $appointments = $this->getAllAppointmentsForDate($date);
             
-            // Get available time slots
-            $availableSlots = $this->getAvailableTimeSlots($doctorId, $date);
+            // Get available time slots (based on working hours only)
+            $availableSlots = $this->getAvailableTimeSlotsGlobal($date);
             
-            // Get unavailable slots with doctor info
-            $unavailableSlots = $this->getUnavailableSlots($doctorId, $date);
+            // Get unavailable slots (outside working hours only)
+            $unavailableSlots = $this->getUnavailableSlotsGlobal($date);
 
             return $this->jsonResponse([
                 'ok' => true,
@@ -149,9 +149,8 @@ class ApiController
                 ], 400);
             }
 
-            // Check if time slot is available
-            if (!Helpers::isTimeSlotAvailable(
-                $data['doctor_id'], 
+            // Check if time slot is available globally (any doctor can book any available slot)
+            if (!Helpers::isTimeSlotAvailableGlobal(
                 $data['date'], 
                 $data['start_time'], 
                 $this->calculateEndTime($data['start_time'])
@@ -934,6 +933,43 @@ class ApiController
         return $appointments;
     }
 
+    private function getAllAppointmentsForDate($date)
+    {
+        // Set debug log file
+        ini_set('error_log', '/tmp/clinic_debug.log');
+        
+        $stmt = $this->pdo->prepare("
+            SELECT a.*, p.first_name, p.last_name, p.phone, p.dob, p.gender,
+                   CONCAT(p.first_name, ' ', p.last_name) as patient_name,
+                   DATE_FORMAT(a.start_time, '%H:%i') as start_time_formatted,
+                   DATE_FORMAT(a.end_time, '%H:%i') as end_time_formatted,
+                   d.display_name as doctor_name, u.name as user_name
+            FROM appointments a
+            JOIN patients p ON a.patient_id = p.id
+            JOIN doctors d ON a.doctor_id = d.id
+            JOIN users u ON d.user_id = u.id
+            WHERE a.date = ? AND a.status NOT IN ('Cancelled', 'NoShow')
+            ORDER BY a.start_time
+        ");
+        $stmt->execute([$date]);
+        $appointments = $stmt->fetchAll();
+        
+        // Format the time fields to match frontend expectations
+        foreach ($appointments as &$appointment) {
+            $appointment['start_time'] = $appointment['start_time_formatted'];
+            $appointment['end_time'] = $appointment['end_time_formatted'];
+            $appointment['doctor_display_name'] = $appointment['user_name'] ?? $appointment['doctor_name'];
+        }
+        
+        error_log("Debug getAllAppointmentsForDate - Date: $date");
+        error_log("Debug - Found " . count($appointments) . " appointments");
+        foreach ($appointments as $apt) {
+            error_log("Debug - Appointment: ID={$apt['id']}, Time={$apt['start_time']}, Patient={$apt['patient_name']}, Doctor={$apt['doctor_display_name']}, Status={$apt['status']}");
+        }
+        
+        return $appointments;
+    }
+
     private function getAvailableTimeSlots($doctorId, $date)
     {
         // Set debug log file
@@ -981,6 +1017,36 @@ class ApiController
         return $slots;
     }
 
+    private function getAvailableTimeSlotsGlobal($date)
+    {
+        // Set debug log file
+        ini_set('error_log', '/tmp/clinic_debug.log');
+        
+        // Use default working hours (2 PM to 11 PM) for all doctors
+        $slots = [];
+        $start = new \DateTime('14:00');
+        $end = new \DateTime('23:00');
+        $interval = new \DateInterval('PT15M');
+        
+        $current = clone $start;
+        while ($current < $end) {
+            $timeStr = $current->format('H:i');
+            
+            // Check if slot is available (no appointments at this time)
+            $isAvailable = $this->isTimeSlotAvailableGlobal($date, $timeStr);
+            error_log("Debug - Checking global slot $timeStr: " . ($isAvailable ? "AVAILABLE" : "NOT AVAILABLE"));
+            
+            if ($isAvailable) {
+                $slots[] = $timeStr;
+            }
+            
+            $current->add($interval);
+        }
+        
+        error_log("Debug - Generated " . count($slots) . " global available slots: " . implode(', ', $slots));
+        return $slots;
+    }
+
     private function isTimeSlotAvailable($doctorId, $date, $startTime)
     {
         $stmt = $this->pdo->prepare("
@@ -992,6 +1058,21 @@ class ApiController
         $count = $stmt->fetchColumn();
         
         error_log("Debug isTimeSlotAvailable - Doctor: $doctorId, Date: $date, Time: $startTime, Appointments: $count");
+        
+        return $count == 0;
+    }
+
+    private function isTimeSlotAvailableGlobal($date, $startTime)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT COUNT(*) FROM appointments 
+            WHERE date = ? AND start_time = ? 
+            AND status NOT IN ('Cancelled', 'NoShow')
+        ");
+        $stmt->execute([$date, $startTime]);
+        $count = $stmt->fetchColumn();
+        
+        error_log("Debug isTimeSlotAvailableGlobal - Date: $date, Time: $startTime, Appointments: $count");
         
         return $count == 0;
     }
@@ -1109,6 +1190,76 @@ class ApiController
         return $unavailableSlots;
     }
 
+    private function getUnavailableSlotsGlobal($date)
+    {
+        // Set debug log file
+        ini_set('error_log', '/tmp/clinic_debug.log');
+        
+        // Get all time slots that are unavailable globally
+        $allSlots = $this->getAllTimeSlots($date);
+        $availableSlots = $this->getAvailableTimeSlotsGlobal($date);
+        $unavailableSlots = [];
+        
+        // Debug logging
+        error_log("Debug getUnavailableSlotsGlobal - Date: $date");
+        error_log("Debug - All slots count: " . count($allSlots));
+        error_log("Debug - Available slots count: " . count($availableSlots));
+        
+        foreach ($allSlots as $time) {
+            if (!in_array($time, $availableSlots)) {
+                // Check if there's ANY appointment at this time
+                $stmt = $this->pdo->prepare("
+                    SELECT a.start_time, a.doctor_id, d.display_name as doctor_name, u.name as user_name,
+                           p.first_name, p.last_name, a.visit_type, a.status
+                    FROM appointments a
+                    JOIN doctors d ON a.doctor_id = d.id
+                    JOIN users u ON d.user_id = u.id
+                    JOIN patients p ON a.patient_id = p.id
+                    WHERE a.date = ? AND a.start_time = ? 
+                    AND a.status NOT IN ('Cancelled', 'NoShow')
+                ");
+                $stmt->execute([$date, $time]);
+                $appointment = $stmt->fetch();
+                
+                if ($appointment) {
+                    $doctorDisplayName = $appointment['user_name'] ?? $appointment['doctor_name'];
+                    $patientName = $appointment['first_name'] . ' ' . $appointment['last_name'];
+                    $visitType = $appointment['visit_type'];
+                    $status = $appointment['status'];
+                    
+                    error_log("Debug - Adding reserved slot for: $doctorDisplayName - $patientName");
+                    
+                    $unavailableSlots[] = [
+                        'time' => $time,
+                        'doctor_name' => $doctorDisplayName,
+                        'patient_name' => $patientName,
+                        'visit_type' => $visitType,
+                        'status' => $status,
+                        'reason' => 'Reserved for ' . $doctorDisplayName . ' - Patient: ' . $patientName . ' - Type: (' . $visitType . ')'
+                    ];
+                } else {
+                    // Check if it's outside working hours (before 2 PM or after 11 PM)
+                    $timeObj = new \DateTime($time);
+                    $workStart = new \DateTime('14:00');
+                    $workEnd = new \DateTime('23:00');
+                    
+                    $isOutside = $timeObj < $workStart || $timeObj >= $workEnd;
+                    error_log("Debug - Time: $time, Outside working hours: " . ($isOutside ? 'YES' : 'NO'));
+                    
+                    if ($isOutside) {
+                        $unavailableSlots[] = [
+                            'time' => $time,
+                            'doctor_name' => null,
+                            'reason' => 'Outside working hours'
+                        ];
+                    }
+                }
+            }
+        }
+        
+        return $unavailableSlots;
+    }
+
     private function getAllTimeSlots($date)
     {
         // Generate all possible time slots for the day (2 PM to 11 PM)
@@ -1152,9 +1303,12 @@ class ApiController
     {
         $stmt = $this->pdo->prepare("
             SELECT a.*, p.first_name, p.last_name, p.phone, p.dob, p.gender,
-                   CONCAT(p.first_name, ' ', p.last_name) as patient_name
+                   CONCAT(p.first_name, ' ', p.last_name) as patient_name,
+                   CONCAT(u.name) as doctor_name
             FROM appointments a
             JOIN patients p ON a.patient_id = p.id
+            JOIN doctors d ON a.doctor_id = d.id
+            JOIN users u ON d.user_id = u.id
             WHERE a.id = ?
         ");
         $stmt->execute([$id]);

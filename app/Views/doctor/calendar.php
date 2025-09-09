@@ -286,6 +286,7 @@ function loadCalendar() {
     console.log('🔍 DEBUG: Loading calendar for doctor:', doctorId, 'date:', dateStr);
     console.log('🔍 DEBUG: API URL:', `/api/calendar?doctor_id=${doctorId}&date=${dateStr}`);
     
+    // Any doctor can load calendar data
     fetch(`/api/calendar?doctor_id=${doctorId}&date=${dateStr}`)
         .then(response => {
             console.log('🔍 DEBUG: API Response status:', response.status);
@@ -342,7 +343,7 @@ function renderCalendar(data) {
             html += '</div>';
         });
     } else {
-        // Normal day processing
+        // Normal day processing (any doctor can see all appointments)
         timeSlots.forEach(time => {
             const appointment = data.appointments.find(apt => apt.start_time === time);
             const isAvailable = data.available_slots.includes(time);
@@ -372,29 +373,10 @@ function renderCalendar(data) {
                             <i class="bi bi-plus-circle me-2"></i>Available - ${formatTime(time)}
                          </div>`;
             } else {
-                // Show detailed unavailable information
-                if (unavailableSlot && unavailableSlot.doctor_name) {
-                    const displayText = `Reserved for ${unavailableSlot.doctor_name} - ${unavailableSlot.patient_name} (${unavailableSlot.visit_type})`;
-                    
-                    html += `<div class="unavailable-slot reserved-slot" title="${displayText}">
-                               <i class="bi bi-person-fill-lock me-2"></i>
-                               <div class="slot-details">
-                                   <div class="info-line"><span class="label">Dr Name:</span> ${unavailableSlot.doctor_name}</div>
-                                   <div class="info-line"><span class="label">Patient:</span> ${unavailableSlot.patient_name || 'N/A'}</div>
-                                   <div class="info-line"><span class="label">Type:</span> ${unavailableSlot.visit_type || 'N/A'}</div>
-                               </div>
-                             </div>`;
-                } else if (unavailableSlot && unavailableSlot.reason === 'Outside working hours') {
+                // Show unavailable information (only outside working hours now)
+                if (unavailableSlot && unavailableSlot.reason === 'Outside working hours') {
                     html += `<div class="unavailable-slot outside-hours" title="Outside working hours">
                                <i class="bi bi-clock me-2"></i>Outside working hours
-                             </div>`;
-                } else if (unavailableSlot && unavailableSlot.reason) {
-                    html += `<div class="unavailable-slot debug-slot" title="Debug: ${unavailableSlot.reason}">
-                               <i class="bi bi-exclamation-triangle me-2"></i>
-                               <div class="debug-info">
-                                   <div>Debug Info:</div>
-                                   <div>${unavailableSlot.reason}</div>
-                               </div>
                              </div>`;
                 } else {
                     // This should not happen - let's debug why
@@ -424,7 +406,7 @@ function renderAppointmentSlot(appointment) {
     const statusClass = getStatusBadgeClass(appointment.status);
     const visitTypeClass = getVisitTypeBadgeClass(appointment.visit_type);
     
-    // Create detailed tooltip content
+    // Create detailed tooltip content (any doctor can see appointment details)
     const tooltipContent = `
         <div class="appointment-tooltip">
             <div class="tooltip-header">
@@ -434,6 +416,10 @@ function renderAppointmentSlot(appointment) {
                 <div class="tooltip-row">
                     <span class="tooltip-label">Patient:</span>
                     <span class="tooltip-value">${appointment.patient_name}</span>
+                </div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Doctor:</span>
+                    <span class="tooltip-value">${appointment.doctor_display_name || 'N/A'}</span>
                 </div>
                 <div class="tooltip-row">
                     <span class="tooltip-label">Phone:</span>
@@ -482,6 +468,7 @@ function renderAppointmentSlot(appointment) {
             <div class="appointment-header">
                 <div class="appointment-info">
                     <div class="info-line"><span class="label">Patient:</span> ${appointment.patient_name}</div>
+                    <div class="info-line"><span class="label">Doctor:</span> ${appointment.doctor_display_name || 'N/A'}</div>
                     <div class="info-line"><span class="label">Type:</span> ${appointment.visit_type}</div>
                     <div class="info-line"><span class="label">Time:</span> ${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}</div>
                 </div>
@@ -495,6 +482,7 @@ function renderAppointmentSlot(appointment) {
 }
 
 function generateTimeSlots() {
+    // Generate time slots for any doctor to use
     const slots = [];
     const start = new Date();
     start.setHours(14, 0, 0, 0); // 2:00 PM
@@ -513,11 +501,12 @@ function generateTimeSlots() {
 }
 
 function navigateToAppointment(appointmentId) {
-    // Navigate to appointment page
+    // Navigate to appointment page (any doctor can access any appointment)
     window.location.href = `/doctor/appointments/${appointmentId}`;
 }
 
 function calculateAge(dob) {
+    // Calculate age for any doctor to see
     if (!dob) return null;
     
     try {
@@ -541,7 +530,7 @@ function calculateAge(dob) {
 }
 
 function initializeTooltips() {
-    // Dispose existing tooltips first
+    // Dispose existing tooltips first (any doctor can use tooltips)
     const existingTooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     existingTooltips.forEach(element => {
         const tooltip = bootstrap.Tooltip.getInstance(element);
@@ -563,6 +552,7 @@ function initializeTooltips() {
 }
 
 function showAppointmentDetails(appointmentId) {
+    // Any doctor can view any appointment details
     fetch(`/api/appointments/${appointmentId}`)
         .then(response => response.json())
         .then(data => {
@@ -579,6 +569,7 @@ function showAppointmentDetails(appointmentId) {
 }
 
 function populateAppointmentModal(appointment) {
+    // Any doctor can populate appointment modal
     const modalBody = document.getElementById('appointmentModalBody');
     
     modalBody.innerHTML = `
@@ -592,6 +583,7 @@ function populateAppointmentModal(appointment) {
             </div>
             <div class="col-md-6">
                 <h6>Appointment Details</h6>
+                <p><strong>Doctor:</strong> ${appointment.doctor_display_name || 'N/A'}</p>
                 <p><strong>Date:</strong> ${formatDate(appointment.date)}</p>
                 <p><strong>Time:</strong> ${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}</p>
                 <p><strong>Type:</strong> ${appointment.visit_type}</p>
@@ -608,12 +600,12 @@ function populateAppointmentModal(appointment) {
 }
 
 function showActionButtons(status) {
-    // Hide all buttons first
+    // Hide all buttons first (any doctor can perform actions)
     document.querySelectorAll('#appointmentModal .modal-footer button:not(.btn-secondary)').forEach(btn => {
         btn.style.display = 'none';
     });
     
-    // Show relevant buttons based on status
+    // Show relevant buttons based on status (any doctor can perform actions)
     switch (status) {
         case 'Booked':
             document.getElementById('startVisitBtn').style.display = 'inline-block';
@@ -631,6 +623,7 @@ function showActionButtons(status) {
 }
 
 function startAutoRefresh() {
+    // Auto refresh for any doctor
     refreshInterval = setInterval(() => {
         loadCalendar();
         updateStatusIndicator();
@@ -638,6 +631,7 @@ function startAutoRefresh() {
 }
 
 function updateStatusIndicator() {
+    // Update status indicator for any doctor
     const indicator = document.getElementById('statusIndicator');
     indicator.innerHTML = '<i class="bi bi-circle-fill me-1"></i> Live';
     indicator.className = 'badge bg-success me-2';
@@ -650,6 +644,7 @@ function updateStatusIndicator() {
 }
 
 function updateDateDisplay() {
+    // Update date display for any doctor
     const display = document.getElementById('currentDateDisplay');
     display.textContent = currentDate.toLocaleDateString('en-US', {
         weekday: 'long',
@@ -660,11 +655,13 @@ function updateDateDisplay() {
 }
 
 function updateLastUpdate() {
+    // Update last update time for any doctor
     const lastUpdate = document.getElementById('lastUpdate');
     lastUpdate.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
 }
 
 function getStatusBadgeClass(status) {
+    // Get status badge class for any doctor to see
     const classes = {
         'Booked': 'badge bg-primary',
         'CheckedIn': 'badge bg-info',
@@ -678,6 +675,7 @@ function getStatusBadgeClass(status) {
 }
 
 function getVisitTypeBadgeClass(type) {
+    // Get visit type badge class for any doctor to see
     const classes = {
         'New': 'badge bg-primary',
         'FollowUp': 'badge bg-success',
@@ -687,6 +685,7 @@ function getVisitTypeBadgeClass(type) {
 }
 
 function formatTime(time) {
+    // Format time for any doctor to see
     if (!time) return '';
     return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
         hour: '2-digit',
@@ -696,6 +695,7 @@ function formatTime(time) {
 }
 
 function formatDate(date) {
+    // Format date for any doctor to see
     if (!date) return '';
     return new Date(date).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -706,7 +706,7 @@ function formatDate(date) {
 
 // Add appointment functions
 function openAddAppointmentModal(preselectedTime = null, preselectedDate = null) {
-    // Set date - use preselected date or current date
+    // Set date - use preselected date or current date (any doctor can add appointments)
     const dateToUse = preselectedDate || currentDate.toISOString().split('T')[0];
     
     // Validate date before opening modal
@@ -801,7 +801,7 @@ function quickAddAppointment(time) {
         return;
     }
     
-    // Set the current date being viewed and the selected time
+    // Set the current date being viewed and the selected time (any doctor can add appointments)
     openAddAppointmentModal(time, selectedDate);
 }
 
@@ -821,7 +821,7 @@ function validateDateSelection(dateString) {
     return { valid: true };
 }
 
-// Format date in English
+// Format date in English (any doctor can see formatted dates)
 function formatDateArabic(dateString) {
     const date = new Date(dateString + 'T00:00:00');
     const options = { 
@@ -834,7 +834,7 @@ function formatDateArabic(dateString) {
 }
 
 function searchPatients() {
-    // Don't search if patient is preselected
+    // Don't search if patient is preselected (any doctor can search patients)
     if (preselectedPatient) {
         return;
     }
@@ -858,6 +858,7 @@ function searchPatients() {
 }
 
 function displayPatientSearchResults(patients) {
+    // Display patient search results for any doctor
     const resultsContainer = document.getElementById('patientSearchResults');
     
     if (patients.length === 0) {
@@ -879,6 +880,7 @@ function displayPatientSearchResults(patients) {
 }
 
 function selectPatient(patientId, patientName) {
+    // Any doctor can select any patient
     document.getElementById('selectedPatientId').value = patientId;
     document.getElementById('patientSearch').value = patientName;
     document.getElementById('patientSearchResults').innerHTML = '';
@@ -890,6 +892,7 @@ function loadAvailableTimeSlots(preselectedTime = null) {
     
     const doctorId = <?= $doctorId ?>;
     
+    // Any doctor can load available time slots
     fetch(`/api/calendar?doctor_id=${doctorId}&date=${date}`)
         .then(response => response.json())
         .then(data => {
@@ -919,7 +922,7 @@ function populateTimeSlots(availableSlots, preselectedTime = null) {
     const timeSelect = document.getElementById('appointmentTime');
     timeSelect.innerHTML = '<option value="">Select time slot...</option>';
     
-    // Add all available slots
+    // Add all available slots (any doctor can see all available slots)
     availableSlots.forEach(time => {
         const option = document.createElement('option');
         option.value = time;
@@ -965,7 +968,7 @@ function handleAddAppointment(e) {
     
     console.log('Form Data:', appointmentData); // Debug log
     
-    // Validation
+    // Validation (any doctor can add appointments)
     if (!appointmentData.patient_id) {
         showErrorMessage('Please select a patient');
         return;
@@ -993,7 +996,7 @@ function handleAddAppointment(e) {
         return;
     }
     
-    // Add doctor_id
+    // Add doctor_id (any doctor can book appointments)
     appointmentData.doctor_id = <?= $doctorId ?>;
     
     console.log('Final appointment data:', appointmentData); // Debug log
@@ -1032,7 +1035,7 @@ function handleAddAppointment(e) {
 }
 
 function showNotification(message, type = 'info') {
-    // Create notification element
+    // Create notification element (any doctor can see notifications)
     const notification = document.createElement('div');
     notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
     notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
@@ -1054,18 +1057,18 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-// Enhanced error message function
+// Enhanced error message function (any doctor can see error messages)
 function showErrorMessage(message) {
     showNotification(message, 'danger');
 }
 
-// Enhanced success message function  
+// Enhanced success message function (any doctor can see success messages)
 function showSuccessMessage(message) {
     showNotification(message, 'success');
 }
 
 function clearPreselectedPatient() {
-    // Clear preselected patient
+    // Clear preselected patient (any doctor can change patient selection)
     preselectedPatient = null;
     
     // Clear form fields
@@ -1091,6 +1094,7 @@ function clearPreselectedPatient() {
 }
 
 function debounce(func, wait) {
+    // Debounce function for any doctor to use
     let timeout;
     return function executedFunction(...args) {
         const later = () => {
@@ -1102,7 +1106,7 @@ function debounce(func, wait) {
     };
 }
 
-// Cleanup on page unload
+// Cleanup on page unload (any doctor can use cleanup)
 window.addEventListener('beforeunload', () => {
     if (refreshInterval) {
         clearInterval(refreshInterval);

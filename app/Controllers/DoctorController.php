@@ -168,10 +168,9 @@ class DoctorController
     public function viewAppointment($id)
     {
         $user = $this->auth->user();
-        $doctorId = $this->getDoctorId($user['id']);
         
-        // Get appointment details
-        $appointment = $this->getAppointment($id, $doctorId);
+        // Get appointment details - available to all doctors
+        $appointment = $this->getAppointmentForAllDoctors($id);
         if (!$appointment) {
             http_response_code(404);
             echo "<h1>Appointment not found</h1><p>The requested appointment could not be found.</p>";
@@ -244,8 +243,8 @@ class DoctorController
         $user = $this->auth->user();
         $doctorId = $this->getDoctorId($user['id']);
         
-        // Get appointment details
-        $appointment = $this->getAppointment($id, $doctorId);
+        // Get appointment details - available to all doctors
+        $appointment = $this->getAppointmentForAllDoctors($id);
         if (!$appointment) {
             http_response_code(404);
             echo "<h1>Appointment not found</h1><p>The requested appointment could not be found.</p>";
@@ -298,8 +297,8 @@ class DoctorController
         $user = $this->auth->user();
         $doctorId = $this->getDoctorId($user['id']);
         
-        // Get appointment details
-        $appointment = $this->getAppointment($id, $doctorId);
+        // Get appointment details - available to all doctors
+        $appointment = $this->getAppointmentForAllDoctors($id);
         if (!$appointment) {
             http_response_code(404);
             echo "<h1>Appointment not found</h1><p>The requested appointment could not be found.</p>";
@@ -337,8 +336,8 @@ class DoctorController
         $user = $this->auth->user();
         $doctorId = $this->getDoctorId($user['id']);
         
-        // Verify appointment belongs to this doctor
-        $appointment = $this->getAppointment($id, $doctorId);
+        // Get appointment details - available to all doctors
+        $appointment = $this->getAppointmentForAllDoctors($id);
         if (!$appointment) {
             http_response_code(404);
             echo "<h1>Appointment not found</h1><p>The requested appointment could not be found.</p>";
@@ -801,6 +800,24 @@ class DoctorController
             WHERE a.id = ? AND a.doctor_id = ?
         ");
         $stmt->execute([$id, $doctorId]);
+        return $stmt->fetch();
+    }
+
+    private function getAppointmentForAllDoctors($id)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT a.*, 
+                   CONCAT(p.first_name, ' ', p.last_name) as patient_name,
+                   p.first_name, p.last_name, p.phone, p.dob, p.gender,
+                   YEAR(CURDATE()) - YEAR(p.dob) as patient_age,
+                   CONCAT(u.name) as doctor_name
+            FROM appointments a
+            JOIN patients p ON a.patient_id = p.id
+            JOIN doctors d ON a.doctor_id = d.id
+            JOIN users u ON d.user_id = u.id
+            WHERE a.id = ?
+        ");
+        $stmt->execute([$id]);
         return $stmt->fetch();
     }
 

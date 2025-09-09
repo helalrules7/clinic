@@ -109,6 +109,7 @@ class Helpers
 
     /**
      * Check if date is Friday
+     * Note: Friday is always a holiday (closed day) for all doctors
      */
     public static function isFriday($date = null)
     {
@@ -118,7 +119,7 @@ class Helpers
             $date = new \DateTime($date);
         }
         
-        return $date->format('N') == 5; // 5 = Friday
+        return $date->format('w') == 5; // 5 = Friday (using 'w' format: 0=Sunday, 1=Monday, ..., 6=Saturday)
     }
 
     /**
@@ -176,6 +177,49 @@ class Helpers
         ";
         
         $params = [$doctorId, $date, $endTime, $startTime, $endTime, $startTime, $startTime, $endTime];
+        
+        if ($excludeAppointmentId) {
+            $sql .= " AND id != ?";
+            $params[] = $excludeAppointmentId;
+        }
+        
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        
+        return $stmt->fetchColumn() == 0;
+    }
+
+    public static function isTimeSlotAvailableGlobal($date, $startTime, $endTime, $excludeAppointmentId = null)
+    {
+        $db = \App\Config\Database::getInstance()->getConnection();
+        
+        // Check if it's Friday - always closed
+        if (self::isFriday($date)) {
+            return false;
+        }
+        
+        // Check if it's within working hours (2 PM to 11 PM)
+        $timeObj = new \DateTime($startTime);
+        $workStart = new \DateTime('14:00');
+        $workEnd = new \DateTime('23:00');
+        
+        if ($timeObj < $workStart || $timeObj >= $workEnd) {
+            return false;
+        }
+        
+        // Check for conflicts with any appointment
+        $sql = "
+            SELECT COUNT(*) FROM appointments 
+            WHERE date = ? 
+            AND status NOT IN ('Cancelled', 'NoShow')
+            AND (
+                (start_time < ? AND end_time > ?) OR
+                (start_time < ? AND end_time > ?) OR
+                (start_time >= ? AND end_time <= ?)
+            )
+        ";
+        
+        $params = [$date, $endTime, $startTime, $endTime, $startTime, $startTime, $endTime];
         
         if ($excludeAppointmentId) {
             $sql .= " AND id != ?";

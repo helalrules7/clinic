@@ -285,9 +285,12 @@ class PrintController
     private function getAppointment($id)
     {
         $stmt = $this->pdo->prepare("
-            SELECT a.*, p.first_name, p.last_name, p.phone
+            SELECT a.*, p.first_name, p.last_name, p.phone,
+                   CONCAT(u.name) as doctor_name
             FROM appointments a
             JOIN patients p ON a.patient_id = p.id
+            JOIN doctors d ON a.doctor_id = d.id
+            JOIN users u ON d.user_id = u.id
             WHERE a.id = ?
         ");
         $stmt->execute([$id]);

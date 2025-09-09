@@ -16,24 +16,25 @@ INSERT INTO doctors (user_id, display_name, specialty, license_number) VALUES
 (2, 'Dr. Ahmed AlFaramawy', 'Ophthalmology', 'EGY-OPH-002');
 
 -- Insert doctor schedules
--- Dr. Ahmed: Sunday, Monday, Wednesday
+-- All doctors work all days except Friday (Friday is always off)
+-- Dr. Ahmed: All days except Friday
 INSERT INTO doctor_schedule (doctor_id, weekday, is_working, work_start, work_end) VALUES
 (1, 0, TRUE, '14:00:00', '23:00:00'), -- Sunday
 (1, 1, TRUE, '14:00:00', '23:00:00'), -- Monday
-(1, 2, FALSE, '00:00:00', '00:00:00'), -- Tuesday
+(1, 2, TRUE, '14:00:00', '23:00:00'), -- Tuesday
 (1, 3, TRUE, '14:00:00', '23:00:00'), -- Wednesday
-(1, 4, FALSE, '00:00:00', '00:00:00'), -- Thursday
-(1, 5, FALSE, '00:00:00', '00:00:00'), -- Friday (closed)
-(1, 6, FALSE, '00:00:00', '00:00:00'); -- Saturday
+(1, 4, TRUE, '14:00:00', '23:00:00'), -- Thursday
+(1, 5, FALSE, '00:00:00', '00:00:00'), -- Friday (OFF)
+(1, 6, TRUE, '14:00:00', '23:00:00'); -- Saturday
 
--- Dr. Sara: Tuesday, Thursday, Saturday
+-- Dr. Ahmed AlFaramawy: All days except Friday
 INSERT INTO doctor_schedule (doctor_id, weekday, is_working, work_start, work_end) VALUES
-(2, 0, FALSE, '00:00:00', '00:00:00'), -- Sunday
-(2, 1, FALSE, '00:00:00', '00:00:00'), -- Monday
+(2, 0, TRUE, '14:00:00', '23:00:00'), -- Sunday
+(2, 1, TRUE, '14:00:00', '23:00:00'), -- Monday
 (2, 2, TRUE, '14:00:00', '23:00:00'), -- Tuesday
-(2, 3, FALSE, '00:00:00', '00:00:00'), -- Wednesday
+(2, 3, TRUE, '14:00:00', '23:00:00'), -- Wednesday
 (2, 4, TRUE, '14:00:00', '23:00:00'), -- Thursday
-(2, 5, FALSE, '00:00:00', '00:00:00'), -- Friday (closed)
+(2, 5, FALSE, '00:00:00', '00:00:00'), -- Friday (OFF)
 (2, 6, TRUE, '14:00:00', '23:00:00'); -- Saturday
 
 -- Insert sample patients
