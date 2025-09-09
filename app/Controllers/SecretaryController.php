@@ -43,10 +43,10 @@ class SecretaryController
             'recentPayments' => $recentPayments
         ]);
         
-        echo $this->view->render('layouts/main', [
-            'title' => 'Secretary Dashboard',
-            'pageTitle' => 'Dashboard',
-            'pageSubtitle' => 'Welcome back, ' . $user['name'],
+        echo $this->view->render('layouts/secretary_main', [
+            'title' => 'عيادة رؤية - لوحة تحكم السكرتارية',
+            'pageTitle' => 'لوحة التحكم',
+            'pageSubtitle' => 'مرحباً بعودتك، ' . $user['name'],
             'content' => $content
         ]);
     }
@@ -66,10 +66,10 @@ class SecretaryController
             'todayBookings' => $todayBookings
         ]);
         
-        echo $this->view->render('layouts/main', [
-            'title' => 'Bookings - Secretary Dashboard',
-            'pageTitle' => 'Manage Bookings',
-            'pageSubtitle' => 'Create and manage appointments',
+        echo $this->view->render('layouts/secretary_main', [
+            'title' => 'عيادة رؤية - إدارة الحجوزات',
+            'pageTitle' => 'إدارة الحجوزات',
+            'pageSubtitle' => 'إنشاء وإدارة المواعيد',
             'content' => $content
         ]);
     }
@@ -89,10 +89,10 @@ class SecretaryController
             'paymentStats' => $paymentStats
         ]);
         
-        echo $this->view->render('layouts/main', [
-            'title' => 'Payments - Secretary Dashboard',
-            'pageTitle' => 'Payment Management',
-            'pageSubtitle' => 'Track and manage payments',
+        echo $this->view->render('layouts/secretary_main', [
+            'title' => 'عيادة رؤية - إدارة المدفوعات',
+            'pageTitle' => 'إدارة المدفوعات',
+            'pageSubtitle' => 'تتبع وإدارة المدفوعات',
             'content' => $content
         ]);
     }
@@ -112,10 +112,10 @@ class SecretaryController
             'search' => $search
         ]);
         
-        echo $this->view->render('layouts/main', [
-            'title' => 'Patients - Secretary Dashboard',
-            'pageTitle' => 'Patient Management',
-            'pageSubtitle' => 'View and manage patient records',
+        echo $this->view->render('layouts/secretary_main', [
+            'title' => 'عيادة رؤية - إدارة المرضى',
+            'pageTitle' => 'إدارة المرضى',
+            'pageSubtitle' => 'عرض وإدارة سجلات المرضى',
             'content' => $content
         ]);
     }
@@ -126,10 +126,10 @@ class SecretaryController
         
         $content = $this->view->render('secretary/new-patient', []);
         
-        echo $this->view->render('layouts/main', [
-            'title' => 'New Patient - Secretary Dashboard',
-            'pageTitle' => 'Add New Patient',
-            'pageSubtitle' => 'Register a new patient',
+        echo $this->view->render('layouts/secretary_main', [
+            'title' => 'عيادة رؤية - مريض جديد',
+            'pageTitle' => 'إضافة مريض جديد',
+            'pageSubtitle' => 'تسجيل مريض جديد',
             'content' => $content
         ]);
     }
@@ -206,9 +206,9 @@ class SecretaryController
             'payments' => $payments
         ]);
         
-        echo $this->view->render('layouts/main', [
-            'title' => 'Patient Profile - Secretary Dashboard',
-            'pageTitle' => 'Patient Profile',
+        echo $this->view->render('layouts/secretary_main', [
+            'title' => 'عيادة رؤية - ملف المريض',
+            'pageTitle' => 'ملف المريض',
             'pageSubtitle' => $patient['first_name'] . ' ' . $patient['last_name'],
             'content' => $content
         ]);
@@ -234,10 +234,10 @@ class SecretaryController
             'items' => $items
         ]);
         
-        echo $this->view->render('layouts/main', [
-            'title' => 'Invoice - Secretary Dashboard',
-            'pageTitle' => 'Invoice Details',
-            'pageSubtitle' => 'Invoice #' . $invoice['invoice_no'],
+        echo $this->view->render('layouts/secretary_main', [
+            'title' => 'عيادة رؤية - الفاتورة',
+            'pageTitle' => 'تفاصيل الفاتورة',
+            'pageSubtitle' => 'فاتورة رقم #' . $invoice['invoice_no'],
             'content' => $content
         ]);
     }

@@ -1,15 +1,15 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">Today's Overview</h4>
+            <h4 class="mb-0 arabic-text">نظرة عامة على اليوم</h4>
             <div class="d-flex gap-2">
                 <a href="/secretary/bookings" class="btn btn-primary">
                     <i class="bi bi-calendar-plus me-2"></i>
-                    New Booking
+                    حجز جديد
                 </a>
                 <a href="/secretary/patients/new" class="btn btn-success">
                     <i class="bi bi-person-plus me-2"></i>
-                    New Patient
+                    مريض جديد
                 </a>
             </div>
         </div>
@@ -27,7 +27,7 @@
                     </div>
                     <div class="stat-content ms-3">
                         <h3 class="stat-number"><?= $stats['total_appointments'] ?? 0 ?></h3>
-                        <p class="stat-label">Total Appointments</p>
+                        <p class="stat-label arabic-text">إجمالي المواعيد</p>
                     </div>
                 </div>
             </div>
@@ -43,7 +43,7 @@
                     </div>
                     <div class="stat-content ms-3">
                         <h3 class="stat-number"><?= $stats['checked_in'] ?? 0 ?></h3>
-                        <p class="stat-label">Checked In</p>
+                        <p class="stat-label arabic-text">تم الحضور</p>
                     </div>
                 </div>
             </div>
@@ -59,7 +59,7 @@
                     </div>
                     <div class="stat-content ms-3">
                         <h3 class="stat-number"><?= $stats['completed'] ?? 0 ?></h3>
-                        <p class="stat-label">Completed</p>
+                        <p class="stat-label arabic-text">مكتملة</p>
                     </div>
                 </div>
             </div>
@@ -75,7 +75,7 @@
                     </div>
                     <div class="stat-content ms-3">
                         <h3 class="stat-number"><?= $stats['booked'] ?? 0 ?></h3>
-                        <p class="stat-label">Pending</p>
+                        <p class="stat-label arabic-text">في الانتظار</p>
                     </div>
                 </div>
             </div>
@@ -88,30 +88,30 @@
     <div class="col-md-8">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
+                <h5 class="mb-0 arabic-text">
                     <i class="bi bi-calendar-day me-2"></i>
-                    Today's Appointments
+                    مواعيد اليوم
                 </h5>
-                <a href="/secretary/bookings" class="btn btn-sm btn-outline-primary">View All</a>
+                <a href="/secretary/bookings" class="btn btn-sm btn-outline-primary arabic-text">عرض الكل</a>
             </div>
             <div class="card-body p-0">
                 <?php if (empty($todayAppointments)): ?>
                     <div class="text-center py-4">
                         <i class="bi bi-calendar-x display-4 text-muted"></i>
-                        <p class="text-muted mt-2">No appointments scheduled for today</p>
-                        <a href="/secretary/bookings" class="btn btn-primary">Book First Appointment</a>
+                        <p class="text-muted mt-2 arabic-text">لا توجد مواعيد مجدولة لهذا اليوم</p>
+                        <a href="/secretary/bookings" class="btn btn-primary arabic-text">حجز أول موعد</a>
                     </div>
                 <?php else: ?>
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Time</th>
-                                    <th>Patient</th>
-                                    <th>Doctor</th>
-                                    <th>Type</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                                    <th class="arabic-text">الوقت</th>
+                                    <th class="arabic-text">المريض</th>
+                                    <th class="arabic-text">الطبيب</th>
+                                    <th class="arabic-text">النوع</th>
+                                    <th class="arabic-text">الحالة</th>
+                                    <th class="arabic-text">الإجراءات</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -175,17 +175,17 @@
     <div class="col-md-4">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
+                <h5 class="mb-0 arabic-text">
                     <i class="bi bi-credit-card me-2"></i>
-                    Recent Payments
+                    المدفوعات الأخيرة
                 </h5>
-                <a href="/secretary/payments" class="btn btn-sm btn-outline-primary">View All</a>
+                <a href="/secretary/payments" class="btn btn-sm btn-outline-primary arabic-text">عرض الكل</a>
             </div>
             <div class="card-body p-0">
                 <?php if (empty($recentPayments)): ?>
                     <div class="text-center py-4">
                         <i class="bi bi-credit-card text-muted"></i>
-                        <p class="text-muted mt-2">No recent payments</p>
+                        <p class="text-muted mt-2 arabic-text">لا توجد مدفوعات حديثة</p>
                     </div>
                 <?php else: ?>
                     <div class="list-group list-group-flush">
@@ -213,9 +213,9 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">
+                <h5 class="mb-0 arabic-text">
                     <i class="bi bi-lightning me-2"></i>
-                    Quick Actions
+                    الإجراءات السريعة
                 </h5>
             </div>
             <div class="card-body">
@@ -223,32 +223,32 @@
                     <div class="col-md-3 mb-3">
                         <a href="/secretary/bookings" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
                             <i class="bi bi-calendar-plus display-6 mb-3"></i>
-                            <span class="fw-semibold">New Booking</span>
-                            <small class="text-muted">Schedule appointment</small>
+                            <span class="fw-semibold arabic-text">حجز جديد</span>
+                            <small class="text-muted arabic-text">جدولة موعد</small>
                         </a>
                     </div>
                     
                     <div class="col-md-3 mb-3">
                         <a href="/secretary/patients/new" class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
                             <i class="bi bi-person-plus display-6 mb-3"></i>
-                            <span class="fw-semibold">New Patient</span>
-                            <small class="text-muted">Register patient</small>
+                            <span class="fw-semibold arabic-text">مريض جديد</span>
+                            <small class="text-muted arabic-text">تسجيل مريض</small>
                         </a>
                     </div>
                     
                     <div class="col-md-3 mb-3">
                         <a href="/secretary/payments" class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
                             <i class="bi bi-credit-card display-6 mb-3"></i>
-                            <span class="fw-semibold">Record Payment</span>
-                            <small class="text-muted">Process payment</small>
+                            <span class="fw-semibold arabic-text">تسجيل دفعة</span>
+                            <small class="text-muted arabic-text">معالجة دفعة</small>
                         </a>
                     </div>
                     
                     <div class="col-md-3 mb-3">
                         <a href="/secretary/patients" class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
                             <i class="bi bi-search display-6 mb-3"></i>
-                            <span class="fw-semibold">Find Patient</span>
-                            <small class="text-muted">Search records</small>
+                            <span class="fw-semibold arabic-text">البحث عن مريض</span>
+                            <small class="text-muted arabic-text">البحث في السجلات</small>
                         </a>
                     </div>
                 </div>
@@ -264,7 +264,7 @@ function viewAppointment(appointmentId) {
 }
 
 function checkInPatient(appointmentId) {
-    if (confirm('Mark patient as checked in?')) {
+    if (confirm('تأكيد حضور المريض؟')) {
         // Update appointment status via API
         fetch(`/api/appointments/${appointmentId}`, {
             method: 'PUT',
@@ -280,12 +280,12 @@ function checkInPatient(appointmentId) {
             if (data.ok) {
                 location.reload();
             } else {
-                alert('Error: ' + data.error);
+                alert('خطأ: ' + data.error);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error updating appointment status');
+            alert('خطأ في تحديث حالة الموعد');
         });
     }
 }
@@ -297,6 +297,7 @@ setInterval(() => {
 </script>
 
 <style>
+    
 .stat-card {
     border: none;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
