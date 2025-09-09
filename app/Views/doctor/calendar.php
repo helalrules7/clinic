@@ -214,6 +214,9 @@ const SERVER_DATETIME = '<?= $serverDateTime ?>';
 const SERVER_TIMESTAMP = <?= $serverTimestamp ?>;
 
 let currentDate = new Date();
+// Ensure currentDate is set to today at noon to avoid timezone issues
+const today = new Date();
+currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0);
 let selectedAppointment = null;
 let refreshInterval;
 let preselectedPatient = <?= $preselectedPatient ? json_encode($preselectedPatient) : 'null' ?>;
@@ -228,17 +231,18 @@ document.addEventListener('DOMContentLoaded', function() {
 function setupEventListeners() {
     // Navigation buttons
     document.getElementById('todayBtn').addEventListener('click', () => {
-        currentDate = new Date();
+        const today = new Date();
+        currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0);
         loadCalendar();
     });
     
     document.getElementById('prevDayBtn').addEventListener('click', () => {
-        currentDate.setDate(currentDate.getDate() - 1);
+        currentDate = new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
         loadCalendar();
     });
     
     document.getElementById('nextDayBtn').addEventListener('click', () => {
-        currentDate.setDate(currentDate.getDate() + 1);
+        currentDate = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
         loadCalendar();
     });
     
@@ -283,19 +287,12 @@ function loadCalendar() {
     const dateStr = currentDate.toISOString().split('T')[0];
     const doctorId = <?= $doctorId ?>;
     
-    console.log('🔍 DEBUG: Loading calendar for doctor:', doctorId, 'date:', dateStr);
-    console.log('🔍 DEBUG: API URL:', `/api/calendar?doctor_id=${doctorId}&date=${dateStr}`);
     
     // Any doctor can load calendar data
     fetch(`/api/calendar?doctor_id=${doctorId}&date=${dateStr}`)
-        .then(response => {
-            console.log('🔍 DEBUG: API Response status:', response.status);
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('🔍 DEBUG: API Response data:', data);
             if (data.ok) {
-                console.log('🔍 DEBUG: Unavailable slots:', data.data.unavailable_slots);
                 renderCalendar(data.data);
                 updateDateDisplay();
                 updateLastUpdate();
@@ -314,9 +311,11 @@ function renderCalendar(data) {
     const container = document.getElementById('calendarContainer');
     const timeSlots = generateTimeSlots();
     
-    // Check if it's Friday (official holiday)
-    const currentDateObj = new Date(currentDate);
-    const isFriday = currentDateObj.getDay() === 5; // 5 = Friday
+    // Check if it's Friday (official holiday) - use the date from server data
+    const dateStr = data.date || currentDate.toISOString().split('T')[0];
+    const currentDateObj = new Date(dateStr + 'T12:00:00'); // Use noon to avoid timezone issues
+    const isFriday = currentDateObj.getDay() === 5; // 5 = Friday (0=Sunday, 1=Monday, ..., 6=Saturday)
+    
     
     let html = '<div class="calendar-grid">';
     
@@ -328,15 +327,16 @@ function renderCalendar(data) {
     
     // If it's Friday, show official holiday for all slots
     if (isFriday || data.is_friday) {
+        const dayName = currentDateObj.toLocaleDateString('en-US', {weekday: 'long'});
         timeSlots.forEach(time => {
             html += '<div class="calendar-row">';
             html += `<div class="time-slot">${formatTime(time)}</div>`;
             html += '<div class="appointment-slot">';
-            html += `<div class="unavailable-slot official-holiday" title="Official Holiday - Friday">
+            html += `<div class="unavailable-slot official-holiday" title="Official Holiday - ${dayName}">
                        <i class="bi bi-calendar-x me-2"></i>
                        <div class="holiday-info">
                            <div class="holiday-title">Official Holiday</div>
-                           <div class="holiday-subtitle">Friday</div>
+                           <div class="holiday-subtitle">${dayName}</div>
                        </div>
                      </div>`;
             html += '</div>';
@@ -349,17 +349,6 @@ function renderCalendar(data) {
             const isAvailable = data.available_slots.includes(time);
             const unavailableSlot = data.unavailable_slots ? data.unavailable_slots.find(slot => slot.time === time) : null;
             
-            // Debug logging for time matching
-            if (time === '14:00') {
-                console.log('🔍 DEBUG Time 14:00:', {
-                    time: time,
-                    appointments: data.appointments,
-                    appointmentFound: appointment,
-                    appointmentTimes: data.appointments.map(apt => apt.start_time),
-                    isAvailable: isAvailable,
-                    unavailableSlot: unavailableSlot
-                });
-            }
             
             html += '<div class="calendar-row">';
             html += `<div class="time-slot">${formatTime(time)}</div>`;
@@ -646,7 +635,10 @@ function updateStatusIndicator() {
 function updateDateDisplay() {
     // Update date display for any doctor
     const display = document.getElementById('currentDateDisplay');
-    display.textContent = currentDate.toLocaleDateString('en-US', {
+    // Use the date string from currentDate to avoid timezone issues
+    const dateStr = currentDate.toISOString().split('T')[0];
+    const displayDate = new Date(dateStr + 'T12:00:00');
+    display.textContent = displayDate.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
@@ -966,7 +958,6 @@ function handleAddAppointment(e) {
     const formData = new FormData(e.target);
     const appointmentData = Object.fromEntries(formData);
     
-    console.log('Form Data:', appointmentData); // Debug log
     
     // Validation (any doctor can add appointments)
     if (!appointmentData.patient_id) {
@@ -999,7 +990,6 @@ function handleAddAppointment(e) {
     // Add doctor_id (any doctor can book appointments)
     appointmentData.doctor_id = <?= $doctorId ?>;
     
-    console.log('Final appointment data:', appointmentData); // Debug log
     
     // Save appointment
     fetch('/api/appointments', {
@@ -1011,8 +1001,6 @@ function handleAddAppointment(e) {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('API Response:', data); // Debug log
-        
         if (data.ok) {
             // Close modal
             bootstrap.Modal.getInstance(document.getElementById('addAppointmentModal')).hide();
