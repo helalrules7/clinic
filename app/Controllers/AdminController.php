@@ -246,6 +246,48 @@ class AdminController
         }
     }
 
+    public function settings()
+    {
+        $user = $this->auth->user();
+        
+        try {
+            // Get system settings
+            $settings = $this->getSystemSettings();
+            
+            // Handle form submission
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                if (!$this->validateCsrfToken()) {
+                    throw new Exception('Invalid CSRF token');
+                }
+                
+                $this->updateSystemSettings($_POST);
+                $_SESSION['success_message'] = 'Settings updated successfully';
+                header('Location: /admin/settings');
+                exit;
+            }
+
+            // Generate CSRF token
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+
+            $content = $this->view->render('admin/settings', [
+                'settings' => $settings,
+                'csrf_token' => $_SESSION['csrf_token']
+            ]);
+            
+            echo $this->view->render('layouts/main', [
+                'title' => 'System Settings',
+                'pageTitle' => 'System Settings',
+                'pageSubtitle' => 'Manage system configuration',
+                'content' => $content
+            ]);
+        } catch (Exception $e) {
+            error_log("Settings error: " . $e->getMessage());
+            $_SESSION['error_message'] = 'Failed to load settings: ' . $e->getMessage();
+            header('Location: /admin/dashboard');
+            exit;
+        }
+    }
+
     // Helper methods
     private function getSystemStats()
     {
@@ -369,10 +411,11 @@ class AdminController
         $sql = "
             SELECT u.*, 
                    COUNT(DISTINCT a.id) as total_appointments,
-                   COUNT(DISTINCT p.id) as total_patients
+                   (SELECT COUNT(DISTINCT a2.patient_id) 
+                    FROM appointments a2 
+                    WHERE a2.doctor_id = u.id) as total_patients
             FROM users u
             LEFT JOIN appointments a ON u.id = a.doctor_id
-            LEFT JOIN patients p ON u.id = p.created_by
             {$whereClause}
             GROUP BY u.id
             ORDER BY u.created_at DESC
@@ -585,5 +628,49 @@ class AdminController
             return false;
         }
         return hash_equals($_SESSION['csrf_token'], $_POST['csrf_token']);
+    }
+
+    private function getSystemSettings()
+    {
+        return [
+            'clinic_name' => 'Roaya Clinic',
+            'clinic_email' => 'info@roayaclinic.com',
+            'clinic_phone' => '+20 123 456 7890',
+            'clinic_address' => 'Cairo, Egypt',
+            'timezone' => 'Africa/Cairo',
+            'date_format' => 'Y-m-d',
+            'time_format' => 'H:i',
+            'items_per_page' => 10,
+            'backup_frequency' => 'daily',
+            'email_notifications' => true,
+            'sms_notifications' => false,
+            'maintenance_mode' => false
+        ];
+    }
+
+    private function updateSystemSettings($data)
+    {
+        // In a real application, you would save these to a database
+        // For now, we'll just validate the data
+        $allowedSettings = [
+            'clinic_name', 'clinic_email', 'clinic_phone', 'clinic_address',
+            'timezone', 'date_format', 'time_format', 'items_per_page',
+            'backup_frequency', 'email_notifications', 'sms_notifications', 'maintenance_mode'
+        ];
+
+        foreach ($data as $key => $value) {
+            if (in_array($key, $allowedSettings)) {
+                // Validate and sanitize the value
+                if ($key === 'clinic_email' && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                    throw new Exception('Invalid email address');
+                }
+                if ($key === 'items_per_page' && (!is_numeric($value) || $value < 1 || $value > 100)) {
+                    throw new Exception('Items per page must be between 1 and 100');
+                }
+                if (in_array($key, ['email_notifications', 'sms_notifications', 'maintenance_mode'])) {
+                    $value = (bool) $value;
+                }
+            }
+        }
     }
 }

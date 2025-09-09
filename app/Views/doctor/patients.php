@@ -86,6 +86,52 @@
     </div>
 </div>
 
+<!-- Doctor Filter -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card border-info">
+            <div class="card-header bg-info bg-opacity-10">
+                <h6 class="mb-0 text-info">
+                    <i class="bi bi-funnel me-2"></i>
+                    Filter by Doctor
+                </h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="btn-group" role="group" id="doctorFilterGroup">
+                    <button type="button" 
+                            class="btn btn-outline-primary active" 
+                            data-doctor="all" 
+                            onclick="filterByDoctor('all')">
+                        <i class="bi bi-people me-1"></i>
+                        All Doctors
+                    </button>
+                    <?php 
+                    $buttonColors = ['btn-outline-success', 'btn-outline-warning', 'btn-outline-info', 'btn-outline-secondary'];
+                    $colorIndex = 0;
+                    foreach ($doctors as $doctor): 
+                        $colorClass = $buttonColors[$colorIndex % count($buttonColors)];
+                        $colorIndex++;
+                    ?>
+                    <button type="button" 
+                            class="btn <?= $colorClass ?>" 
+                            data-doctor="<?= $doctor['id'] ?>" 
+                            onclick="filterByDoctor('<?= $doctor['id'] ?>')">
+                        <i class="bi bi-person-badge me-1"></i>
+                        <?= htmlspecialchars($doctor['display_name']) ?>
+                    </button>
+                    <?php endforeach; ?>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Showing patients for: <span id="currentFilterText">All Doctors</span>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Patients Table -->
 <div class="card">
     <div class="card-header">
@@ -140,6 +186,7 @@
                         <th>Patient Info</th>
                         <th>Contact</th>
                         <th>Age</th>
+                        <th>Doctors</th>
                         <th>Last Visit</th>
                         <th>Total Visits</th>
                         <th>Actions</th>
@@ -1417,6 +1464,87 @@ kbd[lang="ar"] {
     }
 }
 
+/* Doctor Filter Styling */
+#doctorFilterGroup .btn {
+    border-radius: 6px;
+    margin: 0 2px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+#doctorFilterGroup .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+#doctorFilterGroup .btn.active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+#doctorFilterGroup .btn-outline-primary.active {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+#doctorFilterGroup .btn-outline-success.active {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+#doctorFilterGroup .btn-outline-warning.active {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #212529;
+}
+
+#doctorFilterGroup .btn-outline-info.active {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
+}
+
+#doctorFilterGroup .btn-outline-secondary.active {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+#doctorFilterGroup .btn i {
+    font-size: 0.9rem;
+}
+
+/* Filter card styling */
+.card.border-info {
+    border-color: var(--accent) !important;
+}
+
+.card-header.bg-info.bg-opacity-10 {
+    background-color: rgba(var(--accent-rgb), 0.1) !important;
+    border-bottom-color: rgba(var(--accent-rgb), 0.2) !important;
+}
+
+.text-info {
+    color: var(--accent) !important;
+}
+
+/* Responsive filter buttons */
+@media (max-width: 768px) {
+    #doctorFilterGroup {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    #doctorFilterGroup .btn {
+        margin: 2px 0;
+        width: 100%;
+    }
+}
+
 /* Custom Tooltip Styling */
 .tooltip {
     font-family: 'Cairo', sans-serif;
@@ -1488,7 +1616,8 @@ let paginationState = {
     itemsPerPage: 20,
     totalItems: 0,
     allPatients: [],
-    filteredPatients: []
+    filteredPatients: [],
+    currentDoctorFilter: 'all'
 };
 
 // Debounce function
@@ -1518,10 +1647,15 @@ function viewPatient(patientId) {
 function initializePagination() {
     // Get patients data from PHP
     const patientsData = <?= json_encode($patients, JSON_UNESCAPED_UNICODE) ?>;
+    const doctorsData = <?= json_encode($doctors, JSON_UNESCAPED_UNICODE) ?>;
     
     paginationState.allPatients = patientsData;
     paginationState.filteredPatients = [...patientsData];
     paginationState.totalItems = patientsData.length;
+    paginationState.doctors = doctorsData;
+    
+    // Apply initial doctor filter
+    applyDoctorFilter();
     
     // Render initial page
     renderPatientsTable();
@@ -1529,6 +1663,7 @@ function initializePagination() {
     renderPaginationNav();
     
     console.log('Pagination initialized with', paginationState.totalItems, 'patients');
+    console.log('Doctors available:', paginationState.doctors);
 }
 
 // Render patients table with current page data
@@ -1586,6 +1721,14 @@ function renderPatientsTable() {
                 // Gender-based avatar color
                 const avatarClass = patient.gender === 'Female' ? 'avatar-circle avatar-female me-3' : 'avatar-circle avatar-male me-3';
                 
+                // Get doctor who created this patient
+                let doctorInfo = 'Unknown';
+                if (patient.created_by_doctor_name) {
+                    doctorInfo = patient.created_by_doctor_name;
+                } else if (patient.created_by_name) {
+                    doctorInfo = patient.created_by_name;
+                }
+                
                 html += `
                     <tr>
                         <td>
@@ -1611,6 +1754,14 @@ function renderPatientsTable() {
                         </td>
                         <td>
                             ${age !== 'Not specified' ? `${age} years` : '<span class="text-muted">Not specified</span>'}
+                        </td>
+                        <td>
+                            <div class="doctor-info">
+                                ${doctorInfo === 'Unknown' ? 
+                                    '<span class="badge bg-secondary">Unknown</span>' :
+                                    `<span class="badge bg-info">${escapeHtml(doctorInfo)}</span>`
+                                }
+                            </div>
                         </td>
                         <td>
                             ${patient.last_visit ? 
@@ -1831,13 +1982,72 @@ function escapeHtml(text) {
     return text ? text.replace(/[&<>"']/g, function(m) { return map[m]; }) : '';
 }
 
+// Filter patients by doctor
+function filterByDoctor(doctorId) {
+    console.log('Filtering by doctor:', doctorId);
+    
+    // Update active button
+    document.querySelectorAll('#doctorFilterGroup .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-doctor="${doctorId}"]`).classList.add('active');
+    
+    // Update current filter
+    paginationState.currentDoctorFilter = doctorId;
+    
+    // Update filter text
+    let filterText = 'All Doctors';
+    if (doctorId !== 'all') {
+        const doctor = paginationState.doctors.find(d => d.id == doctorId);
+        if (doctor) {
+            filterText = doctor.display_name;
+        }
+    }
+    document.getElementById('currentFilterText').textContent = filterText;
+    
+    // Apply doctor filter
+    applyDoctorFilter();
+    
+    // Apply current search filter if exists
+    const quickSearch = document.getElementById('quickSearch');
+    if (quickSearch && quickSearch.value.trim()) {
+        filterPatientsLocally(quickSearch.value);
+    } else {
+        // Update display
+        renderPatientsTable();
+        updatePaginationInfo();
+        renderPaginationNav();
+    }
+}
+
+// Apply doctor filter to patients
+function applyDoctorFilter() {
+    const { currentDoctorFilter, allPatients } = paginationState;
+    
+    if (currentDoctorFilter === 'all') {
+        paginationState.filteredPatients = [...allPatients];
+    } else {
+        // Filter patients by doctor ID based on who created the patient profile
+        paginationState.filteredPatients = allPatients.filter(patient => {
+            // Check if patient was created by the selected doctor
+            return patient.created_by_doctor_id == currentDoctorFilter;
+        });
+    }
+    
+    // Reset to first page
+    paginationState.currentPage = 1;
+}
+
 // Filter patients locally (for main table pagination)
 function filterPatientsLocally(query) {
+    // First apply doctor filter
+    applyDoctorFilter();
+    
     if (!query || query.trim().length < 2) {
-        paginationState.filteredPatients = [...paginationState.allPatients];
+        // No search query, just use doctor filter results
     } else {
         const searchTerm = query.trim().toLowerCase();
-        paginationState.filteredPatients = paginationState.allPatients.filter(patient => {
+        paginationState.filteredPatients = paginationState.filteredPatients.filter(patient => {
             const fullName = `${patient.first_name} ${patient.last_name}`.toLowerCase();
             const phone = (patient.phone || '').toLowerCase();
             const altPhone = (patient.alt_phone || '').toLowerCase();

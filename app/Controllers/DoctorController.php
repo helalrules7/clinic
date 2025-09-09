@@ -86,9 +86,11 @@ class DoctorController
     {
         $user = $this->auth->user();
         $patients = $this->getAllPatients();
+        $doctors = $this->getAllDoctors();
         
         $content = $this->view->render('doctor/patients', [
-            'patients' => $patients
+            'patients' => $patients,
+            'doctors' => $doctors
         ]);
         
         echo $this->view->render('layouts/main', [
@@ -844,11 +846,58 @@ class DoctorController
         $stmt = $this->pdo->prepare("
             SELECT p.*, 
                    COUNT(DISTINCT a.id) as total_appointments,
-                   MAX(a.date) as last_visit
+                   MAX(a.date) as last_visit,
+                   (SELECT te.actor_user_id 
+                    FROM timeline_events te 
+                    WHERE te.patient_id = p.id 
+                    AND te.event_type = 'Booking' 
+                    AND te.event_summary LIKE '%New patient registered%' 
+                    ORDER BY te.created_at ASC 
+                    LIMIT 1) as created_by_user_id,
+                   (SELECT u.name 
+                    FROM timeline_events te 
+                    LEFT JOIN users u ON te.actor_user_id = u.id
+                    WHERE te.patient_id = p.id 
+                    AND te.event_type = 'Booking' 
+                    AND te.event_summary LIKE '%New patient registered%' 
+                    ORDER BY te.created_at ASC 
+                    LIMIT 1) as created_by_name,
+                   (SELECT d.id 
+                    FROM timeline_events te 
+                    LEFT JOIN users u ON te.actor_user_id = u.id
+                    LEFT JOIN doctors d ON u.id = d.user_id
+                    WHERE te.patient_id = p.id 
+                    AND te.event_type = 'Booking' 
+                    AND te.event_summary LIKE '%New patient registered%' 
+                    ORDER BY te.created_at ASC 
+                    LIMIT 1) as created_by_doctor_id,
+                   (SELECT d.display_name 
+                    FROM timeline_events te 
+                    LEFT JOIN users u ON te.actor_user_id = u.id
+                    LEFT JOIN doctors d ON u.id = d.user_id
+                    WHERE te.patient_id = p.id 
+                    AND te.event_type = 'Booking' 
+                    AND te.event_summary LIKE '%New patient registered%' 
+                    ORDER BY te.created_at ASC 
+                    LIMIT 1) as created_by_doctor_name
             FROM patients p
             LEFT JOIN appointments a ON p.id = a.patient_id
             GROUP BY p.id
             ORDER BY p.created_at DESC
+        ");
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+    
+    private function getAllDoctors()
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT d.id, d.display_name, d.specialty
+            FROM doctors d
+            WHERE d.user_id IN (
+                SELECT id FROM users WHERE role = 'doctor' AND is_active = 1
+            )
+            ORDER BY d.display_name
         ");
         $stmt->execute();
         return $stmt->fetchAll();
