@@ -1515,15 +1515,14 @@ function openCameraModal(appointmentId, patientId) {
                         <input type="hidden" id="cameraAppointmentId" value="${appointmentId}">
                         <input type="hidden" id="cameraPatientId" value="${patientId}">
                         
-                        <div class="mb-3">
+                        <div class="mb-3" id="cameraAttachmentTypeContainer">
                             <label class="form-label">Photo Type</label>
                             <select class="form-select" id="cameraAttachmentType" required>
-                                <option value="">Select Photo Type</option>
+                                <option value="photo" selected>Photo</option>
                                 <option value="xray">X-ray</option>
                                 <option value="ct_scan">CT Scan</option>
                                 <option value="mri">MRI</option>
                                 <option value="ultrasound">Ultrasound</option>
-                                <option value="photo">Photo</option>
                                 <option value="eye_photo">Eye Photo</option>
                                 <option value="retina_photo">Retina Photo</option>
                                 <option value="other">Other</option>
@@ -1543,23 +1542,20 @@ function openCameraModal(appointmentId, patientId) {
                                 <canvas id="cameraCanvas" width="640" height="480" style="max-width: 100%; border-radius: 8px; display: none;"></canvas>
                                 <div id="cameraPlaceholder" class="d-flex flex-column align-items-center justify-content-center h-100" style="min-height: 300px;">
                                     <i class="bi bi-camera text-muted" style="font-size: 4rem;"></i>
-                                    <p class="text-muted mt-2">Click "Start Camera" to begin</p>
+                                    <p class="text-muted mt-2">Loading camera...</p>
                                 </div>
                             </div>
                         </div>
                         
                         <!-- Camera Controls -->
                         <div class="d-flex justify-content-center gap-2 mb-3">
-                            <button type="button" class="btn btn-primary" id="startCameraBtn" onclick="startCamera()">
-                                <i class="bi bi-camera-video me-2"></i>Start Camera
-                            </button>
-                            <button type="button" class="btn btn-success" id="capturePhotoBtn" onclick="capturePhoto()" style="display: none;">
+                            <button type="button" class="btn btn-success" id="capturePhotoBtn" onclick="capturePhoto()">
                                 <i class="bi bi-camera me-2"></i>Take Photo
                             </button>
                             <button type="button" class="btn btn-warning" id="retakePhotoBtn" onclick="retakePhoto()" style="display: none;">
                                 <i class="bi bi-arrow-clockwise me-2"></i>Retake
                             </button>
-                            <button type="button" class="btn btn-danger" id="stopCameraBtn" onclick="stopCamera()" style="display: none;">
+                            <button type="button" class="btn btn-danger" id="stopCameraBtn" onclick="stopCamera()">
                                 <i class="bi bi-stop-circle me-2"></i>Stop Camera
                             </button>
                         </div>
@@ -1586,6 +1582,11 @@ function openCameraModal(appointmentId, patientId) {
     const modal = new bootstrap.Modal(document.getElementById('cameraModal'));
     modal.show();
     
+    // Start camera automatically when modal is shown
+    document.getElementById('cameraModal').addEventListener('shown.bs.modal', function() {
+        startCamera();
+    });
+    
     // Clean up modal and stop camera on hide
     document.getElementById('cameraModal').addEventListener('hidden.bs.modal', function() {
         stopCamera();
@@ -1599,9 +1600,9 @@ let capturedImageData = null;
 function startCamera() {
     const video = document.getElementById('cameraVideo');
     const placeholder = document.getElementById('cameraPlaceholder');
-    const startBtn = document.getElementById('startCameraBtn');
     const captureBtn = document.getElementById('capturePhotoBtn');
     const stopBtn = document.getElementById('stopCameraBtn');
+    const attachmentTypeContainer = document.getElementById('cameraAttachmentTypeContainer');
     
     // Check if camera is supported
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -1624,8 +1625,12 @@ function startCamera() {
         placeholder.style.display = 'none';
         video.style.display = 'block';
         
+        // Hide photo type field when camera starts
+        if (attachmentTypeContainer) {
+            attachmentTypeContainer.style.display = 'none';
+        }
+        
         // Update buttons
-        startBtn.style.display = 'none';
         captureBtn.style.display = 'inline-block';
         stopBtn.style.display = 'inline-block';
         
@@ -1698,11 +1703,11 @@ function stopCamera() {
     const video = document.getElementById('cameraVideo');
     const canvas = document.getElementById('cameraCanvas');
     const placeholder = document.getElementById('cameraPlaceholder');
-    const startBtn = document.getElementById('startCameraBtn');
     const captureBtn = document.getElementById('capturePhotoBtn');
     const retakeBtn = document.getElementById('retakePhotoBtn');
     const stopBtn = document.getElementById('stopCameraBtn');
     const saveBtn = document.getElementById('savePhotoBtn');
+    const attachmentTypeContainer = document.getElementById('cameraAttachmentTypeContainer');
     
     if (video) {
         video.style.display = 'none';
@@ -1717,11 +1722,15 @@ function stopCamera() {
         placeholder.style.display = 'flex';
     }
     
+    // Show photo type field when camera stops
+    if (attachmentTypeContainer) {
+        attachmentTypeContainer.style.display = 'block';
+    }
+    
     // Reset buttons
-    if (startBtn) startBtn.style.display = 'inline-block';
-    if (captureBtn) captureBtn.style.display = 'none';
+    if (captureBtn) captureBtn.style.display = 'inline-block';
     if (retakeBtn) retakeBtn.style.display = 'none';
-    if (stopBtn) stopBtn.style.display = 'none';
+    if (stopBtn) stopBtn.style.display = 'inline-block';
     if (saveBtn) saveBtn.style.display = 'none';
     
     // Clear captured image

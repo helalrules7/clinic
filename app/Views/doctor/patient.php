@@ -2490,11 +2490,10 @@ function openPatientCameraModal(patientId) {
                     <div class="modal-body">
                         <input type="hidden" id="patientCameraId" value="${patientId}">
                         
-                        <div class="mb-3">
+                        <div class="mb-3" id="patientPhotoTypeContainer">
                             <label class="form-label">Photo Type</label>
                             <select class="form-select" id="patientPhotoType" required>
-                                <option value="">Select Photo Type</option>
-                                <option value="medical_photo">Medical Photo</option>
+                                <option value="medical_photo" selected>Medical Photo</option>
                                 <option value="xray">X-ray</option>
                                 <option value="scan">Scan</option>
                                 <option value="lab_result">Lab Result</option>
@@ -2516,23 +2515,20 @@ function openPatientCameraModal(patientId) {
                                 <canvas id="patientCameraCanvas" width="640" height="480" style="max-width: 100%; border-radius: 8px; display: none;"></canvas>
                                 <div id="patientCameraPlaceholder" class="d-flex flex-column align-items-center justify-content-center h-100" style="min-height: 300px;">
                                     <i class="bi bi-camera text-muted" style="font-size: 4rem;"></i>
-                                    <p class="text-muted mt-2">Click "Start Camera" to begin</p>
+                                    <p class="text-muted mt-2">Loading camera...</p>
                                 </div>
                             </div>
                         </div>
                         
                         <!-- Camera Controls -->
                         <div class="d-flex justify-content-center gap-2 mb-3">
-                            <button type="button" class="btn btn-primary" id="startPatientCameraBtn" onclick="startPatientCamera()">
-                                <i class="bi bi-camera-video me-2"></i>Start Camera
-                            </button>
-                            <button type="button" class="btn btn-success" id="capturePatientPhotoBtn" onclick="capturePatientPhoto()" style="display: none;">
+                            <button type="button" class="btn btn-success" id="capturePatientPhotoBtn" onclick="capturePatientPhoto()">
                                 <i class="bi bi-camera me-2"></i>Take Photo
                             </button>
                             <button type="button" class="btn btn-warning" id="retakePatientPhotoBtn" onclick="retakePatientPhoto()" style="display: none;">
                                 <i class="bi bi-arrow-clockwise me-2"></i>Retake
                             </button>
-                            <button type="button" class="btn btn-danger" id="stopPatientCameraBtn" onclick="stopPatientCamera()" style="display: none;">
+                            <button type="button" class="btn btn-danger" id="stopPatientCameraBtn" onclick="stopPatientCamera()">
                                 <i class="bi bi-stop-circle me-2"></i>Stop Camera
                             </button>
                         </div>
@@ -2552,6 +2548,11 @@ function openPatientCameraModal(patientId) {
     const modal = new bootstrap.Modal(document.getElementById('patientCameraModal'));
     modal.show();
     
+    // Start camera automatically when modal is shown
+    document.getElementById('patientCameraModal').addEventListener('shown.bs.modal', function() {
+        startPatientCamera();
+    });
+    
     // Clean up modal and stop camera on hide
     document.getElementById('patientCameraModal').addEventListener('hidden.bs.modal', function() {
         stopPatientCamera();
@@ -2565,9 +2566,9 @@ let capturedPatientImageData = null;
 function startPatientCamera() {
     const video = document.getElementById('patientCameraVideo');
     const placeholder = document.getElementById('patientCameraPlaceholder');
-    const startBtn = document.getElementById('startPatientCameraBtn');
     const captureBtn = document.getElementById('capturePatientPhotoBtn');
     const stopBtn = document.getElementById('stopPatientCameraBtn');
+    const photoTypeContainer = document.getElementById('patientPhotoTypeContainer');
     
     navigator.mediaDevices.getUserMedia({ 
         video: { 
@@ -2583,7 +2584,11 @@ function startPatientCamera() {
         placeholder.style.display = 'none';
         video.style.display = 'block';
         
-        startBtn.style.display = 'none';
+        // Hide photo type field when camera starts
+        if (photoTypeContainer) {
+            photoTypeContainer.style.display = 'none';
+        }
+        
         captureBtn.style.display = 'inline-block';
         stopBtn.style.display = 'inline-block';
         
@@ -2647,11 +2652,11 @@ function stopPatientCamera() {
     const video = document.getElementById('patientCameraVideo');
     const canvas = document.getElementById('patientCameraCanvas');
     const placeholder = document.getElementById('patientCameraPlaceholder');
-    const startBtn = document.getElementById('startPatientCameraBtn');
     const captureBtn = document.getElementById('capturePatientPhotoBtn');
     const retakeBtn = document.getElementById('retakePatientPhotoBtn');
     const stopBtn = document.getElementById('stopPatientCameraBtn');
     const saveBtn = document.getElementById('savePatientPhotoBtn');
+    const photoTypeContainer = document.getElementById('patientPhotoTypeContainer');
     
     if (video) {
         video.style.display = 'none';
@@ -2661,10 +2666,14 @@ function stopPatientCamera() {
     if (canvas) canvas.style.display = 'none';
     if (placeholder) placeholder.style.display = 'flex';
     
-    if (startBtn) startBtn.style.display = 'inline-block';
-    if (captureBtn) captureBtn.style.display = 'none';
+    // Show photo type field when camera stops
+    if (photoTypeContainer) {
+        photoTypeContainer.style.display = 'block';
+    }
+    
+    if (captureBtn) captureBtn.style.display = 'inline-block';
     if (retakeBtn) retakeBtn.style.display = 'none';
-    if (stopBtn) stopBtn.style.display = 'none';
+    if (stopBtn) stopBtn.style.display = 'inline-block';
     if (saveBtn) saveBtn.style.display = 'none';
     
     capturedPatientImageData = null;
