@@ -26,7 +26,7 @@
                     <div class="col-md-6">
                         <form method="GET" class="d-flex">
                             <input type="text" name="search" class="form-control me-2" 
-                                   placeholder="Search by name or email..." 
+                                   placeholder="Search by name, username, or email..." 
                                    value="<?= htmlspecialchars($search ?? '') ?>">
                             <button type="submit" class="btn btn-outline-primary">
                                 <i class="fas fa-search"></i>
@@ -55,6 +55,7 @@
                         <thead class="table-dark">
                             <tr>
                                 <th>Name</th>
+                                <th>Username</th>
                                 <th>Email</th>
                                 <th>Role</th>
                                 <th>Status</th>
@@ -78,6 +79,9 @@
                                                     <small class="text-muted">ID: <?= $user['id'] ?></small>
                                                 </div>
                                             </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">@<?= htmlspecialchars($user['username']) ?></span>
                                         </td>
                                         <td><?= htmlspecialchars($user['email']) ?></td>
                                         <td>
@@ -115,7 +119,7 @@
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="8" class="text-center py-4">
+                                    <td colspan="9" class="text-center py-4">
                                         <i class="fas fa-users fa-3x text-muted mb-3"></i>
                                         <p class="text-muted">No users found</p>
                                     </td>
@@ -148,7 +152,7 @@
 <div class="modal fade" id="createUserModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="/admin/users/create">
+            <form method="POST" action="/admin/users">
                 <div class="modal-header">
                     <h5 class="modal-title">Add New User</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -159,6 +163,12 @@
                     <div class="mb-3">
                         <label for="name" class="form-label">Full Name *</label>
                         <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username *</label>
+                        <input type="text" class="form-control" id="username" name="username" required pattern="[a-zA-Z0-9_]+" minlength="3" maxlength="20">
+                        <div class="form-text">Username must be 3-20 characters, letters, numbers, and underscores only</div>
                     </div>
                     
                     <div class="mb-3">
@@ -217,6 +227,12 @@
                     <div class="mb-3">
                         <label for="edit_name" class="form-label">Full Name *</label>
                         <input type="text" class="form-control" id="edit_name" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_username" class="form-label">Username *</label>
+                        <input type="text" class="form-control" id="edit_username" name="username" required pattern="[a-zA-Z0-9_]+" minlength="3" maxlength="20">
+                        <div class="form-text">Username must be 3-20 characters, letters, numbers, and underscores only</div>
                     </div>
                     
                     <div class="mb-3">
@@ -574,6 +590,7 @@ document.getElementById('role').addEventListener('change', function() {
 function editUser(user) {
     document.getElementById('edit_user_id').value = user.id;
     document.getElementById('edit_name').value = user.name;
+    document.getElementById('edit_username').value = user.username;
     document.getElementById('edit_email').value = user.email;
     document.getElementById('edit_role').value = user.role;
     document.getElementById('edit_is_active').checked = user.is_active == 1;

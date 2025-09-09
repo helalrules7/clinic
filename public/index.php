@@ -52,14 +52,15 @@ try {
     // Admin routes
     $router->get('/admin/dashboard', 'AdminController@dashboard');
     $router->get('/admin/users', 'AdminController@users');
-    $router->get('/admin/reports', 'AdminController@reports');
-    $router->get('/admin/settings', 'AdminController@settings');
-    $router->post('/admin/settings', 'AdminController@settings');
-    $router->get('/admin/users/create', 'AdminController@createUser');
-    $router->post('/admin/users', 'AdminController@storeUser');
-    $router->get('/admin/users/{id}/edit', 'AdminController@editUser');
+    $router->post('/admin/users', 'AdminController@createUser');
     $router->put('/admin/users/{id}', 'AdminController@updateUser');
     $router->delete('/admin/users/{id}', 'AdminController@deleteUser');
+    $router->get('/admin/reports', 'AdminController@reports');
+    $router->get('/admin/reports/export', 'AdminController@exportReport');
+    $router->get('/admin/settings', 'AdminController@settings');
+    $router->post('/admin/settings', 'AdminController@settings');
+    $router->post('/admin/users/update/{id}', 'AdminController@updateUser');
+    $router->post('/admin/users/delete/{id}', 'AdminController@deleteUser');
     
     // Secretary routes
     $router->get('/secretary/dashboard', 'SecretaryController@dashboard');
@@ -161,18 +162,7 @@ try {
     $router->get('/print/lab-tests/{id}', 'PrintController@labTests');
     $router->get('/print/invoice/{id}', 'PrintController@invoice');
     $router->get('/print/appointment/{id}', 'PrintController@appointmentReport');
-    
-    // Admin routes
-    $router->get('/admin/dashboard', 'AdminController@dashboard');
-    $router->get('/admin/users', 'AdminController@users');
-    $router->post('/admin/users', 'AdminController@createUser');
-    $router->put('/admin/users/{id}', 'AdminController@updateUser');
-    $router->delete('/admin/users/{id}', 'AdminController@deleteUser');
-    $router->get('/admin/reports', 'AdminController@reports');
-    $router->get('/admin/reports/export', 'AdminController@exportReport');
-    $router->get('/admin/settings', 'AdminController@settings');
-    $router->post('/admin/settings', 'AdminController@settings');
-    
+        
     // Handle the request
     $router->dispatch();
     

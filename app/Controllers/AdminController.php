@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Lib\Auth;
 use App\Lib\View;
+use App\Lib\Validator;
 use App\Config\Database;
 use App\Config\Constants;
 use PDO;
@@ -12,12 +13,14 @@ class AdminController
 {
     private $auth;
     private $view;
+    private $validator;
     private $pdo;
 
     public function __construct()
     {
         $this->auth = new Auth();
         $this->view = new View();
+        $this->validator = new Validator();
         $this->pdo = Database::getInstance()->getConnection();
         
         // Require admin authentication
@@ -91,13 +94,14 @@ class AdminController
             // Validate input
             $rules = [
                 'name' => 'required|max:100',
+                'username' => 'required|min:3|max:20',
                 'email' => 'required|email|unique:users,email',
                 'role' => 'required|in:doctor,secretary,admin',
                 'password' => 'required|min:8'
             ];
             
             $data = $_POST;
-            if (!$this->view->validator->validate($data, $rules)) {
+            if (!$this->validator->validate($data, $rules)) {
                 throw new \Exception('Validation failed');
             }
             
@@ -137,13 +141,14 @@ class AdminController
             // Validate input
             $rules = [
                 'name' => 'required|max:100',
+                'username' => 'required|min:3|max:20',
                 'email' => 'required|email',
                 'role' => 'required|in:doctor,secretary,admin',
                 'is_active' => 'boolean'
             ];
             
             $data = $_POST;
-            if (!$this->view->validator->validate($data, $rules)) {
+            if (!$this->validator->validate($data, $rules)) {
                 throw new \Exception('Validation failed');
             }
             
@@ -434,14 +439,15 @@ class AdminController
     private function createUserRecord($data)
     {
         $stmt = $this->pdo->prepare("
-            INSERT INTO users (name, email, password_hash, role, is_active)
-            VALUES (?, ?, ?, ?, 1)
+            INSERT INTO users (name, username, email, password_hash, role, is_active)
+            VALUES (?, ?, ?, ?, ?, 1)
         ");
         
         $passwordHash = password_hash($data['password'], PASSWORD_ARGON2ID);
         
         $stmt->execute([
             $data['name'],
+            $data['username'],
             $data['email'],
             $passwordHash,
             $data['role']
@@ -453,7 +459,7 @@ class AdminController
     private function createDoctorRecord($userId, $data)
     {
         $stmt = $this->pdo->prepare("
-            INSERT INTO doctors (user_id, display_name, specialization, license_number)
+            INSERT INTO doctors (user_id, display_name, specialty, license_number)
             VALUES (?, ?, ?, ?)
         ");
         
@@ -468,12 +474,13 @@ class AdminController
     private function updateUserRecord($id, $data)
     {
         $stmt = $this->pdo->prepare("
-            UPDATE users SET name = ?, email = ?, role = ?, is_active = ?, updated_at = NOW()
+            UPDATE users SET name = ?, username = ?, email = ?, role = ?, is_active = ?, updated_at = NOW()
             WHERE id = ?
         ");
         
         return $stmt->execute([
             $data['name'],
+            $data['username'],
             $data['email'],
             $data['role'],
             $data['is_active'] ?? 1,
