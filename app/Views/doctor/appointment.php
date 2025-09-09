@@ -1355,21 +1355,21 @@ function showPrescriptionModal(appointmentId) {
                         <div class="modal-body">
                             <input type="hidden" name="appointment_id" value="${appointmentId}">
                             <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Drug Name</label>
+                                <div class="col-12 mb-3">
+                                    <label class="form-label">Drug Name <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="drug_name" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Dose</label>
-                                    <input type="text" class="form-control" name="dose" required>
+                                    <input type="text" class="form-control" name="dose">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Frequency</label>
-                                    <input type="text" class="form-control" name="frequency" required>
+                                    <input type="text" class="form-control" name="frequency">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Duration</label>
-                                    <input type="text" class="form-control" name="duration" required>
+                                    <input type="text" class="form-control" name="duration">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Route</label>
@@ -2183,21 +2183,21 @@ function editMedication(medicationId, drugName, dose, frequency, duration, route
                     <form id="editMedicationForm">
                         <div class="modal-body">
                             <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Drug Name</label>
+                                <div class="col-12 mb-3">
+                                    <label class="form-label">Drug Name <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="drug_name" value="${drugName}" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Dose</label>
-                                    <input type="text" class="form-control" name="dose" value="${dose}" required>
+                                    <input type="text" class="form-control" name="dose" value="${dose}">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Frequency</label>
-                                    <input type="text" class="form-control" name="frequency" value="${frequency}" required>
+                                    <input type="text" class="form-control" name="frequency" value="${frequency}">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Duration</label>
-                                    <input type="text" class="form-control" name="duration" value="${duration}" required>
+                                    <input type="text" class="form-control" name="duration" value="${duration}">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Route</label>

@@ -720,9 +720,11 @@ class ApiController
             $rules = [
                 'appointment_id' => 'required|integer',
                 'drug_name' => 'required|max:120',
-                'dose' => 'required|max:60',
-                'frequency' => 'required|max:60',
-                'duration' => 'required|max:60'
+                'dose' => 'max:60',
+                'frequency' => 'max:60',
+                'duration' => 'max:60',
+                'route' => 'max:60',
+                'notes' => 'max:500'
             ];
 
             $data = $_POST;
@@ -1484,9 +1486,9 @@ class ApiController
         $stmt->execute([
             $data['appointment_id'],
             $data['drug_name'],
-            $data['dose'],
-            $data['frequency'],
-            $data['duration'],
+            $data['dose'] ?? null,
+            $data['frequency'] ?? null,
+            $data['duration'] ?? null,
             $data['route'] ?? 'Topical',
             $data['notes'] ?? null
         ]);
@@ -1906,9 +1908,9 @@ class ApiController
             // Validate input
             $rules = [
                 'drug_name' => 'required|max:120',
-                'dose' => 'required|max:60',
-                'frequency' => 'required|max:60',
-                'duration' => 'required|max:60',
+                'dose' => 'max:60',
+                'frequency' => 'max:60',
+                'duration' => 'max:60',
                 'route' => 'max:60',
                 'notes' => 'max:500'
             ];
@@ -1948,9 +1950,9 @@ class ApiController
 
             $result = $stmt->execute([
                 $data['drug_name'],
-                $data['dose'],
-                $data['frequency'],
-                $data['duration'],
+                $data['dose'] ?? null,
+                $data['frequency'] ?? null,
+                $data['duration'] ?? null,
                 $data['route'] ?? 'Topical',
                 $data['notes'] ?? null,
                 $id
