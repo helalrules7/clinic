@@ -115,10 +115,104 @@ class Auth
             $roles = [$roles];
         }
         
-        if (!in_array($this->user['role'], $roles)) {
+        // Check if admin is in View As mode
+        $currentRole = $this->getCurrentRole();
+        $originalRole = $this->getOriginalRole();
+        
+        // Special handling for admin functions when in View As mode
+        if ($this->isViewAsMode() && in_array('admin', $roles)) {
+            // If trying to access admin functions while in View As mode,
+            // check if original role was admin
+            if ($originalRole === 'admin') {
+                return; // Allow access
+            } else {
+                http_response_code(403);
+                throw new \Exception('Access denied - Admin privileges required');
+            }
+        }
+        
+        // Normal role check
+        if (!in_array($currentRole, $roles)) {
             http_response_code(403);
             throw new \Exception('Access denied');
         }
+    }
+
+    /**
+     * Get the current effective role (considering View As mode)
+     */
+    public function getCurrentRole()
+    {
+        if (!$this->check()) {
+            return null;
+        }
+        
+        // If admin is in View As mode, return the viewed role
+        if ($this->isViewAsMode()) {
+            return $_SESSION['view_as_role'] ?? $this->user['role'];
+        }
+        
+        return $this->user['role'];
+    }
+
+    /**
+     * Check if admin is in View As mode
+     */
+    public function isViewAsMode()
+    {
+        return isset($_SESSION['view_as_mode']) && 
+               $_SESSION['view_as_mode'] === true && 
+               isset($this->user['role']) && 
+               $this->user['role'] === 'admin';
+    }
+
+    /**
+     * Start View As mode for admin
+     */
+    public function startViewAs($role)
+    {
+        if (!isset($this->user['role']) || $this->user['role'] !== 'admin') {
+            throw new \Exception('Only administrators can use View As feature');
+        }
+        
+        $allowedRoles = ['doctor', 'secretary'];
+        if (!in_array($role, $allowedRoles)) {
+            throw new \Exception('Invalid role for View As');
+        }
+        
+        $_SESSION['view_as_mode'] = true;
+        $_SESSION['view_as_role'] = $role;
+        $_SESSION['original_role'] = $this->user['role'];
+        
+        // Update the user object to reflect the viewed role
+        $this->user['role'] = $role;
+        $_SESSION['user']['role'] = $role;
+    }
+
+    /**
+     * Stop View As mode and return to admin role
+     */
+    public function stopViewAs()
+    {
+        if (!$this->isViewAsMode()) {
+            return;
+        }
+        
+        $_SESSION['view_as_mode'] = false;
+        unset($_SESSION['view_as_role']);
+        
+        // Restore original admin role
+        $this->user['role'] = $_SESSION['original_role'] ?? 'admin';
+        $_SESSION['user']['role'] = $this->user['role'];
+        unset($_SESSION['original_role']);
+    }
+
+    /**
+     * Get the original role before View As
+     */
+    public function getOriginalRole()
+    {
+        return $_SESSION['original_role'] ?? $this->user['role'];
     }
 
     public function changePassword($userId, $currentPassword, $newPassword)

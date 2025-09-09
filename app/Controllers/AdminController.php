@@ -23,8 +23,8 @@ class AdminController
         $this->validator = new Validator();
         $this->pdo = Database::getInstance()->getConnection();
         
-        // Require admin authentication
-        $this->auth->requireRole('admin');
+        // Require admin authentication (handles View As mode automatically)
+        $this->auth->requireRole(['admin']);
     }
 
     public function dashboard()
@@ -40,10 +40,14 @@ class AdminController
         // Get system health
         $systemHealth = $this->getSystemHealth();
         
+        // Get View As status
+        $viewAsStatus = $this->getViewAsStatus();
+        
         $content = $this->view->render('admin/dashboard', [
             'stats' => $stats,
             'recentActivities' => $recentActivities,
-            'systemHealth' => $systemHealth
+            'systemHealth' => $systemHealth,
+            'viewAsStatus' => $viewAsStatus
         ]);
         
         echo $this->view->render('layouts/main', [
@@ -292,6 +296,89 @@ class AdminController
             header('Location: /admin/dashboard');
             exit;
         }
+    }
+
+    /**
+     * View As functionality - Switch to different role view
+     */
+    public function viewAs()
+    {
+        $user = $this->auth->user();
+        
+        // Only allow admins to use View As
+        if ($user['role'] !== 'admin') {
+            http_response_code(403);
+            echo "Access denied - View As is only available for administrators";
+            return;
+        }
+        
+        $role = $_GET['role'] ?? '';
+        $allowedRoles = ['doctor', 'secretary'];
+        
+        if (!in_array($role, $allowedRoles)) {
+            header('Location: /admin/dashboard?error=' . urlencode('Invalid role for View As'));
+            exit;
+        }
+        
+        try {
+            // Start View As mode
+            $this->auth->startViewAs($role);
+            
+            // Redirect to the appropriate dashboard
+            if ($role === 'doctor') {
+                header('Location: /doctor/dashboard?view_as=1');
+            } elseif ($role === 'secretary') {
+                header('Location: /secretary/dashboard?view_as=1');
+            }
+            exit;
+            
+        } catch (\Exception $e) {
+            header('Location: /admin/dashboard?error=' . urlencode($e->getMessage()));
+            exit;
+        }
+    }
+
+    /**
+     * Stop View As mode and return to admin dashboard
+     */
+    public function stopViewAs()
+    {
+        $user = $this->auth->user();
+        
+        // Only allow admins to stop View As
+        if ($user['role'] !== 'admin' && !$this->auth->isViewAsMode()) {
+            http_response_code(403);
+            echo "Access denied";
+            return;
+        }
+        
+        try {
+            // Stop View As mode
+            $this->auth->stopViewAs();
+            
+            // Redirect back to admin dashboard
+            header('Location: /admin/dashboard?success=' . urlencode('Returned to admin view'));
+            exit;
+            
+        } catch (\Exception $e) {
+            header('Location: /admin/dashboard?error=' . urlencode($e->getMessage()));
+            exit;
+        }
+    }
+
+    /**
+     * Get View As status for admin dashboard
+     */
+    public function getViewAsStatus()
+    {
+        $user = $this->auth->user();
+        
+        return [
+            'isViewAsMode' => $this->auth->isViewAsMode(),
+            'currentRole' => $this->auth->getCurrentRole(),
+            'originalRole' => $this->auth->getOriginalRole(),
+            'isAdmin' => $user['role'] === 'admin'
+        ];
     }
 
     // Helper methods

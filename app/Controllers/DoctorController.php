@@ -19,8 +19,8 @@ class DoctorController
         $this->view = new View();
         $this->pdo = Database::getInstance()->getConnection();
         
-        // Require doctor authentication
-        $this->auth->requireRole('doctor');
+        // Require doctor authentication (or admin in View As mode)
+        $this->auth->requireRole(['doctor', 'admin']);
     }
 
     public function dashboard()

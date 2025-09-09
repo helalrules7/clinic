@@ -209,6 +209,77 @@
     </div>
 </div>
 
+<!-- View As Controls (Admin Only) -->
+<?php if ($viewAsStatus['isAdmin']): ?>
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-eye me-2"></i>
+                    View As - Role Interface Preview
+                </h5>
+            </div>
+            <div class="card-body">
+                <?php if ($viewAsStatus['isViewAsMode']): ?>
+                    <!-- Currently in View As mode -->
+                    <div class="alert alert-warning d-flex align-items-center" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <div>
+                            <strong>Active Preview Mode:</strong> 
+                            You are currently viewing as <strong><?= ucfirst($viewAsStatus['currentRole']) ?></strong>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="/admin/stop-view-as" class="btn btn-warning">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Return to Admin
+                        </a>
+                        <span class="btn btn-outline-secondary disabled">
+                            <i class="fas fa-user-shield me-2"></i>
+                            <?= ucfirst($viewAsStatus['originalRole']) ?> (Original)
+                        </span>
+                    </div>
+                <?php else: ?>
+                    <!-- Not in View As mode - show options -->
+                    <p class="text-muted mb-3">
+                        Use this tool to preview each role's interface as regular users see it
+                    </p>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-user-md fa-3x text-primary mb-3"></i>
+                                    <h5>Doctor Interface</h5>
+                                    <p class="text-muted small">Preview doctor dashboard and available functions</p>
+                                    <a href="/admin/view-as?role=doctor" class="btn btn-primary">
+                                        <i class="fas fa-eye me-2"></i>
+                                        Preview Doctor Interface
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-user-tie fa-3x text-success mb-3"></i>
+                                    <h5>Secretary Interface</h5>
+                                    <p class="text-muted small">Preview secretary dashboard and available functions</p>
+                                    <a href="/admin/view-as?role=secretary" class="btn btn-success">
+                                        <i class="fas fa-eye me-2"></i>
+                                        Preview Secretary Interface
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Quick Actions -->
 <div class="row mt-4">
     <div class="col-12">

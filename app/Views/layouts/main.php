@@ -408,6 +408,36 @@
         .sidebar-footer a:hover {
             color: var(--success);
         }
+        
+        /* View As Banner Styles */
+        .view-as-banner {
+            animation: pulse 2s infinite;
+            border: 3px solid #ffc107;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3); }
+            50% { box-shadow: 0 4px 25px rgba(255, 193, 7, 0.6); }
+            100% { box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3); }
+        }
+        
+        .view-as-indicator {
+            position: relative;
+        }
+        
+        .view-as-indicator::before {
+            content: "⚠️";
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 16px;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -523,6 +553,18 @@
                 </a>
             </div>
             
+            <?php 
+            // Check if admin is in View As mode using session directly
+            if (isset($_SESSION['view_as_mode']) && $_SESSION['view_as_mode'] === true): 
+            ?>
+            <div class="nav-item mt-auto">
+                <a href="/admin/stop-view-as" class="nav-link text-warning" style="font-weight: bold; background-color: rgba(255, 193, 7, 0.1);">
+                    <i class="fas fa-arrow-left"></i>
+                    Exit View As
+                </a>
+            </div>
+            <?php endif; ?>
+            
             <div class="nav-item mt-auto">
                 <a href="/logout" class="nav-link text-danger">
                     <i class="bi bi-box-arrow-right"></i>
@@ -545,17 +587,71 @@
     
     <!-- Main Content -->
     <div class="main-content">
+        <?php 
+        // View As Banner - Very visible indicator
+        if (isset($_SESSION['view_as_mode']) && $_SESSION['view_as_mode'] === true): 
+        ?>
+        <div class="view-as-banner" style="background: linear-gradient(135deg, #ffc107, #ff8f00); color: #000; padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3); text-align: center; position: relative;">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h4 class="mb-0" style="font-weight: bold;">
+                            <i class="fas fa-eye me-2"></i>
+                            VIEW AS MODE ACTIVE - You are viewing as: <strong><?= ucfirst($_SESSION['view_as_role'] ?? 'Unknown') ?></strong>
+                        </h4>
+                        <small>You are currently previewing the <?= ucfirst($_SESSION['view_as_role'] ?? 'Unknown') ?> interface</small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a href="/admin/stop-view-as" class="btn btn-dark btn-lg" style="font-weight: bold; padding: 10px 20px;">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            EXIT VIEW AS
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+        
         <div class="top-bar">
             <button class="btn sidebar-toggle" id="sidebarToggle">
                 <i class="bi bi-list"></i>
             </button>
             
             <div class="page-title">
-                <h1><?= $pageTitle ?? 'Dashboard' ?></h1>
+                <h1>
+                    <?= $pageTitle ?? 'Dashboard' ?>
+                    <?php if (isset($_SESSION['view_as_mode']) && $_SESSION['view_as_mode'] === true): ?>
+                        <span class="badge bg-warning text-dark ms-2" style="font-size: 0.6em; animation: pulse 2s infinite;">
+                            VIEW AS: <?= strtoupper($_SESSION['view_as_role'] ?? 'Unknown') ?>
+                        </span>
+                    <?php endif; ?>
+                </h1>
                 <small><?= $pageSubtitle ?? 'Welcome to your dashboard' ?></small>
             </div>
             
             <div class="top-actions">
+                <?php 
+                // Check if admin is in View As mode using session directly
+                if (isset($_SESSION['view_as_mode']) && $_SESSION['view_as_mode'] === true): 
+                ?>
+                    <div class="view-as-indicator me-3">
+                        <div class="alert alert-warning d-flex align-items-center mb-0 py-2 px-3" style="font-size: 0.9rem; border: 2px solid #ffc107;">
+                            <i class="fas fa-eye me-2"></i>
+                            <span><strong>VIEW AS MODE:</strong> <?= ucfirst($_SESSION['view_as_role'] ?? 'Unknown') ?></span>
+                            <a href="/admin/stop-view-as" class="btn btn-sm btn-outline-warning ms-2">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                Exit
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Exit Button -->
+                    <a href="/admin/stop-view-as" class="btn btn-warning me-2" title="Exit View As Mode" style="font-weight: bold;">
+                        <i class="fas fa-sign-out-alt me-1"></i>
+                        Exit View As
+                    </a>
+                <?php endif; ?>
+                
                 <button id="themeToggle" class="btn btn-outline-secondary theme-toggle">
                     <i class="bi bi-moon"></i>
                 </button>

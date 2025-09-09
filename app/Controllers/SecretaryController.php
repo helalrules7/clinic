@@ -19,8 +19,8 @@ class SecretaryController
         $this->view = new View();
         $this->pdo = Database::getInstance()->getConnection();
         
-        // Require secretary authentication
-        $this->auth->requireRole('secretary');
+        // Require secretary authentication (or admin in View As mode)
+        $this->auth->requireRole(['secretary', 'admin']);
     }
 
     public function dashboard()

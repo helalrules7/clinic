@@ -62,6 +62,10 @@ try {
     $router->post('/admin/users/update/{id}', 'AdminController@updateUser');
     $router->post('/admin/users/delete/{id}', 'AdminController@deleteUser');
     
+    // View As routes (Admin only)
+    $router->get('/admin/view-as', 'AdminController@viewAs');
+    $router->get('/admin/stop-view-as', 'AdminController@stopViewAs');
+    
     // Secretary routes
     $router->get('/secretary/dashboard', 'SecretaryController@dashboard');
     $router->get('/secretary/bookings', 'SecretaryController@bookings');
