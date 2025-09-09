@@ -422,7 +422,7 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                     Appointment Information
                 </div>
                 <div class="small">
-                    This appointment is managed by <strong>Dr. <?= htmlspecialchars($appointmentDoctorName) ?></strong>.
+                    This appointment is managed by <strong><?= htmlspecialchars($appointmentDoctorName) ?></strong>.
                     <br>
                     <small class="text-info-light">
                         <i class="bi bi-check-circle me-1"></i>
@@ -444,7 +444,7 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                 Appointment #<?= $appointment['id'] ?>
                 <span class="badge bg-info ms-2 fs-6">
                     <i class="bi bi-person-check me-1"></i>
-                    Dr. <?= htmlspecialchars($appointmentDoctorName) ?>'s Patient
+                    <?= htmlspecialchars($appointmentDoctorName) ?>'s Patient
                 </span>
             </h2>
             <p class="mb-2">
