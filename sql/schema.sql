@@ -24,6 +24,19 @@ CREATE TABLE users (
     INDEX idx_active (is_active)
 ) ENGINE=InnoDB;
 
+-- Settings table
+CREATE TABLE settings (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    setting_key VARCHAR(100) UNIQUE NOT NULL,
+    setting_value TEXT,
+    setting_type ENUM('string', 'integer', 'boolean', 'json') NOT NULL DEFAULT 'string',
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_setting_key (setting_key)
+) ENGINE=InnoDB;
+
 
 -- Patient Files Table
 CREATE TABLE IF NOT EXISTS patient_files (

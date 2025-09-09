@@ -6,6 +6,7 @@ use App\Lib\Auth;
 use App\Lib\View;
 use App\Config\Database;
 use App\Config\Constants;
+use PDO;
 
 class AdminController
 {
@@ -632,45 +633,125 @@ class AdminController
 
     private function getSystemSettings()
     {
-        return [
-            'clinic_name' => 'Roaya Clinic',
-            'clinic_email' => 'info@roayaclinic.com',
-            'clinic_phone' => '+20 123 456 7890',
-            'clinic_address' => 'Cairo, Egypt',
-            'timezone' => 'Africa/Cairo',
-            'date_format' => 'Y-m-d',
-            'time_format' => 'H:i',
-            'items_per_page' => 10,
-            'backup_frequency' => 'daily',
-            'email_notifications' => true,
-            'sms_notifications' => false,
-            'maintenance_mode' => false
-        ];
+        try {
+            $stmt = $this->pdo->prepare("SELECT setting_key, setting_value, setting_type FROM settings");
+            $stmt->execute();
+            $settings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $result = [];
+            foreach ($settings as $setting) {
+                $key = $setting['setting_key'];
+                $value = $setting['setting_value'];
+                $type = $setting['setting_type'];
+                
+                // Convert value based on type
+                switch ($type) {
+                    case 'integer':
+                        $result[$key] = (int) $value;
+                        break;
+                    case 'boolean':
+                        $result[$key] = (bool) $value;
+                        break;
+                    case 'json':
+                        $result[$key] = json_decode($value, true);
+                        break;
+                    default:
+                        $result[$key] = $value;
+                }
+            }
+            
+            // Set defaults for missing settings
+            $defaults = [
+                'clinic_name' => 'Roaya Clinic',
+                'clinic_email' => 'info@roayaclinic.com',
+                'clinic_phone' => '+20 123 456 7890',
+                'clinic_address' => 'Cairo, Egypt',
+                'timezone' => 'Africa/Cairo',
+                'date_format' => 'Y-m-d',
+                'time_format' => 'H:i',
+                'items_per_page' => 10,
+                'backup_frequency' => 'daily',
+                'email_notifications' => true,
+                'sms_notifications' => false,
+                'maintenance_mode' => false
+            ];
+            
+            return array_merge($defaults, $result);
+        } catch (Exception $e) {
+            error_log("Error getting system settings: " . $e->getMessage());
+            // Return defaults if database error
+            return [
+                'clinic_name' => 'Roaya Clinic',
+                'clinic_email' => 'info@roayaclinic.com',
+                'clinic_phone' => '+20 123 456 7890',
+                'clinic_address' => 'Cairo, Egypt',
+                'timezone' => 'Africa/Cairo',
+                'date_format' => 'Y-m-d',
+                'time_format' => 'H:i',
+                'items_per_page' => 10,
+                'backup_frequency' => 'daily',
+                'email_notifications' => true,
+                'sms_notifications' => false,
+                'maintenance_mode' => false
+            ];
+        }
     }
 
     private function updateSystemSettings($data)
     {
-        // In a real application, you would save these to a database
-        // For now, we'll just validate the data
         $allowedSettings = [
             'clinic_name', 'clinic_email', 'clinic_phone', 'clinic_address',
             'timezone', 'date_format', 'time_format', 'items_per_page',
             'backup_frequency', 'email_notifications', 'sms_notifications', 'maintenance_mode'
         ];
 
-        foreach ($data as $key => $value) {
-            if (in_array($key, $allowedSettings)) {
-                // Validate and sanitize the value
-                if ($key === 'clinic_email' && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                    throw new Exception('Invalid email address');
-                }
-                if ($key === 'items_per_page' && (!is_numeric($value) || $value < 1 || $value > 100)) {
-                    throw new Exception('Items per page must be between 1 and 100');
-                }
-                if (in_array($key, ['email_notifications', 'sms_notifications', 'maintenance_mode'])) {
-                    $value = (bool) $value;
+        try {
+            $this->pdo->beginTransaction();
+            
+            foreach ($data as $key => $value) {
+                if (in_array($key, $allowedSettings)) {
+                    // Validate and sanitize the value
+                    if ($key === 'clinic_email' && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                        throw new Exception('Invalid email address');
+                    }
+                    if ($key === 'items_per_page' && (!is_numeric($value) || $value < 1 || $value > 100)) {
+                        throw new Exception('Items per page must be between 1 and 100');
+                    }
+                    
+                    // Determine setting type and convert value
+                    $settingType = 'string';
+                    if (in_array($key, ['email_notifications', 'sms_notifications', 'maintenance_mode'])) {
+                        $value = (bool) $value;
+                        $settingType = 'boolean';
+                    } elseif ($key === 'items_per_page') {
+                        $value = (int) $value;
+                        $settingType = 'integer';
+                    }
+                    
+                    // Convert boolean to string for database storage
+                    if ($settingType === 'boolean') {
+                        $dbValue = $value ? '1' : '0';
+                    } else {
+                        $dbValue = (string) $value;
+                    }
+                    
+                    // Insert or update setting
+                    $stmt = $this->pdo->prepare("
+                        INSERT INTO settings (setting_key, setting_value, setting_type) 
+                        VALUES (?, ?, ?) 
+                        ON DUPLICATE KEY UPDATE 
+                        setting_value = VALUES(setting_value),
+                        setting_type = VALUES(setting_type),
+                        updated_at = CURRENT_TIMESTAMP
+                    ");
+                    $stmt->execute([$key, $dbValue, $settingType]);
                 }
             }
+            
+            $this->pdo->commit();
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            throw $e;
         }
     }
 }
