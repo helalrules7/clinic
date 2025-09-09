@@ -777,14 +777,15 @@ class DoctorController
     private function getPatientAppointments($patientId, $doctorId)
     {
         $stmt = $this->pdo->prepare("
-            SELECT a.*, cn.diagnosis, cn.plan
+            SELECT a.*, cn.diagnosis, cn.plan, d.name as doctor_name
             FROM appointments a
             LEFT JOIN consultation_notes cn ON a.id = cn.appointment_id
-            WHERE a.patient_id = ? AND a.doctor_id = ?
+            LEFT JOIN users d ON a.doctor_id = d.id
+            WHERE a.patient_id = ?
             ORDER BY a.date DESC, a.start_time DESC
             LIMIT 10
         ");
-        $stmt->execute([$patientId, $doctorId]);
+        $stmt->execute([$patientId]);
         return $stmt->fetchAll();
     }
 
