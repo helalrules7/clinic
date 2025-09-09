@@ -533,7 +533,7 @@
             <!-- Version info -->
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="text-muted">
-                    <div class="mb-1">Roaya Clinic v1.2 Beta</div>
+                    <div class="mb-1">Roaya Clinic v2.0</div>
                     <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none">Ahmed Helal</a></div>
                 </small>
             </div>

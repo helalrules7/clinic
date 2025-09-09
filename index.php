@@ -172,7 +172,13 @@ try {
     // Admin routes
     $router->get('/admin/dashboard', 'AdminController@dashboard');
     $router->get('/admin/users', 'AdminController@users');
+    $router->post('/admin/users', 'AdminController@createUser');
+    $router->put('/admin/users/{id}', 'AdminController@updateUser');
+    $router->delete('/admin/users/{id}', 'AdminController@deleteUser');
     $router->get('/admin/reports', 'AdminController@reports');
+    $router->get('/admin/reports/export', 'AdminController@exportReport');
+    $router->get('/admin/settings', 'AdminController@settings');
+    $router->post('/admin/settings', 'AdminController@settings');
     
     // ✅ FIXED: استخدام dispatch() بدلاً من handle()
     $router->dispatch();

@@ -11,7 +11,7 @@
                     <h1 class="display-4 fw-bold mb-3">Roaya Clinic</h1>
                     <h2 class="h4 mb-4 opacity-90">Management System</h2>
                     <div class="badge bg-white text-dark px-4 py-2 fs-6 fw-semibold">
-                        Version 1.2
+                        Version 2.0
                     </div>
                 </div>
             </div>
@@ -35,7 +35,7 @@
                                 <h5 class="text-muted mb-2">
                                     <i class="bi bi-tag me-2"></i>Version
                                 </h5>
-                                <p class="h4 text-primary fw-bold">1.2</p>
+                                <p class="h4 text-primary fw-bold">2.0</p>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -194,6 +194,71 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-indigo text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #6366f1 !important;">
+                                        <i class="bi bi-speedometer2"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">Admin Dashboard</h5>
+                                        <p class="text-muted mb-0">Comprehensive admin dashboard with system statistics, user management, reports, and system health monitoring.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-rose text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #f43f5e !important;">
+                                        <i class="bi bi-people-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">User Management</h5>
+                                        <p class="text-muted mb-0">Complete user management system with role-based access control, user creation, editing, and deletion functionality.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-emerald text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #10b981 !important;">
+                                        <i class="bi bi-graph-up"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">Advanced Reports</h5>
+                                        <p class="text-muted mb-0">Comprehensive reporting system with user statistics, appointment analytics, financial reports, and data export capabilities.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-amber text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #f59e0b !important;">
+                                        <i class="bi bi-gear-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">System Settings</h5>
+                                        <p class="text-muted mb-0">Complete system configuration with clinic information, notification settings, maintenance mode, and backup management.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-cyan text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #06b6d4 !important;">
+                                        <i class="bi bi-funnel"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">Doctor Filter</h5>
+                                        <p class="text-muted mb-0">Advanced filtering system for patients by doctor with real-time search, dropdown selection, and dynamic results.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -334,7 +399,7 @@
                 <div class="card-header">
                     <h3 class="card-title mb-0">
                         <i class="bi bi-lightning text-warning me-2"></i>
-                        What's New in Version 1.2
+                        What's New in Version 2.0
                     </h3>
                 </div>
                 <div class="card-body">
@@ -402,6 +467,83 @@
                                 <div>
                                     <h6 class="fw-bold mb-1">Bug Fixes & Optimizations</h6>
                                     <p class="text-muted mb-0">Fixed routing issues, corrected SQL queries, improved error handling, and enhanced authentication checks for better system stability.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-indigo text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #6366f1 !important;">
+                                    <i class="bi bi-speedometer2" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Admin Dashboard System</h6>
+                                    <p class="text-muted mb-0">Complete admin dashboard with system statistics, user management, reports generation, system health monitoring, and quick actions for administrators.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-rose text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #f43f5e !important;">
+                                    <i class="bi bi-people-fill" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Advanced User Management</h6>
+                                    <p class="text-muted mb-0">Comprehensive user management with role-based access control, user creation/editing/deletion, search functionality, and pagination for better performance.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-emerald text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #10b981 !important;">
+                                    <i class="bi bi-graph-up" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Enhanced Reporting System</h6>
+                                    <p class="text-muted mb-0">Advanced reporting with user statistics, appointment analytics, financial reports, data export capabilities, and interactive charts for better insights.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-amber text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #f59e0b !important;">
+                                    <i class="bi bi-gear-fill" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">System Settings Panel</h6>
+                                    <p class="text-muted mb-0">Complete system configuration interface with clinic information management, notification settings, maintenance mode, and backup frequency controls.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-cyan text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #06b6d4 !important;">
+                                    <i class="bi bi-funnel" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Doctor Filter for Patients</h6>
+                                    <p class="text-muted mb-0">Advanced filtering system allowing patients to be filtered by assigned doctor with real-time search, dropdown selection, and dynamic result updates.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-slate text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #64748b !important;">
+                                    <i class="bi bi-palette" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Enhanced Dark/Light Mode</h6>
+                                    <p class="text-muted mb-0">Improved theme system with consistent dark and light mode support across all admin pages, better color variables, and enhanced user experience.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-violet text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #8b5cf6 !important;">
+                                    <i class="bi bi-fonts" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Font Awesome Integration</h6>
+                                    <p class="text-muted mb-0">Complete Font Awesome 6.4.0 integration with consistent icons across all admin interfaces, improved visual consistency, and better user experience.</p>
                                 </div>
                             </div>
                         </div>
