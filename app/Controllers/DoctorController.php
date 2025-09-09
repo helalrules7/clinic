@@ -133,6 +133,18 @@ class DoctorController
         // Get patient glasses prescriptions
         $glassesPrescriptions = $this->getPatientGlassesPrescriptions($id);
         
+        // Get treating doctor info (the doctor who created the patient profile)
+        $treatingDoctor = null;
+        if (!empty($patient['created_by_doctor_name'])) {
+            $treatingDoctor = [
+                'name' => $patient['created_by_name'],
+                'display_name' => $patient['created_by_doctor_name']
+            ];
+        } else {
+            // Fallback to current doctor if no creator info available
+            $treatingDoctor = $this->getCurrentDoctorInfo($user['id']);
+        }
+        
         $content = $this->view->render('doctor/patient', [
             'patient' => $patient,
             'timeline' => $timeline,
@@ -141,7 +153,8 @@ class DoctorController
             'patientAttachments' => $patientAttachments,
             'patientNotes' => $patientNotes,
             'glassesPrescriptions' => $glassesPrescriptions,
-            'doctorId' => $doctorId
+            'doctorId' => $doctorId,
+            'currentDoctor' => $treatingDoctor
         ]);
         
         echo $this->view->render('layouts/main', [
@@ -665,7 +678,24 @@ class DoctorController
     private function getPatient($id)
     {
         $stmt = $this->pdo->prepare("
-            SELECT p.*, mh.allergies, mh.medications, mh.systemic_history, mh.ocular_history
+            SELECT p.*, mh.allergies, mh.medications, mh.systemic_history, mh.ocular_history,
+                   (SELECT u.name 
+                    FROM timeline_events te 
+                    LEFT JOIN users u ON te.actor_user_id = u.id
+                    WHERE te.patient_id = p.id 
+                    AND te.event_type = 'Booking' 
+                    AND te.event_summary LIKE '%New patient registered%' 
+                    ORDER BY te.created_at ASC 
+                    LIMIT 1) as created_by_name,
+                   (SELECT d.display_name 
+                    FROM timeline_events te 
+                    LEFT JOIN users u ON te.actor_user_id = u.id
+                    LEFT JOIN doctors d ON u.id = d.user_id
+                    WHERE te.patient_id = p.id 
+                    AND te.event_type = 'Booking' 
+                    AND te.event_summary LIKE '%New patient registered%' 
+                    ORDER BY te.created_at ASC 
+                    LIMIT 1) as created_by_doctor_name
             FROM patients p
             LEFT JOIN medical_history mh ON p.id = mh.patient_id
             WHERE p.id = ?
@@ -951,6 +981,18 @@ class DoctorController
         ");
         $stmt->execute([$patientId]);
         return $stmt->fetchAll();
+    }
+    
+    private function getCurrentDoctorInfo($userId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT u.name, d.display_name, d.specialty
+            FROM users u
+            LEFT JOIN doctors d ON u.id = d.user_id
+            WHERE u.id = ?
+        ");
+        $stmt->execute([$userId]);
+        return $stmt->fetch();
     }
     
     public function editPatient($id)

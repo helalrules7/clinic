@@ -25,6 +25,17 @@
                         (<?= date_diff(date_create($patient['dob']), date_create('now'))->y ?> years old)
                     </small>
                 <?php endif; ?>
+                
+                <!-- Current Doctor Badge -->
+                <?php if (isset($currentDoctor) && $currentDoctor): ?>
+                <div class="mt-3">
+                    <span class="badge doctor-badge fs-6 px-4 py-2">
+                        <i class="bi bi-person-badge me-2"></i>
+                        <strong>Treating Doctor:</strong> 
+                        <?= htmlspecialchars($currentDoctor['display_name'] ?? $currentDoctor['name']) ?>
+                    </span>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -1772,6 +1783,43 @@ div.form-text {
     .timeline-content::after {
         left: -5px;
     }
+}
+
+/* Doctor Badge Styles */
+.doctor-badge {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border: 2px solid #0056b3;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    transition: all 0.3s ease;
+    animation: doctorBadgePulse 3s infinite;
+}
+
+.doctor-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+}
+
+@keyframes doctorBadgePulse {
+    0% { box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3); }
+    50% { box-shadow: 0 4px 20px rgba(0, 123, 255, 0.5); }
+    100% { box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3); }
+}
+
+.doctor-badge i {
+    animation: doctorIconSpin 2s linear infinite;
+}
+
+@keyframes doctorIconSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Dark mode support for doctor badge */
+[data-bs-theme="dark"] .doctor-badge {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    border-color: #0a58ca;
+    box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
 }
 </style>
 
