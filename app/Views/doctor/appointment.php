@@ -408,6 +408,26 @@
 }
 </style>
 
+<!-- Breadcrumb -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/doctor/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/doctor/patients">Patients</a></li>
+            <li class="breadcrumb-item"><a href="/doctor/patients/<?= $appointment['patient_id'] ?? '' ?>"><?= htmlspecialchars($appointment['patient_name'] ?? '') ?></a></li>
+            <li class="breadcrumb-item active">Appointment</li>
+        </ol>
+    </nav>
+    <div class="d-flex gap-2">
+        <a href="/doctor/patients/<?= $appointment['patient_id'] ?? '' ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-person"></i> Patient Profile
+        </a>
+        <a href="/doctor/appointments/<?= $appointment['id'] ?? '' ?>/edit" class="btn btn-primary">
+            <i class="bi bi-pencil-square"></i> Edit Consultation
+        </a>
+    </div>
+</div>
+
 <!-- Doctor Info Badge (showing appointment doctor info) -->
 <?php 
 $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
@@ -423,11 +443,6 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                 </div>
                 <div class="small">
                     This appointment is managed by <strong><?= htmlspecialchars($appointmentDoctorName) ?></strong>.
-                    <br>
-                    <small class="text-info-light">
-                        <i class="bi bi-check-circle me-1"></i>
-                        All doctors have access to view and manage patient records.
-                    </small>
                 </div>
             </div>
             <button type="button" class="btn-close btn-close-white ms-3" onclick="closeDoctorInfo()"></button>

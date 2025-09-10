@@ -335,14 +335,71 @@
         </div>
         <?php endif; ?>
         
-        <?php if ($consultationNotes['slit_lamp']): ?>
+        <?php if ($consultationNotes['external_appearance_right'] || $consultationNotes['external_appearance_left']): ?>
+        <div class="field">
+            <span class="field-label">المظهر الخارجي:</span>
+            <span class="field-value">
+                <?php if ($consultationNotes['external_appearance_right']): ?>
+                    العين اليمنى: <?= nl2br(htmlspecialchars($consultationNotes['external_appearance_right'])) ?>
+                <?php endif; ?>
+                <?php if ($consultationNotes['external_appearance_left']): ?>
+                    <?= $consultationNotes['external_appearance_right'] ? '<br>' : '' ?>العين اليسرى: <?= nl2br(htmlspecialchars($consultationNotes['external_appearance_left'])) ?>
+                <?php endif; ?>
+            </span>
+        </div>
+        <?php endif; ?>
+        
+        <?php if ($consultationNotes['eyelid_right'] || $consultationNotes['eyelid_left']): ?>
+        <div class="field">
+            <span class="field-label">فحص الجفون:</span>
+            <span class="field-value">
+                <?php if ($consultationNotes['eyelid_right']): ?>
+                    العين اليمنى: <?= nl2br(htmlspecialchars($consultationNotes['eyelid_right'])) ?>
+                <?php endif; ?>
+                <?php if ($consultationNotes['eyelid_left']): ?>
+                    <?= $consultationNotes['eyelid_right'] ? '<br>' : '' ?>العين اليسرى: <?= nl2br(htmlspecialchars($consultationNotes['eyelid_left'])) ?>
+                <?php endif; ?>
+            </span>
+        </div>
+        <?php endif; ?>
+        
+        <?php if ($consultationNotes['slit_lamp_right'] || $consultationNotes['slit_lamp_left']): ?>
+        <div class="field">
+            <span class="field-label">فحص المصباح الشقي:</span>
+            <span class="field-value">
+                <?php if ($consultationNotes['slit_lamp_right']): ?>
+                    العين اليمنى: <?= nl2br(htmlspecialchars($consultationNotes['slit_lamp_right'])) ?>
+                <?php endif; ?>
+                <?php if ($consultationNotes['slit_lamp_left']): ?>
+                    <?= $consultationNotes['slit_lamp_right'] ? '<br>' : '' ?>العين اليسرى: <?= nl2br(htmlspecialchars($consultationNotes['slit_lamp_left'])) ?>
+                <?php endif; ?>
+            </span>
+        </div>
+        <?php endif; ?>
+        
+        <?php if ($consultationNotes['fundus_right'] || $consultationNotes['fundus_left']): ?>
+        <div class="field">
+            <span class="field-label">فحص قاع العين:</span>
+            <span class="field-value">
+                <?php if ($consultationNotes['fundus_right']): ?>
+                    العين اليمنى: <?= nl2br(htmlspecialchars($consultationNotes['fundus_right'])) ?>
+                <?php endif; ?>
+                <?php if ($consultationNotes['fundus_left']): ?>
+                    <?= $consultationNotes['fundus_right'] ? '<br>' : '' ?>العين اليسرى: <?= nl2br(htmlspecialchars($consultationNotes['fundus_left'])) ?>
+                <?php endif; ?>
+            </span>
+        </div>
+        <?php endif; ?>
+        
+        <!-- Fallback for old data format -->
+        <?php if ($consultationNotes['slit_lamp'] && !$consultationNotes['slit_lamp_right'] && !$consultationNotes['slit_lamp_left']): ?>
         <div class="field">
             <span class="field-label">فحص المصباح الشقي:</span>
             <span class="field-value"><?= nl2br(htmlspecialchars($consultationNotes['slit_lamp'])) ?></span>
         </div>
         <?php endif; ?>
         
-        <?php if ($consultationNotes['fundus']): ?>
+        <?php if ($consultationNotes['fundus'] && !$consultationNotes['fundus_right'] && !$consultationNotes['fundus_left']): ?>
         <div class="field">
             <span class="field-label">فحص قاع العين:</span>
             <span class="field-value"><?= nl2br(htmlspecialchars($consultationNotes['fundus'])) ?></span>
@@ -367,6 +424,20 @@
         <div class="field">
             <span class="field-label">موعد المتابعة:</span>
             <span class="field-value">بعد <?= $consultationNotes['followup_days'] ?> يوم</span>
+        </div>
+        <?php endif; ?>
+        
+        <?php if ($consultationNotes['systemic_disease']): ?>
+        <div class="field">
+            <span class="field-label">الأمراض الجهازية:</span>
+            <span class="field-value"><?= nl2br(htmlspecialchars($consultationNotes['systemic_disease'])) ?></span>
+        </div>
+        <?php endif; ?>
+        
+        <?php if ($consultationNotes['medication']): ?>
+        <div class="field">
+            <span class="field-label">الأدوية الحالية:</span>
+            <span class="field-value"><?= nl2br(htmlspecialchars($consultationNotes['medication'])) ?></span>
         </div>
         <?php endif; ?>
     </div>

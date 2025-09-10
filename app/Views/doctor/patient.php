@@ -1,3 +1,14 @@
+<!-- Breadcrumb -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/doctor/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/doctor/patients">Patients</a></li>
+            <li class="breadcrumb-item active"><?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></li>
+        </ol>
+    </nav>
+</div>
+
 <!-- Patient Profile Header -->
 <div class="row mb-4">
     <div class="col-md-8">
@@ -1030,6 +1041,45 @@
 }
 
 .text-muted {
+    color: var(--muted) !important;
+}
+
+/* Breadcrumb Styles */
+.breadcrumb-item a {
+    color: dodgerblue !important;
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    color: #1e90ff !important;
+    text-decoration: underline;
+}
+
+.breadcrumb-item.active {
+    color: var(--text) !important;
+    font-weight: 600;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    color: var(--muted) !important;
+    content: ">" !important;
+}
+
+/* Dark Mode Breadcrumb */
+.dark .breadcrumb-item a {
+    color: dodgerblue !important;
+}
+
+.dark .breadcrumb-item a:hover {
+    color: #87ceeb !important;
+}
+
+.dark .breadcrumb-item.active {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.dark .breadcrumb-item + .breadcrumb-item::before {
     color: var(--muted) !important;
 }
 

@@ -325,6 +325,16 @@ $reportTypes = [
     color: var(--text) !important;
 }
 
+/* Chart Container Dark Mode Adjustments */
+.dark .card .card-body canvas {
+    background-color: var(--card) !important;
+}
+
+/* Chart Text Dark Mode */
+.dark .card .card-header h6 {
+    color: var(--text) !important;
+}
+
 /* Dark Mode Specific Adjustments */
 .dark .card {
     background-color: var(--card) !important;
@@ -656,6 +666,95 @@ $reportTypes = [
                     </tbody>
                 </table>
             </div>
+    </div>
+</div>
+
+    <!-- Charts Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-graph-up me-2"></i>
+                Visual Analytics
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <?php if ($reportType === 'appointments'): ?>
+                    <!-- Appointments Line Chart -->
+                    <div class="col-lg-8 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Appointments Trend</h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="appointmentsChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Appointments Status Pie Chart -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Appointments Status</h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="appointmentsPieChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                <?php elseif ($reportType === 'revenue'): ?>
+                    <!-- Revenue Line Chart -->
+                    <div class="col-lg-8 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Revenue Trend</h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="revenueChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Revenue vs Discounts Chart -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Revenue vs Discounts</h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="revenuePieChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                <?php elseif ($reportType === 'patients'): ?>
+                    <!-- Patients Line Chart -->
+                    <div class="col-lg-8 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">New Patients Trend</h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="patientsChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Gender Distribution Pie Chart -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Gender Distribution</h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="genderPieChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 
@@ -671,6 +770,9 @@ $reportTypes = [
         </div>
     </div>
 <?php endif; ?>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
 // Auto-submit form when dates change
@@ -696,4 +798,463 @@ document.querySelector('form').addEventListener('submit', function(e) {
         alert('Start date must be before end date');
     }
 });
+
+// Chart.js Configuration
+const chartColors = {
+    primary: '#007bff',
+    success: '#28a745',
+    danger: '#dc3545',
+    warning: '#ffc107',
+    info: '#17a2b8',
+    secondary: '#6c757d',
+    light: '#f8f9fa',
+    dark: '#343a40'
+};
+
+// Dark mode colors
+const darkModeColors = {
+    primary: '#0d6efd',
+    success: '#198754',
+    danger: '#dc3545',
+    warning: '#ffc107',
+    info: '#0dcaf0',
+    secondary: '#6c757d',
+    light: '#f8f9fa',
+    dark: '#212529'
+};
+
+// Get current theme colors
+function getThemeColors() {
+    return document.body.classList.contains('dark') ? darkModeColors : chartColors;
+}
+
+// Chart.js default configuration
+Chart.defaults.font.family = "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--text') || '#0f172a';
+
+// Get current theme colors dynamically
+function getCurrentThemeColors() {
+    const isDark = document.body.classList.contains('dark');
+    return {
+        text: getComputedStyle(document.documentElement).getPropertyValue('--text') || (isDark ? '#f8fafc' : '#0f172a'),
+        muted: getComputedStyle(document.documentElement).getPropertyValue('--muted') || (isDark ? '#cbd5e1' : '#475569'),
+        grid: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)',
+        border: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.15)',
+        background: isDark ? '#1e293b' : '#ffffff'
+    };
+}
+
+<?php if (!empty($reportData)): ?>
+// Prepare data for charts
+const reportData = <?= json_encode($reportData) ?>;
+const reportType = '<?= $reportType ?>';
+
+// Common chart options
+function getCommonOptions() {
+    const themeColors = getCurrentThemeColors();
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    usePointStyle: true,
+                    padding: 20,
+                    font: {
+                        size: 12,
+                        family: "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                    },
+                    color: themeColors.text
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.95)',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                borderColor: themeColors.border,
+                borderWidth: 1,
+                cornerRadius: 8,
+                displayColors: true,
+                titleFont: {
+                    family: "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                    size: 13,
+                    weight: 'bold'
+                },
+                bodyFont: {
+                    family: "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                    size: 12
+                }
+            }
+        },
+        scales: {
+            x: {
+                grid: {
+                    color: themeColors.grid,
+                    drawBorder: false
+                },
+                ticks: {
+                    color: themeColors.text,
+                    font: {
+                        family: "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                    }
+                }
+            },
+            y: {
+                grid: {
+                    color: themeColors.grid,
+                    drawBorder: false
+                },
+                ticks: {
+                    color: themeColors.text,
+                    font: {
+                        family: "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                    }
+                }
+            }
+        }
+    };
+}
+
+// Pie chart options
+function getPieOptions() {
+    const themeColors = getCurrentThemeColors();
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    usePointStyle: true,
+                    padding: 20,
+                    font: {
+                        size: 12,
+                        family: "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                    },
+                    color: themeColors.text
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.95)',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                borderColor: themeColors.border,
+                borderWidth: 1,
+                cornerRadius: 8,
+                titleFont: {
+                    family: "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                    size: 13,
+                    weight: 'bold'
+                },
+                bodyFont: {
+                    family: "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                    size: 12
+                },
+                callbacks: {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return `${label}: ${value} (${percentage}%)`;
+                    }
+                }
+            }
+        }
+    };
+}
+
+<?php if ($reportType === 'appointments'): ?>
+// Appointments Line Chart
+const appointmentsCtx = document.getElementById('appointmentsChart');
+if (appointmentsCtx) {
+    const dates = reportData.map(item => item.date);
+    const totalAppointments = reportData.map(item => item.total_appointments);
+    const completed = reportData.map(item => item.completed);
+    const cancelled = reportData.map(item => item.cancelled);
+    const noShow = reportData.map(item => item.no_show);
+    
+    new Chart(appointmentsCtx, {
+        type: 'line',
+        data: {
+            labels: dates.map(date => new Date(date).toLocaleDateString('ar-EG', { 
+                month: 'short', 
+                day: 'numeric' 
+            })),
+            datasets: [
+                {
+                    label: 'Total Appointments',
+                    data: totalAppointments,
+                    borderColor: chartColors.primary,
+                    backgroundColor: chartColors.primary + '20',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Completed',
+                    data: completed,
+                    borderColor: chartColors.success,
+                    backgroundColor: chartColors.success + '20',
+                    tension: 0.4,
+                    fill: false
+                },
+                {
+                    label: 'Cancelled',
+                    data: cancelled,
+                    borderColor: chartColors.danger,
+                    backgroundColor: chartColors.danger + '20',
+                    tension: 0.4,
+                    fill: false
+                },
+                {
+                    label: 'No Show',
+                    data: noShow,
+                    borderColor: chartColors.warning,
+                    backgroundColor: chartColors.warning + '20',
+                    tension: 0.4,
+                    fill: false
+                }
+            ]
+        },
+        options: getCommonOptions()
+    });
+}
+
+// Appointments Status Pie Chart
+const appointmentsPieCtx = document.getElementById('appointmentsPieChart');
+if (appointmentsPieCtx) {
+    const totalCompleted = <?= $totalCompleted ?>;
+    const totalCancelled = <?= $totalCancelled ?>;
+    const totalNoShow = <?= $totalNoShow ?>;
+    
+    new Chart(appointmentsPieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Completed', 'Cancelled', 'No Show'],
+            datasets: [{
+                data: [totalCompleted, totalCancelled, totalNoShow],
+                backgroundColor: [
+                    chartColors.success,
+                    chartColors.danger,
+                    chartColors.warning
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: getPieOptions()
+    });
+}
+
+<?php elseif ($reportType === 'revenue'): ?>
+// Revenue Line Chart
+const revenueCtx = document.getElementById('revenueChart');
+if (revenueCtx) {
+    const dates = reportData.map(item => item.date);
+    const dailyRevenue = reportData.map(item => item.daily_revenue);
+    const discounts = reportData.map(item => item.discounts);
+    
+    new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: dates.map(date => new Date(date).toLocaleDateString('ar-EG', { 
+                month: 'short', 
+                day: 'numeric' 
+            })),
+            datasets: [
+                {
+                    label: 'Daily Revenue (EGP)',
+                    data: dailyRevenue,
+                    borderColor: chartColors.success,
+                    backgroundColor: chartColors.success + '20',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Discounts (EGP)',
+                    data: discounts,
+                    borderColor: chartColors.danger,
+                    backgroundColor: chartColors.danger + '20',
+                    tension: 0.4,
+                    fill: false,
+                    yAxisID: 'y'
+                }
+            ]
+        },
+        options: {
+            ...getCommonOptions(),
+            scales: {
+                ...getCommonOptions().scales,
+                y: {
+                    ...getCommonOptions().scales.y,
+                    beginAtZero: true,
+                    ticks: {
+                        ...getCommonOptions().scales.y.ticks,
+                        callback: function(value) {
+                            return value.toLocaleString('ar-EG') + ' EGP';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Revenue vs Discounts Pie Chart
+const revenuePieCtx = document.getElementById('revenuePieChart');
+if (revenuePieCtx) {
+    const totalRevenue = <?= $totalRevenue ?>;
+    const totalDiscounts = <?= $totalDiscounts ?>;
+    
+    new Chart(revenuePieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Revenue', 'Discounts'],
+            datasets: [{
+                data: [totalRevenue, totalDiscounts],
+                backgroundColor: [
+                    chartColors.success,
+                    chartColors.danger
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            ...getPieOptions(),
+            plugins: {
+                ...getPieOptions().plugins,
+                tooltip: {
+                    ...getPieOptions().plugins.tooltip,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed;
+                            return `${label}: ${value.toLocaleString('ar-EG')} EGP`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+<?php elseif ($reportType === 'patients'): ?>
+// Patients Line Chart
+const patientsCtx = document.getElementById('patientsChart');
+if (patientsCtx) {
+    const dates = reportData.map(item => item.date);
+    const newPatients = reportData.map(item => item.new_patients);
+    const malePatients = reportData.map(item => item.male);
+    const femalePatients = reportData.map(item => item.female);
+    
+    new Chart(patientsCtx, {
+        type: 'line',
+        data: {
+            labels: dates.map(date => new Date(date).toLocaleDateString('ar-EG', { 
+                month: 'short', 
+                day: 'numeric' 
+            })),
+            datasets: [
+                {
+                    label: 'New Patients',
+                    data: newPatients,
+                    borderColor: chartColors.primary,
+                    backgroundColor: chartColors.primary + '20',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Male Patients',
+                    data: malePatients,
+                    borderColor: chartColors.info,
+                    backgroundColor: chartColors.info + '20',
+                    tension: 0.4,
+                    fill: false
+                },
+                {
+                    label: 'Female Patients',
+                    data: femalePatients,
+                    borderColor: chartColors.warning,
+                    backgroundColor: chartColors.warning + '20',
+                    tension: 0.4,
+                    fill: false
+                }
+            ]
+        },
+        options: getCommonOptions()
+    });
+}
+
+// Gender Distribution Pie Chart
+const genderPieCtx = document.getElementById('genderPieChart');
+if (genderPieCtx) {
+    const totalMale = <?= $totalMale ?>;
+    const totalFemale = <?= $totalFemale ?>;
+    
+    new Chart(genderPieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Male', 'Female'],
+            datasets: [{
+                data: [totalMale, totalFemale],
+                backgroundColor: [
+                    chartColors.info,
+                    chartColors.warning
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: getPieOptions()
+    });
+}
+
+<?php endif; ?>
+
+// Update chart colors when theme changes
+function updateChartColors() {
+    const themeColors = getCurrentThemeColors();
+    Chart.defaults.color = themeColors.text;
+    
+    // Update all existing charts
+    Chart.helpers.each(Chart.instances, function(chart) {
+        // Update chart options with new theme colors
+        if (chart.options && chart.options.plugins) {
+            if (chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+                chart.options.plugins.legend.labels.color = themeColors.text;
+            }
+            if (chart.options.scales) {
+                Object.keys(chart.options.scales).forEach(scaleKey => {
+                    const scale = chart.options.scales[scaleKey];
+                    if (scale.ticks) {
+                        scale.ticks.color = themeColors.text;
+                    }
+                    if (scale.grid) {
+                        scale.grid.color = themeColors.grid;
+                    }
+                });
+            }
+        }
+        chart.update();
+    });
+}
+
+// Listen for theme changes
+const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            updateChartColors();
+        }
+    });
+});
+
+observer.observe(document.body, {
+    attributes: true,
+    attributeFilter: ['class']
+});
+
+<?php endif; ?>
 </script>
