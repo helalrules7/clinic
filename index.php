@@ -93,7 +93,9 @@ try {
     $router->post('/doctor/appointments/{id}/edit', 'DoctorController@updateConsultation');
     $router->post('/doctor/appointments/{id}/consultation', 'DoctorController@saveConsultation');
     $router->get('/doctor/profile', 'DoctorController@profile');
+    $router->post('/doctor/profile/update', 'DoctorController@updateProfile');
     $router->post('/doctor/profile/change-password', 'DoctorController@changePassword');
+    $router->post('/doctor/profile/update-field', 'DoctorController@updateField');
     $router->get('/doctor/reports', 'DoctorController@reports');
     $router->get('/doctor/reports/export', 'DoctorController@exportDoctorReport');
     

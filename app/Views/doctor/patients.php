@@ -353,20 +353,7 @@
                                 <div class="form-text">Patient's date of birth (if empty, today's date will be used)</div>
                             </div>
                             
-
-                            
-                            <div class="mb-3">
-                                <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
-                                <select class="form-select" id="gender" name="gender" required>
-                                    <option value="">-- Please select gender --</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                </select>
-                                <div class="invalid-feedback"></div>
-                                <div class="form-text text-danger"><strong>Required:</strong> Please select the patient's gender</div>
-                            </div>
-                            
-                            <div class="mb-3">
+                            <div class="mb-3" style="display: none;">
                                 <label for="nationalId" class="form-label">National ID</label>
                                 <input type="text" class="form-control" id="nationalId" name="national_id" maxlength="20">
                                 <div class="form-text">Government issued ID number (optional)</div>
@@ -387,7 +374,7 @@
                                 <div class="form-text">Primary contact number</div>
                             </div>
                             
-                            <div class="mb-3">
+                            <div class="mb-3" style="display: none;">
                                 <label for="altPhone" class="form-label">Alternative Phone</label>
                                 <input type="tel" class="form-control" id="altPhone" name="alt_phone" maxlength="20">
                                 <div class="form-text">Secondary contact number (optional)</div>
@@ -400,12 +387,22 @@
                             </div>
                             
                             <div class="mb-3">
+                                <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
+                                <select class="form-select" id="gender" name="gender" required>
+                                    <option value="Male" selected>Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                                <div class="form-text text-danger"><strong>Required:</strong> Change the gender if needed</div>
+                            </div>
+                            
+                            <div class="mb-3" style="display: none;">
                                 <label for="emergencyContact" class="form-label">Emergency Contact</label>
                                 <input type="text" class="form-control" id="emergencyContact" name="emergency_contact" maxlength="100">
                                 <div class="form-text">Emergency contact person name</div>
                             </div>
                             
-                            <div class="mb-3">
+                            <div class="mb-3" style="display: none;">
                                 <label for="emergencyPhone" class="form-label">Emergency Phone</label>
                                 <input type="tel" class="form-control" id="emergencyPhone" name="emergency_phone" maxlength="20">
                                 <div class="form-text">Emergency contact phone number</div>

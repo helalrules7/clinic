@@ -599,6 +599,112 @@ class DoctorController
         }
     }
 
+    public function updateField()
+    {
+        $user = $this->auth->user();
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            return;
+        }
+        
+        // Get JSON input
+        $input = json_decode(file_get_contents('php://input'), true);
+        
+        if (!$input) {
+            echo json_encode(['success' => false, 'message' => 'Invalid JSON input']);
+            return;
+        }
+        
+        $field = $input['field'] ?? '';
+        $value = trim($input['value'] ?? '');
+        $csrfToken = $input['csrf_token'] ?? '';
+        
+        // Validate CSRF token
+        if (!hash_equals($_SESSION['csrf_token'] ?? '', $csrfToken)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid security token']);
+            return;
+        }
+        
+        // Validate field name
+        $allowedFields = ['name', 'email', 'phone', 'doctor_name', 'specialty'];
+        if (!in_array($field, $allowedFields)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid field name']);
+            return;
+        }
+        
+        // Validate required fields
+        if (in_array($field, ['name', 'email']) && empty($value)) {
+            echo json_encode(['success' => false, 'message' => ucfirst($field) . ' cannot be empty']);
+            return;
+        }
+        
+        // Validate email format
+        if ($field === 'email' && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
+            echo json_encode(['success' => false, 'message' => 'Please enter a valid email address']);
+            return;
+        }
+        
+        try {
+            // Check if email is already taken by another user
+            if ($field === 'email') {
+                $stmt = $this->pdo->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
+                $stmt->execute([$value, $user['id']]);
+                if ($stmt->fetch()) {
+                    echo json_encode(['success' => false, 'message' => 'Email is already taken by another user']);
+                    return;
+                }
+            }
+            
+            // Start transaction
+            $this->pdo->beginTransaction();
+            
+            if (in_array($field, ['name', 'email', 'phone'])) {
+                // Update users table
+                $stmt = $this->pdo->prepare("
+                    UPDATE users 
+                    SET {$field} = ?, updated_at = NOW() 
+                    WHERE id = ?
+                ");
+                $stmt->execute([$value, $user['id']]);
+                
+                // Update session data
+                $_SESSION['user'][$field] = $value;
+                
+            } elseif (in_array($field, ['doctor_name', 'specialty'])) {
+                // Update doctors table
+                $doctorId = $this->getDoctorId($user['id']);
+                if ($doctorId) {
+                    $stmt = $this->pdo->prepare("
+                        UPDATE doctors 
+                        SET {$field} = ?, updated_at = NOW() 
+                        WHERE user_id = ?
+                    ");
+                    $stmt->execute([$value, $user['id']]);
+                    
+                    // Update session data
+                    $_SESSION['user'][$field] = $value;
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Doctor profile not found']);
+                    return;
+                }
+            }
+            
+            // Commit transaction
+            $this->pdo->commit();
+            
+            echo json_encode(['success' => true, 'message' => ucfirst($field) . ' updated successfully']);
+            
+        } catch (\Exception $e) {
+            // Rollback transaction
+            $this->pdo->rollBack();
+            error_log("Error updating field {$field} for user {$user['id']}: " . $e->getMessage());
+            
+            echo json_encode(['success' => false, 'message' => 'Failed to update ' . $field]);
+        }
+    }
+
     // Private helper methods
     private function validateCsrfToken()
     {
