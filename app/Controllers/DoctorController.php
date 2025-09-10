@@ -375,7 +375,7 @@ class DoctorController
                     IOP_right, IOP_left, slit_lamp_right, slit_lamp_left, fundus_right, fundus_left,
                     external_appearance_right, external_appearance_left, eyelid_right, eyelid_left,
                     diagnosis, diagnosis_code, systemic_disease, medication, plan, followup_days, created_by)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
             }
             
