@@ -357,21 +357,25 @@ class DoctorController
             
             if ($noteId) {
                 // Update existing consultation note
-                $stmt = $this->pdo->prepare("
-                    UPDATE consultation_notes SET 
-                    chief_complaint = ?, hx_present_illness = ?, visual_acuity_right = ?, visual_acuity_left = ?,
-                    refraction_right = ?, refraction_left = ?, IOP_right = ?, IOP_left = ?, slit_lamp = ?,
-                    fundus = ?, diagnosis = ?, diagnosis_code = ?, plan = ?, followup_days = ?, updated_at = CURRENT_TIMESTAMP
-                    WHERE id = ? AND appointment_id = ?
-                ");
+            $stmt = $this->pdo->prepare("
+                UPDATE consultation_notes SET 
+                chief_complaint = ?, hx_present_illness = ?, visual_acuity_right = ?, visual_acuity_left = ?,
+                refraction_right = ?, refraction_left = ?, IOP_right = ?, IOP_left = ?, 
+                slit_lamp_right = ?, slit_lamp_left = ?, fundus_right = ?, fundus_left = ?,
+                external_appearance_right = ?, external_appearance_left = ?, eyelid_right = ?, eyelid_left = ?,
+                diagnosis = ?, diagnosis_code = ?, systemic_disease = ?, medication = ?, 
+                plan = ?, followup_days = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND appointment_id = ?
+            ");
             } else {
                 // Create new consultation note
                 $stmt = $this->pdo->prepare("
                     INSERT INTO consultation_notes (appointment_id, chief_complaint, hx_present_illness, 
                     visual_acuity_right, visual_acuity_left, refraction_right, refraction_left, 
-                    IOP_right, IOP_left, slit_lamp, fundus, diagnosis, diagnosis_code, plan, 
-                    followup_days, created_by) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    IOP_right, IOP_left, slit_lamp_right, slit_lamp_left, fundus_right, fundus_left,
+                    external_appearance_right, external_appearance_left, eyelid_right, eyelid_left,
+                    diagnosis, diagnosis_code, systemic_disease, medication, plan, followup_days, created_by)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
             }
             
@@ -387,24 +391,32 @@ class DoctorController
             
             if ($noteId) {
                 // Execute UPDATE query
-                $stmt->execute([
-                    $processTextField($_POST['chief_complaint']),
-                    $processTextField($_POST['hx_present_illness']),
-                    $processTextField($_POST['visual_acuity_right']),
-                    $processTextField($_POST['visual_acuity_left']),
-                    $processTextField($_POST['refraction_right']),
-                    $processTextField($_POST['refraction_left']),
-                    $iopRight,
-                    $iopLeft,
-                    $processTextField($_POST['slit_lamp']),
-                    $processTextField($_POST['fundus']),
-                    $processTextField($_POST['diagnosis']),
-                    $processTextField($_POST['diagnosis_code']),
-                    $processTextField($_POST['plan']),
-                    $followupDays,
-                    $noteId,
-                    $id
-                ]);
+            $stmt->execute([
+                $processTextField($_POST['chief_complaint']),
+                $processTextField($_POST['hx_present_illness']),
+                $processTextField($_POST['visual_acuity_right']),
+                $processTextField($_POST['visual_acuity_left']),
+                $processTextField($_POST['refraction_right']),
+                $processTextField($_POST['refraction_left']),
+                $iopRight,
+                $iopLeft,
+                $processTextField($_POST['slit_lamp_right']),
+                $processTextField($_POST['slit_lamp_left']),
+                $processTextField($_POST['fundus_right']),
+                $processTextField($_POST['fundus_left']),
+                $processTextField($_POST['external_appearance_right']),
+                $processTextField($_POST['external_appearance_left']),
+                $processTextField($_POST['eyelid_right']),
+                $processTextField($_POST['eyelid_left']),
+                $processTextField($_POST['diagnosis']),
+                $processTextField($_POST['diagnosis_code']),
+                $processTextField($_POST['systemic_disease']),
+                $processTextField($_POST['medication']),
+                $processTextField($_POST['plan']),
+                $followupDays,
+                $noteId,
+                $id
+            ]);
             } else {
                 // Execute INSERT query
                 $stmt->execute([
@@ -417,10 +429,18 @@ class DoctorController
                     $processTextField($_POST['refraction_left']),
                     $iopRight,
                     $iopLeft,
-                    $processTextField($_POST['slit_lamp']),
-                    $processTextField($_POST['fundus']),
+                    $processTextField($_POST['slit_lamp_right']),
+                    $processTextField($_POST['slit_lamp_left']),
+                    $processTextField($_POST['fundus_right']),
+                    $processTextField($_POST['fundus_left']),
+                    $processTextField($_POST['external_appearance_right']),
+                    $processTextField($_POST['external_appearance_left']),
+                    $processTextField($_POST['eyelid_right']),
+                    $processTextField($_POST['eyelid_left']),
                     $processTextField($_POST['diagnosis']),
                     $processTextField($_POST['diagnosis_code']),
+                    $processTextField($_POST['systemic_disease']),
+                    $processTextField($_POST['medication']),
                     $processTextField($_POST['plan']),
                     $followupDays,
                     $user['id']

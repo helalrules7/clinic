@@ -1603,9 +1603,10 @@ class ApiController
         $stmt = $this->pdo->prepare("
             INSERT INTO consultation_notes (appointment_id, chief_complaint, hx_present_illness,
                                          visual_acuity_right, visual_acuity_left, refraction_right, refraction_left,
-                                         IOP_right, IOP_left, slit_lamp, fundus, diagnosis, diagnosis_code,
-                                         plan, followup_days, created_by)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                         IOP_right, IOP_left, slit_lamp_right, slit_lamp_left, fundus_right, fundus_left,
+                                         external_appearance_right, external_appearance_left, eyelid_right, eyelid_left,
+                                         diagnosis, diagnosis_code, systemic_disease, medication, plan, followup_days, created_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
         $stmt->execute([
@@ -1618,10 +1619,18 @@ class ApiController
             $data['refraction_left'] ?? null,
             $data['IOP_right'] ?? null,
             $data['IOP_left'] ?? null,
-            $data['slit_lamp'] ?? null,
-            $data['fundus'] ?? null,
+            $data['slit_lamp_right'] ?? null,
+            $data['slit_lamp_left'] ?? null,
+            $data['fundus_right'] ?? null,
+            $data['fundus_left'] ?? null,
+            $data['external_appearance_right'] ?? null,
+            $data['external_appearance_left'] ?? null,
+            $data['eyelid_right'] ?? null,
+            $data['eyelid_left'] ?? null,
             $data['diagnosis'],
             $data['diagnosis_code'] ?? null,
+            $data['systemic_disease'] ?? null,
+            $data['medication'] ?? null,
             $data['plan'],
             $data['followup_days'] ?? null,
             $userId
@@ -3871,5 +3880,38 @@ class ApiController
     {
         $d = \DateTime::createFromFormat('Y-m-d', $date);
         return $d && $d->format('Y-m-d') === $date;
+    }
+
+    // Delete Consultation Note
+    public function deleteConsultationNote($noteId)
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            // Check if consultation note exists
+            $stmt = $this->pdo->prepare("SELECT * FROM consultation_notes WHERE id = ?");
+            $stmt->execute([$noteId]);
+            $note = $stmt->fetch();
+
+            if (!$note) {
+                return $this->jsonResponse(['error' => 'Consultation note not found'], 404);
+            }
+
+            // Delete the consultation note
+            $stmt = $this->pdo->prepare("DELETE FROM consultation_notes WHERE id = ?");
+            $stmt->execute([$noteId]);
+
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => 'Consultation note deleted successfully'
+            ]);
+
+        } catch (Exception $e) {
+            error_log("Error deleting consultation note: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Failed to delete consultation note'], 500);
+        }
     }
 }

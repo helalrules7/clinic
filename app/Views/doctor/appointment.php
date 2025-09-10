@@ -170,7 +170,7 @@
 }
 
 .consultation-note-header {
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    background: linear-gradient(135deg,var(--bg), var(--border));
     border-radius: 8px;
     padding: 0.75rem;
     margin-bottom: 1rem;
@@ -182,7 +182,7 @@
 }
 
 .consultation-section.border-top {
-    border-top: 2px solid #dee2e6 !important;
+    border-top: 2px solid var(--border) !important;
 }
 
 .collapse {
@@ -523,7 +523,7 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                             <?php endif; ?>
                         </p>
                         <p><strong>Address:</strong> <?= htmlspecialchars($patient['address'] ?? 'N/A') ?></p>
-                        <p><strong>National ID:</strong> <?= htmlspecialchars($patient['national_id'] ?? 'N/A') ?></p>
+                        <p style="display: none;"><strong>National ID:</strong> <?= htmlspecialchars($patient['national_id'] ?? 'N/A') ?></p>
                     </div>
                 </div>
             </div>
@@ -583,6 +583,11 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                                         <i class="bi bi-eye"></i>
                                     </button>
                                     <?php endif; ?>
+                                    <button class="btn btn-outline-danger btn-sm" 
+                                            onclick="deleteConsultationNote(<?= $note['id'] ?>, '<?= addslashes($note['chief_complaint'] ?? 'Consultation Note') ?>')"
+                                            title="Delete this note">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -593,7 +598,7 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                         <!-- Chief Complaint -->
                         <?php if (!empty($note['chief_complaint'])): ?>
                         <div class="mb-3">
-                            <h6 class="text-primary">Chief Complaint</h6>
+                            <h6 class="text-primary">*Chief Complaint (Required)</h6>
                             <p><?= htmlspecialchars($note['chief_complaint']) ?></p>
                         </div>
                         <?php endif; ?>
@@ -629,6 +634,47 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                         </div>
                         <?php endif; ?>
 
+                        <!-- Diagnosis -->
+                        <?php if (!empty($note['diagnosis'])): ?>
+                        <div class="mb-3">
+                            <h6 class="text-danger">Diagnosis (Required)</h6>
+                            <p><?= htmlspecialchars($note['diagnosis']) ?>
+                            <?php if (!empty($note['diagnosis_code'])): ?>
+                                <span class="badge bg-secondary ms-2"><?= htmlspecialchars($note['diagnosis_code']) ?></span>
+                            <?php endif; ?>
+                            </p>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- Systemic Disease -->
+                        <?php if (!empty($note['systemic_disease'])): ?>
+                        <div class="mb-3">
+                            <h6 class="text-danger">Systemic Disease</h6>
+                            <p class="ms-3"><?= nl2br(htmlspecialchars($note['systemic_disease'])) ?></p>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- Medication -->
+                        <?php if (!empty($note['medication'])): ?>
+                        <div class="mb-3">
+                            <h6 class="text-primary">Current Medication</h6>
+                            <p class="ms-3"><?= nl2br(htmlspecialchars($note['medication'])) ?></p>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- Separator -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="border-top border-2 border-primary opacity-25 my-3"></div>
+                                <div class="text-center">
+                                    <span class="badge bg-primary text-white px-3 py-2">
+                                        <i class="bi bi-eye me-1"></i>
+                                        Eye Examination
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Visual Acuity -->
                         <?php if (!empty($note['visual_acuity_right']) || !empty($note['visual_acuity_left'])): ?>
                         <div class="mb-3">
@@ -636,12 +682,20 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                             <div class="row">
                                 <?php if (!empty($note['visual_acuity_right'])): ?>
                                 <div class="col-md-6">
-                                    <strong>Right Eye:</strong> <?= htmlspecialchars($note['visual_acuity_right']) ?>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-success me-2">OD</span>
+                                        <strong>Right Eye:</strong>
+                                    </div>
+                                    <p class="ms-4 border-start border-success border-3 ps-3"><?= htmlspecialchars($note['visual_acuity_right']) ?></p>
                                 </div>
                                 <?php endif; ?>
                                 <?php if (!empty($note['visual_acuity_left'])): ?>
                                 <div class="col-md-6">
-                                    <strong>Left Eye:</strong> <?= htmlspecialchars($note['visual_acuity_left']) ?>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-info me-2">OS</span>
+                                        <strong>Left Eye:</strong>
+                                    </div>
+                                    <p class="ms-4 border-start border-info border-3 ps-3"><?= htmlspecialchars($note['visual_acuity_left']) ?></p>
                                 </div>
                                 <?php endif; ?>
                             </div>
@@ -655,12 +709,20 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                             <div class="row">
                                 <?php if (!empty($note['refraction_right'])): ?>
                                 <div class="col-md-6">
-                                    <strong>Right Eye:</strong> <?= htmlspecialchars($note['refraction_right']) ?>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-success me-2">OD</span>
+                                        <strong>Right Eye:</strong>
+                                    </div>
+                                    <p class="ms-4 border-start border-success border-3 ps-3"><?= htmlspecialchars($note['refraction_right']) ?></p>
                                 </div>
                                 <?php endif; ?>
                                 <?php if (!empty($note['refraction_left'])): ?>
                                 <div class="col-md-6">
-                                    <strong>Left Eye:</strong> <?= htmlspecialchars($note['refraction_left']) ?>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-info me-2">OS</span>
+                                        <strong>Left Eye:</strong>
+                                    </div>
+                                    <p class="ms-4 border-start border-info border-3 ps-3"><?= htmlspecialchars($note['refraction_left']) ?></p>
                                 </div>
                                 <?php endif; ?>
                             </div>
@@ -674,12 +736,20 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                             <div class="row">
                                 <?php if (!empty($note['IOP_right'])): ?>
                                 <div class="col-md-6">
-                                    <strong>Right Eye:</strong> <?= htmlspecialchars($note['IOP_right']) ?> mmHg
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-success me-2">OD</span>
+                                        <strong>Right Eye:</strong>
+                                    </div>
+                                    <p class="ms-4 border-start border-success border-3 ps-3"><?= htmlspecialchars($note['IOP_right']) ?> mmHg</p>
                                 </div>
                                 <?php endif; ?>
                                 <?php if (!empty($note['IOP_left'])): ?>
                                 <div class="col-md-6">
-                                    <strong>Left Eye:</strong> <?= htmlspecialchars($note['IOP_left']) ?> mmHg
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-info me-2">OS</span>
+                                        <strong>Left Eye:</strong>
+                                    </div>
+                                    <p class="ms-4 border-start border-info border-3 ps-3"><?= htmlspecialchars($note['IOP_left']) ?> mmHg</p>
                                 </div>
                                 <?php endif; ?>
                             </div>
@@ -687,32 +757,125 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                         <?php endif; ?>
 
                         <!-- Slit Lamp Examination -->
-                        <?php if (!empty($note['slit_lamp'])): ?>
+                        <?php if (!empty($note['slit_lamp_right']) || !empty($note['slit_lamp_left'])): ?>
                         <div class="mb-3">
                             <h6 class="text-success">Slit Lamp Examination</h6>
-                            <p><?= nl2br(htmlspecialchars($note['slit_lamp'])) ?></p>
+                            <div class="row">
+                                <?php if (!empty($note['slit_lamp_right'])): ?>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-success me-2">OD</span>
+                                        <strong>Right Eye:</strong>
+                                    </div>
+                                    <div class="ms-4 border-start border-success border-3 ps-3"><?= nl2br(htmlspecialchars($note['slit_lamp_right'])) ?></div>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (!empty($note['slit_lamp_left'])): ?>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-info me-2">OS</span>
+                                        <strong>Left Eye:</strong>
+                                    </div>
+                                    <div class="ms-4 border-start border-info border-3 ps-3"><?= nl2br(htmlspecialchars($note['slit_lamp_left'])) ?></div>
+                                </div>
+                                <?php endif; ?>
+                            </div>
                         </div>
                         <?php endif; ?>
 
                         <!-- Fundus Examination -->
-                        <?php if (!empty($note['fundus'])): ?>
+                        <?php if (!empty($note['fundus_right']) || !empty($note['fundus_left'])): ?>
                         <div class="mb-3">
                             <h6 class="text-danger">Fundus Examination</h6>
-                            <p><?= nl2br(htmlspecialchars($note['fundus'])) ?></p>
+                            <div class="row">
+                                <?php if (!empty($note['fundus_right'])): ?>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-success me-2">OD</span>
+                                        <strong>Right Eye:</strong>
+                                    </div>
+                                    <div class="ms-4 border-start border-success border-3 ps-3"><?= nl2br(htmlspecialchars($note['fundus_right'])) ?></div>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (!empty($note['fundus_left'])): ?>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-info me-2">OS</span>
+                                        <strong>Left Eye:</strong>
+                                    </div>
+                                    <div class="ms-4 border-start border-info border-3 ps-3"><?= nl2br(htmlspecialchars($note['fundus_left'])) ?></div>
+                                </div>
+                                <?php endif; ?>
+                            </div>
                         </div>
                         <?php endif; ?>
 
-                        <!-- Diagnosis -->
-                        <?php if (!empty($note['diagnosis'])): ?>
+                        <!-- External Appearance -->
+                        <?php if (!empty($note['external_appearance_right']) || !empty($note['external_appearance_left'])): ?>
                         <div class="mb-3">
-                            <h6 class="text-danger">Diagnosis</h6>
-                            <p><?= htmlspecialchars($note['diagnosis']) ?>
-                            <?php if (!empty($note['diagnosis_code'])): ?>
-                                <span class="badge bg-secondary ms-2"><?= htmlspecialchars($note['diagnosis_code']) ?></span>
-                            <?php endif; ?>
-                            </p>
+                            <h6 class="text-warning">External Appearance</h6>
+                            <div class="row">
+                                <?php if (!empty($note['external_appearance_right'])): ?>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-success me-2">OD</span>
+                                        <strong>Right Eye:</strong>
+                                    </div>
+                                    <div class="ms-4 border-start border-success border-3 ps-3"><?= nl2br(htmlspecialchars($note['external_appearance_right'])) ?></div>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (!empty($note['external_appearance_left'])): ?>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-info me-2">OS</span>
+                                        <strong>Left Eye:</strong>
+                                    </div>
+                                    <div class="ms-4 border-start border-info border-3 ps-3"><?= nl2br(htmlspecialchars($note['external_appearance_left'])) ?></div>
+                                </div>
+                                <?php endif; ?>
+                            </div>
                         </div>
                         <?php endif; ?>
+
+                        <!-- Eyelid -->
+                        <?php if (!empty($note['eyelid_right']) || !empty($note['eyelid_left'])): ?>
+                        <div class="mb-3">
+                            <h6 class="text-secondary">Eyelid</h6>
+                            <div class="row">
+                                <?php if (!empty($note['eyelid_right'])): ?>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-success me-2">OD</span>
+                                        <strong>Right Eye:</strong>
+                                    </div>
+                                    <div class="ms-4 border-start border-success border-3 ps-3"><?= nl2br(htmlspecialchars($note['eyelid_right'])) ?></div>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (!empty($note['eyelid_left'])): ?>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-info me-2">OS</span>
+                                        <strong>Left Eye:</strong>
+                                    </div>
+                                    <div class="ms-4 border-start border-info border-3 ps-3"><?= nl2br(htmlspecialchars($note['eyelid_left'])) ?></div>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- Separator -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="border-top border-2 border-success opacity-25 my-3"></div>
+                                <div class="text-center">
+                                    <span class="badge bg-success text-white px-3 py-2">
+                                        <i class="bi bi-clipboard2-pulse me-1"></i>
+                                        Treatment Plan
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Plan -->
                         <?php if (!empty($note['plan'])): ?>
@@ -1246,7 +1409,7 @@ function confirmMarkCompleted(appointmentId) {
     // Show loading state
     const button = document.querySelector(`button[onclick="markCompleted(${appointmentId})"]`);
     const originalText = button.innerHTML;
-    button.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>جاري التحديث...';
+    button.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Updating...';
     button.disabled = true;
     
     // API call to update status
@@ -2127,6 +2290,98 @@ function showDeleteConfirmModal(title, message, warning, onConfirm) {
     
     // Clean up modal on hide
     document.getElementById('deleteConfirmModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+// Delete Consultation Note Function
+function deleteConsultationNote(noteId, noteTitle) {
+    const modalHtml = `
+        <div class="modal fade" id="deleteConsultationNoteModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">Delete Consultation Notes
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <div class="mb-4">
+                            <i class="bi bi-trash-fill text-danger" style="font-size: 4rem;"></i>
+                        </div>
+                        <h6 class="mb-3">Are you sure you want to delete this consultation note?</h6>
+                        <p class="text-muted mb-3">
+                            <strong>Consultation Note Title:</strong> ${noteTitle}
+                        </p>
+                        <div class="alert alert-warning" role="alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Warning:</strong> This action cannot be undone and all data in this note will be permanently lost.
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-1"></i>Cancel
+                        </button>
+                        <button type="button" class="btn btn-danger" id="confirmDeleteConsultationNote">
+                            <i class="bi bi-trash me-1"></i>Delete Consultation Note
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('deleteConsultationNoteModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('deleteConsultationNoteModal'));
+    modal.show();
+    
+    // Handle confirm button
+    document.getElementById('confirmDeleteConsultationNote').addEventListener('click', function() {
+        // Show loading state
+        this.disabled = true;
+        this.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Deleting...';
+        
+        fetch(`/api/consultation-notes/${noteId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                modal.hide();
+                showSuccessMessage('Consultation note deleted successfully');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showErrorMessage('Error: ' + (data.message || 'Failed to delete consultation note'));
+                // Restore button state
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-trash me-1"></i>Delete Consultation Note';
+            }
+        })
+        .catch(error => {
+            console.error('Consultation note delete error:', error);
+            showErrorMessage('Error: ' + error.message);
+            // Restore button state
+            this.disabled = false;
+            this.innerHTML = '<i class="bi bi-trash me-1"></i>Delete Consultation Note';
+        });
+    });
+    
+    // Clean up modal after hide
+    document.getElementById('deleteConsultationNoteModal').addEventListener('hidden.bs.modal', function() {
         this.remove();
     });
 }

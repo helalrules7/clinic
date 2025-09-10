@@ -123,6 +123,7 @@ try {
     $router->get('/api/patients/{id}/timeline', 'ApiController@getPatientTimeline');
     $router->put('/api/patients/{id}/emergency-contact', 'ApiController@updateEmergencyContact');
     $router->post('/api/consultations', 'ApiController@createConsultation');
+    $router->delete('/api/consultation-notes/{id}', 'ApiController@deleteConsultationNote');
     $router->post('/api/prescriptions/meds', 'ApiController@createMedicationPrescription');
     $router->put('/api/prescriptions/meds/{id}', 'ApiController@updateMedication');
     $router->delete('/api/prescriptions/meds/{id}', 'ApiController@deleteMedication');
