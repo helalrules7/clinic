@@ -91,6 +91,7 @@ try {
     $router->get('/doctor/profile', 'DoctorController@profile');
     $router->post('/doctor/profile/change-password', 'DoctorController@changePassword');
     $router->post('/doctor/profile/update', 'DoctorController@updateProfile');
+    $router->get('/doctor/drugs', 'DoctorController@drugs');
     $router->get('/doctor/reports', 'DoctorController@reports');
     $router->get('/doctor/reports/export', 'DoctorController@exportDoctorReport');
     
@@ -157,6 +158,11 @@ try {
     
     // Individual Glasses Prescription API routes
     $router->get('/api/prescriptions/glasses/{id}', 'ApiController@getGlassesPrescription');
+    
+    // Drug Search API routes
+    $router->get('/api/searchDrugs', 'ApiController@searchDrugs');
+    $router->get('/api/getDrugDetails', 'ApiController@getDrugDetails');
+    $router->get('/api/getFilterOptions', 'ApiController@getFilterOptions');
     
     // Print routes
     $router->get('/print/prescription/{id}', 'PrintController@medicationPrescription');

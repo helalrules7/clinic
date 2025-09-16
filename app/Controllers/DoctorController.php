@@ -1252,6 +1252,22 @@ class DoctorController
         ]);
     }
 
+    public function drugs()
+    {
+        $user = $this->auth->user();
+        
+        $content = $this->view->render('doctor/drugs', [
+            'user' => $user
+        ]);
+        
+        echo $this->view->render('layouts/main', [
+            'title' => 'Drug Search - Doctor Dashboard',
+            'pageTitle' => 'Drug Search',
+            'pageSubtitle' => 'Search and browse medications',
+            'content' => $content
+        ]);
+    }
+
     public function exportDoctorReport()
     {
         try {

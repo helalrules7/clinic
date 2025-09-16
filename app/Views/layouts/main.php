@@ -483,6 +483,12 @@
                     </a>
                 </div>
                 <div class="nav-item">
+                    <a href="/doctor/drugs" class="nav-link <?= $this->isActiveRoute('/doctor/drugs') ? 'active' : '' ?>">
+                        <i class="bi bi-capsule"></i>
+                        Drug Search
+                    </a>
+                </div>
+                <div class="nav-item">
                     <a href="/doctor/reports" class="nav-link <?= $this->isActiveRoute('/doctor/reports') ? 'active' : '' ?>">
                         <i class="bi bi-graph-up"></i>
                         Reports

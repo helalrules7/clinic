@@ -3914,4 +3914,260 @@ class ApiController
             return $this->jsonResponse(['error' => 'Failed to delete consultation note'], 500);
         }
     }
+
+    public function searchDrugs()
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $searchTerm = $_GET['q'] ?? '';
+            $limit = min((int)($_GET['limit'] ?? 20), 50); // Max 50 results
+            $category = $_GET['category'] ?? '';
+            $company = $_GET['company'] ?? '';
+            $route = $_GET['route'] ?? '';
+            
+            // If no search term and no filters, return empty
+            if (strlen($searchTerm) < 2 && empty($category) && empty($company) && empty($route)) {
+                return $this->jsonResponse(['drugs' => []]);
+            }
+
+            // Connect to drugs database
+            $drugsPdo = $this->getDrugsDatabaseConnection();
+            
+            // Build WHERE clause with filters
+            $whereConditions = [];
+            $params = [];
+            
+            // Add search conditions only if search term exists
+            if (strlen($searchTerm) >= 2) {
+                $searchTerm = '%' . $searchTerm . '%';
+                $whereConditions = [
+                    '(',
+                    'FirstName LIKE ? OR',
+                    'LastName LIKE ? OR',
+                    'Company LIKE ? OR',
+                    'Pharmacology LIKE ? OR',
+                    'SRDE LIKE ?',
+                    ')'
+                ];
+                $params = [$searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm];
+            } else {
+                // If no search term, just get all records (will be filtered by category/company/route)
+                $whereConditions = ['1=1'];
+            }
+            
+            if (!empty($category)) {
+                $whereConditions[] = 'AND Pharmacology = ?';
+                $params[] = $category;
+            }
+            
+            if (!empty($company)) {
+                $whereConditions[] = 'AND Company = ?';
+                $params[] = $company;
+            }
+            
+            if (!empty($route)) {
+                $whereConditions[] = 'AND Route = ?';
+                $params[] = $route;
+            }
+            
+            $whereClause = implode(' ', $whereConditions);
+            
+            // Debug logging
+            error_log("Search API Debug - Search Term: " . $searchTerm);
+            error_log("Search API Debug - Category: " . $category);
+            error_log("Search API Debug - Company: " . $company);
+            error_log("Search API Debug - Route: " . $route);
+            error_log("Search API Debug - WHERE Clause: " . $whereClause);
+            error_log("Search API Debug - Params: " . json_encode($params));
+            
+            // Also log the full SQL query for debugging
+            $fullQuery = "SELECT ID, FirstName as drug_name, LastName as active_ingredient, price, Company, Pharmacology as category, Route as administration_route, SRDE, GI FROM drugs WHERE {$whereClause} {$orderBy} LIMIT ?";
+            error_log("Search API Debug - Full Query: " . $fullQuery);
+            
+            // Build ORDER BY clause
+            $orderBy = '';
+            if (strlen($searchTerm) >= 2) {
+                $exactMatch = '%' . trim($_GET['q'] ?? '') . '%';
+                $orderBy = "
+                    ORDER BY 
+                        CASE 
+                            WHEN FirstName LIKE ? THEN 1
+                            WHEN LastName LIKE ? THEN 2
+                            WHEN Company LIKE ? THEN 3
+                            ELSE 4
+                        END,
+                        FirstName
+                ";
+                $params[] = $exactMatch;
+                $params[] = $exactMatch;
+                $params[] = $exactMatch;
+            } else {
+                $orderBy = "ORDER BY FirstName";
+            }
+            
+            $stmt = $drugsPdo->prepare("
+                SELECT 
+                    ID,
+                    FirstName as drug_name,
+                    LastName as active_ingredient,
+                    price,
+                    Company,
+                    Pharmacology as category,
+                    Route as administration_route,
+                    SRDE,
+                    GI
+                FROM drugs 
+                WHERE {$whereClause}
+                {$orderBy}
+                LIMIT ?
+            ");
+            
+            $params[] = $limit;
+            
+            $stmt->execute($params);
+            
+            $drugs = $stmt->fetchAll();
+            
+            error_log("Search API Debug - Results Count: " . count($drugs));
+            if (count($drugs) > 0) {
+                error_log("Search API Debug - First Result: " . json_encode($drugs[0]));
+            }
+            
+            return $this->jsonResponse(['drugs' => $drugs]);
+
+        } catch (Exception $e) {
+            error_log("Error searching drugs: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Failed to search drugs'], 500);
+        }
+    }
+
+    public function getDrugDetails()
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $drugId = $_GET['id'] ?? null;
+            
+            if (!$drugId) {
+                return $this->jsonResponse(['error' => 'Drug ID is required'], 400);
+            }
+
+            // Connect to drugs database
+            $drugsPdo = $this->getDrugsDatabaseConnection();
+            
+            $stmt = $drugsPdo->prepare("
+                SELECT 
+                    ID,
+                    FirstName as drug_name,
+                    LastName as active_ingredient,
+                    price,
+                    priceold,
+                    Company,
+                    Pharmacology as category,
+                    Route as administration_route,
+                    SRDE,
+                    GI,
+                    imageid
+                FROM drugs 
+                WHERE ID = ?
+            ");
+            
+            $stmt->execute([$drugId]);
+            $drug = $stmt->fetch();
+            
+            if (!$drug) {
+                return $this->jsonResponse(['error' => 'Drug not found'], 404);
+            }
+            
+            return $this->jsonResponse(['drug' => $drug]);
+
+        } catch (Exception $e) {
+            error_log("Error getting drug details: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Failed to get drug details'], 500);
+        }
+    }
+
+    public function getFilterOptions()
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            // Connect to drugs database
+            $drugsPdo = $this->getDrugsDatabaseConnection();
+            
+            // Get unique categories
+            $stmt = $drugsPdo->prepare("SELECT DISTINCT Pharmacology as category FROM drugs WHERE Pharmacology IS NOT NULL AND Pharmacology != '' ORDER BY Pharmacology");
+            $stmt->execute();
+            $categories = $stmt->fetchAll();
+            
+            // Get unique companies
+            $stmt = $drugsPdo->prepare("SELECT DISTINCT Company FROM drugs WHERE Company IS NOT NULL AND Company != '' ORDER BY Company");
+            $stmt->execute();
+            $companies = $stmt->fetchAll();
+            
+            // Get unique routes
+            $stmt = $drugsPdo->prepare("SELECT DISTINCT Route as route FROM drugs WHERE Route IS NOT NULL AND Route != '' ORDER BY Route");
+            $stmt->execute();
+            $routes = $stmt->fetchAll();
+            
+            return $this->jsonResponse([
+                'categories' => array_column($categories, 'category'),
+                'companies' => array_column($companies, 'Company'),
+                'routes' => array_column($routes, 'route')
+            ]);
+
+        } catch (Exception $e) {
+            error_log("Error getting filter options: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Failed to get filter options'], 500);
+        }
+    }
+
+    private function getDrugsDatabaseConnection()
+    {
+        // Connect to egyptian_drugs database with specific user
+        $host = $_ENV['DB_HOST'] ?? 'localhost';
+        $username = 'drug_user';  // Use the correct user for drugs database
+        $password = 'DrugPassword123!';  // Use the correct password for drugs database
+        
+        $dsn = "mysql:host={$host};dbname=egyptian_drugs;charset=utf8mb4";
+        
+        return new \PDO($dsn, $username, $password, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+            \PDO::ATTR_EMULATE_PREPARES => false,
+            \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
+        ]);
+    }
 }
+
+
+//===============================================
+// Server Connection//
+//===============================================
+
+/* private function getDrugsDatabaseConnection()
+{
+    // Connect to egyptian_drugs database with specific user
+    $host = $_ENV['DB_HOST'] ?? 'localhost';
+    $username = 'AhmedHelal_egyptian_drugs';  // Use the correct user for drugs database
+    $password = 'Carmen@1230';  // Use the correct password for drugs database
+    
+    $dsn = "mysql:host={$host};dbname=AhmedHelal_egyptian_drugs;charset=utf8mb4";
+    
+    return new \PDO($dsn, $username, $password, [
+        \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+        \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        \PDO::ATTR_EMULATE_PREPARES => false,
+        \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
+    ]);
+} */
