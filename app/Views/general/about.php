@@ -11,7 +11,7 @@
                     <h1 class="display-4 fw-bold mb-3">Roaya Clinic</h1>
                     <h2 class="h4 mb-4 opacity-90">Management System</h2>
                     <div class="badge bg-white text-dark px-4 py-2 fs-6 fw-semibold">
-                        Version 2.0
+                        Version 2.1 DS
                     </div>
                 </div>
             </div>
@@ -35,7 +35,7 @@
                                 <h5 class="text-muted mb-2">
                                     <i class="bi bi-tag me-2"></i>Version
                                 </h5>
-                                <p class="h4 text-primary fw-bold">2.0</p>
+                                <p class="h4 text-primary fw-bold">2.1 DS</p>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -259,6 +259,19 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-coral text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #ff6b6b !important;">
+                                        <i class="bi bi-capsule"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">Smart Drug Management</h5>
+                                        <p class="text-muted mb-0">Intelligent drug suggestions with usage analytics, autocomplete search, comprehensive drug database, and streamlined prescription workflow.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -340,6 +353,64 @@
                                 </div>
                                 <h6 class="fw-bold">Composer</h6>
                                 <small class="text-muted">Dependencies</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Smart Drug Features -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-capsule me-2"></i>
+                        Smart Drug Management Features
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-4 mb-4">
+                            <div class="drug-feature-card text-center p-4 border rounded">
+                                <div class="drug-feature-icon bg-coral text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #ff6b6b !important;">
+                                    <i class="bi bi-capsule" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h5 class="fw-bold mb-3">Smart Drug Suggestions</h5>
+                                <p class="text-muted mb-0">Intelligent badges showing most used medications with usage counts, enabling one-click prescription filling for enhanced workflow efficiency.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 mb-4">
+                            <div class="drug-feature-card text-center p-4 border rounded">
+                                <div class="drug-feature-icon bg-mint text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #00d4aa !important;">
+                                    <i class="bi bi-search" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h5 class="fw-bold mb-3">Advanced Autocomplete</h5>
+                                <p class="text-muted mb-0">Real-time drug search with intelligent suggestions after 3 characters, comprehensive drug database integration for accurate medication selection.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 mb-4">
+                            <div class="drug-feature-card text-center p-4 border rounded">
+                                <div class="drug-feature-icon bg-gold text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #ffd700 !important;">
+                                    <i class="bi bi-info-circle" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h5 class="fw-bold mb-3">Comprehensive Drug Info</h5>
+                                <p class="text-muted mb-0">Complete drug information system with manufacturer details, active ingredients, pricing information, and detailed drug profiles.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-info border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-lightbulb text-info me-3" style="font-size: 1.5rem;"></i>
+                                    <div>
+                                        <h6 class="alert-heading mb-1">Enhanced Prescription Workflow</h6>
+                                        <p class="mb-0">The new drug management system streamlines the prescription process with smart suggestions, autocomplete features, and comprehensive drug information, making medication prescribing faster, more accurate, and more efficient for healthcare providers.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -544,6 +615,50 @@
                                 <div>
                                     <h6 class="fw-bold mb-1">Font Awesome Integration</h6>
                                     <p class="text-muted mb-0">Complete Font Awesome 6.4.0 integration with consistent icons across all admin interfaces, improved visual consistency, and better user experience.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-coral text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #ff6b6b !important;">
+                                    <i class="bi bi-capsule" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Smart Drug Suggestions</h6>
+                                    <p class="text-muted mb-0">Intelligent drug suggestion system with clickable badges showing most used medications, usage counts, and one-click prescription filling for enhanced workflow efficiency.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-mint text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #00d4aa !important;">
+                                    <i class="bi bi-search" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Advanced Drug Autocomplete</h6>
+                                    <p class="text-muted mb-0">Real-time drug search with autocomplete functionality, intelligent suggestions after 3 characters, and comprehensive drug database integration for accurate medication selection.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-gold text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #ffd700 !important;">
+                                    <i class="bi bi-info-circle" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Comprehensive Drug Search</h6>
+                                    <p class="text-muted mb-0">Complete drug information system with manufacturer details, active ingredients, pricing information, and detailed drug profiles for informed medical decisions.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-lavender text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #b19cd9 !important;">
+                                    <i class="bi bi-lightning-charge" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Enhanced Prescription Workflow</h6>
+                                    <p class="text-muted mb-0">Streamlined prescription management with smart suggestions, autocomplete features, and optimized UI for faster, more accurate medication prescribing.</p>
                                 </div>
                             </div>
                         </div>
@@ -762,5 +877,42 @@
     color: var(--text) !important;
     border: 1px solid var(--border) !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Smart Drug Features Styling */
+.drug-feature-card {
+    transition: all 0.3s ease;
+    background-color: var(--card);
+    border-color: var(--border) !important;
+}
+
+.drug-feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border-color: var(--accent) !important;
+}
+
+.dark .drug-feature-card:hover {
+    box-shadow: 0 10px 30px rgba(255, 255, 255, 0.05);
+}
+
+.drug-feature-icon {
+    transition: all 0.3s ease;
+}
+
+.drug-feature-card:hover .drug-feature-icon {
+    transform: scale(1.1);
+}
+
+/* Alert styling for drug features */
+.alert-info {
+    background-color: rgba(13, 202, 240, 0.1) !important;
+    border-color: rgba(13, 202, 240, 0.2) !important;
+    color: var(--text) !important;
+}
+
+.dark .alert-info {
+    background-color: rgba(13, 202, 240, 0.05) !important;
+    border-color: rgba(13, 202, 240, 0.1) !important;
 }
 </style>

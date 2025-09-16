@@ -4148,6 +4148,117 @@ class ApiController
             \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
         ]);
     }
+
+    public function getMostUsedDrugs()
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $limit = min((int)($_GET['limit'] ?? 10), 20); // Max 20 results, default 10
+
+            // Check if prescriptions table exists and has data
+            $checkStmt = $this->pdo->prepare("SELECT COUNT(*) as count FROM prescriptions WHERE drug_name IS NOT NULL AND drug_name != ''");
+            $checkStmt->execute();
+            $count = $checkStmt->fetch()['count'];
+            
+            if ($count == 0) {
+                return $this->jsonResponse(['drugs' => []]);
+            }
+
+            // Get most used drugs from prescriptions table
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    drug_name,
+                    COUNT(*) as usage_count,
+                    GROUP_CONCAT(DISTINCT frequency ORDER BY frequency SEPARATOR ', ') as common_frequencies,
+                    GROUP_CONCAT(DISTINCT dose ORDER BY dose SEPARATOR ', ') as common_doses
+                FROM prescriptions 
+                WHERE drug_name IS NOT NULL 
+                AND drug_name != ''
+                GROUP BY drug_name 
+                ORDER BY usage_count DESC 
+                LIMIT ?
+            ");
+            
+            $stmt->execute([$limit]);
+            $drugs = $stmt->fetchAll();
+
+            // Format the response
+            $formattedDrugs = array_map(function($drug) {
+                return [
+                    'drug_name' => $drug['drug_name'],
+                    'usage_count' => (int)$drug['usage_count'],
+                    'common_frequencies' => $drug['common_frequencies'] ?: 'N/A',
+                    'common_doses' => $drug['common_doses'] ?: 'N/A'
+                ];
+            }, $drugs);
+
+            return $this->jsonResponse(['drugs' => $formattedDrugs]);
+
+        } catch (\Exception $e) {
+            error_log("Error getting most used drugs: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return $this->jsonResponse(['error' => 'Failed to get most used drugs: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function searchDrugsAutocomplete()
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $searchTerm = $_GET['q'] ?? '';
+            $limit = min((int)($_GET['limit'] ?? 10), 20); // Max 20 results, default 10
+            
+            if (strlen($searchTerm) < 2) {
+                return $this->jsonResponse(['drugs' => []]);
+            }
+
+            // Connect to drugs database
+            $drugsPdo = $this->getDrugsDatabaseConnection();
+            
+            $searchTerm = '%' . $searchTerm . '%';
+            
+            $stmt = $drugsPdo->prepare("
+                SELECT 
+                    ID,
+                    FirstName as drug_name,
+                    LastName as active_ingredient,
+                    Company,
+                    Pharmacology as category,
+                    Route as administration_route
+                FROM drugs 
+                WHERE FirstName LIKE ? 
+                ORDER BY 
+                    CASE 
+                        WHEN FirstName LIKE ? THEN 1
+                        WHEN LastName LIKE ? THEN 2
+                        WHEN Company LIKE ? THEN 3
+                        ELSE 4
+                    END,
+                    FirstName
+                LIMIT ?
+            ");
+            
+            $exactMatch = '%' . trim($_GET['q'] ?? '') . '%';
+            $stmt->execute([$searchTerm, $exactMatch, $exactMatch, $exactMatch, $limit]);
+            
+            $drugs = $stmt->fetchAll();
+            
+            return $this->jsonResponse(['drugs' => $drugs]);
+
+        } catch (\Exception $e) {
+            error_log("Error searching drugs autocomplete: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return $this->jsonResponse(['error' => 'Failed to search drugs: ' . $e->getMessage()], 500);
+        }
+    }
 }
 
 

@@ -406,6 +406,91 @@
 .dark .badge.bg-secondary {
     background-color: #64748b !important;
 }
+
+/* Drug Suggestion Badges */
+.drug-suggestion-badge {
+    transition: all 0.2s ease;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 15px;
+    line-height: 1.2;
+}
+
+.drug-suggestion-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    background-color: #0d6efd !important;
+}
+
+.drug-suggestion-badge:active {
+    transform: translateY(0);
+}
+
+/* Drug Suggestions Dropdown */
+#drugSuggestions {
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 0.375rem 0.375rem;
+    background: white;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.suggestion-item {
+    transition: background-color 0.15s ease;
+}
+
+.suggestion-item:hover {
+    background-color: #f8f9fa !important;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none !important;
+}
+
+/* Dark mode for drug suggestions */
+.dark #drugSuggestions {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark .suggestion-item:hover {
+    background-color: var(--bg) !important;
+}
+
+.dark .drug-suggestion-badge {
+    background-color: var(--accent) !important;
+}
+
+.dark .drug-suggestion-badge:hover {
+    background-color: #0284c7 !important;
+}
+
+/* Usage Count Badge - Red Circle with White Text */
+.usage-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #dc3545 !important;
+    color: white !important;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 0.6rem;
+    font-weight: bold;
+    margin-left: 0.4rem;
+    min-width: 16px;
+    line-height: 1;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark mode for usage count badge */
+.dark .usage-count-badge {
+    background-color: #dc3545 !important;
+    color: white !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
 </style>
 
 <!-- Breadcrumb -->
@@ -1523,10 +1608,24 @@ function showPrescriptionModal(appointmentId) {
                     <form id="prescriptionForm" action="/api/prescriptions/meds" method="POST">
                         <div class="modal-body">
                             <input type="hidden" name="appointment_id" value="${appointmentId}">
+                            
+                            <!-- Most Used Drugs Suggestions -->
+                            <div class="mb-4">
+                                <label class="form-label">Most Used Drugs</label>
+                                <div id="mostUsedDrugs" class="d-flex flex-wrap gap-2">
+                                    <div class="text-muted">
+                                        <i class="bi bi-hourglass-split me-1"></i>Loading suggestions...
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <div class="row">
                                 <div class="col-12 mb-3">
                                     <label class="form-label">Drug Name <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="drug_name" required>
+                                    <div class="position-relative">
+                                        <input type="text" class="form-control" name="drug_name" id="drugNameInput" required autocomplete="off">
+                                        <div id="drugSuggestions" class="position-absolute w-100 bg-white border border-top-0 rounded-bottom shadow-sm" style="z-index: 1050; display: none; max-height: 200px; overflow-y: auto;"></div>
+                                    </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Dose</label>
@@ -1593,10 +1692,141 @@ function showPrescriptionModal(appointmentId) {
         });
     });
     
+    // Load most used drugs suggestions
+    loadMostUsedDrugs();
+    
+    // Setup autocomplete for drug name input
+    setupDrugNameAutocomplete();
+    
     // Clean up modal on hide
     document.getElementById('prescriptionModal').addEventListener('hidden.bs.modal', function() {
         this.remove();
     });
+}
+
+// Load most used drugs and display as clickable badges
+async function loadMostUsedDrugs() {
+    try {
+        const response = await fetch('/api/getMostUsedDrugs?limit=10');
+        const data = await response.json();
+        
+        const container = document.getElementById('mostUsedDrugs');
+        if (data.drugs && data.drugs.length > 0) {
+            container.innerHTML = '';
+            data.drugs.forEach(drug => {
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-primary me-2 mb-2 drug-suggestion-badge';
+                badge.style.cursor = 'pointer';
+                badge.innerHTML = `
+                    <i class="bi bi-capsule me-1"></i>
+                    ${drug.drug_name}
+                    <span class="usage-count-badge">${drug.usage_count}</span>
+                `;
+                badge.title = `Used ${drug.usage_count} times. Common doses: ${drug.common_doses || 'N/A'}. Common frequencies: ${drug.common_frequencies || 'N/A'}`;
+                
+                badge.addEventListener('click', () => {
+                    document.getElementById('drugNameInput').value = drug.drug_name;
+                    // Hide suggestions when drug is selected
+                    document.getElementById('drugSuggestions').style.display = 'none';
+                });
+                
+                container.appendChild(badge);
+            });
+        } else {
+            container.innerHTML = '<div class="text-muted"><i class="bi bi-info-circle me-1"></i>No drug usage data available</div>';
+        }
+    } catch (error) {
+        console.error('Error loading most used drugs:', error);
+        const container = document.getElementById('mostUsedDrugs');
+        container.innerHTML = '<div class="text-muted"><i class="bi bi-exclamation-triangle me-1"></i>Failed to load suggestions</div>';
+    }
+}
+
+// Setup autocomplete functionality for drug name input
+function setupDrugNameAutocomplete() {
+    const drugNameInput = document.getElementById('drugNameInput');
+    const suggestionsContainer = document.getElementById('drugSuggestions');
+    let searchTimeout;
+    
+    drugNameInput.addEventListener('input', function() {
+        const searchTerm = this.value.trim();
+        
+        // Clear previous timeout
+        clearTimeout(searchTimeout);
+        
+        if (searchTerm.length < 3) {
+            suggestionsContainer.style.display = 'none';
+            return;
+        }
+        
+        // Debounce search
+        searchTimeout = setTimeout(() => {
+            searchDrugsAutocomplete(searchTerm);
+        }, 300);
+    });
+    
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!drugNameInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+            suggestionsContainer.style.display = 'none';
+        }
+    });
+    
+    // Show suggestions when input is focused and has content
+    drugNameInput.addEventListener('focus', function() {
+        if (this.value.trim().length >= 3) {
+            searchDrugsAutocomplete(this.value.trim());
+        }
+    });
+}
+
+// Search drugs for autocomplete
+async function searchDrugsAutocomplete(searchTerm) {
+    try {
+        const response = await fetch(`/api/searchDrugsAutocomplete?q=${encodeURIComponent(searchTerm)}&limit=6`);
+        const data = await response.json();
+        
+        const suggestionsContainer = document.getElementById('drugSuggestions');
+        
+        if (data.drugs && data.drugs.length > 0) {
+            suggestionsContainer.innerHTML = '';
+            
+            data.drugs.forEach(drug => {
+                const suggestionItem = document.createElement('div');
+                suggestionItem.className = 'p-1 border-bottom suggestion-item';
+                suggestionItem.style.cursor = 'pointer';
+                suggestionItem.innerHTML = `
+                    <div class="fw-bold text-primary" style="font-size: 0.8rem;">${drug.drug_name}</div>
+                    <small class="text-muted" style="font-size: 0.7rem;">${drug.active_ingredient || ''} ${drug.Company ? '- ' + drug.Company : ''}</small>
+                `;
+                
+                suggestionItem.addEventListener('click', () => {
+                    document.getElementById('drugNameInput').value = drug.drug_name;
+                    suggestionsContainer.style.display = 'none';
+                });
+                
+                suggestionItem.addEventListener('mouseenter', function() {
+                    this.style.backgroundColor = '#f8f9fa';
+                });
+                
+                suggestionItem.addEventListener('mouseleave', function() {
+                    this.style.backgroundColor = '';
+                });
+                
+                suggestionsContainer.appendChild(suggestionItem);
+            });
+            
+            suggestionsContainer.style.display = 'block';
+        } else {
+            suggestionsContainer.innerHTML = '<div class="p-2 text-muted text-center">No drugs found</div>';
+            suggestionsContainer.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error searching drugs:', error);
+        const suggestionsContainer = document.getElementById('drugSuggestions');
+        suggestionsContainer.innerHTML = '<div class="p-2 text-danger text-center">Error loading suggestions</div>';
+        suggestionsContainer.style.display = 'block';
+    }
 }
 
 function showRescheduleModal(appointmentId) {

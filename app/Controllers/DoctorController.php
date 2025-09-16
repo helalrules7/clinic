@@ -201,7 +201,7 @@ class DoctorController
             'glasses' => $glasses,
             'labTests' => $labTests,
             'attachments' => $attachments,
-            'doctorId' => $doctorId
+            'doctorId' => $user['id']
         ]);
         
         echo $this->view->render('layouts/main', [

@@ -134,7 +134,9 @@ try {
     $router->get('/api/searchDrugs', 'ApiController@searchDrugs');
     $router->get('/api/getDrugDetails', 'ApiController@getDrugDetails');
     $router->get('/api/getFilterOptions', 'ApiController@getFilterOptions');
-    
+    $router->get('/api/getMostUsedDrugs', 'ApiController@getMostUsedDrugs');
+    $router->get('/api/searchDrugsAutocomplete', 'ApiController@searchDrugsAutocomplete');
+
     // Lab Tests & Radiology API routes
     $router->post('/api/lab-tests', 'ApiController@createLabTest');
     $router->put('/api/lab-tests/{id}', 'ApiController@updateLabTest');
