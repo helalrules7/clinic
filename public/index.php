@@ -122,6 +122,10 @@ try {
     $router->post('/api/prescriptions/glasses', 'ApiController@createGlassesPrescription');
     $router->put('/api/prescriptions/glasses/{id}', 'ApiController@updateGlassesPrescription');
     $router->delete('/api/prescriptions/glasses/{id}', 'ApiController@deleteGlassesPrescription');
+    // Drug Search API routes
+    $router->get('/api/searchDrugs', 'ApiController@searchDrugs');
+    $router->get('/api/getDrugDetails', 'ApiController@getDrugDetails');
+    $router->get('/api/getFilterOptions', 'ApiController@getFilterOptions');
     
     // Lab Tests & Radiology API routes
     $router->post('/api/lab-tests', 'ApiController@createLabTest');
@@ -158,12 +162,7 @@ try {
     
     // Individual Glasses Prescription API routes
     $router->get('/api/prescriptions/glasses/{id}', 'ApiController@getGlassesPrescription');
-    
-    // Drug Search API routes
-    $router->get('/api/searchDrugs', 'ApiController@searchDrugs');
-    $router->get('/api/getDrugDetails', 'ApiController@getDrugDetails');
-    $router->get('/api/getFilterOptions', 'ApiController@getFilterOptions');
-    
+        
     // Print routes
     $router->get('/print/prescription/{id}', 'PrintController@medicationPrescription');
     $router->get('/print/glasses/{id}', 'PrintController@glassesPrescription');
