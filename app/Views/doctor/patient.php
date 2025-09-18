@@ -3629,18 +3629,21 @@ function showAddGlassesPrescriptionModal(patientId) {
                                             <div class="row">
                                                 <div class="col-4">
                                                     <label class="form-label">Sphere</label>
-                                                    <input type="number" class="form-control" id="distanceSphereR" 
-                                                           step="0.25" min="-30" max="30" placeholder="0.00">
+                                                    <input type="text" class="form-control" id="distanceSphereR" 
+                                                           placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                                    <div class="form-text">Sphere power</div>
                                                 </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Cylinder</label>
-                                                    <input type="number" class="form-control" id="distanceCylinderR" 
-                                                           step="0.25" min="-10" max="10" placeholder="0.00">
+                                                    <input type="text" class="form-control" id="distanceCylinderR" 
+                                                           placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                                    <div class="form-text">Cylinder power</div>
                                                 </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Axis</label>
-                                                    <input type="number" class="form-control" id="distanceAxisR" 
-                                                           min="1" max="180" placeholder="0">
+                                                    <input type="text" class="form-control" id="distanceAxisR" 
+                                                           placeholder="0, 90, 180" pattern="[0-9]*">
+                                                    <div class="form-text">Axis (0-180)</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -3649,18 +3652,21 @@ function showAddGlassesPrescriptionModal(patientId) {
                                             <div class="row">
                                                 <div class="col-4">
                                                     <label class="form-label">Sphere</label>
-                                                    <input type="number" class="form-control" id="distanceSphereL" 
-                                                           step="0.25" min="-30" max="30" placeholder="0.00">
+                                                    <input type="text" class="form-control" id="distanceSphereL" 
+                                                           placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                                    <div class="form-text">Sphere power</div>
                                                 </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Cylinder</label>
-                                                    <input type="number" class="form-control" id="distanceCylinderL" 
-                                                           step="0.25" min="-10" max="10" placeholder="0.00">
+                                                    <input type="text" class="form-control" id="distanceCylinderL" 
+                                                           placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                                    <div class="form-text">Cylinder power</div>
                                                 </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Axis</label>
-                                                    <input type="number" class="form-control" id="distanceAxisL" 
-                                                           min="1" max="180" placeholder="0">
+                                                    <input type="text" class="form-control" id="distanceAxisL" 
+                                                           placeholder="0, 90, 180" pattern="[0-9]*">
+                                                    <div class="form-text">Axis (0-180)</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -3680,18 +3686,21 @@ function showAddGlassesPrescriptionModal(patientId) {
                                             <div class="row">
                                                 <div class="col-4">
                                                     <label class="form-label">Sphere</label>
-                                                    <input type="number" class="form-control" id="nearSphereR" 
-                                                           step="0.25" min="-30" max="30" placeholder="0.00">
+                                                    <input type="text" class="form-control" id="nearSphereR" 
+                                                           placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                                    <div class="form-text">Sphere power</div>
                                                 </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Cylinder</label>
-                                                    <input type="number" class="form-control" id="nearCylinderR" 
-                                                           step="0.25" min="-10" max="10" placeholder="0.00">
+                                                    <input type="text" class="form-control" id="nearCylinderR" 
+                                                           placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                                    <div class="form-text">Cylinder power</div>
                                                 </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Axis</label>
-                                                    <input type="number" class="form-control" id="nearAxisR" 
-                                                           min="1" max="180" placeholder="0">
+                                                    <input type="text" class="form-control" id="nearAxisR" 
+                                                           placeholder="0, 90, 180" pattern="[0-9]*">
+                                                    <div class="form-text">Axis (0-180)</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -3700,18 +3709,21 @@ function showAddGlassesPrescriptionModal(patientId) {
                                             <div class="row">
                                                 <div class="col-4">
                                                     <label class="form-label">Sphere</label>
-                                                    <input type="number" class="form-control" id="nearSphereL" 
-                                                           step="0.25" min="-30" max="30" placeholder="0.00">
+                                                    <input type="text" class="form-control" id="nearSphereL" 
+                                                           placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                                    <div class="form-text">Sphere power</div>
                                                 </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Cylinder</label>
-                                                    <input type="number" class="form-control" id="nearCylinderL" 
-                                                           step="0.25" min="-10" max="10" placeholder="0.00">
+                                                    <input type="text" class="form-control" id="nearCylinderL" 
+                                                           placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                                    <div class="form-text">Cylinder power</div>
                                                 </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Axis</label>
-                                                    <input type="number" class="form-control" id="nearAxisL" 
-                                                           min="1" max="180" placeholder="0">
+                                                    <input type="text" class="form-control" id="nearAxisL" 
+                                                           placeholder="0, 90, 180" pattern="[0-9]*">
+                                                    <div class="form-text">Axis (0-180)</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -3723,13 +3735,15 @@ function showAddGlassesPrescriptionModal(patientId) {
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="pdDistance" class="form-label">PD Distance (mm)</label>
-                                    <input type="number" class="form-control" id="pdDistance" 
-                                           step="0.5" min="40" max="80" placeholder="62.0">
+                                    <input type="text" class="form-control" id="pdDistance" 
+                                           placeholder="62.0, +2, -1" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                    <div class="form-text">Enter PD value (e.g., 62.0, +2, -1)</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="pdNear" class="form-label">PD Near (mm)</label>
-                                    <input type="number" class="form-control" id="pdNear" 
-                                           step="0.5" min="40" max="80" placeholder="60.0">
+                                    <input type="text" class="form-control" id="pdNear" 
+                                           placeholder="60.0, +2, -1" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                    <div class="form-text">Enter PD value (e.g., 60.0, +2, -1)</div>
                                 </div>
                             </div>
                             
@@ -3985,18 +3999,18 @@ function showGlassesPrescriptionModal(data, mode) {
                                             <div class="row">
                                                 <div class="col-4">
                                                     <label class="form-label">Sphere</label>
-                                                    <input type="number" class="form-control" id="editDistanceSphereR" 
-                                                           step="0.25" min="-30" max="30" value="${data.distance_sphere_r || ''}" ${readonly}>
+                                                    <input type="text" class="form-control" id="editDistanceSphereR" 
+                                                           placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.distance_sphere_r || ''}" ${readonly}>
                                                 </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Cylinder</label>
-                                                    <input type="number" class="form-control" id="editDistanceCylinderR" 
-                                                           step="0.25" min="-10" max="10" value="${data.distance_cylinder_r || ''}" ${readonly}>
+                                                    <input type="text" class="form-control" id="editDistanceCylinderR" 
+                                                           placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.distance_cylinder_r || ''}" ${readonly}>
                                                 </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Axis</label>
-                                                    <input type="number" class="form-control" id="editDistanceAxisR" 
-                                                           min="1" max="180" value="${data.distance_axis_r || ''}" ${readonly}>
+                                                    <input type="text" class="form-control" id="editDistanceAxisR" 
+                                                           placeholder="0, 90, 180" pattern="[0-9]*" value="${data.distance_axis_r || ''}" ${readonly}>
                                                 </div>
                                             </div>
                                         </div>
@@ -4005,18 +4019,18 @@ function showGlassesPrescriptionModal(data, mode) {
                                             <div class="row">
                                                 <div class="col-4">
                                                     <label class="form-label">Sphere</label>
-                                                    <input type="number" class="form-control" id="editDistanceSphereL" 
-                                                           step="0.25" min="-30" max="30" value="${data.distance_sphere_l || ''}" ${readonly}>
+                                                    <input type="text" class="form-control" id="editDistanceSphereL" 
+                                                           placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.distance_sphere_l || ''}" ${readonly}>
                                                 </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Cylinder</label>
-                                                    <input type="number" class="form-control" id="editDistanceCylinderL" 
-                                                           step="0.25" min="-10" max="10" value="${data.distance_cylinder_l || ''}" ${readonly}>
+                                                    <input type="text" class="form-control" id="editDistanceCylinderL" 
+                                                           placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.distance_cylinder_l || ''}" ${readonly}>
                                                 </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Axis</label>
-                                                    <input type="number" class="form-control" id="editDistanceAxisL" 
-                                                           min="1" max="180" value="${data.distance_axis_l || ''}" ${readonly}>
+                                                    <input type="text" class="form-control" id="editDistanceAxisL" 
+                                                           placeholder="0, 90, 180" pattern="[0-9]*" value="${data.distance_axis_l || ''}" ${readonly}>
                                                 </div>
                                             </div>
                                         </div>
@@ -4036,18 +4050,18 @@ function showGlassesPrescriptionModal(data, mode) {
                                             <div class="row">
                                                 <div class="col-4">
                                                     <label class="form-label">Sphere</label>
-                                                    <input type="number" class="form-control" id="editNearSphereR" 
-                                                           step="0.25" min="-30" max="30" value="${data.near_sphere_r || ''}" ${readonly}>
+                                                    <input type="text" class="form-control" id="editNearSphereR" 
+                                                           placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.near_sphere_r || ''}" ${readonly}>
                                                 </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Cylinder</label>
-                                                    <input type="number" class="form-control" id="editNearCylinderR" 
-                                                           step="0.25" min="-10" max="10" value="${data.near_cylinder_r || ''}" ${readonly}>
+                                                    <input type="text" class="form-control" id="editNearCylinderR" 
+                                                           placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.near_cylinder_r || ''}" ${readonly}>
                                                 </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Axis</label>
-                                                    <input type="number" class="form-control" id="editNearAxisR" 
-                                                           min="1" max="180" value="${data.near_axis_r || ''}" ${readonly}>
+                                                    <input type="text" class="form-control" id="editNearAxisR" 
+                                                           placeholder="0, 90, 180" pattern="[0-9]*" value="${data.near_axis_r || ''}" ${readonly}>
                                                 </div>
                                             </div>
                                         </div>
@@ -4056,18 +4070,18 @@ function showGlassesPrescriptionModal(data, mode) {
                                             <div class="row">
                                                 <div class="col-4">
                                                     <label class="form-label">Sphere</label>
-                                                    <input type="number" class="form-control" id="editNearSphereL" 
-                                                           step="0.25" min="-30" max="30" value="${data.near_sphere_l || ''}" ${readonly}>
+                                                    <input type="text" class="form-control" id="editNearSphereL" 
+                                                           placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.near_sphere_l || ''}" ${readonly}>
                                                 </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Cylinder</label>
-                                                    <input type="number" class="form-control" id="editNearCylinderL" 
-                                                           step="0.25" min="-10" max="10" value="${data.near_cylinder_l || ''}" ${readonly}>
+                                                    <input type="text" class="form-control" id="editNearCylinderL" 
+                                                           placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.near_cylinder_l || ''}" ${readonly}>
                                                 </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Axis</label>
-                                                    <input type="number" class="form-control" id="editNearAxisL" 
-                                                           min="1" max="180" value="${data.near_axis_l || ''}" ${readonly}>
+                                                    <input type="text" class="form-control" id="editNearAxisL" 
+                                                           placeholder="0, 90, 180" pattern="[0-9]*" value="${data.near_axis_l || ''}" ${readonly}>
                                                 </div>
                                             </div>
                                         </div>
@@ -4079,13 +4093,13 @@ function showGlassesPrescriptionModal(data, mode) {
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label">PD Distance (mm)</label>
-                                    <input type="number" class="form-control" id="editPdDistance" 
-                                           step="0.5" min="40" max="80" value="${data.PD_DISTANCE || ''}" ${readonly}>
+                                    <input type="text" class="form-control" id="editPdDistance" 
+                                           placeholder="62.0, +2, -1" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.PD_DISTANCE || ''}" ${readonly}>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">PD Near (mm)</label>
-                                    <input type="number" class="form-control" id="editPdNear" 
-                                           step="0.5" min="40" max="80" value="${data.PD_NEAR || ''}" ${readonly}>
+                                    <input type="text" class="form-control" id="editPdNear" 
+                                           placeholder="60.0, +2, -1" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.PD_NEAR || ''}" ${readonly}>
                                 </div>
                             </div>
                             

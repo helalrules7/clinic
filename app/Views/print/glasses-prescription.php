@@ -463,19 +463,19 @@
                 
                 <div class="measurement-row">
                     <span class="measurement-label">Sphere:</span>
-                    <span class="measurement-value"><?= $prescription['distance_sphere_r'] ?? '0.00' ?></span>
+                    <span class="measurement-value"><?= $prescription['distance_sphere_r'] ?? $prescription['sphere_r'] ?? '0.00' ?></span>
                     <span class="measurement-unit">D</span>
                 </div>
                 
                 <div class="measurement-row">
                     <span class="measurement-label">Cylinder:</span>
-                    <span class="measurement-value"><?= $prescription['distance_cylinder_r'] ?? '0.00' ?></span>
+                    <span class="measurement-value"><?= $prescription['distance_cylinder_r'] ?? $prescription['cylinder_r'] ?? '0.00' ?></span>
                     <span class="measurement-unit">D</span>
                 </div>
                 
                 <div class="measurement-row">
                     <span class="measurement-label">Axis:</span>
-                    <span class="measurement-value"><?= $prescription['distance_axis_r'] ?? '0' ?></span>
+                    <span class="measurement-value"><?= $prescription['distance_axis_r'] ?? $prescription['axis_r'] ?? '0' ?></span>
                     <span class="measurement-unit">°</span>
                 </div>
                 
@@ -488,19 +488,19 @@
                 
                 <div class="measurement-row">
                     <span class="measurement-label">Sphere:</span>
-                    <span class="measurement-value"><?= $prescription['distance_sphere_l'] ?? '0.00' ?></span>
+                    <span class="measurement-value"><?= $prescription['distance_sphere_l'] ?? $prescription['sphere_l'] ?? '0.00' ?></span>
                     <span class="measurement-unit">D</span>
                 </div>
                 
                 <div class="measurement-row">
                     <span class="measurement-label">Cylinder:</span>
-                    <span class="measurement-value"><?= $prescription['distance_cylinder_l'] ?? '0.00' ?></span>
+                    <span class="measurement-value"><?= $prescription['distance_cylinder_l'] ?? $prescription['cylinder_l'] ?? '0.00' ?></span>
                     <span class="measurement-unit">D</span>
                 </div>
                 
                 <div class="measurement-row">
                     <span class="measurement-label">Axis:</span>
-                    <span class="measurement-value"><?= $prescription['distance_axis_l'] ?? '0' ?></span>
+                    <span class="measurement-value"><?= $prescription['distance_axis_l'] ?? $prescription['axis_l'] ?? '0' ?></span>
                     <span class="measurement-unit">°</span>
                 </div>
                 
@@ -513,7 +513,7 @@
             <div class="lens-title">نوع العدسة - Lens Type</div>
             <div class="lens-details">
                 <div>
-                    <strong>النوع:</strong> <?= $prescription['lens_type'] ?>
+                    <strong>النوع:</strong> <?= $prescription['lens_type'] ?? 'Single Vision' ?>
                 </div>
                 <div>
                     <strong>التاريخ:</strong> <?= date('d/m/Y', strtotime($prescription['created_at'] ?? 'now')) ?>
@@ -527,11 +527,11 @@
             <div class="pd-values">
                 <div class="pd-item">
                     <span class="pd-label">للقراءة - Near</span>
-                    <span class="pd-value"><?= $prescription['PD_NEAR'] ?? 'N/A' ?> mm</span>
+                    <span class="pd-value"><?= $prescription['PD_NEAR'] ?? $prescription['pd_near'] ?? 'N/A' ?> mm</span>
                 </div>
                 <div class="pd-item">
                     <span class="pd-label">للبعد - Distance</span>
-                    <span class="pd-value"><?= $prescription['PD_DISTANCE'] ?? 'N/A' ?> mm</span>
+                    <span class="pd-value"><?= $prescription['PD_DISTANCE'] ?? $prescription['pd_distance'] ?? 'N/A' ?> mm</span>
                 </div>
             </div>
         </div>

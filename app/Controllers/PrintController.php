@@ -74,12 +74,17 @@ class PrintController
         try {
             $user = $this->auth->user();
             
-            // Get glasses prescription by its ID (not appointment ID)
+            // First try to get glasses prescription by its ID (for direct prescription printing)
             $prescription = $this->getGlassesPrescription($id);
+            
             if (!$prescription) {
-                http_response_code(404);
-                echo "No glasses prescription found with ID: " . $id;
-                return;
+                // If not found by prescription ID, try to get by appointment ID
+                $prescription = $this->getGlassesPrescriptionByAppointmentId($id);
+                if (!$prescription) {
+                    http_response_code(404);
+                    echo "No glasses prescription found with ID: " . $id;
+                    return;
+                }
             }
             
             // Get appointment details using the appointment_id from prescription
@@ -243,6 +248,20 @@ class PrintController
             WHERE gp.id = ?
         ");
         $stmt->execute([$id]);
+        return $stmt->fetch();
+    }
+
+    private function getGlassesPrescriptionByAppointmentId($appointmentId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT gp.*, a.patient_id, a.date as appointment_date, a.start_time, a.visit_type
+            FROM glasses_prescriptions gp
+            JOIN appointments a ON gp.appointment_id = a.id
+            WHERE gp.appointment_id = ?
+            ORDER BY gp.created_at DESC
+            LIMIT 1
+        ");
+        $stmt->execute([$appointmentId]);
         return $stmt->fetch();
     }
 

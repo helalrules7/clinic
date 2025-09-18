@@ -380,8 +380,29 @@ class DoctorController
             }
             
             // Process and validate input data
-            $iopRight = (!empty($_POST['IOP_right']) && is_numeric($_POST['IOP_right'])) ? (float)$_POST['IOP_right'] : null;
-            $iopLeft = (!empty($_POST['IOP_left']) && is_numeric($_POST['IOP_left'])) ? (float)$_POST['IOP_left'] : null;
+            // Allow IOP values with + and - signs, convert to float if numeric
+            $iopRight = null;
+            if (!empty($_POST['IOP_right'])) {
+                $iopValue = trim($_POST['IOP_right']);
+                if (is_numeric($iopValue)) {
+                    $iopRight = (float)$iopValue;
+                } else {
+                    // Store as text if not purely numeric (e.g., contains + or -)
+                    $iopRight = $iopValue;
+                }
+            }
+            
+            $iopLeft = null;
+            if (!empty($_POST['IOP_left'])) {
+                $iopValue = trim($_POST['IOP_left']);
+                if (is_numeric($iopValue)) {
+                    $iopLeft = (float)$iopValue;
+                } else {
+                    // Store as text if not purely numeric (e.g., contains + or -)
+                    $iopLeft = $iopValue;
+                }
+            }
+            
             $followupDays = (!empty($_POST['followup_days']) && is_numeric($_POST['followup_days'])) ? (int)$_POST['followup_days'] : null;
             
             // Helper function to handle empty strings
@@ -391,35 +412,36 @@ class DoctorController
             
             if ($noteId) {
                 // Execute UPDATE query
-            $stmt->execute([
-                $processTextField($_POST['chief_complaint']),
-                $processTextField($_POST['hx_present_illness']),
-                $processTextField($_POST['visual_acuity_right']),
-                $processTextField($_POST['visual_acuity_left']),
-                $processTextField($_POST['refraction_right']),
-                $processTextField($_POST['refraction_left']),
-                $iopRight,
-                $iopLeft,
-                $processTextField($_POST['slit_lamp_right']),
-                $processTextField($_POST['slit_lamp_left']),
-                $processTextField($_POST['fundus_right']),
-                $processTextField($_POST['fundus_left']),
-                $processTextField($_POST['external_appearance_right']),
-                $processTextField($_POST['external_appearance_left']),
-                $processTextField($_POST['eyelid_right']),
-                $processTextField($_POST['eyelid_left']),
-                $processTextField($_POST['diagnosis']),
-                $processTextField($_POST['diagnosis_code']),
-                $processTextField($_POST['systemic_disease']),
-                $processTextField($_POST['medication']),
-                $processTextField($_POST['plan']),
-                $followupDays,
-                $noteId,
-                $id
-            ]);
+                $updateData = [
+                    $processTextField($_POST['chief_complaint']),
+                    $processTextField($_POST['hx_present_illness']),
+                    $processTextField($_POST['visual_acuity_right']),
+                    $processTextField($_POST['visual_acuity_left']),
+                    $processTextField($_POST['refraction_right']),
+                    $processTextField($_POST['refraction_left']),
+                    $iopRight,
+                    $iopLeft,
+                    $processTextField($_POST['slit_lamp_right']),
+                    $processTextField($_POST['slit_lamp_left']),
+                    $processTextField($_POST['fundus_right']),
+                    $processTextField($_POST['fundus_left']),
+                    $processTextField($_POST['external_appearance_right']),
+                    $processTextField($_POST['external_appearance_left']),
+                    $processTextField($_POST['eyelid_right']),
+                    $processTextField($_POST['eyelid_left']),
+                    $processTextField($_POST['diagnosis']),
+                    $processTextField($_POST['diagnosis_code']),
+                    $processTextField($_POST['systemic_disease']),
+                    $processTextField($_POST['medication']),
+                    $processTextField($_POST['plan']),
+                    $followupDays,
+                    $noteId,
+                    $id
+                ];
+                $result = $stmt->execute($updateData);
             } else {
                 // Execute INSERT query
-                $stmt->execute([
+                $insertData = [
                     $id,
                     $processTextField($_POST['chief_complaint']),
                     $processTextField($_POST['hx_present_illness']),
@@ -444,7 +466,11 @@ class DoctorController
                     $processTextField($_POST['plan']),
                     $followupDays,
                     $user['id']
-                ]);
+                ];
+                $result = $stmt->execute($insertData);
+                if ($result) {
+                    $newNoteId = $this->pdo->lastInsertId();
+                }
             }
             
             // Redirect back to appointment view
@@ -452,8 +478,6 @@ class DoctorController
             exit;
             
         } catch (\Exception $e) {
-            error_log("Error updating consultation for appointment $id: " . $e->getMessage());
-            error_log("Stack trace: " . $e->getTraceAsString());
             header('Location: /doctor/appointments/' . $id . '/edit?error=' . urlencode($e->getMessage()));
             exit;
         }

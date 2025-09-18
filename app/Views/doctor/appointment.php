@@ -491,6 +491,112 @@
     color: white !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
+
+/* Dark Mode Breadcrumb Styles */
+.dark .breadcrumb {
+    background-color: transparent !important;
+    padding: 0.75rem 0 !important;
+}
+
+.dark .breadcrumb-item {
+    color: var(--muted) !important;
+}
+
+.dark .breadcrumb-item a {
+    color: var(--accent) !important;
+    text-decoration: none !important;
+    transition: color 0.3s ease !important;
+}
+
+.dark .breadcrumb-item a:hover {
+    color: var(--text) !important;
+    text-decoration: underline !important;
+}
+
+.dark .breadcrumb-item.active {
+    color: var(--text) !important;
+    font-weight: 500 !important;
+}
+
+.dark .breadcrumb-item + .breadcrumb-item::before {
+    color: var(--muted) !important;
+    content: "›" !important;
+}
+
+/* Dark Mode Text Color Classes */
+.dark .text-primary {
+    color: var(--accent) !important;
+}
+
+.dark .text-success {
+    color: var(--success) !important;
+}
+
+.dark .text-info {
+    color: #22d3ee !important;
+}
+
+.dark .text-danger {
+    color: var(--danger) !important;
+}
+
+.dark .text-warning {
+    color: #fbbf24 !important;
+}
+
+.dark .text-secondary {
+    color: var(--muted) !important;
+}
+
+/* Dark Mode Badge Styles */
+.dark .badge.bg-primary {
+    background-color: var(--accent) !important;
+    color: #0b1220 !important;
+}
+
+.dark .badge.bg-success {
+    background-color: var(--success) !important;
+    color: #0b1220 !important;
+}
+
+.dark .badge.bg-info {
+    background-color: #22d3ee !important;
+    color: #0b1220 !important;
+}
+
+.dark .badge.bg-danger {
+    background-color: var(--danger) !important;
+    color: #0b1220 !important;
+}
+
+.dark .badge.bg-warning {
+    background-color: #fbbf24 !important;
+    color: #0b1220 !important;
+}
+
+.dark .badge.bg-secondary {
+    background-color: var(--muted) !important;
+    color: var(--text) !important;
+}
+
+.dark .badge.bg-light {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+.dark .badge.bg-dark {
+    background-color: var(--text) !important;
+    color: var(--card) !important;
+}
+
+/* Dark Mode Progress Bar Styles */
+.dark .progress {
+    background-color: var(--border) !important;
+}
+
+.dark .progress-bar {
+    background-color: var(--accent) !important;
+}
 </style>
 
 <!-- Breadcrumb -->
@@ -2731,11 +2837,13 @@ function addGlassesPrescription(appointmentId) {
                             <div class="row mb-3">
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">PD Distance (PD)</label>
-                                    <input type="number" step="0.5" class="form-control" name="PD_DISTANCE" placeholder="62.0">
+                                    <input type="text" class="form-control" name="PD_DISTANCE" placeholder="62.0, +2, -1" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                    <div class="form-text">Enter PD value (e.g., 62.0, +2, -1)</div>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">PD Near (NPD)</label>
-                                    <input type="number" step="0.5" class="form-control" name="PD_NEAR" placeholder="58.0">
+                                    <input type="text" class="form-control" name="PD_NEAR" placeholder="58.0, +2, -1" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                    <div class="form-text">Enter PD value (e.g., 58.0, +2, -1)</div>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Lens Type</label>
@@ -2758,15 +2866,18 @@ function addGlassesPrescription(appointmentId) {
                                     <div class="row">
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">SPH</label>
-                                            <input type="number" step="0.25" class="form-control" name="distance_sphere_r" placeholder="0.00">
+                                            <input type="text" class="form-control" name="distance_sphere_r" placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                            <div class="form-text">Sphere power</div>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">CYL</label>
-                                            <input type="number" step="0.25" class="form-control" name="distance_cylinder_r" placeholder="0.00">
+                                            <input type="text" class="form-control" name="distance_cylinder_r" placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                            <div class="form-text">Cylinder power</div>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">AXIS</label>
-                                            <input type="number" min="0" max="180" class="form-control" name="distance_axis_r" placeholder="0">
+                                            <input type="text" class="form-control" name="distance_axis_r" placeholder="0, 90, 180" pattern="[0-9]*">
+                                            <div class="form-text">Axis (0-180)</div>
                                         </div>
                                     </div>
                                 </div>
@@ -2776,15 +2887,18 @@ function addGlassesPrescription(appointmentId) {
                                     <div class="row ps-3">
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">SPH</label>
-                                            <input type="number" step="0.25" class="form-control" name="distance_sphere_l" placeholder="0.00">
+                                            <input type="text" class="form-control" name="distance_sphere_l" placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                            <div class="form-text">Sphere power</div>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">CYL</label>
-                                            <input type="number" step="0.25" class="form-control" name="distance_cylinder_l" placeholder="0.00">
+                                            <input type="text" class="form-control" name="distance_cylinder_l" placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                            <div class="form-text">Cylinder power</div>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">AXIS</label>
-                                            <input type="number" min="0" max="180" class="form-control" name="distance_axis_l" placeholder="0">
+                                            <input type="text" class="form-control" name="distance_axis_l" placeholder="0, 90, 180" pattern="[0-9]*">
+                                            <div class="form-text">Axis (0-180)</div>
                                         </div>
                                     </div>
                                 </div>
@@ -2800,15 +2914,18 @@ function addGlassesPrescription(appointmentId) {
                                     <div class="row">
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">SPH</label>
-                                            <input type="number" step="0.25" class="form-control" name="near_sphere_r" placeholder="0.00">
+                                            <input type="text" class="form-control" name="near_sphere_r" placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                            <div class="form-text">Sphere power</div>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">CYL</label>
-                                            <input type="number" step="0.25" class="form-control" name="near_cylinder_r" placeholder="0.00">
+                                            <input type="text" class="form-control" name="near_cylinder_r" placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                            <div class="form-text">Cylinder power</div>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">AXIS</label>
-                                            <input type="number" min="0" max="180" class="form-control" name="near_axis_r" placeholder="0">
+                                            <input type="text" class="form-control" name="near_axis_r" placeholder="0, 90, 180" pattern="[0-9]*">
+                                            <div class="form-text">Axis (0-180)</div>
                                         </div>
                                     </div>
                                 </div>
@@ -2818,15 +2935,18 @@ function addGlassesPrescription(appointmentId) {
                                     <div class="row ps-3">
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">SPH</label>
-                                            <input type="number" step="0.25" class="form-control" name="near_sphere_l" placeholder="0.00">
+                                            <input type="text" class="form-control" name="near_sphere_l" placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                            <div class="form-text">Sphere power</div>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">CYL</label>
-                                            <input type="number" step="0.25" class="form-control" name="near_cylinder_l" placeholder="0.00">
+                                            <input type="text" class="form-control" name="near_cylinder_l" placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                            <div class="form-text">Cylinder power</div>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">AXIS</label>
-                                            <input type="number" min="0" max="180" class="form-control" name="near_axis_l" placeholder="0">
+                                            <input type="text" class="form-control" name="near_axis_l" placeholder="0, 90, 180" pattern="[0-9]*">
+                                            <div class="form-text">Axis (0-180)</div>
                                         </div>
                                     </div>
                                 </div>
@@ -2903,11 +3023,13 @@ function editGlassesPrescription(glassesId, glassesData) {
                             <div class="row mb-3">
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">PD Distance (PD)</label>
-                                    <input type="number" step="0.5" class="form-control" name="PD_DISTANCE" value="${glassesData.PD_DISTANCE || ''}">
+                                    <input type="text" class="form-control" name="PD_DISTANCE" value="${glassesData.PD_DISTANCE || ''}" placeholder="62.0, +2, -1" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                    <div class="form-text">Enter PD value (e.g., 62.0, +2, -1)</div>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">PD Near (NPD)</label>
-                                    <input type="number" step="0.5" class="form-control" name="PD_NEAR" value="${glassesData.PD_NEAR || ''}">
+                                    <input type="text" class="form-control" name="PD_NEAR" value="${glassesData.PD_NEAR || ''}" placeholder="58.0, +2, -1" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                    <div class="form-text">Enter PD value (e.g., 58.0, +2, -1)</div>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Lens Type</label>
@@ -2930,15 +3052,18 @@ function editGlassesPrescription(glassesId, glassesData) {
                                     <div class="row">
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">SPH</label>
-                                            <input type="number" step="0.25" class="form-control" name="distance_sphere_r" value="${glassesData.distance_sphere_r || ''}">
+                                            <input type="text" class="form-control" name="distance_sphere_r" value="${glassesData.distance_sphere_r || ''}" placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                            <div class="form-text">Sphere power</div>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">CYL</label>
-                                            <input type="number" step="0.25" class="form-control" name="distance_cylinder_r" value="${glassesData.distance_cylinder_r || ''}">
+                                            <input type="text" class="form-control" name="distance_cylinder_r" value="${glassesData.distance_cylinder_r || ''}" placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                            <div class="form-text">Cylinder power</div>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">AXIS</label>
-                                            <input type="number" min="0" max="180" class="form-control" name="distance_axis_r" value="${glassesData.distance_axis_r || ''}">
+                                            <input type="text" class="form-control" name="distance_axis_r" value="${glassesData.distance_axis_r || ''}" placeholder="0, 90, 180" pattern="[0-9]*">
+                                            <div class="form-text">Axis (0-180)</div>
                                         </div>
                                     </div>
                                 </div>
@@ -2948,15 +3073,18 @@ function editGlassesPrescription(glassesId, glassesData) {
                                     <div class="row ps-3">
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">SPH</label>
-                                            <input type="number" step="0.25" class="form-control" name="distance_sphere_l" value="${glassesData.distance_sphere_l || ''}">
+                                            <input type="text" class="form-control" name="distance_sphere_l" value="${glassesData.distance_sphere_l || ''}" placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                            <div class="form-text">Sphere power</div>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">CYL</label>
-                                            <input type="number" step="0.25" class="form-control" name="distance_cylinder_l" value="${glassesData.distance_cylinder_l || ''}">
+                                            <input type="text" class="form-control" name="distance_cylinder_l" value="${glassesData.distance_cylinder_l || ''}" placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                            <div class="form-text">Cylinder power</div>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">AXIS</label>
-                                            <input type="number" min="0" max="180" class="form-control" name="distance_axis_l" value="${glassesData.distance_axis_l || ''}">
+                                            <input type="text" class="form-control" name="distance_axis_l" value="${glassesData.distance_axis_l || ''}" placeholder="0, 90, 180" pattern="[0-9]*">
+                                            <div class="form-text">Axis (0-180)</div>
                                         </div>
                                     </div>
                                 </div>
@@ -2972,15 +3100,18 @@ function editGlassesPrescription(glassesId, glassesData) {
                                     <div class="row">
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">SPH</label>
-                                            <input type="number" step="0.25" class="form-control" name="near_sphere_r" value="${glassesData.near_sphere_r || ''}">
+                                            <input type="text" class="form-control" name="near_sphere_r" value="${glassesData.near_sphere_r || ''}" placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                            <div class="form-text">Sphere power</div>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">CYL</label>
-                                            <input type="number" step="0.25" class="form-control" name="near_cylinder_r" value="${glassesData.near_cylinder_r || ''}">
+                                            <input type="text" class="form-control" name="near_cylinder_r" value="${glassesData.near_cylinder_r || ''}" placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                            <div class="form-text">Cylinder power</div>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">AXIS</label>
-                                            <input type="number" min="0" max="180" class="form-control" name="near_axis_r" value="${glassesData.near_axis_r || ''}">
+                                            <input type="text" class="form-control" name="near_axis_r" value="${glassesData.near_axis_r || ''}" placeholder="0, 90, 180" pattern="[0-9]*">
+                                            <div class="form-text">Axis (0-180)</div>
                                         </div>
                                     </div>
                                 </div>
@@ -2990,15 +3121,18 @@ function editGlassesPrescription(glassesId, glassesData) {
                                     <div class="row ps-3">
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">SPH</label>
-                                            <input type="number" step="0.25" class="form-control" name="near_sphere_l" value="${glassesData.near_sphere_l || ''}">
+                                            <input type="text" class="form-control" name="near_sphere_l" value="${glassesData.near_sphere_l || ''}" placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                            <div class="form-text">Sphere power</div>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">CYL</label>
-                                            <input type="number" step="0.25" class="form-control" name="near_cylinder_l" value="${glassesData.near_cylinder_l || ''}">
+                                            <input type="text" class="form-control" name="near_cylinder_l" value="${glassesData.near_cylinder_l || ''}" placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*">
+                                            <div class="form-text">Cylinder power</div>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">AXIS</label>
-                                            <input type="number" min="0" max="180" class="form-control" name="near_axis_l" value="${glassesData.near_axis_l || ''}">
+                                            <input type="text" class="form-control" name="near_axis_l" value="${glassesData.near_axis_l || ''}" placeholder="0, 90, 180" pattern="[0-9]*">
+                                            <div class="form-text">Axis (0-180)</div>
                                         </div>
                                     </div>
                                 </div>

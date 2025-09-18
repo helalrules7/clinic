@@ -27,6 +27,7 @@
     </div>
 </div>
 
+
 <!-- Patient Info Card -->
 <div class="row mb-4">
     <div class="col-12">
@@ -103,6 +104,12 @@
 </div>
 <?php endif; ?>
 
+<?php 
+// Get the latest consultation note for editing, or prepare for new one
+$consultation = !empty($consultationNotes) ? $consultationNotes[0] : [];
+$isEditing = !empty($consultation);
+?>
+
 <!-- Edit Consultation Form -->
 <div class="row">
     <div class="col-12">
@@ -127,12 +134,6 @@
                         <?= htmlspecialchars($success) ?>
                     </div>
                 <?php endif; ?>
-
-                <?php 
-                // Get the latest consultation note for editing, or prepare for new one
-                $consultation = !empty($consultationNotes) ? $consultationNotes[0] : [];
-                $isEditing = !empty($consultation);
-                ?>
                 
                 <form method="POST" action="/doctor/appointments/<?= $appointment['id'] ?? '' ?>/edit" id="consultationForm">
                     <!-- CSRF Token -->
@@ -218,7 +219,8 @@
                                 <span class="badge bg-success me-2">OD</span> Visual Acuity - Right Eye
                             </label>
                             <input type="text" class="form-control border-success" id="visual_acuity_right" name="visual_acuity_right"
-                                placeholder="e.g., 20/20" value="<?= htmlspecialchars($consultation['visual_acuity_right'] ?? '') ?>">
+                                placeholder="e.g., 20/20, 6/6, +2" value="<?= htmlspecialchars($consultation['visual_acuity_right'] ?? '') ?>">
+                            <div class="form-text">Enter visual acuity (e.g., 20/20, 6/6, +2)</div>
                         </div>
                         <div class="col-md-6">
                             <label for="visual_acuity_left" class="form-label">
@@ -226,7 +228,8 @@
                                 <span class="badge bg-info me-2">OS</span> Visual Acuity - Left Eye
                             </label>
                             <input type="text" class="form-control border-info" id="visual_acuity_left" name="visual_acuity_left"
-                                placeholder="e.g., 20/20" value="<?= htmlspecialchars($consultation['visual_acuity_left'] ?? '') ?>">
+                                placeholder="e.g., 20/20, 6/6, +2" value="<?= htmlspecialchars($consultation['visual_acuity_left'] ?? '') ?>">
+                            <div class="form-text">Enter visual acuity (e.g., 20/20, 6/6, +2)</div>
                         </div>
                     </div>
 
@@ -238,7 +241,8 @@
                                 <span class="badge bg-success me-2">OD</span> Refraction - Right Eye
                             </label>
                             <input type="text" class="form-control border-success" id="refraction_right" name="refraction_right"
-                                placeholder="e.g., -2.00 -0.50 x 90" value="<?= htmlspecialchars($consultation['refraction_right'] ?? '') ?>">
+                                placeholder="e.g., -2.00 -0.50 x 90, +1.50" value="<?= htmlspecialchars($consultation['refraction_right'] ?? '') ?>">
+                            <div class="form-text">Enter refraction values (e.g., -2.00 -0.50 x 90, +1.50)</div>
                         </div>
                         <div class="col-md-6">
                             <label for="refraction_left" class="form-label">
@@ -246,7 +250,8 @@
                                 <span class="badge bg-info me-2">OS</span> Refraction - Left Eye
                             </label>
                             <input type="text" class="form-control border-info" id="refraction_left" name="refraction_left"
-                                placeholder="e.g., -2.00 -0.50 x 90" value="<?= htmlspecialchars($consultation['refraction_left'] ?? '') ?>">
+                                placeholder="e.g., -2.00 -0.50 x 90, +1.50" value="<?= htmlspecialchars($consultation['refraction_left'] ?? '') ?>">
+                            <div class="form-text">Enter refraction values (e.g., -2.00 -0.50 x 90, +1.50)</div>
                         </div>
                     </div>
 
@@ -257,16 +262,20 @@
                                 <i class="bi bi-speedometer text-warning"></i>
                                 <span class="badge bg-success me-2">OD</span> IOP - Right Eye (mmHg)
                             </label>
-                            <input type="number" step="0.1" class="form-control border-success" id="IOP_right" name="IOP_right"
-                                placeholder="e.g., 15.0" value="<?= htmlspecialchars($consultation['IOP_right'] ?? '') ?>">
+                            <input type="text" class="form-control border-success" id="IOP_right" name="IOP_right"
+                                placeholder="e.g., 15.0, +2, -1" pattern="[+-]?[0-9]*\.?[0-9]*" 
+                                value="<?= htmlspecialchars($consultation['IOP_right'] ?? '') ?>">
+                            <div class="form-text">Enter pressure value (e.g., 15.0, +2, -1)</div>
                         </div>
                         <div class="col-md-6">
                             <label for="IOP_left" class="form-label">
                                 <i class="bi bi-speedometer text-warning"></i>
                                 <span class="badge bg-info me-2">OS</span> IOP - Left Eye (mmHg)
                             </label>
-                            <input type="number" step="0.1" class="form-control border-info" id="IOP_left" name="IOP_left"
-                                placeholder="e.g., 15.0" value="<?= htmlspecialchars($consultation['IOP_left'] ?? '') ?>">
+                            <input type="text" class="form-control border-info" id="IOP_left" name="IOP_left"
+                                placeholder="e.g., 15.0, +2, -1" pattern="[+-]?[0-9]*\.?[0-9]*"
+                                value="<?= htmlspecialchars($consultation['IOP_left'] ?? '') ?>">
+                            <div class="form-text">Enter pressure value (e.g., 15.0, +2, -1)</div>
                         </div>
                     </div>
 
@@ -425,6 +434,7 @@
 </div>
 
 <script>
+
     // Auto-resize textareas
     document.querySelectorAll('textarea').forEach(textarea => {
         textarea.addEventListener('input', function() {
@@ -448,11 +458,74 @@
             }
         });
 
+        // Validate IOP fields - allow numeric values with + and - signs
+        const iopFields = ['IOP_right', 'IOP_left'];
+        iopFields.forEach(fieldName => {
+            const field = document.getElementById(fieldName);
+            if (field && field.value.trim()) {
+                const value = field.value.trim();
+                // Allow empty, numeric values, or values with + and - at the beginning
+                const iopPattern = /^[+-]?[0-9]*\.?[0-9]*$/;
+                if (!iopPattern.test(value)) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                    // Show error message
+                    let errorDiv = field.parentNode.querySelector('.invalid-feedback');
+                    if (!errorDiv) {
+                        errorDiv = document.createElement('div');
+                        errorDiv.className = 'invalid-feedback';
+                        field.parentNode.appendChild(errorDiv);
+                    }
+                    errorDiv.textContent = 'Please enter a valid pressure value (e.g., 15.0, +2, -1)';
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            }
+        });
+        
         if (!isValid) {
             e.preventDefault();
-            alert('Please fill in required fields: Chief Complaint and Diagnosis');
+            alert('Please correct the errors before submitting the form.');
+            return false;
         }
+        
+        // Add loading state to prevent double submission
+        const submitBtn = this.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+        }
+        
+        return true;
     });
+
+
+    // Real-time validation for IOP fields
+    document.getElementById('IOP_right').addEventListener('input', function() {
+        validateIOPField(this);
+    });
+
+    document.getElementById('IOP_left').addEventListener('input', function() {
+        validateIOPField(this);
+    });
+
+    function validateIOPField(field) {
+        const value = field.value.trim();
+        const iopPattern = /^[+-]?[0-9]*\.?[0-9]*$/;
+        
+        if (value === '') {
+            field.classList.remove('is-invalid', 'is-valid');
+            return;
+        }
+        
+        if (iopPattern.test(value)) {
+            field.classList.remove('is-invalid');
+            field.classList.add('is-valid');
+        } else {
+            field.classList.remove('is-valid');
+            field.classList.add('is-invalid');
+        }
+    }
 
 
 </script>
@@ -628,6 +701,58 @@
     background-color: var(--bg) !important;
     border-color: var(--border) !important;
     color: var(--text) !important;
+}
+
+/* Form Validation Styles */
+.form-control.is-valid {
+    border-color: #28a745;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='m2.3 6.73.94-.94 1.88-1.88L6.73 2.3l.94.94L4.12 6.7z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 4.6 1.4 1.4 1.4-1.4'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.invalid-feedback {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: #dc3545;
+}
+
+.valid-feedback {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: #28a745;
+}
+
+/* Dark mode validation styles */
+.dark .form-control.is-valid {
+    border-color: #28a745;
+    background-color: var(--card);
+}
+
+.dark .form-control.is-invalid {
+    border-color: #dc3545;
+    background-color: var(--card);
+}
+
+.dark .invalid-feedback {
+    color: #fb7185;
+}
+
+.dark .valid-feedback {
+    color: #4ade80;
 }
 
 /* Responsive Adjustments */
