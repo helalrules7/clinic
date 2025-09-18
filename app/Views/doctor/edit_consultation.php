@@ -177,27 +177,6 @@
                             placeholder="Enter the history of present illness..."><?= htmlspecialchars($consultation['hx_present_illness'] ?? '') ?></textarea>
                     </div>
 
-                    <!-- Diagnosis -->
-                    <div class="mb-3">
-                        <label for="diagnosis" class="form-label">
-                            <i class="bi bi-clipboard2-check text-danger"></i>
-                            <span class="text-danger">*</span> Diagnosis (Required)
-                            <small class="text-muted ms-2">(Required for registration and saving)</small>
-                        </label>
-                        <textarea class="form-control" id="diagnosis" name="diagnosis" rows="3"
-                            placeholder="Enter diagnosis..."><?= htmlspecialchars($consultation['diagnosis'] ?? '') ?></textarea>
-                    </div>
-
-                    <!-- Diagnosis Code -->
-                    <div class="mb-3">
-                        <label for="diagnosis_code" class="form-label">
-                            <i class="bi bi-upc text-secondary"></i>
-                            Diagnosis Code (ICD-10)
-                        </label>
-                        <input type="text" class="form-control" id="diagnosis_code" name="diagnosis_code"
-                            placeholder="e.g., H25.9" value="<?= htmlspecialchars($consultation['diagnosis_code'] ?? '') ?>">
-                    </div>
-
                     <!-- Systemic Disease -->
                     <div class="mb-3">
                         <label for="systemic_disease" class="form-label">
@@ -234,14 +213,6 @@
                     <!-- Visual Acuity -->
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="visual_acuity_left" class="form-label">
-                                <i class="bi bi-eye text-primary"></i>
-                                <span class="badge bg-info me-2">OS</span> Visual Acuity - Left Eye
-                            </label>
-                            <input type="text" class="form-control border-info" id="visual_acuity_left" name="visual_acuity_left"
-                                placeholder="e.g., 20/20" value="<?= htmlspecialchars($consultation['visual_acuity_left'] ?? '') ?>">
-                        </div>
-                        <div class="col-md-6">
                             <label for="visual_acuity_right" class="form-label">
                                 <i class="bi bi-eye text-primary"></i>
                                 <span class="badge bg-success me-2">OD</span> Visual Acuity - Right Eye
@@ -249,18 +220,18 @@
                             <input type="text" class="form-control border-success" id="visual_acuity_right" name="visual_acuity_right"
                                 placeholder="e.g., 20/20" value="<?= htmlspecialchars($consultation['visual_acuity_right'] ?? '') ?>">
                         </div>
+                        <div class="col-md-6">
+                            <label for="visual_acuity_left" class="form-label">
+                                <i class="bi bi-eye text-primary"></i>
+                                <span class="badge bg-info me-2">OS</span> Visual Acuity - Left Eye
+                            </label>
+                            <input type="text" class="form-control border-info" id="visual_acuity_left" name="visual_acuity_left"
+                                placeholder="e.g., 20/20" value="<?= htmlspecialchars($consultation['visual_acuity_left'] ?? '') ?>">
+                        </div>
                     </div>
 
                     <!-- Refraction -->
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="refraction_left" class="form-label">
-                                <i class="bi bi-eyeglasses text-info"></i>
-                                <span class="badge bg-info me-2">OS</span> Refraction - Left Eye
-                            </label>
-                            <input type="text" class="form-control border-info" id="refraction_left" name="refraction_left"
-                                placeholder="e.g., -2.00 -0.50 x 90" value="<?= htmlspecialchars($consultation['refraction_left'] ?? '') ?>">
-                        </div>
                         <div class="col-md-6">
                             <label for="refraction_right" class="form-label">
                                 <i class="bi bi-eyeglasses text-info"></i>
@@ -269,18 +240,18 @@
                             <input type="text" class="form-control border-success" id="refraction_right" name="refraction_right"
                                 placeholder="e.g., -2.00 -0.50 x 90" value="<?= htmlspecialchars($consultation['refraction_right'] ?? '') ?>">
                         </div>
+                        <div class="col-md-6">
+                            <label for="refraction_left" class="form-label">
+                                <i class="bi bi-eyeglasses text-info"></i>
+                                <span class="badge bg-info me-2">OS</span> Refraction - Left Eye
+                            </label>
+                            <input type="text" class="form-control border-info" id="refraction_left" name="refraction_left"
+                                placeholder="e.g., -2.00 -0.50 x 90" value="<?= htmlspecialchars($consultation['refraction_left'] ?? '') ?>">
+                        </div>
                     </div>
 
                     <!-- IOP (Intraocular Pressure) -->
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="IOP_left" class="form-label">
-                                <i class="bi bi-speedometer text-warning"></i>
-                                <span class="badge bg-info me-2">OS</span> IOP - Left Eye (mmHg)
-                            </label>
-                            <input type="number" step="0.1" class="form-control border-info" id="IOP_left" name="IOP_left"
-                                placeholder="e.g., 15.0" value="<?= htmlspecialchars($consultation['IOP_left'] ?? '') ?>">
-                        </div>
                         <div class="col-md-6">
                             <label for="IOP_right" class="form-label">
                                 <i class="bi bi-speedometer text-warning"></i>
@@ -289,18 +260,18 @@
                             <input type="number" step="0.1" class="form-control border-success" id="IOP_right" name="IOP_right"
                                 placeholder="e.g., 15.0" value="<?= htmlspecialchars($consultation['IOP_right'] ?? '') ?>">
                         </div>
+                        <div class="col-md-6">
+                            <label for="IOP_left" class="form-label">
+                                <i class="bi bi-speedometer text-warning"></i>
+                                <span class="badge bg-info me-2">OS</span> IOP - Left Eye (mmHg)
+                            </label>
+                            <input type="number" step="0.1" class="form-control border-info" id="IOP_left" name="IOP_left"
+                                placeholder="e.g., 15.0" value="<?= htmlspecialchars($consultation['IOP_left'] ?? '') ?>">
+                        </div>
                     </div>
 
                     <!-- Slit Lamp Examination -->
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="slit_lamp_left" class="form-label">
-                                <i class="bi bi-search text-success"></i>
-                                <span class="badge bg-info me-2">OS</span> Slit Lamp Examination - Left Eye
-                            </label>
-                            <textarea class="form-control border-info" id="slit_lamp_left" name="slit_lamp_left" rows="3"
-                                placeholder="Enter left eye slit lamp findings..."><?= htmlspecialchars($consultation['slit_lamp_left'] ?? '') ?></textarea>
-                        </div>
                         <div class="col-md-6">
                             <label for="slit_lamp_right" class="form-label">
                                 <i class="bi bi-search text-success"></i>
@@ -309,18 +280,18 @@
                             <textarea class="form-control border-success" id="slit_lamp_right" name="slit_lamp_right" rows="3"
                                 placeholder="Enter right eye slit lamp findings..."><?= htmlspecialchars($consultation['slit_lamp_right'] ?? '') ?></textarea>
                         </div>
+                        <div class="col-md-6">
+                            <label for="slit_lamp_left" class="form-label">
+                                <i class="bi bi-search text-success"></i>
+                                <span class="badge bg-info me-2">OS</span> Slit Lamp Examination - Left Eye
+                            </label>
+                            <textarea class="form-control border-info" id="slit_lamp_left" name="slit_lamp_left" rows="3"
+                                placeholder="Enter left eye slit lamp findings..."><?= htmlspecialchars($consultation['slit_lamp_left'] ?? '') ?></textarea>
+                        </div>
                     </div>
 
                     <!-- Fundus Examination -->
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="fundus_left" class="form-label">
-                                <i class="bi bi-circle text-danger"></i>
-                                <span class="badge bg-info me-2">OS</span> Fundus Examination - Left Eye
-                            </label>
-                            <textarea class="form-control border-info" id="fundus_left" name="fundus_left" rows="3"
-                                placeholder="Enter left eye fundus findings..."><?= htmlspecialchars($consultation['fundus_left'] ?? '') ?></textarea>
-                        </div>
                         <div class="col-md-6">
                             <label for="fundus_right" class="form-label">
                                 <i class="bi bi-circle text-danger"></i>
@@ -329,18 +300,18 @@
                             <textarea class="form-control border-success" id="fundus_right" name="fundus_right" rows="3"
                                 placeholder="Enter right eye fundus findings..."><?= htmlspecialchars($consultation['fundus_right'] ?? '') ?></textarea>
                         </div>
+                        <div class="col-md-6">
+                            <label for="fundus_left" class="form-label">
+                                <i class="bi bi-circle text-danger"></i>
+                                <span class="badge bg-info me-2">OS</span> Fundus Examination - Left Eye
+                            </label>
+                            <textarea class="form-control border-info" id="fundus_left" name="fundus_left" rows="3"
+                                placeholder="Enter left eye fundus findings..."><?= htmlspecialchars($consultation['fundus_left'] ?? '') ?></textarea>
+                        </div>
                     </div>
 
                     <!-- External Appearance -->
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="external_appearance_left" class="form-label">
-                                <i class="bi bi-eye-fill text-warning"></i>
-                                <span class="badge bg-info me-2">OS</span> External Appearance - Left Eye
-                            </label>
-                            <textarea class="form-control border-info" id="external_appearance_left" name="external_appearance_left" rows="3"
-                                placeholder="Enter left eye external appearance..."><?= htmlspecialchars($consultation['external_appearance_left'] ?? '') ?></textarea>
-                        </div>
                         <div class="col-md-6">
                             <label for="external_appearance_right" class="form-label">
                                 <i class="bi bi-eye-fill text-warning"></i>
@@ -349,18 +320,18 @@
                             <textarea class="form-control border-success" id="external_appearance_right" name="external_appearance_right" rows="3"
                                 placeholder="Enter right eye external appearance..."><?= htmlspecialchars($consultation['external_appearance_right'] ?? '') ?></textarea>
                         </div>
+                        <div class="col-md-6">
+                            <label for="external_appearance_left" class="form-label">
+                                <i class="bi bi-eye-fill text-warning"></i>
+                                <span class="badge bg-info me-2">OS</span> External Appearance - Left Eye
+                            </label>
+                            <textarea class="form-control border-info" id="external_appearance_left" name="external_appearance_left" rows="3"
+                                placeholder="Enter left eye external appearance..."><?= htmlspecialchars($consultation['external_appearance_left'] ?? '') ?></textarea>
+                        </div>
                     </div>
 
                     <!-- Eyelid -->
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="eyelid_left" class="form-label">
-                                <i class="bi bi-eye-slash text-secondary"></i>
-                                <span class="badge bg-info me-2">OS</span> Eyelid - Left Eye
-                            </label>
-                            <textarea class="form-control border-info" id="eyelid_left" name="eyelid_left" rows="3"
-                                placeholder="Enter left eye eyelid findings..."><?= htmlspecialchars($consultation['eyelid_left'] ?? '') ?></textarea>
-                        </div>
                         <div class="col-md-6">
                             <label for="eyelid_right" class="form-label">
                                 <i class="bi bi-eye-slash text-secondary"></i>
@@ -368,6 +339,14 @@
                             </label>
                             <textarea class="form-control border-success" id="eyelid_right" name="eyelid_right" rows="3"
                                 placeholder="Enter right eye eyelid findings..."><?= htmlspecialchars($consultation['eyelid_right'] ?? '') ?></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="eyelid_left" class="form-label">
+                                <i class="bi bi-eye-slash text-secondary"></i>
+                                <span class="badge bg-info me-2">OS</span> Eyelid - Left Eye
+                            </label>
+                            <textarea class="form-control border-info" id="eyelid_left" name="eyelid_left" rows="3"
+                                placeholder="Enter left eye eyelid findings..."><?= htmlspecialchars($consultation['eyelid_left'] ?? '') ?></textarea>
                         </div>
                     </div>
 
@@ -382,6 +361,27 @@
                                 </span>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Diagnosis -->
+                    <div class="mb-3">
+                        <label for="diagnosis" class="form-label">
+                            <i class="bi bi-clipboard2-check text-danger"></i>
+                            <span class="text-danger">*</span> Diagnosis (Required)
+                            <small class="text-muted ms-2">(Required for registration and saving)</small>
+                        </label>
+                        <textarea class="form-control" id="diagnosis" name="diagnosis" rows="3"
+                            placeholder="Enter diagnosis..."><?= htmlspecialchars($consultation['diagnosis'] ?? '') ?></textarea>
+                    </div>
+
+                    <!-- Diagnosis Code -->
+                    <div class="mb-3">
+                        <label for="diagnosis_code" class="form-label">
+                            <i class="bi bi-upc text-secondary"></i>
+                            Diagnosis Code (ICD-10)
+                        </label>
+                        <input type="text" class="form-control" id="diagnosis_code" name="diagnosis_code"
+                            placeholder="e.g., H25.9" value="<?= htmlspecialchars($consultation['diagnosis_code'] ?? '') ?>">
                     </div>
 
                     <!-- Treatment Plan -->

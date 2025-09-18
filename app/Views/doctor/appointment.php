@@ -734,18 +734,6 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                         </div>
                         <?php endif; ?>
 
-                        <!-- Diagnosis -->
-                        <?php if (!empty($note['diagnosis'])): ?>
-                        <div class="mb-3">
-                            <h6 class="text-danger">Diagnosis (Required)</h6>
-                            <p><?= htmlspecialchars($note['diagnosis']) ?>
-                            <?php if (!empty($note['diagnosis_code'])): ?>
-                                <span class="badge bg-secondary ms-2"><?= htmlspecialchars($note['diagnosis_code']) ?></span>
-                            <?php endif; ?>
-                            </p>
-                        </div>
-                        <?php endif; ?>
-
                         <!-- Systemic Disease -->
                         <?php if (!empty($note['systemic_disease'])): ?>
                         <div class="mb-3">
@@ -780,15 +768,6 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                         <div class="mb-3">
                             <h6 class="text-primary">Visual Acuity</h6>
                             <div class="row">
-                                <?php if (!empty($note['visual_acuity_left'])): ?>
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <span class="badge bg-info me-2">OS</span>
-                                        <strong>Left Eye:</strong>
-                                    </div>
-                                    <p class="ms-4 border-start border-info border-3 ps-3"><?= htmlspecialchars($note['visual_acuity_left']) ?></p>
-                                </div>
-                                <?php endif; ?>
                                 <?php if (!empty($note['visual_acuity_right'])): ?>
                                 <div class="col-md-6">
                                     <div class="d-flex align-items-center mb-2">
@@ -796,6 +775,15 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                                         <strong>Right Eye:</strong>
                                     </div>
                                     <p class="ms-4 border-start border-success border-3 ps-3"><?= htmlspecialchars($note['visual_acuity_right']) ?></p>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (!empty($note['visual_acuity_left'])): ?>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-info me-2">OS</span>
+                                        <strong>Left Eye:</strong>
+                                    </div>
+                                    <p class="ms-4 border-start border-info border-3 ps-3"><?= htmlspecialchars($note['visual_acuity_left']) ?></p>
                                 </div>
                                 <?php endif; ?>
                             </div>
@@ -807,15 +795,6 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                         <div class="mb-3">
                             <h6 class="text-info">Refraction</h6>
                             <div class="row">
-                                <?php if (!empty($note['refraction_left'])): ?>
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <span class="badge bg-info me-2">OS</span>
-                                        <strong>Left Eye:</strong>
-                                    </div>
-                                    <p class="ms-4 border-start border-info border-3 ps-3"><?= htmlspecialchars($note['refraction_left']) ?></p>
-                                </div>
-                                <?php endif; ?>
                                 <?php if (!empty($note['refraction_right'])): ?>
                                 <div class="col-md-6">
                                     <div class="d-flex align-items-center mb-2">
@@ -823,6 +802,15 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                                         <strong>Right Eye:</strong>
                                     </div>
                                     <p class="ms-4 border-start border-success border-3 ps-3"><?= htmlspecialchars($note['refraction_right']) ?></p>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (!empty($note['refraction_left'])): ?>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-info me-2">OS</span>
+                                        <strong>Left Eye:</strong>
+                                    </div>
+                                    <p class="ms-4 border-start border-info border-3 ps-3"><?= htmlspecialchars($note['refraction_left']) ?></p>
                                 </div>
                                 <?php endif; ?>
                             </div>
@@ -834,15 +822,6 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                         <div class="mb-3">
                             <h6 class="text-warning">Intraocular Pressure (IOP)</h6>
                             <div class="row">
-                                <?php if (!empty($note['IOP_left'])): ?>
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <span class="badge bg-info me-2">OS</span>
-                                        <strong>Left Eye:</strong>
-                                    </div>
-                                    <p class="ms-4 border-start border-info border-3 ps-3"><?= htmlspecialchars($note['IOP_left']) ?> mmHg</p>
-                                </div>
-                                <?php endif; ?>
                                 <?php if (!empty($note['IOP_right'])): ?>
                                 <div class="col-md-6">
                                     <div class="d-flex align-items-center mb-2">
@@ -850,6 +829,15 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                                         <strong>Right Eye:</strong>
                                     </div>
                                     <p class="ms-4 border-start border-success border-3 ps-3"><?= htmlspecialchars($note['IOP_right']) ?> mmHg</p>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (!empty($note['IOP_left'])): ?>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-info me-2">OS</span>
+                                        <strong>Left Eye:</strong>
+                                    </div>
+                                    <p class="ms-4 border-start border-info border-3 ps-3"><?= htmlspecialchars($note['IOP_left']) ?> mmHg</p>
                                 </div>
                                 <?php endif; ?>
                             </div>
@@ -861,15 +849,6 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                         <div class="mb-3">
                             <h6 class="text-success">Slit Lamp Examination</h6>
                             <div class="row">
-                                <?php if (!empty($note['slit_lamp_left'])): ?>
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <span class="badge bg-info me-2">OS</span>
-                                        <strong>Left Eye:</strong>
-                                    </div>
-                                    <div class="ms-4 border-start border-info border-3 ps-3"><?= nl2br(htmlspecialchars($note['slit_lamp_left'])) ?></div>
-                                </div>
-                                <?php endif; ?>
                                 <?php if (!empty($note['slit_lamp_right'])): ?>
                                 <div class="col-md-6">
                                     <div class="d-flex align-items-center mb-2">
@@ -877,6 +856,15 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                                         <strong>Right Eye:</strong>
                                     </div>
                                     <div class="ms-4 border-start border-success border-3 ps-3"><?= nl2br(htmlspecialchars($note['slit_lamp_right'])) ?></div>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (!empty($note['slit_lamp_left'])): ?>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-info me-2">OS</span>
+                                        <strong>Left Eye:</strong>
+                                    </div>
+                                    <div class="ms-4 border-start border-info border-3 ps-3"><?= nl2br(htmlspecialchars($note['slit_lamp_left'])) ?></div>
                                 </div>
                                 <?php endif; ?>
                             </div>
@@ -888,15 +876,6 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                         <div class="mb-3">
                             <h6 class="text-danger">Fundus Examination</h6>
                             <div class="row">
-                                <?php if (!empty($note['fundus_left'])): ?>
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <span class="badge bg-info me-2">OS</span>
-                                        <strong>Left Eye:</strong>
-                                    </div>
-                                    <div class="ms-4 border-start border-info border-3 ps-3"><?= nl2br(htmlspecialchars($note['fundus_left'])) ?></div>
-                                </div>
-                                <?php endif; ?>
                                 <?php if (!empty($note['fundus_right'])): ?>
                                 <div class="col-md-6">
                                     <div class="d-flex align-items-center mb-2">
@@ -904,6 +883,15 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                                         <strong>Right Eye:</strong>
                                     </div>
                                     <div class="ms-4 border-start border-success border-3 ps-3"><?= nl2br(htmlspecialchars($note['fundus_right'])) ?></div>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (!empty($note['fundus_left'])): ?>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-info me-2">OS</span>
+                                        <strong>Left Eye:</strong>
+                                    </div>
+                                    <div class="ms-4 border-start border-info border-3 ps-3"><?= nl2br(htmlspecialchars($note['fundus_left'])) ?></div>
                                 </div>
                                 <?php endif; ?>
                             </div>
@@ -915,15 +903,6 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                         <div class="mb-3">
                             <h6 class="text-warning">External Appearance</h6>
                             <div class="row">
-                                <?php if (!empty($note['external_appearance_left'])): ?>
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <span class="badge bg-info me-2">OS</span>
-                                        <strong>Left Eye:</strong>
-                                    </div>
-                                    <div class="ms-4 border-start border-info border-3 ps-3"><?= nl2br(htmlspecialchars($note['external_appearance_left'])) ?></div>
-                                </div>
-                                <?php endif; ?>
                                 <?php if (!empty($note['external_appearance_right'])): ?>
                                 <div class="col-md-6">
                                     <div class="d-flex align-items-center mb-2">
@@ -931,6 +910,15 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                                         <strong>Right Eye:</strong>
                                     </div>
                                     <div class="ms-4 border-start border-success border-3 ps-3"><?= nl2br(htmlspecialchars($note['external_appearance_right'])) ?></div>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (!empty($note['external_appearance_left'])): ?>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-info me-2">OS</span>
+                                        <strong>Left Eye:</strong>
+                                    </div>
+                                    <div class="ms-4 border-start border-info border-3 ps-3"><?= nl2br(htmlspecialchars($note['external_appearance_left'])) ?></div>
                                 </div>
                                 <?php endif; ?>
                             </div>
@@ -942,15 +930,6 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                         <div class="mb-3">
                             <h6 class="text-secondary">Eyelid</h6>
                             <div class="row">
-                                <?php if (!empty($note['eyelid_left'])): ?>
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <span class="badge bg-info me-2">OS</span>
-                                        <strong>Left Eye:</strong>
-                                    </div>
-                                    <div class="ms-4 border-start border-info border-3 ps-3"><?= nl2br(htmlspecialchars($note['eyelid_left'])) ?></div>
-                                </div>
-                                <?php endif; ?>
                                 <?php if (!empty($note['eyelid_right'])): ?>
                                 <div class="col-md-6">
                                     <div class="d-flex align-items-center mb-2">
@@ -958,6 +937,15 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                                         <strong>Right Eye:</strong>
                                     </div>
                                     <div class="ms-4 border-start border-success border-3 ps-3"><?= nl2br(htmlspecialchars($note['eyelid_right'])) ?></div>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (!empty($note['eyelid_left'])): ?>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-info me-2">OS</span>
+                                        <strong>Left Eye:</strong>
+                                    </div>
+                                    <div class="ms-4 border-start border-info border-3 ps-3"><?= nl2br(htmlspecialchars($note['eyelid_left'])) ?></div>
                                 </div>
                                 <?php endif; ?>
                             </div>
@@ -976,6 +964,18 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Diagnosis -->
+                        <?php if (!empty($note['diagnosis'])): ?>
+                        <div class="mb-3">
+                            <h6 class="text-danger">Diagnosis (Required)</h6>
+                            <p><?= htmlspecialchars($note['diagnosis']) ?>
+                            <?php if (!empty($note['diagnosis_code'])): ?>
+                                <span class="badge bg-secondary ms-2"><?= htmlspecialchars($note['diagnosis_code']) ?></span>
+                            <?php endif; ?>
+                            </p>
+                        </div>
+                        <?php endif; ?>
 
                         <!-- Plan -->
                         <?php if (!empty($note['plan'])): ?>
