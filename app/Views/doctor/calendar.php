@@ -115,6 +115,86 @@
     </div>
 </div>
 
+<!-- Delete Appointment Modal -->
+<div class="modal fade" id="deleteAppointmentModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Delete Appointment
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger d-flex align-items-start" role="alert">
+                    <i class="bi bi-shield-exclamation fs-3 me-3"></i>
+                    <div>
+                        <h6 class="alert-heading mb-2">Warning!</h6>
+                        <p class="mb-0">You are about to delete this appointment permanently. This action <strong>cannot be undone</strong>.</p>
+                    </div>
+                </div>
+                
+                <div class="appointment-delete-info mb-4">
+                    <h6 class="text-danger mb-3">
+                        <i class="bi bi-calendar-event me-2"></i>
+                        Appointment Details:
+                    </h6>
+                    <div class="card border-warning">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="bi bi-person-circle text-primary" style="font-size: 2rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1" id="deleteAppointmentPatientName"></h6>
+                                    <small class="text-muted">Time: <span id="deleteAppointmentTime"></span></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="deletion-consequences">
+                    <h6 class="text-danger mb-3">
+                        <i class="bi bi-list-check me-2"></i>
+                        The following data will be deleted permanently:
+                    </h6>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-calendar-event text-danger me-2"></i>
+                            <span>Appointment details</span>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-file-medical text-danger me-2"></i>
+                            <span>Consultation notes and prescriptions</span>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-receipt text-danger me-2"></i>
+                            <span>Associated payments</span>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-file-earmark text-danger me-2"></i>
+                            <span>Lab tests and results</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteAppointmentBtn">
+                    <i class="bi bi-trash me-1"></i>
+                    <span class="btn-text">Delete Appointment</span>
+                    <span class="spinner-border spinner-border-sm d-none ms-2" role="status"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Add Appointment Modal -->
 <div class="modal fade" id="addAppointmentModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -200,6 +280,108 @@
     </div>
 </div>
 
+<!-- Add Patient Modal -->
+<div class="modal fade" id="addPatientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header position-relative">
+                <h5 class="modal-title">
+                    <i class="bi bi-person-plus me-2"></i>
+                    Add New Patient
+                </h5>
+                <div class="keyboard-hint">
+                    <span>Press</span>
+                    <kbd>Esc</kbd>
+                    <span>to close</span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addPatientForm">
+                <div class="modal-body">
+                    <!-- Success/Error Messages -->
+                    <div id="addPatientMessage" class="alert d-none" role="alert"></div>
+                    
+                    <div class="row">
+                        <!-- Basic Information -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="bi bi-person me-1"></i>
+                                Basic Information
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="firstName" name="first_name" required maxlength="50">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="lastName" name="last_name" required maxlength="50">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="age" class="form-label">Age (Years)</label>
+                                <input type="number" class="form-control" id="age" name="age" min="0" max="150" placeholder="Enter age in years">
+                                <div class="form-text">Alternative: Enter age to automatically calculate date of birth</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="dob" class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" id="dob" name="dob">
+                                <div class="form-text">Patient's date of birth (if empty, today's date will be used)</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Contact Information -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="bi bi-telephone me-1"></i>
+                                Contact Information
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="phone" name="phone" required maxlength="20">
+                                <div class="invalid-feedback"></div>
+                                <div class="form-text">Primary contact number</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="address" class="form-label">Address</label>
+                                <textarea class="form-control" id="address" name="address" rows="3" maxlength="500"></textarea>
+                                <div class="form-text">Home address (optional)</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
+                                <select class="form-select" id="gender" name="gender" required>
+                                    <option value="Male" selected>Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                                <div class="form-text text-danger"><strong>Required:</strong> Change the gender if needed</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="addPatientSubmit" title="Save patient - Press 'Ctrl+S'">
+                        <i class="bi bi-person-plus me-1"></i>
+                        <span class="btn-text">Add Patient</span>
+                        <small class="ms-2 text-white-50">
+                            <kbd style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); font-size: 0.7rem;">Ctrl+S</kbd>
+                        </small>
+                        <span class="spinner-border spinner-border-sm d-none ms-2" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 // Get server time for Egypt timezone
 <?php
@@ -278,8 +460,14 @@ function setupEventListeners() {
     
     // New patient button
     document.getElementById('newPatientBtn').addEventListener('click', () => {
-        // Redirect to new patient page or open modal
-        window.open('/secretary/patients/new', '_blank');
+        // Close current modal first
+        bootstrap.Modal.getInstance(document.getElementById('addAppointmentModal')).hide();
+        
+        // Open add patient modal
+        setTimeout(() => {
+            const addPatientModal = new bootstrap.Modal(document.getElementById('addPatientModal'));
+            addPatientModal.show();
+        }, 300);
     });
 }
 
@@ -449,21 +637,29 @@ function renderAppointmentSlot(appointment) {
     
     return `
         <div class="appointment-card ${appointment.status.toLowerCase()}" 
-             onclick="navigateToAppointment(${appointment.id})"
              data-bs-toggle="tooltip" 
              data-bs-placement="right" 
              data-bs-html="true"
              data-bs-title="${tooltipContent.replace(/"/g, '&quot;')}">
             <div class="appointment-header">
-                <div class="appointment-info">
+                <div class="appointment-info" onclick="navigateToAppointment(${appointment.id})">
                     <div class="info-line"><span class="label">Patient:</span> ${appointment.patient_name}</div>
                     <div class="info-line"><span class="label">Doctor:</span> ${appointment.doctor_display_name || 'N/A'}</div>
                     <div class="info-line"><span class="label">Type:</span> ${appointment.visit_type}</div>
                     <div class="info-line"><span class="label">Time:</span> ${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}</div>
                 </div>
-                <span class="${statusClass}">${appointment.status}</span>
+                <div class="appointment-actions">
+                    <span class="${statusClass}">${appointment.status}</span>
+                    <button class="btn btn-sm btn-outline-danger delete-appointment-btn" 
+                            onclick="event.stopPropagation(); deleteAppointment(${appointment.id}, '${appointment.patient_name}', '${formatTime(appointment.start_time)}')"
+                            data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            data-bs-title="Delete this appointment">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
             </div>
-            <div class="appointment-notes">
+            <div class="appointment-notes" onclick="navigateToAppointment(${appointment.id})">
                 ${appointment.notes ? appointment.notes.substring(0, 50) + '...' : 'No notes'}
             </div>
         </div>
@@ -492,6 +688,99 @@ function generateTimeSlots() {
 function navigateToAppointment(appointmentId) {
     // Navigate to appointment page (any doctor can access any appointment)
     window.location.href = `/doctor/appointments/${appointmentId}`;
+}
+
+// Global variables for delete appointment
+let currentAppointmentToDelete = null;
+
+function deleteAppointment(appointmentId, patientName, appointmentTime) {
+    // Store appointment data
+    currentAppointmentToDelete = {
+        id: appointmentId,
+        patientName: patientName,
+        time: appointmentTime
+    };
+    
+    // Update modal content
+    document.getElementById('deleteAppointmentPatientName').textContent = patientName;
+    document.getElementById('deleteAppointmentTime').textContent = appointmentTime;
+    
+    // Show modal
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteAppointmentModal'));
+    deleteModal.show();
+}
+
+// Handle confirm delete button click
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('confirmDeleteAppointmentBtn').addEventListener('click', function() {
+        if (currentAppointmentToDelete) {
+            confirmDeleteAppointment();
+        }
+    });
+});
+
+function confirmDeleteAppointment() {
+    if (!currentAppointmentToDelete) {
+        showNotification('No appointment selected for deletion.', 'danger');
+        return;
+    }
+    
+    const { id, patientName, time } = currentAppointmentToDelete;
+    
+    // Show loading state
+    setDeleteAppointmentButtonLoading(true);
+    
+    // Send delete request
+    fetch(`/api/appointments/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        setDeleteAppointmentButtonLoading(false);
+        
+        if (data.ok) {
+            // Success
+            showNotification('Appointment deleted successfully!', 'success');
+            
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('deleteAppointmentModal')).hide();
+            
+            // Clear current appointment
+            currentAppointmentToDelete = null;
+            
+            // Refresh calendar
+            loadCalendar();
+        } else {
+            // Error from server
+            const errorMsg = data.error || data.message || 'Failed to delete appointment. Please try again.';
+            showNotification(errorMsg, 'danger');
+        }
+    })
+    .catch(error => {
+        setDeleteAppointmentButtonLoading(false);
+        console.error('Error deleting appointment:', error);
+        showNotification('An error occurred while deleting the appointment. Please try again.', 'danger');
+    });
+}
+
+function setDeleteAppointmentButtonLoading(loading) {
+    const btn = document.getElementById('confirmDeleteAppointmentBtn');
+    const btnText = btn.querySelector('.btn-text');
+    const spinner = btn.querySelector('.spinner-border');
+    
+    if (loading) {
+        btn.disabled = true;
+        btnText.textContent = 'Deleting...';
+        spinner.classList.remove('d-none');
+    } else {
+        btn.disabled = false;
+        btnText.textContent = 'Delete Appointment';
+        spinner.classList.add('d-none');
+    }
 }
 
 function calculateAge(dob) {
@@ -1094,6 +1383,327 @@ function debounce(func, wait) {
     };
 }
 
+// Add Patient functionality
+function initializeAddPatientModal() {
+    const addPatientForm = document.getElementById('addPatientForm');
+    const addPatientModal = document.getElementById('addPatientModal');
+    const addPatientSubmit = document.getElementById('addPatientSubmit');
+    const addPatientMessage = document.getElementById('addPatientMessage');
+    
+    // Reset form when modal opens
+    addPatientModal.addEventListener('show.bs.modal', function() {
+        addPatientForm.reset();
+        addPatientForm.classList.remove('was-validated');
+        hideMessage();
+        resetSubmitButton();
+        
+        // Focus on first name field
+        setTimeout(() => {
+            document.getElementById('firstName').focus();
+        }, 300);
+    });
+    
+    // Handle form submission
+    addPatientForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate form
+        if (!addPatientForm.checkValidity()) {
+            addPatientForm.classList.add('was-validated');
+            showMessage('Please fill in all required fields correctly.', 'error');
+            return;
+        }
+        
+        // Additional validation
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const gender = document.getElementById('gender').value;
+        
+        if (!firstName || !lastName || !phone) {
+            showMessage('First name, last name, and phone number are required.', 'error');
+            return;
+        }
+        
+        if (!gender) {
+            showMessage('Please select the patient\'s gender.', 'error');
+            document.getElementById('gender').focus();
+            return;
+        }
+        
+        // Validate phone number format
+        const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+        const phoneRegex = /^(\+\d{1,3})?\d{7,15}$/;
+        if (!phoneRegex.test(cleanPhone)) {
+            showMessage('Please enter a valid phone number (7-15 digits, optionally with country code).', 'error');
+            return;
+        }
+        
+        // Submit form
+        submitPatientForm();
+    });
+    
+    function submitPatientForm() {
+        const formData = new FormData(addPatientForm);
+        
+        // Show loading state
+        setSubmitButtonLoading(true);
+        hideMessage();
+        
+        // Send AJAX request
+        fetch('/api/patients', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            setSubmitButtonLoading(false);
+            console.log('API Response:', data);
+            
+            if (data.ok) {
+                // Success
+                showMessage('Patient added successfully!', 'success');
+                
+                // Save form data before resetting
+                const formData = new FormData(addPatientForm);
+                const savedFormData = {
+                    first_name: formData.get('first_name'),
+                    last_name: formData.get('last_name'),
+                    phone: formData.get('phone'),
+                    gender: formData.get('gender'),
+                    dob: formData.get('dob'),
+                    age: formData.get('age')
+                };
+                
+                // Reset form
+                addPatientForm.reset();
+                addPatientForm.classList.remove('was-validated');
+                
+                // Close modal after delay and return to appointment modal
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(addPatientModal).hide();
+                    
+                    // Return to appointment modal with new patient selected
+                    setTimeout(() => {
+                        const appointmentModal = new bootstrap.Modal(document.getElementById('addAppointmentModal'));
+                        appointmentModal.show();
+                        
+                        // Auto-select the new patient - handle different response formats
+                        const patientData = data.data || data.patient || data;
+                        console.log('Patient data to select:', patientData);
+                        
+                        if (patientData && (patientData.id || patientData.patient_id)) {
+                            // Use saved form data to create patient info
+                            const patientInfo = {
+                                id: patientData.id || patientData.patient_id,
+                                first_name: savedFormData.first_name,
+                                last_name: savedFormData.last_name,
+                                phone: savedFormData.phone,
+                                gender: savedFormData.gender,
+                                dob: savedFormData.dob,
+                                age: savedFormData.age
+                            };
+                            
+                            console.log('Using saved form data for patient:', patientInfo);
+                            selectNewPatient(patientInfo);
+                            
+                            // Set visit type to "New" automatically
+                            document.getElementById('visitType').value = 'New';
+                            
+                            // Also refresh the patient search to make sure the new patient appears in search results
+                            setTimeout(() => {
+                                const searchQuery = document.getElementById('patientSearch').value;
+                                if (searchQuery) {
+                                    searchPatients(searchQuery);
+                                }
+                            }, 1000);
+                        } else {
+                            console.error('No valid patient data found in response:', data);
+                            showNotification('Patient added but could not auto-select. Please search for the patient manually.', 'warning');
+                        }
+                    }, 300);
+                }, 1500);
+                
+            } else {
+                // Error from server
+                const errorMsg = data.error || data.message || 'Failed to add patient. Please try again.';
+                showMessage(errorMsg, 'error');
+                
+                // Show validation errors if available
+                if (data.details) {
+                    showValidationErrors(data.details);
+                }
+            }
+        })
+        .catch(error => {
+            setSubmitButtonLoading(false);
+            console.error('Error adding patient:', error);
+            showMessage('An error occurred while adding the patient. Please try again.', 'error');
+        });
+    }
+    
+    function selectNewPatient(patientData) {
+        console.log('selectNewPatient called with:', patientData);
+        
+        // Handle different response formats
+        const firstName = patientData.first_name || patientData.firstName || '';
+        const lastName = patientData.last_name || patientData.lastName || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        const patientId = patientData.id || patientData.patient_id;
+        const phone = patientData.phone || patientData.phone_number || '';
+        const age = patientData.age || calculateAgeFromDOB(patientData.dob) || 'N/A';
+        
+        console.log('Processed patient data:', { firstName, lastName, fullName, patientId, phone, age });
+        
+        // Fill patient search field
+        document.getElementById('patientSearch').value = fullName;
+        document.getElementById('selectedPatientId').value = patientId;
+        
+        // Show patient info
+        document.getElementById('patientSearchResults').innerHTML = `
+            <div class="selected-patient-info alert alert-success">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong>New Patient Added:</strong> ${fullName}<br>
+                        <small>Phone: ${phone} • Age: ${age}</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearPreselectedPatient()">
+                        Change Patient
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    function calculateAgeFromDOB(dob) {
+        if (!dob) return null;
+        try {
+            const today = new Date();
+            const birthDate = new Date(dob);
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            
+            return age > 0 ? age : null;
+        } catch (error) {
+            console.error('Error calculating age:', error);
+            return null;
+        }
+    }
+    
+    
+    function showMessage(message, type) {
+        addPatientMessage.className = `alert alert-${type === 'error' ? 'danger' : type}`;
+        addPatientMessage.textContent = message;
+        addPatientMessage.classList.remove('d-none');
+    }
+    
+    function hideMessage() {
+        addPatientMessage.classList.add('d-none');
+    }
+    
+    function setSubmitButtonLoading(loading) {
+        const btnText = addPatientSubmit.querySelector('.btn-text');
+        const spinner = addPatientSubmit.querySelector('.spinner-border');
+        
+        if (loading) {
+            addPatientSubmit.disabled = true;
+            btnText.textContent = 'Adding...';
+            spinner.classList.remove('d-none');
+        } else {
+            addPatientSubmit.disabled = false;
+            btnText.textContent = 'Add Patient';
+            spinner.classList.add('d-none');
+        }
+    }
+    
+    function resetSubmitButton() {
+        setSubmitButtonLoading(false);
+    }
+    
+    function showValidationErrors(errors) {
+        // Clear previous validation errors
+        document.querySelectorAll('.invalid-feedback').forEach(el => {
+            el.textContent = '';
+        });
+        
+        // Show new validation errors
+        Object.keys(errors).forEach(field => {
+            const input = document.querySelector(`[name="${field}"]`);
+            if (input) {
+                input.classList.add('is-invalid');
+                const feedback = input.parentNode.querySelector('.invalid-feedback');
+                if (feedback) {
+                    feedback.textContent = errors[field];
+                }
+            }
+        });
+    }
+    
+    // Clear validation errors on input
+    addPatientForm.addEventListener('input', function(e) {
+        if (e.target.classList.contains('is-invalid')) {
+            e.target.classList.remove('is-invalid');
+            const feedback = e.target.parentNode.querySelector('.invalid-feedback');
+            if (feedback) {
+                feedback.textContent = '';
+            }
+        }
+    });
+    
+    // Age and Date of Birth conversion
+    const dobInput = document.getElementById('dob');
+    const ageInput = document.getElementById('age');
+    
+    // Convert age to date of birth
+    ageInput.addEventListener('input', function() {
+        const age = parseInt(this.value);
+        if (age && age > 0 && age <= 150) {
+            const today = new Date();
+            const birthYear = today.getFullYear() - age;
+            const birthDate = new Date(birthYear, today.getMonth(), today.getDate());
+            dobInput.value = birthDate.toISOString().split('T')[0];
+            
+            // Clear age field after conversion
+            setTimeout(() => {
+                this.value = '';
+            }, 1000);
+        }
+    });
+    
+    // Convert date of birth to age
+    dobInput.addEventListener('change', function() {
+        if (this.value) {
+            const birthDate = new Date(this.value);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            
+            if (age >= 0 && age <= 150) {
+                ageInput.placeholder = `Calculated age: ${age} years`;
+                setTimeout(() => {
+                    ageInput.placeholder = 'Enter age in years';
+                }, 3000);
+            }
+        }
+    });
+}
+
+// Initialize add patient modal when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAddPatientModal();
+});
+
 // Cleanup on page unload (any doctor can use cleanup)
 window.addEventListener('beforeunload', () => {
     if (refreshInterval) {
@@ -1247,6 +1857,13 @@ window.addEventListener('beforeunload', () => {
 
 .appointment-header .appointment-info {
     flex: 1;
+    cursor: pointer;
+}
+
+.appointment-header .appointment-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .appointment-header .appointment-info .info-line {
@@ -1900,5 +2517,207 @@ input[readonly] {
 
 .dark small {
     color: var(--muted);
+}
+
+/* Add Patient Modal Styling */
+#addPatientModal .modal-content {
+    background-color: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+#addPatientModal .modal-header {
+    background-color: var(--bg);
+    border-bottom-color: var(--border);
+    color: var(--text);
+}
+
+#addPatientModal .modal-footer {
+    background-color: var(--card);
+    border-top-color: var(--border);
+}
+
+#addPatientModal .form-label {
+    color: var(--text);
+    font-weight: 500;
+}
+
+#addPatientModal .form-control,
+#addPatientModal .form-select {
+    background-color: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+#addPatientModal .form-control:focus,
+#addPatientModal .form-select:focus {
+    background-color: var(--card);
+    border-color: var(--accent);
+    color: var(--text);
+    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
+}
+
+#addPatientModal .form-text {
+    color: var(--muted);
+    font-size: 0.875rem;
+}
+
+#addPatientModal .text-primary {
+    color: var(--accent) !important;
+}
+
+#addPatientModal .text-danger {
+    color: #dc3545 !important;
+}
+
+#addPatientModal .invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875rem;
+}
+
+#addPatientModal .form-control.is-invalid,
+#addPatientModal .form-select.is-invalid {
+    border-color: #dc3545;
+}
+
+#addPatientModal .alert {
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+#addPatientModal .alert-success {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-color: #28a745;
+    color: #155724;
+}
+
+#addPatientModal .alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+/* Keyboard shortcut hint styling */
+.keyboard-hint {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.keyboard-hint kbd {
+    background-color: var(--bg-alt);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.65rem;
+    padding: 1px 4px;
+}
+
+/* Form validation styling */
+.was-validated .form-control:valid {
+    border-color: #28a745;
+}
+
+.was-validated .form-control:invalid {
+    border-color: #dc3545;
+}
+
+.was-validated .form-select:valid {
+    border-color: #28a745;
+}
+
+.was-validated .form-select:invalid {
+    border-color: #dc3545;
+}
+
+/* Spinner styling */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.1em;
+}
+
+/* Delete appointment button styling */
+.delete-appointment-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.delete-appointment-btn:hover {
+    opacity: 1;
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+    background-color: #c82333;
+    border-color: #bd2130;
+    color: white;
+}
+
+.appointment-card:hover .delete-appointment-btn {
+    opacity: 1;
+}
+
+/* Dark mode delete button */
+.dark .delete-appointment-btn {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.dark .delete-appointment-btn:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+    color: white;
+}
+
+/* Delete Appointment Modal Styling */
+#deleteAppointmentModal .modal-content {
+    background-color: var(--card);
+    color: var(--text);
+}
+
+#deleteAppointmentModal .modal-header {
+    background-color: #dc3545 !important;
+    border-bottom-color: #dc3545;
+}
+
+#deleteAppointmentModal .modal-footer {
+    background-color: var(--card);
+    border-top-color: var(--border);
+}
+
+#deleteAppointmentModal .alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+[data-bs-theme="dark"] #deleteAppointmentModal .alert-danger {
+    background-color: rgba(220, 53, 69, 0.15);
+    color: #f5c6cb;
+}
+
+#deleteAppointmentModal .list-group-item {
+    background-color: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+#deleteAppointmentModal .card {
+    background-color: var(--card);
+    border-color: #ffc107;
+}
+
+#deleteAppointmentModal .card-body {
+    background-color: var(--bg);
 }
 </style>

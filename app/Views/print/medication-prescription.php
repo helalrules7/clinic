@@ -127,7 +127,6 @@
         }
         
         .medication-item {
-            border: 1px solid #ddd;
             margin-bottom: 10px;
             padding: 10px;
             border-radius: 5px;
@@ -366,28 +365,6 @@
             <div class="medication-header">
                 <div class="drug-name"><?= $prescription['drug_name'] ?></div>
                 <div class="rx-symbol">℞</div>
-            </div>
-            
-            <div class="medication-details">
-                <div class="detail-group">
-                    <span class="detail-label">الجرعة:</span>
-                    <span class="detail-value"><?= $prescription['dose'] ?></span>
-                </div>
-                
-                <div class="detail-group">
-                    <span class="detail-label">التكرار:</span>
-                    <span class="detail-value"><?= $prescription['frequency'] ?></span>
-                </div>
-                
-                <div class="detail-group">
-                    <span class="detail-label">المدة:</span>
-                    <span class="detail-value"><?= $prescription['duration'] ?></span>
-                </div>
-                
-                <div class="detail-group">
-                    <span class="detail-label">طريقة الاستخدام:</span>
-                    <span class="detail-value"><?= $prescription['route'] ?? 'Topical' ?></span>
-                </div>
             </div>
             
             <?php if ($prescription['notes']): ?>

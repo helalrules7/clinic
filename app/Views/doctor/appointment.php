@@ -1041,7 +1041,7 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h6 class="text-primary mb-0"><?= htmlspecialchars($med['drug_name']) ?></h6>
                             <div class="btn-group btn-group-sm" role="group">
-                                <button class="btn btn-outline-primary" onclick="editMedication(<?= $med['id'] ?>, '<?= addslashes($med['drug_name']) ?>', '<?= addslashes($med['dose']) ?>', '<?= addslashes($med['frequency']) ?>', '<?= addslashes($med['duration']) ?>', '<?= addslashes($med['route']) ?>', '<?= addslashes($med['notes'] ?? '') ?>')" title="Edit Medication">
+                                <button class="btn btn-outline-primary" onclick="editMedication(<?= $med['id'] ?>, '<?= addslashes($med['drug_name']) ?>', '<?= addslashes($med['notes'] ?? '') ?>')" title="Edit Medication">
                                     <i class="bi bi-pencil"></i>
                                 </button>
                                 <button class="btn btn-outline-danger" onclick="deleteMedication(<?= $med['id'] ?>)" title="Delete Medication">
@@ -1049,11 +1049,6 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                                 </button>
                             </div>
                         </div>
-                        <p class="mb-1">
-                            <strong>Dosage:</strong> <?= htmlspecialchars($med['dose']) ?><br>
-                            <strong>Frequency:</strong> <?= htmlspecialchars($med['frequency']) ?><br>
-                            <strong>Duration:</strong> <?= htmlspecialchars($med['duration']) ?>
-                        </p>
                         <?php if (!empty($med['notes'])): ?>
                             <p class="text-muted mb-0">
                                 <small><?= htmlspecialchars($med['notes']) ?></small>
@@ -1626,26 +1621,6 @@ function showPrescriptionModal(appointmentId) {
                                         <input type="text" class="form-control" name="drug_name" id="drugNameInput" required autocomplete="off">
                                         <div id="drugSuggestions" class="position-absolute w-100 bg-white border border-top-0 rounded-bottom shadow-sm" style="z-index: 1050; display: none; max-height: 200px; overflow-y: auto;"></div>
                                     </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Dose</label>
-                                    <input type="text" class="form-control" name="dose">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Frequency</label>
-                                    <input type="text" class="form-control" name="frequency">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Duration</label>
-                                    <input type="text" class="form-control" name="duration">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Route</label>
-                                    <select class="form-control" name="route">
-                                        <option value="Topical">Topical</option>
-                                        <option value="Oral">Oral</option>
-                                        <option value="Injection">Injection</option>
-                                    </select>
                                 </div>
                                 <div class="col-12 mb-3">
                                     <label class="form-label">Notes</label>
@@ -2662,7 +2637,7 @@ function deleteMedication(medicationId) {
 }
 
 // Edit Medication Function
-function editMedication(medicationId, drugName, dose, frequency, duration, route, notes) {
+function editMedication(medicationId, drugName, notes) {
     const modalHtml = `
         <div class="modal fade" id="editMedicationModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
@@ -2677,26 +2652,6 @@ function editMedication(medicationId, drugName, dose, frequency, duration, route
                                 <div class="col-12 mb-3">
                                     <label class="form-label">Drug Name <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="drug_name" value="${drugName}" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Dose</label>
-                                    <input type="text" class="form-control" name="dose" value="${dose}">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Frequency</label>
-                                    <input type="text" class="form-control" name="frequency" value="${frequency}">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Duration</label>
-                                    <input type="text" class="form-control" name="duration" value="${duration}">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Route</label>
-                                    <select class="form-control" name="route">
-                                        <option value="Topical" ${route === 'Topical' ? 'selected' : ''}>Topical</option>
-                                        <option value="Oral" ${route === 'Oral' ? 'selected' : ''}>Oral</option>
-                                        <option value="Injection" ${route === 'Injection' ? 'selected' : ''}>Injection</option>
-                                    </select>
                                 </div>
                                 <div class="col-12 mb-3">
                                     <label class="form-label">Notes</label>

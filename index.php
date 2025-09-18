@@ -116,6 +116,7 @@ try {
     $router->get('/api/appointments/{id}', 'ApiController@getAppointment');
     $router->post('/api/appointments', 'ApiController@createAppointment');
     $router->put('/api/appointments/{id}', 'ApiController@updateAppointment');
+    $router->delete('/api/appointments/{id}', 'ApiController@deleteAppointment');
     $router->post('/api/payments', 'ApiController@createPayment');
     $router->get('/api/patients/search', 'ApiController@searchPatients');
     $router->post('/api/patients', 'ApiController@createPatient');

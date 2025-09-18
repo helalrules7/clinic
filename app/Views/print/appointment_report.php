@@ -449,15 +449,6 @@
         <?php foreach ($medications as $med): ?>
         <div class="prescription-item">
             <div class="prescription-name"><?= htmlspecialchars($med['drug_name']) ?></div>
-            <div class="prescription-details">
-                <strong>الجرعة:</strong> <?= htmlspecialchars($med['dose']) ?> | 
-                <strong>التكرار:</strong> <?= htmlspecialchars($med['frequency']) ?> | 
-                <strong>المدة:</strong> <?= htmlspecialchars($med['duration']) ?> | 
-                <strong>طريقة الإعطاء:</strong> <?= htmlspecialchars($med['route']) ?>
-                <?php if ($med['notes']): ?>
-                <br><strong>ملاحظات:</strong> <?= htmlspecialchars($med['notes']) ?>
-                <?php endif; ?>
-            </div>
         </div>
         <?php endforeach; ?>
     </div>

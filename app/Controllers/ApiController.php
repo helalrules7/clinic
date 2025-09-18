@@ -94,6 +94,109 @@ class ApiController
         }
     }
 
+    public function deleteAppointment($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            if (!$id) {
+                return $this->jsonResponse(['error' => 'Appointment ID is required'], 400);
+            }
+
+            // Check if user is doctor or admin (security check)
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                return $this->jsonResponse(['error' => 'Insufficient permissions'], 403);
+            }
+
+            // Start transaction
+            $this->pdo->beginTransaction();
+
+            try {
+                // Get appointment details before deletion for logging
+                $stmt = $this->pdo->prepare("
+                    SELECT a.*, p.first_name, p.last_name 
+                    FROM appointments a 
+                    LEFT JOIN patients p ON a.patient_id = p.id 
+                    WHERE a.id = ?
+                ");
+                $stmt->execute([$id]);
+                $appointment = $stmt->fetch();
+
+                if (!$appointment) {
+                    $this->pdo->rollback();
+                    return $this->jsonResponse(['error' => 'Appointment not found'], 404);
+                }
+
+                // Delete related data first
+                // 1. Delete prescriptions
+                $stmt = $this->pdo->prepare("DELETE FROM prescriptions WHERE appointment_id = ?");
+                $stmt->execute([$id]);
+
+                // 2. Delete glasses prescriptions
+                $stmt = $this->pdo->prepare("DELETE FROM glasses_prescriptions WHERE appointment_id = ?");
+                $stmt->execute([$id]);
+
+                // 3. Delete lab tests
+                $stmt = $this->pdo->prepare("DELETE FROM lab_tests WHERE appointment_id = ?");
+                $stmt->execute([$id]);
+
+                // 4. Delete radiology tests (if table exists)
+                try {
+                    $stmt = $this->pdo->prepare("DELETE FROM radiology_tests WHERE appointment_id = ?");
+                    $stmt->execute([$id]);
+                } catch (\PDOException $e) {
+                    // Ignore if table doesn't exist
+                    error_log("Radiology tests table not found: " . $e->getMessage());
+                }
+
+                // 5. Delete consultation notes
+                $stmt = $this->pdo->prepare("DELETE FROM consultation_notes WHERE appointment_id = ?");
+                $stmt->execute([$id]);
+
+                // 6. Delete payments
+                $stmt = $this->pdo->prepare("DELETE FROM payments WHERE appointment_id = ?");
+                $stmt->execute([$id]);
+
+                // 7. Delete timeline events
+                $stmt = $this->pdo->prepare("DELETE FROM timeline_events WHERE appointment_id = ?");
+                $stmt->execute([$id]);
+
+                // 8. Finally, delete the appointment
+                $stmt = $this->pdo->prepare("DELETE FROM appointments WHERE id = ?");
+                $stmt->execute([$id]);
+
+                // Commit transaction
+                $this->pdo->commit();
+
+                // Log the deletion
+                error_log("Appointment deleted: ID {$id}, Patient: {$appointment['first_name']} {$appointment['last_name']}, Date: {$appointment['date']}, Time: {$appointment['start_time']}");
+
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'message' => 'Appointment deleted successfully',
+                    'data' => [
+                        'deleted_appointment' => [
+                            'id' => $id,
+                            'patient_name' => $appointment['first_name'] . ' ' . $appointment['last_name'],
+                            'date' => $appointment['date'],
+                            'time' => $appointment['start_time']
+                        ]
+                    ]
+                ]);
+
+            } catch (\Exception $e) {
+                $this->pdo->rollback();
+                throw $e;
+            }
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function getAppointment($id)
     {
         try {
