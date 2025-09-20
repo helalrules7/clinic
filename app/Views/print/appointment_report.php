@@ -218,9 +218,9 @@
 <body>
     <div class="header">
         <div class="logo-section">
-            <img src="/assets/images/Light.png" alt="Roaya Clinic Logo" class="clinic-logo">
-            <div class="clinic-name">Roaya Ophthalmology Clinic</div>
-            <div class="clinic-name-ar">رؤية لطب وجراحة العيون</div>
+            <img src="<?= htmlspecialchars($clinic['logo_print']) ?>" alt="<?= htmlspecialchars($clinic['name']) ?> Logo" class="clinic-logo">
+            <div class="clinic-name"><?= htmlspecialchars($clinic['name']) ?></div>
+            <div class="clinic-name-ar"><?= htmlspecialchars($clinic['name_arabic']) ?></div>
         </div>
         <div class="clinic-info">
             <?= htmlspecialchars($clinic['address']) ?> | 
@@ -231,7 +231,7 @@
     </div>
     
     <div class="watermark">
-        <img src="/assets/images/Light.png" alt="Watermark">
+        <img src="<?= htmlspecialchars($clinic['logo_watermark']) ?>" alt="Watermark">
     </div>
 
     <div class="patient-info">

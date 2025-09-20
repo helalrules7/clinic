@@ -270,6 +270,9 @@ class AdminController
                     throw new Exception('Invalid CSRF token');
                 }
                 
+                // Handle file uploads
+                $this->handleLogoUploads();
+                
                 $this->updateSystemSettings($_POST);
                 $_SESSION['success_message'] = 'Settings updated successfully';
                 header('Location: /admin/settings');
@@ -757,9 +760,15 @@ class AdminController
             // Set defaults for missing settings
             $defaults = [
                 'clinic_name' => 'Roaya Clinic',
+                'clinic_name_arabic' => 'رؤية لطب وجراحة العيون',
                 'clinic_email' => 'info@roayaclinic.com',
                 'clinic_phone' => '+20 123 456 7890',
                 'clinic_address' => 'Cairo, Egypt',
+                'clinic_logo' => '/assets/images/Light.png',
+                'clinic_logo_print' => '/assets/images/Light.png',
+                'clinic_logo_watermark' => '/assets/images/Light.png',
+                'new_visit_cost' => '100',
+                'repeated_visit_cost' => '50',
                 'timezone' => 'Africa/Cairo',
                 'date_format' => 'Y-m-d',
                 'time_format' => 'H:i',
@@ -845,6 +854,75 @@ class AdminController
             $this->pdo->commit();
         } catch (Exception $e) {
             $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    private function handleLogoUploads()
+    {
+        $uploadDir = '/var/www/html/clinic/public/uploads/logos/';
+        $allowedTypes = [
+            'image/jpeg', 'image/png', 'image/gif', 'image/svg+xml',
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
+        $maxSize = 10 * 1024 * 1024; // 10MB for documents
+        
+        $logoFields = ['clinic_logo_print', 'clinic_logo_watermark']; // clinic_logo disabled
+        
+        foreach ($logoFields as $field) {
+            // Handle file upload
+            if (isset($_FILES[$field]) && $_FILES[$field]['error'] === UPLOAD_ERR_OK) {
+                $file = $_FILES[$field];
+                
+                // Validate file type
+                if (!in_array($file['type'], $allowedTypes)) {
+                    throw new \Exception("Invalid file type for {$field}. Only JPEG, PNG, GIF, and SVG are allowed.");
+                }
+                
+                // Validate file size
+                if ($file['size'] > $maxSize) {
+                    throw new \Exception("File too large for {$field}. Maximum size is 5MB.");
+                }
+                
+                // Generate unique filename
+                $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+                $filename = $field . '_' . time() . '_' . uniqid() . '.' . $extension;
+                $filepath = $uploadDir . $filename;
+                
+                // Move uploaded file
+                if (move_uploaded_file($file['tmp_name'], $filepath)) {
+                    // Update setting with new file path
+                    $this->updateSetting($field, '/uploads/logos/' . $filename);
+                } else {
+                    throw new \Exception("Failed to upload {$field}");
+                }
+            }
+            // Handle text path input
+            elseif (isset($_POST[$field . '_path']) && !empty($_POST[$field . '_path'])) {
+                $path = $_POST[$field . '_path'];
+                // Validate that it's a valid path
+                if (filter_var($path, FILTER_VALIDATE_URL) || (strpos($path, '/') === 0 && file_exists('/var/www/html/clinic/public' . $path))) {
+                    $this->updateSetting($field, $path);
+                }
+            }
+        }
+    }
+
+    private function updateSetting($key, $value)
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                INSERT INTO settings (setting_key, setting_value, setting_type, updated_at) 
+                VALUES (?, ?, 'string', NOW())
+                ON DUPLICATE KEY UPDATE 
+                setting_value = VALUES(setting_value), 
+                updated_at = NOW()
+            ");
+            $stmt->execute([$key, $value]);
+        } catch (\Exception $e) {
+            error_log("Error updating setting {$key}: " . $e->getMessage());
             throw $e;
         }
     }

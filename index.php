@@ -98,6 +98,8 @@ try {
     $router->get('/doctor/drugs', 'DoctorController@drugs');
     $router->get('/doctor/reports', 'DoctorController@reports');
     $router->get('/doctor/reports/export', 'DoctorController@exportDoctorReport');
+    $router->get('/doctor/settings', 'DoctorController@settings');
+    $router->post('/doctor/settings', 'DoctorController@settings');
     
 
 

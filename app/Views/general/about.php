@@ -11,7 +11,7 @@
                     <h1 class="display-4 fw-bold mb-3">Roaya Clinic</h1>
                     <h2 class="h4 mb-4 opacity-90">Management System</h2>
                     <div class="badge bg-white text-dark px-4 py-2 fs-6 fw-semibold">
-                        Version 2.1 DS
+                        Version 3.0
                     </div>
                 </div>
             </div>
@@ -35,7 +35,7 @@
                                 <h5 class="text-muted mb-2">
                                     <i class="bi bi-tag me-2"></i>Version
                                 </h5>
-                                <p class="h4 text-primary fw-bold">2.1 DS</p>
+                                <p class="h4 text-primary fw-bold">3.0</p>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -272,6 +272,71 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-emerald text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #10b981 !important;">
+                                        <i class="bi bi-currency-dollar"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">Visit Cost Management</h5>
+                                        <p class="text-muted mb-0">Comprehensive visit cost management system with configurable new visit and repeated visit pricing, automated billing calculations, and financial tracking.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-violet text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #8b5cf6 !important;">
+                                        <i class="bi bi-building"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">Advanced Clinic Settings</h5>
+                                        <p class="text-muted mb-0">Complete clinic configuration with Arabic/English names, logo management, watermark settings, website integration, and dynamic print templates.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-rose text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #f43f5e !important;">
+                                        <i class="bi bi-image"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">Logo & Branding Management</h5>
+                                        <p class="text-muted mb-0">Advanced logo upload system with preview functionality, multiple logo types (clinic, print, watermark), and secure file management with .htaccess protection.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-amber text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #f59e0b !important;">
+                                        <i class="bi bi-file-earmark-pdf"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">Dynamic Print Templates</h5>
+                                        <p class="text-muted mb-0">All print templates now use dynamic clinic information from settings, including Arabic names, logos, contact details, and customizable branding elements.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-teal text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #20c997 !important;">
+                                        <i class="bi bi-shield-lock"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">Enhanced Security</h5>
+                                        <p class="text-muted mb-0">Advanced security features with CSRF protection, secure file uploads, .htaccess file protection, and comprehensive input validation for all forms.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -353,6 +418,64 @@
                                 </div>
                                 <h6 class="fw-bold">Composer</h6>
                                 <small class="text-muted">Dependencies</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Version 3.0 New Features -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-star-fill me-2"></i>
+                        Version 3.0 New Features
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-4 mb-4">
+                            <div class="new-feature-card text-center p-4 border rounded">
+                                <div class="new-feature-icon bg-emerald text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #10b981 !important;">
+                                    <i class="bi bi-currency-dollar" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h5 class="fw-bold mb-3">Visit Cost Management</h5>
+                                <p class="text-muted mb-0">Complete visit cost management system with configurable new visit and repeated visit pricing, automated billing calculations, and financial tracking.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 mb-4">
+                            <div class="new-feature-card text-center p-4 border rounded">
+                                <div class="new-feature-icon bg-violet text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #8b5cf6 !important;">
+                                    <i class="bi bi-building" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h5 class="fw-bold mb-3">Advanced Clinic Settings</h5>
+                                <p class="text-muted mb-0">Comprehensive clinic configuration with Arabic/English names, logo management, watermark settings, and website integration.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 mb-4">
+                            <div class="new-feature-card text-center p-4 border rounded">
+                                <div class="new-feature-icon bg-rose text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #f43f5e !important;">
+                                    <i class="bi bi-image" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h5 class="fw-bold mb-3">Logo & Branding</h5>
+                                <p class="text-muted mb-0">Advanced logo upload system with preview functionality, multiple logo types, and secure file management with .htaccess protection.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-primary border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-lightning-charge text-primary me-3" style="font-size: 1.5rem;"></i>
+                                    <div>
+                                        <h6 class="alert-heading mb-1">Major System Enhancement</h6>
+                                        <p class="mb-0">Version 3.0 brings comprehensive improvements to clinic management with advanced settings, cost management, branding control, and enhanced security features for a complete healthcare management solution.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -470,11 +593,77 @@
                 <div class="card-header">
                     <h3 class="card-title mb-0">
                         <i class="bi bi-lightning text-warning me-2"></i>
-                        What's New in Version 2.0
+                        What's New in Version 3.0
                     </h3>
                 </div>
                 <div class="card-body">
                     <div class="timeline">
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-emerald text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #10b981 !important;">
+                                    <i class="bi bi-currency-dollar" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Visit Cost Management System</h6>
+                                    <p class="text-muted mb-0">Complete visit cost management with configurable new visit and repeated visit pricing, automated billing calculations, and financial tracking for better revenue management.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-violet text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #8b5cf6 !important;">
+                                    <i class="bi bi-building" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Advanced Clinic Settings</h6>
+                                    <p class="text-muted mb-0">Comprehensive clinic configuration with Arabic/English names, logo management, watermark settings, website integration, and dynamic print templates for complete branding control.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-rose text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #f43f5e !important;">
+                                    <i class="bi bi-image" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Logo & Branding Management</h6>
+                                    <p class="text-muted mb-0">Advanced logo upload system with preview functionality, multiple logo types (clinic, print, watermark), secure file management with .htaccess protection, and real-time preview capabilities.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-amber text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #f59e0b !important;">
+                                    <i class="bi bi-file-earmark-pdf" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Dynamic Print Templates</h6>
+                                    <p class="text-muted mb-0">All print templates now use dynamic clinic information from settings, including Arabic names, logos, contact details, and customizable branding elements for professional document generation.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-teal text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #20c997 !important;">
+                                    <i class="bi bi-shield-lock" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Enhanced Security Features</h6>
+                                    <p class="text-muted mb-0">Advanced security with CSRF protection, secure file uploads, .htaccess file protection, comprehensive input validation, and secure file management for maximum data protection.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-indigo text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #6366f1 !important;">
+                                    <i class="bi bi-gear-fill" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Doctor Settings Access</h6>
+                                    <p class="text-muted mb-0">Extended settings functionality to doctor role with complete access to clinic configuration, visit cost management, and system settings for enhanced workflow control.</p>
+                                </div>
+                            </div>
+                        </div>
                         <div class="timeline-item mb-4">
                             <div class="d-flex">
                                 <div class="timeline-marker bg-purple text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #6f42c1 !important;">
@@ -879,6 +1068,31 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
+/* Version 3.0 New Features Styling */
+.new-feature-card {
+    transition: all 0.3s ease;
+    background-color: var(--card);
+    border-color: var(--border) !important;
+}
+
+.new-feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border-color: var(--accent) !important;
+}
+
+.dark .new-feature-card:hover {
+    box-shadow: 0 10px 30px rgba(255, 255, 255, 0.05);
+}
+
+.new-feature-icon {
+    transition: all 0.3s ease;
+}
+
+.new-feature-card:hover .new-feature-icon {
+    transform: scale(1.1);
+}
+
 /* Smart Drug Features Styling */
 .drug-feature-card {
     transition: all 0.3s ease;
@@ -902,6 +1116,18 @@
 
 .drug-feature-card:hover .drug-feature-icon {
     transform: scale(1.1);
+}
+
+/* Alert styling for new features */
+.alert-primary {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+    border-color: rgba(13, 110, 253, 0.2) !important;
+    color: var(--text) !important;
+}
+
+.dark .alert-primary {
+    background-color: rgba(13, 110, 253, 0.05) !important;
+    border-color: rgba(13, 110, 253, 0.1) !important;
 }
 
 /* Alert styling for drug features */

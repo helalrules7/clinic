@@ -6,6 +6,7 @@ use App\Lib\Auth;
 use App\Lib\View;
 use App\Config\Database;
 use App\Config\Constants;
+use PDO;
 
 class DoctorController
 {
@@ -1292,6 +1293,180 @@ class DoctorController
         ]);
     }
 
+    public function settings()
+    {
+        $user = $this->auth->user();
+        
+        try {
+            // Get system settings
+            $settings = $this->getSystemSettings();
+            
+            // Handle form submission
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                if (!$this->validateCsrfToken()) {
+                    throw new Exception('Invalid CSRF token');
+                }
+                
+                // Handle file uploads
+                $this->handleLogoUploads();
+                
+                $this->updateSystemSettings($_POST);
+                $_SESSION['success_message'] = 'Settings updated successfully';
+                header('Location: /doctor/settings');
+                exit;
+            }
+
+            // Generate CSRF token
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+
+            $content = $this->view->render('doctor/settings', [
+                'settings' => $settings,
+                'csrf_token' => $_SESSION['csrf_token']
+            ]);
+            
+            echo $this->view->render('layouts/main', [
+                'title' => 'Settings - Doctor Dashboard',
+                'pageTitle' => 'Settings',
+                'pageSubtitle' => 'Manage system configuration',
+                'content' => $content
+            ]);
+        } catch (Exception $e) {
+            error_log("Settings error: " . $e->getMessage());
+            $_SESSION['error_message'] = 'Failed to load settings: ' . $e->getMessage();
+            header('Location: /doctor/dashboard');
+            exit;
+        }
+    }
+
+    private function getSystemSettings()
+    {
+        try {
+            $stmt = $this->pdo->prepare("SELECT setting_key, setting_value, setting_type FROM settings");
+            $stmt->execute();
+            $settings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $result = [];
+            foreach ($settings as $setting) {
+                $key = $setting['setting_key'];
+                $value = $setting['setting_value'];
+                $type = $setting['setting_type'];
+                
+                // Convert value based on type
+                switch ($type) {
+                    case 'integer':
+                        $result[$key] = (int) $value;
+                        break;
+                    case 'boolean':
+                        $result[$key] = (bool) $value;
+                        break;
+                    case 'json':
+                        $result[$key] = json_decode($value, true);
+                        break;
+                    default:
+                        $result[$key] = $value;
+                }
+            }
+            
+            // Set defaults for missing settings
+            $defaults = [
+                'clinic_name' => 'Roaya Clinic',
+                'clinic_name_arabic' => 'رؤية لطب وجراحة العيون',
+                'clinic_email' => 'info@roayaclinic.com',
+                'clinic_phone' => '+20 123 456 7890',
+                'clinic_address' => 'Cairo, Egypt',
+                'clinic_logo' => '/assets/images/Light.png',
+                'clinic_logo_print' => '/assets/images/Light.png',
+                'clinic_logo_watermark' => '/assets/images/Light.png',
+                'new_visit_cost' => '100',
+                'repeated_visit_cost' => '50',
+                'timezone' => 'Africa/Cairo',
+                'date_format' => 'Y-m-d',
+                'time_format' => 'H:i',
+                'items_per_page' => 10,
+                'backup_frequency' => 'daily',
+                'email_notifications' => true,
+                'sms_notifications' => false,
+                'maintenance_mode' => false
+            ];
+            
+            return array_merge($defaults, $result);
+        } catch (Exception $e) {
+            error_log("Error getting settings: " . $e->getMessage());
+            return [
+                'clinic_name' => 'Roaya Clinic',
+                'clinic_email' => 'info@roayaclinic.com',
+                'clinic_phone' => '+20 123 456 7890',
+                'clinic_address' => 'Cairo, Egypt',
+                'timezone' => 'Africa/Cairo',
+                'date_format' => 'Y-m-d',
+                'time_format' => 'H:i',
+                'items_per_page' => 10,
+                'backup_frequency' => 'daily',
+                'email_notifications' => true,
+                'sms_notifications' => false,
+                'maintenance_mode' => false
+            ];
+        }
+    }
+
+    private function updateSystemSettings($data)
+    {
+        $allowedSettings = [
+            'clinic_name', 'clinic_email', 'clinic_phone', 'clinic_address',
+            'timezone', 'date_format', 'time_format', 'items_per_page',
+            'backup_frequency', 'email_notifications', 'sms_notifications', 'maintenance_mode'
+        ];
+
+        try {
+            $this->pdo->beginTransaction();
+            
+            foreach ($data as $key => $value) {
+                if (in_array($key, $allowedSettings)) {
+                    // Validate and sanitize the value
+                    if ($key === 'clinic_email' && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                        throw new Exception('Invalid email address');
+                    }
+                    if ($key === 'items_per_page' && (!is_numeric($value) || $value < 1 || $value > 100)) {
+                        throw new Exception('Items per page must be between 1 and 100');
+                    }
+                    
+                    // Determine setting type and convert value
+                    $settingType = 'string';
+                    if (in_array($key, ['email_notifications', 'sms_notifications', 'maintenance_mode'])) {
+                        $value = (bool) $value;
+                        $settingType = 'boolean';
+                    } elseif ($key === 'items_per_page') {
+                        $value = (int) $value;
+                        $settingType = 'integer';
+                    }
+                    
+                    // Convert boolean to string for database storage
+                    if ($settingType === 'boolean') {
+                        $dbValue = $value ? '1' : '0';
+                    } else {
+                        $dbValue = (string) $value;
+                    }
+                    
+                    // Insert or update setting
+                    $stmt = $this->pdo->prepare("
+                        INSERT INTO settings (setting_key, setting_value, setting_type) 
+                        VALUES (?, ?, ?) 
+                        ON DUPLICATE KEY UPDATE 
+                        setting_value = VALUES(setting_value), 
+                        setting_type = VALUES(setting_type),
+                        updated_at = CURRENT_TIMESTAMP
+                    ");
+                    $stmt->execute([$key, $dbValue, $settingType]);
+                }
+            }
+            
+            $this->pdo->commit();
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
     public function exportDoctorReport()
     {
         try {
@@ -1410,5 +1585,69 @@ class DoctorController
         
         fclose($output);
         exit;
+    }
+
+    private function handleLogoUploads()
+    {
+        $uploadDir = '/var/www/html/clinic/public/uploads/logos/';
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml'];
+        $maxSize = 5 * 1024 * 1024; // 5MB
+        
+        $logoFields = ['clinic_logo_print', 'clinic_logo_watermark']; // clinic_logo disabled
+        
+        foreach ($logoFields as $field) {
+            // Handle file upload
+            if (isset($_FILES[$field]) && $_FILES[$field]['error'] === UPLOAD_ERR_OK) {
+                $file = $_FILES[$field];
+                
+                // Validate file type
+                if (!in_array($file['type'], $allowedTypes)) {
+                    throw new \Exception("Invalid file type for {$field}. Only JPEG, PNG, GIF, and SVG are allowed.");
+                }
+                
+                // Validate file size
+                if ($file['size'] > $maxSize) {
+                    throw new \Exception("File too large for {$field}. Maximum size is 5MB.");
+                }
+                
+                // Generate unique filename
+                $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+                $filename = $field . '_' . time() . '_' . uniqid() . '.' . $extension;
+                $filepath = $uploadDir . $filename;
+                
+                // Move uploaded file
+                if (move_uploaded_file($file['tmp_name'], $filepath)) {
+                    // Update setting with new file path
+                    $this->updateSetting($field, '/uploads/logos/' . $filename);
+                } else {
+                    throw new \Exception("Failed to upload {$field}");
+                }
+            }
+            // Handle text path input
+            elseif (isset($_POST[$field . '_path']) && !empty($_POST[$field . '_path'])) {
+                $path = $_POST[$field . '_path'];
+                // Validate that it's a valid path
+                if (filter_var($path, FILTER_VALIDATE_URL) || (strpos($path, '/') === 0 && file_exists('/var/www/html/clinic/public' . $path))) {
+                    $this->updateSetting($field, $path);
+                }
+            }
+        }
+    }
+
+    private function updateSetting($key, $value)
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                INSERT INTO settings (setting_key, setting_value, setting_type, updated_at) 
+                VALUES (?, ?, 'string', NOW())
+                ON DUPLICATE KEY UPDATE 
+                setting_value = VALUES(setting_value), 
+                updated_at = NOW()
+            ");
+            $stmt->execute([$key, $value]);
+        } catch (\Exception $e) {
+            error_log("Error updating setting {$key}: " . $e->getMessage());
+            throw $e;
+        }
     }
 }

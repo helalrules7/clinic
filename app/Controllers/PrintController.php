@@ -6,6 +6,7 @@ use App\Lib\Auth;
 use App\Lib\View;
 use App\Config\Database;
 use App\Config\Constants;
+use PDO;
 
 class PrintController
 {
@@ -355,13 +356,108 @@ class PrintController
 
     private function getClinicInfo()
     {
-        return [
-            'name' => Constants::APP_NAME,
-            'address' => 'كفر الشيخ - عمارات الأوقاف - امام البنك الأهلي',
-            'phone' => '٠١٠٢٧٢٢٥١٩٧',
-            'email' => 'info@roaya-clinic.com',
-            'website' => 'www.roaya-clinic.com'
-        ];
+        try {
+            $settings = $this->getSystemSettings();
+            return [
+                'name' => $settings['clinic_name'] ?? Constants::APP_NAME,
+                'name_arabic' => $settings['clinic_name_arabic'] ?? 'رؤية لطب وجراحة العيون',
+                'address' => $settings['clinic_address'] ?? 'كفر الشيخ - عمارات الأوقاف - امام البنك الأهلي',
+                'phone' => $settings['clinic_phone'] ?? '٠١٠٢٧٢٢٥١٩٧',
+                'email' => $settings['clinic_email'] ?? 'info@roaya-clinic.com',
+                'website' => $settings['clinic_website'] ?? 'www.roaya-clinic.com',
+                'logo' => $settings['clinic_logo'] ?? '/assets/images/Light.png',
+                'logo_print' => $settings['clinic_logo_print'] ?? '/assets/images/Light.png',
+                'logo_watermark' => $settings['clinic_logo_watermark'] ?? '/assets/images/Light.png'
+            ];
+        } catch (Exception $e) {
+            // Fallback to default values if settings retrieval fails
+            return [
+                'name' => Constants::APP_NAME,
+                'name_arabic' => 'رؤية لطب وجراحة العيون',
+                'address' => 'كفر الشيخ - عمارات الأوقاف - امام البنك الأهلي',
+                'phone' => '٠١٠٢٧٢٢٥١٩٧',
+                'email' => 'info@roaya-clinic.com',
+                'website' => 'www.roaya-clinic.com',
+                'logo' => '/assets/images/Light.png',
+                'logo_print' => '/assets/images/Light.png',
+                'logo_watermark' => '/assets/images/Light.png'
+            ];
+        }
+    }
+
+    private function getSystemSettings()
+    {
+        try {
+            $stmt = $this->pdo->prepare("SELECT setting_key, setting_value, setting_type FROM settings");
+            $stmt->execute();
+            $settings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $result = [];
+            foreach ($settings as $setting) {
+                $key = $setting['setting_key'];
+                $value = $setting['setting_value'];
+                $type = $setting['setting_type'];
+                
+                // Convert value based on type
+                switch ($type) {
+                    case 'integer':
+                        $result[$key] = (int) $value;
+                        break;
+                    case 'boolean':
+                        $result[$key] = (bool) $value;
+                        break;
+                    case 'json':
+                        $result[$key] = json_decode($value, true);
+                        break;
+                    default:
+                        $result[$key] = $value;
+                }
+            }
+            
+            // Set defaults for missing settings
+            $defaults = [
+                'clinic_name' => 'Roaya Clinic',
+                'clinic_name_arabic' => 'رؤية لطب وجراحة العيون',
+                'clinic_email' => 'info@roayaclinic.com',
+                'clinic_phone' => '+20 123 456 7890',
+                'clinic_address' => 'Cairo, Egypt',
+                'clinic_website' => 'www.roaya-clinic.com',
+                'clinic_logo' => '/assets/images/Light.png',
+                'clinic_logo_print' => '/assets/images/Light.png',
+                'clinic_logo_watermark' => '/assets/images/Light.png',
+                'timezone' => 'Africa/Cairo',
+                'date_format' => 'Y-m-d',
+                'time_format' => 'H:i',
+                'items_per_page' => 10,
+                'backup_frequency' => 'daily',
+                'email_notifications' => true,
+                'sms_notifications' => false,
+                'maintenance_mode' => false
+            ];
+            
+            return array_merge($defaults, $result);
+        } catch (Exception $e) {
+            // Return defaults if database error
+            return [
+                'clinic_name' => 'Roaya Clinic',
+                'clinic_name_arabic' => 'رؤية لطب وجراحة العيون',
+                'clinic_email' => 'info@roayaclinic.com',
+                'clinic_phone' => '+20 123 456 7890',
+                'clinic_address' => 'Cairo, Egypt',
+                'clinic_website' => 'www.roaya-clinic.com',
+                'clinic_logo' => '/assets/images/Light.png',
+                'clinic_logo_print' => '/assets/images/Light.png',
+                'clinic_logo_watermark' => '/assets/images/Light.png',
+                'timezone' => 'Africa/Cairo',
+                'date_format' => 'Y-m-d',
+                'time_format' => 'H:i',
+                'items_per_page' => 10,
+                'backup_frequency' => 'daily',
+                'email_notifications' => true,
+                'sms_notifications' => false,
+                'maintenance_mode' => false
+            ];
+        }
     }
 
     public function appointmentReport($id)

@@ -495,6 +495,12 @@
                     </a>
                 </div>
                 <div class="nav-item">
+                    <a href="/doctor/settings" class="nav-link <?= $this->isActiveRoute('/doctor/settings') ? 'active' : '' ?>">
+                        <i class="bi bi-gear"></i>
+                        Settings
+                    </a>
+                </div>
+                <div class="nav-item">
                     <a href="/doctor/profile" class="nav-link <?= $this->isActiveRoute('/doctor/profile') ? 'active' : '' ?>">
                         <i class="bi bi-person-circle"></i>
                         Profile
@@ -581,7 +587,7 @@
             <!-- Version info -->
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="text-muted">
-                    <div class="mb-1">Roaya Clinic v2.1 DS</div>
+                    <div class="mb-1">Roaya Clinic v3.0</div>
                     <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none">Ahmed Helal</a></div>
                 </small>
             </div>

@@ -1,7 +1,7 @@
 <?php
 /**
- * Admin Settings Template
- * صفحة إعدادات الإدارة
+ * Doctor Settings Template
+ * صفحة إعدادات الأطباء
  */
 ?>
 
@@ -172,7 +172,7 @@
                         <?php unset($_SESSION['error_message']); ?>
                     <?php endif; ?>
 
-                    <form method="POST" action="/admin/settings" enctype="multipart/form-data">
+                    <form method="POST" action="/doctor/settings" enctype="multipart/form-data">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
                         
                         <!-- General Settings -->
