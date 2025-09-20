@@ -7,61 +7,80 @@
 
 <style>
 :root {
-    --bg: #1a1a1a;
-    --bg-alt: #2d2d2d;
-    --bg-dark: #1e1e1e;
-    --text: #ffffff;
-    --text-muted: #b0b0b0;
-    --accent: #0d6efd;
-    --accent-rgb: 13, 110, 253;
-    --border: #404040;
-    --muted: #6c757d;
+    --bg: #f8fafc;
+    --text: #0f172a;
+    --card: #ffffff;
+    --muted: #475569;
+    --accent: #0ea5e9;
+    --success: #10b981;
+    --danger: #ef4444;
+    --border: #e2e8f0;
+    --sidebar-width: 280px;
 }
 
-[data-bs-theme="light"] {
-    --bg: #ffffff;
-    --bg-alt: #f8f9fa;
-    --bg-dark: #ffffff;
-    --text: #212529;
-    --text-muted: #6c757d;
-    --accent: #0d6efd;
-    --accent-rgb: 13, 110, 253;
-    --border: #dee2e6;
-    --muted: #6c757d;
+.dark {
+    --bg: #0b1220;
+    --text: #f8fafc;
+    --card: #1e293b;
+    --muted: #cbd5e1;
+    --accent: #38bdf8;
+    --success: #4ade80;
+    --danger: #fb7185;
+    --border: #334155;
 }
 
 .card {
-    background: var(--bg-dark);
+    background: var(--card);
     border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    animation: fadeUp 0.35s ease both;
     color: var(--text);
 }
 
+.card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
 .card-header {
-    background: var(--bg-alt);
+    background: var(--bg);
     border-bottom: 1px solid var(--border);
+    border-radius: 12px 12px 0 0;
+    padding: 1rem 1.5rem;
     color: var(--text);
 }
 
 .form-control, .form-select {
-    background: var(--bg-dark);
+    background: var(--card);
     border: 2px solid var(--border);
     color: var(--text);
+    font-weight: 500;
+    border-radius: 8px;
 }
 
 .form-control:focus, .form-select:focus {
-    background: var(--bg-dark);
+    background: var(--card);
     border-color: var(--accent);
     color: var(--text);
-    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25);
+    font-weight: 600;
+}
+
+.form-control::placeholder {
+    color: var(--muted);
+    font-weight: 400;
 }
 
 .form-label {
     color: var(--text);
     font-weight: 600;
+    margin-bottom: 0.5rem;
 }
 
 .form-text {
-    color: var(--text-muted);
+    color: var(--muted);
 }
 
 .form-check-input:checked {
@@ -74,11 +93,21 @@
 }
 
 .form-control:disabled {
-    background-color: var(--bg-alt);
+    background-color: var(--bg);
     border-color: var(--border);
-    color: var(--text-muted);
+    color: var(--muted);
     cursor: not-allowed;
     opacity: 0.6;
+}
+
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
 }
 
 .btn-primary {
@@ -98,13 +127,13 @@
 }
 
 .btn-outline-secondary:hover {
-    background-color: var(--bg-alt);
+    background-color: var(--bg);
     border-color: var(--accent);
     color: var(--accent);
 }
 
 .text-muted {
-    color: var(--text-muted) !important;
+    color: var(--muted) !important;
 }
 
 .settings-section {
@@ -116,6 +145,7 @@
     border-bottom: 2px solid var(--accent);
     padding-bottom: 0.5rem;
     margin-bottom: 1.5rem;
+    font-weight: 600;
 }
 
 .setting-item {
@@ -124,12 +154,12 @@
 
 .setting-description {
     font-size: 0.875rem;
-    color: var(--text-muted);
+    color: var(--muted);
     margin-top: 0.25rem;
 }
 
 .input-group-text {
-    background-color: var(--bg-alt);
+    background-color: var(--bg);
     border: 2px solid var(--border);
     color: var(--text);
 }
@@ -140,6 +170,22 @@
 
 .input-group .form-control:focus + .input-group-text {
     border-color: var(--accent);
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Dark mode adjustments */
+.dark .card:hover {
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.05);
 }
 </style>
 
