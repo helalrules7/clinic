@@ -1763,6 +1763,30 @@ function showPrescriptionModal(appointmentId) {
                                         <div id="drugSuggestions" class="position-absolute w-100 bg-white border border-top-0 rounded-bottom shadow-sm" style="z-index: 1050; display: none; max-height: 200px; overflow-y: auto;"></div>
                                     </div>
                                 </div>
+                                <div class="col-md-4 mb-3" style="display: none;">
+                                    <label class="form-label">Dose</label>
+                                    <input type="text" class="form-control" name="dose" placeholder="e.g., 1 tablet, 2 drops">
+                                </div>
+                                <div class="col-md-4 mb-3" style="display: none;">
+                                    <label class="form-label">Frequency</label>
+                                    <input type="text" class="form-control" name="frequency" placeholder="e.g., Twice daily, Every 6 hours">
+                                </div>
+                                <div class="col-md-4 mb-3" style="display: none;">
+                                    <label class="form-label">Duration</label>
+                                    <input type="text" class="form-control" name="duration" placeholder="e.g., 7 days, 2 weeks">
+                                </div>
+                                <div class="col-12 mb-3" style="display: none;">
+                                    <label class="form-label">Route</label>
+                                    <select class="form-control" name="route">
+                                        <option value="Topical">Topical</option>
+                                        <option value="Oral">Oral</option>
+                                        <option value="IV">IV</option>
+                                        <option value="IM">IM</option>
+                                        <option value="Sublingual">Sublingual</option>
+                                        <option value="Inhalation">Inhalation</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
                                 <div class="col-12 mb-3">
                                     <label class="form-label">Notes</label>
                                     <textarea class="form-control" name="notes" rows="3"></textarea>
@@ -2793,6 +2817,30 @@ function editMedication(medicationId, drugName, notes) {
                                 <div class="col-12 mb-3">
                                     <label class="form-label">Drug Name <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="drug_name" value="${drugName}" required>
+                                </div>
+                                <div class="col-md-4 mb-3" style="display: none;">
+                                    <label class="form-label">Dose</label>
+                                    <input type="text" class="form-control" name="dose" placeholder="e.g., 1 tablet, 2 drops">
+                                </div>
+                                <div class="col-md-4 mb-3" style="display: none;">
+                                    <label class="form-label">Frequency</label>
+                                    <input type="text" class="form-control" name="frequency" placeholder="e.g., Twice daily, Every 6 hours">
+                                </div>
+                                <div class="col-md-4 mb-3" style="display: none;">
+                                    <label class="form-label">Duration</label>
+                                    <input type="text" class="form-control" name="duration" placeholder="e.g., 7 days, 2 weeks">
+                                </div>
+                                <div class="col-12 mb-3" style="display: none;">
+                                    <label class="form-label">Route</label>
+                                    <select class="form-control" name="route">
+                                        <option value="Topical">Topical</option>
+                                        <option value="Oral">Oral</option>
+                                        <option value="IV">IV</option>
+                                        <option value="IM">IM</option>
+                                        <option value="Sublingual">Sublingual</option>
+                                        <option value="Inhalation">Inhalation</option>
+                                        <option value="Other">Other</option>
+                                    </select>
                                 </div>
                                 <div class="col-12 mb-3">
                                     <label class="form-label">Notes</label>

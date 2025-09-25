@@ -1818,9 +1818,9 @@ class ApiController
         $stmt->execute([
             $data['appointment_id'],
             $data['drug_name'],
-            $data['dose'] ?? null,
-            $data['frequency'] ?? null,
-            $data['duration'] ?? null,
+            $data['dose'] ?? '',
+            $data['frequency'] ?? '',
+            $data['duration'] ?? '',
             $data['route'] ?? 'Topical',
             $data['notes'] ?? null
         ]);
@@ -2282,9 +2282,9 @@ class ApiController
 
             $result = $stmt->execute([
                 $data['drug_name'],
-                $data['dose'] ?? null,
-                $data['frequency'] ?? null,
-                $data['duration'] ?? null,
+                $data['dose'] ?? '',
+                $data['frequency'] ?? '',
+                $data['duration'] ?? '',
                 $data['route'] ?? 'Topical',
                 $data['notes'] ?? null,
                 $id
