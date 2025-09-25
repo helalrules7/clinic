@@ -7,6 +7,8 @@ use App\Lib\Validator;
 use App\Config\Database;
 use App\Config\Constants;
 use App\Lib\Helpers;
+use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
+use Box\Spout\Common\Entity\Row;
 
 class ApiController
 {
@@ -18,6 +20,11 @@ class ApiController
     public function __construct()
     {
         try {
+            // Start session if not already started
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            
             $this->auth = new Auth();
             $this->validator = new Validator();
             $this->pdo = Database::getInstance()->getConnection();
@@ -248,7 +255,7 @@ class ApiController
             if (!$this->validator->validate($data, $rules)) {
                 return $this->jsonResponse([
                     'error' => 'Validation failed',
-                    'details' => $this->validator->getErrors()
+                    'details' => $this->validator->getAllErrors()
                 ], 400);
             }
 
@@ -349,7 +356,7 @@ class ApiController
             if (!$this->validator->validate($data, $rules)) {
                 return $this->jsonResponse([
                     'error' => 'Validation failed',
-                    'details' => $this->validator->getErrors()
+                    'details' => $this->validator->getAllErrors()
                 ], 400);
             }
 
@@ -412,6 +419,57 @@ class ApiController
         }
     }
 
+    public function getPatient($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    id,
+                    first_name,
+                    last_name,
+                    dob,
+                    gender,
+                    phone,
+                    alt_phone,
+                    national_id,
+                    emergency_contact,
+                    emergency_phone,
+                    address,
+                    created_at
+                FROM patients 
+                WHERE id = ?
+            ");
+            $stmt->execute([$id]);
+            $patient = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            if (!$patient) {
+                return $this->jsonResponse(['error' => 'Patient not found'], 404);
+            }
+
+            // Calculate age
+            if ($patient['dob']) {
+                $today = new \DateTime();
+                $birthDate = new \DateTime($patient['dob']);
+                $age = $today->diff($birthDate)->y;
+                $patient['age'] = $age;
+            } else {
+                $patient['age'] = null;
+            }
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'patient' => $patient
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function createPatient()
     {
         try {
@@ -438,7 +496,7 @@ class ApiController
             if (!$this->validator->validate($data, $rules)) {
                 return $this->jsonResponse([
                     'error' => 'Validation failed',
-                    'details' => $this->validator->getErrors()
+                    'details' => $this->validator->getAllErrors()
                 ], 400);
             }
 
@@ -694,10 +752,10 @@ class ApiController
             ];
 
             if (!$this->validator->validate($input, $rules)) {
-                error_log("DEBUG: Validation failed: " . json_encode($this->validator->getErrors()));
+                error_log("DEBUG: Validation failed: " . json_encode($this->validator->getAllErrors()));
                 return $this->jsonResponse([
                     'error' => 'Validation failed',
-                    'details' => $this->validator->getErrors()
+                    'details' => $this->validator->getAllErrors()
                 ], 400);
             }
 
@@ -776,7 +834,7 @@ class ApiController
             if (!$this->validator->validate($data, $rules)) {
                 return $this->jsonResponse([
                     'error' => 'Validation failed',
-                    'details' => $this->validator->getErrors()
+                    'details' => $this->validator->getAllErrors()
                 ], 400);
             }
 
@@ -833,7 +891,7 @@ class ApiController
             if (!$this->validator->validate($data, $rules)) {
                 return $this->jsonResponse([
                     'error' => 'Validation failed',
-                    'details' => $this->validator->getErrors()
+                    'details' => $this->validator->getAllErrors()
                 ], 400);
             }
 
@@ -885,7 +943,7 @@ class ApiController
             if (!$this->validator->validate($data, $rules)) {
                 return $this->jsonResponse([
                     'error' => 'Validation failed',
-                    'details' => $this->validator->getErrors()
+                    'details' => $this->validator->getAllErrors()
                 ], 400);
             }
 
@@ -999,7 +1057,15 @@ class ApiController
     {
         header('Content-Type: application/json');
         http_response_code($statusCode);
-        echo json_encode($data);
+        
+        $json = json_encode($data);
+        if ($json === false) {
+            error_log("JSON encoding error: " . json_last_error_msg());
+            $data = ['error' => 'JSON encoding failed'];
+            $json = json_encode($data);
+        }
+        
+        echo $json;
         exit;
     }
 
@@ -2196,7 +2262,7 @@ class ApiController
             error_log("Parsed data for validation: " . json_encode($data));
             
             if (!$this->validator->validate($data, $rules)) {
-                $errors = $this->validator->getErrors();
+                $errors = $this->validator->getAllErrors();
                 error_log("Validation errors: " . json_encode($errors));
                 error_log("POST data: " . json_encode($data));
                 
@@ -2287,7 +2353,7 @@ class ApiController
             if (!$this->validator->validate($data, $rules)) {
                 return $this->jsonResponse([
                     'error' => 'Validation failed',
-                    'details' => $this->validator->getErrors()
+                    'details' => $this->validator->getAllErrors()
                 ], 400);
             }
 
@@ -4239,10 +4305,10 @@ class ApiController
     {
         // Connect to egyptian_drugs database with specific user
         $host = $_ENV['DB_HOST'] ?? 'localhost';
-        $username = 'drug_user';  // Use the correct user for drugs database
-        $password = 'DrugPassword123!';  // Use the correct password for drugs database
+        $username = 'AhmedHelal_egyptian_drugs';  // Use the correct user for drugs database
+        $password = 'Carmen@1230';  // Use the correct password for drugs database
         
-        $dsn = "mysql:host={$host};dbname=egyptian_drugs;charset=utf8mb4";
+        $dsn = "mysql:host={$host};dbname=AhmedHelal_egyptian_drugs;charset=utf8mb4";
         
         return new \PDO($dsn, $username, $password, [
             \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
@@ -4360,6 +4426,1589 @@ class ApiController
             error_log("Error searching drugs autocomplete: " . $e->getMessage());
             error_log("Stack trace: " . $e->getTraceAsString());
             return $this->jsonResponse(['error' => 'Failed to search drugs: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Create daily balance entry
+     */
+    public function createDailyBalance()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            
+            // Validate input
+            $rules = [
+                'amount' => 'required|decimal',
+                'balance_type' => 'required|in:opening,additional,withdrawal',
+                'description' => 'string',
+                'balance_date' => 'datetime'
+            ];
+
+            $data = $_POST;
+            if (!$this->validator->validate($data, $rules)) {
+                return $this->jsonResponse([
+                    'error' => 'Validation failed',
+                    'details' => $this->validator->getAllErrors()
+                ], 400);
+            }
+
+            // Create daily balance record
+            $stmt = $this->pdo->prepare("
+                INSERT INTO daily_balances (amount, balance_type, description, created_by, created_at)
+                VALUES (?, ?, ?, ?, ?)
+            ");
+            
+            $createdAt = !empty($data['balance_date']) ? $data['balance_date'] : date('Y-m-d H:i:s');
+            
+            $stmt->execute([
+                $data['amount'],
+                $data['balance_type'],
+                $data['description'] ?? null,
+                $user['id'],
+                $createdAt
+            ]);
+            
+            $balanceId = $this->pdo->lastInsertId();
+            
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => ['id' => $balanceId],
+                'message' => 'تم تسجيل الرصيد بنجاح'
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Error creating daily balance: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'فشل في تسجيل الرصيد'], 500);
+        }
+    }
+
+    /**
+     * Create daily closure (Doctor only) - API endpoint
+     */
+    public function createDailyClosureApi()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            
+            // Check if user is doctor
+            if ($user['role'] !== 'doctor') {
+                return $this->jsonResponse(['error' => 'غير مصرح بالوصول - الطبيب فقط'], 403);
+            }
+            
+            $today = date('Y-m-d');
+            
+            // Check if today is already closed
+            if ($this->isDateClosed($today)) {
+                return $this->jsonResponse(['error' => 'تم إغلاق اليوم مسبقاً'], 400);
+            }
+            
+            // Create closure using existing method
+            $closureId = $this->createDailyClosure($today, $user['id']);
+            
+            return $this->jsonResponse([
+                'ok' => true,
+                'message' => 'تم إغلاق اليوم بنجاح',
+                'data' => ['id' => $closureId]
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Error creating daily closure: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'فشل في إغلاق اليوم'], 500);
+        }
+    }
+
+    /**
+     * Create expense entry
+     */
+    public function createExpense()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            
+            // Validate input
+            $rules = [
+                'amount' => 'required|decimal',
+                'expense_name' => 'required|string',
+                'category' => 'required|in:utilities,medical,maintenance,office,salary,other',
+                'notes' => 'string',
+                'expense_date' => 'datetime'
+            ];
+
+            // Parse JSON data from request
+            $input = file_get_contents("php://input");
+            $data = json_decode($input, true);
+            
+            if (!$this->validator->validate($data, $rules)) {
+                return $this->jsonResponse([
+                    'error' => 'Validation failed',
+                    'details' => $this->validator->getAllErrors()
+                ], 400);
+            }
+
+            // Create expense record
+            $stmt = $this->pdo->prepare("
+                INSERT INTO expenses (amount, expense_name, category, notes, created_by, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ");
+            
+            $createdAt = !empty($data['expense_date']) ? $data['expense_date'] : date('Y-m-d H:i:s');
+            
+            $stmt->execute([
+                $data['amount'],
+                $data['expense_name'],
+                $data['category'],
+                $data['notes'] ?? null,
+                $user['id'],
+                $createdAt
+            ]);
+            
+            $expenseId = $this->pdo->lastInsertId();
+            
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => ['id' => $expenseId],
+                'message' => 'تم تسجيل المصروف بنجاح'
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Error creating expense: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'فشل في تسجيل المصروف'], 500);
+        }
+    }
+
+    /**
+     * Update expense entry
+     */
+    public function updateExpense($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            
+            // Validate input
+            $rules = [
+                'amount' => 'required|decimal',
+                'expense_name' => 'required|string',
+                'category' => 'required|in:utilities,medical,maintenance,office,salary,other',
+                'notes' => 'string',
+                'expense_date' => 'datetime'
+            ];
+
+            // For PUT requests, we need to parse the input differently
+            if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+                $input = file_get_contents("php://input");
+                $data = json_decode($input, true);
+            } else {
+                $data = $_POST;
+            }
+            
+            if (!$this->validator->validate($data, $rules)) {
+                return $this->jsonResponse([
+                    'error' => 'Validation failed',
+                    'details' => $this->validator->getAllErrors()
+                ], 400);
+            }
+
+            // Check if expense exists
+            $stmt = $this->pdo->prepare("SELECT * FROM expenses WHERE id = ?");
+            $stmt->execute([$id]);
+            $expense = $stmt->fetch(\PDO::FETCH_ASSOC);
+            
+            if (!$expense) {
+                return $this->jsonResponse(['error' => 'Expense not found'], 404);
+            }
+
+            // Update expense record
+            $stmt = $this->pdo->prepare("
+                UPDATE expenses 
+                SET amount = ?, expense_name = ?, category = ?, notes = ?
+                WHERE id = ?
+            ");
+            
+            $result = $stmt->execute([
+                $data['amount'],
+                $data['expense_name'],
+                $data['category'],
+                $data['notes'] ?? null,
+                $id
+            ]);
+            
+            if ($result) {
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'message' => 'Expense updated successfully'
+                ]);
+            } else {
+                return $this->jsonResponse(['error' => 'Failed to update expense'], 500);
+            }
+            
+        } catch (\Exception $e) {
+            error_log("Error updating expense: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Failed to update expense'], 500);
+        }
+    }
+
+    /**
+     * Delete expense entry
+     */
+    public function deleteExpense($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            // Check if expense exists
+            $stmt = $this->pdo->prepare("SELECT * FROM expenses WHERE id = ?");
+            $stmt->execute([$id]);
+            $expense = $stmt->fetch();
+            
+            if (!$expense) {
+                return $this->jsonResponse(['error' => 'Expense not found'], 404);
+            }
+
+            // Delete expense record
+            $stmt = $this->pdo->prepare("DELETE FROM expenses WHERE id = ?");
+            $stmt->execute([$id]);
+            
+            return $this->jsonResponse([
+                'ok' => true,
+                'message' => 'Expense deleted successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            error_log("Error deleting expense: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Failed to delete expense'], 500);
+        }
+    }
+
+    /**
+     * Update payment entry
+     */
+    public function updatePayment($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            
+            // Validate input
+            $rules = [
+                'amount' => 'required|decimal',
+                'type' => 'required|in:Booking,FollowUp,Consultation,Procedure,Other',
+                'method' => 'required|in:Cash,Card,Transfer,Wallet',
+                'description' => 'string'
+            ];
+
+            // For PUT requests, we need to parse the input differently
+            if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+                $input = file_get_contents("php://input");
+                $data = json_decode($input, true);
+            } else {
+                $data = $_POST;
+            }
+            
+            if (!$this->validator->validate($data, $rules)) {
+                return $this->jsonResponse([
+                    'error' => 'Validation failed',
+                    'details' => $this->validator->getAllErrors()
+                ], 400);
+            }
+
+            // Check if payment exists
+            $stmt = $this->pdo->prepare("SELECT * FROM payments WHERE id = ?");
+            $stmt->execute([$id]);
+            $payment = $stmt->fetch(\PDO::FETCH_ASSOC);
+            
+            if (!$payment) {
+                return $this->jsonResponse(['error' => 'Payment not found'], 404);
+            }
+
+            // Update payment record
+            $stmt = $this->pdo->prepare("
+                UPDATE payments 
+                SET amount = ?, type = ?, method = ?, description = ?
+                WHERE id = ?
+            ");
+            
+            $result = $stmt->execute([
+                $data['amount'],
+                $data['type'],
+                $data['method'],
+                $data['description'] ?? null,
+                $id
+            ]);
+            
+            if ($result) {
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'message' => 'Payment updated successfully'
+                ]);
+            } else {
+                return $this->jsonResponse(['error' => 'Failed to update payment'], 500);
+            }
+            
+        } catch (\Exception $e) {
+            error_log("Error updating payment: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Failed to update payment'], 500);
+        }
+    }
+
+    /**
+     * Delete payment entry
+     */
+    public function deletePayment($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            // Check if payment exists
+            $stmt = $this->pdo->prepare("SELECT * FROM payments WHERE id = ?");
+            $stmt->execute([$id]);
+            $payment = $stmt->fetch();
+            
+            if (!$payment) {
+                return $this->jsonResponse(['error' => 'Payment not found'], 404);
+            }
+
+            // Delete payment record
+            $stmt = $this->pdo->prepare("DELETE FROM payments WHERE id = ?");
+            $stmt->execute([$id]);
+            
+            return $this->jsonResponse([
+                'ok' => true,
+                'message' => 'Payment deleted successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            error_log("Error deleting payment: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Failed to delete payment'], 500);
+        }
+    }
+
+    /**
+     * Get single payment details for editing
+     */
+    public function getPayment($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $stmt = $this->pdo->prepare("
+                SELECT p.*, 
+                       CONCAT(pat.first_name, ' ', pat.last_name) as patient_name,
+                       pat.phone as patient_phone
+                FROM payments p
+                LEFT JOIN patients pat ON p.patient_id = pat.id
+                WHERE p.id = ?
+            ");
+            $stmt->execute([$id]);
+            $payment = $stmt->fetch(\PDO::FETCH_ASSOC);
+            
+            if (!$payment) {
+                return $this->jsonResponse(['error' => 'Payment not found'], 404);
+            }
+            
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => $payment
+            ]);
+            
+        } catch (\Exception $e) {
+            error_log("Error getting payment: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Failed to get payment'], 500);
+        }
+    }
+
+    /**
+     * Get single expense details for editing
+     */
+    public function getExpense($id)
+    {
+        try {
+            error_log("getExpense: Checking authentication");
+            if (!$this->auth->check()) {
+                error_log("getExpense: Authentication failed");
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+            error_log("getExpense: Authentication successful");
+
+            $stmt = $this->pdo->prepare("
+                SELECT e.*, 
+                       u.name as created_by_name
+                FROM expenses e
+                LEFT JOIN users u ON e.created_by = u.id
+                WHERE e.id = ?
+            ");
+            $stmt->execute([$id]);
+            $expense = $stmt->fetch(\PDO::FETCH_ASSOC);
+            
+            if (!$expense) {
+                return $this->jsonResponse(['error' => 'Expense not found'], 404);
+            }
+            
+            error_log("getExpense: Returning data: " . print_r($expense, true));
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => $expense
+            ]);
+            
+        } catch (\Exception $e) {
+            error_log("Error getting expense: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Failed to get expense'], 500);
+        }
+    }
+
+    /**
+     * Get financial transactions with pagination and filters
+     */
+    public function getFinancialTransactions()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $page = (int)($_GET['page'] ?? 1);
+            $limit = (int)($_GET['limit'] ?? 10);
+            $date = $_GET['date'] ?? null;
+            $type = $_GET['type'] ?? 'all';
+            
+            $offset = ($page - 1) * $limit;
+            
+            // Build WHERE conditions
+            $whereConditions = [];
+            $params = [];
+            
+            if ($date) {
+                $whereConditions[] = "DATE(created_at) = ?";
+                $params[] = $date;
+            }
+            
+            // Get transactions from different sources
+            $transactions = [];
+            
+            // Get payments
+            if ($type === 'all' || $type === 'payment') {
+                $paymentQuery = "
+                    SELECT 
+                        'payment' as type,
+                        p.id,
+                        p.amount,
+                        p.created_at,
+                        CONCAT('دفعة - ', pat.first_name, ' ', pat.last_name) as description,
+                        u.name as created_by_name
+                    FROM payments p
+                    LEFT JOIN patients pat ON p.patient_id = pat.id
+                    LEFT JOIN users u ON p.received_by = u.id
+                ";
+                
+                if (!empty($whereConditions)) {
+                    $paymentQuery .= " WHERE " . implode(' AND ', $whereConditions);
+                }
+                
+                $paymentQuery .= " ORDER BY p.created_at DESC";
+                
+                $stmt = $this->pdo->prepare($paymentQuery);
+                $stmt->execute($params);
+                $payments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                
+                foreach ($payments as $payment) {
+                    $transactions[] = $payment;
+                }
+            }
+            
+            // Get expenses
+            if ($type === 'all' || $type === 'expense') {
+                $expenseQuery = "
+                    SELECT 
+                        'expense' as type,
+                        e.id,
+                        e.amount,
+                        e.created_at,
+                        CONCAT('مصروف - ', e.expense_name) as description,
+                        u.name as created_by_name
+                    FROM expenses e
+                    LEFT JOIN users u ON e.created_by = u.id
+                ";
+                
+                if (!empty($whereConditions)) {
+                    $expenseQuery .= " WHERE " . implode(' AND ', $whereConditions);
+                }
+                
+                $expenseQuery .= " ORDER BY e.created_at DESC";
+                
+                $stmt = $this->pdo->prepare($expenseQuery);
+                $stmt->execute($params);
+                $expenses = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                
+                foreach ($expenses as $expense) {
+                    $transactions[] = $expense;
+                }
+            }
+            
+            // Get daily balances
+            if ($type === 'all' || $type === 'balance') {
+                $balanceQuery = "
+                    SELECT 
+                        'balance' as type,
+                        db.id,
+                        db.amount,
+                        db.created_at,
+                        CONCAT('رصيد - ', db.balance_type) as description,
+                        u.name as created_by_name
+                    FROM daily_balances db
+                    LEFT JOIN users u ON db.created_by = u.id
+                ";
+                
+                if (!empty($whereConditions)) {
+                    $balanceQuery .= " WHERE " . implode(' AND ', $whereConditions);
+                }
+                
+                $balanceQuery .= " ORDER BY db.created_at DESC";
+                
+                $stmt = $this->pdo->prepare($balanceQuery);
+                $stmt->execute($params);
+                $balances = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                
+                foreach ($balances as $balance) {
+                    $transactions[] = $balance;
+                }
+            }
+            
+            // Sort all transactions by date
+            usort($transactions, function($a, $b) {
+                return strtotime($b['created_at']) - strtotime($a['created_at']);
+            });
+            
+            // Calculate running balance
+            $runningBalance = 0;
+            foreach ($transactions as &$transaction) {
+                if ($transaction['type'] === 'expense') {
+                    $runningBalance -= $transaction['amount'];
+                } else {
+                    $runningBalance += $transaction['amount'];
+                }
+                $transaction['balance'] = $runningBalance;
+            }
+            
+            // Apply pagination
+            $total = count($transactions);
+            $paginatedTransactions = array_slice($transactions, $offset, $limit);
+            
+            $pagination = [
+                'current_page' => $page,
+                'last_page' => ceil($total / $limit),
+                'per_page' => $limit,
+                'total' => $total,
+                'from' => $offset + 1,
+                'to' => min($offset + $limit, $total)
+            ];
+            
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => [
+                    'transactions' => $paginatedTransactions,
+                    'pagination' => $pagination
+                ]
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Error getting financial transactions: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'فشل في تحميل المعاملات المالية'], 500);
+        }
+    }
+
+    public function exportFinancialTransactions()
+    {
+        try {
+            // Clear any output
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+            
+            // Set memory and time limits
+            ini_set('memory_limit', '512M');
+            ini_set('max_execution_time', 300);
+            
+            error_log("=== EXPORT START ===");
+            error_log("Export function called at: " . date('Y-m-d H:i:s'));
+            
+            if (!$this->auth->check()) {
+                error_log("EXPORT FAILED: User not authenticated");
+                http_response_code(401);
+                echo "Unauthorized - Please login first";
+                exit;
+            }
+
+            // Get parameters
+            $date = $_GET['date'] ?? '';
+            $type = $_GET['type'] ?? 'all';
+            
+            error_log("Export parameters - date: '$date', type: '$type'");
+            
+            // Get all transactions
+            $transactions = $this->getAllFinancialTransactions($date, $type);
+            
+            error_log("Found " . count($transactions) . " transactions");
+            
+            // Try Excel first, fallback to CSV
+            if ($this->tryExcelExport($transactions)) {
+                return; // Excel export successful
+            }
+            
+            // Fallback to CSV
+            $this->exportAsCSV($transactions);
+            
+        } catch (Exception $e) {
+            error_log("=== EXPORT ERROR ===");
+            error_log("Error: " . $e->getMessage());
+            
+            // Clear any previous output
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+            
+            // Return error as CSV
+            $this->exportAsCSV([]);
+        }
+    }
+    
+    private function tryExcelExport($transactions)
+    {
+        try {
+            // Check if PhpSpreadsheet is available
+            if (!class_exists('PhpOffice\PhpSpreadsheet\Spreadsheet')) {
+                error_log("PhpSpreadsheet not available, using CSV");
+                return false;
+            }
+            
+            error_log("Trying Excel export with PhpSpreadsheet");
+            
+            // Create spreadsheet
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            
+            // Set RTL for Arabic
+            $sheet->setRightToLeft(true);
+            
+            // Headers with numbering
+            $headers = ['م', 'التاريخ', 'النوع', 'الوصف', 'المبلغ', 'الرصيد'];
+            $column = 'A';
+            foreach ($headers as $header) {
+                $sheet->setCellValue($column . '1', $header);
+                $column++;
+            }
+            
+            // Data with numbering and translation
+            $row = 2;
+            if (empty($transactions)) {
+                $sheet->setCellValue('A' . $row, '1');
+                $sheet->setCellValue('B' . $row, 'لا توجد معاملات للتصدير');
+            } else {
+                $counter = 1;
+                foreach ($transactions as $transaction) {
+                    // ترقيم
+                    $sheet->setCellValue('A' . $row, $counter);
+                    
+                    // التاريخ
+                    $sheet->setCellValue('B' . $row, $transaction['created_at']);
+                    
+                    // ترجمة النوع
+                    $translatedType = $this->translateTransactionType($transaction['type']);
+                    $sheet->setCellValue('C' . $row, $translatedType);
+                    
+                    // الوصف
+                    $sheet->setCellValue('D' . $row, $transaction['description']);
+                    
+                    // المبلغ
+                    $sheet->setCellValue('E' . $row, $transaction['amount']);
+                    
+                    // الرصيد
+                    $sheet->setCellValue('F' . $row, $transaction['balance']);
+                    
+                    // تطبيق الألوان حسب نوع العملية
+                    $this->applyTransactionColors($sheet, $row, $transaction['type']);
+                    
+                    $row++;
+                    $counter++;
+                }
+            }
+            
+            // Auto-size columns
+            foreach (range('A', 'F') as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+            
+            // Style headers
+            $headerStyle = [
+                'font' => [
+                    'bold' => true,
+                    'size' => 14,
+                    'color' => ['argb' => 'FFFFFFFF'],
+                ],
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FF2E86AB'], // أزرق غامق
+                ],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                        'color' => ['argb' => 'FF000000'],
+                    ],
+                ],
+            ];
+            $sheet->getStyle('A1:F1')->applyFromArray($headerStyle);
+            
+            // تطبيق تنسيق الصفوف المتناوبة
+            $this->applyAlternatingRowColors($sheet, $row);
+            
+            // تعيين ارتفاع الصفوف
+            $sheet->getRowDimension(1)->setRowHeight(25); // صف العناوين
+            for ($i = 2; $i < $row; $i++) {
+                $sheet->getRowDimension($i)->setRowHeight(20); // صفوف البيانات
+            }
+            
+            // إضافة معلومات إضافية في عمود منفصل بعد البيانات
+            $infoColumn = 'H'; // العمود H بعد آخر عمود بيانات (F)
+            $infoRow = 1; // بداية من الصف الأول
+            
+            $sheet->setCellValue($infoColumn . $infoRow, 'معلومات التصدير:');
+            $sheet->setCellValue($infoColumn . ($infoRow + 1), 'تاريخ التصدير:');
+            $sheet->setCellValue($infoColumn . ($infoRow + 2), date('Y/m/d H:i:s'));
+            $sheet->setCellValue($infoColumn . ($infoRow + 3), 'إجمالي المعاملات:');
+            $sheet->setCellValue($infoColumn . ($infoRow + 4), count($transactions));
+            $sheet->setCellValue($infoColumn . ($infoRow + 5), 'نوع التصدير:');
+            $sheet->setCellValue($infoColumn . ($infoRow + 6), 'Excel مع تنسيق');
+            
+            // تنسيق معلومات التصدير
+            $infoStyle = [
+                'font' => [
+                    'bold' => true,
+                    'size' => 12,
+                    'color' => ['argb' => 'FF2E86AB'], // أزرق
+                ],
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FFE8F4FD'], // أزرق فاتح
+                ],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                        'color' => ['argb' => 'FF2E86AB'],
+                    ],
+                ],
+            ];
+            
+            // تطبيق التنسيق على العنوان
+            $sheet->getStyle($infoColumn . $infoRow)->applyFromArray($infoStyle);
+            
+            // تنسيق البيانات
+            $dataStyle = [
+                'font' => [
+                    'size' => 11,
+                    'color' => ['argb' => 'FF000000'], // أسود
+                ],
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FFFFFFFF'], // أبيض
+                ],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                        'color' => ['argb' => 'FF2E86AB'],
+                    ],
+                ],
+            ];
+            
+            // تطبيق التنسيق على البيانات
+            for ($i = 1; $i <= 6; $i++) {
+                $sheet->getStyle($infoColumn . ($infoRow + $i))->applyFromArray($dataStyle);
+            }
+            
+            // تعيين عرض عمود المعلومات
+            $sheet->getColumnDimension($infoColumn)->setWidth(20);
+            
+            // Save file
+            $filename = 'المعاملات_المالية_' . date('Y-m-d') . '.xlsx';
+            
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Cache-Control: max-age=0');
+            
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $writer->save('php://output');
+            
+            error_log("Excel export successful");
+            exit;
+            
+        } catch (Exception $e) {
+            error_log("Excel export failed: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    private function translateTransactionType($type)
+    {
+        $translations = [
+            'opening_balance' => 'رصيد افتتاحي',
+            'additional_balance' => 'رصيد إضافي',
+            'payment' => 'دفعة من مريض',
+            'expense' => 'مصروف',
+            'withdrawal' => 'سحب',
+            'booking' => 'حجز',
+            'refund' => 'استرداد',
+            'balance' => 'رصيد'
+        ];
+        
+        return $translations[$type] ?? $type;
+    }
+    
+    private function applyTransactionColors($sheet, $row, $type)
+    {
+        $baseStyle = [
+            'font' => [
+                'bold' => true,
+                'color' => ['argb' => 'FFFFFFFF'], // أبيض
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['argb' => 'FF000000'],
+                ],
+            ],
+        ];
+        
+        switch ($type) {
+            case 'opening_balance':
+            case 'additional_balance':
+            case 'balance':
+                // أزرق للرصيد
+                $style = array_merge($baseStyle, [
+                    'fill' => [
+                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                        'startColor' => ['argb' => 'FF2E86AB'], // أزرق
+                    ],
+                ]);
+                break;
+                
+            case 'withdrawal':
+            case 'expense':
+                // أحمر للسحب والمصروفات
+                $style = array_merge($baseStyle, [
+                    'fill' => [
+                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                        'startColor' => ['argb' => 'FFDC3545'], // أحمر
+                    ],
+                ]);
+                break;
+                
+            case 'payment':
+            case 'booking':
+            case 'refund':
+                // أخضر للإيرادات والدفعات
+                $style = array_merge($baseStyle, [
+                    'fill' => [
+                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                        'startColor' => ['argb' => 'FF28A745'], // أخضر
+                    ],
+                ]);
+                break;
+                
+            default:
+                // رمادي للأنواع الأخرى
+                $style = array_merge($baseStyle, [
+                    'fill' => [
+                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                        'startColor' => ['argb' => 'FF6C757D'], // رمادي
+                    ],
+                ]);
+                break;
+        }
+        
+        // تطبيق التنسيق على عمود النوع فقط
+        $sheet->getStyle('C' . $row)->applyFromArray($style);
+    }
+    
+    private function applyAlternatingRowColors($sheet, $lastRow)
+    {
+        for ($row = 2; $row < $lastRow; $row++) {
+            $isEvenRow = ($row % 2 == 0);
+            
+            $alternatingStyle = [
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['argb' => $isEvenRow ? 'FFE8F4FD' : 'FFFFFFFF'], // أزرق فاتح جداً أو أبيض
+                ],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                        'color' => ['argb' => 'FF000000'],
+                    ],
+                ],
+            ];
+            
+            // تطبيق التنسيق على جميع الأعمدة عدا عمود النوع (C) الذي له ألوان خاصة
+            $sheet->getStyle('A' . $row . ':B' . $row)->applyFromArray($alternatingStyle);
+            $sheet->getStyle('D' . $row . ':F' . $row)->applyFromArray($alternatingStyle);
+        }
+    }
+    
+    private function exportAsCSV($transactions)
+    {
+        // Set CSV headers
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="المعاملات_المالية_' . date('Y-m-d') . '.csv"');
+        header('Cache-Control: no-cache, must-revalidate');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+        
+        // Add UTF-8 BOM
+        echo "\xEF\xBB\xBF";
+        
+        // CSV content
+        echo "التاريخ,النوع,الوصف,المبلغ,الرصيد\n";
+        
+        if (empty($transactions)) {
+            echo '"لا توجد معاملات للتصدير","","","",""' . "\n";
+        } else {
+            foreach ($transactions as $transaction) {
+                echo '"' . $transaction['created_at'] . '",' .
+                     '"' . $transaction['type'] . '",' .
+                     '"' . $transaction['description'] . '",' .
+                     '"' . $transaction['amount'] . '",' .
+                     '"' . $transaction['balance'] . '"' . "\n";
+            }
+        }
+        
+        error_log("CSV export successful");
+        exit;
+    }
+
+    private function getAllFinancialTransactions($date = null, $type = 'all')
+    {
+        try {
+            error_log("=== GET ALL FINANCIAL TRANSACTIONS START ===");
+            error_log("Parameters - date: '$date', type: '$type'");
+            
+            $whereConditions = [];
+            $params = [];
+            
+            // Date filter
+            if ($date) {
+                $whereConditions[] = "DATE(created_at) = ?";
+                $params[] = $date;
+                error_log("Date filter applied: $date");
+            }
+            
+            // Type filter
+            if ($type !== 'all') {
+                if ($type === 'payment') {
+                    $whereConditions[] = "type = 'payment'";
+                } elseif ($type === 'expense') {
+                    $whereConditions[] = "type = 'expense'";
+                } elseif ($type === 'balance') {
+                    $whereConditions[] = "type = 'balance'";
+                }
+                error_log("Type filter applied: $type");
+            }
+            
+            $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
+            error_log("Where clause: $whereClause");
+            
+            // Prepare parameters for each subquery
+            $paymentParams = [];
+            $expenseParams = [];
+            $balanceParams = [];
+            
+            if ($date) {
+                $paymentParams[] = $date;
+                $expenseParams[] = $date;
+                $balanceParams[] = $date;
+            }
+            
+            error_log("Payment params: " . json_encode($paymentParams));
+            error_log("Expense params: " . json_encode($expenseParams));
+            error_log("Balance params: " . json_encode($balanceParams));
+            
+            // Get all transactions with simplified query
+            $allTransactions = [];
+            
+            // Get payments
+            try {
+                error_log("=== GETTING PAYMENTS ===");
+                $paymentQuery = "
+                    SELECT 
+                        p.created_at,
+                        'payment' as type,
+                        CONCAT('دفعة من ', COALESCE(CONCAT(pat.first_name, ' ', pat.last_name), 'غير محدد')) as description,
+                        p.amount,
+                        0 as balance
+                    FROM payments p
+                    LEFT JOIN patients pat ON p.patient_id = pat.id
+                    " . ($date ? "WHERE DATE(p.created_at) = ?" : "");
+                
+                error_log("Payment query: " . $paymentQuery);
+                error_log("Payment params: " . json_encode($paymentParams));
+                
+                $stmt = $this->pdo->prepare($paymentQuery);
+                $stmt->execute($paymentParams);
+                $payments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                $allTransactions = array_merge($allTransactions, $payments);
+                error_log("Found " . count($payments) . " payments");
+                error_log("Payment sample: " . json_encode(array_slice($payments, 0, 1)));
+            } catch (Exception $e) {
+                error_log("ERROR getting payments: " . $e->getMessage());
+                error_log("Payment query: " . $paymentQuery);
+                error_log("Payment params: " . json_encode($paymentParams));
+            }
+            
+            // Get expenses
+            try {
+                error_log("=== GETTING EXPENSES ===");
+                $expenseQuery = "
+                    SELECT 
+                        e.created_at,
+                        'expense' as type,
+                        CONCAT('مصروف: ', e.expense_name) as description,
+                        e.amount,
+                        0 as balance
+                    FROM expenses e
+                    " . ($date ? "WHERE DATE(e.created_at) = ?" : "");
+                
+                error_log("Expense query: " . $expenseQuery);
+                error_log("Expense params: " . json_encode($expenseParams));
+                
+                $stmt = $this->pdo->prepare($expenseQuery);
+                $stmt->execute($expenseParams);
+                $expenses = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                $allTransactions = array_merge($allTransactions, $expenses);
+                error_log("Found " . count($expenses) . " expenses");
+                error_log("Expense sample: " . json_encode(array_slice($expenses, 0, 1)));
+            } catch (Exception $e) {
+                error_log("ERROR getting expenses: " . $e->getMessage());
+                error_log("Expense query: " . $expenseQuery);
+                error_log("Expense params: " . json_encode($expenseParams));
+            }
+            
+            // Get daily balances
+            try {
+                error_log("=== GETTING DAILY BALANCES ===");
+                $balanceQuery = "
+                    SELECT 
+                        db.created_at,
+                        'balance' as type,
+                        CONCAT('رصيد: ', 
+                            CASE 
+                                WHEN db.balance_type = 'opening' THEN 'رصيد افتتاحي'
+                                WHEN db.balance_type = 'additional' THEN 'إضافة رصيد'
+                                WHEN db.balance_type = 'withdrawal' THEN 'سحب من الرصيد'
+                                ELSE 'رصيد'
+                            END,
+                            CASE WHEN db.description IS NOT NULL THEN CONCAT(' - ', db.description) ELSE '' END
+                        ) as description,
+                        db.amount,
+                        0 as balance
+                    FROM daily_balances db
+                    " . ($date ? "WHERE DATE(db.created_at) = ?" : "");
+                
+                error_log("Balance query: " . $balanceQuery);
+                error_log("Balance params: " . json_encode($balanceParams));
+                
+                $stmt = $this->pdo->prepare($balanceQuery);
+                $stmt->execute($balanceParams);
+                $balances = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                $allTransactions = array_merge($allTransactions, $balances);
+                error_log("Found " . count($balances) . " balances");
+                error_log("Balance sample: " . json_encode(array_slice($balances, 0, 1)));
+            } catch (Exception $e) {
+                error_log("ERROR getting balances: " . $e->getMessage());
+                error_log("Balance query: " . $balanceQuery);
+                error_log("Balance params: " . json_encode($balanceParams));
+            }
+            
+            // Sort by created_at
+            usort($allTransactions, function($a, $b) {
+                return strtotime($a['created_at']) - strtotime($b['created_at']);
+            });
+            
+            // Filter by type if needed
+            if ($type !== 'all') {
+                $allTransactions = array_filter($allTransactions, function($transaction) use ($type) {
+                    return $transaction['type'] === $type;
+                });
+            }
+            
+            $results = $allTransactions;
+            
+            // Log for debugging
+            error_log("=== GET ALL FINANCIAL TRANSACTIONS END ===");
+            error_log("Total transactions found: " . count($results));
+            error_log("Final results sample: " . json_encode(array_slice($results, 0, 2)));
+            error_log("Export query executed. Found " . count($results) . " transactions for date: " . $date . ", type: " . $type);
+            
+            return $results;
+            
+        } catch (Exception $e) {
+            error_log("Error getting all financial transactions: " . $e->getMessage());
+        return [];
+        }
+    }
+
+    private function generateExcelContent($transactions)
+    {
+        // Create Excel content with proper UTF-8 BOM for Arabic support
+        $excel = "\xEF\xBB\xBF"; // UTF-8 BOM for Arabic support
+        
+        // Add headers with Arabic text
+        $excel .= "التاريخ,النوع,الوصف,المبلغ,الرصيد\n";
+        
+        foreach ($transactions as $transaction) {
+            // Format date in Arabic format
+            $formattedDate = $this->getArabicDate($transaction['created_at']);
+            
+            // Format type in Arabic
+            $typeText = $this->getTransactionTypeText($transaction['type']);
+            
+            // Clean description for CSV - handle Arabic text properly
+            $description = $this->cleanForCSV($transaction['description']);
+            
+            // Format amounts with proper Arabic number formatting
+            $amount = $this->formatArabicNumber($transaction['amount']);
+            $balance = $this->formatArabicNumber($transaction['balance']);
+            
+            $excel .= sprintf(
+                "%s,%s,\"%s\",%s,%s\n",
+                $formattedDate,
+                $typeText,
+                $description,
+                $amount,
+                $balance
+            );
+        }
+        
+        return $excel;
+    }
+
+    private function generateFormattedExcelContent($transactions)
+    {
+        try {
+            error_log("=== GENERATE EXCEL CONTENT START ===");
+            error_log("Transactions count: " . count($transactions));
+            
+            require_once 'vendor/autoload.php';
+            
+            // Create new Spreadsheet object
+            $spreadsheet = new Spreadsheet();
+            error_log("Spreadsheet object created successfully");
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Set sheet title
+        $sheet->setTitle('المعاملات المالية');
+        
+        // Set headers
+        $headers = ['التاريخ', 'النوع', 'الوصف', 'المبلغ', 'الرصيد'];
+        $col = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($col . '1', $header);
+            $col++;
+        }
+        
+        // Style headers
+        $headerStyle = [
+            'font' => [
+                'bold' => true,
+                'size' => 16,
+                'color' => ['rgb' => 'FFFFFF']
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4CAF50']
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000']
+                ]
+            ]
+        ];
+        
+        $sheet->getStyle('A1:E1')->applyFromArray($headerStyle);
+        
+        // Set row height for headers
+        $sheet->getRowDimension(1)->setRowHeight(25);
+        
+        // Add data rows
+        $row = 2;
+        if (empty($transactions)) {
+            // Add empty row with message
+            $sheet->setCellValue('A' . $row, 'لا توجد معاملات للتصدير');
+            $sheet->setCellValue('B' . $row, 'لا توجد معاملات للتصدير');
+            $sheet->setCellValue('C' . $row, 'لا توجد معاملات للتصدير');
+            $sheet->setCellValue('D' . $row, '0.00');
+            $sheet->setCellValue('E' . $row, '0.00');
+            
+            // Style empty row
+            $emptyStyle = [
+                'font' => [
+                    'size' => 14,
+                    'color' => ['rgb' => '666666']
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => '000000']
+                    ]
+                ],
+                'alignment' => [
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                    'horizontal' => Alignment::HORIZONTAL_CENTER
+                ]
+            ];
+            $sheet->getStyle('A' . $row . ':E' . $row)->applyFromArray($emptyStyle);
+            $sheet->getRowDimension($row)->setRowHeight(20);
+            $row++;
+        } else {
+            foreach ($transactions as $transaction) {
+            $date = $this->getArabicDate($transaction['created_at']);
+            $type = $transaction['type'];
+            $description = $transaction['description'];
+            $amount = $this->formatArabicNumber($transaction['amount']);
+            $balance = $this->formatArabicNumber($transaction['balance']);
+            
+            // Set cell values
+            $sheet->setCellValue('A' . $row, $date);
+            $sheet->setCellValue('B' . $row, $type);
+            $sheet->setCellValue('C' . $row, $description);
+            $sheet->setCellValue('D' . $row, $amount);
+            $sheet->setCellValue('E' . $row, $balance);
+            
+            // Determine row style based on transaction type
+            $rowStyle = [
+                'font' => [
+                    'size' => 14
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => '000000']
+                    ]
+                ],
+                'alignment' => [
+                    'vertical' => Alignment::VERTICAL_CENTER
+                ]
+            ];
+            
+            if ($type === 'payment') {
+                $rowStyle['fill'] = [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => 'E8F5E8']
+                ];
+                $rowStyle['font']['color'] = ['rgb' => '2E7D32'];
+            } elseif ($type === 'expense') {
+                $rowStyle['fill'] = [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => 'FFEBEE']
+                ];
+                $rowStyle['font']['color'] = ['rgb' => 'C62828'];
+            } elseif ($type === 'balance') {
+                if (strpos($description, 'سحب') !== false) {
+                    // Withdrawal - Red
+                    $rowStyle['fill'] = [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'FFEBEE']
+                    ];
+                    $rowStyle['font']['color'] = ['rgb' => 'C62828'];
+                } elseif (strpos($description, 'إضافة') !== false) {
+                    // Additional balance - Green
+                    $rowStyle['fill'] = [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'E8F5E8']
+                    ];
+                    $rowStyle['font']['color'] = ['rgb' => '2E7D32'];
+                } elseif (strpos($description, 'افتتاحي') !== false) {
+                    // Opening balance - Blue
+                    $rowStyle['fill'] = [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'E3F2FD']
+                    ];
+                    $rowStyle['font']['color'] = ['rgb' => '1565C0'];
+                }
+            }
+            
+            // Apply row style
+            $sheet->getStyle('A' . $row . ':E' . $row)->applyFromArray($rowStyle);
+            
+            // Set row height
+            $sheet->getRowDimension($row)->setRowHeight(20);
+            
+            $row++;
+            }
+        }
+        
+        // Auto-size columns
+        foreach (range('A', 'E') as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+        
+        // Create writer and save to string
+        error_log("Creating Xlsx writer");
+        $writer = new Xlsx($spreadsheet);
+        error_log("Xlsx writer created successfully");
+        
+        ob_start();
+        $writer->save('php://output');
+        $excelContent = ob_get_contents();
+        ob_end_clean();
+        
+        error_log("Excel content generated, length: " . strlen($excelContent));
+        return $excelContent;
+        
+        } catch (Exception $e) {
+            error_log("=== GENERATE EXCEL CONTENT ERROR ===");
+            error_log("Error in generateFormattedExcelContent: " . $e->getMessage());
+            error_log("Error trace: " . $e->getTraceAsString());
+            throw $e;
+        }
+    }
+    
+    private function cleanForCSV($text)
+    {
+        // Clean text for CSV format while preserving Arabic characters
+        $text = str_replace([',', '"', "\n", "\r"], ['،', '""', ' ', ' '], $text);
+        return trim($text);
+    }
+    
+    private function formatArabicNumber($number)
+    {
+        // Format number with Arabic locale
+        return number_format($number, 2, '.', ',');
+    }
+    
+    private function getArabicDate($date)
+    {
+        // Convert date to Arabic format
+        $arabicMonths = [
+            '01' => 'يناير', '02' => 'فبراير', '03' => 'مارس', '04' => 'أبريل',
+            '05' => 'مايو', '06' => 'يونيو', '07' => 'يوليو', '08' => 'أغسطس',
+            '09' => 'سبتمبر', '10' => 'أكتوبر', '11' => 'نوفمبر', '12' => 'ديسمبر'
+        ];
+        
+        $dateObj = new \DateTime($date);
+        $month = $dateObj->format('m');
+        $day = $dateObj->format('d');
+        $year = $dateObj->format('Y');
+        $time = $dateObj->format('H:i');
+        
+        return $day . ' ' . $arabicMonths[$month] . ' ' . $year . ' ' . $time;
+    }
+    
+    private function getTransactionTypeText($type)
+    {
+        $types = [
+            'payment' => 'دفعة',
+            'expense' => 'مصروف',
+            'balance' => 'رصيد'
+        ];
+        
+        return $types[$type] ?? 'غير محدد';
+    }
+
+    /**
+     * Get dashboard summary for updating cards
+     */
+    public function getDashboardSummary()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            
+            // Get daily balance
+            $dailyBalance = $this->getDailyBalance();
+            
+            // Get payment types summary
+            $paymentTypes = $this->getPaymentTypesSummary();
+            
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => [
+                    'dailyBalance' => $dailyBalance,
+                    'paymentTypes' => $paymentTypes
+                ]
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Error getting dashboard summary: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'فشل في تحميل ملخص لوحة التحكم'], 500);
+        }
+    }
+
+    private function getDailyBalance()
+    {
+        try {
+            $today = date('Y-m-d');
+            
+            // Get opening balance
+            $stmt = $this->pdo->prepare("
+                SELECT COALESCE(SUM(amount), 0) as opening_balance
+                FROM daily_balances 
+                WHERE DATE(created_at) = ? AND balance_type = 'opening'
+            ");
+            $stmt->execute([$today]);
+            $openingBalance = $stmt->fetchColumn();
+            
+            // Get additional balance (positive amounts)
+            $stmt = $this->pdo->prepare("
+                SELECT COALESCE(SUM(amount), 0) as additional_balance
+                FROM daily_balances 
+                WHERE DATE(created_at) = ? AND balance_type = 'additional'
+            ");
+            $stmt->execute([$today]);
+            $additionalBalance = $stmt->fetchColumn();
+            
+            // Get total withdrawals (negative amounts)
+            $stmt = $this->pdo->prepare("
+                SELECT COALESCE(SUM(amount), 0) as total_withdrawals
+                FROM daily_balances 
+                WHERE DATE(created_at) = ? AND balance_type = 'withdrawal'
+            ");
+            $stmt->execute([$today]);
+            $totalWithdrawals = $stmt->fetchColumn();
+            
+            // Get total received today
+            $stmt = $this->pdo->prepare("
+                SELECT COALESCE(SUM(amount), 0) as total_received
+                FROM payments 
+                WHERE DATE(created_at) = ?
+            ");
+            $stmt->execute([$today]);
+            $totalReceived = $stmt->fetchColumn();
+            
+            // Get total expenses today
+            $stmt = $this->pdo->prepare("
+                SELECT COALESCE(SUM(amount), 0) as total_expenses
+                FROM expenses 
+                WHERE DATE(created_at) = ?
+            ");
+            $stmt->execute([$today]);
+            $totalExpenses = $stmt->fetchColumn();
+            
+            // Calculate current balance: opening + additional + payments - withdrawals - expenses
+            $currentBalance = $openingBalance + $additionalBalance + $totalReceived - $totalWithdrawals - $totalExpenses;
+            
+            // Get transactions count
+            $stmt = $this->pdo->prepare("
+                SELECT COUNT(*) as transactions_count
+                FROM (
+                    SELECT id FROM payments WHERE DATE(created_at) = ?
+                    UNION ALL
+                    SELECT id FROM expenses WHERE DATE(created_at) = ?
+                    UNION ALL
+                    SELECT id FROM daily_balances WHERE DATE(created_at) = ?
+                ) as all_transactions
+            ");
+            $stmt->execute([$today, $today, $today]);
+            $transactionsCount = $stmt->fetchColumn();
+            
+            return [
+                'opening_balance' => $openingBalance,
+                'total_received' => $totalReceived,
+                'total_expenses' => $totalExpenses,
+                'current_balance' => $currentBalance,
+                'transactions_count' => $transactionsCount
+            ];
+            
+        } catch (Exception $e) {
+            error_log("Error getting daily balance: " . $e->getMessage());
+            return [
+                'opening_balance' => 0,
+                'total_received' => 0,
+                'total_expenses' => 0,
+                'current_balance' => 0,
+                'transactions_count' => 0
+            ];
+        }
+    }
+
+    private function getPaymentTypesSummary()
+    {
+        try {
+            $today = date('Y-m-d');
+            
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    type,
+                    COUNT(*) as count,
+                    SUM(amount) as total
+                FROM payments 
+                WHERE DATE(created_at) = ?
+                GROUP BY type
+            ");
+            $stmt->execute([$today]);
+            $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            $summary = [];
+            foreach ($results as $result) {
+                $summary[$result['type']] = [
+                    'count' => $result['count'],
+                    'total' => $result['total']
+                ];
+            }
+            
+            return $summary;
+            
+        } catch (Exception $e) {
+            error_log("Error getting payment types summary: " . $e->getMessage());
+            return [];
         }
     }
 }

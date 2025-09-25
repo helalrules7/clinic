@@ -3,6 +3,7 @@ RewriteEngine On
 # Redirect all requests to public/index.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/assets/
 RewriteRule ^(.*)$ public/index.php [QSA,L]
 
 # Security: Block access to sensitive files

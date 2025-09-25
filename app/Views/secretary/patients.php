@@ -1,10 +1,12 @@
 <!-- Patients Header -->
 <div class="row mb-4">
-    <div class="col-md-8">
-        <h4 class="text-primary arabic-text">
-            <i class="bi bi-people me-2"></i>
-            إدارة المرضى
-        </h4>
+    <div class="col-md-6">
+        <div class="d-flex align-items-center">
+            <h4 class="mb-0 me-3 arabic-text">
+                <i class="bi bi-people me-2"></i>
+                إدارة المرضى
+            </h4>
+        </div>
         <p class="text-muted mb-0 arabic-text">عرض وإدارة سجلات المرضى</p>
         <div class="mt-2">
             <small class="text-muted arabic-text">
@@ -16,9 +18,9 @@
             </small>
         </div>
     </div>
-    <div class="col-md-4 text-end">
-        <div class="btn-group" role="group">
-            <a href="/secretary/patients/new" class="btn btn-success">
+    <div class="col-md-6 text-end">
+        <div class="d-flex gap-2 justify-content-end">
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addPatientModal">
                 <i class="bi bi-person-plus me-2"></i>
                 مريض جديد
                 <span class="ms-2">
@@ -26,7 +28,7 @@
                     <span class="text-white-50 mx-1">/</span>
                     <kbd lang="ar">ى</kbd>
                 </span>
-            </a>
+            </button>
             <button class="btn btn-primary" 
                     data-bs-toggle="modal" 
                     data-bs-target="#searchModal" 
@@ -43,43 +45,138 @@
     </div>
 </div>
 
-<!-- Patients Statistics -->
+<!-- Patient Statistics -->
 <div class="row mb-4">
     <div class="col-md-3">
-        <div class="card border-primary">
-            <div class="card-body text-center">
-                <i class="bi bi-people text-primary" style="font-size: 2rem;"></i>
-                <h3 class="mt-2 mb-1"><?= count($patients) ?></h3>
-                <p class="text-muted mb-0 arabic-text">إجمالي المرضى</p>
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-primary">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="stat-content ms-3">
+                        <h3 class="stat-number"><?= $stats['total'] ?? 0 ?></h3>
+                        <p class="stat-label arabic-text">إجمالي المرضى</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card border-success">
-            <div class="card-body text-center">
-                <i class="bi bi-calendar-check text-success" style="font-size: 2rem;"></i>
-                <h3 class="mt-2 mb-1"><?= count(array_filter($patients, fn($p) => $p['last_visit'] && date('Y-m-d', strtotime($p['last_visit'])) >= date('Y-m-d', strtotime('-7 days')))) ?></h3>
-                <p class="text-muted mb-0 arabic-text">زيارات هذا الأسبوع</p>
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-success">
+                        <i class="bi bi-person-check"></i>
+                    </div>
+                    <div class="stat-content ms-3">
+                        <h3 class="stat-number"><?= $stats['active'] ?? 0 ?></h3>
+                        <p class="stat-label arabic-text">مرضى نشطين</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card border-info">
-            <div class="card-body text-center">
-                <i class="bi bi-person-plus text-info" style="font-size: 2rem;"></i>
-                <h3 class="mt-2 mb-1"><?= count(array_filter($patients, fn($p) => date('Y-m-d', strtotime($p['created_at'])) >= date('Y-m-d', strtotime('-30 days')))) ?></h3>
-                <p class="text-muted mb-0 arabic-text">جدد هذا الشهر</p>
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-info">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                    <div class="stat-content ms-3">
+                        <h3 class="stat-number"><?= $stats['recent'] ?? 0 ?></h3>
+                        <p class="stat-label arabic-text">جدد هذا الشهر</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card border-warning">
-            <div class="card-body text-center">
-                <i class="bi bi-clock text-warning" style="font-size: 2rem;"></i>
-                <h3 class="mt-2 mb-1"><?= count(array_filter($patients, fn($p) => !$p['last_visit'] || date('Y-m-d', strtotime($p['last_visit'])) < date('Y-m-d', strtotime('-30 days')))) ?></h3>
-                <p class="text-muted mb-0 arabic-text">غير نشطين</p>
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-warning">
+                        <i class="bi bi-gender-ambiguous"></i>
+                    </div>
+                    <div class="stat-content ms-3">
+                        <h3 class="stat-number"><?= ($stats['gender']['Female'] ?? 0) ?></h3>
+                        <p class="stat-label arabic-text">إناث</p>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0 arabic-text">
+            <i class="bi bi-funnel me-2"></i>
+            فلاتر البحث
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" id="filterForm">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="search" class="form-label arabic-text">البحث</label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="search" 
+                           name="search" 
+                           value="<?= htmlspecialchars($search) ?>" 
+                           placeholder="الاسم، الهاتف، الرقم القومي...">
+                </div>
+                <div class="col-md-2">
+                    <label for="gender" class="form-label arabic-text">الجنس</label>
+                    <select class="form-select" id="gender" name="gender">
+                        <option value="">الكل</option>
+                        <?php foreach ($genderOptions as $value => $label): ?>
+                            <option value="<?= $value ?>" <?= $gender === $value ? 'selected' : '' ?>>
+                                <?= $label ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="age_range" class="form-label arabic-text">الفئة العمرية</label>
+                    <select class="form-select" id="age_range" name="age_range">
+                        <option value="">الكل</option>
+                        <?php foreach ($ageRangeOptions as $value => $label): ?>
+                            <option value="<?= $value ?>" <?= $ageRange === $value ? 'selected' : '' ?>>
+                                <?= $label ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="last_visit" class="form-label arabic-text">آخر زيارة</label>
+                    <select class="form-select" id="last_visit" name="last_visit">
+                        <option value="">الكل</option>
+                        <?php foreach ($lastVisitOptions as $value => $label): ?>
+                            <option value="<?= $value ?>" <?= $lastVisit === $value ? 'selected' : '' ?>>
+                                <?= $label ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search me-1"></i>
+                            بحث
+                        </button>
+                        <a href="/secretary/patients" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise me-1"></i>
+                            إعادة تعيين
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -138,7 +235,7 @@
                         <th class="arabic-text">التواصل</th>
                         <th class="arabic-text">العمر</th>
                         <th class="arabic-text">آخر زيارة</th>
-                        <th class="arabic-text">إجمالي الزيارات</th>
+                        <th class="arabic-text">إجمالي المدفوعات</th>
                         <th class="arabic-text">الإجراءات</th>
                     </tr>
                 </thead>
@@ -153,15 +250,15 @@
                     <?php else: ?>
                         <?php foreach ($patients as $patient): ?>
                             <?php
-                            $age = $patient['dob'] ? calculateAge($patient['dob']) : 'غير محدد';
-                            $lastVisit = $patient['last_visit'] ? formatDate($patient['last_visit']) : 'لم يزر بعد';
-                            $firstName = $patient['first_name'] || '';
-                            $lastName = $patient['last_name'] || '';
+                            $age = $viewHelper->calculateAge($patient['dob']);
+                            $lastVisit = $patient['last_visit'] ? $viewHelper->formatDateSimple($patient['last_visit']) : 'لم يزر بعد';
+                            $firstName = $patient['first_name'] ?? '';
+                            $lastName = $patient['last_name'] ?? '';
                             $fullName = trim($firstName . ' ' . $lastName);
-                            $firstChar = $firstName ? strtoupper($firstName[0]) : '؟';
-                            $lastChar = $lastName ? strtoupper($lastName[0]) : '؟';
+                            $firstChar = !empty($firstName) ? strtoupper($firstName[0]) : '؟';
+                            $lastChar = !empty($lastName) ? strtoupper($lastName[0]) : '؟';
                             $avatarInitials = $firstChar . '.' . $lastChar;
-                            $avatarClass = $patient['gender'] === 'Female' ? 'avatar-circle avatar-female me-3' : 'avatar-circle avatar-male me-3';
+                            $avatarClass = ($patient['gender'] ?? '') === 'Female' ? 'avatar-circle avatar-female me-3' : 'avatar-circle avatar-male me-3';
                             ?>
                             <tr>
                                 <td>
@@ -172,6 +269,12 @@
                                         <div>
                                             <h6 class="mb-1 arabic-text"><?= htmlspecialchars($fullName) ?></h6>
                                             <small class="text-muted">ID: #<?= $patient['id'] ?></small>
+                                            <?php if (!empty($patient['gender'])): ?>
+                                                <br><small class="text-muted">
+                                                    <i class="bi bi-<?= $patient['gender'] === 'Female' ? 'gender-female' : 'gender-male' ?> me-1"></i>
+                                                    <?= $patient['gender'] === 'Female' ? 'أنثى' : 'ذكر' ?>
+                                                </small>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </td>
@@ -180,10 +283,22 @@
                                         <i class="bi bi-telephone me-1"></i>
                                         <?= htmlspecialchars($patient['phone'] ?? 'غير متوفر') ?>
                                     </div>
-                                    <?php if ($patient['alt_phone']): ?>
+                                    <?php if (!empty($patient['alt_phone'])): ?>
                                         <div class="mt-1">
                                             <i class="bi bi-telephone-plus me-1"></i>
                                             <small class="text-muted"><?= htmlspecialchars($patient['alt_phone']) ?></small>
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if (!empty($patient['national_id'])): ?>
+                                        <div class="mt-1">
+                                            <i class="bi bi-card-text me-1"></i>
+                                            <small class="text-muted"><?= htmlspecialchars($patient['national_id']) ?></small>
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if (!empty($patient['emergency_contact'])): ?>
+                                        <div class="mt-1">
+                                            <i class="bi bi-person-heart me-1"></i>
+                                            <small class="text-muted"><?= htmlspecialchars($patient['emergency_contact']) ?></small>
                                         </div>
                                     <?php endif; ?>
                                 </td>
@@ -197,7 +312,13 @@
                                     ?>
                                 </td>
                                 <td>
-                                    <span class="badge bg-primary arabic-text"><?= $patient['total_appointments'] ?? 0 ?></span>
+                                    <?php if (($patient['total_paid'] ?? 0) > 0): ?>
+                                        <span class="badge bg-success arabic-text"><?= number_format($patient['total_paid'], 2) ?> جنيه</span>
+                                        <br><small class="text-muted"><?= $patient['total_appointments'] ?? 0 ?> زيارة</small>
+                                    <?php else: ?>
+                                        <span class="badge bg-secondary arabic-text">لم يدفع</span>
+                                        <br><small class="text-muted"><?= $patient['total_appointments'] ?? 0 ?> زيارة</small>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group">
@@ -208,13 +329,13 @@
                                            data-bs-title="عرض تفاصيل المريض">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <a href="/secretary/bookings?patient_id=<?= $patient['id'] ?>" 
-                                           class="btn btn-outline-success btn-sm" 
-                                           data-bs-toggle="tooltip" 
-                                           data-bs-placement="top" 
-                                           data-bs-title="حجز موعد جديد">
+                                        <button class="btn btn-outline-success btn-sm" 
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" 
+                                                data-bs-title="حجز موعد جديد"
+                                                onclick="openBookingModal(<?= $patient['id'] ?>, '<?= htmlspecialchars($fullName) ?>')">
                                             <i class="bi bi-calendar-plus"></i>
-                                        </a>
+                                        </button>
                                         <a href="/secretary/payments?patient_id=<?= $patient['id'] ?>" 
                                            class="btn btn-outline-info btn-sm" 
                                            data-bs-toggle="tooltip" 
@@ -313,9 +434,125 @@
     </div>
 </div>
 
+<!-- Add Patient Modal -->
+<div class="modal fade" id="addPatientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header position-relative">
+                <h5 class="modal-title arabic-text">
+                    <i class="bi bi-person-plus me-2"></i>
+                    إضافة مريض جديد
+                </h5>
+                <div class="keyboard-hint">
+                    <span>اضغط</span>
+                    <kbd>Esc</kbd>
+                    <span>للإغلاق</span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addPatientForm">
+                <div class="modal-body">
+                    <!-- Success/Error Messages -->
+                    <div id="addPatientMessage" class="alert d-none" role="alert"></div>
+                    
+                    <div class="row">
+                        <!-- Basic Information -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3 arabic-text">
+                                <i class="bi bi-person me-1"></i>
+                                المعلومات الأساسية
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <label for="firstName" class="form-label arabic-text">الاسم الأول <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="firstName" name="first_name" required maxlength="50">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="lastName" class="form-label arabic-text">الاسم الأخير <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="lastName" name="last_name" required maxlength="50">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="age" class="form-label arabic-text">العمر (بالسنوات)</label>
+                                <input type="number" class="form-control" id="age" name="age" min="0" max="150" placeholder="أدخل العمر بالسنوات">
+                                <div class="form-text arabic-text">بديل: أدخل العمر لحساب تاريخ الميلاد تلقائياً</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="dob" class="form-label arabic-text">تاريخ الميلاد</label>
+                                <input type="date" class="form-control" id="dob" name="dob">
+                                <div class="form-text arabic-text">تاريخ ميلاد المريض (إذا ترك فارغاً سيتم استخدام تاريخ اليوم)</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Contact Information -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3 arabic-text">
+                                <i class="bi bi-telephone me-1"></i>
+                                معلومات الاتصال
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <label for="phone" class="form-label arabic-text">رقم الهاتف <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="phone" name="phone" required maxlength="20">
+                                <div class="invalid-feedback"></div>
+                                <div class="form-text arabic-text">رقم الاتصال الأساسي</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="altPhone" class="form-label arabic-text">رقم هاتف بديل</label>
+                                <input type="tel" class="form-control" id="altPhone" name="alt_phone" maxlength="20">
+                                <div class="form-text arabic-text">رقم هاتف إضافي (اختياري)</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="nationalId" class="form-label arabic-text">الرقم القومي</label>
+                                <input type="text" class="form-control" id="nationalId" name="national_id" maxlength="20">
+                                <div class="form-text arabic-text">الرقم القومي (اختياري)</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="address" class="form-label arabic-text">العنوان</label>
+                                <textarea class="form-control" id="address" name="address" rows="3" maxlength="500"></textarea>
+                                <div class="form-text arabic-text">عنوان المنزل (اختياري)</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="gender" class="form-label arabic-text">الجنس <span class="text-danger">*</span></label>
+                                <select class="form-select" id="gender" name="gender" required>
+                                    <option value="Male" class="arabic-text">ذكر</option>
+                                    <option value="Female" class="arabic-text">أنثى</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                                <div class="form-text text-danger arabic-text"><strong>مطلوب:</strong> غير الجنس إذا لزم الأمر</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-success" id="addPatientSubmit" title="حفظ المريض - اضغط 'Ctrl+S'">
+                        <i class="bi bi-person-plus me-1"></i>
+                        <span class="btn-text">إضافة المريض</span>
+                        <small class="ms-2 text-white-50">
+                            <kbd style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); font-size: 0.7rem;">Ctrl+S</kbd>
+                        </small>
+                        <span class="spinner-border spinner-border-sm d-none ms-2" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 // Helper functions
 function calculateAge(dob) {
+    if (!dob) return 'غير محدد';
+    
     const today = new Date();
     const birthDate = new Date(dob);
     let age = today.getFullYear() - birthDate.getFullYear();
@@ -329,6 +566,8 @@ function calculateAge(dob) {
 }
 
 function formatDate(dateString) {
+    if (!dateString) return 'غير محدد';
+    
     const date = new Date(dateString);
     return date.toLocaleDateString('ar-SA', {
         year: 'numeric',
@@ -422,15 +661,19 @@ function displaySearchResults(patients, searchTerm) {
                                     <i class="bi bi-telephone-plus me-1"></i>
                                     ${patient.alt_phone}
                                 </small>` : ''}
+                                ${patient.national_id ? `<small class="text-muted d-block">
+                                    <i class="bi bi-card-text me-1"></i>
+                                    الرقم القومي: ${highlightedNationalId}
+                                </small>` : ''}
                             </div>
                             <div class="col-md-6">
                                 <small class="text-muted d-block">
                                     <i class="bi bi-person me-1"></i>
                                     العمر: ${age} سنة
                                 </small>
-                                ${patient.national_id ? `<small class="text-muted d-block">
-                                    <i class="bi bi-card-text me-1"></i>
-                                    الرقم القومي: ${highlightedNationalId}
+                                ${patient.emergency_contact ? `<small class="text-muted d-block">
+                                    <i class="bi bi-person-heart me-1"></i>
+                                    طوارئ: ${patient.emergency_contact}
                                 </small>` : ''}
                             </div>
                         </div>
@@ -594,6 +837,228 @@ function filterPatientsBySearch(query) {
         }
     });
 }
+
+function openBookingModal(patientId, patientName) {
+    // Redirect to bookings page with patient pre-selected
+    window.location.href = `/secretary/bookings?patient_id=${patientId}`;
+}
+
+// Add Patient functionality - Age and Date of Birth conversion
+function initializeAddPatientModal() {
+    const addPatientForm = document.getElementById('addPatientForm');
+    const addPatientModal = document.getElementById('addPatientModal');
+    const addPatientSubmit = document.getElementById('addPatientSubmit');
+    const addPatientMessage = document.getElementById('addPatientMessage');
+    
+    // Reset form when modal opens
+    addPatientModal.addEventListener('show.bs.modal', function() {
+        addPatientForm.reset();
+        addPatientForm.classList.remove('was-validated');
+        hideMessage();
+        resetSubmitButton();
+        
+        // Focus on first name field
+        setTimeout(() => {
+            document.getElementById('firstName').focus();
+        }, 300);
+    });
+    
+    // Handle form submission
+    addPatientForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate form
+        if (!addPatientForm.checkValidity()) {
+            addPatientForm.classList.add('was-validated');
+            showMessage('يرجى ملء جميع الحقول المطلوبة بشكل صحيح.', 'error');
+            return;
+        }
+        
+        // Additional validation
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const gender = document.getElementById('gender').value;
+        
+        if (!firstName || !lastName || !phone) {
+            showMessage('الاسم الأول والاسم الأخير ورقم الهاتف مطلوبة.', 'error');
+            return;
+        }
+        
+        if (!gender) {
+            showMessage('يرجى اختيار جنس المريض.', 'error');
+            document.getElementById('gender').focus();
+            return;
+        }
+        
+        // Validate phone number format
+        const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+        const phoneRegex = /^(\+\d{1,3})?\d{7,15}$/;
+        if (!phoneRegex.test(cleanPhone)) {
+            showMessage('يرجى إدخال رقم هاتف صحيح (7-15 رقم، مع إمكانية إضافة رمز الدولة).', 'error');
+            return;
+        }
+        
+        // Submit form
+        submitPatientForm();
+    });
+    
+    function submitPatientForm() {
+        const formData = new FormData(addPatientForm);
+        
+        // Show loading state
+        setSubmitButtonLoading(true);
+        hideMessage();
+        
+        // Send AJAX request
+        fetch('/api/patients', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            setSubmitButtonLoading(false);
+            
+            if (data.ok) {
+                // Success
+                showMessage('تم إضافة المريض بنجاح!', 'success');
+                
+                // Reset form
+                addPatientForm.reset();
+                addPatientForm.classList.remove('was-validated');
+                
+                // Close modal after delay and refresh page
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(addPatientModal).hide();
+                    // Refresh the page to show the new patient
+                    window.location.reload();
+                }, 1500);
+                
+            } else {
+                // Error from server
+                const errorMsg = data.error || data.message || 'فشل في إضافة المريض. يرجى المحاولة مرة أخرى.';
+                showMessage(errorMsg, 'error');
+                
+                // Show validation errors if available
+                if (data.details) {
+                    showValidationErrors(data.details);
+                }
+            }
+        })
+        .catch(error => {
+            setSubmitButtonLoading(false);
+            showMessage('حدث خطأ أثناء إضافة المريض. يرجى المحاولة مرة أخرى.', 'error');
+        });
+    }
+    
+    function showMessage(message, type) {
+        addPatientMessage.className = `alert alert-${type === 'error' ? 'danger' : type}`;
+        addPatientMessage.textContent = message;
+        addPatientMessage.classList.remove('d-none');
+    }
+    
+    function hideMessage() {
+        addPatientMessage.classList.add('d-none');
+    }
+    
+    function setSubmitButtonLoading(loading) {
+        const btnText = addPatientSubmit.querySelector('.btn-text');
+        const spinner = addPatientSubmit.querySelector('.spinner-border');
+        
+        if (loading) {
+            addPatientSubmit.disabled = true;
+            btnText.textContent = 'جاري الإضافة...';
+            spinner.classList.remove('d-none');
+        } else {
+            addPatientSubmit.disabled = false;
+            btnText.textContent = 'إضافة المريض';
+            spinner.classList.add('d-none');
+        }
+    }
+    
+    function resetSubmitButton() {
+        setSubmitButtonLoading(false);
+    }
+    
+    function showValidationErrors(errors) {
+        // Clear previous validation errors
+        document.querySelectorAll('.invalid-feedback').forEach(el => {
+            el.textContent = '';
+        });
+        
+        // Show new validation errors
+        Object.keys(errors).forEach(field => {
+            const input = document.querySelector(`[name="${field}"]`);
+            if (input) {
+                input.classList.add('is-invalid');
+                const feedback = input.parentNode.querySelector('.invalid-feedback');
+                if (feedback) {
+                    feedback.textContent = errors[field];
+                }
+            }
+        });
+    }
+    
+    // Clear validation errors on input
+    addPatientForm.addEventListener('input', function(e) {
+        if (e.target.classList.contains('is-invalid')) {
+            e.target.classList.remove('is-invalid');
+            const feedback = e.target.parentNode.querySelector('.invalid-feedback');
+            if (feedback) {
+                feedback.textContent = '';
+            }
+        }
+    });
+    
+    // Age and Date of Birth conversion
+    const dobInput = document.getElementById('dob');
+    const ageInput = document.getElementById('age');
+    
+    // Convert age to date of birth
+    ageInput.addEventListener('input', function() {
+        const age = parseInt(this.value);
+        if (age && age > 0 && age <= 150) {
+            const today = new Date();
+            const birthYear = today.getFullYear() - age;
+            const birthDate = new Date(birthYear, today.getMonth(), today.getDate());
+            dobInput.value = birthDate.toISOString().split('T')[0];
+            
+            // Clear age field after conversion
+            setTimeout(() => {
+                this.value = '';
+            }, 1000);
+        }
+    });
+    
+    // Convert date of birth to age
+    dobInput.addEventListener('change', function() {
+        if (this.value) {
+            const birthDate = new Date(this.value);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            
+            if (age >= 0 && age <= 150) {
+                ageInput.placeholder = `العمر المحسوب: ${age} سنة`;
+                setTimeout(() => {
+                    ageInput.placeholder = 'أدخل العمر بالسنوات';
+                }, 3000);
+            }
+        }
+    });
+}
+
+// Initialize add patient modal when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAddPatientModal();
+});
 </script>
 
 <style>

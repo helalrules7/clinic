@@ -1379,6 +1379,7 @@ class DoctorController
                 'clinic_logo_watermark' => '/assets/images/Light.png',
                 'new_visit_cost' => '100',
                 'repeated_visit_cost' => '50',
+                'consultation_cost' => '200',
                 'timezone' => 'Africa/Cairo',
                 'date_format' => 'Y-m-d',
                 'time_format' => 'H:i',
@@ -1413,6 +1414,8 @@ class DoctorController
     {
         $allowedSettings = [
             'clinic_name', 'clinic_email', 'clinic_phone', 'clinic_address',
+            'clinic_name_arabic', 'clinic_website', 'clinic_logo', 'clinic_logo_print', 'clinic_logo_watermark',
+            'new_visit_cost', 'repeated_visit_cost', 'consultation_cost',
             'timezone', 'date_format', 'time_format', 'items_per_page',
             'backup_frequency', 'email_notifications', 'sms_notifications', 'maintenance_mode'
         ];
@@ -1428,6 +1431,9 @@ class DoctorController
                     }
                     if ($key === 'items_per_page' && (!is_numeric($value) || $value < 1 || $value > 100)) {
                         throw new Exception('Items per page must be between 1 and 100');
+                    }
+                    if (in_array($key, ['new_visit_cost', 'repeated_visit_cost', 'consultation_cost']) && (!is_numeric($value) || $value < 0)) {
+                        throw new Exception(ucfirst(str_replace('_', ' ', $key)) . ' must be a positive number');
                     }
                     
                     // Determine setting type and convert value
@@ -1648,6 +1654,386 @@ class DoctorController
         } catch (\Exception $e) {
             error_log("Error updating setting {$key}: " . $e->getMessage());
             throw $e;
+        }
+    }
+
+    /**
+     * Financial Management Page
+     */
+    public function payments()
+    {
+        $user = $this->auth->user();
+        
+        // Get daily balance
+        $dailyBalance = $this->getDailyBalance();
+        
+        // Get payment types summary
+        $paymentTypes = $this->getPaymentTypesSummary();
+        
+        // Get today's payments
+        $payments = $this->getTodayPayments();
+        
+        // Get today's expenses
+        $expenses = $this->getTodayExpenses();
+        
+        $content = $this->view->render('doctor/payments', [
+            'dailyBalance' => $dailyBalance,
+            'paymentTypes' => $paymentTypes,
+            'payments' => $payments,
+            'expenses' => $expenses,
+            'userRole' => $user['role'],
+            'viewHelper' => $this->view
+        ]);
+        
+        echo $this->view->render('layouts/main', [
+            'title' => 'Roaya Clinic - Financial Management',
+            'pageTitle' => 'Financial Management',
+            'pageSubtitle' => 'Manage payments, expenses, and daily operations',
+            'content' => $content,
+            'viewHelper' => $this->view
+        ]);
+    }
+
+    /**
+     * Daily Closure Page
+     */
+    public function dailyClosure()
+    {
+        $user = $this->auth->user();
+        
+        // Get today's date
+        $today = date('Y-m-d');
+        
+        // Check if today is already closed
+        $isClosed = $this->isDateClosed($today);
+        
+        // Get daily summary
+        $dailySummary = $this->getDailySummary($today);
+        
+        $content = $this->view->render('doctor/daily_closure', [
+            'today' => $today,
+            'isClosed' => $isClosed,
+            'dailySummary' => $dailySummary,
+            'viewHelper' => $this->view
+        ]);
+        
+        echo $this->view->render('layouts/main', [
+            'title' => 'Roaya Clinic - Daily Closure',
+            'pageTitle' => 'Daily Closure',
+            'pageSubtitle' => 'Review and close daily operations',
+            'content' => $content,
+            'viewHelper' => $this->view
+        ]);
+    }
+
+    private function getDailyBalance()
+    {
+        try {
+            $today = date('Y-m-d');
+            
+            // Get opening balance
+            $stmt = $this->pdo->prepare("
+                SELECT COALESCE(SUM(amount), 0) as opening_balance
+                FROM daily_balances 
+                WHERE DATE(created_at) = ? AND balance_type = 'opening'
+            ");
+            $stmt->execute([$today]);
+            $openingBalance = $stmt->fetchColumn();
+            
+            // Get additional balance (positive amounts)
+            $stmt = $this->pdo->prepare("
+                SELECT COALESCE(SUM(amount), 0) as additional_balance
+                FROM daily_balances 
+                WHERE DATE(created_at) = ? AND balance_type = 'additional'
+            ");
+            $stmt->execute([$today]);
+            $additionalBalance = $stmt->fetchColumn();
+            
+            // Get total withdrawals (negative amounts)
+            $stmt = $this->pdo->prepare("
+                SELECT COALESCE(SUM(amount), 0) as total_withdrawals
+                FROM daily_balances 
+                WHERE DATE(created_at) = ? AND balance_type = 'withdrawal'
+            ");
+            $stmt->execute([$today]);
+            $totalWithdrawals = $stmt->fetchColumn();
+            
+            // Get total received today
+            $stmt = $this->pdo->prepare("
+                SELECT COALESCE(SUM(amount), 0) as total_received
+                FROM payments 
+                WHERE DATE(created_at) = ?
+            ");
+            $stmt->execute([$today]);
+            $totalReceived = $stmt->fetchColumn();
+            
+            // Get total expenses today
+            $stmt = $this->pdo->prepare("
+                SELECT COALESCE(SUM(amount), 0) as total_expenses
+                FROM expenses 
+                WHERE DATE(created_at) = ?
+            ");
+            $stmt->execute([$today]);
+            $totalExpenses = $stmt->fetchColumn();
+            
+            // Calculate current balance: opening + additional + payments - withdrawals - expenses
+            $currentBalance = $openingBalance + $additionalBalance + $totalReceived - $totalWithdrawals - $totalExpenses;
+            
+            // Get transactions count
+            $stmt = $this->pdo->prepare("
+                SELECT COUNT(*) as transactions_count
+                FROM (
+                    SELECT id FROM payments WHERE DATE(created_at) = ?
+                    UNION ALL
+                    SELECT id FROM expenses WHERE DATE(created_at) = ?
+                    UNION ALL
+                    SELECT id FROM daily_balances WHERE DATE(created_at) = ?
+                ) as all_transactions
+            ");
+            $stmt->execute([$today, $today, $today]);
+            $transactionsCount = $stmt->fetchColumn();
+            
+            return [
+                'opening_balance' => $openingBalance,
+                'additional_balance' => $additionalBalance,
+                'total_received' => $totalReceived,
+                'total_expenses' => $totalExpenses,
+                'total_withdrawals' => $totalWithdrawals,
+                'current_balance' => $currentBalance,
+                'transactions_count' => $transactionsCount,
+                'withdrawals_count' => count($this->getTodayWithdrawals())
+            ];
+            
+        } catch (Exception $e) {
+            error_log("Error getting daily balance: " . $e->getMessage());
+            return [
+                'opening_balance' => 0,
+                'total_received' => 0,
+                'total_expenses' => 0,
+                'current_balance' => 0,
+                'transactions_count' => 0
+            ];
+        }
+    }
+
+    private function getPaymentTypesSummary()
+    {
+        try {
+            $today = date('Y-m-d');
+            
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    type,
+                    COUNT(*) as count,
+                    SUM(amount) as total
+                FROM payments 
+                WHERE DATE(created_at) = ?
+                GROUP BY type
+            ");
+            $stmt->execute([$today]);
+            $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            $summary = [];
+            foreach ($results as $result) {
+                $summary[$result['type']] = [
+                    'count' => $result['count'],
+                    'total' => $result['total']
+                ];
+            }
+            
+            return $summary;
+            
+        } catch (Exception $e) {
+            error_log("Error getting payment types summary: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    private function getTodayPayments()
+    {
+        try {
+            $today = date('Y-m-d');
+            
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    p.*,
+                    CONCAT(pat.first_name, ' ', pat.last_name) as patient_name,
+                    pat.phone,
+                    u.name as received_by_name
+                FROM payments p
+                LEFT JOIN patients pat ON p.patient_id = pat.id
+                LEFT JOIN users u ON p.received_by = u.id
+                WHERE DATE(p.created_at) = ?
+                ORDER BY p.created_at DESC
+            ");
+            $stmt->execute([$today]);
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+        } catch (Exception $e) {
+            error_log("Error getting today's payments: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    private function getTodayExpenses()
+    {
+        try {
+            $today = date('Y-m-d');
+            
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    e.*,
+                    u.name as created_by_name
+                FROM expenses e
+                LEFT JOIN users u ON e.created_by = u.id
+                WHERE DATE(e.created_at) = ?
+                ORDER BY e.created_at DESC
+            ");
+            $stmt->execute([$today]);
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+        } catch (Exception $e) {
+            error_log("Error getting today's expenses: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    private function getTodayWithdrawals()
+    {
+        try {
+            $today = date('Y-m-d');
+            
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    db.*,
+                    u.name as created_by_name
+                FROM daily_balances db
+                LEFT JOIN users u ON db.created_by = u.id
+                WHERE DATE(db.created_at) = ? AND db.balance_type = 'withdrawal'
+                ORDER BY db.created_at DESC
+            ");
+            $stmt->execute([$today]);
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+        } catch (Exception $e) {
+            error_log("Error getting today's withdrawals: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    private function isDateClosed($date)
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT COUNT(*) FROM daily_closures WHERE date = ?
+            ");
+            $stmt->execute([$date]);
+            return $stmt->fetchColumn() > 0;
+            
+        } catch (Exception $e) {
+            error_log("Error checking if date is closed: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    private function getDailySummary($date)
+    {
+        try {
+            // Get opening balance
+            $stmt = $this->pdo->prepare("
+                SELECT COALESCE(SUM(amount), 0) as opening_balance
+                FROM daily_balances 
+                WHERE DATE(created_at) = ? AND balance_type = 'opening'
+            ");
+            $stmt->execute([$date]);
+            $openingBalance = $stmt->fetchColumn();
+            
+            // Get additional balance
+            $stmt = $this->pdo->prepare("
+                SELECT COALESCE(SUM(amount), 0) as additional_balance
+                FROM daily_balances 
+                WHERE DATE(created_at) = ? AND balance_type = 'additional'
+            ");
+            $stmt->execute([$date]);
+            $additionalBalance = $stmt->fetchColumn();
+            
+            // Get total withdrawals
+            $stmt = $this->pdo->prepare("
+                SELECT COALESCE(SUM(amount), 0) as total_withdrawals
+                FROM daily_balances 
+                WHERE DATE(created_at) = ? AND balance_type = 'withdrawal'
+            ");
+            $stmt->execute([$date]);
+            $totalWithdrawals = $stmt->fetchColumn();
+            
+            // Get all payments
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    p.*,
+                    CONCAT(pat.first_name, ' ', pat.last_name) as patient_name,
+                    u.name as received_by_name
+                FROM payments p
+                LEFT JOIN patients pat ON p.patient_id = pat.id
+                LEFT JOIN users u ON p.received_by = u.id
+                WHERE DATE(p.created_at) = ?
+                ORDER BY p.created_at ASC
+            ");
+            $stmt->execute([$date]);
+            $payments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            // Get all expenses
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    e.*,
+                    u.name as created_by_name
+                FROM expenses e
+                LEFT JOIN users u ON e.created_by = u.id
+                WHERE DATE(e.created_at) = ?
+                ORDER BY e.created_at ASC
+            ");
+            $stmt->execute([$date]);
+            $expenses = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            // Calculate totals
+            $totalPayments = array_sum(array_column($payments, 'amount'));
+            $totalExpenses = array_sum(array_column($expenses, 'amount'));
+            $netAmount = $openingBalance + $additionalBalance + $totalPayments - $totalWithdrawals - $totalExpenses;
+            
+            // Get all withdrawals
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    db.*,
+                    u.name as created_by_name
+                FROM daily_balances db
+                LEFT JOIN users u ON db.created_by = u.id
+                WHERE DATE(db.created_at) = ? AND db.balance_type = 'withdrawal'
+                ORDER BY db.created_at ASC
+            ");
+            $stmt->execute([$date]);
+            $withdrawals = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            return [
+                'opening_balance' => $openingBalance,
+                'additional_balance' => $additionalBalance,
+                'payments' => $payments,
+                'expenses' => $expenses,
+                'withdrawals' => $withdrawals,
+                'total_payments' => $totalPayments,
+                'total_expenses' => $totalExpenses,
+                'total_withdrawals' => $totalWithdrawals,
+                'net_amount' => $netAmount
+            ];
+            
+        } catch (Exception $e) {
+            error_log("Error getting daily summary: " . $e->getMessage());
+            return [
+                'opening_balance' => 0,
+                'payments' => [],
+                'expenses' => [],
+                'total_payments' => 0,
+                'total_expenses' => 0,
+                'net_amount' => 0
+            ];
         }
     }
 }

@@ -21,6 +21,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <link rel="stylesheet" href="/sec-style.css">
+
     <style>
         :root {
             --bg: #f8fafc;
@@ -584,10 +586,10 @@
         <div class="user-info">
             <div class="d-flex align-items-center">
                 <div class="user-avatar">
-                    <?= strtoupper(substr($this->getCurrentUser()['name'] ?? 'س', 0, 1)) ?>
+                    <?= strtoupper(substr(($this->getCurrentUser()['name'] ?? 'س'), 0, 1)) ?>
                 </div>
                 <div class="user-details">
-                    <h6><?= htmlspecialchars($this->getCurrentUser()['name'] ?? 'المستخدم') ?></h6>
+                    <h6><?= htmlspecialchars(($this->getCurrentUser()['name'] ?? 'المستخدم')) ?></h6>
                     <small class="secretary-badge">سكرتارية</small>
                 </div>
             </div>
@@ -616,12 +618,6 @@
                 <a href="/secretary/patients" class="nav-link <?= $this->isActiveRoute('/secretary/patients') ? 'active' : '' ?>">
                     <i class="bi bi-people"></i>
                     المرضى
-                </a>
-            </div>
-            <div class="nav-item">
-                <a href="/secretary/reports" class="nav-link <?= $this->isActiveRoute('/secretary/reports') ? 'active' : '' ?>">
-                    <i class="bi bi-graph-up"></i>
-                    التقارير
                 </a>
             </div>
             <div class="nav-item">
@@ -660,7 +656,7 @@
             <!-- Version info -->
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="text-muted">
-                    <div class="mb-1">عيادة رؤية v2.0</div>
+                    <div class="mb-1">عيادة رؤية v4.0</div>
                     <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none">أحمد هلال</a></div>
                 </small>
             </div>

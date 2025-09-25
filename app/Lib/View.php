@@ -81,16 +81,6 @@ class View
         return $classes[$status] ?? 'badge bg-secondary';
     }
 
-    public function getVisitTypeBadgeClass($type)
-    {
-        $classes = [
-            'New' => 'badge bg-primary',
-            'FollowUp' => 'badge bg-success',
-            'Procedure' => 'badge bg-warning'
-        ];
-        
-        return $classes[$type] ?? 'badge bg-secondary';
-    }
 
     public function getPaymentMethodIcon($method)
     {
@@ -201,5 +191,183 @@ class View
             'default' => 'secondary'
         ];
         return $colors[$status] ?? $colors['default'];
+    }
+
+    public function getPaymentTypeBadgeClass($type)
+    {
+        $classes = [
+            'new_booking' => 'badge bg-primary',
+            'followup' => 'badge bg-success',
+            'consultation' => 'badge bg-info',
+            'procedure' => 'badge bg-warning',
+            'other' => 'badge bg-secondary',
+            'Booking' => 'badge bg-primary',
+            'FollowUp' => 'badge bg-success',
+            'Consultation' => 'badge bg-info',
+            'Procedure' => 'badge bg-warning',
+            'Other' => 'badge bg-secondary'
+        ];
+        
+        return $classes[$type] ?? 'badge bg-secondary';
+    }
+
+    public function getPaymentTypeText($type)
+    {
+        $texts = [
+            'new_booking' => 'حجز جديد',
+            'followup' => 'إعادة كشف',
+            'consultation' => 'استشارة طبية',
+            'procedure' => 'إجراء طبي',
+            'other' => 'أخرى',
+            'Booking' => 'حجز جديد',
+            'FollowUp' => 'إعادة كشف',
+            'Consultation' => 'استشارة طبية',
+            'Procedure' => 'إجراء طبي',
+            'Other' => 'أخرى'
+        ];
+        
+        return $texts[$type] ?? $type;
+    }
+
+    public function getPaymentMethodBadgeClass($method)
+    {
+        $classes = [
+            'Cash' => 'badge bg-success',
+            'Card' => 'badge bg-primary',
+            'Transfer' => 'badge bg-info',
+            'Wallet' => 'badge bg-secondary'
+        ];
+        
+        return $classes[$method] ?? 'badge bg-secondary';
+    }
+
+    public function getPaymentMethodText($method)
+    {
+        $texts = [
+            'Cash' => 'نقدي',
+            'Card' => 'بطاقة ائتمان',
+            'Transfer' => 'تحويل بنكي',
+            'Wallet' => 'محفظة إلكترونية'
+        ];
+        
+        return $texts[$method] ?? $method;
+    }
+
+    public function getStatusText($status)
+    {
+        $texts = [
+            'Completed' => 'مكتمل',
+            'Pending' => 'في الانتظار',
+            'Failed' => 'فشل',
+            'Cancelled' => 'ملغي',
+            'Refunded' => 'مسترد'
+        ];
+        
+        return $texts[$status] ?? $status;
+    }
+
+    public function getExpenseCategoryBadgeClass($category)
+    {
+        $classes = [
+            'utilities' => 'badge bg-primary',
+            'medical' => 'badge bg-danger',
+            'maintenance' => 'badge bg-warning',
+            'office' => 'badge bg-info',
+            'salary' => 'badge bg-success',
+            'other' => 'badge bg-secondary'
+        ];
+        
+        return $classes[$category] ?? 'badge bg-secondary';
+    }
+
+    public function getExpenseCategoryText($category)
+    {
+        $texts = [
+            'utilities' => 'مرافق عامة',
+            'medical' => 'طبية',
+            'maintenance' => 'صيانة',
+            'office' => 'مكتبية',
+            'salary' => 'راتب',
+            'other' => 'أخرى'
+        ];
+        
+        return $texts[$category] ?? $category;
+    }
+
+    public function getVisitTypeBadgeClass($type)
+    {
+        $classes = [
+            'new_booking' => 'badge bg-primary',
+            'followup' => 'badge bg-success',
+            'consultation' => 'badge bg-info',
+            'procedure' => 'badge bg-warning',
+            'other' => 'badge bg-secondary'
+        ];
+        
+        return $classes[$type] ?? 'badge bg-secondary';
+    }
+
+    public function getVisitTypeText($type)
+    {
+        $texts = [
+            'new_booking' => 'حجز جديد',
+            'followup' => 'إعادة كشف',
+            'consultation' => 'استشارة طبية',
+            'procedure' => 'إجراء طبي',
+            'other' => 'أخرى'
+        ];
+        
+        return $texts[$type] ?? $type;
+    }
+
+    public function getBookingStatusBadgeClass($status)
+    {
+        $classes = [
+            'Booked' => 'badge bg-primary',
+            'CheckedIn' => 'badge bg-success',
+            'Completed' => 'badge bg-info',
+            'Cancelled' => 'badge bg-danger',
+            'NoShow' => 'badge bg-warning',
+            'default' => 'badge bg-secondary'
+        ];
+        
+        return $classes[$status] ?? $classes['default'];
+    }
+
+    public function getBookingStatusText($status)
+    {
+        $texts = [
+            'Booked' => 'محجوز',
+            'CheckedIn' => 'تم الحضور',
+            'Completed' => 'مكتمل',
+            'Cancelled' => 'ملغي',
+            'NoShow' => 'لم يحضر',
+            'default' => 'غير محدد'
+        ];
+        
+        return $texts[$status] ?? $status;
+    }
+
+    public function calculateAge($dob)
+    {
+        if (!$dob) {
+            return 'غير محدد';
+        }
+        
+        $today = new \DateTime();
+        $birthDate = new \DateTime($dob);
+        $age = $today->diff($birthDate);
+        
+        return $age->y;
+    }
+
+    public function formatDateSimple($dateString)
+    {
+        if (!$dateString) {
+            return 'غير محدد';
+        }
+        
+        $date = new \DateTime($dateString);
+        return $date->format('Y-m-d');
     }
 }

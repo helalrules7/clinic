@@ -489,6 +489,18 @@
                     </a>
                 </div>
                 <div class="nav-item">
+                    <a href="/doctor/payments" class="nav-link <?= $this->isActiveRoute('/doctor/payments') ? 'active' : '' ?>">
+                        <i class="bi bi-credit-card"></i>
+                        Financial Management
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/doctor/daily-closure" class="nav-link <?= $this->isActiveRoute('/doctor/daily-closure') ? 'active' : '' ?>">
+                        <i class="bi bi-calendar-check"></i>
+                        Daily Closure
+                    </a>
+                </div>
+                <div class="nav-item">
                     <a href="/doctor/reports" class="nav-link <?= $this->isActiveRoute('/doctor/reports') ? 'active' : '' ?>">
                         <i class="bi bi-graph-up"></i>
                         Reports
@@ -587,7 +599,7 @@
             <!-- Version info -->
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="text-muted">
-                    <div class="mb-1">Roaya Clinic v3.0</div>
+                    <div class="mb-1">Roaya Clinic v4.0 F</div>
                     <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none">Ahmed Helal</a></div>
                 </small>
             </div>

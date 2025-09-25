@@ -11,7 +11,7 @@
                     <h1 class="display-4 fw-bold mb-3">Roaya Clinic</h1>
                     <h2 class="h4 mb-4 opacity-90">Management System</h2>
                     <div class="badge bg-white text-dark px-4 py-2 fs-6 fw-semibold">
-                        Version 3.0
+                        Version 4.0
                     </div>
                 </div>
             </div>
@@ -35,7 +35,7 @@
                                 <h5 class="text-muted mb-2">
                                     <i class="bi bi-tag me-2"></i>Version
                                 </h5>
-                                <p class="h4 text-primary fw-bold">3.0</p>
+                                <p class="h4 text-primary fw-bold">4.0</p>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -262,6 +262,71 @@
                         <div class="col-lg-6 mb-4">
                             <div class="feature-item">
                                 <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-emerald text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #10b981 !important;">
+                                        <i class="bi bi-cash-stack"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">Daily Financial Management</h5>
+                                        <p class="text-muted mb-0">Complete daily financial tracking with opening balance, additional balance, withdrawals, expenses, and automated daily closure system.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-blue text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #3b82f6 !important;">
+                                        <i class="bi bi-file-earmark-excel"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">Advanced Excel Export</h5>
+                                        <p class="text-muted mb-0">Professional Excel export with Arabic RTL support, conditional formatting, color-coded transactions, and comprehensive financial reporting.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-purple text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #8b5cf6 !important;">
+                                        <i class="bi bi-person-badge"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">Secretary Management System</h5>
+                                        <p class="text-muted mb-0">Complete secretary interface with profile management, financial access, patient management, and role-based permissions.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-orange text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #f97316 !important;">
+                                        <i class="bi bi-graph-up-arrow"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">Real-time Financial Dashboard</h5>
+                                        <p class="text-muted mb-0">Live financial dashboard with current balance tracking, transaction summaries, and comprehensive financial analytics.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="feature-icon bg-teal text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #14b8a6 !important;">
+                                        <i class="bi bi-calendar-x"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-2">Daily Closure System</h5>
+                                        <p class="text-muted mb-0">Automated daily closure with financial summaries, balance verification, and comprehensive daily reports for complete financial control.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="feature-item">
+                                <div class="d-flex align-items-start">
                                     <div class="feature-icon bg-coral text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #ff6b6b !important;">
                                         <i class="bi bi-capsule"></i>
                                     </div>
@@ -426,14 +491,14 @@
         </div>
     </div>
 
-    <!-- Version 3.0 New Features -->
+    <!-- Version 4.0 New Features -->
     <div class="row mb-5">
         <div class="col-12">
             <div class="card border-primary">
                 <div class="card-header bg-primary text-white">
                     <h3 class="card-title mb-0">
                         <i class="bi bi-star-fill me-2"></i>
-                        Version 3.0 New Features
+                        Version 4.0 New Features
                     </h3>
                 </div>
                 <div class="card-body">
@@ -441,28 +506,57 @@
                         <div class="col-lg-4 mb-4">
                             <div class="new-feature-card text-center p-4 border rounded">
                                 <div class="new-feature-icon bg-emerald text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #10b981 !important;">
-                                    <i class="bi bi-currency-dollar" style="font-size: 1.5rem;"></i>
+                                    <i class="bi bi-cash-stack" style="font-size: 1.5rem;"></i>
                                 </div>
-                                <h5 class="fw-bold mb-3">Visit Cost Management</h5>
-                                <p class="text-muted mb-0">Complete visit cost management system with configurable new visit and repeated visit pricing, automated billing calculations, and financial tracking.</p>
+                                <h5 class="fw-bold mb-3">Daily Financial Management</h5>
+                                <p class="text-muted mb-0">Complete daily financial tracking with opening balance, additional balance, withdrawals, expenses, and automated daily closure system for comprehensive financial control.</p>
                             </div>
                         </div>
                         <div class="col-lg-4 mb-4">
                             <div class="new-feature-card text-center p-4 border rounded">
-                                <div class="new-feature-icon bg-violet text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #8b5cf6 !important;">
-                                    <i class="bi bi-building" style="font-size: 1.5rem;"></i>
+                                <div class="new-feature-icon bg-blue text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #3b82f6 !important;">
+                                    <i class="bi bi-file-earmark-excel" style="font-size: 1.5rem;"></i>
                                 </div>
-                                <h5 class="fw-bold mb-3">Advanced Clinic Settings</h5>
-                                <p class="text-muted mb-0">Comprehensive clinic configuration with Arabic/English names, logo management, watermark settings, and website integration.</p>
+                                <h5 class="fw-bold mb-3">Advanced Excel Export</h5>
+                                <p class="text-muted mb-0">Professional Excel export with Arabic RTL support, conditional formatting, color-coded transactions, and comprehensive financial reporting using PhpSpreadsheet.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 mb-4">
+                            <div class="new-feature-card text-center p-4 border rounded">
+                                <div class="new-feature-icon bg-purple text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #8b5cf6 !important;">
+                                    <i class="bi bi-person-badge" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h5 class="fw-bold mb-3">Secretary Management System</h5>
+                                <p class="text-muted mb-0">Complete secretary interface with profile management, financial access, patient management, and role-based permissions for enhanced workflow efficiency.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-lg-4 mb-4">
+                            <div class="new-feature-card text-center p-4 border rounded">
+                                <div class="new-feature-icon bg-orange text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #f97316 !important;">
+                                    <i class="bi bi-graph-up-arrow" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h5 class="fw-bold mb-3">Real-time Financial Dashboard</h5>
+                                <p class="text-muted mb-0">Live financial dashboard with current balance tracking, transaction summaries, and comprehensive financial analytics for better decision making.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 mb-4">
+                            <div class="new-feature-card text-center p-4 border rounded">
+                                <div class="new-feature-icon bg-teal text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #14b8a6 !important;">
+                                    <i class="bi bi-calendar-x" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h5 class="fw-bold mb-3">Daily Closure System</h5>
+                                <p class="text-muted mb-0">Automated daily closure with financial summaries, balance verification, and comprehensive daily reports for complete financial control and accountability.</p>
                             </div>
                         </div>
                         <div class="col-lg-4 mb-4">
                             <div class="new-feature-card text-center p-4 border rounded">
                                 <div class="new-feature-icon bg-rose text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #f43f5e !important;">
-                                    <i class="bi bi-image" style="font-size: 1.5rem;"></i>
+                                    <i class="bi bi-shield-lock" style="font-size: 1.5rem;"></i>
                                 </div>
-                                <h5 class="fw-bold mb-3">Logo & Branding</h5>
-                                <p class="text-muted mb-0">Advanced logo upload system with preview functionality, multiple logo types, and secure file management with .htaccess protection.</p>
+                                <h5 class="fw-bold mb-3">Enhanced Security & Validation</h5>
+                                <p class="text-muted mb-0">Advanced security features with CSRF protection, comprehensive input validation, secure file management, and role-based access control for maximum data protection.</p>
                             </div>
                         </div>
                     </div>
@@ -472,8 +566,66 @@
                                 <div class="d-flex align-items-center">
                                     <i class="bi bi-lightning-charge text-primary me-3" style="font-size: 1.5rem;"></i>
                                     <div>
-                                        <h6 class="alert-heading mb-1">Major System Enhancement</h6>
-                                        <p class="mb-0">Version 3.0 brings comprehensive improvements to clinic management with advanced settings, cost management, branding control, and enhanced security features for a complete healthcare management solution.</p>
+                                        <h6 class="alert-heading mb-1">Major Financial & Management Enhancement</h6>
+                                        <p class="mb-0">Version 4.0 brings revolutionary improvements to clinic management with comprehensive daily financial tracking, advanced Excel export capabilities, complete secretary management system, and enhanced security features for a complete healthcare management solution.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Management Features -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-cash-stack me-2"></i>
+                        Advanced Financial Management Features
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-4 mb-4">
+                            <div class="financial-feature-card text-center p-4 border rounded">
+                                <div class="financial-feature-icon bg-emerald text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #10b981 !important;">
+                                    <i class="bi bi-cash-stack" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h5 class="fw-bold mb-3">Daily Balance Management</h5>
+                                <p class="text-muted mb-0">Complete daily financial tracking with opening balance, additional balance, withdrawals, and automated balance calculations for comprehensive financial control.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 mb-4">
+                            <div class="financial-feature-card text-center p-4 border rounded">
+                                <div class="financial-feature-icon bg-blue text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #3b82f6 !important;">
+                                    <i class="bi bi-file-earmark-excel" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h5 class="fw-bold mb-3">Professional Excel Export</h5>
+                                <p class="text-muted mb-0">Advanced Excel export with Arabic RTL support, conditional formatting, color-coded transactions, and comprehensive financial reporting using PhpSpreadsheet.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 mb-4">
+                            <div class="financial-feature-card text-center p-4 border rounded">
+                                <div class="financial-feature-icon bg-orange text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #f97316 !important;">
+                                    <i class="bi bi-graph-up-arrow" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h5 class="fw-bold mb-3">Real-time Financial Dashboard</h5>
+                                <p class="text-muted mb-0">Live financial dashboard with current balance tracking, transaction summaries, and comprehensive financial analytics for better decision making.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-success border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-lightbulb text-success me-3" style="font-size: 1.5rem;"></i>
+                                    <div>
+                                        <h6 class="alert-heading mb-1">Revolutionary Financial Control</h6>
+                                        <p class="mb-0">Version 4.0 introduces comprehensive financial management with daily balance tracking, advanced Excel export capabilities, real-time dashboards, and automated daily closure system for complete financial control and transparency in healthcare management.</p>
                                     </div>
                                 </div>
                             </div>
@@ -593,7 +745,7 @@
                 <div class="card-header">
                     <h3 class="card-title mb-0">
                         <i class="bi bi-lightning text-warning me-2"></i>
-                        What's New in Version 3.0
+                        What's New in Version 4.0
                     </h3>
                 </div>
                 <div class="card-body">
@@ -601,11 +753,66 @@
                         <div class="timeline-item mb-4">
                             <div class="d-flex">
                                 <div class="timeline-marker bg-emerald text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #10b981 !important;">
-                                    <i class="bi bi-currency-dollar" style="font-size: 0.8rem;"></i>
+                                    <i class="bi bi-cash-stack" style="font-size: 0.8rem;"></i>
                                 </div>
                                 <div>
-                                    <h6 class="fw-bold mb-1">Visit Cost Management System</h6>
-                                    <p class="text-muted mb-0">Complete visit cost management with configurable new visit and repeated visit pricing, automated billing calculations, and financial tracking for better revenue management.</p>
+                                    <h6 class="fw-bold mb-1">Daily Financial Management System</h6>
+                                    <p class="text-muted mb-0">Complete daily financial tracking with opening balance, additional balance, withdrawals, expenses, and automated daily closure system for comprehensive financial control and accountability.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-blue text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #3b82f6 !important;">
+                                    <i class="bi bi-file-earmark-excel" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Advanced Excel Export with PhpSpreadsheet</h6>
+                                    <p class="text-muted mb-0">Professional Excel export with Arabic RTL support, conditional formatting, color-coded transactions, alternating row colors, and comprehensive financial reporting using PhpSpreadsheet library.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-purple text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #8b5cf6 !important;">
+                                    <i class="bi bi-person-badge" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Complete Secretary Management System</h6>
+                                    <p class="text-muted mb-0">Full secretary interface with profile management, financial access, patient management, role-based permissions, and comprehensive secretary dashboard for enhanced workflow efficiency.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-orange text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #f97316 !important;">
+                                    <i class="bi bi-graph-up-arrow" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Real-time Financial Dashboard</h6>
+                                    <p class="text-muted mb-0">Live financial dashboard with current balance tracking, transaction summaries, comprehensive financial analytics, and real-time updates for better decision making and financial control.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-teal text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #14b8a6 !important;">
+                                    <i class="bi bi-calendar-x" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Automated Daily Closure System</h6>
+                                    <p class="text-muted mb-0">Automated daily closure with financial summaries, balance verification, comprehensive daily reports, and complete financial control for enhanced accountability and transparency.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-4">
+                            <div class="d-flex">
+                                <div class="timeline-marker bg-rose text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px; background-color: #f43f5e !important;">
+                                    <i class="bi bi-shield-lock" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Enhanced Security & Validation</h6>
+                                    <p class="text-muted mb-0">Advanced security features with CSRF protection, comprehensive input validation, secure file management, role-based access control, and enhanced authentication for maximum data protection.</p>
                                 </div>
                             </div>
                         </div>
@@ -1090,6 +1297,31 @@
 }
 
 .new-feature-card:hover .new-feature-icon {
+    transform: scale(1.1);
+}
+
+/* Financial Management Features Styling */
+.financial-feature-card {
+    transition: all 0.3s ease;
+    background-color: var(--card);
+    border-color: var(--border) !important;
+}
+
+.financial-feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border-color: var(--accent) !important;
+}
+
+.dark .financial-feature-card:hover {
+    box-shadow: 0 10px 30px rgba(255, 255, 255, 0.05);
+}
+
+.financial-feature-icon {
+    transition: all 0.3s ease;
+}
+
+.financial-feature-card:hover .financial-feature-icon {
     transform: scale(1.1);
 }
 

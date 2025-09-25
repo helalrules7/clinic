@@ -1,0 +1,1 @@
+ALTER TABLE appointments DROP INDEX unique_doctor_date_time;

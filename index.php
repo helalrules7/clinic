@@ -64,6 +64,7 @@ try {
     $router->post('/admin/settings', 'AdminController@settings');
     $router->post('/admin/users/update/{id}', 'AdminController@updateUser');
     $router->post('/admin/users/delete/{id}', 'AdminController@deleteUser');
+    
     // View As routes (Admin only)
     $router->get('/admin/view-as', 'AdminController@viewAs');
     $router->get('/admin/stop-view-as', 'AdminController@stopViewAs');
@@ -72,13 +73,28 @@ try {
     // Secretary routes
     $router->get('/secretary/dashboard', 'SecretaryController@dashboard');
     $router->get('/secretary/bookings', 'SecretaryController@bookings');
+    $router->get('/secretary/bookings/calendar', 'SecretaryController@getBookingsCalendar');
+    $router->post('/secretary/bookings', 'SecretaryController@createBooking');
+    $router->delete('/secretary/bookings/{id}', 'SecretaryController@deleteBooking');
+    $router->post('/secretary/bookings/{id}/confirm', 'SecretaryController@confirmAttendance');
+    $router->get('/secretary/bookings/{id}/details', 'SecretaryController@getBookingDetails');
+    $router->post('/secretary/bookings/{id}/update', 'SecretaryController@updateBooking');
+    $router->get('/secretary/bookings/{id}', 'SecretaryController@viewBooking');
     $router->get('/secretary/payments', 'SecretaryController@payments');
     $router->get('/secretary/patients', 'SecretaryController@patients');
+    $router->get('/secretary/patients/{id}', 'SecretaryController@viewPatient');
     $router->get('/secretary/patients/new', 'SecretaryController@newPatient');
     $router->post('/secretary/patients', 'SecretaryController@createPatient');
-    $router->get('/secretary/patients/{id}', 'SecretaryController@viewPatient');
     $router->get('/secretary/invoices/{id}', 'SecretaryController@viewInvoice');
-    
+    $router->get('/secretary/payments/{id}', 'SecretaryController@viewPayment');
+    $router->get('/secretary/payments/{id}/receipt', 'PrintController@paymentReceipt');
+    $router->get('/secretary/expenses/{id}', 'SecretaryController@viewExpense');
+    $router->get('/secretary/bookings/{id}', 'SecretaryController@viewBooking');
+    $router->get('/secretary/bookings/{id}/print', 'PrintController@bookingDetails');
+    $router->get('/secretary/patients/{id}/invoice', 'PrintController@patientInvoice');
+    $router->get('/secretary/profile', 'SecretaryController@profile');
+    $router->post('/secretary/profile/update', 'SecretaryController@updateProfile');
+    $router->post('/secretary/profile/change-password', 'SecretaryController@changePassword');
     // Doctor routes
     $router->get('/doctor/dashboard', 'DoctorController@dashboard');
     $router->get('/doctor/calendar', 'DoctorController@calendar');
@@ -96,6 +112,8 @@ try {
     $router->post('/doctor/profile/change-password', 'DoctorController@changePassword');
     $router->post('/doctor/profile/update-field', 'DoctorController@updateField');
     $router->get('/doctor/drugs', 'DoctorController@drugs');
+    $router->get('/doctor/payments', 'DoctorController@payments');
+    $router->get('/doctor/daily-closure', 'DoctorController@dailyClosure');
     $router->get('/doctor/reports', 'DoctorController@reports');
     $router->get('/doctor/reports/export', 'DoctorController@exportDoctorReport');
     $router->get('/doctor/settings', 'DoctorController@settings');
@@ -120,7 +138,18 @@ try {
     $router->put('/api/appointments/{id}', 'ApiController@updateAppointment');
     $router->delete('/api/appointments/{id}', 'ApiController@deleteAppointment');
     $router->post('/api/payments', 'ApiController@createPayment');
+    $router->post('/api/daily-balance', 'ApiController@createDailyBalance');
+    $router->post('/api/daily-closure', 'ApiController@createDailyClosureApi');
+    $router->post('/api/expenses', 'ApiController@createExpense');
+    $router->put('/api/expenses/{id}', 'ApiController@updateExpense');
+    $router->delete('/api/expenses/{id}', 'ApiController@deleteExpense');
+    $router->put('/api/payments/{id}', 'ApiController@updatePayment');
+    $router->delete('/api/payments/{id}', 'ApiController@deletePayment');
+    $router->get('/api/financial-transactions', 'ApiController@getFinancialTransactions');
+    $router->get('/api/financial-transactions/export', 'ApiController@exportFinancialTransactions');
+    $router->get('/api/dashboard-summary', 'ApiController@getDashboardSummary');
     $router->get('/api/patients/search', 'ApiController@searchPatients');
+    $router->get('/api/patients/{id}', 'ApiController@getPatient');
     $router->post('/api/patients', 'ApiController@createPatient');
     $router->delete('/api/patients/{id}', 'ApiController@deletePatient');
     $router->get('/api/patients/{id}/timeline', 'ApiController@getPatientTimeline');
@@ -176,6 +205,10 @@ try {
     
     // Individual Glasses Prescription API routes
     $router->get('/api/prescriptions/glasses/{id}', 'ApiController@getGlassesPrescription');
+    
+    // Payment and Expense API routes
+    $router->get('/api/payments/{id}', 'ApiController@getPayment');
+    $router->get('/api/expenses/{id}', 'ApiController@getExpense');
     
     // Print routes
     $router->get('/print/prescription/{id}', 'PrintController@medicationPrescription');

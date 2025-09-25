@@ -769,6 +769,7 @@ class AdminController
                 'clinic_logo_watermark' => '/assets/images/Light.png',
                 'new_visit_cost' => '100',
                 'repeated_visit_cost' => '50',
+                'consultation_cost' => '200',
                 'timezone' => 'Africa/Cairo',
                 'date_format' => 'Y-m-d',
                 'time_format' => 'H:i',
@@ -804,6 +805,8 @@ class AdminController
     {
         $allowedSettings = [
             'clinic_name', 'clinic_email', 'clinic_phone', 'clinic_address',
+            'clinic_name_arabic', 'clinic_website', 'clinic_logo', 'clinic_logo_print', 'clinic_logo_watermark',
+            'new_visit_cost', 'repeated_visit_cost', 'consultation_cost',
             'timezone', 'date_format', 'time_format', 'items_per_page',
             'backup_frequency', 'email_notifications', 'sms_notifications', 'maintenance_mode'
         ];
@@ -819,6 +822,9 @@ class AdminController
                     }
                     if ($key === 'items_per_page' && (!is_numeric($value) || $value < 1 || $value > 100)) {
                         throw new Exception('Items per page must be between 1 and 100');
+                    }
+                    if (in_array($key, ['new_visit_cost', 'repeated_visit_cost', 'consultation_cost']) && (!is_numeric($value) || $value < 0)) {
+                        throw new Exception(ucfirst(str_replace('_', ' ', $key)) . ' must be a positive number');
                     }
                     
                     // Determine setting type and convert value

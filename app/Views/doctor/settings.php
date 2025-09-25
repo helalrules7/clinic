@@ -342,7 +342,7 @@
                             <h5><i class="fas fa-dollar-sign me-2"></i>Visit Costs</h5>
                             
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="setting-item">
                                         <label for="new_visit_cost" class="form-label">New Visit Cost</label>
                                         <div class="input-group">
@@ -353,7 +353,7 @@
                                         <div class="form-text">The cost required for the first visit to the patient</div>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="setting-item">
                                         <label for="repeated_visit_cost" class="form-label">Repeated Visit Cost</label>
                                         <div class="input-group">
@@ -362,6 +362,17 @@
                                             <span class="input-group-text">EGP</span>
                                         </div>
                                         <div class="form-text">The cost required for the repeated visits to the patient</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="setting-item">
+                                        <label for="consultation_cost" class="form-label">Consultation/Medical Procedure Cost</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="consultation_cost" name="consultation_cost" 
+                                                   value="<?= htmlspecialchars($settings['consultation_cost'] ?? '50.00') ?>" min="0" step="0.01">
+                                            <span class="input-group-text">EGP</span>
+                                        </div>
+                                        <div class="form-text">The cost required for consultation or medical procedure</div>
                                     </div>
                                 </div>
                             </div>

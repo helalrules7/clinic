@@ -533,4 +533,350 @@ class PrintController
         $stmt->execute([$appointmentId]);
         return $stmt->fetch();
     }
+
+    /**
+     * Print payment receipt/invoice
+     */
+    public function paymentReceipt($paymentId)
+    {
+        try {
+            $user = $this->auth->user();
+            
+            // Get payment details
+            $payment = $this->getPaymentDetails($paymentId);
+            if (!$payment) {
+                http_response_code(404);
+                echo "Payment not found";
+                return;
+            }
+            
+            // Get patient details
+            $patient = $this->getPatientDetails($payment['patient_id']);
+            if (!$patient) {
+                http_response_code(404);
+                echo "Patient not found";
+                return;
+            }
+            
+            // Get clinic settings
+            $clinic = $this->getClinicInfo();
+            
+            // Create invoice data structure
+            $invoice = [
+                'invoice_no' => 'PAY-' . str_pad($paymentId, 6, '0', STR_PAD_LEFT),
+                'created_at' => $payment['created_at'],
+                'due_date' => $payment['created_at'],
+                'status' => 'Paid',
+                'total_amount' => $payment['amount'],
+                'paid_amount' => $payment['amount'],
+                'balance' => 0,
+                'total_payments' => $payment['amount'],
+                'total_discounts' => $payment['discount_amount'] ?? 0,
+                'total_exemptions' => $payment['is_exempt'] ? $payment['amount'] : 0
+            ];
+            
+            // Create items array
+            $items = [[
+                'type' => $this->getPaymentTypeText($payment['type']),
+                'method' => $this->getPaymentMethodText($payment['method']),
+                'amount' => $payment['amount'],
+                'created_at' => $payment['created_at'],
+                'appointment_id' => $payment['appointment_id'],
+                'discount_amount' => $payment['discount_amount'] ?? 0,
+                'is_exempt' => $payment['is_exempt'] ?? false
+            ]];
+            
+            // Render the invoice
+            echo $this->view->render('print/invoice', [
+                'invoice' => $invoice,
+                'patient' => $patient,
+                'clinic' => $clinic,
+                'items' => $items
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Error printing payment receipt: " . $e->getMessage());
+            http_response_code(500);
+            echo "Error generating receipt";
+        }
+    }
+
+    /**
+     * Print patient invoice (all payments)
+     */
+    public function patientInvoice($patientId)
+    {
+        try {
+            $user = $this->auth->user();
+            
+            // Get patient details
+            $patient = $this->getPatientDetails($patientId);
+            if (!$patient) {
+                http_response_code(404);
+                echo "Patient not found";
+                return;
+            }
+            
+            // Get all payments for this patient
+            $payments = $this->getPatientPayments($patientId);
+            if (empty($payments)) {
+                http_response_code(404);
+                echo "No payments found for this patient";
+                return;
+            }
+            
+            // Get clinic settings
+            $clinic = $this->getClinicInfo();
+            
+            // Calculate totals
+            $totalAmount = array_sum(array_column($payments, 'amount'));
+            $totalDiscounts = array_sum(array_column($payments, 'discount_amount'));
+            $totalExemptions = array_sum(array_filter(array_column($payments, 'amount'), function($payment) {
+                return $payment['is_exempt'] ?? false;
+            }));
+            $paidAmount = $totalAmount - $totalDiscounts - $totalExemptions;
+            
+            // Create invoice data structure
+            $invoice = [
+                'invoice_no' => 'INV-' . str_pad($patientId, 6, '0', STR_PAD_LEFT) . '-' . date('Ymd'),
+                'created_at' => date('Y-m-d H:i:s'),
+                'due_date' => date('Y-m-d H:i:s'),
+                'status' => $paidAmount > 0 ? 'Paid' : 'Pending',
+                'total_amount' => $totalAmount,
+                'paid_amount' => $paidAmount,
+                'balance' => $totalAmount - $paidAmount,
+                'total_payments' => $paidAmount,
+                'total_discounts' => $totalDiscounts,
+                'total_exemptions' => $totalExemptions
+            ];
+            
+            // Create items array
+            $items = [];
+            foreach ($payments as $payment) {
+                $items[] = [
+                    'type' => $this->getPaymentTypeText($payment['type']),
+                    'method' => $this->getPaymentMethodText($payment['method']),
+                    'amount' => $payment['amount'],
+                    'created_at' => $payment['created_at'],
+                    'appointment_id' => $payment['appointment_id'],
+                    'discount_amount' => $payment['discount_amount'] ?? 0,
+                    'is_exempt' => $payment['is_exempt'] ?? false
+                ];
+            }
+            
+            // Render the invoice
+            echo $this->view->render('print/invoice', [
+                'invoice' => $invoice,
+                'patient' => $patient,
+                'clinic' => $clinic,
+                'items' => $items
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Error printing patient invoice: " . $e->getMessage());
+            http_response_code(500);
+            echo "Error generating invoice";
+        }
+    }
+
+    private function getPaymentDetails($paymentId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT p.*, 
+                   CONCAT(pat.first_name, ' ', pat.last_name) as patient_name,
+                   pat.phone as patient_phone
+            FROM payments p
+            LEFT JOIN patients pat ON p.patient_id = pat.id
+            WHERE p.id = ?
+        ");
+        $stmt->execute([$paymentId]);
+        return $stmt->fetch();
+    }
+
+    private function getPatientDetails($patientId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT * FROM patients WHERE id = ?
+        ");
+        $stmt->execute([$patientId]);
+        return $stmt->fetch();
+    }
+
+    private function getPatientPayments($patientId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT * FROM payments 
+            WHERE patient_id = ? 
+            ORDER BY created_at DESC
+        ");
+        $stmt->execute([$patientId]);
+        return $stmt->fetchAll();
+    }
+
+
+    private function getPaymentTypeText($type)
+    {
+        $texts = [
+            'Booking' => 'حجز جديد',
+            'FollowUp' => 'إعادة كشف',
+            'Consultation' => 'استشارة طبية',
+            'Other' => 'أخرى'
+        ];
+        
+        return $texts[$type] ?? $type;
+    }
+
+    private function getPaymentMethodText($method)
+    {
+        $texts = [
+            'Cash' => 'نقدي',
+            'Card' => 'بطاقة ائتمان',
+            'Transfer' => 'تحويل بنكي',
+            'Wallet' => 'محفظة إلكترونية'
+        ];
+        
+        return $texts[$method] ?? $method;
+    }
+
+    public function bookingDetails($id)
+    {
+        try {
+            $user = $this->auth->user();
+            
+            // Get booking details
+            $booking = $this->getBookingDetails($id);
+            if (!$booking) {
+                http_response_code(404);
+                echo "Booking not found";
+                return;
+            }
+            
+            // Get patient details
+            $patient = $this->getPatientDetails($booking['patient_id']);
+            if (!$patient) {
+                http_response_code(404);
+                echo "Patient not found";
+                return;
+            }
+            
+            // Get doctor details
+            $doctor = $this->getDoctorDetails($booking['doctor_id']);
+            
+            // Get payment details if exists
+            $payments = $this->getBookingPayments($id);
+            
+            // Get related bookings for this patient
+            $relatedBookings = $this->getPatientRelatedBookings($booking['patient_id'], $id);
+            
+            // Get clinic info
+            $clinic = $this->getClinicInfo();
+            
+            echo $this->view->render('print/booking_details', [
+                'booking' => $booking,
+                'patient' => $patient,
+                'doctor' => $doctor,
+                'payments' => $payments,
+                'relatedBookings' => $relatedBookings,
+                'clinic' => $clinic
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Error printing booking details: " . $e->getMessage());
+            http_response_code(500);
+            echo "Error loading booking details";
+        }
+    }
+
+    private function getBookingDetails($id)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT a.*, 
+                   CONCAT(p.first_name, ' ', p.last_name) as patient_name,
+                   p.phone as patient_phone,
+                   p.dob,
+                   d.display_name as doctor_display_name,
+                   d.id as doctor_id,
+                   COALESCE(SUM(pay.amount), 0) as total_paid
+            FROM appointments a
+            JOIN patients p ON a.patient_id = p.id
+            JOIN doctors d ON a.doctor_id = d.id
+            LEFT JOIN payments pay ON a.id = pay.appointment_id
+            WHERE a.id = ?
+            GROUP BY a.id
+        ");
+        $stmt->execute([$id]);
+        $booking = $stmt->fetch(\PDO::FETCH_ASSOC);
+        
+        if ($booking) {
+            // Add visit cost based on visit type
+            $settings = $this->getSystemSettings();
+            switch ($booking['visit_type']) {
+                case 'New':
+                    $booking['visit_cost'] = $settings['new_visit_cost'] ?? 150;
+                    break;
+                case 'FollowUp':
+                    $booking['visit_cost'] = $settings['repeated_visit_cost'] ?? 100;
+                    break;
+                case 'Consultation':
+                    $booking['visit_cost'] = $settings['consultation_cost'] ?? 100;
+                    break;
+                default:
+                    $booking['visit_cost'] = 150;
+            }
+        }
+        
+        return $booking;
+    }
+
+
+    private function getDoctorDetails($doctorId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT id, name, email, role FROM users WHERE id = ?
+        ");
+        $stmt->execute([$doctorId]);
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
+    }
+
+    private function getBookingPayments($bookingId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT p.*, 
+                   CONCAT(pat.first_name, ' ', pat.last_name) as patient_name,
+                   u.name as received_by_name
+            FROM payments p
+            LEFT JOIN patients pat ON p.patient_id = pat.id
+            LEFT JOIN users u ON p.received_by = u.id
+            WHERE p.appointment_id = ?
+            ORDER BY p.created_at DESC
+        ");
+        $stmt->execute([$bookingId]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    private function getPatientRelatedBookings($patientId, $excludeBookingId = null)
+    {
+        $sql = "
+            SELECT b.*, 
+                   CONCAT(p.first_name, ' ', p.last_name) as patient_name,
+                   u.name as doctor_name
+            FROM appointments b
+            LEFT JOIN patients p ON b.patient_id = p.id
+            LEFT JOIN users u ON b.doctor_id = u.id
+            WHERE b.patient_id = ?
+        ";
+        
+        $params = [$patientId];
+        
+        if ($excludeBookingId) {
+            $sql .= " AND b.id != ?";
+            $params[] = $excludeBookingId;
+        }
+        
+        $sql .= " ORDER BY b.date DESC, b.start_time DESC LIMIT 10";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
 }

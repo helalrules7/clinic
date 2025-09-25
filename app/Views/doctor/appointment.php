@@ -79,6 +79,42 @@
     font-size: 0.9rem;
     padding: 0.5rem 1rem;
     border-radius: 20px;
+    font-weight: 500;
+}
+
+.status-badge i {
+    font-size: 1rem;
+}
+
+/* Specific status badge colors */
+.status-badge.bg-success {
+    background-color: #198754 !important;
+    color: white;
+}
+
+.status-badge.bg-primary {
+    background-color: #0d6efd !important;
+    color: white;
+}
+
+.status-badge.bg-info {
+    background-color: #0dcaf0 !important;
+    color: #000;
+}
+
+.status-badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #000;
+}
+
+.status-badge.bg-danger {
+    background-color: #dc3545 !important;
+    color: white;
+}
+
+.status-badge.bg-secondary {
+    background-color: #6c757d !important;
+    color: white;
 }
 
 .consultation-section {
@@ -665,8 +701,9 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
         </div>
         <div class="col-md-4 text-end">
             <div class="d-flex flex-column align-items-end gap-2">
-                <span class="status-badge bg-<?= $this->getStatusColor($appointment['status']) ?>">
-                    <?= ucfirst($appointment['status']) ?>
+                <span class="status-badge d-flex align-items-center gap-2" id="appointmentStatusBadge">
+                    <i class="bi bi-question-circle" id="statusIcon"></i>
+                    <span id="statusText"><?= ucfirst($appointment['status']) ?></span>
                 </span>
                 <?php if ($appointment['status'] !== 'Completed'): ?>
                 <button class="btn btn-light btn-sm" onclick="markCompleted(<?= $appointment['id'] ?>)">
@@ -1632,10 +1669,8 @@ function confirmMarkCompleted(appointmentId) {
     })
     .then(data => {
         if (data.ok) {
-            // Update UI to show completed status
-            const statusBadge = document.querySelector('.status-badge');
-            statusBadge.className = 'status-badge bg-success';
-            statusBadge.textContent = 'Completed';
+            // Update UI to show completed status using new functions
+            updateStatusBadge('Completed');
             
             // Hide the complete button
             button.style.display = 'none';
@@ -3622,8 +3657,68 @@ function printLabTests(appointmentId) {
     window.open('/print/lab-tests/' + appointmentId, '_blank');
 }
 
+// Status badge functions
+function getStatusBadgeClass(status) {
+    const classes = {
+        'Booked': 'bg-primary',
+        'CheckedIn': 'bg-success',
+        'InProgress': 'bg-warning',
+        'Completed': 'bg-info',
+        'Cancelled': 'bg-danger',
+        'NoShow': 'bg-secondary',
+        'Rescheduled': 'bg-info'
+    };
+    return classes[status] || 'bg-secondary';
+}
+
+function getStatusDisplayText(status) {
+    const statusTexts = {
+        'Booked': 'محجوز',
+        'CheckedIn': 'تم الحضور',
+        'InProgress': 'قيد التنفيذ',
+        'Completed': 'مكتمل',
+        'Cancelled': 'ملغي',
+        'NoShow': 'لم يحضر',
+        'Rescheduled': 'مؤجل'
+    };
+    return statusTexts[status] || status;
+}
+
+function getStatusIcon(status) {
+    const icons = {
+        'Booked': 'bi-calendar-check',
+        'CheckedIn': 'bi-check-circle-fill',
+        'InProgress': 'bi-hourglass-split',
+        'Completed': 'bi-check2-all',
+        'Cancelled': 'bi-x-circle-fill',
+        'NoShow': 'bi-clock-fill',
+        'Rescheduled': 'bi-arrow-clockwise'
+    };
+    return icons[status] || 'bi-question-circle';
+}
+
+function updateStatusBadge(status) {
+    const badge = document.getElementById('appointmentStatusBadge');
+    const icon = document.getElementById('statusIcon');
+    const text = document.getElementById('statusText');
+    
+    if (badge && icon && text) {
+        // Update classes
+        badge.className = `status-badge d-flex align-items-center gap-2 ${getStatusBadgeClass(status)}`;
+        
+        // Update icon
+        icon.className = `bi ${getStatusIcon(status)}`;
+        
+        // Update text
+        text.textContent = getStatusDisplayText(status);
+    }
+}
+
 // Initialize tooltips for file attachments
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize status badge
+    updateStatusBadge('<?= $appointment['status'] ?>');
+    
     // Initialize Bootstrap tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {

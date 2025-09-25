@@ -649,7 +649,10 @@ function renderAppointmentSlot(appointment) {
                     <div class="info-line"><span class="label">Time:</span> ${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}</div>
                 </div>
                 <div class="appointment-actions">
-                    <span class="${statusClass}">${appointment.status}</span>
+                    <span class="badge ${statusClass} d-flex align-items-center gap-1">
+                        <i class="bi ${getStatusIcon(appointment.status)}"></i>
+                        ${getStatusDisplayText(appointment.status)}
+                    </span>
                     <button class="btn btn-sm btn-outline-danger delete-appointment-btn" 
                             onclick="event.stopPropagation(); deleteAppointment(${appointment.id}, '${appointment.patient_name}', '${formatTime(appointment.start_time)}')"
                             data-bs-toggle="tooltip" 
@@ -944,15 +947,41 @@ function updateLastUpdate() {
 function getStatusBadgeClass(status) {
     // Get status badge class for any doctor to see
     const classes = {
-        'Booked': 'badge bg-primary',
-        'CheckedIn': 'badge bg-info',
-        'InProgress': 'badge bg-warning',
-        'Completed': 'badge bg-success',
-        'Cancelled': 'badge bg-danger',
-        'NoShow': 'badge bg-secondary',
-        'Rescheduled': 'badge bg-info'
+        'Booked': 'bg-primary',
+        'CheckedIn': 'bg-success',
+        'InProgress': 'bg-warning',
+        'Completed': 'bg-info',
+        'Cancelled': 'bg-danger',
+        'NoShow': 'bg-secondary',
+        'Rescheduled': 'bg-info'
     };
-    return classes[status] || 'badge bg-secondary';
+    return classes[status] || 'bg-secondary';
+}
+
+function getStatusDisplayText(status) {
+    const statusTexts = {
+        'Booked': 'محجوز',
+        'CheckedIn': 'تم الحضور',
+        'InProgress': 'قيد التنفيذ',
+        'Completed': 'مكتمل',
+        'Cancelled': 'ملغي',
+        'NoShow': 'لم يحضر',
+        'Rescheduled': 'مؤجل'
+    };
+    return statusTexts[status] || status;
+}
+
+function getStatusIcon(status) {
+    const icons = {
+        'Booked': 'bi-calendar-check',
+        'CheckedIn': 'bi-check-circle-fill',
+        'InProgress': 'bi-hourglass-split',
+        'Completed': 'bi-check2-all',
+        'Cancelled': 'bi-x-circle-fill',
+        'NoShow': 'bi-clock-fill',
+        'Rescheduled': 'bi-arrow-clockwise'
+    };
+    return icons[status] || 'bi-question-circle';
 }
 
 function getVisitTypeBadgeClass(type) {
@@ -2478,6 +2507,49 @@ input[readonly] {
 .dark .card-body {
     background-color: var(--card);
     color: var(--text);
+}
+
+/* Status badge styling */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+}
+
+.badge i {
+    font-size: 0.875rem;
+}
+
+/* Specific status badge colors */
+.badge.bg-success {
+    background-color: #198754 !important;
+    color: white;
+}
+
+.badge.bg-primary {
+    background-color: #0d6efd !important;
+    color: white;
+}
+
+.badge.bg-info {
+    background-color: #0dcaf0 !important;
+    color: #000;
+}
+
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #000;
+}
+
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+    color: white;
+}
+
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+    color: white;
 }
 
 /* Dark Mode Badge Styles */
