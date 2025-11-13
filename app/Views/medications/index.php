@@ -280,14 +280,20 @@
     border-bottom: 2px solid var(--border);
     cursor: pointer;
     transition: background-color 0.2s ease;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.05) 50%, transparent 100%);
+    position: relative;
+}
+
+.dark .appointment-header {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
 }
 
 .appointment-header:hover {
-    background: var(--bg);
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.1) 50%, transparent 100%);
 }
 
 .dark .appointment-header:hover {
-    background: var(--card);
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 50%, transparent 100%);
 }
 
 .appointment-header.collapsed {
@@ -949,18 +955,20 @@ function renderPrescriptionList(appointments, patientId) {
                             ${appointment.prescription_count} ${appointment.prescription_count === 1 ? 'prescription' : 'prescriptions'}
                         </div>
                     </div>
-                    <div class="appointment-actions" onclick="event.stopPropagation();">
+                    <div class="appointment-actions">
                         <a href="/doctor/appointments/${appointment.appointment_id}" 
                            class="btn btn-sm btn-success" 
                            target="_blank"
-                           title="View Appointment">
+                           title="View Appointment"
+                           onclick="event.stopPropagation(); event.preventDefault(); window.open(this.href, '_blank');">
                             <i class="bi bi-calendar-check me-1"></i>
                             View Appointment
                         </a>
                         <a href="/print/medication/${appointment.appointment_id}" 
                            class="btn btn-sm btn-primary" 
                            target="_blank"
-                           title="Print Prescription">
+                           title="Print Prescription"
+                           onclick="event.stopPropagation(); event.preventDefault(); window.open(this.href, '_blank');">
                             <i class="bi bi-printer me-1"></i>
                             Print Prescription
                         </a>

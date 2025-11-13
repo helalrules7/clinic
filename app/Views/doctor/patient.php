@@ -238,18 +238,38 @@
                         $groupedMedications[$appointmentId]['medications'][] = $med;
                     }
                     ?>
+                    <div class="d-flex justify-content-end mb-3">
+                        <button class="btn btn-outline-primary btn-sm" id="expandAllMedicationsBtn" onclick="expandCollapseAllMedications()">
+                            <i class="bi bi-chevron-double-down me-1"></i><span id="expandAllMedicationsText">Expand All</span>
+                        </button>
+                    </div>
                     <div class="prescription-timeline">
-                        <?php foreach ($groupedMedications as $appointmentId => $group): ?>
+                        <?php 
+                        $medicationIndex = 0;
+                        $totalMedications = count($groupedMedications);
+                        foreach ($groupedMedications as $appointmentId => $group): 
+                            $isLatest = ($medicationIndex === 0);
+                            $medicationIndex++;
+                            $collapseId = 'medicationCollapse' . $appointmentId;
+                        ?>
                         <div class="timeline-item prescription-timeline-item">
-                            <div class="timeline-marker bg-success">
+                            <div class="timeline-marker <?= $isLatest ? 'bg-warning' : 'bg-success' ?>">
                                 <i class="bi bi-calendar-event text-white"></i>
                             </div>
                             <div class="timeline-content">
-                                <div class="timeline-header d-flex justify-content-between align-items-start">
+                                <div class="timeline-header prescription-header <?= $isLatest ? 'expanded' : 'collapsed' ?>" 
+                                     data-bs-target="#<?= $collapseId ?>"
+                                     aria-expanded="<?= $isLatest ? 'true' : 'false' ?>"
+                                     aria-controls="<?= $collapseId ?>"
+                                     onclick="handlePrescriptionHeaderClick(event, '<?= $collapseId ?>')"
+                                     style="cursor: pointer;">
                                     <div class="flex-grow-1">
                                         <h6 class="mb-1">
                                             <i class="bi bi-calendar-event me-2 text-success"></i>
                                             Appointment #<?= $group['appointment_info']['id'] ?>
+                                            <?php if ($isLatest): ?>
+                                            <span class="badge bg-warning text-dark ms-2">Latest Prescription</span>
+                                            <?php endif; ?>
                                             <span class="badge bg-success ms-2"><?= count($group['medications']) ?> Medication<?= count($group['medications']) > 1 ? 's' : '' ?></span>
                                         </h6>
                                         <div class="d-flex flex-wrap gap-2 mb-2">
@@ -269,7 +289,7 @@
                                             <?php endif; ?>
                                         </div>
                                     </div>
-                                    <div class="btn-group btn-group-sm" role="group">
+                                    <div class="btn-group btn-group-sm" role="group" onclick="event.stopPropagation(); event.preventDefault();">
                                         <?php if (count($group['medications']) > 0): ?>
                                         <button class="btn btn-outline-primary btn-sm" 
                                                 data-medications-data='<?= htmlspecialchars(json_encode($group['medications']), ENT_QUOTES) ?>'
@@ -277,7 +297,7 @@
                                                 data-appointment-date="<?= $group['appointment_info']['date'] ?>"
                                                 data-appointment-time="<?= $group['appointment_info']['time'] ?>"
                                                 data-doctor-name="<?= htmlspecialchars($group['appointment_info']['doctor_name'] ?? '') ?>"
-                                                onclick="viewAllMedicationsForAppointment(this)"
+                                                onclick="event.stopPropagation(); event.preventDefault(); viewAllMedicationsForAppointment(this)"
                                                 data-bs-toggle="tooltip" 
                                                 data-bs-placement="top" 
                                                 data-bs-title="View All Prescriptions">
@@ -288,21 +308,25 @@
                                            class="btn btn-outline-info btn-sm"
                                            data-bs-toggle="tooltip" 
                                            data-bs-placement="top" 
-                                           data-bs-title="View Appointment">
+                                           data-bs-title="View Appointment"
+                                           onclick="event.stopPropagation();">
                                             <i class="bi bi-calendar-event"></i>
                                         </a>
                                         <button class="btn btn-outline-success btn-sm" 
-                                                onclick="printMedicationPrescription(<?= $group['appointment_info']['id'] ?>)"
+                                                onclick="event.stopPropagation(); printMedicationPrescription(<?= $group['appointment_info']['id'] ?>)"
                                                 data-bs-toggle="tooltip" 
                                                 data-bs-placement="top" 
                                                 data-bs-title="Print Prescription">
                                             <i class="bi bi-printer"></i>
                                         </button>
                                     </div>
+                                    <i class="bi bi-chevron-down collapse-icon ms-2"></i>
                                 </div>
-                                <?php if (count($group['medications']) > 1): ?>
-                                <div class="timeline-body mt-3">
-                                    <div class="medications-list">
+                                <div id="<?= $collapseId ?>" 
+                                     class="timeline-body collapse <?= $isLatest ? 'show' : '' ?>" 
+                                     data-bs-parent=".prescription-timeline">
+                                    <?php if (count($group['medications']) > 1): ?>
+                                    <div class="medications-list mt-3">
                                         <?php foreach ($group['medications'] as $index => $med): ?>
                                         <div class="medication-item p-3 mb-2 rounded" style="background: var(--bg-alt); border-left: 3px solid var(--success);">
                                             <div class="flex-grow-1">
@@ -320,8 +344,8 @@
                                         </div>
                                         <?php endforeach; ?>
                                     </div>
+                                    <?php endif; ?>
                                 </div>
-                                <?php endif; ?>
                             </div>
                         </div>
                         <?php endforeach; ?>
@@ -337,18 +361,38 @@
             <!-- Glasses Tab -->
             <div class="tab-pane fade" id="glasses" role="tabpanel">
                 <?php if (!empty($allGlasses)): ?>
+                    <div class="d-flex justify-content-end mb-3">
+                        <button class="btn btn-outline-primary btn-sm" id="expandAllGlassesBtn" onclick="expandCollapseAllGlasses()">
+                            <i class="bi bi-chevron-double-down me-1"></i><span id="expandAllGlassesText">Expand All</span>
+                        </button>
+                    </div>
                     <div class="prescription-timeline">
-                        <?php foreach ($allGlasses as $glass): ?>
+                        <?php 
+                        $glassesIndex = 0;
+                        $totalGlasses = count($allGlasses);
+                        foreach ($allGlasses as $glass): 
+                            $isLatest = ($glassesIndex === 0);
+                            $glassesIndex++;
+                            $collapseId = 'glassesCollapse' . $glass['id'];
+                        ?>
                         <div class="timeline-item prescription-timeline-item">
-                            <div class="timeline-marker bg-info">
+                            <div class="timeline-marker <?= $isLatest ? 'bg-warning' : 'bg-info' ?>">
                                 <i class="bi bi-eyeglasses text-white"></i>
                             </div>
                             <div class="timeline-content">
-                                <div class="timeline-header d-flex justify-content-between align-items-start">
+                                <div class="timeline-header prescription-header <?= $isLatest ? 'expanded' : 'collapsed' ?>" 
+                                     data-bs-target="#<?= $collapseId ?>"
+                                     aria-expanded="<?= $isLatest ? 'true' : 'false' ?>"
+                                     aria-controls="<?= $collapseId ?>"
+                                     onclick="handlePrescriptionHeaderClick(event, '<?= $collapseId ?>')"
+                                     style="cursor: pointer;">
                                     <div class="flex-grow-1">
                                         <h6 class="mb-1">
                                             <i class="bi bi-eyeglasses me-2 text-info"></i>
                                             <?= htmlspecialchars($glass['lens_type'] ?? 'Glasses Prescription') ?>
+                                            <?php if ($isLatest): ?>
+                                            <span class="badge bg-warning text-dark ms-2">Latest Prescription</span>
+                                            <?php endif; ?>
                                         </h6>
                                         <div class="d-flex flex-wrap gap-2 mb-2">
                                             <small class="text-muted">
@@ -371,27 +415,30 @@
                                             </small>
                                         </div>
                                     </div>
-                                    <div class="btn-group btn-group-sm" role="group">
+                                    <div class="btn-group btn-group-sm" role="group" onclick="event.stopPropagation(); event.preventDefault();">
                                         <button class="btn btn-outline-primary btn-sm" 
                                                 data-glass-id="<?= $glass['id'] ?>"
                                                 data-glass-data='<?= htmlspecialchars(json_encode($glass), ENT_QUOTES) ?>'
-                                                onclick="viewGlassesDetails(this)"
+                                                onclick="event.stopPropagation(); event.preventDefault(); viewGlassesDetails(this)"
                                                 data-bs-toggle="tooltip" 
                                                 data-bs-placement="top" 
                                                 data-bs-title="View Details">
                                             <i class="bi bi-eye"></i>
                                         </button>
                                         <button class="btn btn-outline-success btn-sm" 
-                                                onclick="printGlassesPrescription(<?= $glass['appointment_id'] ?>)"
+                                                onclick="event.stopPropagation(); printGlassesPrescription(<?= $glass['appointment_id'] ?>)"
                                                 data-bs-toggle="tooltip" 
                                                 data-bs-placement="top" 
                                                 data-bs-title="Print Prescription">
                                             <i class="bi bi-printer"></i>
                                         </button>
                                     </div>
+                                    <i class="bi bi-chevron-down collapse-icon ms-2"></i>
                                 </div>
-                                <div class="timeline-body mt-3">
-                                    <div class="row">
+                                <div id="<?= $collapseId ?>" 
+                                     class="timeline-body collapse <?= $isLatest ? 'show' : '' ?>" 
+                                     data-bs-parent=".prescription-timeline">
+                                    <div class="row mt-3">
                                         <div class="col-md-6">
                                             <h6 class="text-primary mb-2">Right Eye (OD)</h6>
                                             <p class="mb-1 small">
@@ -479,22 +526,40 @@
                                strtotime($a['appointment_info']['date'] . ' ' . $a['appointment_info']['time']);
                     });
                     ?>
+                    <div class="d-flex justify-content-end mb-3">
+                        <button class="btn btn-outline-primary btn-sm" id="expandAllPrescriptionsBtn" onclick="expandCollapseAllPrescriptions()">
+                            <i class="bi bi-chevron-double-down me-1"></i><span id="expandAllPrescriptionsText">Expand All</span>
+                        </button>
+                    </div>
                     <div class="prescription-timeline">
-                        <?php foreach ($groupedAllPrescriptions as $appointmentId => $group): ?>
+                        <?php 
+                        $allPrescriptionsIndex = 0;
+                        $totalAllPrescriptions = count($groupedAllPrescriptions);
+                        foreach ($groupedAllPrescriptions as $appointmentId => $group): 
+                            $isLatest = ($allPrescriptionsIndex === 0);
+                            $allPrescriptionsIndex++;
+                            $collapseId = 'allPrescriptionCollapse' . $appointmentId;
+                            $totalPrescriptions = count($group['medications']) + count($group['glasses']);
+                        ?>
                         <div class="timeline-item prescription-timeline-item">
-                            <div class="timeline-marker bg-primary">
+                            <div class="timeline-marker <?= $isLatest ? 'bg-warning' : 'bg-primary' ?>">
                                 <i class="bi bi-calendar-event text-white"></i>
                             </div>
                             <div class="timeline-content">
-                                <div class="timeline-header d-flex justify-content-between align-items-start">
+                                <div class="timeline-header prescription-header <?= $isLatest ? 'expanded' : 'collapsed' ?>" 
+                                     data-bs-target="#<?= $collapseId ?>"
+                                     aria-expanded="<?= $isLatest ? 'true' : 'false' ?>"
+                                     aria-controls="<?= $collapseId ?>"
+                                     onclick="handlePrescriptionHeaderClick(event, '<?= $collapseId ?>')"
+                                     style="cursor: pointer;">
                                     <div class="flex-grow-1">
                                         <h6 class="mb-1">
                                             <i class="bi bi-calendar-event me-2 text-primary"></i>
                                             Appointment #<?= $group['appointment_info']['id'] ?>
-                                            <?php 
-                                            $totalPrescriptions = count($group['medications']) + count($group['glasses']);
-                                            if ($totalPrescriptions > 0):
-                                            ?>
+                                            <?php if ($isLatest): ?>
+                                            <span class="badge bg-warning text-dark ms-2">Latest Prescription</span>
+                                            <?php endif; ?>
+                                            <?php if ($totalPrescriptions > 0): ?>
                                             <span class="badge bg-primary ms-2">
                                                 <?= $totalPrescriptions ?> Prescription<?= $totalPrescriptions > 1 ? 's' : '' ?>
                                             </span>
@@ -517,7 +582,7 @@
                                             <?php endif; ?>
                                         </div>
                                     </div>
-                                    <div class="btn-group btn-group-sm" role="group">
+                                    <div class="btn-group btn-group-sm" role="group" onclick="event.stopPropagation(); event.preventDefault();">
                                         <?php if (!empty($group['medications']) && count($group['medications']) > 0): ?>
                                         <button class="btn btn-outline-primary btn-sm" 
                                                 data-medications-data='<?= htmlspecialchars(json_encode($group['medications']), ENT_QUOTES) ?>'
@@ -525,7 +590,7 @@
                                                 data-appointment-date="<?= $group['appointment_info']['date'] ?>"
                                                 data-appointment-time="<?= $group['appointment_info']['time'] ?>"
                                                 data-doctor-name="<?= htmlspecialchars($group['appointment_info']['doctor_name'] ?? '') ?>"
-                                                onclick="viewAllMedicationsForAppointment(this)"
+                                                onclick="event.stopPropagation(); event.preventDefault(); viewAllMedicationsForAppointment(this)"
                                                 data-bs-toggle="tooltip" 
                                                 data-bs-placement="top" 
                                                 data-bs-title="View All Medication Prescriptions">
@@ -536,12 +601,13 @@
                                            class="btn btn-outline-info btn-sm"
                                            data-bs-toggle="tooltip" 
                                            data-bs-placement="top" 
-                                           data-bs-title="View Appointment">
+                                           data-bs-title="View Appointment"
+                                           onclick="event.stopPropagation();">
                                             <i class="bi bi-calendar-event"></i>
                                         </a>
                                         <?php if (!empty($group['medications'])): ?>
                                         <button class="btn btn-outline-success btn-sm" 
-                                                onclick="printMedicationPrescription(<?= $group['appointment_info']['id'] ?>)"
+                                                onclick="event.stopPropagation(); printMedicationPrescription(<?= $group['appointment_info']['id'] ?>)"
                                                 data-bs-toggle="tooltip" 
                                                 data-bs-placement="top" 
                                                 data-bs-title="Print Medication Prescription">
@@ -550,7 +616,7 @@
                                         <?php endif; ?>
                                         <?php if (!empty($group['glasses'])): ?>
                                         <button class="btn btn-outline-info btn-sm" 
-                                                onclick="printGlassesPrescription(<?= $group['appointment_info']['id'] ?>)"
+                                                onclick="event.stopPropagation(); printGlassesPrescription(<?= $group['appointment_info']['id'] ?>)"
                                                 data-bs-toggle="tooltip" 
                                                 data-bs-placement="top" 
                                                 data-bs-title="Print Glasses Prescription">
@@ -558,9 +624,11 @@
                                         </button>
                                         <?php endif; ?>
                                     </div>
+                                    <i class="bi bi-chevron-down collapse-icon ms-2"></i>
                                 </div>
-                                <?php if ((!empty($group['medications']) && count($group['medications']) > 1) || (!empty($group['glasses']) && count($group['glasses']) > 0)): ?>
-                                <div class="timeline-body mt-3">
+                                <div id="<?= $collapseId ?>" 
+                                     class="timeline-body collapse <?= $isLatest ? 'show' : '' ?>" 
+                                     data-bs-parent=".prescription-timeline">
                                     <!-- Medications Section -->
                                     <?php if (!empty($group['medications']) && count($group['medications']) > 1): ?>
                                     <div class="mb-3">
@@ -625,7 +693,6 @@
                                     </div>
                                     <?php endif; ?>
                                 </div>
-                                <?php endif; ?>
                             </div>
                         </div>
                         <?php endforeach; ?>
@@ -652,26 +719,47 @@
                 Appointment History
                 <span class="badge bg-primary ms-2"><?= count($allAppointments) ?></span>
             </h5>
-            <button class="btn btn-outline-primary btn-sm" onclick="bookNewAppointment(<?= $patient['id'] ?>)">
-                <i class="bi bi-calendar-plus me-1"></i>Book New Appointment
-            </button>
+            <div class="btn-group btn-group-sm" role="group">
+                <button class="btn btn-outline-primary btn-sm" id="expandAllAppointmentsBtn" onclick="expandCollapseAllAppointments()">
+                    <i class="bi bi-chevron-double-down me-1"></i><span id="expandAllAppointmentsText">Expand All</span>
+                </button>
+                <button class="btn btn-outline-primary btn-sm" onclick="bookNewAppointment(<?= $patient['id'] ?>)">
+                    <i class="bi bi-calendar-plus me-1"></i>Book New Appointment
+                </button>
+            </div>
         </div>
     </div>
     <div class="card-body">
         <div class="appointment-timeline">
-            <?php foreach ($allAppointments as $index => $appointment): ?>
+            <?php 
+            $appointmentIndex = 0;
+            $totalAppointments = count($allAppointments);
+            foreach ($allAppointments as $index => $appointment): 
+                $isLatest = ($appointmentIndex === 0);
+                $appointmentIndex++;
+                $collapseId = 'appointmentCollapse' . $appointment['id'];
+                $statusColor = $appointment['status'] === 'Completed' ? 'success' : ($appointment['status'] === 'Cancelled' ? 'danger' : ($appointment['status'] === 'InProgress' ? 'warning' : 'primary'));
+            ?>
             <div class="timeline-item appointment-timeline-item">
-                <div class="timeline-marker bg-<?= $appointment['status'] === 'Completed' ? 'success' : ($appointment['status'] === 'Cancelled' ? 'danger' : 'primary') ?>">
+                <div class="timeline-marker <?= $isLatest ? 'bg-warning' : 'bg-' . $statusColor ?>">
                     <i class="bi bi-calendar-event text-white"></i>
                 </div>
                 <div class="timeline-content">
-                    <div class="timeline-header d-flex justify-content-between align-items-start">
+                    <div class="timeline-header appointment-header <?= $isLatest ? 'expanded' : 'collapsed' ?>" 
+                         data-bs-target="#<?= $collapseId ?>"
+                         aria-expanded="<?= $isLatest ? 'true' : 'false' ?>"
+                         aria-controls="<?= $collapseId ?>"
+                         onclick="handleAppointmentHeaderClick(event, '<?= $collapseId ?>')"
+                         style="cursor: pointer;">
                         <div class="flex-grow-1">
                             <h6 class="mb-1">
-                                <a href="/doctor/appointments/<?= $appointment['id'] ?>" class="text-decoration-none">
+                                <a href="/doctor/appointments/<?= $appointment['id'] ?>" class="text-decoration-none" onclick="event.stopPropagation();">
                                     Appointment #<?= $appointment['id'] ?>
                                 </a>
-                                <span class="badge bg-<?= $appointment['status'] === 'Completed' ? 'success' : ($appointment['status'] === 'Cancelled' ? 'danger' : ($appointment['status'] === 'InProgress' ? 'warning' : 'primary')) ?> ms-2">
+                                <?php if ($isLatest): ?>
+                                <span class="badge bg-warning text-dark ms-2">Latest Appointment</span>
+                                <?php endif; ?>
+                                <span class="badge bg-<?= $statusColor ?> ms-2">
                                     <?= ucfirst($appointment['status']) ?>
                                 </span>
                             </h6>
@@ -701,12 +789,17 @@
                                 <?php endif; ?>
                             </div>
                         </div>
-                        <a href="/doctor/appointments/<?= $appointment['id'] ?>" class="btn btn-sm btn-outline-primary">
+                        <a href="/doctor/appointments/<?= $appointment['id'] ?>" 
+                           class="btn btn-sm btn-outline-primary"
+                           onclick="event.stopPropagation();">
                             <i class="bi bi-eye me-1"></i>View Details
                         </a>
+                        <i class="bi bi-chevron-down collapse-icon ms-2"></i>
                     </div>
                     
-                    <div class="timeline-body mt-3">
+                    <div id="<?= $collapseId ?>" 
+                         class="timeline-body collapse <?= $isLatest ? 'show' : '' ?>" 
+                         data-bs-parent=".appointment-timeline">
                         <!-- Consultation Notes -->
                         <?php if (!empty($appointment['consultation_note'])): ?>
                         <div class="mb-3 p-3 bg-light rounded">
@@ -1899,14 +1992,57 @@
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 1.5rem;
+    padding: 0;
     margin-left: 20px;
     transition: all 0.3s ease;
+    overflow: hidden;
 }
 
 .appointment-timeline-item .timeline-content:hover {
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     transform: translateX(5px);
+}
+
+.appointment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 2px solid var(--border);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.05) 50%, transparent 100%);
+    position: relative;
+}
+
+.dark .appointment-header {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
+}
+
+.appointment-header:hover {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.1) 50%, transparent 100%);
+}
+
+.dark .appointment-header:hover {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 50%, transparent 100%);
+}
+
+.appointment-header.collapsed {
+    border-bottom: none;
+}
+
+.appointment-header .collapse-icon {
+    transition: transform 0.3s ease;
+    color: var(--muted);
+    font-size: 1.2rem;
+}
+
+.appointment-header.expanded .collapse-icon {
+    transform: rotate(180deg);
+}
+
+.appointment-timeline-item .timeline-body {
+    padding: 1.5rem;
 }
 
 .appointment-timeline-item .timeline-header h6 a {
@@ -1962,14 +2098,57 @@
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 1.25rem;
+    padding: 0;
     margin-left: 20px;
     transition: all 0.3s ease;
+    overflow: hidden;
 }
 
 .prescription-timeline-item .timeline-content:hover {
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     transform: translateX(5px);
+}
+
+.prescription-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 2px solid var(--border);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.05) 50%, transparent 100%);
+    position: relative;
+}
+
+.dark .prescription-header {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
+}
+
+.prescription-header:hover {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.1) 50%, transparent 100%);
+}
+
+.dark .prescription-header:hover {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 50%, transparent 100%);
+}
+
+.prescription-header.collapsed {
+    border-bottom: none;
+}
+
+.prescription-header .collapse-icon {
+    transition: transform 0.3s ease;
+    color: var(--muted);
+    font-size: 1.2rem;
+}
+
+.prescription-header.expanded .collapse-icon {
+    transform: rotate(180deg);
+}
+
+.prescription-timeline-item .timeline-body {
+    padding: 1.5rem;
 }
 
 /* Dark Mode for Prescription Timeline */
@@ -4365,6 +4544,14 @@ function refreshTooltips() {
 // Initialize tooltips when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     initializeTooltips();
+    
+    // Initialize expand all button states
+    setTimeout(() => {
+        updateExpandAllAppointmentsButton();
+        updateExpandAllMedicationsButton();
+        updateExpandAllGlassesButton();
+        updateExpandAllPrescriptionsButton();
+    }, 100);
 });
 
 // Refresh tooltips when modals are shown
@@ -5654,6 +5841,474 @@ function viewGlassesDetails(button) {
 function printMedicationPrescription(appointmentId) {
     const printUrl = `/print/prescription/${appointmentId}?t=${Date.now()}`;
     window.open(printUrl, '_blank');
+}
+
+function handlePrescriptionHeaderClick(event, collapseId) {
+    // Check if click originated from a button, link, or any interactive element
+    const clickedElement = event.target;
+    const isButtonClick = clickedElement.closest('button') || 
+                         clickedElement.closest('a') || 
+                         clickedElement.closest('.btn-group') ||
+                         clickedElement.closest('.btn');
+    
+    // If click is on a button, link, or button group, don't toggle collapse
+    if (isButtonClick && !clickedElement.closest('.collapse-icon')) {
+        event.stopPropagation();
+        event.preventDefault();
+        return; // Let the button/link handle its own click
+    }
+    
+    // Otherwise, toggle the collapse
+    togglePrescriptionTimeline(collapseId);
+}
+
+function handleAppointmentHeaderClick(event, collapseId) {
+    // Check if click originated from a button, link, or any interactive element
+    const clickedElement = event.target;
+    const isButtonClick = clickedElement.closest('button') || 
+                         clickedElement.closest('a') || 
+                         clickedElement.closest('.btn-group') ||
+                         clickedElement.closest('.btn');
+    
+    // If click is on a button, link, or button group, don't toggle collapse
+    if (isButtonClick && !clickedElement.closest('.collapse-icon')) {
+        event.stopPropagation();
+        event.preventDefault();
+        return; // Let the button/link handle its own click
+    }
+    
+    // Otherwise, toggle the collapse
+    toggleAppointmentTimeline(collapseId);
+}
+
+function togglePrescriptionTimeline(collapseId) {
+    const header = document.querySelector(`[data-bs-target="#${collapseId}"]`);
+    const body = document.getElementById(collapseId);
+    
+    if (!header || !body) return;
+    
+    // Use Bootstrap Collapse API
+    const bsCollapse = bootstrap.Collapse.getInstance(body) || new bootstrap.Collapse(body, {
+        toggle: false
+    });
+    
+    if (body.classList.contains('show')) {
+        bsCollapse.hide();
+    } else {
+        bsCollapse.show();
+    }
+    
+    // Update header classes after animation
+    body.addEventListener('shown.bs.collapse', function updateHeader() {
+        header.classList.add('expanded');
+        header.classList.remove('collapsed');
+        body.removeEventListener('shown.bs.collapse', updateHeader);
+        
+        // Update expand all button states and icons
+        setTimeout(() => {
+            updateExpandAllMedicationsButton();
+            updateExpandAllGlassesButton();
+            updateExpandAllPrescriptionsButton();
+        }, 100);
+    });
+    
+    body.addEventListener('hidden.bs.collapse', function updateHeader() {
+        header.classList.remove('expanded');
+        header.classList.add('collapsed');
+        body.removeEventListener('hidden.bs.collapse', updateHeader);
+        
+        // Update expand all button states and icons
+        setTimeout(() => {
+            updateExpandAllMedicationsButton();
+            updateExpandAllGlassesButton();
+            updateExpandAllPrescriptionsButton();
+        }, 100);
+    });
+    
+    // Also update immediately for better UX
+    setTimeout(() => {
+        updateExpandAllMedicationsButton();
+        updateExpandAllGlassesButton();
+        updateExpandAllPrescriptionsButton();
+    }, 350);
+}
+
+function toggleAppointmentTimeline(collapseId) {
+    const header = document.querySelector(`[data-bs-target="#${collapseId}"]`);
+    const body = document.getElementById(collapseId);
+    
+    if (!header || !body) return;
+    
+    // Use Bootstrap Collapse API
+    const bsCollapse = bootstrap.Collapse.getInstance(body) || new bootstrap.Collapse(body, {
+        toggle: false
+    });
+    
+    if (body.classList.contains('show')) {
+        bsCollapse.hide();
+    } else {
+        bsCollapse.show();
+    }
+    
+    // Update header classes after animation
+    body.addEventListener('shown.bs.collapse', function updateHeader() {
+        header.classList.add('expanded');
+        header.classList.remove('collapsed');
+        body.removeEventListener('shown.bs.collapse', updateHeader);
+        
+        // Update expand all button state and icon
+        setTimeout(() => {
+            updateExpandAllAppointmentsButton();
+        }, 100);
+    });
+    
+    body.addEventListener('hidden.bs.collapse', function updateHeader() {
+        header.classList.remove('expanded');
+        header.classList.add('collapsed');
+        body.removeEventListener('hidden.bs.collapse', updateHeader);
+        
+        // Update expand all button state and icon
+        setTimeout(() => {
+            updateExpandAllAppointmentsButton();
+        }, 100);
+    });
+    
+    // Also update immediately for better UX
+    setTimeout(() => {
+        updateExpandAllAppointmentsButton();
+    }, 350);
+}
+
+function expandCollapseAllAppointments() {
+    const timeline = document.querySelector('.appointment-timeline');
+    if (!timeline) return;
+    
+    const allCollapses = timeline.querySelectorAll('.collapse');
+    const btn = document.getElementById('expandAllAppointmentsBtn');
+    const text = document.getElementById('expandAllAppointmentsText');
+    
+    if (!btn || !text) return;
+    
+    // Check if all are expanded
+    let allExpanded = true;
+    allCollapses.forEach(collapse => {
+        if (!collapse.classList.contains('show')) {
+            allExpanded = false;
+        }
+    });
+    
+    // Toggle all
+    allCollapses.forEach(collapse => {
+        const collapseId = collapse.id;
+        const header = document.querySelector(`[data-bs-target="#${collapseId}"]`);
+        if (!header) return;
+        
+        if (allExpanded) {
+            // Collapse all
+            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+            if (bsCollapse) {
+                bsCollapse.hide();
+            } else {
+                collapse.classList.remove('show');
+                header.classList.remove('expanded');
+                header.classList.add('collapsed');
+            }
+        } else {
+            // Expand all
+            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+            if (bsCollapse) {
+                bsCollapse.show();
+            } else {
+                collapse.classList.add('show');
+                header.classList.remove('collapsed');
+                header.classList.add('expanded');
+            }
+        }
+    });
+    
+    // Update button text after a short delay to allow animations
+    setTimeout(() => {
+        updateExpandAllAppointmentsButton();
+    }, 350);
+}
+
+function updateExpandAllAppointmentsButton() {
+    const timeline = document.querySelector('.appointment-timeline');
+    if (!timeline) return;
+    
+    const allCollapses = timeline.querySelectorAll('.collapse');
+    const btn = document.getElementById('expandAllAppointmentsBtn');
+    const text = document.getElementById('expandAllAppointmentsText');
+    
+    if (!btn || !text) return;
+    
+    let allExpanded = true;
+    allCollapses.forEach(collapse => {
+        if (!collapse.classList.contains('show')) {
+            allExpanded = false;
+        }
+    });
+    
+    const icon = btn.querySelector('i');
+    if (allExpanded) {
+        text.textContent = 'Collapse All';
+        if (icon) icon.className = 'bi bi-chevron-double-up me-1';
+    } else {
+        text.textContent = 'Expand All';
+        if (icon) icon.className = 'bi bi-chevron-double-down me-1';
+    }
+}
+
+function expandCollapseAllMedications() {
+    const timeline = document.querySelector('#medications .prescription-timeline');
+    if (!timeline) return;
+    
+    const allCollapses = timeline.querySelectorAll('.collapse');
+    const btn = document.getElementById('expandAllMedicationsBtn');
+    const text = document.getElementById('expandAllMedicationsText');
+    
+    if (!btn || !text) return;
+    
+    // Check if all are expanded
+    let allExpanded = true;
+    allCollapses.forEach(collapse => {
+        if (!collapse.classList.contains('show')) {
+            allExpanded = false;
+        }
+    });
+    
+    // Toggle all
+    allCollapses.forEach(collapse => {
+        const collapseId = collapse.id;
+        const header = document.querySelector(`[data-bs-target="#${collapseId}"]`);
+        if (!header) return;
+        
+        if (allExpanded) {
+            // Collapse all
+            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+            if (bsCollapse) {
+                bsCollapse.hide();
+            } else {
+                collapse.classList.remove('show');
+                header.classList.remove('expanded');
+                header.classList.add('collapsed');
+            }
+        } else {
+            // Expand all
+            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+            if (bsCollapse) {
+                bsCollapse.show();
+            } else {
+                collapse.classList.add('show');
+                header.classList.remove('collapsed');
+                header.classList.add('expanded');
+            }
+        }
+    });
+    
+    // Update button text after a short delay
+    setTimeout(() => {
+        updateExpandAllMedicationsButton();
+    }, 350);
+}
+
+function updateExpandAllMedicationsButton() {
+    const timeline = document.querySelector('#medications .prescription-timeline');
+    if (!timeline) return;
+    
+    const allCollapses = timeline.querySelectorAll('.collapse');
+    const btn = document.getElementById('expandAllMedicationsBtn');
+    const text = document.getElementById('expandAllMedicationsText');
+    
+    if (!btn || !text) return;
+    
+    let allExpanded = true;
+    let hasCollapses = allCollapses.length > 0;
+    
+    if (!hasCollapses) return;
+    
+    allCollapses.forEach(collapse => {
+        if (!collapse.classList.contains('show')) {
+            allExpanded = false;
+        }
+    });
+    
+    const icon = btn.querySelector('i');
+    if (allExpanded) {
+        text.textContent = 'Collapse All';
+        if (icon) icon.className = 'bi bi-chevron-double-up me-1';
+    } else {
+        text.textContent = 'Expand All';
+        if (icon) icon.className = 'bi bi-chevron-double-down me-1';
+    }
+}
+
+function expandCollapseAllGlasses() {
+    const timeline = document.querySelector('#glasses .prescription-timeline');
+    if (!timeline) return;
+    
+    const allCollapses = timeline.querySelectorAll('.collapse');
+    const btn = document.getElementById('expandAllGlassesBtn');
+    const text = document.getElementById('expandAllGlassesText');
+    
+    if (!btn || !text) return;
+    
+    // Check if all are expanded
+    let allExpanded = true;
+    allCollapses.forEach(collapse => {
+        if (!collapse.classList.contains('show')) {
+            allExpanded = false;
+        }
+    });
+    
+    // Toggle all
+    allCollapses.forEach(collapse => {
+        const collapseId = collapse.id;
+        const header = document.querySelector(`[data-bs-target="#${collapseId}"]`);
+        if (!header) return;
+        
+        if (allExpanded) {
+            // Collapse all
+            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+            if (bsCollapse) {
+                bsCollapse.hide();
+            } else {
+                collapse.classList.remove('show');
+                header.classList.remove('expanded');
+                header.classList.add('collapsed');
+            }
+        } else {
+            // Expand all
+            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+            if (bsCollapse) {
+                bsCollapse.show();
+            } else {
+                collapse.classList.add('show');
+                header.classList.remove('collapsed');
+                header.classList.add('expanded');
+            }
+        }
+    });
+    
+    // Update button text after a short delay
+    setTimeout(() => {
+        updateExpandAllGlassesButton();
+    }, 350);
+}
+
+function updateExpandAllGlassesButton() {
+    const timeline = document.querySelector('#glasses .prescription-timeline');
+    if (!timeline) return;
+    
+    const allCollapses = timeline.querySelectorAll('.collapse');
+    const btn = document.getElementById('expandAllGlassesBtn');
+    const text = document.getElementById('expandAllGlassesText');
+    
+    if (!btn || !text) return;
+    
+    let allExpanded = true;
+    let hasCollapses = allCollapses.length > 0;
+    
+    if (!hasCollapses) return;
+    
+    allCollapses.forEach(collapse => {
+        if (!collapse.classList.contains('show')) {
+            allExpanded = false;
+        }
+    });
+    
+    const icon = btn.querySelector('i');
+    if (allExpanded) {
+        text.textContent = 'Collapse All';
+        if (icon) icon.className = 'bi bi-chevron-double-up me-1';
+    } else {
+        text.textContent = 'Expand All';
+        if (icon) icon.className = 'bi bi-chevron-double-down me-1';
+    }
+}
+
+function expandCollapseAllPrescriptions() {
+    const timeline = document.querySelector('#all-prescriptions .prescription-timeline');
+    if (!timeline) return;
+    
+    const allCollapses = timeline.querySelectorAll('.collapse');
+    const btn = document.getElementById('expandAllPrescriptionsBtn');
+    const text = document.getElementById('expandAllPrescriptionsText');
+    
+    if (!btn || !text) return;
+    
+    // Check if all are expanded
+    let allExpanded = true;
+    allCollapses.forEach(collapse => {
+        if (!collapse.classList.contains('show')) {
+            allExpanded = false;
+        }
+    });
+    
+    // Toggle all
+    allCollapses.forEach(collapse => {
+        const collapseId = collapse.id;
+        const header = document.querySelector(`[data-bs-target="#${collapseId}"]`);
+        if (!header) return;
+        
+        if (allExpanded) {
+            // Collapse all
+            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+            if (bsCollapse) {
+                bsCollapse.hide();
+            } else {
+                collapse.classList.remove('show');
+                header.classList.remove('expanded');
+                header.classList.add('collapsed');
+            }
+        } else {
+            // Expand all
+            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+            if (bsCollapse) {
+                bsCollapse.show();
+            } else {
+                collapse.classList.add('show');
+                header.classList.remove('collapsed');
+                header.classList.add('expanded');
+            }
+        }
+    });
+    
+    // Update button text after a short delay
+    setTimeout(() => {
+        updateExpandAllPrescriptionsButton();
+    }, 350);
+}
+
+function updateExpandAllPrescriptionsButton() {
+    const timeline = document.querySelector('#all-prescriptions .prescription-timeline');
+    if (!timeline) return;
+    
+    const allCollapses = timeline.querySelectorAll('.collapse');
+    const btn = document.getElementById('expandAllPrescriptionsBtn');
+    const text = document.getElementById('expandAllPrescriptionsText');
+    
+    if (!btn || !text) return;
+    
+    let allExpanded = true;
+    let hasCollapses = allCollapses.length > 0;
+    
+    if (!hasCollapses) return;
+    
+    allCollapses.forEach(collapse => {
+        if (!collapse.classList.contains('show')) {
+            allExpanded = false;
+        }
+    });
+    
+    const icon = btn.querySelector('i');
+    if (allExpanded) {
+        text.textContent = 'Collapse All';
+        if (icon) icon.className = 'bi bi-chevron-double-up me-1';
+    } else {
+        text.textContent = 'Expand All';
+        if (icon) icon.className = 'bi bi-chevron-double-down me-1';
+    }
 }
 
 // Reload patient files via Ajax
