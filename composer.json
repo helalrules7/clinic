@@ -1,0 +1,29 @@
+{
+    "name": "clinic/ophthalmology",
+    "description": "Roaya Clinic Management System",
+    "type": "project",
+    "require": {
+        "php": ">=8.2",
+        "ext-pdo": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "phpoffice/phpword": "^1.4",
+        "ext-gd": "*",
+        "ext-zip": "*",
+        "box/spout": "^3.3",
+        "phpoffice/phpspreadsheet": "^5.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "php -r \"if (!file_exists('.env')) { copy('.env.example', '.env'); echo 'Created .env file from .env.example'; }\""
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}
