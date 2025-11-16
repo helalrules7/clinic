@@ -152,6 +152,38 @@
 .dark #deleteAlertModal .text-muted {
     color: var(--muted) !important;
 }
+
+/* Alert Status Styling in Table */
+.table tbody tr.alert-active {
+    border-left: 4px solid var(--success) !important;
+    background-color: rgba(16, 185, 129, 0.05) !important;
+}
+
+.dark .table tbody tr.alert-active {
+    border-left: 4px solid var(--success) !important;
+    background-color: rgba(74, 222, 128, 0.1) !important;
+}
+
+.table tbody tr.alert-dismissed,
+.table tbody tr.alert-inactive {
+    border-left: 4px solid var(--muted) !important;
+    opacity: 0.6;
+    background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+.dark .table tbody tr.alert-dismissed,
+.dark .table tbody tr.alert-inactive {
+    background-color: rgba(0, 0, 0, 0.1) !important;
+    opacity: 0.5;
+}
+
+.table tbody tr.alert-active:hover {
+    background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+.dark .table tbody tr.alert-active:hover {
+    background-color: rgba(74, 222, 128, 0.15) !important;
+}
 </style>
 
 <div class="container-fluid py-4">
@@ -253,15 +285,36 @@ function loadAlerts() {
                     const alertDateTime = new Date(`${alert.alert_date}T${alert.alert_time}`);
                     const dateStr = alertDateTime.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
                     const timeStr = alertDateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                    const statusBadge = alert.is_active 
-                        ? '<span class="badge bg-success">Active</span>' 
-                        : '<span class="badge bg-secondary">Inactive</span>';
+                    
+                    // Determine alert status (same logic as patient.php)
+                    const isActive = alert.is_active == 1;
+                    const isDismissed = alert.is_dismissed == 1;
+                    const isPast = alertDateTime && alertDateTime < new Date();
+                    
+                    // Determine alert status class for styling
+                    let alertStatusClass = '';
+                    if (isDismissed) {
+                        alertStatusClass = 'alert-dismissed';
+                    } else if (isActive) {
+                        alertStatusClass = 'alert-active';
+                    } else {
+                        alertStatusClass = 'alert-inactive';
+                    }
+                    
+                    const statusBadge = isDismissed 
+                        ? '<span class="badge bg-secondary">Dismissed</span>' 
+                        : (isActive 
+                            ? (isPast 
+                                ? '<span class="badge bg-warning">Past Due</span>' 
+                                : '<span class="badge bg-success">Active</span>')
+                            : '<span class="badge bg-secondary">Inactive</span>');
+                    
                     const repeatInfo = alert.repeat_count > 0 
                         ? `${alert.current_repeat}/${alert.repeat_count}` 
                         : 'Infinite';
                     
                     html += `
-                        <tr>
+                        <tr class="${alertStatusClass}">
                             <td>${escapeHtml(alert.message)}</td>
                             <td>
                                 <i class="bi bi-calendar me-1"></i>${dateStr}<br>

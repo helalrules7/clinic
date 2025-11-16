@@ -851,9 +851,6 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
             <button type="button" class="btn btn-primary hide-on-mobile" onclick="editConsultation(<?= $appointment['id'] ?>)">
                 <i class="bi bi-pencil me-1"></i>Edit Consultation
             </button>
-            <button type="button" class="btn btn-warning hide-on-mobile" onclick="openAlertModal(<?= $appointment['patient_id'] ?? 'null' ?>, <?= $appointment['id'] ?>)">
-                <i class="bi bi-bell me-1"></i>Set Alert
-            </button>
             <button type="button" class="btn btn-success hide-on-mobile" onclick="addPrescription(<?= $appointment['id'] ?>)">
                 <i class="bi bi-prescription2 me-1"></i>Add Prescription
             </button>
@@ -865,6 +862,9 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
             </button>
             <button type="button" class="btn btn-warning hide-on-mobile" onclick="rescheduleAppointment(<?= $appointment['id'] ?>)">
                 <i class="bi bi-calendar-plus me-1"></i>Reschedule
+            </button>
+            <button type="button" class="btn btn-warning hide-on-mobile" onclick="openAlertModal(<?= $appointment['patient_id'] ?? 'null' ?>, <?= $appointment['id'] ?>)">
+                <i class="bi bi-bell me-1"></i>Set Alert
             </button>
             
             <!-- More Actions Dropdown for Mobile -->
@@ -893,16 +893,15 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                             <i class="bi bi-calendar-plus me-2"></i>Reschedule
                         </a>
                     </li>
+                    <li>
+                        <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { openAlertModal(<?= $appointment['patient_id'] ?? 'null' ?>, <?= $appointment['id'] ?>); });">
+                            <i class="bi bi-bell me-2"></i>Set Alert
+                        </a>
+                    </li>
                     <li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { editConsultation(<?= $appointment['id'] ?>); });">
                                 <i class="bi bi-pencil me-2"></i>Edit Consultation
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { openAlertModal(<?= $appointment['patient_id'] ?? 'null' ?>, <?= $appointment['id'] ?>); });">
-                                <i class="bi bi-bell me-2"></i>Set Alert
                             </a>
                         </li>
                     </ul>
@@ -4925,6 +4924,15 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// Set current patient info for alert modal
+window.currentPatientInfo = {
+    id: <?= isset($patient['id']) ? (int)$patient['id'] : 'null' ?>,
+    first_name: <?= json_encode($patient['first_name'] ?? '') ?>,
+    last_name: <?= json_encode($patient['last_name'] ?? '') ?>,
+    phone: <?= json_encode($patient['phone'] ?? '') ?>,
+    age: <?= isset($patient['dob']) ? date_diff(date_create($patient['dob']), date_create('now'))->y : 'null' ?>
+};
 
     </script>
 

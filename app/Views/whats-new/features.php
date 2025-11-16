@@ -477,6 +477,26 @@
             border-color: rgba(30, 144, 255, 0.6);
         }
         
+        .mockup-alert-toast h6,
+        .mockup-alert-toast p,
+        .mockup-alert-toast small {
+            color: var(--text-light);
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .mockup-alert-toast h6,
+            .mockup-alert-toast p,
+            .mockup-alert-toast small {
+                color: var(--text-dark);
+            }
+        }
+        
+        body.dark .mockup-alert-toast h6,
+        body.dark .mockup-alert-toast p,
+        body.dark .mockup-alert-toast small {
+            color: var(--text-dark);
+        }
+        
         .mockup-timeline-marker {
             width: 30px;
             height: 30px;
@@ -713,6 +733,20 @@
             background: var(--card-dark);
             box-shadow: 0 5px 15px var(--shadow-dark);
             border-color: var(--border-dark);
+        }
+        
+        .feature-card-v6 h5 {
+            color: var(--text-light);
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .feature-card-v6 h5 {
+                color: var(--text-dark);
+            }
+        }
+        
+        body.dark .feature-card-v6 h5 {
+            color: var(--text-dark);
         }
         
         .feature-mockup-v6 {
@@ -1046,6 +1080,43 @@
             background: var(--card-dark);
         }
         
+        .mockup-modal-content-v6 h5 {
+            color: var(--text-light);
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .mockup-modal-content-v6 h5 {
+                color: var(--text-dark);
+            }
+        }
+        
+        body.dark .mockup-modal-content-v6 h5 {
+            color: var(--text-dark);
+        }
+        
+        .mockup-modal-content-v6,
+        .mockup-modal-content-v6 div,
+        .mockup-modal-content-v6 p,
+        .mockup-modal-content-v6 strong {
+            color: var(--text-light);
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .mockup-modal-content-v6,
+            .mockup-modal-content-v6 div,
+            .mockup-modal-content-v6 p,
+            .mockup-modal-content-v6 strong {
+                color: var(--text-dark);
+            }
+        }
+        
+        body.dark .mockup-modal-content-v6,
+        body.dark .mockup-modal-content-v6 div,
+        body.dark .mockup-modal-content-v6 p,
+        body.dark .mockup-modal-content-v6 strong {
+            color: var(--text-dark);
+        }
+        
         .mockup-modal-close-v6 {
             position: absolute;
             top: 15px;
@@ -1064,9 +1135,29 @@
             transition: all 0.3s ease;
         }
         
+        @media (prefers-color-scheme: dark) {
+            .mockup-modal-close-v6 {
+                color: var(--text-dark);
+            }
+        }
+        
+        body.dark .mockup-modal-close-v6 {
+            color: var(--text-dark);
+        }
+        
         .mockup-modal-close-v6:hover {
             background: rgba(0, 0, 0, 0.2);
             transform: scale(1.1);
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .mockup-modal-close-v6:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
+        }
+        
+        body.dark .mockup-modal-close-v6:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
         
         @keyframes fadeInModal {
@@ -1332,42 +1423,6 @@
                     <li>Timeline markers now clickable for expand/collapse</li>
                     <li>Smooth animations and transitions</li>
                 </ul>
-                <div class="mockup-badge">
-                    <i class="bi bi-info-circle me-2"></i>Improved user experience and visual consistency
-                </div>
-                <div class="feature-mockup">
-                    <div class="feature-mockup-inner">
-                        <div class="mockup-patient-page">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="mockup-timeline-marker">
-                                    <i class="bi bi-calendar-event"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-1">Appointment Timeline</h6>
-                                    <small class="text-muted">Click marker to expand/collapse</small>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="mockup-timeline-marker" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-                                    <i class="bi bi-capsule"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-1">Medication Prescriptions</h6>
-                                    <small class="text-muted">Interactive timeline markers</small>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <div class="mockup-timeline-marker" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
-                                    <i class="bi bi-eyeglasses"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-1">Glasses Prescriptions</h6>
-                                    <small class="text-muted">Enhanced user interaction</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
             
             <!-- Glass Header System -->
@@ -1387,32 +1442,6 @@
                     <li>Smooth transitions and animations</li>
                     <li>RTL layout support for Arabic interface</li>
                 </ul>
-                <div class="mockup-badge">
-                    <i class="bi bi-info-circle me-2"></i>Modern glass morphism design
-                </div>
-                <div class="feature-mockup">
-                    <div class="feature-mockup-inner">
-                        <div class="mockup-header" id="mockupHeader">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h5 class="mb-0">Roaya Clinic</h5>
-                                    <small class="text-muted">Navigation Header</small>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-outline-primary">Dashboard</button>
-                                    <button class="btn btn-sm btn-outline-primary">Patients</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mockup-patient-page">
-                            <p class="text-muted">Scroll to see the glass header effect...</p>
-                            <div style="height: 300px; overflow-y: auto; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 1rem;">
-                                <p>Content area...</p>
-                                <p style="margin-top: 200px;">Scroll down to see header transform</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
         

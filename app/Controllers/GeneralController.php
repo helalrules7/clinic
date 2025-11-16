@@ -32,7 +32,7 @@ class GeneralController
         
         // Render the about page content
         $content = $this->view->render('general/about', [
-            'version' => 'v6.0',
+            'version' => 'v6.1',
             'releaseDate' => '2025',
             'developer' => [
                 'name' => 'Ahmed Helal',

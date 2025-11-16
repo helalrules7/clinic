@@ -11,7 +11,7 @@
                     <h1 class="display-5 fw-bold mb-2">HClinic / Roaya Clinic</h1>
                     <h2 class="h5 mb-3 opacity-90">Management System</h2>
                     <div class="badge bg-white text-dark px-4 py-2 fs-6 fw-semibold">
-                        Version 6.0
+                        Version 6.1
                     </div>
                 </div>
             </div>
@@ -37,7 +37,7 @@
                                 <h5 class="text-muted mb-2">
                                     <i class="bi bi-tag me-2"></i>Version
                                 </h5>
-                                    <p class="h4 text-primary fw-bold mb-0">6.0</p>
+                                    <p class="h4 text-primary fw-bold mb-0">6.1</p>
                             </div>
                                 <div class="col-md-6 mb-3">
                                 <h5 class="text-muted mb-2">
@@ -71,6 +71,30 @@
                     </h3>
                 </div>
                 <div class="card-body">
+                            <!-- Version 6.0 -->
+                            <div class="version-section mb-4">
+                                <h4 class="version-title mb-3">
+                                    <span class="badge bg-primary me-2">v6.0</span>
+                                    Media Gallery & Prescriptions Management
+                                </h4>
+                                <ul class="version-features">
+                                    <li>Comprehensive media management system organizing all patient images and attachments</li>
+                                    <li>Group images by patient with thumbnail preview and image count</li>
+                                    <li>Full-screen carousel viewer for media gallery</li>
+                                    <li>Patient name filtering with autocomplete</li>
+                                    <li>Load more pagination system</li>
+                                    <li>Direct links to appointments and visits</li>
+                                    <li>Dedicated glasses prescriptions gallery grouped by patient</li>
+                                    <li>Medication prescriptions organized by patient and appointment</li>
+                                    <li>Complete Ajax implementation for all operations without page reloads</li>
+                                    <li>Real-time UI updates with progress indicators</li>
+                                    <li>Significant performance improvements and optimizations</li>
+                                    <li>Faster page load times and optimized database queries</li>
+                                    <li>Efficient pagination and reduced server requests</li>
+                                    <li>Better caching strategies and improved response times</li>
+                                </ul>
+                            </div>
+
                             <!-- Version 5.1 -->
                             <div class="version-section mb-4">
                                 <h4 class="version-title mb-3">
@@ -269,83 +293,63 @@
         </div>
     </div>
 
-        <!-- Sidebar - Version 6.0 Features -->
+        <!-- Sidebar - Version 6.1 Features -->
         <div class="col-lg-4">
             <div class="card border-primary sticky-top" style="top: 20px;">
                 <div class="card-header bg-primary text-white">
                     <h3 class="card-title mb-0">
                         <i class="bi bi-star-fill me-2"></i>
-                        Version 6.0 Features
+                        Version 6.1 Features
                     </h3>
                 </div>
                 <div class="card-body">
                     <div class="v6-feature-item mb-3">
                         <div class="d-flex align-items-start mb-2">
-                            <div class="v6-feature-icon bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; flex-shrink: 0;">
-                                <i class="bi bi-images"></i>
-                                </div>
-                                <div>
-                                <h6 class="fw-bold mb-1">Media Gallery</h6>
-                                <p class="text-muted small mb-0">Comprehensive media management with patient filtering and carousel viewer</p>
-                                </div>
+                            <div class="v6-feature-icon bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; flex-shrink: 0;">
+                                <i class="bi bi-bell"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Patient Alert System</h6>
+                                <p class="text-muted small mb-0">Comprehensive alert and notification system with real-time toast notifications</p>
                             </div>
                         </div>
-
-                    <div class="v6-feature-item mb-3">
-                        <div class="d-flex align-items-start mb-2">
-                            <div class="v6-feature-icon bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; flex-shrink: 0;">
-                                <i class="bi bi-eyeglasses"></i>
-                                </div>
-                                <div>
-                                <h6 class="fw-bold mb-1">Glasses Prescriptions Gallery</h6>
-                                <p class="text-muted small mb-0">Complete glasses prescription management grouped by patient</p>
-                                </div>
-                            </div>
-                        </div>
+                    </div>
 
                     <div class="v6-feature-item mb-3">
                         <div class="d-flex align-items-start mb-2">
                             <div class="v6-feature-icon bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; flex-shrink: 0;">
-                                <i class="bi bi-capsule"></i>
-                                </div>
-                                <div>
-                                <h6 class="fw-bold mb-1">Medication Prescriptions Gallery</h6>
-                                <p class="text-muted small mb-0">Advanced medication management with accordion display</p>
-                                </div>
+                                <i class="bi bi-person-badge"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Enhanced Patient Page UI/UX</h6>
+                                <p class="text-muted small mb-0">Improved timeline markers, reorganized actions, and better visual hierarchy</p>
                             </div>
                         </div>
-
-                    <div class="v6-feature-item mb-3">
-                        <div class="d-flex align-items-start mb-2">
-                            <div class="v6-feature-icon bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; flex-shrink: 0;">
-                                <i class="bi bi-lightning-charge"></i>
-                                </div>
-                                <div>
-                                <h6 class="fw-bold mb-1">Ajax Operations</h6>
-                                <p class="text-muted small mb-0">Complete AJAX-based operations without page reloads</p>
-            </div>
-        </div>
-    </div>
+                    </div>
 
                     <div class="v6-feature-item mb-3">
                         <div class="d-flex align-items-start mb-2">
                             <div class="v6-feature-icon bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; flex-shrink: 0;">
-                                <i class="bi bi-speedometer2"></i>
-                </div>
-                                    <div>
-                                <h6 class="fw-bold mb-1">Performance Improvements</h6>
-                                <p class="text-muted small mb-0">Faster load times, optimized queries, and better caching</p>
-            </div>
-        </div>
-    </div>
-
-                    <div class="mt-4 pt-3 border-top">
-                        <a href="/whats-new" class="btn btn-primary w-100">
-                            <i class="bi bi-arrow-right-circle me-2"></i>
-                            View Full Version Features
-                        </a>
+                                <i class="bi bi-window"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Glass Fixed Header System</h6>
+                                <p class="text-muted small mb-0">Beautiful glass-effect header with backdrop blur and scroll effects</p>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top">
+                        <a href="/whats-new" class="btn btn-primary w-100 mb-2">
+                            <i class="bi bi-arrow-right-circle me-2"></i>
+                            What's New?
+                        </a>
+                        <a href="/whats-new/full-features" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-stars me-2"></i>
+                            Full Features
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
