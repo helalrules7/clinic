@@ -50,46 +50,6 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4 text-end">
-        <div class="btn-group-responsive d-flex flex-wrap justify-content-end gap-2">
-            <button class="btn btn-primary" 
-                    onclick="bookNewAppointment(<?= $patient['id'] ?>)"
-                    data-bs-toggle="tooltip" 
-                    data-bs-placement="bottom" 
-                    data-bs-title="Schedule a new appointment for this patient">
-                <i class="bi bi-calendar-plus me-2"></i>
-                <span class="d-none d-lg-inline">Book Appointment</span>
-                <span class="d-lg-none">Book</span>
-            </button>
-            <button class="btn btn-success" 
-                    onclick="printPatientSummary()"
-                    data-bs-toggle="tooltip" 
-                    data-bs-placement="bottom" 
-                    data-bs-title="Print patient summary report">
-                <i class="bi bi-printer me-2"></i>
-                <span class="d-none d-lg-inline">Print Summary</span>
-                <span class="d-lg-none">Print</span>
-            </button>
-            <button class="btn btn-info" 
-                    onclick="exportPatientData()"
-                    data-bs-toggle="tooltip" 
-                    data-bs-placement="bottom" 
-                    data-bs-title="Export patient data to file">
-                <i class="bi bi-download me-2"></i>
-                <span class="d-none d-lg-inline">Export Data</span>
-                <span class="d-lg-none">Export</span>
-            </button>
-            <button class="btn btn-outline-secondary" 
-                    onclick="editPatient(<?= $patient['id'] ?>)"
-                    data-bs-toggle="tooltip" 
-                    data-bs-placement="bottom" 
-                    data-bs-title="Edit patient information and details">
-                <i class="bi bi-pencil me-2"></i>
-                <span class="d-none d-lg-inline">Edit Patient</span>
-                <span class="d-lg-none">Edit</span>
-            </button>
-        </div>
-    </div>
 </div>
 
 <!-- Patient Information Cards -->
@@ -129,49 +89,64 @@
             </div>
         </div>
     </div>
-
-    <!-- Emergency Contact -->
+    
+    <!-- Action Buttons -->
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header">
                 <h5 class="mb-0">
-                    <i class="bi bi-person-exclamation me-2"></i>
-                    Emergency Contact
+                    <i class="bi bi-gear me-2"></i>
+                    Actions
                 </h5>
             </div>
             <div class="card-body">
-                <?php if ($patient['emergency_contact'] || $patient['emergency_phone']): ?>
-                    <div class="row">
-                        <div class="col-sm-4"><strong>Name:</strong></div>
-                        <div class="col-sm-8" id="emergencyContactName"><?= htmlspecialchars($patient['emergency_contact'] ?? 'N/A') ?></div>
-                    </div>
-                    <div class="row mt-2">
-                        <div class="col-sm-4"><strong>Phone:</strong></div>
-                        <div class="col-sm-8" id="emergencyContactPhone"><?= htmlspecialchars($patient['emergency_phone'] ?? 'N/A') ?></div>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <button class="btn btn-sm btn-outline-secondary" 
-                                    onclick="editEmergencyContact()"
-                                    data-bs-toggle="tooltip" 
-                                    data-bs-placement="top" 
-                                    data-bs-title="Edit emergency contact information">
-                                <i class="bi bi-pencil me-1"></i>Edit
-                            </button>
-                        </div>
-                    </div>
-                <?php else: ?>
-                    <div id="noEmergencyContact">
-                        <p class="text-muted mb-0">No emergency contact information available</p>
-                        <button class="btn btn-sm btn-outline-primary mt-2" 
-                                onclick="addEmergencyContact()"
-                                data-bs-toggle="tooltip" 
-                                data-bs-placement="top" 
-                                data-bs-title="Add emergency contact information for this patient">
-                            <i class="bi bi-plus me-1"></i>Add Emergency Contact
-                        </button>
-                    </div>
-                <?php endif; ?>
+                <div class="btn-group-responsive d-flex flex-wrap gap-2">
+                    <button class="btn btn-primary" 
+                            onclick="bookNewAppointment(<?= $patient['id'] ?>)"
+                            data-bs-toggle="tooltip" 
+                            data-bs-placement="bottom" 
+                            data-bs-title="Schedule a new appointment for this patient">
+                        <i class="bi bi-calendar-plus me-2"></i>
+                        <span class="d-none d-lg-inline">Book Appointment</span>
+                        <span class="d-lg-none">Book</span>
+                    </button>
+                    <button class="btn btn-success" 
+                            onclick="printPatientSummary()"
+                            data-bs-toggle="tooltip" 
+                            data-bs-placement="bottom" 
+                            data-bs-title="Print patient summary report">
+                        <i class="bi bi-printer me-2"></i>
+                        <span class="d-none d-lg-inline">Print Summary</span>
+                        <span class="d-lg-none">Print</span>
+                    </button>
+                    <button class="btn btn-info" 
+                            onclick="exportPatientData()"
+                            data-bs-toggle="tooltip" 
+                            data-bs-placement="bottom" 
+                            data-bs-title="Export patient data to file">
+                        <i class="bi bi-download me-2"></i>
+                        <span class="d-none d-lg-inline">Export Data</span>
+                        <span class="d-lg-none">Export</span>
+                    </button>
+                    <button class="btn btn-outline-secondary" 
+                            onclick="editPatient(<?= $patient['id'] ?>)"
+                            data-bs-toggle="tooltip" 
+                            data-bs-placement="bottom" 
+                            data-bs-title="Edit patient information and details">
+                        <i class="bi bi-pencil me-2"></i>
+                        <span class="d-none d-lg-inline">Edit Patient</span>
+                        <span class="d-lg-none">Edit</span>
+                    </button>
+                    <button class="btn btn-warning" 
+                            onclick="openAlertModal(<?= $patient['id'] ?>, null)"
+                            data-bs-toggle="tooltip" 
+                            data-bs-placement="bottom" 
+                            data-bs-title="Create an alert for this patient">
+                        <i class="bi bi-bell me-2"></i>
+                        <span class="d-none d-lg-inline">Set Alert</span>
+                        <span class="d-lg-none">Alert</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1763,45 +1738,6 @@
 </div>
 <?php endif; ?>
 
-<!-- Emergency Contact Modal -->
-<div class="modal fade" id="emergencyContactModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="emergencyContactModalTitle">Add Emergency Contact</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="emergencyContactForm">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="emergencyContactNameInput" class="form-label">Contact Name *</label>
-                        <input type="text" class="form-control" id="emergencyContactNameInput" 
-                               name="emergency_contact" required maxlength="100" 
-                               placeholder="Enter contact name">
-                        <div class="invalid-feedback"></div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="emergencyContactPhoneInput" class="form-label">Contact Phone *</label>
-                        <input type="tel" class="form-control" id="emergencyContactPhoneInput" 
-                               name="emergency_phone" required 
-                               placeholder="Enter phone number (e.g., 01234567890)">
-                        <div class="invalid-feedback"></div>
-                        <small class="form-text text-muted">Please enter a valid Egyptian phone number</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="saveEmergencyContactBtn">
-                        <span class="spinner-border spinner-border-sm d-none" id="saveSpinner"></span>
-                        <i class="bi bi-check-circle me-2"></i>
-                        Save Contact
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <style>
 /* Dark Mode Support */
 .card {
@@ -3287,34 +3223,478 @@ function editPatient(patientId) {
     window.location.href = `/doctor/patients/${patientId}/edit`;
 }
 
-function addEmergencyContact() {
-    // Clear form and set title for adding
-    document.getElementById('emergencyContactModalTitle').textContent = 'Add Emergency Contact';
-    document.getElementById('emergencyContactForm').reset();
-    clearValidationErrors();
+// Appointment timeline functions - moved to top to ensure availability
+function handleAppointmentHeaderClick(event, collapseId) {
+    // Check if click originated from a button, link, or any interactive element
+    const clickedElement = event.target;
+    const isButtonClick = clickedElement.closest('button') || 
+                         clickedElement.closest('a') || 
+                         clickedElement.closest('.btn-group') ||
+                         clickedElement.closest('.btn');
     
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('emergencyContactModal'));
-    modal.show();
+    // If click is on a button, link, or button group, don't toggle collapse
+    if (isButtonClick && !clickedElement.closest('.collapse-icon')) {
+        event.stopPropagation();
+        event.preventDefault();
+        return; // Let the button/link handle its own click
+    }
+    
+    // Otherwise, toggle the collapse
+    toggleAppointmentTimeline(collapseId);
 }
 
-function editEmergencyContact() {
-    // Set title for editing
-    document.getElementById('emergencyContactModalTitle').textContent = 'Edit Emergency Contact';
+function toggleAppointmentTimeline(collapseId) {
+    const header = document.querySelector(`[data-bs-target="#${collapseId}"]`);
+    const body = document.getElementById(collapseId);
     
-    // Fill form with current values
-    document.getElementById('emergencyContactNameInput').value = document.getElementById('emergencyContactName').textContent || '';
-    document.getElementById('emergencyContactPhoneInput').value = document.getElementById('emergencyContactPhone').textContent || '';
+    if (!header || !body) return;
     
-    clearValidationErrors();
+    // Use Bootstrap Collapse API
+    const bsCollapse = bootstrap.Collapse.getInstance(body) || new bootstrap.Collapse(body, {
+        toggle: false
+    });
     
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('emergencyContactModal'));
-    modal.show();
+    if (body.classList.contains('show')) {
+        bsCollapse.hide();
+    } else {
+        bsCollapse.show();
+    }
+    
+    // Update header classes after animation
+    body.addEventListener('shown.bs.collapse', function updateHeader() {
+        header.classList.add('expanded');
+        header.classList.remove('collapsed');
+        body.removeEventListener('shown.bs.collapse', updateHeader);
+        
+        // Update expand all button state and icon
+        setTimeout(() => {
+            updateExpandAllAppointmentsButton();
+        }, 100);
+    });
+    
+    body.addEventListener('hidden.bs.collapse', function updateHeader() {
+        header.classList.remove('expanded');
+        header.classList.add('collapsed');
+        body.removeEventListener('hidden.bs.collapse', updateHeader);
+        
+        // Update expand all button state and icon
+        setTimeout(() => {
+            updateExpandAllAppointmentsButton();
+        }, 100);
+    });
+    
+    // Also update immediately for better UX
+    setTimeout(() => {
+        updateExpandAllAppointmentsButton();
+    }, 350);
+}
+
+function expandCollapseAllAppointments() {
+    const timeline = document.querySelector('.appointment-timeline');
+    if (!timeline) return;
+    
+    const allCollapses = timeline.querySelectorAll('.collapse');
+    const btn = document.getElementById('expandAllAppointmentsBtn');
+    const text = document.getElementById('expandAllAppointmentsText');
+    
+    if (!btn || !text) return;
+    
+    // Check if all are expanded
+    let allExpanded = true;
+    allCollapses.forEach(collapse => {
+        if (!collapse.classList.contains('show')) {
+            allExpanded = false;
+        }
+    });
+    
+    // Toggle all
+    allCollapses.forEach(collapse => {
+        const collapseId = collapse.id;
+        const header = document.querySelector(`[data-bs-target="#${collapseId}"]`);
+        if (!header) return;
+        
+        if (allExpanded) {
+            // Collapse all
+            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+            if (bsCollapse) {
+                bsCollapse.hide();
+            } else {
+                collapse.classList.remove('show');
+                header.classList.remove('expanded');
+                header.classList.add('collapsed');
+            }
+        } else {
+            // Expand all
+            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+            if (bsCollapse) {
+                bsCollapse.show();
+            } else {
+                collapse.classList.add('show');
+                header.classList.remove('collapsed');
+                header.classList.add('expanded');
+            }
+        }
+    });
+    
+    // Update button text after a short delay to allow animations
+    setTimeout(() => {
+        updateExpandAllAppointmentsButton();
+    }, 350);
+}
+
+function updateExpandAllAppointmentsButton() {
+    const timeline = document.querySelector('.appointment-timeline');
+    if (!timeline) return;
+    
+    const allCollapses = timeline.querySelectorAll('.collapse');
+    const btn = document.getElementById('expandAllAppointmentsBtn');
+    const text = document.getElementById('expandAllAppointmentsText');
+    
+    if (!btn || !text) return;
+    
+    let allExpanded = true;
+    allCollapses.forEach(collapse => {
+        if (!collapse.classList.contains('show')) {
+            allExpanded = false;
+        }
+    });
+    
+    const icon = btn.querySelector('i');
+    if (allExpanded) {
+        text.textContent = 'Collapse All';
+        if (icon) icon.className = 'bi bi-chevron-double-up me-1';
+    } else {
+        text.textContent = 'Expand All';
+        if (icon) icon.className = 'bi bi-chevron-double-down me-1';
+    }
+}
+
+// Prescription timeline functions - moved to top to ensure availability
+function handlePrescriptionHeaderClick(event, collapseId) {
+    // Check if click originated from a button, link, or any interactive element
+    const clickedElement = event.target;
+    const isButtonClick = clickedElement.closest('button') || 
+                         clickedElement.closest('a') || 
+                         clickedElement.closest('.btn-group') ||
+                         clickedElement.closest('.btn');
+    
+    // If click is on a button, link, or button group, don't toggle collapse
+    if (isButtonClick && !clickedElement.closest('.collapse-icon')) {
+        event.stopPropagation();
+        event.preventDefault();
+        return; // Let the button/link handle its own click
+    }
+    
+    // Otherwise, toggle the collapse
+    togglePrescriptionTimeline(collapseId);
+}
+
+function togglePrescriptionTimeline(collapseId) {
+    const header = document.querySelector(`[data-bs-target="#${collapseId}"]`);
+    const body = document.getElementById(collapseId);
+    
+    if (!header || !body) return;
+    
+    // Use Bootstrap Collapse API
+    const bsCollapse = bootstrap.Collapse.getInstance(body) || new bootstrap.Collapse(body, {
+        toggle: false
+    });
+    
+    if (body.classList.contains('show')) {
+        bsCollapse.hide();
+    } else {
+        bsCollapse.show();
+    }
+    
+    // Update header classes after animation
+    body.addEventListener('shown.bs.collapse', function updateHeader() {
+        header.classList.add('expanded');
+        header.classList.remove('collapsed');
+        body.removeEventListener('shown.bs.collapse', updateHeader);
+        
+        // Update expand all button states and icons
+        setTimeout(() => {
+            updateExpandAllMedicationsButton();
+            updateExpandAllGlassesButton();
+            updateExpandAllPrescriptionsButton();
+        }, 100);
+    });
+    
+    body.addEventListener('hidden.bs.collapse', function updateHeader() {
+        header.classList.remove('expanded');
+        header.classList.add('collapsed');
+        body.removeEventListener('hidden.bs.collapse', updateHeader);
+        
+        // Update expand all button states and icons
+        setTimeout(() => {
+            updateExpandAllMedicationsButton();
+            updateExpandAllGlassesButton();
+            updateExpandAllPrescriptionsButton();
+        }, 100);
+    });
+    
+    // Also update immediately for better UX
+    setTimeout(() => {
+        updateExpandAllMedicationsButton();
+        updateExpandAllGlassesButton();
+        updateExpandAllPrescriptionsButton();
+    }, 350);
+}
+
+function expandCollapseAllMedications() {
+    const timeline = document.querySelector('#medications .prescription-timeline');
+    if (!timeline) return;
+    
+    const allCollapses = timeline.querySelectorAll('.collapse');
+    const btn = document.getElementById('expandAllMedicationsBtn');
+    const text = document.getElementById('expandAllMedicationsText');
+    
+    if (!btn || !text) return;
+    
+    // Check if all are expanded
+    let allExpanded = true;
+    allCollapses.forEach(collapse => {
+        if (!collapse.classList.contains('show')) {
+            allExpanded = false;
+        }
+    });
+    
+    // Toggle all
+    allCollapses.forEach(collapse => {
+        const collapseId = collapse.id;
+        const header = document.querySelector(`[data-bs-target="#${collapseId}"]`);
+        if (!header) return;
+        
+        if (allExpanded) {
+            // Collapse all
+            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+            if (bsCollapse) {
+                bsCollapse.hide();
+            } else {
+                collapse.classList.remove('show');
+                header.classList.remove('expanded');
+                header.classList.add('collapsed');
+            }
+        } else {
+            // Expand all
+            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+            if (bsCollapse) {
+                bsCollapse.show();
+            } else {
+                collapse.classList.add('show');
+                header.classList.remove('collapsed');
+                header.classList.add('expanded');
+            }
+        }
+    });
+    
+    // Update button text after a short delay
+    setTimeout(() => {
+        updateExpandAllMedicationsButton();
+    }, 350);
+}
+
+function updateExpandAllMedicationsButton() {
+    const timeline = document.querySelector('#medications .prescription-timeline');
+    if (!timeline) return;
+    
+    const allCollapses = timeline.querySelectorAll('.collapse');
+    const btn = document.getElementById('expandAllMedicationsBtn');
+    const text = document.getElementById('expandAllMedicationsText');
+    
+    if (!btn || !text) return;
+    
+    let allExpanded = true;
+    let hasCollapses = allCollapses.length > 0;
+    
+    if (!hasCollapses) return;
+    
+    allCollapses.forEach(collapse => {
+        if (!collapse.classList.contains('show')) {
+            allExpanded = false;
+        }
+    });
+    
+    const icon = btn.querySelector('i');
+    if (allExpanded) {
+        text.textContent = 'Collapse All';
+        if (icon) icon.className = 'bi bi-chevron-double-up me-1';
+    } else {
+        text.textContent = 'Expand All';
+        if (icon) icon.className = 'bi bi-chevron-double-down me-1';
+    }
+}
+
+function expandCollapseAllGlasses() {
+    const timeline = document.querySelector('#glasses .prescription-timeline');
+    if (!timeline) return;
+    
+    const allCollapses = timeline.querySelectorAll('.collapse');
+    const btn = document.getElementById('expandAllGlassesBtn');
+    const text = document.getElementById('expandAllGlassesText');
+    
+    if (!btn || !text) return;
+    
+    // Check if all are expanded
+    let allExpanded = true;
+    allCollapses.forEach(collapse => {
+        if (!collapse.classList.contains('show')) {
+            allExpanded = false;
+        }
+    });
+    
+    // Toggle all
+    allCollapses.forEach(collapse => {
+        const collapseId = collapse.id;
+        const header = document.querySelector(`[data-bs-target="#${collapseId}"]`);
+        if (!header) return;
+        
+        if (allExpanded) {
+            // Collapse all
+            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+            if (bsCollapse) {
+                bsCollapse.hide();
+            } else {
+                collapse.classList.remove('show');
+                header.classList.remove('expanded');
+                header.classList.add('collapsed');
+            }
+        } else {
+            // Expand all
+            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+            if (bsCollapse) {
+                bsCollapse.show();
+            } else {
+                collapse.classList.add('show');
+                header.classList.remove('collapsed');
+                header.classList.add('expanded');
+            }
+        }
+    });
+    
+    // Update button text after a short delay
+    setTimeout(() => {
+        updateExpandAllGlassesButton();
+    }, 350);
+}
+
+function updateExpandAllGlassesButton() {
+    const timeline = document.querySelector('#glasses .prescription-timeline');
+    if (!timeline) return;
+    
+    const allCollapses = timeline.querySelectorAll('.collapse');
+    const btn = document.getElementById('expandAllGlassesBtn');
+    const text = document.getElementById('expandAllGlassesText');
+    
+    if (!btn || !text) return;
+    
+    let allExpanded = true;
+    let hasCollapses = allCollapses.length > 0;
+    
+    if (!hasCollapses) return;
+    
+    allCollapses.forEach(collapse => {
+        if (!collapse.classList.contains('show')) {
+            allExpanded = false;
+        }
+    });
+    
+    const icon = btn.querySelector('i');
+    if (allExpanded) {
+        text.textContent = 'Collapse All';
+        if (icon) icon.className = 'bi bi-chevron-double-up me-1';
+    } else {
+        text.textContent = 'Expand All';
+        if (icon) icon.className = 'bi bi-chevron-double-down me-1';
+    }
+}
+
+function expandCollapseAllPrescriptions() {
+    const timeline = document.querySelector('#all-prescriptions .prescription-timeline');
+    if (!timeline) return;
+    
+    const allCollapses = timeline.querySelectorAll('.collapse');
+    const btn = document.getElementById('expandAllPrescriptionsBtn');
+    const text = document.getElementById('expandAllPrescriptionsText');
+    
+    if (!btn || !text) return;
+    
+    // Check if all are expanded
+    let allExpanded = true;
+    allCollapses.forEach(collapse => {
+        if (!collapse.classList.contains('show')) {
+            allExpanded = false;
+        }
+    });
+    
+    // Toggle all
+    allCollapses.forEach(collapse => {
+        const collapseId = collapse.id;
+        const header = document.querySelector(`[data-bs-target="#${collapseId}"]`);
+        if (!header) return;
+        
+        if (allExpanded) {
+            // Collapse all
+            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+            if (bsCollapse) {
+                bsCollapse.hide();
+            } else {
+                collapse.classList.remove('show');
+                header.classList.remove('expanded');
+                header.classList.add('collapsed');
+            }
+        } else {
+            // Expand all
+            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+            if (bsCollapse) {
+                bsCollapse.show();
+            } else {
+                collapse.classList.add('show');
+                header.classList.remove('collapsed');
+                header.classList.add('expanded');
+            }
+        }
+    });
+    
+    // Update button text after a short delay
+    setTimeout(() => {
+        updateExpandAllPrescriptionsButton();
+    }, 350);
+}
+
+function updateExpandAllPrescriptionsButton() {
+    const timeline = document.querySelector('#all-prescriptions .prescription-timeline');
+    if (!timeline) return;
+    
+    const allCollapses = timeline.querySelectorAll('.collapse');
+    const btn = document.getElementById('expandAllPrescriptionsBtn');
+    const text = document.getElementById('expandAllPrescriptionsText');
+    
+    if (!btn || !text) return;
+    
+    let allExpanded = true;
+    let hasCollapses = allCollapses.length > 0;
+    
+    if (!hasCollapses) return;
+    
+    allCollapses.forEach(collapse => {
+        if (!collapse.classList.contains('show')) {
+            allExpanded = false;
+        }
+    });
+    
+    const icon = btn.querySelector('i');
+    if (allExpanded) {
+        text.textContent = 'Collapse All';
+        if (icon) icon.className = 'bi bi-chevron-double-up me-1';
+    } else {
+        text.textContent = 'Expand All';
+        if (icon) icon.className = 'bi bi-chevron-double-down me-1';
+    }
 }
 
 function addMedicalHistory() {
-    const patientId = <?= $patient['id'] ?>;
+    const patientId = <?= isset($patient['id']) ? (int)$patient['id'] : 0 ?>;
     showAddMedicalHistoryModal(patientId);
 }
 
@@ -3450,14 +3830,8 @@ function saveNewMedicalHistory() {
     });
 }
 
-// Emergency contact form handling
+// Handle edit note buttons
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('emergencyContactForm');
-    if (form) {
-        form.addEventListener('submit', handleEmergencyContactSubmit);
-    }
-    
-    // Handle edit note buttons
     document.addEventListener('click', function(e) {
         if (e.target.closest('.edit-note-btn')) {
             const button = e.target.closest('.edit-note-btn');
@@ -3469,126 +3843,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-
-function handleEmergencyContactSubmit(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(e.target);
-    const data = {
-        emergency_contact: formData.get('emergency_contact').trim(),
-        emergency_phone: formData.get('emergency_phone').trim()
-    };
-    
-    // Clear previous validation errors
-    clearValidationErrors();
-    
-    // Basic validation
-    if (!data.emergency_contact) {
-        showFieldError('emergencyContactNameInput', 'Contact name is required');
-        return;
-    }
-    
-    if (!data.emergency_phone) {
-        showFieldError('emergencyContactPhoneInput', 'Phone number is required');
-        return;
-    }
-    
-    // Validate Egyptian phone number format
-    const phoneRegex = /^(\+20|0)?1[0-9]{9}$/;
-    if (!phoneRegex.test(data.emergency_phone)) {
-        showFieldError('emergencyContactPhoneInput', 'Please enter a valid Egyptian phone number');
-        return;
-    }
-    
-    // Show loading state
-    const submitBtn = document.getElementById('saveEmergencyContactBtn');
-    const spinner = document.getElementById('saveSpinner');
-    submitBtn.disabled = true;
-    spinner.classList.remove('d-none');
-    
-    // Get patient ID from URL
-    const patientId = window.location.pathname.split('/').pop();
-    
-        patientId: patientId,
-        data: data,
-        url: `/api/patients/${patientId}/emergency-contact`
-    });
-    
-    // Send API request
-    fetch(`/api/patients/${patientId}/emergency-contact`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => {
-        return response.json();
-    })
-    .then(result => {
-        if (result.ok) {
-            // Success - update the UI
-            updateEmergencyContactDisplay(data.emergency_contact, data.emergency_phone);
-            
-            // Hide modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('emergencyContactModal'));
-            modal.hide();
-            
-            // Show success message
-            showNotification('Emergency contact updated successfully!', 'success');
-        } else {
-            // Handle validation errors
-            if (result.details) {
-                Object.keys(result.details).forEach(field => {
-                    const fieldName = field === 'emergency_contact' ? 'emergencyContactNameInput' : 'emergencyContactPhoneInput';
-                    showFieldError(fieldName, result.details[field][0]);
-                });
-            } else {
-                showNotification(result.error || 'Failed to update emergency contact', 'error');
-            }
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('An error occurred. Please try again.', 'error');
-    })
-    .finally(() => {
-        // Hide loading state
-        submitBtn.disabled = false;
-        spinner.classList.add('d-none');
-    });
-}
-
-function updateEmergencyContactDisplay(name, phone) {
-    const nameElement = document.getElementById('emergencyContactName');
-    const phoneElement = document.getElementById('emergencyContactPhone');
-    const noContactDiv = document.getElementById('noEmergencyContact');
-    
-    if (nameElement && phoneElement) {
-        // Update existing display
-        nameElement.textContent = name;
-        phoneElement.textContent = phone;
-    } else if (noContactDiv) {
-        // Replace "no contact" message with contact info
-        noContactDiv.innerHTML = `
-            <div class="row">
-                <div class="col-sm-4"><strong>Name:</strong></div>
-                <div class="col-sm-8" id="emergencyContactName">${escapeHtml(name)}</div>
-            </div>
-            <div class="row mt-2">
-                <div class="col-sm-4"><strong>Phone:</strong></div>
-                <div class="col-sm-8" id="emergencyContactPhone">${escapeHtml(phone)}</div>
-            </div>
-            <div class="row mt-3">
-                <div class="col-12">
-                    <button class="btn btn-sm btn-outline-secondary" onclick="editEmergencyContact()">
-                        <i class="bi bi-pencil me-1"></i>Edit
-                    </button>
-                </div>
-            </div>
-        `;
-    }
-}
 
 function clearValidationErrors() {
     document.querySelectorAll('.is-invalid').forEach(el => {
@@ -4299,11 +4553,6 @@ function editPatientNote(noteId, title, content) {
         updateBtn.disabled = true;
         spinner.classList.remove('d-none');
         
-            noteId: noteId,
-            title: formData.get('title'),
-            content: formData.get('content')
-        });
-        
         // Convert FormData to URLSearchParams for PUT request
         const params = new URLSearchParams();
         for (const [key, value] of formData.entries()) {
@@ -4571,7 +4820,7 @@ function switchMedicalHistoryView(viewType) {
 }
 
 function viewMedicalHistory(historyId) {
-    const patientId = <?= $patient['id'] ?>;
+    const patientId = <?= isset($patient['id']) ? (int)$patient['id'] : 0 ?>;
     
     // Check if this is an old format entry (from medical_history table)
     // Old format entries don't have individual API endpoints, so we'll handle them differently
@@ -4606,7 +4855,7 @@ function viewMedicalHistory(historyId) {
 }
 
 function editMedicalHistory(historyId) {
-    const patientId = <?= $patient['id'] ?>;
+    const patientId = <?= isset($patient['id']) ? (int)$patient['id'] : 0 ?>;
     
     // Check if this is an old format entry (from medical_history table)
     // Old format entries don't have individual API endpoints, so we'll handle them differently
@@ -4743,7 +4992,7 @@ function showMedicalHistoryModal(data, mode) {
 }
 
 function saveEditMedicalHistory() {
-    const patientId = <?= $patient['id'] ?>;
+    const patientId = <?= isset($patient['id']) ? (int)$patient['id'] : 0 ?>;
     const historyId = document.getElementById('historyId').value;
     const formData = {
         condition: document.getElementById('conditionName').value,
@@ -4847,7 +5096,7 @@ function showDeleteConfirmationModal(historyId) {
 }
 
 function confirmDeleteMedicalHistory(historyId) {
-    const patientId = <?= $patient['id'] ?>;
+    const patientId = <?= isset($patient['id']) ? (int)$patient['id'] : 0 ?>;
     
     fetch(`/api/patients/${patientId}/medical-history/${historyId}`, {
         method: 'DELETE'
@@ -5823,477 +6072,9 @@ function printMedicationPrescription(appointmentId) {
     window.open(printUrl, '_blank');
 }
 
-function handlePrescriptionHeaderClick(event, collapseId) {
-    // Check if click originated from a button, link, or any interactive element
-    const clickedElement = event.target;
-    const isButtonClick = clickedElement.closest('button') || 
-                         clickedElement.closest('a') || 
-                         clickedElement.closest('.btn-group') ||
-                         clickedElement.closest('.btn');
-    
-    // If click is on a button, link, or button group, don't toggle collapse
-    if (isButtonClick && !clickedElement.closest('.collapse-icon')) {
-        event.stopPropagation();
-        event.preventDefault();
-        return; // Let the button/link handle its own click
-    }
-    
-    // Otherwise, toggle the collapse
-    togglePrescriptionTimeline(collapseId);
-}
-
-function handleAppointmentHeaderClick(event, collapseId) {
-    // Check if click originated from a button, link, or any interactive element
-    const clickedElement = event.target;
-    const isButtonClick = clickedElement.closest('button') || 
-                         clickedElement.closest('a') || 
-                         clickedElement.closest('.btn-group') ||
-                         clickedElement.closest('.btn');
-    
-    // If click is on a button, link, or button group, don't toggle collapse
-    if (isButtonClick && !clickedElement.closest('.collapse-icon')) {
-        event.stopPropagation();
-        event.preventDefault();
-        return; // Let the button/link handle its own click
-    }
-    
-    // Otherwise, toggle the collapse
-    toggleAppointmentTimeline(collapseId);
-}
-
-function togglePrescriptionTimeline(collapseId) {
-    const header = document.querySelector(`[data-bs-target="#${collapseId}"]`);
-    const body = document.getElementById(collapseId);
-    
-    if (!header || !body) return;
-    
-    // Use Bootstrap Collapse API
-    const bsCollapse = bootstrap.Collapse.getInstance(body) || new bootstrap.Collapse(body, {
-        toggle: false
-    });
-    
-    if (body.classList.contains('show')) {
-        bsCollapse.hide();
-    } else {
-        bsCollapse.show();
-    }
-    
-    // Update header classes after animation
-    body.addEventListener('shown.bs.collapse', function updateHeader() {
-        header.classList.add('expanded');
-        header.classList.remove('collapsed');
-        body.removeEventListener('shown.bs.collapse', updateHeader);
-        
-        // Update expand all button states and icons
-        setTimeout(() => {
-            updateExpandAllMedicationsButton();
-            updateExpandAllGlassesButton();
-            updateExpandAllPrescriptionsButton();
-        }, 100);
-    });
-    
-    body.addEventListener('hidden.bs.collapse', function updateHeader() {
-        header.classList.remove('expanded');
-        header.classList.add('collapsed');
-        body.removeEventListener('hidden.bs.collapse', updateHeader);
-        
-        // Update expand all button states and icons
-        setTimeout(() => {
-            updateExpandAllMedicationsButton();
-            updateExpandAllGlassesButton();
-            updateExpandAllPrescriptionsButton();
-        }, 100);
-    });
-    
-    // Also update immediately for better UX
-    setTimeout(() => {
-        updateExpandAllMedicationsButton();
-        updateExpandAllGlassesButton();
-        updateExpandAllPrescriptionsButton();
-    }, 350);
-}
-
-function toggleAppointmentTimeline(collapseId) {
-    const header = document.querySelector(`[data-bs-target="#${collapseId}"]`);
-    const body = document.getElementById(collapseId);
-    
-    if (!header || !body) return;
-    
-    // Use Bootstrap Collapse API
-    const bsCollapse = bootstrap.Collapse.getInstance(body) || new bootstrap.Collapse(body, {
-        toggle: false
-    });
-    
-    if (body.classList.contains('show')) {
-        bsCollapse.hide();
-    } else {
-        bsCollapse.show();
-    }
-    
-    // Update header classes after animation
-    body.addEventListener('shown.bs.collapse', function updateHeader() {
-        header.classList.add('expanded');
-        header.classList.remove('collapsed');
-        body.removeEventListener('shown.bs.collapse', updateHeader);
-        
-        // Update expand all button state and icon
-        setTimeout(() => {
-            updateExpandAllAppointmentsButton();
-        }, 100);
-    });
-    
-    body.addEventListener('hidden.bs.collapse', function updateHeader() {
-        header.classList.remove('expanded');
-        header.classList.add('collapsed');
-        body.removeEventListener('hidden.bs.collapse', updateHeader);
-        
-        // Update expand all button state and icon
-        setTimeout(() => {
-            updateExpandAllAppointmentsButton();
-        }, 100);
-    });
-    
-    // Also update immediately for better UX
-    setTimeout(() => {
-        updateExpandAllAppointmentsButton();
-    }, 350);
-}
-
-function expandCollapseAllAppointments() {
-    const timeline = document.querySelector('.appointment-timeline');
-    if (!timeline) return;
-    
-    const allCollapses = timeline.querySelectorAll('.collapse');
-    const btn = document.getElementById('expandAllAppointmentsBtn');
-    const text = document.getElementById('expandAllAppointmentsText');
-    
-    if (!btn || !text) return;
-    
-    // Check if all are expanded
-    let allExpanded = true;
-    allCollapses.forEach(collapse => {
-        if (!collapse.classList.contains('show')) {
-            allExpanded = false;
-        }
-    });
-    
-    // Toggle all
-    allCollapses.forEach(collapse => {
-        const collapseId = collapse.id;
-        const header = document.querySelector(`[data-bs-target="#${collapseId}"]`);
-        if (!header) return;
-        
-        if (allExpanded) {
-            // Collapse all
-            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
-            if (bsCollapse) {
-                bsCollapse.hide();
-            } else {
-                collapse.classList.remove('show');
-                header.classList.remove('expanded');
-                header.classList.add('collapsed');
-            }
-        } else {
-            // Expand all
-            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
-            if (bsCollapse) {
-                bsCollapse.show();
-            } else {
-                collapse.classList.add('show');
-                header.classList.remove('collapsed');
-                header.classList.add('expanded');
-            }
-        }
-    });
-    
-    // Update button text after a short delay to allow animations
-    setTimeout(() => {
-        updateExpandAllAppointmentsButton();
-    }, 350);
-}
-
-function updateExpandAllAppointmentsButton() {
-    const timeline = document.querySelector('.appointment-timeline');
-    if (!timeline) return;
-    
-    const allCollapses = timeline.querySelectorAll('.collapse');
-    const btn = document.getElementById('expandAllAppointmentsBtn');
-    const text = document.getElementById('expandAllAppointmentsText');
-    
-    if (!btn || !text) return;
-    
-    let allExpanded = true;
-    allCollapses.forEach(collapse => {
-        if (!collapse.classList.contains('show')) {
-            allExpanded = false;
-        }
-    });
-    
-    const icon = btn.querySelector('i');
-    if (allExpanded) {
-        text.textContent = 'Collapse All';
-        if (icon) icon.className = 'bi bi-chevron-double-up me-1';
-    } else {
-        text.textContent = 'Expand All';
-        if (icon) icon.className = 'bi bi-chevron-double-down me-1';
-    }
-}
-
-function expandCollapseAllMedications() {
-    const timeline = document.querySelector('#medications .prescription-timeline');
-    if (!timeline) return;
-    
-    const allCollapses = timeline.querySelectorAll('.collapse');
-    const btn = document.getElementById('expandAllMedicationsBtn');
-    const text = document.getElementById('expandAllMedicationsText');
-    
-    if (!btn || !text) return;
-    
-    // Check if all are expanded
-    let allExpanded = true;
-    allCollapses.forEach(collapse => {
-        if (!collapse.classList.contains('show')) {
-            allExpanded = false;
-        }
-    });
-    
-    // Toggle all
-    allCollapses.forEach(collapse => {
-        const collapseId = collapse.id;
-        const header = document.querySelector(`[data-bs-target="#${collapseId}"]`);
-        if (!header) return;
-        
-        if (allExpanded) {
-            // Collapse all
-            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
-            if (bsCollapse) {
-                bsCollapse.hide();
-            } else {
-                collapse.classList.remove('show');
-                header.classList.remove('expanded');
-                header.classList.add('collapsed');
-            }
-        } else {
-            // Expand all
-            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
-            if (bsCollapse) {
-                bsCollapse.show();
-            } else {
-                collapse.classList.add('show');
-                header.classList.remove('collapsed');
-                header.classList.add('expanded');
-            }
-        }
-    });
-    
-    // Update button text after a short delay
-    setTimeout(() => {
-        updateExpandAllMedicationsButton();
-    }, 350);
-}
-
-function updateExpandAllMedicationsButton() {
-    const timeline = document.querySelector('#medications .prescription-timeline');
-    if (!timeline) return;
-    
-    const allCollapses = timeline.querySelectorAll('.collapse');
-    const btn = document.getElementById('expandAllMedicationsBtn');
-    const text = document.getElementById('expandAllMedicationsText');
-    
-    if (!btn || !text) return;
-    
-    let allExpanded = true;
-    let hasCollapses = allCollapses.length > 0;
-    
-    if (!hasCollapses) return;
-    
-    allCollapses.forEach(collapse => {
-        if (!collapse.classList.contains('show')) {
-            allExpanded = false;
-        }
-    });
-    
-    const icon = btn.querySelector('i');
-    if (allExpanded) {
-        text.textContent = 'Collapse All';
-        if (icon) icon.className = 'bi bi-chevron-double-up me-1';
-    } else {
-        text.textContent = 'Expand All';
-        if (icon) icon.className = 'bi bi-chevron-double-down me-1';
-    }
-}
-
-function expandCollapseAllGlasses() {
-    const timeline = document.querySelector('#glasses .prescription-timeline');
-    if (!timeline) return;
-    
-    const allCollapses = timeline.querySelectorAll('.collapse');
-    const btn = document.getElementById('expandAllGlassesBtn');
-    const text = document.getElementById('expandAllGlassesText');
-    
-    if (!btn || !text) return;
-    
-    // Check if all are expanded
-    let allExpanded = true;
-    allCollapses.forEach(collapse => {
-        if (!collapse.classList.contains('show')) {
-            allExpanded = false;
-        }
-    });
-    
-    // Toggle all
-    allCollapses.forEach(collapse => {
-        const collapseId = collapse.id;
-        const header = document.querySelector(`[data-bs-target="#${collapseId}"]`);
-        if (!header) return;
-        
-        if (allExpanded) {
-            // Collapse all
-            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
-            if (bsCollapse) {
-                bsCollapse.hide();
-            } else {
-                collapse.classList.remove('show');
-                header.classList.remove('expanded');
-                header.classList.add('collapsed');
-            }
-        } else {
-            // Expand all
-            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
-            if (bsCollapse) {
-                bsCollapse.show();
-            } else {
-                collapse.classList.add('show');
-                header.classList.remove('collapsed');
-                header.classList.add('expanded');
-            }
-        }
-    });
-    
-    // Update button text after a short delay
-    setTimeout(() => {
-        updateExpandAllGlassesButton();
-    }, 350);
-}
-
-function updateExpandAllGlassesButton() {
-    const timeline = document.querySelector('#glasses .prescription-timeline');
-    if (!timeline) return;
-    
-    const allCollapses = timeline.querySelectorAll('.collapse');
-    const btn = document.getElementById('expandAllGlassesBtn');
-    const text = document.getElementById('expandAllGlassesText');
-    
-    if (!btn || !text) return;
-    
-    let allExpanded = true;
-    let hasCollapses = allCollapses.length > 0;
-    
-    if (!hasCollapses) return;
-    
-    allCollapses.forEach(collapse => {
-        if (!collapse.classList.contains('show')) {
-            allExpanded = false;
-        }
-    });
-    
-    const icon = btn.querySelector('i');
-    if (allExpanded) {
-        text.textContent = 'Collapse All';
-        if (icon) icon.className = 'bi bi-chevron-double-up me-1';
-    } else {
-        text.textContent = 'Expand All';
-        if (icon) icon.className = 'bi bi-chevron-double-down me-1';
-    }
-}
-
-function expandCollapseAllPrescriptions() {
-    const timeline = document.querySelector('#all-prescriptions .prescription-timeline');
-    if (!timeline) return;
-    
-    const allCollapses = timeline.querySelectorAll('.collapse');
-    const btn = document.getElementById('expandAllPrescriptionsBtn');
-    const text = document.getElementById('expandAllPrescriptionsText');
-    
-    if (!btn || !text) return;
-    
-    // Check if all are expanded
-    let allExpanded = true;
-    allCollapses.forEach(collapse => {
-        if (!collapse.classList.contains('show')) {
-            allExpanded = false;
-        }
-    });
-    
-    // Toggle all
-    allCollapses.forEach(collapse => {
-        const collapseId = collapse.id;
-        const header = document.querySelector(`[data-bs-target="#${collapseId}"]`);
-        if (!header) return;
-        
-        if (allExpanded) {
-            // Collapse all
-            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
-            if (bsCollapse) {
-                bsCollapse.hide();
-            } else {
-                collapse.classList.remove('show');
-                header.classList.remove('expanded');
-                header.classList.add('collapsed');
-            }
-        } else {
-            // Expand all
-            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
-            if (bsCollapse) {
-                bsCollapse.show();
-            } else {
-                collapse.classList.add('show');
-                header.classList.remove('collapsed');
-                header.classList.add('expanded');
-            }
-        }
-    });
-    
-    // Update button text after a short delay
-    setTimeout(() => {
-        updateExpandAllPrescriptionsButton();
-    }, 350);
-}
-
-function updateExpandAllPrescriptionsButton() {
-    const timeline = document.querySelector('#all-prescriptions .prescription-timeline');
-    if (!timeline) return;
-    
-    const allCollapses = timeline.querySelectorAll('.collapse');
-    const btn = document.getElementById('expandAllPrescriptionsBtn');
-    const text = document.getElementById('expandAllPrescriptionsText');
-    
-    if (!btn || !text) return;
-    
-    let allExpanded = true;
-    let hasCollapses = allCollapses.length > 0;
-    
-    if (!hasCollapses) return;
-    
-    allCollapses.forEach(collapse => {
-        if (!collapse.classList.contains('show')) {
-            allExpanded = false;
-        }
-    });
-    
-    const icon = btn.querySelector('i');
-    if (allExpanded) {
-        text.textContent = 'Collapse All';
-        if (icon) icon.className = 'bi bi-chevron-double-up me-1';
-    } else {
-        text.textContent = 'Expand All';
-        if (icon) icon.className = 'bi bi-chevron-double-down me-1';
-    }
-}
-
 // Reload patient files via Ajax
 function reloadPatientFiles() {
-    const patientId = <?= $patient['id'] ?? 'null' ?>;
+    const patientId = <?= isset($patient['id']) ? (int)$patient['id'] : 0 ?>;
     if (!patientId) {
         console.error('No patient ID found');
         return;
@@ -6360,17 +6141,22 @@ function reloadPatientFiles() {
                             minute: '2-digit'
                         });
                         
+                        // Escape special characters for safe use in HTML/JavaScript
+                        const safeFilePath = (file.file_path || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        const safeFileName = (file.original_filename || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        const safeDescription = (file.description || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        
                         html += `
                             <div class="col-md-6 mb-3">
                                 <div class="attachment-card p-2 border rounded" data-attachment-id="${file.id}" style="min-height: ${isImage ? '200px' : '140px'}; display: flex; flex-direction: column;">
                                     ${isImage ? `
                                     <div class="mb-2 text-center" style="cursor: pointer;" 
-                                         onclick="viewPatientAttachment(${file.id}, '${file.file_path}', '${fileExt}')"
+                                         onclick="viewPatientAttachment(${file.id}, '${safeFilePath}', '${fileExt}')"
                                          data-bs-toggle="tooltip" 
                                          data-bs-placement="top" 
                                          data-bs-title="View Attachement/Photo">
                                         <img src="${viewUrl}" 
-                                             alt="${file.original_filename}"
+                                             alt="${safeFileName}"
                                              class="img-thumbnail" 
                                              style="max-width: 100%; max-height: 120px; object-fit: cover; border-radius: 8px; cursor: pointer;"
                                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -6385,7 +6171,7 @@ function reloadPatientFiles() {
                                         <div class="flex-grow-1">
                                             <div class="d-flex align-items-center justify-content-between mb-1">
                                                 <h6 class="mb-0" style="font-size: 0.8rem; line-height: 1.1;" 
-                                                    title="${file.original_filename}"
+                                                    title="${safeFileName}"
                                                     data-bs-toggle="tooltip" 
                                                     data-bs-placement="top">
                                                     ${displayName}
@@ -6405,7 +6191,7 @@ function reloadPatientFiles() {
                                     ${file.description ? `
                                     <div class="flex-grow-1">
                                         <p class="text-muted mb-1 small" style="font-size: 0.7rem;"
-                                           title="${file.description}"
+                                           title="${safeDescription}"
                                            data-bs-toggle="tooltip" 
                                            data-bs-placement="bottom">
                                            ${file.description.length > 40 ? file.description.substring(0, 37) + '...' : file.description}
@@ -6414,7 +6200,7 @@ function reloadPatientFiles() {
                                     ` : '<div class="flex-grow-1"></div>'}
                                     <div class="btn-group btn-group-sm w-100 mt-auto" role="group">
                                         <button class="btn btn-outline-primary btn-sm" 
-                                                onclick="viewPatientAttachment(${file.id}, '${file.file_path}', '${fileExt}')" 
+                                                onclick="viewPatientAttachment(${file.id}, '${safeFilePath}', '${fileExt}')" 
                                                 style="font-size: 0.7rem; padding: 0.3rem 0.4rem; flex: 1;"
                                                 data-bs-toggle="tooltip" 
                                                 data-bs-placement="top" 
@@ -6422,7 +6208,7 @@ function reloadPatientFiles() {
                                             <i class="bi bi-eye me-1"></i>View
                                         </button>
                                         <button class="btn btn-outline-success btn-sm" 
-                                                onclick="downloadPatientAttachment(${file.id}, '${file.original_filename}')"
+                                                onclick="downloadPatientAttachment(${file.id}, '${safeFileName}')"
                                                 style="font-size: 0.7rem; padding: 0.3rem 0.4rem; flex: 1;">
                                             <i class="bi bi-download me-1"></i>Download
                                         </button>
@@ -6461,3 +6247,5 @@ function reloadPatientFiles() {
 }
 
 </script>
+
+<?php include __DIR__ . '/alert_modal.php'; ?>

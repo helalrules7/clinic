@@ -18,6 +18,7 @@ if (file_exists($vendorAutoload)) {
 
 // Load Controllers
 require_once __DIR__ . '/app/Controllers/SecretaryController.php';
+require_once __DIR__ . '/app/Controllers/AlertController.php';
 
 // Load environment variables
 if (file_exists(__DIR__ . '/.env')) {
@@ -120,6 +121,17 @@ try {
     $router->get('/doctor/reports/export', 'DoctorController@exportDoctorReport');
     $router->get('/doctor/settings', 'DoctorController@settings');
     $router->post('/doctor/settings', 'DoctorController@settings');
+    
+    // Alerts routes - specific routes first to avoid conflicts
+    $router->get('/doctor/alerts', 'AlertController@index');
+    $router->get('/api/alerts/today', 'AlertController@getTodayAlerts');
+    $router->get('/api/alerts/active', 'AlertController@getActiveAlerts');
+    $router->post('/api/alerts/dismiss', 'AlertController@dismiss');
+    $router->get('/api/alerts', 'AlertController@getAllAlerts');
+    $router->get('/api/alerts/{id}', 'AlertController@get');
+    $router->post('/api/alerts', 'AlertController@create');
+    $router->put('/api/alerts/{id}', 'AlertController@update');
+    $router->delete('/api/alerts/{id}', 'AlertController@delete');
     
     // Medical History routes
     $router->post('/api/patients/{id}/medical-history', 'ApiController@createMedicalHistory');

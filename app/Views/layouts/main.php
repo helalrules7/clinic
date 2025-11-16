@@ -556,6 +556,80 @@
                 height: 45px;
             }
         }
+        
+        /* Alert Toast Glass Effect */
+        .alert-toast-glass {
+            /* Glass effect - similar to top-bar */
+            background: rgba(248, 250, 252, 0.85) !important;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 2px solid rgba(30, 144, 255, 0.6) !important;
+            box-shadow: 0 4px 20px rgba(30, 144, 255, 0.4), 
+                        0 0 0 1px rgba(30, 144, 255, 0.2),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            color: var(--text) !important;
+            animation: toastGlow 2s ease-in-out infinite;
+            padding: 0.75rem 1rem !important;
+        }
+        
+        .dark .alert-toast-glass {
+            background: rgba(11, 18, 32, 0.90) !important;
+            border: 2px solid rgba(30, 144, 255, 0.7) !important;
+            box-shadow: 0 4px 20px rgba(30, 144, 255, 0.5), 
+                        0 0 0 1px rgba(30, 144, 255, 0.3),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        
+        @keyframes toastGlow {
+            0%, 100% {
+                box-shadow: 0 4px 20px rgba(30, 144, 255, 0.4), 
+                            0 0 0 1px rgba(30, 144, 255, 0.2),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            }
+            50% {
+                box-shadow: 0 4px 25px rgba(30, 144, 255, 0.6), 
+                            0 0 0 1px rgba(30, 144, 255, 0.4),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            }
+        }
+        
+        .dark .alert-toast-glass {
+            animation: toastGlowDark 2s ease-in-out infinite;
+        }
+        
+        @keyframes toastGlowDark {
+            0%, 100% {
+                box-shadow: 0 4px 20px rgba(30, 144, 255, 0.5), 
+                            0 0 0 1px rgba(30, 144, 255, 0.3),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            }
+            50% {
+                box-shadow: 0 4px 30px rgba(30, 144, 255, 0.7), 
+                            0 0 0 1px rgba(30, 144, 255, 0.5),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            }
+        }
+        
+        .alert-toast-glass .toast-body {
+            color: var(--text) !important;
+        }
+        
+        .alert-toast-glass strong {
+            color: var(--text) !important;
+        }
+        
+        .alert-toast-glass small {
+            color: var(--muted) !important;
+        }
+        
+        .alert-toast-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .alert-toast-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -640,6 +714,12 @@
                     <a href="/doctor/medications" class="nav-link <?= $this->isActiveRoute('/doctor/medications') ? 'active' : '' ?>">
                         <i class="bi bi-capsule"></i>
                         Medications Prescriptions
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/doctor/alerts" class="nav-link <?= $this->isActiveRoute('/doctor/alerts') ? 'active' : '' ?>">
+                        <i class="bi bi-bell"></i>
+                        Alerts
                     </a>
                 </div>
                 <div class="nav-item">
@@ -956,6 +1036,284 @@
                 });
             });
         }
+        
+        // Alert System - Global polling system for all pages
+        (function() {
+            let alertCheckInterval = null;
+            let isChecking = false;
+            let lastCheckTime = 0;
+            const POLLING_INTERVAL = 30000; // Check every 30 seconds
+            const MIN_CHECK_INTERVAL = 5000; // Minimum 5 seconds between checks
+            
+            // Create toast container immediately
+            function createToastContainer() {
+                const container = document.getElementById('toastContainer');
+                if (container) return container;
+                
+                const newContainer = document.createElement('div');
+                newContainer.id = 'toastContainer';
+                newContainer.className = 'toast-container position-fixed bottom-0 start-50 translate-middle-x p-3';
+                newContainer.style.zIndex = '9999';
+                document.body.appendChild(newContainer);
+                return newContainer;
+            }
+            
+            // Initialize toast container on page load
+            createToastContainer();
+            
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+            
+            function checkAlerts() {
+                // Prevent multiple simultaneous checks
+                if (isChecking) return;
+                
+                // Throttle checks - don't check too frequently
+                const now = Date.now();
+                if (now - lastCheckTime < MIN_CHECK_INTERVAL) {
+                    return;
+                }
+                
+                isChecking = true;
+                lastCheckTime = now;
+                
+                fetch('/api/alerts/active', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    cache: 'no-cache'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.alerts && data.alerts.length > 0) {
+                        data.alerts.forEach(alert => {
+                            showAlertToast(alert);
+                        });
+                    }
+                })
+                .catch(error => {
+                    // Silently fail - don't show errors for alert checking
+                    console.debug('Alert check failed:', error);
+                })
+                .finally(() => {
+                    isChecking = false;
+                });
+            }
+            
+            function showAlertToast(alert) {
+                if (!alert || !alert.id) return;
+                
+                const toastContainer = createToastContainer();
+                const toastId = 'alert-toast-' + alert.id + '-' + Date.now();
+                
+                // Check if this alert was already shown (using sessionStorage with timestamp)
+                const alertKey = `alert_shown_${alert.id}_${alert.alert_date}_${alert.alert_time}`;
+                const lastShown = sessionStorage.getItem(alertKey);
+                const now = Date.now();
+                
+                // If shown less than 5 minutes ago, don't show again
+                if (lastShown && (now - parseInt(lastShown)) < 300000) {
+                    return;
+                }
+                
+                // Mark as shown
+                sessionStorage.setItem(alertKey, now.toString());
+                
+                // Check if toast already exists (prevent duplicates)
+                if (document.getElementById(toastId)) {
+                    return;
+                }
+                
+                const patientName = alert.patient_first_name && alert.patient_last_name 
+                    ? `${alert.patient_first_name} ${alert.patient_last_name}` 
+                    : 'Patient';
+                const patientLink = alert.patient_id ? `/doctor/patients/${alert.patient_id}` : '#';
+                
+                const toastHtml = `
+                    <div id="${toastId}" class="toast alert-toast-glass align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false" style="min-width: 550px; max-width: 700px;">
+                        <div class="d-flex align-items-center">
+                            <div class="toast-body flex-grow-1">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-bell-fill me-2" style="font-size: 1.5rem; margin-top: 2px;"></i>
+                                    <div class="flex-grow-1">
+                                        <strong>${escapeHtml(alert.message)}</strong>
+                                        ${alert.patient_id ? `<br><small><i class="bi bi-person me-1"></i>${escapeHtml(patientName)}</small>` : ''}
+                                        ${alert.alert_date && alert.alert_time ? `<br><small><i class="bi bi-clock me-1"></i>${escapeHtml(alert.alert_date)} ${escapeHtml(alert.alert_time)}</small>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 me-2" style="flex-shrink: 0;">
+                                ${alert.patient_id ? `
+                                    <a href="${patientLink}" class="btn btn-sm btn-light alert-toast-btn" data-alert-id="${alert.id}" data-toast-id="${toastId}" style="white-space: nowrap;">
+                                        <i class="bi bi-person me-1"></i>View Patient
+                                    </a>
+                                ` : ''}
+                                <button type="button" class="btn btn-sm btn-outline-light alert-toast-btn snooze-btn" data-alert-id="${alert.id}" data-toast-id="${toastId}" style="white-space: nowrap;">
+                                    <i class="bi bi-clock me-1"></i>Snooze
+                                </button>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close" data-alert-id="${alert.id}" data-toast-id="${toastId}"></button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+                const toastElement = document.getElementById(toastId);
+                
+                if (toastElement) {
+                    // Add event listeners for buttons
+                    const viewPatientBtn = toastElement.querySelector('a[data-alert-id]');
+                    const snoozeBtn = toastElement.querySelector('.snooze-btn');
+                    const closeBtn = toastElement.querySelector('.btn-close');
+                    
+                    if (viewPatientBtn) {
+                        viewPatientBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            const alertId = parseInt(this.getAttribute('data-alert-id'));
+                            const toastId = this.getAttribute('data-toast-id');
+                            dismissAlert(alertId, toastId);
+                            // Navigate to patient page after dismissing
+                            setTimeout(() => {
+                                window.location.href = patientLink;
+                            }, 300);
+                        });
+                    }
+                    
+                    if (snoozeBtn) {
+                        snoozeBtn.addEventListener('click', function() {
+                            const alertId = parseInt(this.getAttribute('data-alert-id'));
+                            const toastId = this.getAttribute('data-toast-id');
+                            dismissAlert(alertId, toastId);
+                        });
+                    }
+                    
+                    if (closeBtn) {
+                        closeBtn.addEventListener('click', function() {
+                            const alertId = parseInt(this.getAttribute('data-alert-id'));
+                            const toastId = this.getAttribute('data-toast-id');
+                            dismissAlert(alertId, toastId);
+                        });
+                    }
+                    
+                    const toast = new bootstrap.Toast(toastElement, {
+                        autohide: false,
+                        delay: 0
+                    });
+                    toast.show();
+                    
+                    toastElement.addEventListener('hidden.bs.toast', function() {
+                        toastElement.remove();
+                    });
+                }
+            }
+            
+            function dismissAlert(alertId, toastId) {
+                if (!alertId || !toastId) return;
+                
+                fetch('/api/alerts/dismiss', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ alert_id: alertId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const toastElement = document.getElementById(toastId);
+                        if (toastElement) {
+                            const toast = bootstrap.Toast.getInstance(toastElement);
+                            if (toast) {
+                                toast.hide();
+                            } else {
+                                toastElement.remove();
+                            }
+                        }
+                    }
+                })
+                .catch(error => {
+                    // Silently fail
+                    console.debug('Dismiss alert failed:', error);
+                    // Still try to hide the toast
+                    const toastElement = document.getElementById(toastId);
+                    if (toastElement) {
+                        const toast = bootstrap.Toast.getInstance(toastElement);
+                        if (toast) {
+                            toast.hide();
+                        } else {
+                            toastElement.remove();
+                        }
+                    }
+                });
+            }
+            
+            // Make dismissAlert available globally
+            window.dismissAlert = dismissAlert;
+            
+            // Start polling system
+            function startAlertPolling() {
+                // Check immediately on page load
+                setTimeout(() => {
+                    checkAlerts();
+                }, 1000); // Wait 1 second after page load
+                
+                // Set up interval polling
+                if (alertCheckInterval) {
+                    clearInterval(alertCheckInterval);
+                }
+                
+                alertCheckInterval = setInterval(() => {
+                    checkAlerts();
+                }, POLLING_INTERVAL);
+            }
+            
+            // Start polling immediately and also when DOM is ready
+            startAlertPolling();
+            
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Check again when DOM is ready
+                    setTimeout(() => {
+                        checkAlerts();
+                    }, 500);
+                });
+            }
+            
+            // Also check when page becomes visible (user switches tabs back)
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    setTimeout(() => {
+                        checkAlerts();
+                    }, 500);
+                }
+            });
+            
+            // Check on window focus
+            window.addEventListener('focus', function() {
+                setTimeout(() => {
+                    checkAlerts();
+                }, 500);
+            });
+            
+            // Clean up on page unload
+            window.addEventListener('beforeunload', function() {
+                if (alertCheckInterval) {
+                    clearInterval(alertCheckInterval);
+                }
+            });
+        })();
     </script>
 </body>
 </html>

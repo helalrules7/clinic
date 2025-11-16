@@ -9,6 +9,9 @@ session_start();
 // Load Composer autoloader
 require_once __DIR__ . '/vendor/autoload.php';
 
+// Load Controllers
+require_once __DIR__ . '/app/Controllers/AlertController.php';
+
 // Load environment variables with error handling
 if (file_exists(__DIR__ . '/.env') && is_readable(__DIR__ . '/.env')) {
     $lines = file(__DIR__ . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -119,7 +122,16 @@ try {
     $router->get('/doctor/settings', 'DoctorController@settings');
     $router->post('/doctor/settings', 'DoctorController@settings');
     
-
+    // Alerts routes - specific routes first to avoid conflicts
+    $router->get('/doctor/alerts', 'AlertController@index');
+    $router->get('/api/alerts/today', 'AlertController@getTodayAlerts');
+    $router->get('/api/alerts/active', 'AlertController@getActiveAlerts');
+    $router->post('/api/alerts/dismiss', 'AlertController@dismiss');
+    $router->get('/api/alerts', 'AlertController@getAllAlerts');
+    $router->get('/api/alerts/{id}', 'AlertController@get');
+    $router->post('/api/alerts', 'AlertController@create');
+    $router->put('/api/alerts/{id}', 'AlertController@update');
+    $router->delete('/api/alerts/{id}', 'AlertController@delete');
 
         // Medical History routes
     $router->post('/api/patients/{id}/medical-history', 'ApiController@createMedicalHistory');

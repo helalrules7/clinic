@@ -2362,16 +2362,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Keyboard shortcuts
     document.addEventListener('keydown', function(e) {
-        // Debug keyboard input (remove in production)
-        if (e.key === 'ب' || e.key.toLowerCase() === 'f') {
-                key: e.key,
-                keyCode: e.keyCode,
-                code: e.code,
-                isInputFocused: isInputFocused(),
-                modalOpen: searchModal.classList.contains('show')
-            });
-        }
-        
         // Open search modal with 'F' key or Arabic 'ب' key (only if no input is focused)
         // Also support Arabic keyboard layout alternatives
         const searchKeys = ['f', 'ب']; // F key and Arabic 'ba' (same position on keyboard)

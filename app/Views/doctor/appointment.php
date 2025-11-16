@@ -851,6 +851,9 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
             <button type="button" class="btn btn-primary hide-on-mobile" onclick="editConsultation(<?= $appointment['id'] ?>)">
                 <i class="bi bi-pencil me-1"></i>Edit Consultation
             </button>
+            <button type="button" class="btn btn-warning hide-on-mobile" onclick="openAlertModal(<?= $appointment['patient_id'] ?? 'null' ?>, <?= $appointment['id'] ?>)">
+                <i class="bi bi-bell me-1"></i>Set Alert
+            </button>
             <button type="button" class="btn btn-success hide-on-mobile" onclick="addPrescription(<?= $appointment['id'] ?>)">
                 <i class="bi bi-prescription2 me-1"></i>Add Prescription
             </button>
@@ -891,16 +894,22 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                         </a>
                     </li>
                     <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { editConsultation(<?= $appointment['id'] ?>); });">
-                            <i class="bi bi-pencil me-2"></i>Edit Consultation
-                        </a>
-                    </li>
-                </ul>
+                        <li>
+                            <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { editConsultation(<?= $appointment['id'] ?>); });">
+                                <i class="bi bi-pencil me-2"></i>Edit Consultation
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { openAlertModal(<?= $appointment['patient_id'] ?? 'null' ?>, <?= $appointment['id'] ?>); });">
+                                <i class="bi bi-bell me-2"></i>Set Alert
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
 <div class="row">
     <!-- Left Column - Patient & Consultation -->
@@ -4918,3 +4927,5 @@ function escapeHtml(text) {
 }
 
     </script>
+
+<?php include __DIR__ . '/alert_modal.php'; ?>

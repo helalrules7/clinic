@@ -143,6 +143,34 @@
     </div>
 </div>
 
+<!-- Today's Alerts -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-warning">
+                    <i class="bi bi-bell me-2"></i>
+                    Today's Alerts
+                </h6>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="/doctor/alerts" class="btn btn-sm btn-outline-warning">
+                        <i class="bi bi-gear me-1"></i>Manage Alerts
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="todayAlertsContainer">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-warning" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <!-- Upcoming Appointments -->
     <div class="col-12 mb-4">
@@ -1045,7 +1073,71 @@ canvas {
 </style>
 
 <script>
+// Load today's alerts
+function loadTodayAlerts() {
+    fetch('/api/alerts/today')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('todayAlertsContainer');
+            if (data.success && data.alerts && data.alerts.length > 0) {
+                let html = '<div class="list-group">';
+                data.alerts.forEach(alert => {
+                    const patientName = alert.patient_first_name && alert.patient_last_name 
+                        ? `${alert.patient_first_name} ${alert.patient_last_name}` 
+                        : 'N/A';
+                    const alertDateTime = new Date(`${alert.alert_date}T${alert.alert_time}`);
+                    const timeStr = alertDateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    
+                    html += `
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">
+                                        <i class="bi bi-bell-fill text-warning me-2"></i>
+                                        ${escapeHtml(alert.message)}
+                                    </h6>
+                                    <p class="mb-1 text-muted">
+                                        <i class="bi bi-clock me-1"></i>${timeStr}
+                                        ${alert.patient_id ? ` | <i class="bi bi-person me-1"></i>${escapeHtml(patientName)}` : ''}
+                                    </p>
+                                </div>
+                                ${alert.patient_id ? `
+                                    <a href="/doctor/patients/${alert.patient_id}" class="btn btn-sm btn-primary ms-2">
+                                        <i class="bi bi-person me-1"></i>View Patient
+                                    </a>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="bi bi-bell-slash text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3 mb-0">No alerts for today</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            document.getElementById('todayAlertsContainer').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Error loading alerts
+                </div>
+            `;
+        });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    loadTodayAlerts();
     // Initialize Bootstrap tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
