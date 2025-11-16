@@ -228,7 +228,11 @@
                             $collapseId = 'medicationCollapse' . $appointmentId;
                         ?>
                         <div class="timeline-item prescription-timeline-item">
-                            <div class="timeline-marker <?= $isLatest ? 'bg-warning' : 'bg-success' ?>">
+                            <div class="timeline-marker <?= $isLatest ? 'bg-warning' : 'bg-success' ?>" 
+                                 onclick="handlePrescriptionHeaderClick(event, '<?= $collapseId ?>')"
+                                 style="cursor: pointer; transition: transform 0.2s ease;"
+                                 onmouseover="this.style.transform='scale(1.1)'"
+                                 onmouseout="this.style.transform='scale(1)'">
                                 <i class="bi bi-calendar-event text-white"></i>
                             </div>
                             <div class="timeline-content">
@@ -351,7 +355,11 @@
                             $collapseId = 'glassesCollapse' . $glass['id'];
                         ?>
                         <div class="timeline-item prescription-timeline-item">
-                            <div class="timeline-marker <?= $isLatest ? 'bg-warning' : 'bg-info' ?>">
+                            <div class="timeline-marker <?= $isLatest ? 'bg-warning' : 'bg-info' ?>" 
+                                 onclick="handlePrescriptionHeaderClick(event, '<?= $collapseId ?>')"
+                                 style="cursor: pointer; transition: transform 0.2s ease;"
+                                 onmouseover="this.style.transform='scale(1.1)'"
+                                 onmouseout="this.style.transform='scale(1)'">
                                 <i class="bi bi-eyeglasses text-white"></i>
                             </div>
                             <div class="timeline-content">
@@ -517,7 +525,11 @@
                             $totalPrescriptions = count($group['medications']) + count($group['glasses']);
                         ?>
                         <div class="timeline-item prescription-timeline-item">
-                            <div class="timeline-marker <?= $isLatest ? 'bg-warning' : 'bg-primary' ?>">
+                            <div class="timeline-marker <?= $isLatest ? 'bg-warning' : 'bg-primary' ?>" 
+                                 onclick="handlePrescriptionHeaderClick(event, '<?= $collapseId ?>')"
+                                 style="cursor: pointer; transition: transform 0.2s ease;"
+                                 onmouseover="this.style.transform='scale(1.1)'"
+                                 onmouseout="this.style.transform='scale(1)'">
                                 <i class="bi bi-calendar-event text-white"></i>
                             </div>
                             <div class="timeline-content">
@@ -716,7 +728,11 @@
                 $statusColor = $appointment['status'] === 'Completed' ? 'success' : ($appointment['status'] === 'Cancelled' ? 'danger' : ($appointment['status'] === 'InProgress' ? 'warning' : 'primary'));
             ?>
             <div class="timeline-item appointment-timeline-item">
-                <div class="timeline-marker <?= $isLatest ? 'bg-warning' : 'bg-' . $statusColor ?>">
+                <div class="timeline-marker <?= $isLatest ? 'bg-warning' : 'bg-' . $statusColor ?>" 
+                     onclick="handleAppointmentHeaderClick(event, '<?= $collapseId ?>')"
+                     style="cursor: pointer; transition: transform 0.2s ease;"
+                     onmouseover="this.style.transform='scale(1.1)'"
+                     onmouseout="this.style.transform='scale(1)'">
                     <i class="bi bi-calendar-event text-white"></i>
                 </div>
                 <div class="timeline-content">
@@ -932,6 +948,173 @@
     </div>
 </div>
 <?php endif; ?>
+
+<!-- Patient Alerts -->
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-bell me-2"></i>
+                Patient Alerts
+                <span class="badge bg-warning ms-2" id="patientAlertsCount">0</span>
+            </h5>
+            <button class="btn btn-primary btn-sm" onclick="openAlertModal(<?= isset($patient['id']) ? (int)$patient['id'] : 'null' ?>, null)">
+                <i class="bi bi-plus me-1"></i>Add Alert
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div id="patientAlertsContainer">
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-2 mb-0">Loading alerts...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Patient Alert Modal -->
+<div class="modal fade" id="deletePatientAlertModal" tabindex="-1" aria-labelledby="deletePatientAlertModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deletePatientAlertModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this alert?</p>
+                <p class="text-muted mb-0"><small>This action cannot be undone.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeletePatientAlertBtn" onclick="confirmDeletePatientAlert()">
+                    <i class="bi bi-trash me-1"></i>Delete Alert
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Patient Alerts Dark Mode Styles */
+#patientAlertsContainer .list-group-item {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+    transition: all 0.3s ease;
+}
+
+#patientAlertsContainer .list-group-item:hover {
+    background-color: var(--bg-alt) !important;
+    border-color: var(--accent) !important;
+}
+
+/* Active Alert Styling */
+#patientAlertsContainer .list-group-item.alert-active {
+    border-left: 4px solid var(--success) !important;
+    background-color: rgba(16, 185, 129, 0.05) !important;
+}
+
+.dark #patientAlertsContainer .list-group-item.alert-active {
+    border-left: 4px solid var(--success) !important;
+    background-color: rgba(74, 222, 128, 0.1) !important;
+}
+
+/* Dismissed/Inactive Alert Styling */
+#patientAlertsContainer .list-group-item.alert-dismissed,
+#patientAlertsContainer .list-group-item.alert-inactive {
+    border-left: 4px solid var(--muted) !important;
+    opacity: 0.6;
+    background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+.dark #patientAlertsContainer .list-group-item.alert-dismissed,
+.dark #patientAlertsContainer .list-group-item.alert-inactive {
+    background-color: rgba(0, 0, 0, 0.1) !important;
+    opacity: 0.5;
+}
+
+/* Alert Text Colors */
+#patientAlertsContainer .list-group-item h6 {
+    color: var(--text) !important;
+}
+
+#patientAlertsContainer .list-group-item .text-muted {
+    color: var(--muted) !important;
+}
+
+/* Alert Icon Colors */
+#patientAlertsContainer .list-group-item.alert-active .bi-bell-fill {
+    color: var(--success) !important;
+    animation: pulse-bell 2s infinite;
+}
+
+#patientAlertsContainer .list-group-item.alert-dismissed .bi-bell-fill,
+#patientAlertsContainer .list-group-item.alert-inactive .bi-bell-fill {
+    color: var(--muted) !important;
+}
+
+@keyframes pulse-bell {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Delete Patient Alert Modal Dark Mode */
+#deletePatientAlertModal .modal-content {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+#deletePatientAlertModal .modal-header {
+    background-color: var(--bg-alt) !important;
+    border-bottom-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+#deletePatientAlertModal .modal-body {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+#deletePatientAlertModal .modal-footer {
+    background-color: var(--bg-alt) !important;
+    border-top-color: var(--border) !important;
+}
+
+#deletePatientAlertModal .text-muted {
+    color: var(--muted) !important;
+}
+
+.dark #deletePatientAlertModal .modal-content {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+.dark #deletePatientAlertModal .modal-header {
+    background-color: var(--bg-alt) !important;
+    border-bottom-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark #deletePatientAlertModal .modal-body {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+.dark #deletePatientAlertModal .modal-footer {
+    background-color: var(--bg-alt) !important;
+    border-top-color: var(--border) !important;
+}
+
+.dark #deletePatientAlertModal .text-muted {
+    color: var(--muted) !important;
+}
+</style>
 
 <!-- Medical History -->
 <div class="card mb-4">
@@ -6245,6 +6428,324 @@ function reloadPatientFiles() {
             setTimeout(() => location.reload(), 2000);
         });
 }
+
+// Load Patient Alerts
+function loadPatientAlerts() {
+    const patientId = <?= isset($patient['id']) ? (int)$patient['id'] : 0 ?>;
+    if (!patientId) {
+        document.getElementById('patientAlertsContainer').innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-bell text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-2 mb-0">No patient selected</p>
+            </div>
+        `;
+        return;
+    }
+    
+    fetch(`/api/alerts/patient/${patientId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        const container = document.getElementById('patientAlertsContainer');
+        const countBadge = document.getElementById('patientAlertsCount');
+        
+        if (data.success && data.alerts && data.alerts.length > 0) {
+            countBadge.textContent = data.alerts.length;
+            
+            let html = '<div class="list-group">';
+            data.alerts.forEach(alert => {
+                const alertDate = alert.alert_date ? new Date(alert.alert_date).toLocaleDateString('en-GB') : 'N/A';
+                const alertTime = alert.alert_time || 'N/A';
+                const isActive = alert.is_active == 1;
+                const isDismissed = alert.is_dismissed == 1;
+                
+                // Determine alert status class
+                let alertStatusClass = '';
+                if (isDismissed) {
+                    alertStatusClass = 'alert-dismissed';
+                } else if (isActive) {
+                    alertStatusClass = 'alert-active';
+                } else {
+                    alertStatusClass = 'alert-inactive';
+                }
+                
+                // Check if alert date/time has passed
+                const alertDateTime = alert.alert_date && alert.alert_time 
+                    ? new Date(`${alert.alert_date}T${alert.alert_time}`) 
+                    : null;
+                const isPast = alertDateTime && alertDateTime < new Date();
+                
+                const statusBadge = isDismissed 
+                    ? '<span class="badge bg-secondary">Dismissed</span>' 
+                    : (isActive 
+                        ? (isPast 
+                            ? '<span class="badge bg-warning">Past Due</span>' 
+                            : '<span class="badge bg-success">Active</span>')
+                        : '<span class="badge bg-secondary">Inactive</span>');
+                
+                html += `
+                    <div class="list-group-item ${alertStatusClass}" data-alert-id="${alert.id}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-bell-fill me-2"></i>
+                                    <h6 class="mb-0">${escapeHtml(alert.message || 'No message')}</h6>
+                                </div>
+                                <div class="text-muted small">
+                                    <i class="bi bi-calendar me-1"></i>${alertDate}
+                                    <i class="bi bi-clock ms-3 me-1"></i>${alertTime}
+                                    ${alert.repeat_count > 1 ? `<span class="ms-3"><i class="bi bi-arrow-repeat me-1"></i>Repeat: ${alert.repeat_count} times</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 ms-3">
+                                ${statusBadge}
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button class="btn btn-outline-primary" onclick="editPatientAlert(${alert.id})" title="Edit Alert">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger" onclick="showDeletePatientAlertModal(${alert.id})" title="Delete Alert">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        } else {
+            countBadge.textContent = '0';
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="bi bi-bell text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-2 mb-0">No alerts found for this patient</p>
+                    <button class="btn btn-primary btn-sm mt-2" onclick="openAlertModal(${patientId}, null)">
+                        <i class="bi bi-plus me-1"></i>Add First Alert
+                    </button>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error loading patient alerts:', error);
+        document.getElementById('patientAlertsContainer').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>Error loading alerts. Please try again.
+            </div>
+        `;
+    });
+}
+
+// Edit Patient Alert
+function editPatientAlert(alertId) {
+    fetch(`/api/alerts/${alertId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.alert) {
+            const alert = data.alert;
+            const patientId = <?= isset($patient['id']) ? (int)$patient['id'] : 'null' ?>;
+            openAlertModal(patientId, alert.appointment_id || null, alert);
+        } else {
+            alert('Error loading alert details');
+        }
+    })
+    .catch(error => {
+        console.error('Error loading alert:', error);
+        alert('Error loading alert details');
+    });
+}
+
+// Show Delete Patient Alert Modal
+let currentPatientAlertIdToDelete = null;
+
+function showDeletePatientAlertModal(alertId) {
+    if (!alertId) {
+        return;
+    }
+    
+    // Store alert ID
+    currentPatientAlertIdToDelete = alertId;
+    const confirmBtn = document.getElementById('confirmDeletePatientAlertBtn');
+    if (confirmBtn) {
+        confirmBtn.setAttribute('data-alert-id', alertId);
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('deletePatientAlertModal'));
+    modal.show();
+}
+
+// Confirm Delete Patient Alert
+function confirmDeletePatientAlert() {
+    // Try to get alert ID from multiple sources
+    let alertId = currentPatientAlertIdToDelete;
+    
+    // Fallback: try to get from button data attribute
+    if (!alertId) {
+        const confirmBtn = document.getElementById('confirmDeletePatientAlertBtn');
+        if (confirmBtn && confirmBtn.getAttribute('data-alert-id')) {
+            alertId = confirmBtn.getAttribute('data-alert-id');
+        }
+    }
+    
+    if (!alertId) {
+        return;
+    }
+    
+    // Disable button during deletion
+    const confirmBtn = document.getElementById('confirmDeletePatientAlertBtn');
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Deleting...';
+    }
+    
+    fetch(`/api/alerts/${alertId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('deletePatientAlertModal'));
+        
+        // Re-enable button
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete Alert';
+        }
+        
+        if (data.success) {
+            modal.hide();
+            currentPatientAlertIdToDelete = null;
+            if (confirmBtn) {
+                confirmBtn.removeAttribute('data-alert-id');
+            }
+            
+            loadPatientAlerts();
+            
+            // Show success message
+            const alertHtml = `
+                <div class="alert alert-success alert-dismissible fade show position-fixed" 
+                     style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;" role="alert">
+                    <i class="bi bi-check-circle me-2"></i>Alert deleted successfully
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', alertHtml);
+            setTimeout(() => {
+                const alertEl = document.querySelector('.alert-success');
+                if (alertEl) alertEl.remove();
+            }, 3000);
+        } else {
+            // Don't hide modal on error so user can try again
+            const errorHtml = `
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>${data.message || 'Failed to delete alert'}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            const modalBody = document.querySelector('#deletePatientAlertModal .modal-body');
+            if (modalBody) {
+                const existingAlert = modalBody.querySelector('.alert-danger');
+                if (existingAlert) {
+                    existingAlert.remove();
+                }
+                modalBody.insertAdjacentHTML('afterbegin', errorHtml);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting alert:', error);
+        
+        // Re-enable button
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete Alert';
+        }
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('deletePatientAlertModal'));
+        const errorHtml = `
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>Error deleting alert. Please try again.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        const modalBody = document.querySelector('#deletePatientAlertModal .modal-body');
+        if (modalBody) {
+            const existingAlert = modalBody.querySelector('.alert-danger');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+            modalBody.insertAdjacentHTML('afterbegin', errorHtml);
+        }
+    });
+}
+
+// Reset delete modal when closed
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteModal = document.getElementById('deletePatientAlertModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('hidden.bs.modal', function() {
+            // Clear any error messages
+            const errorAlert = this.querySelector('.alert-danger');
+            if (errorAlert) {
+                errorAlert.remove();
+            }
+            // Reset button state
+            const confirmBtn = document.getElementById('confirmDeletePatientAlertBtn');
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete Alert';
+            }
+        });
+    }
+});
+
+// Store current patient info globally for alert modal
+window.currentPatientInfo = {
+    id: <?= isset($patient['id']) ? (int)$patient['id'] : 'null' ?>,
+    first_name: <?= isset($patient['first_name']) ? json_encode($patient['first_name'], JSON_UNESCAPED_UNICODE) : 'null' ?>,
+    last_name: <?= isset($patient['last_name']) ? json_encode($patient['last_name'], JSON_UNESCAPED_UNICODE) : 'null' ?>,
+    phone: <?= isset($patient['phone']) ? json_encode($patient['phone'], JSON_UNESCAPED_UNICODE) : 'null' ?>,
+    age: <?= isset($patient['dob']) ? date_diff(date_create($patient['dob']), date_create('now'))->y : 'null' ?>
+};
+
+// Load alerts when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadPatientAlerts();
+    
+    // Reload alerts after alert modal is closed (if alert was created/updated)
+    const alertModal = document.getElementById('alertModal');
+    if (alertModal) {
+        alertModal.addEventListener('hidden.bs.modal', function() {
+            // Small delay to ensure server has processed the request
+            setTimeout(() => {
+                loadPatientAlerts();
+            }, 500);
+        });
+    }
+});
 
 </script>
 

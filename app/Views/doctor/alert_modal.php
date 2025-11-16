@@ -191,73 +191,145 @@ function debounce(func, wait) {
 }
 
 // Alert Modal Functions
-function openAlertModal(patientId, appointmentId) {
-    // Reset to create mode
-    if (typeof currentAlertIdToEdit !== 'undefined') {
-        currentAlertIdToEdit = null;
-    }
+let currentAlertIdToEdit = null;
+let originalAlertData = null; // Store original alert data for comparison
+
+function openAlertModal(patientId, appointmentId, alertData = null) {
+    // Reset to create mode or set edit mode
+    currentAlertIdToEdit = alertData ? alertData.id : null;
+    originalAlertData = alertData ? {...alertData} : null; // Store copy of original data
     
     // Clear patient search
     document.getElementById('alertPatientSearch').value = '';
     document.getElementById('alertPatientSearchResults').innerHTML = '';
     document.getElementById('alertPatientId').value = patientId || '';
     document.getElementById('alertAppointmentId').value = appointmentId || '';
-    document.getElementById('alertMessage').value = '';
-    document.getElementById('alertDate').value = '';
-    document.getElementById('alertTime').value = '';
-    document.getElementById('alertRepeatCount').value = '1';
-    document.getElementById('alertRepeatInterval').value = '0';
     
-    // If patientId is provided, fetch patient info and display it
-    if (patientId) {
-        fetch(`/api/patients/${patientId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.ok && data.data) {
-                    const patient = data.data;
-                    const fullName = `${patient.first_name} ${patient.last_name}`;
-                    document.getElementById('alertPatientSearch').value = fullName;
-                    document.getElementById('alertPatientId').value = patientId;
-                    
-                    // Show selected patient info
-                    document.getElementById('alertPatientSearchResults').innerHTML = `
-                        <div class="selected-patient-info alert alert-info">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <strong>Selected Patient:</strong> ${fullName}<br>
-                                    <small>Phone: ${patient.phone || 'N/A'} • Age: ${patient.age || 'N/A'}</small>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearAlertPatientSelection()">
-                                    Change Patient
-                                </button>
+    if (alertData) {
+        // Edit mode - populate form with alert data
+        document.getElementById('alertMessage').value = alertData.message || '';
+        document.getElementById('alertDate').value = alertData.alert_date || '';
+        document.getElementById('alertTime').value = alertData.alert_time || '';
+        document.getElementById('alertRepeatCount').value = alertData.repeat_count || '1';
+        document.getElementById('alertRepeatInterval').value = alertData.repeat_interval || '0';
+        
+        // Set patient info if available
+        if (alertData.patient_id) {
+            const fullName = alertData.patient_first_name && alertData.patient_last_name 
+                ? `${alertData.patient_first_name} ${alertData.patient_last_name}` 
+                : '';
+            if (fullName) {
+                document.getElementById('alertPatientSearch').value = fullName;
+                document.getElementById('alertPatientId').value = alertData.patient_id;
+                
+                document.getElementById('alertPatientSearchResults').innerHTML = `
+                    <div class="selected-patient-info alert alert-info">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>Selected Patient:</strong> ${fullName}<br>
+                                <small>Phone: ${alertData.patient_phone || 'N/A'}</small>
                             </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearAlertPatientSelection()">
+                                Change Patient
+                            </button>
                         </div>
-                    `;
-                }
-            })
-            .catch(error => {
-                console.debug('Error fetching patient:', error);
-            });
+                    </div>
+                `;
+            }
+        }
+        
+        // Update modal title and button
+        document.getElementById('alertModalLabel').innerHTML = '<i class="bi bi-bell me-2"></i>Edit Alert';
+        const saveBtn = document.querySelector('#alertModal .modal-footer .btn-primary');
+        if (saveBtn) {
+            saveBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Update Alert';
+            saveBtn.setAttribute('onclick', 'saveAlert()');
+        }
+    } else {
+        // Create mode - clear form
+        document.getElementById('alertMessage').value = '';
+        document.getElementById('alertDate').value = '';
+        document.getElementById('alertTime').value = '';
+        document.getElementById('alertRepeatCount').value = '1';
+        document.getElementById('alertRepeatInterval').value = '0';
+        
+        // Check if we have patient info from the page (for patient.php)
+        const currentPatientInfo = window.currentPatientInfo || null;
+        
+        // If patientId is provided, set patient info immediately if available, otherwise fetch
+        if (patientId) {
+            // If we have patient info from the page, use it immediately
+            if (currentPatientInfo && currentPatientInfo.id == patientId) {
+                const fullName = `${currentPatientInfo.first_name} ${currentPatientInfo.last_name}`;
+                document.getElementById('alertPatientSearch').value = fullName;
+                document.getElementById('alertPatientId').value = patientId;
+                
+                // Show selected patient info immediately
+                document.getElementById('alertPatientSearchResults').innerHTML = `
+                    <div class="selected-patient-info alert alert-info">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>Selected Patient:</strong> ${fullName}<br>
+                                <small>Phone: ${currentPatientInfo.phone || 'N/A'} • Age: ${currentPatientInfo.age || 'N/A'}</small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearAlertPatientSelection()">
+                                Change Patient
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Fetch patient info from API
+                fetch(`/api/patients/${patientId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.ok && data.data) {
+                            const patient = data.data;
+                            const fullName = `${patient.first_name} ${patient.last_name}`;
+                            document.getElementById('alertPatientSearch').value = fullName;
+                            document.getElementById('alertPatientId').value = patientId;
+                            
+                            // Show selected patient info
+                            document.getElementById('alertPatientSearchResults').innerHTML = `
+                                <div class="selected-patient-info alert alert-info">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong>Selected Patient:</strong> ${fullName}<br>
+                                            <small>Phone: ${patient.phone || 'N/A'} • Age: ${patient.age || 'N/A'}</small>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearAlertPatientSelection()">
+                                            Change Patient
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        console.debug('Error fetching patient:', error);
+                    });
+            }
+        }
+        
+        // Update modal title and button
+        document.getElementById('alertModalLabel').innerHTML = '<i class="bi bi-bell me-2"></i>Create Alert';
+        const saveBtn = document.querySelector('#alertModal .modal-footer .btn-primary');
+        if (saveBtn) {
+            saveBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Create Alert';
+            saveBtn.setAttribute('onclick', 'saveAlert()');
+        }
+        
+        // Set default date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('alertDate').value = today;
+        
+        // Set default time to current time + 1 hour
+        const now = new Date();
+        now.setHours(now.getHours() + 1);
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        document.getElementById('alertTime').value = `${hours}:${minutes}`;
     }
-    
-    // Update modal title and button
-    document.getElementById('alertModalLabel').innerHTML = '<i class="bi bi-bell me-2"></i>Create Alert';
-    const saveBtn = document.querySelector('#alertModal .modal-footer .btn-primary');
-    if (saveBtn) {
-        saveBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Create Alert';
-        saveBtn.setAttribute('onclick', 'saveAlert()');
-    }
-    
-    // Set default date to today
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('alertDate').value = today;
-    
-    // Set default time to current time + 1 hour
-    const now = new Date();
-    now.setHours(now.getHours() + 1);
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    document.getElementById('alertTime').value = `${hours}:${minutes}`;
     
     const modal = new bootstrap.Modal(document.getElementById('alertModal'));
     modal.show();
@@ -353,18 +425,42 @@ function saveAlert() {
         return;
     }
     
+    const alertDate = document.getElementById('alertDate').value;
+    const alertTime = document.getElementById('alertTime').value;
+    
+    // Check if the new date/time is in the future
+    const alertDateTime = alertDate && alertTime ? new Date(`${alertDate}T${alertTime}`) : null;
+    const isFuture = alertDateTime && alertDateTime > new Date();
+    
+    // Check if alert was previously inactive or dismissed
+    const wasInactive = originalAlertData && (originalAlertData.is_active == 0 || originalAlertData.is_dismissed == 1);
+    
     const formData = {
         patient_id: document.getElementById('alertPatientId').value || null,
         appointment_id: document.getElementById('alertAppointmentId').value || null,
         message: document.getElementById('alertMessage').value,
-        alert_date: document.getElementById('alertDate').value,
-        alert_time: document.getElementById('alertTime').value,
+        alert_date: alertDate,
+        alert_time: alertTime,
         repeat_count: parseInt(document.getElementById('alertRepeatCount').value) || 1,
         repeat_interval: parseInt(document.getElementById('alertRepeatInterval').value) || 0
     };
     
-    fetch('/api/alerts', {
-        method: 'POST',
+    // If editing and new date/time is in the future, reactivate the alert
+    const isEditMode = currentAlertIdToEdit !== null;
+    if (isEditMode && isFuture && wasInactive) {
+        formData.is_active = 1;
+        formData.is_dismissed = 0;
+    } else if (isEditMode) {
+        // Preserve current state if not changing to future date
+        formData.is_active = originalAlertData ? (originalAlertData.is_active || 0) : 1;
+        formData.is_dismissed = originalAlertData ? (originalAlertData.is_dismissed || 0) : 0;
+    }
+    
+    const url = isEditMode ? `/api/alerts/${currentAlertIdToEdit}` : '/api/alerts';
+    const method = isEditMode ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
         headers: {
             'Content-Type': 'application/json'
         },
@@ -376,24 +472,34 @@ function saveAlert() {
             const modal = bootstrap.Modal.getInstance(document.getElementById('alertModal'));
             modal.hide();
             
+            // Reset edit mode
+            currentAlertIdToEdit = null;
+            originalAlertData = null;
+            
             // Show success message
             if (typeof showToast === 'function') {
-                showToast('success', 'Alert Created', 'The alert has been added to your notifications.');
+                showToast('success', isEditMode ? 'Alert Updated' : 'Alert Created', 
+                    isEditMode ? 'The alert has been updated successfully.' : 'The alert has been added to your notifications.');
             }
             
             // Reload alerts if on alerts page
             if (typeof loadAlerts === 'function') {
                 loadAlerts();
             }
+            
+            // Reload patient alerts if on patient page
+            if (typeof loadPatientAlerts === 'function') {
+                loadPatientAlerts();
+            }
         } else {
             if (typeof showToast === 'function') {
-                showToast('error', 'Error', data.message || 'Failed to create alert');
+                showToast('error', 'Error', data.message || `Failed to ${isEditMode ? 'update' : 'create'} alert`);
             }
         }
     })
     .catch(error => {
         if (typeof showToast === 'function') {
-            showToast('error', 'Error', 'Failed to create alert. Please try again.');
+            showToast('error', 'Error', `Failed to ${isEditMode ? 'update' : 'create'} alert. Please try again.`);
         }
     });
 }

@@ -127,6 +127,7 @@ try {
     $router->get('/api/alerts/today', 'AlertController@getTodayAlerts');
     $router->get('/api/alerts/active', 'AlertController@getActiveAlerts');
     $router->post('/api/alerts/dismiss', 'AlertController@dismiss');
+    $router->get('/api/alerts/patient/{patientId}', 'AlertController@getPatientAlerts');
     $router->get('/api/alerts', 'AlertController@getAllAlerts');
     $router->get('/api/alerts/{id}', 'AlertController@get');
     $router->post('/api/alerts', 'AlertController@create');
@@ -144,7 +145,8 @@ try {
     $router->get('/about', 'GeneralController@about');
     $router->get('/whats-new', 'GeneralController@whatsNew');
     $router->get('/whats-new/older-versions', 'GeneralController@olderVersions');
-    
+    $router->get('/whats-new/full-features', 'GeneralController@fullfeatures');
+
     // Media routes
     $router->get('/doctor/media', 'MediaController@index');
     $router->get('/api/media', 'MediaController@getMedia');

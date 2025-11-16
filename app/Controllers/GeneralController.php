@@ -65,4 +65,11 @@ class GeneralController
         include __DIR__ . '/../Views/whats-new/older-versions.php';
         exit;
     }
+    public function fullfeatures()
+    {
+        // This page doesn't require authentication - it's public
+        // Render standalone page for older versions features
+        include __DIR__ . '/../Views/whats-new/features.php';
+        exit;
+    }
 }

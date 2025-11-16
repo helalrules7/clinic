@@ -214,7 +214,7 @@
 
 <script>
 let currentAlertIdToDelete = null;
-let currentAlertIdToEdit = null;
+// Note: currentAlertIdToEdit is declared in alert_modal.php
 
 document.addEventListener('DOMContentLoaded', function() {
     loadAlerts();
@@ -409,33 +409,15 @@ function confirmDeleteAlert() {
 }
 
 function editAlert(alertId) {
-    currentAlertIdToEdit = alertId;
-    
-    // Fetch alert details
+    // Use the openAlertModal function from alert_modal.php
+    // Fetch alert details first, then open modal with alert data
     fetch(`/api/alerts/${alertId}`)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.alert) {
                 const alert = data.alert;
-                
-                // Populate form
-                document.getElementById('alertPatientId').value = alert.patient_id || '';
-                document.getElementById('alertAppointmentId').value = alert.appointment_id || '';
-                document.getElementById('alertMessage').value = alert.message || '';
-                document.getElementById('alertDate').value = alert.alert_date || '';
-                document.getElementById('alertTime').value = alert.alert_time || '';
-                document.getElementById('alertRepeatCount').value = alert.repeat_count || 1;
-                document.getElementById('alertRepeatInterval').value = alert.repeat_interval || 0;
-                
-                // Update modal title and button
-                document.getElementById('alertModalLabel').innerHTML = '<i class="bi bi-pencil me-2"></i>Edit Alert';
-                const saveBtn = document.querySelector('#alertModal .modal-footer .btn-primary');
-                saveBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Update Alert';
-                saveBtn.setAttribute('onclick', 'updateAlert()');
-                
-                // Show modal
-                const modal = new bootstrap.Modal(document.getElementById('alertModal'));
-                modal.show();
+                // Use openAlertModal with alert data for edit mode
+                openAlertModal(alert.patient_id || null, alert.appointment_id || null, alert);
             } else {
                 showToast('error', 'Error', data.message || 'Failed to load alert details');
             }
@@ -443,60 +425,6 @@ function editAlert(alertId) {
         .catch(error => {
             showToast('error', 'Error', 'Failed to load alert details. Please try again.');
         });
-}
-
-function updateAlert() {
-    if (!currentAlertIdToEdit) {
-        showToast('error', 'Error', 'Alert ID is required');
-        return;
-    }
-    
-    const form = document.getElementById('alertForm');
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-    }
-    
-    const formData = {
-        alert_id: currentAlertIdToEdit,
-        patient_id: document.getElementById('alertPatientId').value || null,
-        appointment_id: document.getElementById('alertAppointmentId').value || null,
-        message: document.getElementById('alertMessage').value,
-        alert_date: document.getElementById('alertDate').value,
-        alert_time: document.getElementById('alertTime').value,
-        repeat_count: parseInt(document.getElementById('alertRepeatCount').value) || 1,
-        repeat_interval: parseInt(document.getElementById('alertRepeatInterval').value) || 0
-    };
-    
-    fetch(`/api/alerts/${currentAlertIdToEdit}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('alertModal'));
-            modal.hide();
-            
-            // Reset modal to create mode
-            document.getElementById('alertModalLabel').innerHTML = '<i class="bi bi-bell me-2"></i>Create Alert';
-            const saveBtn = document.querySelector('#alertModal .modal-footer .btn-primary');
-            saveBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Create Alert';
-            saveBtn.setAttribute('onclick', 'saveAlert()');
-            currentAlertIdToEdit = null;
-            
-            showToast('success', 'Alert Updated', 'The alert has been updated successfully.');
-            loadAlerts(); // Reload without page refresh
-        } else {
-            showToast('error', 'Error', data.message || 'Failed to update alert');
-        }
-    })
-    .catch(error => {
-        showToast('error', 'Error', 'Failed to update alert. Please try again.');
-    });
 }
 
 function showToast(type, title, message) {

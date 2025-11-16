@@ -726,8 +726,12 @@
             <!-- Version info -->
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="text-muted">
-                    <div class="mb-1">HClinic / Roaya Clinic v6.0</div>
-                    <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none">Ahmed Helal</a></div>
+                    <div class="mb-1">
+                        HClinic / Roaya Clinic v6.1
+                        <a href="/whats-new" class="text-decoration-none ms-2" style="color: var(--accent);">What's New?</a>
+                        <a href="/whats-new/full-features" class="text-decoration-none ms-2" style="color: var(--accent);">Full Features</a>
+                    </div>
+                    <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none" style="color: var(--accent);">Ahmed Helal</a></div>
                 </small>
             </div>
         </nav>

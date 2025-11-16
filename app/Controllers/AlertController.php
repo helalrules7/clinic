@@ -64,6 +64,32 @@ class AlertController
     }
 
     /**
+     * Get alerts for a specific patient (API endpoint)
+     */
+    public function getPatientAlerts($patientId)
+    {
+        header('Content-Type: application/json');
+        
+        $user = $this->auth->user();
+        $doctorId = $this->getDoctorId($user['id']);
+        
+        if (!$patientId) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Patient ID is required'
+            ]);
+            return;
+        }
+        
+        $alerts = $this->alertModel->getByPatient($doctorId, $patientId, []);
+        
+        echo json_encode([
+            'success' => true,
+            'alerts' => $alerts
+        ]);
+    }
+
+    /**
      * Get single alert by ID (API endpoint)
      */
     public function get($alertId)
@@ -313,7 +339,8 @@ class AlertController
             'alert_time' => $data['alert_time'],
             'repeat_count' => intval($data['repeat_count'] ?? 1),
             'repeat_interval' => intval($data['repeat_interval'] ?? 0),
-            'is_active' => isset($data['is_active']) ? intval($data['is_active']) : 1
+            'is_active' => isset($data['is_active']) ? intval($data['is_active']) : 1,
+            'is_dismissed' => isset($data['is_dismissed']) ? intval($data['is_dismissed']) : 0
         ];
         
         $result = $this->alertModel->update($alertId, $updateData, $doctorId);
