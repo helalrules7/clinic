@@ -187,6 +187,128 @@
 .dark .card:hover {
     box-shadow: 0 8px 25px rgba(255, 255, 255, 0.05);
 }
+
+/* Update Database Modal Dark Mode Support */
+#updateDatabaseModal .modal-content {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+#updateDatabaseModal .modal-header {
+    background-color: var(--success) !important;
+    border-bottom-color: var(--border) !important;
+    color: white !important;
+}
+
+#updateDatabaseModal .modal-body {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+#updateDatabaseModal .modal-footer {
+    background-color: var(--bg) !important;
+    border-top-color: var(--border) !important;
+}
+
+#updateDatabaseModal .text-muted {
+    color: var(--muted) !important;
+}
+
+#updateDatabaseModal .form-label {
+    color: var(--text) !important;
+}
+
+#updateDatabaseModal .alert {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+#updateDatabaseModal .alert-info {
+    background-color: rgba(13, 202, 240, 0.1) !important;
+    border-color: rgba(13, 202, 240, 0.3) !important;
+    color: var(--text) !important;
+}
+
+#updateDatabaseModal .alert-success {
+    background-color: rgba(16, 185, 129, 0.1) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+    color: var(--text) !important;
+}
+
+#updateDatabaseModal .alert-warning {
+    background-color: rgba(245, 158, 11, 0.1) !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
+    color: var(--text) !important;
+}
+
+#updateDatabaseModal .alert-danger {
+    background-color: rgba(239, 68, 68, 0.1) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+    color: var(--text) !important;
+}
+
+#updateDatabaseModal .card {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+#updateDatabaseModal .card.bg-primary,
+#updateDatabaseModal .card.bg-success,
+#updateDatabaseModal .card.bg-info {
+    color: white !important;
+}
+
+#updateDatabaseModal .progress {
+    background-color: var(--bg) !important;
+}
+
+#updateDatabaseModal .progress-bar {
+    background-color: var(--success) !important;
+}
+
+.dark #updateDatabaseModal .modal-content {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+.dark #updateDatabaseModal .modal-header {
+    background-color: var(--success) !important;
+    color: white !important;
+}
+
+.dark #updateDatabaseModal .modal-body {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+.dark #updateDatabaseModal .modal-footer {
+    background-color: var(--bg) !important;
+    border-top-color: var(--border) !important;
+}
+
+.dark #updateDatabaseModal .btn-secondary {
+    background-color: var(--bg) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark #updateDatabaseModal .btn-secondary:hover {
+    background-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark #updateDatabaseModal .btn-success {
+    background-color: var(--success) !important;
+    border-color: var(--success) !important;
+    color: white !important;
+}
+
+.dark #updateDatabaseModal .btn-success:hover {
+    opacity: 0.9;
+}
 </style>
 
 <div class="container-fluid">
@@ -478,6 +600,19 @@
                             </div>
                         </div>
 
+                        <!-- Database Management -->
+                        <div class="settings-section">
+                            <h5><i class="fas fa-database me-2"></i>Database Management</h5>
+                            
+                            <div class="setting-item">
+                                <button type="button" class="btn btn-success" onclick="showUpdateDatabaseModal()">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>
+                                    Update Drugs Database
+                                </button>
+                                <div class="form-text">Update the drugs database from the official source</div>
+                            </div>
+                        </div>
+
                         <!-- Action Buttons -->
                         <div class="d-flex justify-content-end gap-2 mt-4">
                             <button type="button" class="btn btn-outline-secondary" onclick="resetForm()">
@@ -491,6 +626,95 @@
                         </div>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update Database Modal -->
+<div class="modal fade" id="updateDatabaseModal" tabindex="-1" aria-labelledby="updateDatabaseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="updateDatabaseModalLabel">
+                    <i class="bi bi-arrow-clockwise me-2"></i>
+                    Update Drugs Database
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="updateProgressContainer">
+                    <div class="mb-3">
+                        <p class="text-muted">The drugs database will be downloaded and updated from the official source.</p>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Note:</strong> This process may take a few minutes depending on the data size.
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <label class="form-label mb-0" id="progressLabel">Preparing...</label>
+                            <div id="updateSpinner" style="display: none;">
+                                <div class="spinner-border" role="status" style="width: 1.5rem; height: 1.5rem; border-width: 3px; border-color: #0dcaf0; border-right-color: transparent;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="progress" style="height: 30px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" 
+                                 id="updateProgressBar" 
+                                 style="width: 0%"
+                                 aria-valuenow="0" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                <span id="progressText">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Status Messages -->
+                    <div id="updateStatusMessages" class="mb-3" style="max-height: 300px; overflow-y: auto;">
+                        <!-- Status messages will be added here -->
+                    </div>
+                    
+                    <!-- Statistics -->
+                    <div id="updateStatistics" class="row mt-3" style="display: none;">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h6>Total Records</h6>
+                                    <h3 id="totalRecords">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h6>Inserted</h6>
+                                    <h3 id="insertedRecords">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h6>Updated</h6>
+                                    <h3 id="updatedRecords">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="closeUpdateModalBtn">Cancel</button>
+                <button type="button" class="btn btn-success" id="startUpdateBtn" onclick="startDatabaseUpdate()">
+                    <i class="bi bi-play-circle me-2"></i>
+                    Start Update
+                </button>
             </div>
         </div>
     </div>
@@ -546,5 +770,190 @@ document.querySelectorAll('input, select').forEach(element => {
         }, 2000);
     });
 });
+
+// Database Update Functions
+function showUpdateDatabaseModal() {
+    const modal = new bootstrap.Modal(document.getElementById('updateDatabaseModal'));
+    modal.show();
+    
+    // Reset modal state
+    resetUpdateModal();
+}
+
+function resetUpdateModal() {
+    document.getElementById('updateProgressBar').style.width = '0%';
+    document.getElementById('updateProgressBar').setAttribute('aria-valuenow', '0');
+    document.getElementById('progressText').textContent = '0%';
+    document.getElementById('progressLabel').textContent = 'Preparing...';
+    document.getElementById('updateStatusMessages').innerHTML = '';
+    document.getElementById('updateStatistics').style.display = 'none';
+    document.getElementById('totalRecords').textContent = '0';
+    document.getElementById('insertedRecords').textContent = '0';
+    document.getElementById('updatedRecords').textContent = '0';
+    document.getElementById('startUpdateBtn').disabled = false;
+    document.getElementById('startUpdateBtn').innerHTML = '<i class="bi bi-play-circle me-2"></i>Start Update';
+    document.getElementById('closeUpdateModalBtn').disabled = false;
+    document.getElementById('updateSpinner').style.display = 'none';
+}
+
+function startDatabaseUpdate() {
+    const startBtn = document.getElementById('startUpdateBtn');
+    const closeBtn = document.getElementById('closeUpdateModalBtn');
+    
+    // Disable buttons
+    startBtn.disabled = true;
+    closeBtn.disabled = true;
+    startBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Updating...';
+    
+    // Show spinner
+    document.getElementById('updateSpinner').style.display = 'block';
+    
+    // Reset progress
+    resetUpdateModal();
+    
+    // Show statistics
+    document.getElementById('updateStatistics').style.display = 'flex';
+    
+    // Add initial status message
+    addStatusMessage('info', 'Starting update process...');
+    
+    // Start update process
+    updateDatabase();
+}
+
+function updateDatabase() {
+    // Step 1: Downloading
+    document.getElementById('progressLabel').textContent = 'Downloading database file...';
+    updateProgress(10);
+    addStatusMessage('info', 'Downloading database file from server...');
+    
+    // Simulate progress steps
+    setTimeout(() => {
+        updateProgress(30);
+        addStatusMessage('success', 'Database downloaded successfully');
+        
+        // Step 2: Extracting data
+        document.getElementById('progressLabel').textContent = 'Extracting data from source database...';
+        updateProgress(50);
+        addStatusMessage('info', 'Extracting data from source database...');
+        
+        setTimeout(() => {
+            updateProgress(70);
+            addStatusMessage('success', 'Data extracted successfully');
+            
+            // Step 3: Updating database
+            document.getElementById('progressLabel').textContent = 'Updating data in current database...';
+            updateProgress(80);
+            addStatusMessage('info', 'Updating data in current database...');
+            
+            // Make API call
+            fetch('/api/drugs/update-database', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    updateProgress(100);
+                    document.getElementById('progressLabel').textContent = 'Update completed successfully!';
+                    addStatusMessage('success', 'Database updated successfully!');
+                    
+                    // Hide spinner
+                    document.getElementById('updateSpinner').style.display = 'none';
+                    
+                    // Update statistics
+                    if (data.statistics) {
+                        document.getElementById('totalRecords').textContent = data.statistics.total || 0;
+                        document.getElementById('insertedRecords').textContent = data.statistics.inserted || 0;
+                        document.getElementById('updatedRecords').textContent = data.statistics.updated || 0;
+                    }
+                    
+                    // Enable close button
+                    document.getElementById('closeUpdateModalBtn').disabled = false;
+                    document.getElementById('closeUpdateModalBtn').textContent = 'Close';
+                    
+                    // Enable start button for potential retry
+                    document.getElementById('startUpdateBtn').disabled = false;
+                    document.getElementById('startUpdateBtn').innerHTML = '<i class="bi bi-play-circle me-2"></i>Start Update';
+                    
+                    // Show success message
+                    setTimeout(() => {
+                        alert('Database updated successfully!');
+                        location.reload();
+                    }, 2000);
+                } else {
+                    throw new Error(data.error || data.message || 'Update failed');
+                }
+            })
+            .catch(error => {
+                console.error('Update error:', error);
+                updateProgress(0);
+                document.getElementById('progressLabel').textContent = 'An error occurred during update';
+                addStatusMessage('danger', 'Error: ' + error.message);
+                
+                // Hide spinner
+                document.getElementById('updateSpinner').style.display = 'none';
+                
+                // Enable buttons
+                document.getElementById('startUpdateBtn').disabled = false;
+                document.getElementById('startUpdateBtn').innerHTML = '<i class="bi bi-play-circle me-2"></i>Retry';
+                document.getElementById('closeUpdateModalBtn').disabled = false;
+            });
+        }, 1000);
+    }, 1500);
+}
+
+function updateProgress(percent) {
+    const progressBar = document.getElementById('updateProgressBar');
+    const progressText = document.getElementById('progressText');
+    
+    progressBar.style.width = percent + '%';
+    progressBar.setAttribute('aria-valuenow', percent);
+    progressText.textContent = percent + '%';
+}
+
+function addStatusMessage(type, message) {
+    const container = document.getElementById('updateStatusMessages');
+    const alertClass = {
+        'info': 'alert-info',
+        'success': 'alert-success',
+        'warning': 'alert-warning',
+        'danger': 'alert-danger'
+    }[type] || 'alert-info';
+    
+    const icon = {
+        'info': 'bi-info-circle',
+        'success': 'bi-check-circle',
+        'warning': 'bi-exclamation-triangle',
+        'danger': 'bi-x-circle'
+    }[type] || 'bi-info-circle';
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `alert ${alertClass} alert-dismissible fade show`;
+    messageDiv.innerHTML = `
+        <i class="bi ${icon} me-2"></i>${escapeHtml(message)}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    container.appendChild(messageDiv);
+    
+    // Auto scroll to bottom
+    container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 </script>
 

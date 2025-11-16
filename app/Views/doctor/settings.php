@@ -231,6 +231,136 @@
     background-color: var(--success) !important;
     color: white !important;
 }
+
+/* Update Database Modal Dark Mode Support */
+#settingsUpdateDatabaseModal .modal-content {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+#settingsUpdateDatabaseModal .modal-header {
+    background-color: var(--success) !important;
+    border-bottom-color: var(--border) !important;
+    color: white !important;
+}
+
+#settingsUpdateDatabaseModal .modal-body {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+#settingsUpdateDatabaseModal .modal-footer {
+    background-color: var(--bg) !important;
+    border-top-color: var(--border) !important;
+}
+
+#settingsUpdateDatabaseModal .text-muted {
+    color: var(--muted) !important;
+}
+
+#settingsUpdateDatabaseModal .form-label {
+    color: var(--text) !important;
+}
+
+#settingsUpdateDatabaseModal .alert {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+#settingsUpdateDatabaseModal .alert-info {
+    background-color: rgba(13, 202, 240, 0.1) !important;
+    border-color: rgba(13, 202, 240, 0.3) !important;
+    color: var(--text) !important;
+}
+
+#settingsUpdateDatabaseModal .alert-success {
+    background-color: rgba(16, 185, 129, 0.1) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+    color: var(--text) !important;
+}
+
+#settingsUpdateDatabaseModal .alert-warning {
+    background-color: rgba(245, 158, 11, 0.1) !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
+    color: var(--text) !important;
+}
+
+#settingsUpdateDatabaseModal .alert-danger {
+    background-color: rgba(239, 68, 68, 0.1) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+    color: var(--text) !important;
+}
+
+#settingsUpdateDatabaseModal .card {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+#settingsUpdateDatabaseModal .card.bg-primary,
+#settingsUpdateDatabaseModal .card.bg-success,
+#settingsUpdateDatabaseModal .card.bg-info {
+    color: white !important;
+}
+
+#settingsUpdateDatabaseModal .progress {
+    background-color: var(--bg) !important;
+}
+
+#settingsUpdateDatabaseModal .progress-bar {
+    background-color: var(--success) !important;
+}
+
+.dark #settingsUpdateDatabaseModal .modal-content {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+.dark #settingsUpdateDatabaseModal .modal-header {
+    background-color: var(--success) !important;
+    color: white !important;
+}
+
+.dark #settingsUpdateDatabaseModal .modal-body {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+.dark #settingsUpdateDatabaseModal .modal-footer {
+    background-color: var(--bg) !important;
+    border-top-color: var(--border) !important;
+}
+
+.dark #settingsUpdateDatabaseModal .btn-secondary {
+    background-color: var(--bg) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark #settingsUpdateDatabaseModal .btn-secondary:hover {
+    background-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark #settingsUpdateDatabaseModal .btn-success {
+    background-color: var(--success) !important;
+    border-color: var(--success) !important;
+    color: white !important;
+}
+
+.dark #settingsUpdateDatabaseModal .btn-success:hover {
+    opacity: 0.9;
+}
+
+.dark #settingsUpdateDatabaseModal .alert strong {
+    color: var(--text) !important;
+}
+
+.dark #settingsUpdateDatabaseModal .alert p {
+    color: var(--text) !important;
+}
 </style>
 
 <div class="container-fluid">

@@ -830,16 +830,6 @@ class DrugSearch {
     async performSearch(searchTerm, showSuggestions = false) {
         if (this.isLoading) return;
         
-            searchTerm,
-            showSuggestions,
-            page: this.currentPage,
-            filters: {
-                category: this.categoryFilter.value,
-                company: this.companyFilter.value,
-                route: this.routeFilter.value
-            }
-        });
-        
         this.isLoading = true;
         this.showLoading();
         
@@ -1050,11 +1040,6 @@ class DrugSearch {
     }
     
     handleFilterChange() {
-            category: this.categoryFilter.value,
-            company: this.companyFilter.value,
-            route: this.routeFilter.value
-        });
-        
         // Just update the UI state, don't auto-apply filters
         this.updateFilterState();
     }
