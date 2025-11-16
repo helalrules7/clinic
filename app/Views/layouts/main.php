@@ -194,6 +194,25 @@
             margin-bottom: 2rem;
             padding-bottom: 1rem;
             border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            /* Glass effect */
+            background: rgba(248, 250, 252, 0.50);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.3);
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .top-bar.scrolled {
+            padding-top: 1rem;
+        }
+        
+        .dark .top-bar {
+            background: rgba(11, 18, 32, 0.85);
+            border-bottom: 1px solid rgba(51, 65, 85, 0.3);
         }
         
         .page-title h1 {
@@ -486,6 +505,57 @@
             0%, 50% { opacity: 1; }
             51%, 100% { opacity: 0; }
         }
+        
+        /* Scroll to Top Button */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 999;
+            transition: all 0.3s ease;
+            /* Glass effect - more transparent */
+            background: rgba(248, 250, 252, 0.65);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.25);
+            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.15);
+            color: var(--text);
+        }
+        
+        .dark .scroll-to-top {
+            background: rgba(11, 18, 32, 0.65);
+            border: 1px solid rgba(51, 65, 85, 0.25);
+        }
+        
+        .scroll-to-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.2);
+        }
+        
+        .scroll-to-top.show {
+            display: flex;
+        }
+        
+        .scroll-to-top i {
+            font-size: 1.25rem;
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .scroll-to-top {
+                bottom: 1.5rem;
+                right: 1.5rem;
+                width: 45px;
+                height: 45px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -772,6 +842,11 @@
         <!-- Page Content -->
         <?= $content ?>
     </div>
+    
+    <!-- Scroll to Top Button -->
+    <button class="scroll-to-top" id="scrollToTop" aria-label="Scroll to top">
+        <i class="bi bi-arrow-up"></i>
+    </button>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -830,7 +905,6 @@
             sidebarToggle.addEventListener('click', () => {
                 sidebar.classList.toggle('show');
                 overlay.classList.toggle('show');
-                console.log('Sidebar toggled'); // Debug log
             });
             
             overlay.addEventListener('click', () => {
@@ -847,6 +921,40 @@
             });
         } else {
             console.error('Sidebar toggle elements not found');
+        }
+        
+        // Top-bar scroll effect
+        const topBar = document.querySelector('.top-bar');
+        if (topBar) {
+            window.addEventListener('scroll', () => {
+                if (window.pageYOffset > 0) {
+                    topBar.classList.add('scrolled');
+                } else {
+                    topBar.classList.remove('scrolled');
+                }
+            });
+        }
+        
+        // Scroll to Top Button
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+        
+        if (scrollToTopBtn) {
+            // Show/hide button based on scroll position
+            window.addEventListener('scroll', () => {
+                if (window.pageYOffset > 300) {
+                    scrollToTopBtn.classList.add('show');
+                } else {
+                    scrollToTopBtn.classList.remove('show');
+                }
+            });
+            
+            // Scroll to top when button is clicked
+            scrollToTopBtn.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
         }
     </script>
 </body>

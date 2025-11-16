@@ -2751,8 +2751,6 @@ function handleAddBooking(e) {
     const bookingData = Object.fromEntries(formData);
     
     // Debug logging
-    console.log('Form data:', bookingData);
-    console.log('Selected patient ID:', document.getElementById('selectedPatientId').value);
     
     // Validation
     if (!bookingData.patient_id) {

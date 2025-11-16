@@ -21,56 +21,56 @@
     <div class="row">
         <!-- Main Content -->
         <div class="col-lg-8">
-            <!-- System Information -->
+    <!-- System Information -->
             <div class="row mb-4">
                 <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title mb-0">
-                                <i class="bi bi-info-circle text-primary me-2"></i>
-                                System Information
-                            </h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-info-circle text-primary me-2"></i>
+                        System Information
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <h5 class="text-muted mb-2">
-                                        <i class="bi bi-tag me-2"></i>Version
-                                    </h5>
+                                <h5 class="text-muted mb-2">
+                                    <i class="bi bi-tag me-2"></i>Version
+                                </h5>
                                     <p class="h4 text-primary fw-bold mb-0">6.0</p>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <h5 class="text-muted mb-2">
-                                        <i class="bi bi-calendar me-2"></i>Release Year
-                                    </h5>
-                                    <p class="h4 text-primary fw-bold mb-0"><?= $releaseDate ?></p>
-                                </div>
-                                <div class="col-12">
-                                    <h5 class="text-muted mb-2">
-                                        <i class="bi bi-file-text me-2"></i>Description
-                                    </h5>
-                                    <p class="mb-0">
-                                        HClinic / Roaya Clinic Management System is a comprehensive healthcare management solution designed 
-                                        to streamline clinic operations, enhance patient care, and improve administrative efficiency.
-                                    </p>
-                                </div>
                             </div>
+                                <div class="col-md-6 mb-3">
+                                <h5 class="text-muted mb-2">
+                                    <i class="bi bi-calendar me-2"></i>Release Year
+                                </h5>
+                                    <p class="h4 text-primary fw-bold mb-0"><?= $releaseDate ?></p>
+                        </div>
+                        <div class="col-12">
+                                    <h5 class="text-muted mb-2">
+                                    <i class="bi bi-file-text me-2"></i>Description
+                                </h5>
+                                    <p class="mb-0">
+                                    HClinic / Roaya Clinic Management System is a comprehensive healthcare management solution designed 
+                                    to streamline clinic operations, enhance patient care, and improve administrative efficiency. 
+                                </p>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
             <!-- Previous Versions Features -->
             <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title mb-0">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
                                 <i class="bi bi-clock-history text-secondary me-2"></i>
                                 Previous Versions Features
-                            </h3>
-                        </div>
-                        <div class="card-body">
+                    </h3>
+                </div>
+                <div class="card-body">
                             <!-- Version 5.1 -->
                             <div class="version-section mb-4">
                                 <h4 class="version-title mb-3">
@@ -83,7 +83,7 @@
                                     <li>SQLite command-line integration with error handling</li>
                                     <li>Enhanced error handling and logging system</li>
                                 </ul>
-                            </div>
+                                    </div>
 
                             <!-- Version 5.0 -->
                             <div class="version-section mb-4">
@@ -101,7 +101,7 @@
                                     <li>Missed appointments tracking and management</li>
                                     <li>Advanced pagination and quantity control</li>
                                 </ul>
-                            </div>
+                                    </div>
 
                             <!-- Version 4.0 -->
                             <div class="version-section mb-4">
@@ -119,7 +119,7 @@
                                     <li>Dynamic print templates</li>
                                     <li>Visit cost management system</li>
                                 </ul>
-                            </div>
+                                </div>
 
                             <!-- Version 3.0 -->
                             <div class="version-section mb-4">
@@ -151,7 +151,7 @@
                                     <li>Enhanced dark/light mode support</li>
                                     <li>Font Awesome integration</li>
                                 </ul>
-                            </div>
+                        </div>
 
                             <!-- Version 1.0 -->
                             <div class="version-section mb-4">
@@ -167,107 +167,107 @@
                                     <li>User management with role-based access</li>
                                     <li>Dark mode support</li>
                                 </ul>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- Technology Stack -->
+    <!-- Technology Stack -->
             <div class="row mb-4">
                 <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title mb-0">
-                                <i class="bi bi-gear text-secondary me-2"></i>
-                                Technology Stack
-                            </h3>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-gear text-secondary me-2"></i>
+                        Technology Stack
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3">
+                            <div class="tech-item">
+                                <div class="tech-icon bg-primary text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                    <i class="bi bi-code-slash"></i>
+                                </div>
+                                <h6 class="fw-bold">PHP 8+</h6>
+                                <small class="text-muted">Backend</small>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <div class="row text-center">
-                                <div class="col-md-3 mb-3">
-                                    <div class="tech-item">
-                                        <div class="tech-icon bg-primary text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                                            <i class="bi bi-code-slash"></i>
-                                        </div>
-                                        <h6 class="fw-bold">PHP 8+</h6>
-                                        <small class="text-muted">Backend</small>
-                                    </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="tech-item">
+                                <div class="tech-icon bg-success text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                    <i class="bi bi-database"></i>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="tech-item">
-                                        <div class="tech-icon bg-success text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                                            <i class="bi bi-database"></i>
-                                        </div>
-                                        <h6 class="fw-bold">MySQL</h6>
-                                        <small class="text-muted">Database</small>
-                                    </div>
+                                <h6 class="fw-bold">MySQL</h6>
+                                <small class="text-muted">Database</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="tech-item">
+                                <div class="tech-icon bg-info text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                    <i class="bi bi-bootstrap"></i>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="tech-item">
-                                        <div class="tech-icon bg-info text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                                            <i class="bi bi-bootstrap"></i>
-                                        </div>
-                                        <h6 class="fw-bold">Bootstrap 5</h6>
-                                        <small class="text-muted">Frontend</small>
-                                    </div>
+                                <h6 class="fw-bold">Bootstrap 5</h6>
+                                <small class="text-muted">Frontend</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="tech-item">
+                                <div class="tech-icon bg-warning text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                    <i class="bi bi-lightning"></i>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="tech-item">
-                                        <div class="tech-icon bg-warning text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                                            <i class="bi bi-lightning"></i>
-                                        </div>
-                                        <h6 class="fw-bold">Vanilla JS</h6>
-                                        <small class="text-muted">Interactive</small>
-                                    </div>
-                                </div>
+                                <h6 class="fw-bold">Vanilla JS</h6>
+                                <small class="text-muted">Interactive</small>
                             </div>
                         </div>
                     </div>
-                </div>
+                                </div>
             </div>
+        </div>
+    </div>
 
             <!-- Developer Information -->
             <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card border-primary">
-                        <div class="card-header bg-primary text-white">
-                            <h3 class="card-title mb-0">
-                                <i class="bi bi-person-badge me-2"></i>
-                                Developer Information
-                            </h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="row align-items-center">
-                                <div class="col-md-8">
-                                    <h4 class="fw-bold text-primary mb-2"><?= $developer['name'] ?></h4>
-                                    <p class="text-muted mb-3"><?= $developer['title'] ?></p>
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-person-badge me-2"></i>
+                        Developer Information
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                                <h4 class="fw-bold text-primary mb-2"><?= $developer['name'] ?></h4>
+                                <p class="text-muted mb-3"><?= $developer['title'] ?></p>
                                     <p class="mb-4">
-                                        Experienced full-stack developer specializing in modern web applications 
+                                    Experienced full-stack developer specializing in modern web applications 
                                         and healthcare management systems.
-                                    </p>
-                                    <div class="d-flex gap-3">
-                                        <a href="<?= $developer['website'] ?>" target="_blank" class="btn btn-primary">
-                                            <i class="bi bi-globe me-2"></i>
-                                            Visit Website
-                                        </a>
-                                        <a href="mailto:contact@ahmedhelal.dev" class="btn btn-outline-primary">
-                                            <i class="bi bi-envelope me-2"></i>
-                                            Contact
-                                        </a>
-                                    </div>
-                                </div>
-                                <div class="col-md-4 text-center">
+                                </p>
+                                <div class="d-flex gap-3">
+                                    <a href="<?= $developer['website'] ?>" target="_blank" class="btn btn-primary">
+                                        <i class="bi bi-globe me-2"></i>
+                                        Visit Website
+                                    </a>
+                                    <a href="mailto:contact@ahmedhelal.dev" class="btn btn-outline-primary">
+                                        <i class="bi bi-envelope me-2"></i>
+                                        Contact
+                                    </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
                                     <div class="developer-avatar bg-primary text-white rounded-circle mx-auto d-flex align-items-center justify-content-center" style="width: 100px; height: 100px; font-size: 2.5rem; font-weight: bold;">
-                                        AH
+                                AH
                                     </div>
-                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
         <!-- Sidebar - Version 6.0 Features -->
         <div class="col-lg-4">
@@ -283,69 +283,69 @@
                         <div class="d-flex align-items-start mb-2">
                             <div class="v6-feature-icon bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; flex-shrink: 0;">
                                 <i class="bi bi-images"></i>
-                            </div>
-                            <div>
+                                </div>
+                                <div>
                                 <h6 class="fw-bold mb-1">Media Gallery</h6>
                                 <p class="text-muted small mb-0">Comprehensive media management with patient filtering and carousel viewer</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
                     <div class="v6-feature-item mb-3">
                         <div class="d-flex align-items-start mb-2">
                             <div class="v6-feature-icon bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; flex-shrink: 0;">
                                 <i class="bi bi-eyeglasses"></i>
-                            </div>
-                            <div>
+                                </div>
+                                <div>
                                 <h6 class="fw-bold mb-1">Glasses Prescriptions Gallery</h6>
                                 <p class="text-muted small mb-0">Complete glasses prescription management grouped by patient</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
                     <div class="v6-feature-item mb-3">
                         <div class="d-flex align-items-start mb-2">
                             <div class="v6-feature-icon bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; flex-shrink: 0;">
                                 <i class="bi bi-capsule"></i>
-                            </div>
-                            <div>
+                                </div>
+                                <div>
                                 <h6 class="fw-bold mb-1">Medication Prescriptions Gallery</h6>
                                 <p class="text-muted small mb-0">Advanced medication management with accordion display</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
                     <div class="v6-feature-item mb-3">
                         <div class="d-flex align-items-start mb-2">
                             <div class="v6-feature-icon bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; flex-shrink: 0;">
                                 <i class="bi bi-lightning-charge"></i>
-                            </div>
-                            <div>
+                                </div>
+                                <div>
                                 <h6 class="fw-bold mb-1">Ajax Operations</h6>
                                 <p class="text-muted small mb-0">Complete AJAX-based operations without page reloads</p>
-                            </div>
-                        </div>
-                    </div>
+            </div>
+        </div>
+    </div>
 
                     <div class="v6-feature-item mb-3">
                         <div class="d-flex align-items-start mb-2">
                             <div class="v6-feature-icon bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; flex-shrink: 0;">
                                 <i class="bi bi-speedometer2"></i>
-                            </div>
-                            <div>
+                </div>
+                                    <div>
                                 <h6 class="fw-bold mb-1">Performance Improvements</h6>
                                 <p class="text-muted small mb-0">Faster load times, optimized queries, and better caching</p>
-                            </div>
-                        </div>
-                    </div>
+            </div>
+        </div>
+    </div>
 
                     <div class="mt-4 pt-3 border-top">
                         <a href="/whats-new" class="btn btn-primary w-100">
                             <i class="bi bi-arrow-right-circle me-2"></i>
                             View Full Version Features
                         </a>
-                    </div>
-                </div>
+                            </div>
+                        </div>
             </div>
         </div>
     </div>

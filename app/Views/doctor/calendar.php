@@ -1498,7 +1498,6 @@ function initializeAddPatientModal() {
         .then(response => response.json())
         .then(data => {
             setSubmitButtonLoading(false);
-            console.log('API Response:', data);
             
             if (data.ok) {
                 // Success
@@ -1530,7 +1529,6 @@ function initializeAddPatientModal() {
                         
                         // Auto-select the new patient - handle different response formats
                         const patientData = data.data || data.patient || data;
-                        console.log('Patient data to select:', patientData);
                         
                         if (patientData && (patientData.id || patientData.patient_id)) {
                             // Use saved form data to create patient info
@@ -1544,7 +1542,6 @@ function initializeAddPatientModal() {
                                 age: savedFormData.age
                             };
                             
-                            console.log('Using saved form data for patient:', patientInfo);
                             selectNewPatient(patientInfo);
                             
                             // Set visit type to "New" automatically
@@ -1583,7 +1580,6 @@ function initializeAddPatientModal() {
     }
     
     function selectNewPatient(patientData) {
-        console.log('selectNewPatient called with:', patientData);
         
         // Handle different response formats
         const firstName = patientData.first_name || patientData.firstName || '';
@@ -1593,7 +1589,6 @@ function initializeAddPatientModal() {
         const phone = patientData.phone || patientData.phone_number || '';
         const age = patientData.age || calculateAgeFromDOB(patientData.dob) || 'N/A';
         
-        console.log('Processed patient data:', { firstName, lastName, fullName, patientId, phone, age });
         
         // Fill patient search field
         document.getElementById('patientSearch').value = fullName;

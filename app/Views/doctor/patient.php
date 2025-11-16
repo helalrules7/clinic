@@ -3509,7 +3509,6 @@ function handleEmergencyContactSubmit(e) {
     // Get patient ID from URL
     const patientId = window.location.pathname.split('/').pop();
     
-    console.log('DEBUG: Sending emergency contact update', {
         patientId: patientId,
         data: data,
         url: `/api/patients/${patientId}/emergency-contact`
@@ -3524,11 +3523,9 @@ function handleEmergencyContactSubmit(e) {
         body: JSON.stringify(data)
     })
     .then(response => {
-        console.log('DEBUG: Response status:', response.status);
         return response.json();
     })
     .then(result => {
-        console.log('DEBUG: Response data:', result);
         if (result.ok) {
             // Success - update the UI
             updateEmergencyContactDisplay(data.emergency_contact, data.emergency_phone);
@@ -3750,13 +3747,11 @@ function showPatientUploadModal(patientId) {
             if (xhr.status === 200) {
                 try {
                     const response = JSON.parse(xhr.responseText);
-                    console.log('Patient file upload response:', response);
                     if (response.success) {
                         modal.hide();
                         showNotification('File uploaded successfully', 'success');
                         // Wait a bit for modal to close, then reload patient files via Ajax
                         setTimeout(() => {
-                            console.log('Reloading patient files...');
                             reloadPatientFiles();
                         }, 300);
                     } else {
@@ -4025,18 +4020,15 @@ function savePatientPhoto() {
         body: formData
     })
     .then(response => {
-        console.log('Patient camera save response status:', response.status);
         return response.json();
     })
     .then(data => {
-        console.log('Patient camera save data:', data);
         if (data.success) {
             const modal = bootstrap.Modal.getInstance(document.getElementById('patientCameraModal'));
             modal.hide();
             showNotification('Photo saved successfully', 'success');
             // Wait a bit for modal to close, then reload patient files via Ajax
             setTimeout(() => {
-                console.log('Reloading patient files after camera save...');
                 reloadPatientFiles();
             }, 300);
         } else {
@@ -4307,7 +4299,6 @@ function editPatientNote(noteId, title, content) {
         updateBtn.disabled = true;
         spinner.classList.remove('d-none');
         
-        console.log('DEBUG: Updating note', {
             noteId: noteId,
             title: formData.get('title'),
             content: formData.get('content')
@@ -4327,11 +4318,9 @@ function editPatientNote(noteId, title, content) {
             body: params.toString()
         })
         .then(response => {
-            console.log('DEBUG: Response status:', response.status);
             return response.json();
         })
         .then(data => {
-            console.log('DEBUG: Response data:', data);
             if (data.success) {
                 modal.hide();
                 showNotification('Note updated successfully', 'success');
@@ -5193,19 +5182,15 @@ function viewGlassesPrescription(prescriptionId) {
         cache: 'no-cache'
     })
         .then(response => {
-            console.log('View Response status:', response.status);
-            console.log('View Response URL:', response.url);
             if (!response.ok) {
                 // Log the response text for debugging
                 return response.text().then(text => {
-                    console.log('Error response text:', text);
                     throw new Error(`HTTP error! status: ${response.status} - ${text.substring(0, 100)}`);
                 });
             }
             return response.json();
         })
         .then(data => {
-            console.log('View Response data:', data);
             if (data.success) {
                 showGlassesPrescriptionModal(data.data, 'view');
             } else {
@@ -5230,19 +5215,15 @@ function editGlassesPrescription(prescriptionId) {
         cache: 'no-cache'
     })
         .then(response => {
-            console.log('Edit Response status:', response.status);
-            console.log('Edit Response URL:', response.url);
             if (!response.ok) {
                 // Log the response text for debugging
                 return response.text().then(text => {
-                    console.log('Edit Error response text:', text);
                     throw new Error(`HTTP error! status: ${response.status} - ${text.substring(0, 100)}`);
                 });
             }
             return response.json();
         })
         .then(data => {
-            console.log('Edit Response data:', data);
             if (data.success) {
                 showGlassesPrescriptionModal(data.data, 'edit');
             } else {
@@ -5542,7 +5523,6 @@ function deleteGlassesPrescription(prescriptionId) {
 
 function printGlassesPrescription(prescriptionId) {
     const printUrl = `/print/glasses-prescription/${prescriptionId}?t=${Date.now()}`;
-    console.log('Opening print URL:', printUrl);
     window.open(printUrl, '_blank');
 }
 
@@ -6319,7 +6299,6 @@ function reloadPatientFiles() {
         return;
     }
     
-    console.log('Fetching patient files for patient:', patientId);
     fetch(`/api/patients/${patientId}/files`, {
         credentials: 'same-origin',
         headers: {
@@ -6327,14 +6306,12 @@ function reloadPatientFiles() {
         }
     })
         .then(response => {
-            console.log('Patient files API response status:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
         .then(data => {
-            console.log('Patient files data:', data);
             if (data.success && data.files !== undefined) {
                 const container = document.getElementById('patientFilesContainer');
                 if (!container) {

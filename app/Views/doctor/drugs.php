@@ -830,7 +830,6 @@ class DrugSearch {
     async performSearch(searchTerm, showSuggestions = false) {
         if (this.isLoading) return;
         
-        console.log('Performing search:', {
             searchTerm,
             showSuggestions,
             page: this.currentPage,
@@ -854,21 +853,16 @@ class DrugSearch {
             // Add filters
             if (this.categoryFilter.value) {
                 params.append('category', this.categoryFilter.value);
-                console.log('Added category filter:', this.categoryFilter.value);
             }
             if (this.companyFilter.value) {
                 params.append('company', this.companyFilter.value);
-                console.log('Added company filter:', this.companyFilter.value);
             }
             if (this.routeFilter.value) {
                 params.append('route', this.routeFilter.value);
-                console.log('Added route filter:', this.routeFilter.value);
             }
             
-            console.log('API URL:', `/api/searchDrugs?${params}`);
             const response = await fetch(`/api/searchDrugs?${params}`);
             const data = await response.json();
-            console.log('API Response:', data);
             
             if (data.drugs) {
                 if (showSuggestions) {
@@ -891,17 +885,14 @@ class DrugSearch {
     }
     
     displaySuggestions(drugs) {
-        console.log('Displaying suggestions:', drugs);
         
         // Clear previous
         this.portal.innerHTML = '';
         if (!drugs || drugs.length === 0) {
-            console.log('No suggestions to display');
             this.portal.style.display = 'none';
             return;
         }
 
-        console.log('Showing', drugs.length, 'suggestions');
         drugs.slice(0, 8).forEach((drug, idx) => {
             const item = document.createElement('div');
             item.className = 'suggestion-item';
@@ -1059,7 +1050,6 @@ class DrugSearch {
     }
     
     handleFilterChange() {
-        console.log('Filter changed:', {
             category: this.categoryFilter.value,
             company: this.companyFilter.value,
             route: this.routeFilter.value
@@ -1071,7 +1061,6 @@ class DrugSearch {
     
     updateFilterState() {
         const hasFilters = this.categoryFilter.value || this.companyFilter.value || this.routeFilter.value;
-        console.log('Filter state updated:', { hasFilters });
         
         // Update apply button state
         if (hasFilters) {
@@ -1086,30 +1075,24 @@ class DrugSearch {
     }
     
     applyFilters() {
-        console.log('Applying filters...');
         this.currentPage = 1;
         
         // Check if any filters are selected
         const hasFilters = this.categoryFilter.value || this.companyFilter.value || this.routeFilter.value;
-        console.log('Has filters:', hasFilters);
         
         if (this.currentSearchTerm) {
             // If there's a search term, search with filters
-            console.log('Searching with term and filters:', this.currentSearchTerm);
             this.performSearch(this.currentSearchTerm, false);
         } else if (hasFilters) {
             // If no search term but filters are applied, show filtered results
-            console.log('Showing filtered results only');
             this.performSearch('', false);
         } else {
             // If no search term and no filters, clear results
-            console.log('No filters applied, clearing results');
             this.clearResults();
         }
     }
     
     clearFilters() {
-        console.log('Clearing filters...');
         this.categoryFilter.value = '';
         this.companyFilter.value = '';
         this.routeFilter.value = '';
@@ -1118,11 +1101,9 @@ class DrugSearch {
         this.updateFilterState();
         
         if (this.currentSearchTerm) {
-            console.log('Re-searching with cleared filters:', this.currentSearchTerm);
             this.currentPage = 1;
             this.performSearch(this.currentSearchTerm, false);
         } else {
-            console.log('Clearing results (no search term)');
             this.clearResults();
         }
     }

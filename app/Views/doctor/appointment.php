@@ -644,6 +644,135 @@
 .dark .progress-bar {
     background-color: var(--accent) !important;
 }
+
+/* Responsive Action Buttons */
+.action-buttons-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.action-buttons-group .btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Mobile styles for action buttons */
+@media (max-width: 768px) {
+    .action-buttons-group {
+        flex-wrap: nowrap;
+        overflow: hidden;
+    }
+    
+    .action-buttons-group .btn:not(.more-actions-btn) {
+        flex: 0 0 auto;
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .action-buttons-group .more-actions-btn {
+        flex-shrink: 0;
+        margin-left: auto;
+    }
+}
+
+/* Extra small screens - hide some buttons, show dropdown */
+@media (max-width: 576px) {
+    .action-buttons-group .btn.hide-on-mobile {
+        display: none !important;
+    }
+    
+    .action-buttons-group .more-actions-btn {
+        display: block !important;
+        position: relative !important;
+    }
+    
+    .action-buttons-group .more-actions-btn .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Ensure dropdown menu is positioned correctly and visible when shown */
+    .action-buttons-group {
+        overflow: visible !important;
+        position: relative !important;
+    }
+    
+    .action-buttons-group .more-actions-btn {
+        overflow: visible !important;
+        position: relative !important;
+        width: 100% !important;
+    }
+    
+    .action-buttons-group .more-actions-btn .dropdown-menu {
+        position: fixed !important;
+        z-index: 1050 !important;
+        /* Position will be set by JavaScript */
+        margin: 0 !important;
+        margin-top: 0.125rem !important;
+        opacity: 1 !important;
+        max-height: none !important;
+        overflow: visible !important;
+        /* Width will be set by JavaScript to match button width */
+        min-width: auto !important;
+        box-sizing: border-box !important;
+        /* Glass effect */
+        background: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .dark .action-buttons-group .more-actions-btn .dropdown-menu {
+        background: rgba(30, 41, 59, 0.85) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    /* Ensure dropdown items are visible */
+    .action-buttons-group .more-actions-btn .dropdown-menu .dropdown-item {
+        color: var(--text) !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+    
+    .dark .action-buttons-group .more-actions-btn .dropdown-menu .dropdown-item {
+        color: var(--text) !important;
+    }
+    
+    .action-buttons-group .more-actions-btn .dropdown-menu.show {
+        display: block !important;
+        visibility: visible !important;
+    }
+    
+    /* Ensure parent containers don't clip the dropdown */
+    .row.mb-4 {
+        overflow: visible !important;
+    }
+    
+    .col-12 {
+        overflow: visible !important;
+    }
+}
+
+/* Show all buttons on larger screens */
+@media (min-width: 577px) {
+    .action-buttons-group .more-actions-btn {
+        display: none !important;
+    }
+    
+    .action-buttons-group .btn.hide-on-mobile {
+        display: inline-flex !important;
+    }
+}
+
+/* Hide Edit Consultation button next to breadcrumb on mobile */
+@media (max-width: 576px) {
+    .hide-edit-on-mobile, .hide-pa-on-mobile {
+        display: none !important;
+    }
+}
 </style>
 
 <!-- Breadcrumb -->
@@ -657,10 +786,10 @@
         </ol>
     </nav>
     <div class="d-flex gap-2">
-        <a href="/doctor/patients/<?= $appointment['patient_id'] ?? '' ?>" class="btn btn-outline-secondary">
+        <a href="/doctor/patients/<?= $appointment['patient_id'] ?? '' ?>" class="btn btn-outline-secondary hide-pa-on-mobile">
             <i class="bi bi-person"></i> Patient Profile
         </a>
-        <a href="/doctor/appointments/<?= $appointment['id'] ?? '' ?>/edit" class="btn btn-primary">
+        <a href="/doctor/appointments/<?= $appointment['id'] ?? '' ?>/edit" class="btn btn-primary hide-edit-on-mobile">
             <i class="bi bi-pencil-square"></i> Edit Consultation
         </a>
     </div>
@@ -718,22 +847,57 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
 <!-- Action Buttons -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="btn-group" role="group">
-            <button type="button" class="btn btn-primary" onclick="editConsultation(<?= $appointment['id'] ?>)">
+        <div class="action-buttons-group" role="group">
+            <button type="button" class="btn btn-primary hide-on-mobile" onclick="editConsultation(<?= $appointment['id'] ?>)">
                 <i class="bi bi-pencil me-1"></i>Edit Consultation
             </button>
-            <button type="button" class="btn btn-success" onclick="addPrescription(<?= $appointment['id'] ?>)">
+            <button type="button" class="btn btn-success hide-on-mobile" onclick="addPrescription(<?= $appointment['id'] ?>)">
                 <i class="bi bi-prescription2 me-1"></i>Add Prescription
             </button>
-            <button type="button" class="btn btn-danger" onclick="addGlassesPrescription(<?= $appointment['id'] ?>)">
+            <button type="button" class="btn btn-danger hide-on-mobile" onclick="addGlassesPrescription(<?= $appointment['id'] ?>)">
                 <i class="bi bi-eyeglasses me-1"></i>Add Glasses
             </button>
-            <button type="button" class="btn btn-info" onclick="printReport(<?= $appointment['id'] ?>)">
+            <button type="button" class="btn btn-info hide-on-mobile" onclick="printReport(<?= $appointment['id'] ?>)">
                 <i class="bi bi-printer me-1"></i>Print Report
             </button>
-            <button type="button" class="btn btn-warning" onclick="rescheduleAppointment(<?= $appointment['id'] ?>)">
+            <button type="button" class="btn btn-warning hide-on-mobile" onclick="rescheduleAppointment(<?= $appointment['id'] ?>)">
                 <i class="bi bi-calendar-plus me-1"></i>Reschedule
             </button>
+            
+            <!-- More Actions Dropdown for Mobile -->
+            <div class="dropdown more-actions-btn">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="moreActionsDropdown" data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false">
+                    <i class="bi bi-three-dots-vertical me-1"></i>Appointment Actions
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="moreActionsDropdown">
+                    <li>
+                        <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { addPrescription(<?= $appointment['id'] ?>); });">
+                            <i class="bi bi-prescription2 me-2"></i>Add Prescription
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { addGlassesPrescription(<?= $appointment['id'] ?>); });">
+                            <i class="bi bi-eyeglasses me-2"></i>Add Glasses
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { printReport(<?= $appointment['id'] ?>); });">
+                            <i class="bi bi-printer me-2"></i>Print Report
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { rescheduleAppointment(<?= $appointment['id'] ?>); });">
+                            <i class="bi bi-calendar-plus me-2"></i>Reschedule
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { editConsultation(<?= $appointment['id'] ?>); });">
+                            <i class="bi bi-pencil me-2"></i>Edit Consultation
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
@@ -2358,14 +2522,12 @@ function savePhoto() {
         if (xhr.status === 200) {
             try {
                 const response = JSON.parse(xhr.responseText);
-                console.log('Camera save response:', response);
                 if (response.success) {
                     const modal = bootstrap.Modal.getInstance(document.getElementById('cameraModal'));
                     modal.hide();
                     showSuccessMessage('Photo saved successfully');
                     // Wait a bit for modal to close, then reload attachments via Ajax
                     setTimeout(() => {
-                        console.log('Reloading attachments after camera save...');
                         reloadAttachments();
                     }, 300);
                 } else {
@@ -2479,7 +2641,6 @@ function showUploadModal(appointmentId, patientId) {
             // Show file info
             const fileName = file.name;
             const fileSize = (file.size / 1024 / 1024).toFixed(2);
-            console.log(`Selected file: ${fileName} (${fileSize} MB)`);
         }
     });
     
@@ -2514,13 +2675,11 @@ function showUploadModal(appointmentId, patientId) {
                     if (xhr.status === 200) {
                 try {
                     const response = JSON.parse(xhr.responseText);
-                    console.log('Upload response:', response);
                     if (response.success) {
                         modal.hide();
                         showSuccessMessage('Attachment uploaded successfully');
                         // Wait a bit for modal to close, then reload attachments via Ajax
                         setTimeout(() => {
-                            console.log('Reloading attachments...');
                             reloadAttachments();
                         }, 300);
                     } else {
@@ -3698,7 +3857,6 @@ function editLabTest(testId, testData) {
             data[key] = value;
         }
         
-        console.log('Updating lab test:', testId, 'with data:', data);
         
         fetch('/api/lab-tests/' + testId, {
             method: 'PUT',
@@ -3710,7 +3868,6 @@ function editLabTest(testId, testData) {
         })
         .then(response => response.json())
         .then(data => {
-            console.log('Edit response:', data);
             if (data.success) {
                 modal.hide();
                 showSuccessMessage('Lab test updated successfully');
@@ -3888,6 +4045,33 @@ function updateStatusBadge(status) {
     }
 }
 
+// Helper function to close dropdown and execute action
+function closeDropdownAndExecute(dropdownId, action) {
+    const dropdownElement = document.getElementById(dropdownId);
+    
+    if (dropdownElement) {
+        const dropdown = bootstrap.Dropdown.getInstance(dropdownElement);
+        if (dropdown) {
+            dropdown.hide();
+        } else {
+            // Try to create instance if it doesn't exist
+            try {
+                const newDropdown = new bootstrap.Dropdown(dropdownElement);
+                newDropdown.hide();
+            } catch (e) {
+                // Error creating Dropdown instance
+            }
+        }
+    }
+    
+    // Execute action after a small delay to ensure dropdown closes
+    setTimeout(function() {
+        if (typeof action === 'function') {
+            action();
+        }
+    }, 100);
+}
+
 // Initialize tooltips for file attachments
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize status badge
@@ -3898,6 +4082,144 @@ document.addEventListener('DOMContentLoaded', function() {
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
+    
+    // Initialize Bootstrap dropdowns manually to ensure they work
+    const dropdownElementList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));
+    dropdownElementList.forEach(function (dropdownTriggerEl) {
+        try {
+            const dropdown = new bootstrap.Dropdown(dropdownTriggerEl, {
+                popperConfig: null // Disable Popper.js positioning
+            });
+        } catch (e) {
+            console.error('Error initializing dropdown:', e);
+        }
+    });
+    
+    // Specifically check for moreActionsDropdown
+    const moreActionsBtn = document.getElementById('moreActionsDropdown');
+    if (moreActionsBtn) {
+        
+        // Check dropdown menu
+        const dropdownMenu = moreActionsBtn.parentElement.querySelector('.dropdown-menu');
+        if (dropdownMenu) {
+        }
+        
+        // Function to position dropdown menu below button
+        let positionAnimationFrame = null;
+        
+        function positionDropdownMenu() {
+            const menu = moreActionsBtn.parentElement.querySelector('.dropdown-menu');
+            if (menu && menu.classList.contains('show')) {
+                const buttonRect = moreActionsBtn.getBoundingClientRect();
+                
+                // Calculate position: menu should be directly below button
+                // getBoundingClientRect() gives position relative to viewport, perfect for fixed positioning
+                let top = buttonRect.bottom + 4;
+                
+                // Check if menu would go off screen at bottom
+                const estimatedMenuHeight = 220; // Approximate menu height
+                if (buttonRect.bottom + estimatedMenuHeight > window.innerHeight) {
+                    // Show menu above button instead
+                    top = buttonRect.top - estimatedMenuHeight - 4;
+                }
+                
+                // Calculate left position: align with button's left edge + 15px
+                // Menu width should match button width
+                const buttonWidth = buttonRect.width;
+                let leftValue = buttonRect.left + 15;
+                
+                // Ensure menu doesn't go off screen on the right
+                if (leftValue + buttonWidth > window.innerWidth - 16) {
+                    leftValue = window.innerWidth - buttonWidth - 16; // 16px margin from right
+                }
+                
+                // Ensure menu doesn't go off screen on the left
+                if (leftValue < 16) {
+                    leftValue = 16; // 16px margin from left
+                }
+                
+                // Apply fixed positioning below button - same width as button, 15px left offset
+                menu.style.position = 'fixed';
+                menu.style.left = leftValue + 'px';
+                menu.style.transform = 'none';
+                menu.style.top = top + 'px';
+                menu.style.width = buttonWidth + 'px';
+                menu.style.minWidth = buttonWidth + 'px';
+                menu.style.maxWidth = buttonWidth + 'px';
+                menu.style.right = 'auto';
+                
+            }
+        }
+        
+        // Continuous positioning update using requestAnimationFrame
+        function startPositionTracking() {
+            if (positionAnimationFrame) {
+                cancelAnimationFrame(positionAnimationFrame);
+            }
+            
+            function updatePosition() {
+                const menu = moreActionsBtn.parentElement.querySelector('.dropdown-menu');
+                if (menu && menu.classList.contains('show')) {
+                    positionDropdownMenu();
+                    positionAnimationFrame = requestAnimationFrame(updatePosition);
+                } else {
+                    positionAnimationFrame = null;
+                }
+            }
+            
+            positionAnimationFrame = requestAnimationFrame(updatePosition);
+        }
+        
+        // Add click event listener for positioning
+        moreActionsBtn.addEventListener('click', function(e) {
+            
+            // Start continuous positioning after Bootstrap shows it
+            setTimeout(() => {
+                positionDropdownMenu();
+                startPositionTracking();
+            }, 10);
+        });
+        
+        // Hide dropdown on scroll if it's open
+        let scrollTimeout;
+        window.addEventListener('scroll', function() {
+            const menu = moreActionsBtn.parentElement.querySelector('.dropdown-menu');
+            if (menu && menu.classList.contains('show')) {
+                // Hide dropdown immediately on scroll
+                const dropdown = bootstrap.Dropdown.getInstance(moreActionsBtn);
+                if (dropdown) {
+                    dropdown.hide();
+                }
+                if (positionAnimationFrame) {
+                    cancelAnimationFrame(positionAnimationFrame);
+                    positionAnimationFrame = null;
+                }
+            }
+        }, { passive: true });
+        
+        // Update position on resize
+        window.addEventListener('resize', function() {
+            const menu = moreActionsBtn.parentElement.querySelector('.dropdown-menu');
+            if (menu && menu.classList.contains('show')) {
+                positionDropdownMenu();
+            }
+        }, { passive: true });
+        
+        // Listen to Bootstrap dropdown events
+        moreActionsBtn.addEventListener('show.bs.dropdown', function() {
+        });
+        moreActionsBtn.addEventListener('shown.bs.dropdown', function() {
+            // Position menu after Bootstrap animation completes and start tracking
+            positionDropdownMenu();
+            startPositionTracking();
+        });
+        moreActionsBtn.addEventListener('hide.bs.dropdown', function() {
+        });
+        moreActionsBtn.addEventListener('hidden.bs.dropdown', function() {
+        });
+    } else {
+        console.warn('More Actions button NOT found!');
+    }
     
     // Add hover effects to attachment cards
     const attachmentCards = document.querySelectorAll('.attachment-card');
@@ -4223,7 +4545,6 @@ function reloadAttachments() {
         return;
     }
     
-    console.log('Fetching attachments for appointment:', appointmentId);
     fetch(`/api/appointments/${appointmentId}/attachments`, {
         credentials: 'same-origin',
         headers: {
@@ -4231,14 +4552,12 @@ function reloadAttachments() {
         }
     })
         .then(response => {
-            console.log('Attachments API response status:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
         .then(data => {
-            console.log('Attachments data:', data);
             if (data.success && data.attachments !== undefined) {
                 const container = document.getElementById('attachmentsContainer');
                 if (!container) {
@@ -4402,7 +4721,6 @@ function reloadMedications() {
         return;
     }
     
-    console.log('Fetching medications for appointment:', appointmentId);
     fetch(`/api/appointments/${appointmentId}/medications`, {
         credentials: 'same-origin',
         headers: {
@@ -4473,7 +4791,6 @@ function reloadGlasses() {
         return;
     }
     
-    console.log('Fetching glasses for appointment:', appointmentId);
     fetch(`/api/appointments/${appointmentId}/glasses`, {
         credentials: 'same-origin',
         headers: {

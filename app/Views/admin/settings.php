@@ -543,7 +543,6 @@ document.querySelectorAll('input, select').forEach(element => {
         clearTimeout(autoSaveTimeout);
         autoSaveTimeout = setTimeout(() => {
             // You could implement auto-save here
-            console.log('Settings changed, auto-save could be implemented');
         }, 2000);
     });
 });

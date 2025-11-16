@@ -1659,8 +1659,6 @@ function initializePagination() {
     updatePaginationInfo();
     renderPaginationNav();
     
-    console.log('Pagination initialized with', paginationState.totalItems, 'patients');
-    console.log('Doctors available:', paginationState.doctors);
 }
 
 // Render patients table with current page data
@@ -1964,7 +1962,6 @@ function changeItemsPerPage(newLimit) {
     updatePaginationInfo();
     renderPaginationNav();
     
-    console.log('Items per page changed to:', newLimit);
 }
 
 // Escape HTML function
@@ -1981,7 +1978,6 @@ function escapeHtml(text) {
 
 // Filter patients by doctor
 function filterByDoctor(doctorId) {
-    console.log('Filtering by doctor:', doctorId);
     
     // Update active button
     document.querySelectorAll('#doctorFilterGroup .btn').forEach(btn => {
@@ -2368,7 +2364,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('keydown', function(e) {
         // Debug keyboard input (remove in production)
         if (e.key === 'ب' || e.key.toLowerCase() === 'f') {
-            console.log('Search key pressed:', {
                 key: e.key,
                 keyCode: e.keyCode,
                 code: e.code,
@@ -2384,7 +2379,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (isSearchKey && !isInputFocused() && !searchModal.classList.contains('show')) {
             e.preventDefault();
-            console.log('Opening search modal with key:', e.key);
             searchButton.click();
         }
         
@@ -2395,7 +2389,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if ((isAddPatientKey || isCtrlN) && !isInputFocused() && !document.querySelector('.modal.show')) {
             e.preventDefault();
-            console.log('Opening add patient modal with key:', e.key, 'Ctrl pressed:', e.ctrlKey);
             document.querySelector('[data-bs-target="#addPatientModal"]').click();
         }
         
@@ -2668,7 +2661,6 @@ function initializeAddPatientModal() {
 window.currentPatientToDelete = null;
 
 function deletePatient(patientId, patientName) {
-    console.log('deletePatient called with:', { patientId, patientName });
     
     window.currentPatientToDelete = {
         id: patientId,
@@ -2678,7 +2670,6 @@ function deletePatient(patientId, patientName) {
     // Store in localStorage as backup
     localStorage.setItem('deletePatientData', JSON.stringify(window.currentPatientToDelete));
     
-    console.log('window.currentPatientToDelete set to:', window.currentPatientToDelete);
     
     // Set patient info in modal
     document.getElementById('deletePatientId').textContent = patientId;
@@ -2716,7 +2707,6 @@ function deletePatient(patientId, patientName) {
 }
 
 function showDeleteConfirmation() {
-    console.log('showDeleteConfirmation called, window.currentPatientToDelete:', window.currentPatientToDelete);
     
     // Hide warning modal
     const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deletePatientModal'));
@@ -2759,7 +2749,6 @@ function resetDeleteConfirmation() {
 }
 
 function confirmPatientDeletion() {
-    console.log('confirmPatientDeletion called, window.currentPatientToDelete:', window.currentPatientToDelete);
     
     // Try to recover from localStorage if main variable is lost
     if (!window.currentPatientToDelete) {
@@ -2767,7 +2756,6 @@ function confirmPatientDeletion() {
         if (savedData) {
             try {
                 window.currentPatientToDelete = JSON.parse(savedData);
-                console.log('Recovered patient data from localStorage:', window.currentPatientToDelete);
             } catch (e) {
                 console.error('Failed to parse saved patient data:', e);
             }
@@ -2916,12 +2904,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Reset confirmation when modal is hidden
     document.getElementById('deletePatientConfirmModal').addEventListener('hidden.bs.modal', function() {
-        console.log('deletePatientConfirmModal hidden');
         resetDeleteConfirmation();
         
         // Reset patient data only if not transitioning back to warning modal
         if (!isTransitioning) {
-            console.log('Resetting window.currentPatientToDelete from confirm modal');
             window.currentPatientToDelete = null;
             localStorage.removeItem('deletePatientData');
         }
@@ -2929,12 +2915,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Reset patient data when warning modal is hidden
     document.getElementById('deletePatientModal').addEventListener('hidden.bs.modal', function() {
-        console.log('deletePatientModal hidden');
         
         // Don't reset if we're transitioning to confirmation modal
         setTimeout(() => {
             if (!document.getElementById('deletePatientConfirmModal').classList.contains('show')) {
-                console.log('Resetting window.currentPatientToDelete from warning modal');
                 window.currentPatientToDelete = null;
                 localStorage.removeItem('deletePatientData');
             }
@@ -2945,14 +2929,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const originalShowDeleteConfirmation = window.showDeleteConfirmation;
     window.showDeleteConfirmation = function() {
         isTransitioning = true;
-        console.log('Starting transition to confirmation modal');
         
         originalShowDeleteConfirmation();
         
         // Reset transition flag after modal is shown
         setTimeout(() => {
             isTransitioning = false;
-            console.log('Transition completed');
         }, 500);
     };
     
@@ -2960,14 +2942,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const originalBackToDeleteWarning = window.backToDeleteWarning;
     window.backToDeleteWarning = function() {
         isTransitioning = true;
-        console.log('Starting transition back to warning modal');
         
         originalBackToDeleteWarning();
         
         // Reset transition flag after modal is shown
         setTimeout(() => {
             isTransitioning = false;
-            console.log('Back transition completed');
         }, 500);
     };
 });

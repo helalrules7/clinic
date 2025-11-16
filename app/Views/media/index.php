@@ -106,12 +106,12 @@
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         <a href="#" id="viewPatientLink" class="btn btn-outline-info" target="_blank" style="display: none;">
-                            <i class="bi bi-person-fill me-2"></i>
-                            View Patient
+                            <i class="bi bi-person-fill me-2 me-md-2 me-0"></i>
+                            <span class="d-none d-md-inline">View Patient</span>
                         </a>
                         <a href="#" id="viewSourceLink" class="btn btn-outline-light" target="_blank" style="display: none;">
-                            <i class="bi bi-box-arrow-up-right me-2"></i>
-                            <span id="sourceLinkText">View Appointment</span>
+                            <i class="bi bi-box-arrow-up-right me-2 me-md-2 me-0"></i>
+                            <span id="sourceLinkText" class="d-none d-md-inline">View Appointment</span>
                         </a>
                     </div>
                 </div>
@@ -494,6 +494,29 @@
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+/* Mobile responsive for modal footer buttons */
+@media (max-width: 768px) {
+    #viewPatientLink span,
+    #viewSourceLink span {
+        display: none !important;
+    }
+    
+    #viewPatientLink i,
+    #viewSourceLink i {
+        margin: 0 !important;
+    }
+    
+    #viewPatientLink,
+    #viewSourceLink {
+        min-width: 44px;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem !important;
     }
 }
 </style>
