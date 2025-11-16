@@ -1037,13 +1037,13 @@
             });
         }
         
-        // Alert System - Global polling system for all pages
+        // Alert System - Real-time notification system like chat
         (function() {
             let alertCheckInterval = null;
             let isChecking = false;
-            let lastCheckTime = 0;
-            const POLLING_INTERVAL = 30000; // Check every 30 seconds
-            const MIN_CHECK_INTERVAL = 5000; // Minimum 5 seconds between checks
+            let shownAlertIds = new Set(); // Track shown alerts in current session
+            const POLLING_INTERVAL = 10000; // Check every 10 seconds (like chat system)
+            const MIN_CHECK_INTERVAL = 2000; // Minimum 2 seconds between checks
             
             // Create toast container immediately
             function createToastContainer() {
@@ -1074,20 +1074,25 @@
                 
                 // Throttle checks - don't check too frequently
                 const now = Date.now();
-                if (now - lastCheckTime < MIN_CHECK_INTERVAL) {
+                if (now - (window.lastAlertCheckTime || 0) < MIN_CHECK_INTERVAL) {
                     return;
                 }
                 
                 isChecking = true;
-                lastCheckTime = now;
+                window.lastAlertCheckTime = now;
                 
-                fetch('/api/alerts/active', {
+                // Get current date and time for accurate checking
+                const currentDate = new Date().toISOString().split('T')[0];
+                const currentTime = new Date().toTimeString().split(' ')[0].substring(0, 5); // HH:mm format
+                
+                fetch(`/api/alerts/active?date=${currentDate}&time=${currentTime}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest'
                     },
-                    cache: 'no-cache'
+                    cache: 'no-cache',
+                    credentials: 'same-origin'
                 })
                 .then(response => {
                     if (!response.ok) {
@@ -1097,8 +1102,16 @@
                 })
                 .then(data => {
                     if (data.success && data.alerts && data.alerts.length > 0) {
+                        // Show only new alerts that haven't been shown yet
                         data.alerts.forEach(alert => {
-                            showAlertToast(alert);
+                            // Create unique key for this alert instance
+                            const alertKey = `${alert.id}_${alert.alert_date}_${alert.alert_time}`;
+                            
+                            // Check if this exact alert instance was already shown
+                            if (!shownAlertIds.has(alertKey)) {
+                                showAlertToast(alert);
+                                shownAlertIds.add(alertKey);
+                            }
                         });
                     }
                 })
@@ -1115,23 +1128,27 @@
                 if (!alert || !alert.id) return;
                 
                 const toastContainer = createToastContainer();
-                const toastId = 'alert-toast-' + alert.id + '-' + Date.now();
-                
-                // Check if this alert was already shown (using sessionStorage with timestamp)
-                const alertKey = `alert_shown_${alert.id}_${alert.alert_date}_${alert.alert_time}`;
-                const lastShown = sessionStorage.getItem(alertKey);
-                const now = Date.now();
-                
-                // If shown less than 5 minutes ago, don't show again
-                if (lastShown && (now - parseInt(lastShown)) < 300000) {
-                    return;
-                }
-                
-                // Mark as shown
-                sessionStorage.setItem(alertKey, now.toString());
+                const uniqueId = `${alert.id}_${alert.alert_date}_${alert.alert_time}_${Date.now()}`;
+                const toastId = 'alert-toast-' + uniqueId;
                 
                 // Check if toast already exists (prevent duplicates)
                 if (document.getElementById(toastId)) {
+                    return;
+                }
+                
+                // Check if there's already a toast for this alert (by checking all existing toasts)
+                const existingToasts = toastContainer.querySelectorAll('.toast[data-alert-unique-id]');
+                let alreadyShown = false;
+                existingToasts.forEach(existingToast => {
+                    const existingAlertId = existingToast.getAttribute('data-alert-id');
+                    const existingDate = existingToast.getAttribute('data-alert-date');
+                    const existingTime = existingToast.getAttribute('data-alert-time');
+                    if (existingAlertId == alert.id && existingDate == alert.alert_date && existingTime == alert.alert_time) {
+                        alreadyShown = true;
+                    }
+                });
+                
+                if (alreadyShown) {
                     return;
                 }
                 
@@ -1141,7 +1158,7 @@
                 const patientLink = alert.patient_id ? `/doctor/patients/${alert.patient_id}` : '#';
                 
                 const toastHtml = `
-                    <div id="${toastId}" class="toast alert-toast-glass align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false" style="min-width: 550px; max-width: 700px;">
+                    <div id="${toastId}" class="toast alert-toast-glass align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false" data-alert-id="${alert.id}" data-alert-date="${alert.alert_date}" data-alert-time="${alert.alert_time}" data-alert-unique-id="${uniqueId}" style="min-width: 550px; max-width: 700px;">
                         <div class="d-flex align-items-center">
                             <div class="toast-body flex-grow-1">
                                 <div class="d-flex align-items-start">
@@ -1262,57 +1279,83 @@
             // Make dismissAlert available globally
             window.dismissAlert = dismissAlert;
             
-            // Start polling system
+            // Start polling system - like real-time chat
             function startAlertPolling() {
-                // Check immediately on page load
-                setTimeout(() => {
-                    checkAlerts();
-                }, 1000); // Wait 1 second after page load
-                
-                // Set up interval polling
+                // Clear any existing interval
                 if (alertCheckInterval) {
                     clearInterval(alertCheckInterval);
                 }
                 
+                // Check immediately
+                checkAlerts();
+                
+                // Set up continuous polling (like chat system)
                 alertCheckInterval = setInterval(() => {
                     checkAlerts();
                 }, POLLING_INTERVAL);
             }
             
-            // Start polling immediately and also when DOM is ready
-            startAlertPolling();
-            
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function() {
-                    // Check again when DOM is ready
+            // Initialize polling system
+            function initAlertSystem() {
+                // Start polling immediately
+                startAlertPolling();
+                
+                // Also check when DOM is ready
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', function() {
+                        setTimeout(() => {
+                            checkAlerts();
+                        }, 500);
+                    });
+                } else {
+                    // DOM already ready, check immediately
                     setTimeout(() => {
                         checkAlerts();
                     }, 500);
+                }
+                
+                // Check when page becomes visible (user switches tabs back)
+                document.addEventListener('visibilitychange', function() {
+                    if (!document.hidden) {
+                        // Reset check time to allow immediate check
+                        window.lastAlertCheckTime = 0;
+                        setTimeout(() => {
+                            checkAlerts();
+                        }, 300);
+                    }
+                });
+                
+                // Check on window focus
+                window.addEventListener('focus', function() {
+                    window.lastAlertCheckTime = 0;
+                    setTimeout(() => {
+                        checkAlerts();
+                    }, 300);
+                });
+                
+                // Check when user interacts with page (like chat systems)
+                ['click', 'keydown', 'mousemove'].forEach(eventType => {
+                    document.addEventListener(eventType, function() {
+                        // Reset check time occasionally to allow checks
+                        if (Math.random() < 0.1) { // 10% chance
+                            window.lastAlertCheckTime = 0;
+                        }
+                    }, { passive: true });
+                });
+                
+                // Clean up on page unload
+                window.addEventListener('beforeunload', function() {
+                    if (alertCheckInterval) {
+                        clearInterval(alertCheckInterval);
+                    }
                 });
             }
             
-            // Also check when page becomes visible (user switches tabs back)
-            document.addEventListener('visibilitychange', function() {
-                if (!document.hidden) {
-                    setTimeout(() => {
-                        checkAlerts();
-                    }, 500);
-                }
-            });
+            // Start the alert system immediately
+            initAlertSystem();
             
-            // Check on window focus
-            window.addEventListener('focus', function() {
-                setTimeout(() => {
-                    checkAlerts();
-                }, 500);
-            });
-            
-            // Clean up on page unload
-            window.addEventListener('beforeunload', function() {
-                if (alertCheckInterval) {
-                    clearInterval(alertCheckInterval);
-                }
-            });
+            // Make checkAlerts available globally for manual triggering
+            window.checkAlerts = checkAlerts;
         })();
     </script>
 </body>
