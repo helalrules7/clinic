@@ -964,7 +964,7 @@ function renderPrescriptionList(appointments, patientId) {
                             <i class="bi bi-calendar-check me-1"></i>
                             View Appointment
                         </a>
-                        <a href="/print/medication/${appointment.appointment_id}" 
+                        <a href="/print/prescription/${appointment.appointment_id}" 
                            class="btn btn-sm btn-primary" 
                            target="_blank"
                            title="Print Prescription"
