@@ -39,6 +39,7 @@
             --bg-alt: #f1f5f9;
             --bg-dark: #ffffff;
             --accent-rgb: 14, 165, 233;
+            --user-info-bg: rgb(248, 250, 252);
         }
         
         .dark {
@@ -55,6 +56,7 @@
             --bg-alt: #0f172a;
             --bg-dark: #1e293b;
             --accent-rgb: 56, 189, 248;
+            --user-info-bg: rgb(30, 41, 59);
         }
         
         body {
@@ -68,14 +70,24 @@
         .sidebar {
             position: fixed;
             top: 0;
-            right: 0;
+            left: 0;
             height: 100vh;
             width: var(--sidebar-width);
-            background: var(--card);
-            border-left: 1px solid var(--border);
+            /* Glass effect - similar to top-bar */
+            background: rgba(248, 250, 252, 0.35);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(226, 232, 240, 0.3);
+            box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
             z-index: 1000;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
             overflow-y: auto;
+        }
+        
+        .dark .sidebar {
+            background: rgba(11, 18, 32, 0.70);
+            border-right: 1px solid rgba(51, 65, 85, 0.3);
+            box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
         }
         
         .sidebar-header {
@@ -106,7 +118,7 @@
         .user-info {
             padding: 1rem 1.5rem;
             border-bottom: 1px solid var(--border);
-            background: var(--bg);
+            background: var(--user-info-bg);
         }
         
         .user-avatar {

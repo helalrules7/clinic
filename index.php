@@ -50,7 +50,7 @@ header('X-XSS-Protection: 1; mode=block');
 try {
     $router = new \App\Lib\Router();
     
-    $router->get('/', 'AuthController@showLogin');
+    $router->get('/', 'GeneralController@home');
     $router->get('/login', 'AuthController@showLogin');
     $router->post('/login', 'AuthController@login');
     $router->get('/logout', 'AuthController@logout');

@@ -58,6 +58,7 @@
             --danger: #ef4444;
             --border: #e2e8f0;
             --sidebar-width: 280px;
+            --user-info-bg: rgb(248, 250, 252);
         }
         
         .dark {
@@ -69,6 +70,7 @@
             --success: #4ade80;
             --danger: #fb7185;
             --border: #334155;
+            --user-info-bg: rgb(30, 41, 59);
         }
         
         body {
@@ -84,11 +86,21 @@
             left: 0;
             height: 100vh;
             width: var(--sidebar-width);
-            background: var(--card);
-            border-right: 1px solid var(--border);
+            /* Glass effect - similar to top-bar */
+            background: rgba(248, 250, 252, 0.35);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(226, 232, 240, 0.3);
+            box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
             z-index: 1000;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
             overflow-y: auto;
+        }
+        
+        .dark .sidebar {
+            background: rgba(11, 18, 32, 0.70);
+            border-right: 1px solid rgba(51, 65, 85, 0.3);
+            box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
         }
         
         .sidebar-header {
@@ -119,7 +131,7 @@
         .user-info {
             padding: 1rem 1.5rem;
             border-bottom: 1px solid var(--border);
-            background: var(--bg);
+            background: var(--user-info-bg);
         }
         
         .user-avatar {
@@ -198,7 +210,7 @@
             top: 0;
             z-index: 100;
             /* Glass effect */
-            background: rgba(248, 250, 252, 0.50);
+            background: rgba(248, 250, 252, 0.35);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(226, 232, 240, 0.3);
@@ -211,7 +223,7 @@
         }
         
         .dark .top-bar {
-            background: rgba(11, 18, 32, 0.85);
+            background: rgba(11, 18, 32, 0.70);
             border-bottom: 1px solid rgba(51, 65, 85, 0.3);
         }
         
@@ -257,7 +269,7 @@
         }
         
         .card-header {
-            background: var(--bg);
+            background: var(--bg) !important;
             border-bottom: 1px solid var(--border);
             border-radius: 12px 12px 0 0;
             padding: 1rem 1.5rem;
@@ -279,7 +291,7 @@
         }
         
         .table th {
-            background: var(--bg);
+            background: var(--bg) !important;
             border-color: var(--border);
             color: var(--text);
             font-weight: 600;

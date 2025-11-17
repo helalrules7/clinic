@@ -519,8 +519,9 @@
         <h1 class="clinic-name">نظام عيادة طب العيون</h1>
         <p class="clinic-subtitle">Hclinic / Roaya Ophthalmology Clinic Management System</p>
         <p class="clinic-version" dir="ltr" style="text-align: center;">
-            <span dir="rtl">Version</span> v6.0 
+            <span dir="rtl">Version</span> v6.1 
             <a href="/whats-new" class="text-decoration-none whats-new-link" style="margin-right: 0.5rem; margin-left: 0.5rem;">What's New?</a>
+            <a href="/whats-new/full-features" class="text-decoration-none sidebar-footer-link" style="margin-right: 0.5rem;">Full Features</a>
         </p>
         <p class="clinic-author" dir="ltr" style="text-align: center;">
             HClinic / Roaya © 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none sidebar-footer-link">Ahmed Helal</a>
@@ -591,3 +592,4 @@
     </script>
 </body>
 </html>
+
