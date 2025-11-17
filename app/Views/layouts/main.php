@@ -652,6 +652,416 @@
             transform: translateY(-1px);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
+        
+        /* Quick Access Dock Styles */
+        .quick-access-dock {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: none; /* Hidden by default, shown only on desktop */
+        }
+        
+        .dock-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            /* Glass effect - maximum transparency */
+            background: rgba(248, 250, 252, 0.15);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(226, 232, 240, 0.2);
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .dark .dock-container {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(51, 65, 85, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .dock-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            /* Prevent blur on hover - remove all filter effects */
+            filter: none !important;
+            -webkit-filter: none !important;
+            /* Ensure no blur on text/content */
+            will-change: transform;
+        }
+        
+        .dock-item i {
+            font-size: 1.5rem;
+            transition: color 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            color: var(--text);
+            /* Prevent blur on icon - completely remove all filters */
+            filter: none !important;
+            -webkit-filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            /* Force hardware acceleration for crisp rendering */
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            will-change: color, transform;
+        }
+        
+        /* Tooltip/Label for dock items */
+        .dock-item::before {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px) translateZ(0);
+            -webkit-transform: translateX(-50%) translateY(-8px) translateZ(0);
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            padding: 0.4rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease 0.5s, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s;
+            z-index: 1001;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            /* Prevent blur on text - remove all text filters */
+            filter: none !important;
+            -webkit-filter: none !important;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            /* Force hardware acceleration for crisp text */
+            will-change: opacity, transform;
+        }
+        
+        .dark .dock-item::before {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Arrow for tooltip */
+        .dock-item::after {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-2px);
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 6px solid rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease 0.5s, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s;
+            z-index: 1002;
+        }
+        
+        .dark .dock-item::after {
+            border-top-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .dock-item:hover {
+            transform: translateY(-8px) scale(1.2);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            /* Prevent blur on hover - remove all filter effects */
+            filter: none !important;
+            -webkit-filter: none !important;
+            /* Ensure crisp rendering */
+            will-change: transform;
+        }
+        
+        .dock-item:hover i {
+            transform: scale(1.1) translateZ(0);
+            -webkit-transform: scale(1.1) translateZ(0);
+            color: #1e90ff !important; /* Dodger Blue */
+            /* Prevent blur on icon hover - completely remove all filters */
+            filter: none !important;
+            -webkit-filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            /* Force hardware acceleration for crisp rendering */
+            will-change: color, transform;
+        }
+        
+        .dock-item:hover::before {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-12px) translateZ(0);
+            -webkit-transform: translateX(-50%) translateY(-12px) translateZ(0);
+            transition-delay: 0.5s;
+            /* Ensure text is sharp when visible - remove all text filters */
+            filter: none !important;
+            -webkit-filter: none !important;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            will-change: opacity, transform;
+        }
+        
+        .dock-item:hover::after {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-6px);
+            transition-delay: 0.5s;
+        }
+        
+        .dark .dock-item {
+            background: rgba(0, 0, 0, 0.15);
+            color: var(--text);
+            /* Prevent blur in dark mode - remove all filter effects */
+            filter: none !important;
+            -webkit-filter: none !important;
+            will-change: transform;
+        }
+        
+        .dark .dock-item i {
+            color: var(--text);
+            /* Prevent blur on icon in dark mode - completely remove all filters */
+            filter: none !important;
+            -webkit-filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            will-change: color, transform;
+        }
+        
+        .dark .dock-item:hover {
+            background: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            /* Prevent blur on hover in dark mode - remove all filter effects */
+            filter: none !important;
+            -webkit-filter: none !important;
+            will-change: transform;
+        }
+        
+        .dark .dock-item:hover i {
+            transform: scale(1.1) translateZ(0);
+            -webkit-transform: scale(1.1) translateZ(0);
+            color: #1e90ff !important; /* Dodger Blue - same for dark mode */
+            /* Prevent blur on icon hover in dark mode - completely remove all filters */
+            filter: none !important;
+            -webkit-filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            will-change: color, transform;
+        }
+        
+        /* Show dock only on desktop (min-width: 992px) */
+        @media (min-width: 992px) {
+            .quick-access-dock {
+                display: block;
+            }
+        }
+        
+        /* Hide dock on mobile and tablet */
+        @media (max-width: 991px) {
+            .quick-access-dock {
+                display: none !important;
+            }
+        }
+        
+        /* Dock Divider */
+        .dock-divider {
+            width: 1px;
+            height: 32px;
+            background: rgba(226, 232, 240, 0.3);
+            margin: 0 0.5rem;
+        }
+        
+        .dark .dock-divider {
+            background: rgba(51, 65, 85, 0.3);
+        }
+        
+        /* Dock Minimize Button */
+        .dock-minimize-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: none;
+            cursor: pointer;
+            filter: none !important;
+            -webkit-filter: none !important;
+            will-change: transform;
+        }
+        
+        .dock-minimize-btn i {
+            font-size: 1.5rem;
+            transition: color 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            color: var(--text);
+            filter: none !important;
+            -webkit-filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            will-change: color, transform;
+        }
+        
+        .dock-minimize-btn:hover {
+            transform: translateY(-8px) scale(1.2);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            filter: none !important;
+            -webkit-filter: none !important;
+            will-change: transform;
+        }
+        
+        .dock-minimize-btn:hover i {
+            transform: scale(1.1) translateZ(0);
+            -webkit-transform: scale(1.1) translateZ(0);
+            color: #1e90ff !important; /* Dodger Blue */
+            filter: none !important;
+            -webkit-filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            will-change: color, transform;
+        }
+        
+        .dark .dock-minimize-btn {
+            background: rgba(0, 0, 0, 0.15);
+            color: var(--text);
+            filter: none !important;
+            -webkit-filter: none !important;
+            will-change: transform;
+        }
+        
+        .dark .dock-minimize-btn i {
+            color: var(--text);
+            filter: none !important;
+            -webkit-filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            will-change: color, transform;
+        }
+        
+        .dark .dock-minimize-btn:hover {
+            background: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            filter: none !important;
+            -webkit-filter: none !important;
+            will-change: transform;
+        }
+        
+        .dark .dock-minimize-btn:hover i {
+            transform: scale(1.1) translateZ(0);
+            -webkit-transform: scale(1.1) translateZ(0);
+            color: #1e90ff !important; /* Dodger Blue */
+            filter: none !important;
+            -webkit-filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            will-change: color, transform;
+        }
+        
+        /* Dock Minimized State */
+        .quick-access-dock.minimized {
+            left: auto;
+            right: calc(2rem + 64px + 1rem); /* Position to the left of scroll to top button */
+            transform: none;
+            bottom: 2rem; /* Same level as scroll to top button */
+        }
+        
+        .quick-access-dock.minimized .dock-container {
+            padding: 0.75rem;
+            width: 64px;
+            height: 64px;
+            justify-content: center;
+            align-items: center;
+            border-radius: 16px;
+        }
+        
+        .quick-access-dock.minimized .dock-item,
+        .quick-access-dock.minimized .dock-divider {
+            display: none;
+        }
+        
+        .quick-access-dock.minimized .dock-minimize-btn {
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .dark .quick-access-dock.minimized .dock-minimize-btn {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .quick-access-dock.minimized .dock-minimize-btn i {
+            font-size: 1.75rem;
+        }
+        
+        /* Minimized Dock Icon - 4 Squares */
+        .dock-minimize-btn .minimized-icon {
+            display: none;
+            width: 20px;
+            height: 20px;
+            position: relative;
+        }
+        
+        .quick-access-dock.minimized .dock-minimize-btn .bi-dash {
+            display: none;
+        }
+        
+        .quick-access-dock.minimized .dock-minimize-btn .minimized-icon {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 2px;
+        }
+        
+        .minimized-icon-rect {
+            background: #000000;
+            border-radius: 1px;
+        }
+        
+        /* Dark mode - white squares */
+        .dark .minimized-icon-rect {
+            background: #ffffff;
+        }
     </style>
 </head>
 <body>
@@ -956,6 +1366,55 @@
     <button class="scroll-to-top" id="scrollToTop" aria-label="Scroll to top">
         <i class="bi bi-arrow-up"></i>
     </button>
+    
+    <!-- Quick Access Dock (Desktop Only) -->
+    <div class="quick-access-dock" id="quickAccessDock">
+        <div class="dock-container">
+            <a href="/doctor/calendar" class="dock-item" title="View Calendar">
+                <i class="bi bi-calendar3"></i>
+            </a>
+            <a href="/doctor/patients" class="dock-item" title="Patient List">
+                <i class="bi bi-people"></i>
+            </a>
+            <a href="/doctor/drugs" class="dock-item" title="Drugs">
+                <i class="bi bi-capsule"></i>
+            </a>
+            <a href="/doctor/notes" class="dock-item" title="Notes">
+                <i class="bi bi-sticky"></i>
+            </a>
+            <a href="/doctor/medications" class="dock-item" title="Prescriptions">
+                <i class="bi bi-prescription"></i>
+            </a>
+            <a href="/doctor/glasses" class="dock-item" title="Glasses Prescriptions">
+                <i class="bi bi-eyeglasses"></i>
+            </a>
+            <a href="/doctor/media" class="dock-item" title="Media">
+                <i class="bi bi-images"></i>
+            </a>
+            <a href="/doctor/alerts" class="dock-item" title="Alerts">
+                <i class="bi bi-bell"></i>
+            </a>
+            <a href="/doctor/reports" class="dock-item" title="Reports">
+                <i class="bi bi-graph-up"></i>
+            </a>
+            <a href="/doctor/profile" class="dock-item" title="My Profile">
+                <i class="bi bi-person-circle"></i>
+            </a>
+            <a href="/doctor/settings" class="dock-item" title="Settings">
+                <i class="bi bi-gear"></i>
+            </a>
+            <div class="dock-divider"></div>
+            <button class="dock-minimize-btn" id="dockMinimizeBtn" title="Minimize Dock">
+                <i class="bi bi-dash"></i>
+                <div class="minimized-icon">
+                    <span class="minimized-icon-rect"></span>
+                    <span class="minimized-icon-rect"></span>
+                    <span class="minimized-icon-rect"></span>
+                    <span class="minimized-icon-rect"></span>
+                </div>
+            </button>
+        </div>
+    </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -1385,6 +1844,132 @@
             
             // Make checkAlerts available globally for manual triggering
             window.checkAlerts = checkAlerts;
+        })();
+        
+        // Quick Access Dock - Show only on desktop and Minimize functionality
+        (function() {
+            const dock = document.getElementById('quickAccessDock');
+            const minimizeBtn = document.getElementById('dockMinimizeBtn');
+            
+            function updateDockVisibility() {
+                if (!dock) return;
+                
+                // Show only on desktop (min-width: 992px)
+                if (window.innerWidth >= 992) {
+                    dock.style.display = 'block';
+                } else {
+                    dock.style.display = 'none';
+                }
+            }
+            
+            // Load dock minimized state from doctor settings
+            async function loadDockState() {
+                if (!dock) return;
+                
+                try {
+                    const response = await fetch('/api/doctor/settings', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success && data.settings && data.settings.dock_minimized) {
+                            const isMinimized = data.settings.dock_minimized === '1' || data.settings.dock_minimized === true || data.settings.dock_minimized === 1;
+                            if (isMinimized) {
+                                dock.classList.add('minimized');
+                            } else {
+                                dock.classList.remove('minimized');
+                            }
+                        } else {
+                            // Default: not minimized
+                            dock.classList.remove('minimized');
+                        }
+                    }
+                    
+                    // Update button title after loading state
+                    updateMinimizeButtonTitle();
+                } catch (error) {
+                    console.error('Error loading dock state:', error);
+                    // Default: not minimized on error
+                    dock.classList.remove('minimized');
+                    updateMinimizeButtonTitle();
+                }
+            }
+            
+            // Save dock minimized state to doctor settings
+            async function saveDockState(isMinimized) {
+                try {
+                    const response = await fetch('/api/doctor/settings', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            dock_minimized: isMinimized ? '1' : '0'
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to save dock state');
+                    }
+                    
+                    const data = await response.json();
+                    if (!data.success) {
+                        throw new Error('Failed to save dock state');
+                    }
+                } catch (error) {
+                    console.error('Error saving dock state:', error);
+                }
+            }
+            
+            // Update minimize button title based on state
+            function updateMinimizeButtonTitle() {
+                if (!minimizeBtn || !dock) return;
+                const isMinimized = dock.classList.contains('minimized');
+                minimizeBtn.setAttribute('title', isMinimized ? 'Maximize Dock' : 'Minimize Dock');
+            }
+            
+            // Toggle dock minimized state
+            function toggleDockMinimize() {
+                if (!dock) return;
+                
+                const isMinimized = dock.classList.contains('minimized');
+                if (isMinimized) {
+                    dock.classList.remove('minimized');
+                    saveDockState(false);
+                } else {
+                    dock.classList.add('minimized');
+                    saveDockState(true);
+                }
+                
+                // Update button title
+                updateMinimizeButtonTitle();
+            }
+            
+            // Initialize
+            if (minimizeBtn) {
+                minimizeBtn.addEventListener('click', toggleDockMinimize);
+            }
+            
+            // Load state on page load - wait for DOM to be ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    loadDockState();
+                    updateDockVisibility();
+                });
+            } else {
+                // DOM is already ready
+                loadDockState();
+                updateDockVisibility();
+            }
+            
+            // Update visibility on resize
+            window.addEventListener('resize', updateDockVisibility);
         })();
     </script>
 </body>

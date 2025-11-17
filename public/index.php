@@ -128,6 +128,7 @@ try {
     $router->get('/api/alerts/today', 'AlertController@getTodayAlerts');
     $router->get('/api/alerts/active', 'AlertController@getActiveAlerts');
     $router->post('/api/alerts/dismiss', 'AlertController@dismiss');
+    $router->get('/api/alerts/patient/{patientId}', 'AlertController@getPatientAlerts');
     $router->get('/api/alerts', 'AlertController@getAllAlerts');
     $router->get('/api/alerts/{id}', 'AlertController@get');
     $router->post('/api/alerts', 'AlertController@create');

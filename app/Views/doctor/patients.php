@@ -622,7 +622,7 @@
 }
 
 .card-header {
-    background-color: var(--bg-alt);
+    background-color: transparent !important;
     border-bottom-color: var(--border);
     color: var(--text);
 }

@@ -68,17 +68,18 @@ class AlertController
      */
     public function getPatientAlerts($patientId)
     {
-        header('Content-Type: application/json');
+        header('Content-Type: application/json; charset=utf-8');
         
         $user = $this->auth->user();
         $doctorId = $this->getDoctorId($user['id']);
         
         if (!$patientId) {
+            http_response_code(400);
             echo json_encode([
                 'success' => false,
                 'message' => 'Patient ID is required'
-            ]);
-            return;
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
         }
         
         $alerts = $this->alertModel->getByPatient($doctorId, $patientId, []);
@@ -86,7 +87,8 @@ class AlertController
         echo json_encode([
             'success' => true,
             'alerts' => $alerts
-        ]);
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
     }
 
     /**

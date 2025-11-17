@@ -2978,7 +2978,8 @@ class DoctorController
         $allowedSettings = [
             'notes_dashboard_height',
             'notes_dashboard_width',
-            'dashboard_cards_order'
+            'dashboard_cards_order',
+            'dock_minimized'
         ];
         
         try {

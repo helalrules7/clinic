@@ -2502,13 +2502,13 @@ input[readonly] {
 }
 
 .dark .card-header {
-    background-color: var(--bg);
+    background-color: transparent !important;
     border-bottom-color: var(--border);
     color: var(--text);
 }
 
 .dark .card-body {
-    background-color: var(--card);
+    background-color: transparent !important;
     color: var(--text);
 }
 
