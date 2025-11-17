@@ -254,6 +254,16 @@
             border-color: var(--accent);
         }
         
+        /* Light mode: moon icon should be black on hover */
+        .theme-toggle:hover i.bi-moon {
+            color: #000000 !important;
+        }
+        
+        /* Dark mode: sun icon keeps normal color on hover */
+        .dark .theme-toggle:hover i.bi-sun {
+            color: var(--text) !important;
+        }
+        
         .card {
             background: var(--card);
             border: 1px solid var(--border);

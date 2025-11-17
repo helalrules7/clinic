@@ -32,7 +32,7 @@ class DoctorController
     {
         $this->auth->requireRole(['doctor', 'admin']);
     }
-    
+
     /**
      * Helper method to check authentication for API methods
      * Returns true if authenticated, false otherwise
@@ -190,7 +190,7 @@ class DoctorController
                 'name' => $patient['created_by_name'],
                 'display_name' => $patient['created_by_doctor_name']
             ];
-        } else {
+                    } else {
             // Fallback to current doctor if no creator info available
             $treatingDoctor = $this->getCurrentDoctorInfo($user['id']);
         }
@@ -410,16 +410,16 @@ class DoctorController
             
             if ($noteId) {
                 // Update existing consultation note
-            $stmt = $this->pdo->prepare("
-                UPDATE consultation_notes SET 
+                $stmt = $this->pdo->prepare("
+                    UPDATE consultation_notes SET 
                 chief_complaint = ?, hx_present_illness = ?, visual_acuity_right = ?, visual_acuity_left = ?,
                 refraction_right = ?, refraction_left = ?, IOP_right = ?, IOP_left = ?, 
                 slit_lamp_right = ?, slit_lamp_left = ?, fundus_right = ?, fundus_left = ?,
                 external_appearance_right = ?, external_appearance_left = ?, eyelid_right = ?, eyelid_left = ?,
                 diagnosis = ?, diagnosis_code = ?, systemic_disease = ?, medication = ?, 
-                plan = ?, followup_days = ?, updated_at = CURRENT_TIMESTAMP
-                WHERE id = ? AND appointment_id = ?
-            ");
+                    plan = ?, followup_days = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ? AND appointment_id = ?
+                ");
             } else {
                 // Create new consultation note
                 $stmt = $this->pdo->prepare("
@@ -1133,7 +1133,7 @@ class DoctorController
         $stmt->execute([$patientId]);
         return $stmt->fetchAll();
     }
-
+    
     private function getAllPatientAppointmentsWithDetails($patientId)
     {
         // Get all appointments for the patient
@@ -1196,7 +1196,7 @@ class DoctorController
 
     private function getAttachments($appointmentId)
     {
-        $stmt = $this->pdo->prepare("
+                $stmt = $this->pdo->prepare("
             SELECT * FROM patient_attachments 
             WHERE appointment_id = ? 
             ORDER BY created_at DESC
@@ -2431,7 +2431,7 @@ class DoctorController
             } else {
                 http_response_code(404);
                 echo json_encode([
-                    'success' => false,
+                    'success' => false, 
                     'message' => 'Note not found'
                 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
@@ -2536,8 +2536,8 @@ class DoctorController
             $noteId = $this->pdo->lastInsertId();
             
             ob_clean();
-            echo json_encode([
-                'success' => true,
+                echo json_encode([
+                    'success' => true, 
                 'message' => 'Note created successfully',
                 'note_id' => $noteId
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -2555,7 +2555,7 @@ class DoctorController
             exit;
         }
     }
-
+    
     /**
      * Update note (API endpoint)
      */
@@ -2704,8 +2704,8 @@ class DoctorController
             ob_clean();
             http_response_code(500);
             error_log("Error in updateNote: " . $e->getMessage());
-            echo json_encode([
-                'success' => false,
+                echo json_encode([
+                    'success' => false, 
                 'message' => 'An error occurred while updating the note'
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             ob_end_flush();
@@ -2798,7 +2798,7 @@ class DoctorController
             ob_clean();
             if ($result) {
                 echo json_encode([
-                    'success' => true,
+                    'success' => true, 
                     'message' => 'Note deleted successfully'
                 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             } else {
@@ -2817,6 +2817,250 @@ class DoctorController
             echo json_encode([
                 'success' => false,
                 'message' => 'An error occurred while deleting the note'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+    }
+    
+    /**
+     * Get doctor settings (API endpoint)
+     */
+    public function getDoctorSettings()
+    {
+        // Start output buffering IMMEDIATELY
+        if (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        ob_start();
+        
+        header('Content-Type: application/json; charset=utf-8');
+        
+        // Check authentication for API
+        if (!$this->auth->check()) {
+            ob_clean();
+            http_response_code(401);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+        
+        $user = $this->auth->user();
+        if (!in_array($user['role'], ['doctor', 'admin'])) {
+            ob_clean();
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+        
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT setting_key, setting_value, setting_type 
+                FROM doctor_settings 
+                WHERE user_id = ?
+            ");
+            $stmt->execute([$user['id']]);
+            $settings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $result = [];
+            foreach ($settings as $setting) {
+                $key = $setting['setting_key'];
+                $value = $setting['setting_value'];
+                $type = $setting['setting_type'];
+                
+                // Convert value based on type
+                switch ($type) {
+                    case 'integer':
+                        $result[$key] = (int) $value;
+                        break;
+                    case 'boolean':
+                        $result[$key] = (bool) $value;
+                        break;
+                    case 'json':
+                        $result[$key] = json_decode($value, true);
+                        break;
+                    default:
+                        $result[$key] = $value;
+                }
+            }
+            
+            ob_clean();
+            echo json_encode([
+                'success' => true,
+                'settings' => $result
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        } catch (\Exception $e) {
+            ob_clean();
+            http_response_code(500);
+            error_log("Error getting doctor settings: " . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'An error occurred while loading settings'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+    }
+
+    /**
+     * Update doctor settings (API endpoint)
+     */
+    public function updateDoctorSettings()
+    {
+        // Start output buffering IMMEDIATELY
+        if (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        ob_start();
+        
+        header('Content-Type: application/json; charset=utf-8');
+        
+        // Check authentication for API
+        if (!$this->auth->check()) {
+            ob_clean();
+            http_response_code(401);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+        
+        $user = $this->auth->user();
+        if (!in_array($user['role'], ['doctor', 'admin'])) {
+            ob_clean();
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+        
+        // Get JSON input
+        $rawInput = file_get_contents('php://input');
+        error_log("[DOCTOR SETTINGS] Raw input: " . $rawInput);
+        
+        $input = json_decode($rawInput, true);
+        
+        if (!$input || !is_array($input)) {
+            error_log("[DOCTOR SETTINGS] Invalid input data. Raw: " . $rawInput);
+            ob_clean();
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Invalid input data',
+                'debug' => ['raw_input' => $rawInput, 'decoded' => $input]
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+        
+        error_log("[DOCTOR SETTINGS] Input received: " . json_encode($input));
+        error_log("[DOCTOR SETTINGS] User ID: " . $user['id']);
+        
+        // Allowed settings keys
+        $allowedSettings = [
+            'notes_dashboard_height',
+            'notes_dashboard_width',
+            'dashboard_cards_order'
+        ];
+        
+        try {
+            $this->pdo->beginTransaction();
+            
+            $savedCount = 0;
+            foreach ($input as $key => $value) {
+                if (!in_array($key, $allowedSettings)) {
+                    error_log("[DOCTOR SETTINGS] Skipping disallowed key: " . $key);
+                    continue;
+                }
+                
+                // Determine setting type
+                $settingType = 'string';
+                if (is_int($value) || (is_string($value) && is_numeric($value) && strpos($value, '.') === false)) {
+                    $settingType = 'integer';
+                    $value = (int) $value;
+                } elseif (is_bool($value)) {
+                    $settingType = 'boolean';
+                } elseif (is_array($value)) {
+                    $value = json_encode($value);
+                    $settingType = 'json';
+                } elseif ($key === 'dashboard_cards_order' && is_string($value)) {
+                    // dashboard_cards_order is already a JSON string, keep it as string
+                    $settingType = 'string';
+                }
+                
+                // Convert boolean to string for database storage
+                if ($settingType === 'boolean') {
+                    $dbValue = $value ? '1' : '0';
+                } else {
+                    // For dashboard_cards_order, it's already a JSON string, keep it as is
+                    if ($key === 'dashboard_cards_order' && is_string($value)) {
+                        $dbValue = $value; // Keep the JSON string as is
+                    } else {
+                        $dbValue = (string) $value;
+                    }
+                }
+                
+                error_log("[DOCTOR SETTINGS] Saving: key=$key, value=$dbValue, type=$settingType");
+                
+                // Insert or update setting
+                $stmt = $this->pdo->prepare("
+                    INSERT INTO doctor_settings (user_id, setting_key, setting_value, setting_type) 
+                    VALUES (?, ?, ?, ?) 
+                    ON DUPLICATE KEY UPDATE 
+                    setting_value = VALUES(setting_value), 
+                    setting_type = VALUES(setting_type),
+                    updated_at = CURRENT_TIMESTAMP
+                ");
+                $result = $stmt->execute([$user['id'], $key, $dbValue, $settingType]);
+                
+                if ($result) {
+                    $savedCount++;
+                    error_log("[DOCTOR SETTINGS] Successfully saved: $key = $dbValue");
+                } else {
+                    error_log("[DOCTOR SETTINGS] Failed to save: $key");
+                }
+            }
+            
+            $this->pdo->commit();
+            
+            error_log("[DOCTOR SETTINGS] Transaction committed. Saved $savedCount settings.");
+            
+            ob_clean();
+            echo json_encode([
+                'success' => true,
+                'message' => 'Settings updated successfully',
+                'saved_count' => $savedCount
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        } catch (\Exception $e) {
+            $this->pdo->rollBack();
+            ob_clean();
+            http_response_code(500);
+            error_log("[DOCTOR SETTINGS] Error: " . $e->getMessage());
+            error_log("[DOCTOR SETTINGS] Stack trace: " . $e->getTraceAsString());
+            echo json_encode([
+                'success' => false,
+                'message' => 'An error occurred while updating settings',
+                'error' => $e->getMessage()
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             ob_end_flush();
             exit;

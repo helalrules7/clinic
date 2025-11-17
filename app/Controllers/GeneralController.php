@@ -21,7 +21,7 @@ class GeneralController
         $this->view = new View();
         $this->auth = new Auth();
     }
-    
+        
     private function requireAuth()
     {
         // Check if user is authenticated

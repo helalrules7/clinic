@@ -102,14 +102,25 @@
 </div>
 
 <!-- Quick Actions -->
-<div class="row mb-4">
+<div class="row mb-4 dashboard-card-row" data-card-id="quick-actions">
     <div class="col-12">
-        <div class="card shadow">
-            <div class="card-header py-3">
+        <div class="card shadow dashboard-card" data-card-id="quick-actions">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">
                     <i class="bi bi-lightning me-2"></i>
                     Quick Actions
                 </h6>
+                <div class="d-flex align-items-center gap-1">
+                    <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardUp('quick-actions')" title="Move up">
+                        <i class="bi bi-arrow-up"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardDown('quick-actions')" title="Move down">
+                        <i class="bi bi-arrow-down"></i>
+                    </button>
+                    <div class="dashboard-card-drag-handle" title="Drag to reorder">
+                        <i class="bi bi-grip-vertical text-muted"></i>
+                    </div>
+                </div>
             </div>
             <div class="card-body">
                 <div class="row g-2">
@@ -174,24 +185,36 @@
 </div>
 
 <!-- Notes Dashboard -->
-<div class="row mb-4">
+<div class="row mb-4 dashboard-card-row" data-card-id="notes-dashboard">
     <div class="col-12">
-        <div class="card shadow">
+        <div class="card shadow dashboard-card" id="notesDashboardCard" data-card-id="notes-dashboard">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">
                     <i class="bi bi-sticky me-2"></i>
                     Notes Dashboard
                 </h6>
                 <div class="d-flex align-items-center gap-2">
+
                     <button class="btn btn-sm btn-success" id="dashboardAddNoteBtnHeader" onclick="dashboardAddNote()">
                         <i class="bi bi-plus-circle me-1"></i>Add Note
                     </button>
                     <a href="/doctor/notes" class="btn btn-sm btn-primary">
                         <i class="bi bi-arrow-right-circle me-1"></i>Open Notes Dashboard
                     </a>
+                    <div class="d-flex align-items-center gap-1 me-2">
+                        <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardUp('notes-dashboard')" title="Move up">
+                            <i class="bi bi-arrow-up"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardDown('notes-dashboard')" title="Move down">
+                            <i class="bi bi-arrow-down"></i>
+                        </button>
+                        <div class="dashboard-card-drag-handle" title="Drag to reorder">
+                            <i class="bi bi-grip-vertical text-muted"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body" id="notesDashboardCardBody" style="position: relative; overflow: hidden;">
                 <div id="dashboardNotesContainer" class="dashboard-notes-container">
                     <div class="text-center py-3" id="dashboardNotesLoading">
                         <div class="spinner-border text-primary" role="status">
@@ -203,24 +226,36 @@
                         <p class="text-muted mt-3 mb-0">No notes yet. Click "Add Note" to create your first note.</p>
                     </div>
                 </div>
+                <div class="dashboard-notes-resize-handle" id="notesDashboardResizeHandle" title="Drag to resize"></div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Today's Alerts -->
-<div class="row mb-4">
+<div class="row mb-4 dashboard-card-row" data-card-id="today-alerts">
     <div class="col-12">
-        <div class="card shadow">
+        <div class="card shadow dashboard-card" data-card-id="today-alerts">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-warning">
                     <i class="bi bi-bell me-2"></i>
                     Today's Alerts
                 </h6>
                 <div class="d-flex align-items-center gap-2">
-                    <a href="/doctor/alerts" class="btn btn-sm btn-outline-warning">
+                    <a href="/doctor/alerts" class="btn btn-sm btn-outline-warning manage-alerts-btn">
                         <i class="bi bi-gear me-1"></i>Manage Alerts
                     </a>
+                    <div class="d-flex align-items-center gap-1 me-2">
+                        <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardUp('today-alerts')" title="Move up">
+                            <i class="bi bi-arrow-up"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardDown('today-alerts')" title="Move down">
+                            <i class="bi bi-arrow-down"></i>
+                        </button>
+                        <div class="dashboard-card-drag-handle" title="Drag to reorder">
+                            <i class="bi bi-grip-vertical text-muted"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
@@ -236,16 +271,17 @@
     </div>
 </div>
 
-<div class="row">
+<div class="row mb-4 dashboard-card-row" data-card-id="upcoming-appointments">
     <!-- Upcoming Appointments -->
-    <div class="col-12 mb-4">
-        <div class="card shadow">
+    <div class="col-12">
+        <div class="card shadow dashboard-card" data-card-id="upcoming-appointments">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">
                     <i class="bi bi-calendar-event me-2"></i>
                     Upcoming Appointments
                 </h6>
                 <div class="d-flex align-items-center gap-2">
+
                     <select class="form-select form-select-sm" id="upcomingPerPageSelect" style="width: auto;">
                         <option value="5">5 per page</option>
                         <option value="10" selected>10 per page</option>
@@ -255,6 +291,17 @@
                     <a href="/doctor/calendar" class="btn btn-sm btn-primary">
                         View All
                     </a>
+                    <div class="d-flex align-items-center gap-1 me-2">
+                        <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardUp('upcoming-appointments')" title="Move up">
+                            <i class="bi bi-arrow-up"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardDown('upcoming-appointments')" title="Move down">
+                            <i class="bi bi-arrow-down"></i>
+                        </button>
+                        <div class="dashboard-card-drag-handle" title="Drag to reorder">
+                            <i class="bi bi-grip-vertical text-muted"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
@@ -274,22 +321,34 @@
     </div>
 </div>
 
-<div class="row">
+<div class="row mb-4 dashboard-card-row" data-card-id="missed-appointments">
     <!-- Missed Appointments -->
-    <div class="col-12 mb-4">
-        <div class="card shadow">
+    <div class="col-12">
+        <div class="card shadow dashboard-card" data-card-id="missed-appointments">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">
                     <i class="bi bi-exclamation-triangle me-2"></i>
                     Missed Appointments
                 </h6>
                 <div class="d-flex align-items-center gap-2">
+
                     <select class="form-select form-select-sm" id="missedPerPageSelect" style="width: auto;">
                         <option value="5">5 per page</option>
                         <option value="10" selected>10 per page</option>
                         <option value="20">20 per page</option>
                         <option value="50">50 per page</option>
                     </select>
+                    <div class="d-flex align-items-center gap-1 me-2">
+                        <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardUp('missed-appointments')" title="Move up">
+                            <i class="bi bi-arrow-up"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardDown('missed-appointments')" title="Move down">
+                            <i class="bi bi-arrow-down"></i>
+                        </button>
+                        <div class="dashboard-card-drag-handle" title="Drag to reorder">
+                            <i class="bi bi-grip-vertical text-muted"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
@@ -310,14 +369,25 @@
 </div>
 
 <!-- Visual Analytics -->
-<div class="row">
-    <div class="col-12 mb-4">
-        <div class="card shadow">
+<div class="row mb-4 dashboard-card-row" data-card-id="visual-analytics">
+    <div class="col-12">
+        <div class="card shadow dashboard-card" data-card-id="visual-analytics">
         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">
                     <i class="bi bi-graph-up me-2"></i>
                     Visual Analytics
                 </h6>
+                <div class="d-flex align-items-center gap-1">
+                    <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardUp('visual-analytics')" title="Move up">
+                        <i class="bi bi-arrow-up"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardDown('visual-analytics')" title="Move down">
+                        <i class="bi bi-arrow-down"></i>
+                    </button>
+                    <div class="dashboard-card-drag-handle" title="Drag to reorder">
+                        <i class="bi bi-grip-vertical text-muted"></i>
+                    </div>
+                </div>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -382,9 +452,9 @@
 </div>
 
 <!-- Recent Timeline Events -->
-<div class="row">
-    <div class="col-12 mb-4">
-        <div class="card shadow">
+<div class="row mb-4 dashboard-card-row" data-card-id="recent-activity">
+    <div class="col-12">
+        <div class="card shadow dashboard-card" data-card-id="recent-activity">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">
                     <i class="bi bi-activity me-2"></i>
@@ -397,6 +467,17 @@
                         <option value="20">20 per page</option>
                         <option value="50">50 per page</option>
                     </select>
+                    <div class="d-flex align-items-center gap-1 me-2">
+                        <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardUp('recent-activity')" title="Move up">
+                            <i class="bi bi-arrow-up"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardDown('recent-activity')" title="Move down">
+                            <i class="bi bi-arrow-down"></i>
+                        </button>
+                        <div class="dashboard-card-drag-handle" title="Drag to reorder">
+                            <i class="bi bi-grip-vertical text-muted"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
@@ -450,12 +531,12 @@
 }
 
 .card-header {
-    background-color: var(--card) !important;
+    background-color: transparent !important;
     border-bottom-color: var(--border) !important;
 }
 
 .card-body {
-    background-color: var(--card) !important;
+    background-color: transparent !important;
 }
 
 /* Text Colors */
@@ -648,6 +729,25 @@
 .btn-outline-warning:hover {
     background-color: #f6c23e;
     border-color: #f6c23e;
+}
+
+/* Manage Alerts button hover - black text and icon */
+.manage-alerts-btn:hover {
+    color: #000000 !important;
+    background-color: #f6c23e;
+    border-color: #f6c23e;
+}
+
+.manage-alerts-btn:hover i {
+    color: #000000 !important;
+}
+
+.dark .manage-alerts-btn:hover {
+    color: #000000 !important;
+}
+
+.dark .manage-alerts-btn:hover i {
+    color: #000000 !important;
 }
 
 .btn-outline-danger {
@@ -1113,17 +1213,14 @@
 }
 
 .chart-card .card-header {
-    background-color: var(--card) !important;
     border-bottom-color: var(--border) !important;
 }
 
 .chart-card .card-body {
-    background-color: #1e293b !important;
     border-radius: 8px;
 }
 
 .dark .chart-card .card-body {
-    background-color: #1e293b !important;
 }
 
 /* Dark Mode Table Styles */
@@ -1194,7 +1291,8 @@ canvas {
 .dashboard-notes-container {
     position: relative;
     width: 100%;
-    min-height: 300px;
+    height: 100%;
+    min-height: 365px;
     padding: 1rem;
     background: 
         linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%),
@@ -1209,7 +1307,115 @@ canvas {
     border-radius: 12px;
     border: 1px solid var(--border);
     box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.03);
-    overflow: hidden;
+    overflow: auto;
+}
+
+/* Resize handle for Notes Dashboard */
+.dashboard-notes-resize-handle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    cursor: nwse-resize;
+    background: linear-gradient(-45deg, transparent 30%, rgba(0, 0, 0, 0.2) 30%, rgba(0, 0, 0, 0.2) 35%, transparent 35%, transparent 65%, rgba(0, 0, 0, 0.2) 65%, rgba(0, 0, 0, 0.2) 70%, transparent 70%);
+    z-index: 1000;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.dashboard-notes-resize-handle:hover {
+    opacity: 1;
+}
+
+.dark .dashboard-notes-resize-handle {
+    background: linear-gradient(-45deg, transparent 30%, rgba(255, 255, 255, 0.3) 30%, rgba(255, 255, 255, 0.3) 35%, transparent 35%, transparent 65%, rgba(255, 255, 255, 0.3) 65%, rgba(255, 255, 255, 0.3) 70%, transparent 70%);
+}
+
+#notesDashboardCardBody {
+    min-height: 400px;
+    resize: none;
+}
+
+/* Dashboard Cards Drag and Drop Styles */
+.dashboard-card-row {
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.dashboard-card-row.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+}
+
+.dashboard-card-drag-handle {
+    cursor: move;
+    cursor: grab;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dashboard-card-drag-handle:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: scale(1.1);
+}
+
+.dashboard-card-drag-handle:active {
+    cursor: grabbing;
+}
+
+.dark .dashboard-card-drag-handle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-card-drag-handle i {
+    font-size: 1.2rem;
+}
+
+/* Dashboard Card Move Buttons */
+.dashboard-card-move-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+    min-width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    transition: all 0.2s ease;
+}
+
+.dashboard-card-move-btn:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    transform: scale(1.05);
+}
+
+.dashboard-card-move-btn:active {
+    transform: scale(0.95);
+}
+
+.dashboard-card-move-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.dark .dashboard-card-move-btn {
+    background: var(--card);
+    color: var(--text);
+    border-color: var(--border);
+}
+
+.dark .dashboard-card-move-btn:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
 }
 
 .dark .dashboard-notes-container {
@@ -1909,7 +2115,23 @@ function escapeHtml(text) {
 
 document.addEventListener('DOMContentLoaded', function() {
     loadTodayAlerts();
+    loadDoctorSettings().then(() => {
+        // Initialize resize handle after settings are loaded
+        initializeNotesDashboardResize();
+        // Load and apply card order
+        loadDashboardCardOrder().then(() => {
+            // Update buttons after loading order
+            updateCardButtons();
+        });
+    });
+    
+    // Initial button update (in case loadDashboardCardOrder hasn't finished)
+    setTimeout(() => {
+        updateCardButtons();
+    }, 200);
     loadDashboardNotes();
+    // Initialize drag and drop for cards
+    initializeDashboardCardDragDrop();
     // Initialize Bootstrap tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -2598,6 +2820,434 @@ document.addEventListener('DOMContentLoaded', function() {
     let dashboardIsDragging = false;
     let dashboardCurrentDragNote = null;
     let dashboardDragOffset = { x: 0, y: 0 };
+    
+    // Notes Dashboard Resize Management
+    let notesDashboardIsResizing = false;
+    let notesDashboardResizeStart = { x: 0, y: 0, height: 0 };
+    const DEFAULT_NOTES_DASHBOARD_HEIGHT = 400;
+    
+    // Load doctor settings
+    async function loadDoctorSettings() {
+        try {
+            const response = await fetch('/api/doctor/settings', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.success && data.settings) {
+                const cardBody = document.getElementById('notesDashboardCardBody');
+                if (cardBody) {
+                    // Apply saved height if exists
+                    if (data.settings.notes_dashboard_height) {
+                        cardBody.style.height = `${data.settings.notes_dashboard_height}px`;
+                    } else {
+                        cardBody.style.height = `${DEFAULT_NOTES_DASHBOARD_HEIGHT}px`;
+                    }
+                }
+            }
+        } catch (error) {
+            // Set default height on error
+            const cardBody = document.getElementById('notesDashboardCardBody');
+            if (cardBody) {
+                cardBody.style.height = `${DEFAULT_NOTES_DASHBOARD_HEIGHT}px`;
+            }
+        }
+    }
+    
+    // Save doctor settings
+    async function saveDoctorSettings(settings) {
+        try {
+            const response = await fetch('/api/doctor/settings', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(settings)
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            return data.success === true;
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    // Notes Dashboard Resize Functions
+    function startNotesDashboardResize(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        notesDashboardIsResizing = true;
+        const cardBody = document.getElementById('notesDashboardCardBody');
+        
+        if (!cardBody) {
+            notesDashboardIsResizing = false;
+            return;
+        }
+        
+        const rect = cardBody.getBoundingClientRect();
+        
+        notesDashboardResizeStart.x = event.clientY;
+        notesDashboardResizeStart.height = rect.height;
+        
+        
+        document.addEventListener('mousemove', onNotesDashboardResize);
+        document.addEventListener('mouseup', stopNotesDashboardResize);
+    }
+    
+    function onNotesDashboardResize(event) {
+        if (!notesDashboardIsResizing) return;
+        
+        event.preventDefault();
+        
+        const cardBody = document.getElementById('notesDashboardCardBody');
+        if (!cardBody) {
+            stopNotesDashboardResize();
+            return;
+        }
+        
+        const deltaY = event.clientY - notesDashboardResizeStart.x;
+        const newHeight = notesDashboardResizeStart.height + deltaY;
+        
+        // Min height: 400px, Max height: 800px
+        const minHeight = 400;
+        const maxHeight = 800;
+        
+        const constrainedHeight = Math.max(minHeight, Math.min(newHeight, maxHeight));
+        
+        cardBody.style.height = `${constrainedHeight}px`;
+        // Update container height as well
+        const container = document.getElementById('dashboardNotesContainer');
+        if (container) {
+            container.style.height = '100%';
+        }
+    }
+    
+    function stopNotesDashboardResize() {
+        if (notesDashboardIsResizing) {
+            const cardBody = document.getElementById('notesDashboardCardBody');
+            if (cardBody) {
+                const height = parseInt(cardBody.style.height) || DEFAULT_NOTES_DASHBOARD_HEIGHT;
+                
+                // Save to database
+                saveDoctorSettings({
+                    notes_dashboard_height: height
+                });
+            }
+            
+            notesDashboardIsResizing = false;
+        }
+        
+        document.removeEventListener('mousemove', onNotesDashboardResize);
+        document.removeEventListener('mouseup', stopNotesDashboardResize);
+    }
+    
+    // Initialize resize handle - wait for DOM to be ready
+    function initializeNotesDashboardResize() {
+        const notesDashboardResizeHandle = document.getElementById('notesDashboardResizeHandle');
+        if (notesDashboardResizeHandle) {
+            // Remove any existing listeners to prevent duplicates
+            const newHandle = notesDashboardResizeHandle.cloneNode(true);
+            notesDashboardResizeHandle.parentNode.replaceChild(newHandle, notesDashboardResizeHandle);
+            
+            // Add event listener to the new element
+            newHandle.addEventListener('mousedown', startNotesDashboardResize);
+        } else {
+            // Retry after a short delay
+            setTimeout(initializeNotesDashboardResize, 100);
+        }
+    }
+    
+    // Dashboard Cards Drag and Drop Management
+    let dashboardCardDragging = null;
+    let dashboardCardDragOffset = { x: 0, y: 0 };
+    
+    // Default card order
+    const DEFAULT_CARD_ORDER = [
+        'quick-actions',
+        'notes-dashboard',
+        'today-alerts',
+        'upcoming-appointments',
+        'missed-appointments',
+        'visual-analytics',
+        'recent-activity'
+    ];
+    
+    // Initialize drag and drop for dashboard cards
+    function initializeDashboardCardDragDrop() {
+        const dragHandles = document.querySelectorAll('.dashboard-card-drag-handle');
+        dragHandles.forEach(handle => {
+            handle.addEventListener('mousedown', startCardDrag);
+        });
+    }
+    
+    // Start dragging a card
+    function startCardDrag(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const cardRow = event.target.closest('.dashboard-card-row');
+        if (!cardRow) return;
+        
+        dashboardCardDragging = cardRow;
+        const rect = cardRow.getBoundingClientRect();
+        
+        dashboardCardDragOffset.x = event.clientX - rect.left;
+        dashboardCardDragOffset.y = event.clientY - rect.top;
+        
+        cardRow.classList.add('dragging');
+        cardRow.style.position = 'relative';
+        cardRow.style.zIndex = '1000';
+        
+        document.addEventListener('mousemove', onCardDrag);
+        document.addEventListener('mouseup', stopCardDrag);
+    }
+    
+    // Handle card dragging
+    function onCardDrag(event) {
+        if (!dashboardCardDragging) return;
+        
+        event.preventDefault();
+        
+        const allCards = Array.from(document.querySelectorAll('.dashboard-card-row'));
+        const draggingIndex = allCards.indexOf(dashboardCardDragging);
+        
+        if (draggingIndex === -1) return;
+        
+        // Find the card we're hovering over and determine new position
+        let targetCard = null;
+        let insertBefore = false;
+        
+        for (let i = 0; i < allCards.length; i++) {
+            if (i === draggingIndex) continue;
+            
+            const cardRect = allCards[i].getBoundingClientRect();
+            const cardCenterY = cardRect.top + (cardRect.height / 2);
+            
+            // Check if mouse is over this card
+            if (event.clientY >= cardRect.top && event.clientY <= cardRect.bottom) {
+                targetCard = allCards[i];
+                // Determine if we should insert before or after based on mouse position
+                insertBefore = event.clientY < cardCenterY;
+                break;
+            }
+        }
+        
+        // Reorder cards only if we found a valid target
+        if (targetCard && targetCard !== dashboardCardDragging) {
+            const container = dashboardCardDragging.parentElement;
+            if (!container) return;
+            
+            try {
+                // Use nextElementSibling instead of nextSibling to skip text nodes
+                if (insertBefore) {
+                    // Insert before target card
+                    if (targetCard.parentElement === container) {
+                        container.insertBefore(dashboardCardDragging, targetCard);
+                    }
+                } else {
+                    // Insert after target card
+                    const nextElement = targetCard.nextElementSibling;
+                    if (nextElement && nextElement.parentElement === container) {
+                        container.insertBefore(dashboardCardDragging, nextElement);
+                    } else {
+                        // Target is the last element, append dragging card
+                        container.appendChild(dashboardCardDragging);
+                    }
+                }
+            } catch (e) {
+                // Silently handle error
+            }
+        }
+    }
+    
+    // Stop dragging a card
+    function stopCardDrag() {
+        if (dashboardCardDragging) {
+            dashboardCardDragging.classList.remove('dragging');
+            dashboardCardDragging.style.position = '';
+            dashboardCardDragging.style.zIndex = '';
+            
+            // Save new order
+            saveDashboardCardOrder();
+            
+            // Update buttons after drag
+            updateCardButtons();
+            
+            dashboardCardDragging = null;
+        }
+        
+        document.removeEventListener('mousemove', onCardDrag);
+        document.removeEventListener('mouseup', stopCardDrag);
+    }
+    
+    // Update card buttons visibility based on position
+    function updateCardButtons() {
+        const allCards = Array.from(document.querySelectorAll('.dashboard-card-row'));
+        
+        allCards.forEach((card, index) => {
+            const cardId = card.getAttribute('data-card-id');
+            const upButton = card.querySelector(`button[onclick="moveCardUp('${cardId}')"]`);
+            const downButton = card.querySelector(`button[onclick="moveCardDown('${cardId}')"]`);
+            
+            // Hide Up button for first card
+            if (upButton) {
+                if (index === 0) {
+                    upButton.style.display = 'none';
+                } else {
+                    upButton.style.display = 'flex';
+                }
+            }
+            
+            // Hide Down button for last card
+            if (downButton) {
+                if (index === allCards.length - 1) {
+                    downButton.style.display = 'none';
+                } else {
+                    downButton.style.display = 'flex';
+                }
+            }
+        });
+    }
+    
+    // Move card up
+    function moveCardUp(cardId) {
+        const allCards = Array.from(document.querySelectorAll('.dashboard-card-row'));
+        const currentCard = allCards.find(card => card.getAttribute('data-card-id') === cardId);
+        
+        if (!currentCard) return;
+        
+        const currentIndex = allCards.indexOf(currentCard);
+        if (currentIndex === 0) return; // Already at top
+        
+        const container = currentCard.parentElement;
+        if (!container) return;
+        
+        const previousCard = allCards[currentIndex - 1];
+        if (previousCard) {
+            container.insertBefore(currentCard, previousCard);
+            saveDashboardCardOrder();
+            updateCardButtons(); // Update buttons after move
+        }
+    }
+    
+    // Move card down
+    function moveCardDown(cardId) {
+        const allCards = Array.from(document.querySelectorAll('.dashboard-card-row'));
+        const currentCard = allCards.find(card => card.getAttribute('data-card-id') === cardId);
+        
+        if (!currentCard) return;
+        
+        const currentIndex = allCards.indexOf(currentCard);
+        if (currentIndex === allCards.length - 1) return; // Already at bottom
+        
+        const container = currentCard.parentElement;
+        if (!container) return;
+        
+        const nextCard = allCards[currentIndex + 1];
+        if (nextCard) {
+            const nextNextSibling = nextCard.nextElementSibling;
+            if (nextNextSibling) {
+                container.insertBefore(currentCard, nextNextSibling);
+            } else {
+                container.appendChild(currentCard);
+            }
+            saveDashboardCardOrder();
+            updateCardButtons(); // Update buttons after move
+        }
+    }
+    
+    // Make functions global
+    window.moveCardUp = moveCardUp;
+    window.moveCardDown = moveCardDown;
+    
+    // Save card order to database
+    async function saveDashboardCardOrder() {
+        try {
+            const cards = Array.from(document.querySelectorAll('.dashboard-card-row'));
+            const order = cards.map(card => card.getAttribute('data-card-id'));
+            
+            await saveDoctorSettings({
+                dashboard_cards_order: JSON.stringify(order)
+            });
+        } catch (error) {
+            // Silently handle error
+        }
+    }
+    
+    // Load and apply card order from database
+    async function loadDashboardCardOrder() {
+        try {
+            const response = await fetch('/api/doctor/settings', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (!response.ok) return;
+            
+            const data = await response.json();
+            
+            if (data.success && data.settings && data.settings.dashboard_cards_order) {
+                let order;
+                try {
+                    order = typeof data.settings.dashboard_cards_order === 'string' 
+                        ? JSON.parse(data.settings.dashboard_cards_order)
+                        : data.settings.dashboard_cards_order;
+                } catch (e) {
+                    order = DEFAULT_CARD_ORDER;
+                }
+                
+                // Validate order
+                const validOrder = order.filter(id => DEFAULT_CARD_ORDER.includes(id));
+                const missingCards = DEFAULT_CARD_ORDER.filter(id => !validOrder.includes(id));
+                const finalOrder = [...validOrder, ...missingCards];
+                
+                // Apply order - find the container that holds all cards
+                const cards = Array.from(document.querySelectorAll('.dashboard-card-row'));
+                if (cards.length === 0) return;
+                
+                const cardMap = new Map(cards.map(card => [card.getAttribute('data-card-id'), card]));
+                
+                // Get the parent container (should be the main content area)
+                const firstCard = cards[0];
+                if (!firstCard) return;
+                
+                const mainContainer = firstCard.parentElement;
+                if (!mainContainer) return;
+                
+                // Reorder cards based on finalOrder
+                finalOrder.forEach(cardId => {
+                    const card = cardMap.get(cardId);
+                    if (card && card.parentElement === mainContainer) {
+                        // Remove card from current position and append to end (will be reordered)
+                        mainContainer.appendChild(card);
+                    }
+                });
+                
+                // Update buttons after loading order
+                updateCardButtons();
+            }
+        } catch (error) {
+            // Silently handle error
+        }
+    }
     
     function getDashboardColorClass(backgroundColor) {
         for (const [key, value] of Object.entries(dashboardColorMap)) {

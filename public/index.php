@@ -142,6 +142,10 @@ try {
     $router->put('/api/notes/{id}', 'DoctorController@updateNote');
     $router->delete('/api/notes/{id}', 'DoctorController@deleteNote');
     
+    // Doctor settings routes
+    $router->get('/api/doctor/settings', 'DoctorController@getDoctorSettings');
+    $router->put('/api/doctor/settings', 'DoctorController@updateDoctorSettings');
+    
     // Medical History routes
     $router->post('/api/patients/{id}/medical-history', 'ApiController@createMedicalHistory');
     $router->get('/api/patients/{id}/medical-history/{historyId}', 'ApiController@getMedicalHistoryEntry');
