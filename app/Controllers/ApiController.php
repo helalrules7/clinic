@@ -430,7 +430,138 @@ class ApiController
             return $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
     }
+    
+    /**
+     * Search appointments for autocomplete (used in notes)
+     * Searches by appointment ID or patient name
+     */
+    public function searchAppointments()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
 
+            $query = $_GET['q'] ?? '';
+            $limit = min((int)($_GET['limit'] ?? 10), 20);
+            
+            if (strlen($query) < 1) {
+                return $this->jsonResponse(['ok' => true, 'data' => []]);
+            }
+
+            $user = $this->auth->user();
+            $doctorId = $this->getDoctorId($user['id']);
+            
+            // If user is admin, allow searching all appointments; otherwise filter by doctor_id
+            $isAdmin = in_array($user['role'], ['admin']);
+            
+            // Search by appointment ID (if query is numeric) or patient name
+            if (is_numeric($query)) {
+                // Search by appointment ID
+                if ($isAdmin || $doctorId) {
+                    if ($isAdmin) {
+                        // Admin can see all appointments
+                        $stmt = $this->pdo->prepare("
+                            SELECT 
+                                a.id,
+                                a.date,
+                                a.start_time,
+                                a.end_time,
+                                a.status,
+                                CONCAT(p.first_name, ' ', p.last_name) as patient_name,
+                                p.id as patient_id
+                            FROM appointments a
+                            JOIN patients p ON a.patient_id = p.id
+                            WHERE a.id = ?
+                            ORDER BY a.date DESC, a.start_time DESC
+                            LIMIT ?
+                        ");
+                        $stmt->execute([$query, $limit]);
+                    } else {
+                        // Doctor can only see their own appointments
+                        $stmt = $this->pdo->prepare("
+                            SELECT 
+                                a.id,
+                                a.date,
+                                a.start_time,
+                                a.end_time,
+                                a.status,
+                                CONCAT(p.first_name, ' ', p.last_name) as patient_name,
+                                p.id as patient_id
+                            FROM appointments a
+                            JOIN patients p ON a.patient_id = p.id
+                            WHERE a.id = ? AND a.doctor_id = ?
+                            ORDER BY a.date DESC, a.start_time DESC
+                            LIMIT ?
+                        ");
+                        $stmt->execute([$query, $doctorId, $limit]);
+                    }
+                } else {
+                    // User is not a doctor and not admin - return empty
+                    return $this->jsonResponse(['ok' => true, 'data' => []]);
+                }
+            } else {
+                // Search by patient name
+                $searchTerm = '%' . $query . '%';
+                if ($isAdmin || $doctorId) {
+                    if ($isAdmin) {
+                        // Admin can see all appointments
+                        $stmt = $this->pdo->prepare("
+                            SELECT 
+                                a.id,
+                                a.date,
+                                a.start_time,
+                                a.end_time,
+                                a.status,
+                                CONCAT(p.first_name, ' ', p.last_name) as patient_name,
+                                p.id as patient_id
+                            FROM appointments a
+                            JOIN patients p ON a.patient_id = p.id
+                            WHERE (p.first_name LIKE ? OR p.last_name LIKE ? OR CONCAT(p.first_name, ' ', p.last_name) LIKE ?)
+                            ORDER BY a.date DESC, a.start_time DESC
+                            LIMIT ?
+                        ");
+                        $stmt->execute([$searchTerm, $searchTerm, $searchTerm, $limit]);
+                    } else {
+                        // Doctor can only see their own appointments
+                        $stmt = $this->pdo->prepare("
+                            SELECT 
+                                a.id,
+                                a.date,
+                                a.start_time,
+                                a.end_time,
+                                a.status,
+                                CONCAT(p.first_name, ' ', p.last_name) as patient_name,
+                                p.id as patient_id
+                            FROM appointments a
+                            JOIN patients p ON a.patient_id = p.id
+                            WHERE a.doctor_id = ? 
+                            AND (p.first_name LIKE ? OR p.last_name LIKE ? OR CONCAT(p.first_name, ' ', p.last_name) LIKE ?)
+                            ORDER BY a.date DESC, a.start_time DESC
+                            LIMIT ?
+                        ");
+                        $stmt->execute([$doctorId, $searchTerm, $searchTerm, $searchTerm, $limit]);
+                    }
+                } else {
+                    // User is not a doctor and not admin - return empty
+                    return $this->jsonResponse(['ok' => true, 'data' => []]);
+                }
+            }
+            
+            $appointments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => $appointments
+            ]);
+
+        } catch (\Exception $e) {
+            error_log("Error searching appointments: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return $this->jsonResponse(['error' => 'Failed to search appointments: ' . $e->getMessage()], 500);
+        }
+    }
+    
     public function getPatient($id)
     {
         try {

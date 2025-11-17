@@ -735,6 +735,12 @@
                     </a>
                 </div>
                 <div class="nav-item">
+                    <a href="/doctor/notes" class="nav-link <?= $this->isActiveRoute('/doctor/notes') ? 'active' : '' ?>">
+                        <i class="bi bi-sticky"></i>
+                        Notes
+                    </a>
+                </div>
+                <div class="nav-item">
                     <a href="/doctor/settings" class="nav-link <?= $this->isActiveRoute('/doctor/settings') ? 'active' : '' ?>">
                         <i class="bi bi-gear"></i>
                         Settings

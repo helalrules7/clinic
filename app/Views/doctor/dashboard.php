@@ -112,30 +112,95 @@
                 </h6>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3 mb-3">
-                        <a href="/doctor/calendar" class="btn btn-outline-primary quick-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
-                            <i class="bi bi-calendar3 fa-2x mb-2"></i>
-                            <span>View Calendar</span>
+                <div class="row g-2">
+                    <div class="col-auto mb-2">
+                        <a href="/doctor/calendar" class="btn btn-outline-primary quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2">
+                            <i class="bi bi-calendar3 mb-1"></i>
+                            <span style="font-size: 0.75rem;">View Calendar</span>
                         </a>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <a href="/doctor/patients" class="btn btn-outline-success quick-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
-                            <i class="bi bi-people fa-2x mb-2"></i>
-                            <span>Patient List</span>
+                    <div class="col-auto mb-2">
+                        <a href="/doctor/patients" class="btn btn-outline-success quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2">
+                            <i class="bi bi-people mb-1"></i>
+                            <span style="font-size: 0.75rem;">Patient List</span>
                         </a>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <a href="/doctor/profile" class="btn btn-outline-info quick-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
-                            <i class="bi bi-person-circle fa-2x mb-2"></i>
-                            <span>My Profile</span>
+                    <div class="col-auto mb-2">
+                        <a href="/doctor/profile" class="btn btn-outline-info quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2">
+                            <i class="bi bi-person-circle mb-1"></i>
+                            <span style="font-size: 0.75rem;">My Profile</span>
                         </a>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <a href="/doctor/reports" class="btn btn-outline-warning quick-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
-                            <i class="bi bi-graph-up fa-2x mb-2"></i>
-                            <span>Reports</span>
+                    <div class="col-auto mb-2">
+                        <a href="/doctor/reports" class="btn btn-outline-warning quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2">
+                            <i class="bi bi-graph-up mb-1"></i>
+                            <span style="font-size: 0.75rem;">Reports</span>
                         </a>
+                    </div>
+                    <div class="col-auto mb-2">
+                        <a href="/doctor/alerts" class="btn btn-outline-danger quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2">
+                            <i class="bi bi-bell mb-1"></i>
+                            <span style="font-size: 0.75rem;">Alerts</span>
+                        </a>
+                    </div>
+                    <div class="col-auto mb-2">
+                        <a href="/doctor/drugs" class="btn btn-outline-success quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2">
+                            <i class="bi bi-capsule mb-1"></i>
+                            <span style="font-size: 0.75rem;">Drugs</span>
+                        </a>
+                    </div>
+                    <div class="col-auto mb-2">
+                        <a href="/doctor/notes" class="btn btn-outline-warning quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2">
+                            <i class="bi bi-sticky mb-1"></i>
+                            <span style="font-size: 0.75rem;">Notes</span>
+                        </a>
+                    </div>
+                    <div class="col-auto mb-2">
+                        <a href="/doctor/medications" class="btn btn-outline-info quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2">
+                            <i class="bi bi-prescription mb-1"></i>
+                            <span style="font-size: 0.75rem;">Prescriptions</span>
+                        </a>
+                    </div>
+                    <div class="col-auto mb-2">
+                        <a href="/doctor/glasses" class="btn btn-outline-primary quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2">
+                            <i class="bi bi-eyeglasses mb-1"></i>
+                            <span style="font-size: 0.75rem;">Glasses Prescriptions</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notes Dashboard -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-sticky me-2"></i>
+                    Notes Dashboard
+                </h6>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-success" id="dashboardAddNoteBtnHeader" onclick="dashboardAddNote()">
+                        <i class="bi bi-plus-circle me-1"></i>Add Note
+                    </button>
+                    <a href="/doctor/notes" class="btn btn-sm btn-primary">
+                        <i class="bi bi-arrow-right-circle me-1"></i>Open Notes Dashboard
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="dashboardNotesContainer" class="dashboard-notes-container">
+                    <div class="text-center py-3" id="dashboardNotesLoading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="text-center py-4" id="dashboardNotesEmpty" style="display: none;">
+                        <i class="bi bi-sticky text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3 mb-0">No notes yet. Click "Add Note" to create your first note.</p>
                     </div>
                 </div>
             </div>
@@ -585,6 +650,21 @@
     border-color: #f6c23e;
 }
 
+.btn-outline-danger {
+    color: var(--danger) !important;
+    border-color: var(--danger) !important;
+}
+
+.btn-outline-danger:hover {
+    background-color: var(--danger);
+    border-color: var(--danger);
+    color: white !important;
+}
+
+.btn-outline-danger:hover i {
+    color: white !important;
+}
+
 /* Dark Mode Button Hover States */
 .dark .btn-outline-primary:hover {
     background-color: var(--accent);
@@ -612,6 +692,21 @@
     background-color: #f6c23e;
     border-color: #f6c23e;
     color: #0b1220;
+}
+
+.dark .btn-outline-danger {
+    color: var(--danger) !important;
+    border-color: var(--danger) !important;
+}
+
+.dark .btn-outline-danger:hover {
+    background-color: var(--danger);
+    border-color: var(--danger);
+    color: white !important;
+}
+
+.dark .btn-outline-danger:hover i {
+    color: white !important;
 }
 
 /* Badge Styles for Dark Mode */
@@ -655,14 +750,16 @@
 
 /* Quick Actions Professional Styling */
 .quick-action-btn {
-    border-radius: 12px !important;
+    border-radius: 8px !important;
     border-width: 2px !important;
     transition: all 0.3s ease !important;
     font-weight: 500 !important;
     text-decoration: none !important;
     position: relative;
     overflow: hidden;
-    min-height: 120px;
+    min-width: 100px;
+    min-height: 60px;
+    white-space: nowrap;
 }
 
 .quick-action-btn:before {
@@ -726,6 +823,14 @@
     box-shadow: 0 8px 25px rgba(246, 194, 62, 0.3);
 }
 
+.quick-action-btn.btn-outline-danger:hover {
+    background: linear-gradient(135deg, var(--danger), #dc2626) !important;
+    border-color: var(--danger) !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+}
+
 /* Dark Mode Quick Actions */
 .dark .quick-action-btn.btn-outline-primary {
     color: var(--accent) !important;
@@ -765,6 +870,20 @@
 .dark .quick-action-btn.btn-outline-warning:hover {
     background: linear-gradient(135deg, #f6c23e, #d97706) !important;
     color: #0b1220 !important;
+}
+
+.dark .quick-action-btn.btn-outline-danger {
+    color: var(--danger) !important;
+    border-color: var(--danger) !important;
+}
+
+.dark .quick-action-btn.btn-outline-danger:hover {
+    background: linear-gradient(135deg, var(--danger), #dc2626) !important;
+    color: white !important;
+}
+
+.dark .quick-action-btn.btn-outline-danger:hover i {
+    color: white !important;
 }
 
 /* Patient Name Link Styles */
@@ -1070,6 +1189,631 @@ canvas {
 .dark canvas {
     filter: brightness(1);
 }
+
+/* Notes Dashboard Styles */
+.dashboard-notes-container {
+    position: relative;
+    width: 100%;
+    min-height: 300px;
+    padding: 1rem;
+    background: 
+        linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%),
+        repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 10px,
+            rgba(0, 0, 0, 0.02) 10px,
+            rgba(0, 0, 0, 0.02) 20px
+        ),
+        var(--bg);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+}
+
+.dark .dashboard-notes-container {
+    background: 
+        linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(74, 222, 128, 0.08) 100%),
+        repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 10px,
+            rgba(255, 255, 255, 0.02) 10px,
+            rgba(255, 255, 255, 0.02) 20px
+        ),
+        var(--bg);
+    border: 1px solid var(--border);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-note-widget {
+    position: absolute;
+    min-width: 250px;
+    min-height: 200px;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    cursor: move;
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    font-size: 0.85rem;
+}
+
+.dashboard-note-widget.color-white {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.dashboard-note-widget.color-red {
+    background: rgba(239, 68, 68, 0.85);
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+.dashboard-note-widget.color-black {
+    background: rgba(30, 41, 59, 0.85);
+    border-color: rgba(30, 41, 59, 0.4);
+}
+
+.dashboard-note-widget.color-dodgerblue {
+    background: rgba(30, 144, 255, 0.85);
+    border-color: rgba(30, 144, 255, 0.4);
+}
+
+.dashboard-note-widget.color-warning {
+    background: rgba(251, 191, 36, 0.85);
+    border-color: rgba(251, 191, 36, 0.4);
+}
+
+.dashboard-note-widget.color-success {
+    background: rgba(16, 185, 129, 0.85);
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+.dashboard-note-widget:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.dashboard-note-widget.dragging {
+    opacity: 0.8;
+    z-index: 10000 !important;
+    transform: rotate(1deg);
+}
+
+.dashboard-note-widget-header {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    cursor: move;
+}
+
+.dark .dashboard-note-widget-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(30, 41, 59, 0.5);
+}
+
+.dashboard-note-widget-title {
+    font-weight: 600;
+    font-size: 0.85rem;
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.dashboard-note-widget-title:focus {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.dashboard-note-widget-actions {
+    display: flex;
+    gap: 0.3rem;
+}
+
+.dashboard-note-widget-btn {
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(5px);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 0.7rem;
+    padding: 0;
+}
+
+.dashboard-note-widget-btn:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: scale(1.1);
+}
+
+.dashboard-note-widget-btn.delete {
+    color: var(--danger);
+}
+
+.dashboard-note-widget-btn.delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+.dark .dashboard-note-widget-btn {
+    background: rgba(30, 41, 59, 0.6);
+    color: var(--text);
+}
+
+.dark .dashboard-note-widget-btn:hover {
+    background: rgba(30, 41, 59, 0.9);
+}
+
+.dashboard-note-widget-body {
+    flex: 1;
+    padding: 0.75rem;
+    overflow-y: auto;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    background-image: 
+        repeating-linear-gradient(
+            transparent,
+            transparent 31px,
+            rgba(0, 0, 0, 0.1) 31px,
+            rgba(0, 0, 0, 0.1) 32px
+        );
+    background-size: 100% 32px;
+}
+
+.dark .dashboard-note-widget-body {
+    background-image: 
+        repeating-linear-gradient(
+            transparent,
+            transparent 31px,
+            rgba(255, 255, 255, 0.1) 31px,
+            rgba(255, 255, 255, 0.1) 32px
+        );
+}
+
+.dashboard-note-widget-content {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    outline: none;
+    resize: none;
+    font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+    word-wrap: break-word;
+}
+
+.dashboard-note-widget-content[contenteditable="true"]:empty:before {
+    content: attr(data-placeholder);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Ensure autocomplete elements don't interfere with contenteditable */
+.dashboard-note-widget-content a[data-type] {
+    pointer-events: auto !important;
+    user-select: none;
+    cursor: pointer !important;
+    text-decoration: none;
+    display: inline-flex;
+}
+
+.dashboard-note-widget-content a[data-type]:hover {
+    opacity: 0.9;
+}
+
+.dashboard-note-widget-content span[data-type] {
+    pointer-events: auto;
+    user-select: none;
+    cursor: default;
+    display: inline-flex;
+    position: relative;
+}
+
+/* Prevent contenteditable from editing inside badges and links */
+.dashboard-note-widget-content a[data-type],
+.dashboard-note-widget-content span[data-type] {
+    -webkit-user-modify: read-only;
+    -moz-user-modify: read-only;
+    user-modify: read-only;
+}
+
+/* Ensure links are fully clickable */
+.dashboard-note-widget-content a[data-type="patient"],
+.dashboard-note-widget-content a[data-type="appointment"] {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* Prevent contenteditable from capturing clicks on link content */
+.dashboard-note-widget-content a[data-type] * {
+    pointer-events: none;
+}
+
+/* Patient link in note content - Badge Primary style */
+.dashboard-note-content-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--accent);
+    color: white;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 0 0.2rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.dashboard-note-content-link:hover {
+    background: var(--accent);
+    opacity: 0.9;
+    transform: translateY(-1px);
+    color: white;
+}
+
+.dashboard-note-content-link .patient-icon {
+    font-size: 0.9rem;
+}
+
+.dark .dashboard-note-content-link {
+    background: var(--accent);
+    color: white;
+}
+
+.dark .dashboard-note-content-link:hover {
+    background: var(--accent);
+    color: white;
+    opacity: 0.9;
+}
+
+/* Appointment link in note content - Badge Secondary style */
+.dashboard-note-content-appointment-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #6c757d;
+    color: white;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 0 0.2rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.dashboard-note-content-appointment-link:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+    color: white;
+}
+
+.dashboard-note-content-appointment-link .appointment-icon {
+    font-size: 0.9rem;
+}
+
+.dark .dashboard-note-content-appointment-link {
+    background: #6c757d;
+    color: white;
+}
+
+.dark .dashboard-note-content-appointment-link:hover {
+    background: #5a6268;
+    color: white;
+}
+
+/* Drug badge in note content */
+.dashboard-note-content-drug-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 0 0.2rem;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.dark .dashboard-note-content-drug-badge {
+    background: rgba(16, 185, 129, 0.2);
+    color: #4ade80;
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+.dashboard-note-content-drug-badge .drug-icon {
+    font-size: 0.9rem;
+}
+
+/* Support for notes created in index.php (without dashboard- prefix) */
+.dashboard-note-widget-content .note-content-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--accent);
+    color: white;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 0 0.2rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.dashboard-note-widget-content .note-content-link:hover {
+    background: var(--accent);
+    opacity: 0.9;
+    transform: translateY(-1px);
+    color: white;
+}
+
+.dashboard-note-widget-content .note-content-link .patient-icon {
+    font-size: 0.9rem;
+}
+
+.dark .dashboard-note-widget-content .note-content-link {
+    background: var(--accent);
+    color: white;
+}
+
+.dark .dashboard-note-widget-content .note-content-link:hover {
+    background: var(--accent);
+    color: white;
+    opacity: 0.9;
+}
+
+.dashboard-note-widget-content .note-content-appointment-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #6c757d;
+    color: white;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 0 0.2rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.dashboard-note-widget-content .note-content-appointment-link:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+    color: white;
+}
+
+.dashboard-note-widget-content .note-content-appointment-link .appointment-icon {
+    font-size: 0.9rem;
+}
+
+.dark .dashboard-note-widget-content .note-content-appointment-link {
+    background: #6c757d;
+    color: white;
+}
+
+.dark .dashboard-note-widget-content .note-content-appointment-link:hover {
+    background: #5a6268;
+    color: white;
+}
+
+.dashboard-note-widget-content .note-content-drug-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 0 0.2rem;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.dark .dashboard-note-widget-content .note-content-drug-badge {
+    background: rgba(16, 185, 129, 0.2);
+    color: #4ade80;
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+.dashboard-note-widget-content .note-content-drug-badge .drug-icon {
+    font-size: 0.9rem;
+}
+
+/* Autocomplete Portal Styles */
+.dashboard-note-autocomplete-portal {
+    position: fixed !important;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 9999999 !important;
+    min-width: 250px;
+    max-width: 400px;
+}
+
+.dark .dashboard-note-autocomplete-portal {
+    background: var(--card);
+    border-color: var(--border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dashboard-note-autocomplete-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.dashboard-note-autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.dashboard-note-autocomplete-item:hover,
+.dashboard-note-autocomplete-item.selected {
+    background: var(--accent);
+    color: white;
+}
+
+.dashboard-note-autocomplete-item .item-icon {
+    font-size: 1.2rem;
+    opacity: 0.8;
+}
+
+.dashboard-note-autocomplete-item .item-content {
+    flex: 1;
+}
+
+.dashboard-note-autocomplete-item .item-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.dashboard-note-autocomplete-item .item-subtitle {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+.dashboard-note-widget.light-text {
+    color: #ffffff;
+}
+
+.dashboard-note-widget.light-text .dashboard-note-widget-title,
+.dashboard-note-widget.light-text .dashboard-note-widget-content {
+    color: #ffffff;
+}
+
+.dashboard-note-widget.dark-text {
+    color: #0f172a;
+}
+
+.dashboard-note-widget.dark-text .dashboard-note-widget-title,
+.dashboard-note-widget.dark-text .dashboard-note-widget-content {
+    color: #0f172a;
+}
+
+.dashboard-note-color-picker-wrapper {
+    position: relative;
+}
+
+.dashboard-note-color-picker-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.3rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.4rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    min-width: 150px;
+}
+
+.dashboard-color-option-dropdown {
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-color-option-dropdown:hover {
+    transform: scale(1.15);
+    border-color: var(--accent);
+}
+
+.dashboard-color-option-dropdown.white { background: #ffffff; }
+.dashboard-color-option-dropdown.red { background: #ef4444; }
+.dashboard-color-option-dropdown.black { background: #1e293b; }
+.dashboard-color-option-dropdown.dodgerblue { background: #1e90ff; }
+.dashboard-color-option-dropdown.warning { background: #fbbf24; }
+.dashboard-color-option-dropdown.success { background: #10b981; }
+
+.dark .dashboard-note-color-picker-dropdown {
+    background: var(--card);
+    border-color: var(--border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Hide the floating add button since we moved it to header */
+#dashboardAddNoteBtn {
+    display: none !important;
+}
+
+/* Resize handle for dashboard notes */
+.dashboard-note-widget-resize {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    cursor: nwse-resize;
+    background: linear-gradient(-45deg, transparent 30%, rgba(0, 0, 0, 0.2) 30%, rgba(0, 0, 0, 0.2) 35%, transparent 35%, transparent 65%, rgba(0, 0, 0, 0.2) 65%, rgba(0, 0, 0, 0.2) 70%, transparent 70%);
+    z-index: 10;
+}
+
+.dark .dashboard-note-widget-resize {
+    background: linear-gradient(-45deg, transparent 30%, rgba(255, 255, 255, 0.2) 30%, rgba(255, 255, 255, 0.2) 35%, transparent 35%, transparent 65%, rgba(255, 255, 255, 0.2) 65%, rgba(255, 255, 255, 0.2) 70%, transparent 70%);
+}
+
+/* Ensure delete modal is always on top for dashboard */
+#dashboardDeleteNoteModal {
+    z-index: 99999 !important;
+}
+
+#dashboardDeleteNoteModal .modal-backdrop {
+    z-index: 99998 !important;
+}
+
+#dashboardDeleteNoteModal .modal-dialog {
+    z-index: 100000 !important;
+}
 </style>
 
 <script>
@@ -1138,6 +1882,7 @@ function escapeHtml(text) {
 
 document.addEventListener('DOMContentLoaded', function() {
     loadTodayAlerts();
+    loadDashboardNotes();
     // Initialize Bootstrap tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -1811,6 +2556,1115 @@ document.addEventListener('DOMContentLoaded', function() {
         div.textContent = text;
         return div.innerHTML;
     }
+    
+    // Dashboard Notes Management
+    const dashboardColorMap = {
+        'white': { bg: '#ffffff', class: 'white', text: 'dark-text' },
+        'red': { bg: '#ef4444', class: 'red', text: 'light-text' },
+        'black': { bg: '#1e293b', class: 'black', text: 'light-text' },
+        'dodgerblue': { bg: '#1e90ff', class: 'dodgerblue', text: 'light-text' },
+        'warning': { bg: '#fbbf24', class: 'warning', text: 'dark-text' },
+        'success': { bg: '#10b981', class: 'success', text: 'light-text' }
+    };
+    
+    let dashboardNotes = [];
+    let dashboardIsDragging = false;
+    let dashboardCurrentDragNote = null;
+    let dashboardDragOffset = { x: 0, y: 0 };
+    const MAX_DASHBOARD_NOTES = 10;
+    
+    function getDashboardColorClass(backgroundColor) {
+        for (const [key, value] of Object.entries(dashboardColorMap)) {
+            if (value.bg.toLowerCase() === backgroundColor.toLowerCase()) {
+                return value.class;
+            }
+        }
+        return 'warning';
+    }
+    
+    function getDashboardTextColor(backgroundColor) {
+        const hex = backgroundColor.replace('#', '');
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness > 128 ? 'dark-text' : 'light-text';
+    }
+    
+    function createDashboardNoteWidget(note) {
+        const bgColor = note.background_color || '#fbbf24';
+        const colorClass = getDashboardColorClass(bgColor);
+        const textColorClass = getDashboardTextColor(bgColor);
+        
+        // Always use default size for dashboard display (regardless of saved size in DB)
+        const defaultWidth = 300;
+        const defaultHeight = 250;
+        
+        const widget = document.createElement('div');
+        widget.className = `dashboard-note-widget color-${colorClass} ${textColorClass}`;
+        widget.id = `dashboard-note-${note.id}`;
+        widget.style.left = `${note.position_x || 0}px`;
+        widget.style.top = `${note.position_y || 0}px`;
+        widget.style.width = `${defaultWidth}px`;
+        widget.style.height = `${defaultHeight}px`;
+        widget.style.zIndex = note.z_index || 1;
+        
+        widget.innerHTML = `
+            <div class="dashboard-note-widget-header" onmousedown="dashboardStartDrag(event, ${note.id})">
+                <input type="text" class="dashboard-note-widget-title" placeholder="Title..." value="${escapeHtml(note.title || '')}" 
+                       data-note-id="${note.id}" onblur="dashboardUpdateNoteTitle(${note.id}, this.value)">
+                <div class="dashboard-note-widget-actions">
+                    <div class="dashboard-note-color-picker-wrapper" style="position: relative;">
+                        <button class="dashboard-note-widget-btn" onclick="dashboardToggleColorPicker(${note.id}, event)" title="Change color">
+                            <i class="bi bi-palette"></i>
+                        </button>
+                        <div class="dashboard-note-color-picker-dropdown" id="dashboardColorPicker-${note.id}" style="display: none;">
+                            <div class="dashboard-color-option-dropdown white" onclick="dashboardChangeNoteColor(${note.id}, '#ffffff')"></div>
+                            <div class="dashboard-color-option-dropdown red" onclick="dashboardChangeNoteColor(${note.id}, '#ef4444')"></div>
+                            <div class="dashboard-color-option-dropdown black" onclick="dashboardChangeNoteColor(${note.id}, '#1e293b')"></div>
+                            <div class="dashboard-color-option-dropdown dodgerblue" onclick="dashboardChangeNoteColor(${note.id}, '#1e90ff')"></div>
+                            <div class="dashboard-color-option-dropdown warning" onclick="dashboardChangeNoteColor(${note.id}, '#fbbf24')"></div>
+                            <div class="dashboard-color-option-dropdown success" onclick="dashboardChangeNoteColor(${note.id}, '#10b981')"></div>
+                        </div>
+                    </div>
+                    <button class="dashboard-note-widget-btn" onclick="dashboardBringToFront(${note.id})" title="Bring to front">
+                        <i class="bi bi-layers"></i>
+                    </button>
+                    <button class="dashboard-note-widget-btn" onclick="dashboardFitToSize(${note.id})" title="Fit to default size">
+                        <i class="bi bi-arrows-angle-contract"></i>
+                    </button>
+                    <button class="dashboard-note-widget-btn delete" onclick="dashboardDeleteNote(${note.id})" title="Delete">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="dashboard-note-widget-body">
+                <div class="dashboard-note-widget-content"
+                     contenteditable="true"
+                     data-placeholder="Write your note... (Use @ for patients, # for appointments, $ for drugs)"
+                     data-note-id="${note.id}"
+                     onblur="dashboardUpdateNoteContent(${note.id}, this.innerHTML)">${note.content || ''}</div>
+            </div>
+            <div class="dashboard-note-widget-resize" onmousedown="dashboardStartResize(event, ${note.id})"></div>
+        `;
+        
+        return widget;
+    }
+    
+    async function loadDashboardNotes() {
+        try {
+            const response = await fetch('/api/notes', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Response is not JSON');
+            }
+            
+            const data = await response.json();
+            const container = document.getElementById('dashboardNotesContainer');
+            const loading = document.getElementById('dashboardNotesLoading');
+            const empty = document.getElementById('dashboardNotesEmpty');
+            
+            if (data.success && data.notes && data.notes.length > 0) {
+                loading.style.display = 'none';
+                empty.style.display = 'none';
+                
+                // Limit to 5 notes
+                dashboardNotes = data.notes.slice(0, MAX_DASHBOARD_NOTES);
+                
+                // Clear container
+                container.querySelectorAll('.dashboard-note-widget').forEach(w => w.remove());
+                
+                // Add notes
+                dashboardNotes.forEach(note => {
+                    const widget = createDashboardNoteWidget(note);
+                    container.appendChild(widget);
+                    
+                    // Initialize autocomplete for this contenteditable
+                    const contentEditable = widget.querySelector('.dashboard-note-widget-content[contenteditable="true"]');
+                    if (contentEditable) {
+                        dashboardInitAutocomplete(contentEditable);
+                    }
+                });
+                
+                // Update header button state
+                const headerBtn = document.getElementById('dashboardAddNoteBtnHeader');
+                if (headerBtn) {
+                    if (dashboardNotes.length >= MAX_DASHBOARD_NOTES) {
+                        headerBtn.disabled = true;
+                        headerBtn.title = `Maximum ${MAX_DASHBOARD_NOTES} notes allowed on dashboard`;
+                    } else {
+                        headerBtn.disabled = false;
+                        headerBtn.title = '';
+                    }
+                }
+            } else {
+                loading.style.display = 'none';
+                empty.style.display = 'block';
+                
+                // Enable header button
+                const headerBtn = document.getElementById('dashboardAddNoteBtnHeader');
+                if (headerBtn) {
+                    headerBtn.disabled = false;
+                    headerBtn.title = '';
+                }
+            }
+        } catch (error) {
+            console.error('Error loading dashboard notes:', error);
+            document.getElementById('dashboardNotesLoading').style.display = 'none';
+        }
+    }
+    
+    async function dashboardAddNote() {
+        // Check current count from DOM
+        const container = document.getElementById('dashboardNotesContainer');
+        const currentCount = container.querySelectorAll('.dashboard-note-widget').length;
+        
+        if (currentCount >= MAX_DASHBOARD_NOTES) {
+            alert(`Maximum ${MAX_DASHBOARD_NOTES} notes allowed on dashboard. Please use the full Notes Dashboard for more.`);
+            return;
+        }
+        
+        const containerRect = container.getBoundingClientRect();
+        
+        // Default size for new notes
+        const defaultWidth = 300;
+        const defaultHeight = 250;
+        
+        // Center position calculation based on default size
+        const x = Math.max(0, (containerRect.width / 2) - (defaultWidth / 2));
+        const y = Math.max(0, (containerRect.height / 2) - (defaultHeight / 2));
+        
+        try {
+            const response = await fetch('/api/notes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    title: '',
+                    content: '',
+                    background_color: '#fbbf24',
+                    position_x: x,
+                    position_y: y,
+                    width: defaultWidth,
+                    height: defaultHeight,
+                    z_index: 1
+                })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                loadDashboardNotes();
+            }
+        } catch (error) {
+            console.error('Error creating note:', error);
+            alert('Failed to create note. Please try again.');
+        }
+    }
+    
+    function dashboardStartDrag(event, noteId) {
+        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.tagName === 'BUTTON') {
+            return;
+        }
+        
+        dashboardIsDragging = true;
+        dashboardCurrentDragNote = noteId;
+        const widget = document.getElementById(`dashboard-note-${noteId}`);
+        const rect = widget.getBoundingClientRect();
+        const containerRect = document.getElementById('dashboardNotesContainer').getBoundingClientRect();
+        
+        dashboardDragOffset.x = event.clientX - rect.left;
+        dashboardDragOffset.y = event.clientY - rect.top;
+        
+        widget.classList.add('dragging');
+        
+        document.addEventListener('mousemove', dashboardOnDrag);
+        document.addEventListener('mouseup', dashboardStopDrag);
+        event.preventDefault();
+    }
+    
+    function dashboardOnDrag(event) {
+        if (!dashboardIsDragging || !dashboardCurrentDragNote) return;
+        
+        const widget = document.getElementById(`dashboard-note-${dashboardCurrentDragNote}`);
+        const container = document.getElementById('dashboardNotesContainer');
+        const containerRect = container.getBoundingClientRect();
+        
+        let x = event.clientX - containerRect.left - dashboardDragOffset.x;
+        let y = event.clientY - containerRect.top - dashboardDragOffset.y;
+        
+        x = Math.max(0, Math.min(x, containerRect.width - widget.offsetWidth));
+        y = Math.max(0, Math.min(y, containerRect.height - widget.offsetHeight));
+        
+        widget.style.left = `${x}px`;
+        widget.style.top = `${y}px`;
+    }
+    
+    function dashboardStopDrag() {
+        if (dashboardIsDragging && dashboardCurrentDragNote) {
+            const widget = document.getElementById(`dashboard-note-${dashboardCurrentDragNote}`);
+            widget.classList.remove('dragging');
+            
+            dashboardUpdateNotePosition(
+                dashboardCurrentDragNote,
+                parseInt(widget.style.left),
+                parseInt(widget.style.top)
+            );
+            
+            dashboardIsDragging = false;
+            dashboardCurrentDragNote = null;
+        }
+        
+        document.removeEventListener('mousemove', dashboardOnDrag);
+        document.removeEventListener('mouseup', dashboardStopDrag);
+    }
+    
+    function dashboardToggleColorPicker(noteId, event) {
+        event.stopPropagation();
+        
+        document.querySelectorAll('.dashboard-note-color-picker-dropdown').forEach(picker => {
+            if (picker.id !== `dashboardColorPicker-${noteId}`) {
+                picker.style.display = 'none';
+            }
+        });
+        
+        const picker = document.getElementById(`dashboardColorPicker-${noteId}`);
+        if (picker) {
+            picker.style.display = picker.style.display === 'none' ? 'flex' : 'none';
+            
+            setTimeout(() => {
+                document.addEventListener('click', function closePicker(e) {
+                    if (!picker.contains(e.target) && !e.target.closest(`#dashboardColorPicker-${noteId}`)) {
+                        picker.style.display = 'none';
+                        document.removeEventListener('click', closePicker);
+                    }
+                });
+            }, 10);
+        }
+    }
+    
+    function dashboardChangeNoteColor(noteId, color) {
+        const picker = document.getElementById(`dashboardColorPicker-${noteId}`);
+        if (picker) picker.style.display = 'none';
+        
+        const widget = document.getElementById(`dashboard-note-${noteId}`);
+        if (!widget) return;
+        
+        const colorClass = getDashboardColorClass(color);
+        const textColorClass = getDashboardTextColor(color);
+        
+        widget.classList.remove('color-white', 'color-red', 'color-black', 'color-dodgerblue', 'color-warning', 'color-success');
+        widget.classList.remove('light-text', 'dark-text');
+        widget.classList.add(`color-${colorClass}`);
+        widget.classList.add(textColorClass);
+        
+        dashboardUpdateNote(noteId, { background_color: color });
+    }
+    
+    async function dashboardUpdateNoteTitle(noteId, title) {
+        await dashboardUpdateNote(noteId, { title });
+    }
+    
+    async function dashboardUpdateNoteContent(noteId, content) {
+        // content is already HTML from contenteditable innerHTML
+        await dashboardUpdateNote(noteId, { content: content });
+    }
+    
+    async function dashboardUpdateNotePosition(noteId, x, y) {
+        await dashboardUpdateNote(noteId, { position_x: x, position_y: y });
+    }
+    
+    // Resize functionality for dashboard notes
+    let dashboardIsResizing = false;
+    let dashboardCurrentResizeNote = null;
+    let dashboardResizeStart = { x: 0, y: 0, width: 0, height: 0 };
+    
+    function dashboardStartResize(event, noteId) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        dashboardIsResizing = true;
+        dashboardCurrentResizeNote = noteId;
+        const widget = document.getElementById(`dashboard-note-${noteId}`);
+        
+        if (!widget) {
+            dashboardIsResizing = false;
+            return;
+        }
+        
+        const rect = widget.getBoundingClientRect();
+        
+        dashboardResizeStart.x = event.clientX;
+        dashboardResizeStart.y = event.clientY;
+        dashboardResizeStart.width = rect.width;
+        dashboardResizeStart.height = rect.height;
+        
+        // Bring note to front during resize
+        const container = document.getElementById('dashboardNotesContainer');
+        if (container) {
+            const allNotes = container.querySelectorAll('.dashboard-note-widget');
+            let maxZIndex = 0;
+            allNotes.forEach(note => {
+                const zIndex = parseInt(window.getComputedStyle(note).zIndex) || 0;
+                if (zIndex > maxZIndex) maxZIndex = zIndex;
+            });
+            widget.style.zIndex = maxZIndex + 1;
+        }
+        
+        document.addEventListener('mousemove', dashboardOnResize);
+        document.addEventListener('mouseup', dashboardStopResize);
+    }
+    
+    function dashboardOnResize(event) {
+        if (!dashboardIsResizing || !dashboardCurrentResizeNote) return;
+        
+        event.preventDefault();
+        
+        const widget = document.getElementById(`dashboard-note-${dashboardCurrentResizeNote}`);
+        if (!widget) {
+            dashboardStopResize();
+            return;
+        }
+        
+        const container = document.getElementById('dashboardNotesContainer');
+        if (!container) {
+            dashboardStopResize();
+            return;
+        }
+        
+        const containerRect = container.getBoundingClientRect();
+        const widgetRect = widget.getBoundingClientRect();
+        
+        const deltaX = event.clientX - dashboardResizeStart.x;
+        const deltaY = event.clientY - dashboardResizeStart.y;
+        
+        let newWidth = dashboardResizeStart.width + deltaX;
+        let newHeight = dashboardResizeStart.height + deltaY;
+        
+        // Constrain to container and min size only (no max size)
+        const minWidth = 250;
+        const minHeight = 200;
+        
+        // Calculate max width/height based on container bounds only
+        const maxAllowedWidth = containerRect.width - (widgetRect.left - containerRect.left);
+        const maxAllowedHeight = containerRect.height - (widgetRect.top - containerRect.top);
+        
+        newWidth = Math.max(minWidth, Math.min(newWidth, maxAllowedWidth));
+        newHeight = Math.max(minHeight, Math.min(newHeight, maxAllowedHeight));
+        
+        widget.style.width = `${newWidth}px`;
+        widget.style.height = `${newHeight}px`;
+    }
+    
+    function dashboardStopResize() {
+        if (dashboardIsResizing && dashboardCurrentResizeNote) {
+            const widget = document.getElementById(`dashboard-note-${dashboardCurrentResizeNote}`);
+            
+            // Save size
+            dashboardUpdateNoteSize(
+                dashboardCurrentResizeNote,
+                parseInt(widget.style.width),
+                parseInt(widget.style.height)
+            );
+            
+            dashboardIsResizing = false;
+            dashboardCurrentResizeNote = null;
+        }
+        
+        document.removeEventListener('mousemove', dashboardOnResize);
+        document.removeEventListener('mouseup', dashboardStopResize);
+    }
+    
+    async function dashboardUpdateNoteSize(noteId, width, height) {
+        await dashboardUpdateNote(noteId, { width, height });
+    }
+    
+    // Bring to front
+    function dashboardBringToFront(noteId) {
+        const widget = document.getElementById(`dashboard-note-${noteId}`);
+        const container = document.getElementById('dashboardNotesContainer');
+        if (!widget || !container) return;
+        
+        const allNotes = container.querySelectorAll('.dashboard-note-widget');
+        let maxZIndex = 0;
+        allNotes.forEach(note => {
+            const zIndex = parseInt(window.getComputedStyle(note).zIndex) || 0;
+            if (zIndex > maxZIndex) maxZIndex = zIndex;
+        });
+        
+        widget.style.zIndex = maxZIndex + 1;
+        dashboardUpdateNote(noteId, { z_index: maxZIndex + 1 });
+    }
+    
+    // Fit to default size
+    function dashboardFitToSize(noteId) {
+        const widget = document.getElementById(`dashboard-note-${noteId}`);
+        if (!widget) return;
+        
+        const defaultWidth = 300;
+        const defaultHeight = 250;
+        
+        widget.style.width = `${defaultWidth}px`;
+        widget.style.height = `${defaultHeight}px`;
+        
+        dashboardUpdateNoteSize(noteId, defaultWidth, defaultHeight);
+    }
+    
+    async function dashboardUpdateNote(noteId, data) {
+        try {
+            const response = await fetch(`/api/notes/${noteId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Network error' }));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.message || 'Failed to update note');
+            }
+        } catch (error) {
+            console.error('Error updating note:', error);
+            // Don't show alert for every update - it's too frequent
+            // Only log to console
+        }
+    }
+    
+    async function dashboardDeleteNote(noteId) {
+        // Show confirmation modal
+        dashboardShowDeleteConfirmModal(noteId);
+    }
+    
+    // Show delete confirmation modal
+    function dashboardShowDeleteConfirmModal(noteId) {
+        const modal = document.getElementById('dashboardDeleteNoteModal');
+        if (!modal) {
+            // Create modal if it doesn't exist
+            const modalHtml = `
+                <div class="modal fade" id="dashboardDeleteNoteModal" tabindex="-1" aria-labelledby="dashboardDeleteNoteModalLabel" aria-hidden="true" style="z-index: 99999;">
+                    <div class="modal-dialog modal-dialog-centered" style="z-index: 100000;">
+                        <div class="modal-content" style="background: var(--card); border: 1px solid var(--border); z-index: 100001;">
+                            <div class="modal-header" style="border-bottom: 1px solid var(--border);">
+                                <h5 class="modal-title" id="dashboardDeleteNoteModalLabel" style="color: var(--text);">
+                                    <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+                                    Delete Note
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body" style="color: var(--text);">
+                                <p>Are you sure you want to delete this note? This action cannot be undone.</p>
+                            </div>
+                            <div class="modal-footer" style="border-top: 1px solid var(--border);">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-danger" id="dashboardConfirmDeleteBtn">
+                                    <i class="bi bi-trash me-2"></i>
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+        
+        const modalInstance = new bootstrap.Modal(document.getElementById('dashboardDeleteNoteModal'));
+        const confirmBtn = document.getElementById('dashboardConfirmDeleteBtn');
+        
+        // Remove previous event listeners
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        
+        // Add new event listener
+        newConfirmBtn.addEventListener('click', async function() {
+            await dashboardPerformDelete(noteId);
+            modalInstance.hide();
+        });
+        
+        modalInstance.show();
+    }
+    
+    // Perform the actual delete
+    async function dashboardPerformDelete(noteId) {
+        try {
+            const response = await fetch(`/api/notes/${noteId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            // Check if response is ok
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Network error' }));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const widget = document.getElementById(`dashboard-note-${noteId}`);
+                if (widget) {
+                    widget.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    widget.style.opacity = '0';
+                    widget.style.transform = 'scale(0.8)';
+                    
+                    setTimeout(() => {
+                        widget.remove();
+                        loadDashboardNotes();
+                    }, 300);
+                }
+            } else {
+                throw new Error(data.message || 'Failed to delete note');
+            }
+        } catch (error) {
+            console.error('Error deleting note:', error);
+            alert('Failed to delete note: ' + error.message);
+        }
+    }
+    
+    // Autocomplete functionality for dashboard notes
+    let dashboardAutocompletePortal = null;
+    let dashboardCurrentAutocompleteType = null;
+    let dashboardCurrentAutocompleteQuery = '';
+    let dashboardCurrentAutocompleteItems = [];
+    let dashboardSelectedAutocompleteIndex = -1;
+    let dashboardAutocompleteTextarea = null;
+    let dashboardAutocompleteCursorPosition = 0;
+    let dashboardAutocompleteDebounceTimer = null;
+    let dashboardAutocompleteUpdateHandler = null;
+    
+    // Initialize autocomplete for a contenteditable div
+    function dashboardInitAutocomplete(contentEditable) {
+        if (!contentEditable) return;
+        
+        contentEditable.addEventListener('input', dashboardHandleContentEditableInput);
+        contentEditable.addEventListener('keydown', dashboardHandleContentEditableKeydown);
+        contentEditable.addEventListener('blur', function() {
+            setTimeout(() => {
+                dashboardHideAutocomplete();
+            }, 200);
+        });
+        
+        contentEditable.addEventListener('click', function(event) {
+            const target = event.target;
+            const link = target.closest('a[data-type]');
+            
+            if (link) {
+                event.stopPropagation();
+                event.preventDefault();
+                window.open(link.href, '_blank');
+                return false;
+            }
+        }, true);
+        
+        contentEditable.addEventListener('mousedown', function(event) {
+            const target = event.target;
+            const link = target.closest('a[data-type]');
+            const badge = target.closest('span[data-type]');
+            
+            if (link) {
+                event.stopPropagation();
+                return true;
+            }
+            
+            if (badge) {
+                event.preventDefault();
+                event.stopPropagation();
+                const range = document.createRange();
+                const selection = window.getSelection();
+                const badgeRect = badge.getBoundingClientRect();
+                const clickX = event.clientX;
+                
+                if (clickX < badgeRect.left + badgeRect.width / 2) {
+                    range.setStartBefore(badge);
+                } else {
+                    range.setStartAfter(badge);
+                }
+                range.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(range);
+                contentEditable.focus();
+            }
+        }, true);
+    }
+    
+    function dashboardHandleContentEditableInput(event) {
+        const contentEditable = event.target;
+        const selection = window.getSelection();
+        
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const startContainer = range.startContainer;
+            
+            let autocompleteElement = null;
+            if (startContainer.nodeType === Node.TEXT_NODE) {
+                autocompleteElement = startContainer.parentElement;
+            } else if (startContainer.nodeType === Node.ELEMENT_NODE) {
+                autocompleteElement = startContainer;
+            }
+            
+            while (autocompleteElement && autocompleteElement !== contentEditable) {
+                const dataType = autocompleteElement.getAttribute('data-type');
+                if (dataType === 'patient' || dataType === 'appointment' || dataType === 'drug') {
+                    const inputType = event.inputType;
+                    if (inputType === 'deleteContentBackward' || inputType === 'deleteContentForward' || 
+                        inputType === 'deleteByDrag' || inputType === 'deleteByCut' ||
+                        (!inputType && event.data === null)) {
+                        const parent = autocompleteElement.parentNode;
+                        if (parent) {
+                            const space = document.createTextNode(' ');
+                            parent.replaceChild(space, autocompleteElement);
+                            
+                            const newRange = document.createRange();
+                            newRange.setStartAfter(space);
+                            newRange.collapse(true);
+                            selection.removeAllRanges();
+                            selection.addRange(newRange);
+                            contentEditable.focus();
+                            
+                            const noteId = contentEditable.getAttribute('data-note-id');
+                            if (noteId) {
+                                dashboardUpdateNoteContent(parseInt(noteId), contentEditable.innerHTML);
+                            }
+                        }
+                        return;
+                    }
+                    break;
+                }
+                autocompleteElement = autocompleteElement.parentElement;
+            }
+        }
+        
+        if (dashboardAutocompleteDebounceTimer) {
+            clearTimeout(dashboardAutocompleteDebounceTimer);
+        }
+        
+        dashboardAutocompleteDebounceTimer = setTimeout(() => {
+            dashboardProcessAutocompleteInput(event);
+        }, 300);
+    }
+    
+    function dashboardProcessAutocompleteInput(event) {
+        const contentEditable = event.target;
+        const selection = window.getSelection();
+        
+        if (!selection.rangeCount) {
+            dashboardHideAutocomplete();
+            return;
+        }
+        
+        const range = selection.getRangeAt(0).cloneRange();
+        
+        const fullRange = document.createRange();
+        fullRange.selectNodeContents(contentEditable);
+        fullRange.setEnd(range.startContainer, range.startOffset);
+        const textBeforeCursor = fullRange.toString();
+        
+        const match = textBeforeCursor.match(/(@|#|\$)([^\s@#$]*)$/);
+        
+        if (match) {
+            const trigger = match[1];
+            const query = match[2];
+            
+            let minLength = 2;
+            if (trigger === '#') {
+                minLength = /^\d+$/.test(query) ? 1 : 2;
+            }
+            
+            if (query.length >= minLength && query !== dashboardCurrentAutocompleteQuery) {
+                dashboardCurrentAutocompleteType = trigger === '@' ? 'patient' : (trigger === '#' ? 'appointment' : 'drug');
+                dashboardCurrentAutocompleteQuery = query;
+                dashboardAutocompleteTextarea = contentEditable;
+                
+                const rect = range.getBoundingClientRect();
+                dashboardAutocompleteCursorPosition = {
+                    range: range,
+                    textBefore: textBeforeCursor,
+                    match: match
+                };
+                
+                dashboardShowAutocomplete(contentEditable, rect, query);
+            } else if (query.length < minLength) {
+                dashboardHideAutocomplete();
+            }
+        } else {
+            dashboardHideAutocomplete();
+        }
+    }
+    
+    function dashboardHandleContentEditableKeydown(event) {
+        const contentEditable = event.target;
+        const selection = window.getSelection();
+        
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            let node = range.startContainer;
+            
+            while (node && node !== contentEditable) {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    const dataType = node.getAttribute('data-type');
+                    if (dataType === 'patient' || dataType === 'appointment' || dataType === 'drug') {
+                        if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar' || event.keyCode === 13 || event.keyCode === 32) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            
+                            const textContent = (event.key === 'Enter' || event.keyCode === 13) ? '\n' : ' ';
+                            const newTextNode = document.createTextNode(textContent);
+                            const parent = node.parentNode;
+                            
+                            if (parent) {
+                                parent.insertBefore(newTextNode, node.nextSibling);
+                                
+                                const newRange = document.createRange();
+                                newRange.setStartAfter(newTextNode);
+                                newRange.collapse(true);
+                                selection.removeAllRanges();
+                                selection.addRange(newRange);
+                                contentEditable.focus();
+                                
+                                const noteId = contentEditable.getAttribute('data-note-id');
+                                if (noteId) {
+                                    dashboardUpdateNoteContent(parseInt(noteId), contentEditable.innerHTML);
+                                }
+                            }
+                            return;
+                        }
+                        break;
+                    }
+                }
+                node = node.parentNode;
+            }
+        }
+        
+        if (!dashboardAutocompletePortal || dashboardAutocompletePortal.style.display === 'none') {
+            return;
+        }
+        
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            dashboardSelectedAutocompleteIndex = Math.min(dashboardSelectedAutocompleteIndex + 1, dashboardCurrentAutocompleteItems.length - 1);
+            dashboardUpdateAutocompleteSelection();
+        } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            dashboardSelectedAutocompleteIndex = Math.max(dashboardSelectedAutocompleteIndex - 1, -1);
+            dashboardUpdateAutocompleteSelection();
+        } else if (event.key === 'Enter' || event.key === 'Tab') {
+            event.preventDefault();
+            if (dashboardSelectedAutocompleteIndex >= 0 && dashboardCurrentAutocompleteItems[dashboardSelectedAutocompleteIndex]) {
+                dashboardSelectAutocompleteItem(dashboardCurrentAutocompleteItems[dashboardSelectedAutocompleteIndex]);
+            }
+        } else if (event.key === 'Escape') {
+            dashboardHideAutocomplete();
+        }
+    }
+    
+    async function dashboardShowAutocomplete(contentEditable, cursorRect, query) {
+        if (!dashboardAutocompletePortal) {
+            dashboardAutocompletePortal = document.createElement('div');
+            dashboardAutocompletePortal.className = 'dashboard-note-autocomplete-portal';
+            dashboardAutocompletePortal.id = 'dashboardNoteAutocompletePortal';
+            document.body.appendChild(dashboardAutocompletePortal);
+        }
+        
+        // Position portal at cursor location (not following mouse)
+        const x = cursorRect.left + window.scrollX;
+        const y = cursorRect.bottom + window.scrollY + 5;
+        
+        dashboardAutocompletePortal.style.position = 'fixed';
+        dashboardAutocompletePortal.style.left = `${x}px`;
+        dashboardAutocompletePortal.style.top = `${y}px`;
+        dashboardAutocompletePortal.style.display = 'block';
+        dashboardAutocompletePortal.style.zIndex = '9999999';
+        
+        // Remove any existing mouse tracking handler (we don't want it to follow mouse)
+        if (dashboardAutocompleteUpdateHandler) {
+            document.removeEventListener('mousemove', dashboardAutocompleteUpdateHandler);
+            dashboardAutocompleteUpdateHandler = null;
+        }
+        
+        await dashboardLoadAutocompleteItems(query);
+    }
+    
+    async function dashboardLoadAutocompleteItems(query) {
+        try {
+            if (query !== dashboardCurrentAutocompleteQuery) {
+                return;
+            }
+            
+            let url = '';
+            if (dashboardCurrentAutocompleteType === 'patient') {
+                url = `/api/patients/search?q=${encodeURIComponent(query)}`;
+            } else if (dashboardCurrentAutocompleteType === 'appointment') {
+                url = `/api/appointments/search?q=${encodeURIComponent(query)}&limit=10`;
+            } else if (dashboardCurrentAutocompleteType === 'drug') {
+                url = `/api/searchDrugsAutocomplete?q=${encodeURIComponent(query)}&limit=10`;
+            }
+            
+            if (!url) return;
+            
+            const response = await fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (!response.ok) {
+                if (response.status !== 400 && response.status !== 404) {
+                    console.error('Error loading autocomplete:', response.status);
+                }
+                return;
+            }
+            
+            const data = await response.json();
+            
+            if (query !== dashboardCurrentAutocompleteQuery) {
+                return;
+            }
+            
+            let items = [];
+            
+            if (dashboardCurrentAutocompleteType === 'patient' && data.ok && data.data) {
+                items = data.data.map(patient => ({
+                    type: 'patient',
+                    id: patient.id,
+                    title: `${patient.first_name} ${patient.last_name}`,
+                    subtitle: patient.phone || '',
+                    data: patient
+                }));
+            } else if (dashboardCurrentAutocompleteType === 'appointment' && data.ok && data.data) {
+                items = data.data.map(apt => {
+                    const date = new Date(apt.date);
+                    const dateStr = date.toLocaleDateString('en-GB');
+                    const timeStr = apt.start_time ? apt.start_time.substring(0, 5) : '';
+                    const patientName = escapeHtml(apt.patient_name || 'Unknown');
+                    const status = escapeHtml(apt.status || '');
+                    return {
+                        type: 'appointment',
+                        id: apt.id,
+                        title: `#${apt.id} - ${patientName}`,
+                        subtitle: `${dateStr} ${timeStr} - ${status}`,
+                        data: apt
+                    };
+                });
+            } else if (dashboardCurrentAutocompleteType === 'drug' && data.drugs) {
+                items = data.drugs.map(drug => ({
+                    type: 'drug',
+                    id: drug.ID,
+                    title: drug.drug_name,
+                    subtitle: drug.active_ingredient || drug.Company || '',
+                    data: drug
+                }));
+            }
+            
+            if (query === dashboardCurrentAutocompleteQuery) {
+                dashboardCurrentAutocompleteItems = items;
+                dashboardSelectedAutocompleteIndex = -1;
+                dashboardRenderAutocompleteItems(items);
+            }
+        } catch (error) {
+            console.error('Error loading autocomplete items:', error);
+        }
+    }
+    
+    function dashboardRenderAutocompleteItems(items) {
+        if (!dashboardAutocompletePortal) return;
+        
+        if (items.length === 0) {
+            dashboardAutocompletePortal.innerHTML = '<div class="dashboard-note-autocomplete-item"><div class="item-content">No results found</div></div>';
+            return;
+        }
+        
+        let html = '';
+        items.forEach((item, index) => {
+            const icon = item.type === 'patient' ? 'bi-person' : (item.type === 'appointment' ? 'bi-calendar-event' : 'bi-capsule');
+            html += `
+                <div class="dashboard-note-autocomplete-item ${index === dashboardSelectedAutocompleteIndex ? 'selected' : ''}" 
+                     data-index="${index}"
+                     onclick="dashboardSelectAutocompleteItem(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                    <i class="bi ${icon} item-icon"></i>
+                    <div class="item-content">
+                        <div class="item-title">${escapeHtml(item.title)}</div>
+                        ${item.subtitle ? `<div class="item-subtitle">${escapeHtml(item.subtitle)}</div>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        
+        dashboardAutocompletePortal.innerHTML = html;
+    }
+    
+    function dashboardUpdateAutocompleteSelection() {
+        if (!dashboardAutocompletePortal) return;
+        
+        const items = dashboardAutocompletePortal.querySelectorAll('.dashboard-note-autocomplete-item');
+        items.forEach((item, index) => {
+            if (index === dashboardSelectedAutocompleteIndex) {
+                item.classList.add('selected');
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+    }
+    
+    function dashboardSelectAutocompleteItem(item) {
+        if (!dashboardAutocompleteTextarea || !item || !dashboardAutocompleteCursorPosition) return;
+        
+        const contentEditable = dashboardAutocompleteTextarea;
+        const range = dashboardAutocompleteCursorPosition.range;
+        const match = dashboardAutocompleteCursorPosition.match;
+        
+        if (match && range) {
+            range.setStart(range.startContainer, range.startOffset - match[0].length);
+            range.deleteContents();
+            
+            let replacement = null;
+            if (item.type === 'patient') {
+                replacement = document.createElement('a');
+                replacement.href = `/doctor/patients/${item.id}`;
+                // Use standard class name (without dashboard- prefix) for compatibility
+                replacement.className = 'note-content-link';
+                replacement.target = '_blank';
+                replacement.setAttribute('data-type', 'patient');
+                replacement.setAttribute('data-id', item.id);
+                replacement.innerHTML = `<i class="bi bi-person patient-icon"></i>${escapeHtml(item.title)}`;
+            } else if (item.type === 'appointment') {
+                replacement = document.createElement('a');
+                replacement.href = `/doctor/appointments/${item.id}`;
+                // Use standard class name (without dashboard- prefix) for compatibility
+                replacement.className = 'note-content-appointment-link';
+                replacement.target = '_blank';
+                replacement.setAttribute('data-type', 'appointment');
+                replacement.setAttribute('data-id', item.id);
+                replacement.innerHTML = `<i class="bi bi-calendar-event appointment-icon"></i>#${item.id}`;
+            } else if (item.type === 'drug') {
+                replacement = document.createElement('span');
+                // Use standard class name (without dashboard- prefix) for compatibility
+                replacement.className = 'note-content-drug-badge';
+                replacement.setAttribute('data-type', 'drug');
+                replacement.setAttribute('data-id', item.id);
+                replacement.innerHTML = `<i class="bi bi-capsule drug-icon"></i>${escapeHtml(item.title)}`;
+            }
+            
+            if (replacement) {
+                range.insertNode(replacement);
+                
+                const spaceAfter = document.createTextNode(' ');
+                range.setStartAfter(replacement);
+                range.insertNode(spaceAfter);
+                
+                const newRange = document.createRange();
+                newRange.setStartAfter(spaceAfter);
+                newRange.collapse(true);
+                
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+                
+                setTimeout(() => {
+                    contentEditable.focus();
+                    
+                    const finalRange = document.createRange();
+                    try {
+                        finalRange.setStartAfter(spaceAfter);
+                        finalRange.collapse(true);
+                    } catch (e) {
+                        const endTextNode = document.createTextNode(' ');
+                        contentEditable.appendChild(endTextNode);
+                        finalRange.setStartAfter(endTextNode);
+                        finalRange.collapse(true);
+                    }
+                    
+                    const finalSelection = window.getSelection();
+                    finalSelection.removeAllRanges();
+                    finalSelection.addRange(finalRange);
+                    contentEditable.focus();
+                    
+                    setTimeout(() => {
+                        const checkRange = finalSelection.getRangeAt(0);
+                        let checkNode = checkRange.startContainer;
+                        while (checkNode && checkNode !== contentEditable) {
+                            if (checkNode === replacement) {
+                                const parent = replacement.parentNode;
+                                if (parent) {
+                                    const newTextNode = document.createTextNode(' ');
+                                    parent.insertBefore(newTextNode, replacement.nextSibling);
+                                    const newRange = document.createRange();
+                                    newRange.setStartAfter(newTextNode);
+                                    newRange.collapse(true);
+                                    finalSelection.removeAllRanges();
+                                    finalSelection.addRange(newRange);
+                                    contentEditable.focus();
+                                }
+                                break;
+                            }
+                            checkNode = checkNode.parentNode;
+                        }
+                    }, 50);
+                }, 200);
+                
+                const noteId = contentEditable.getAttribute('data-note-id');
+                if (noteId) {
+                    dashboardUpdateNoteContent(parseInt(noteId), contentEditable.innerHTML);
+                }
+            }
+        }
+        
+        dashboardHideAutocomplete();
+        contentEditable.focus();
+    }
+    
+    function dashboardHideAutocomplete() {
+        if (dashboardAutocompletePortal) {
+            dashboardAutocompletePortal.style.display = 'none';
+        }
+        
+        // Remove mouse tracking handler
+        if (dashboardAutocompleteUpdateHandler) {
+            document.removeEventListener('mousemove', dashboardAutocompleteUpdateHandler);
+            dashboardAutocompleteUpdateHandler = null;
+        }
+        
+        dashboardCurrentAutocompleteType = null;
+        dashboardCurrentAutocompleteQuery = '';
+        dashboardCurrentAutocompleteItems = [];
+        dashboardSelectedAutocompleteIndex = -1;
+        dashboardAutocompleteTextarea = null;
+    }
+    
+    // Make functions global
+    window.dashboardStartDrag = dashboardStartDrag;
+    window.dashboardStartResize = dashboardStartResize;
+    window.dashboardToggleColorPicker = dashboardToggleColorPicker;
+    window.dashboardChangeNoteColor = dashboardChangeNoteColor;
+    window.dashboardBringToFront = dashboardBringToFront;
+    window.dashboardFitToSize = dashboardFitToSize;
+    window.dashboardDeleteNote = dashboardDeleteNote;
+    window.dashboardUpdateNoteTitle = dashboardUpdateNoteTitle;
+    window.dashboardUpdateNoteContent = dashboardUpdateNoteContent;
+    window.dashboardAddNote = dashboardAddNote;
+    window.dashboardSelectAutocompleteItem = dashboardSelectAutocompleteItem;
 });
 </script>
 

@@ -20,12 +20,52 @@ class DoctorController
         $this->view = new View();
         $this->pdo = Database::getInstance()->getConnection();
         
-        // Require doctor authentication (or admin in View As mode)
+        // Don't require role in constructor - let each method handle it
+        // This allows API methods to handle authentication differently
+    }
+    
+    /**
+     * Helper method to require doctor/admin role
+     * Use this in non-API methods
+     */
+    private function requireDoctorRole()
+    {
         $this->auth->requireRole(['doctor', 'admin']);
+    }
+    
+    /**
+     * Helper method to check authentication for API methods
+     * Returns true if authenticated, false otherwise
+     */
+    private function checkApiAuth()
+    {
+        if (!$this->auth->check()) {
+            http_response_code(401);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
+        }
+        
+        $user = $this->auth->user();
+        if (!in_array($user['role'], ['doctor', 'admin'])) {
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
+        }
+        
+        return true;
     }
 
     public function dashboard()
     {
+        $this->requireDoctorRole();
         $user = $this->auth->user();
         $doctorId = $this->getDoctorId($user['id']);
         
@@ -2159,6 +2199,627 @@ class DoctorController
                 'total_expenses' => 0,
                 'net_amount' => 0
             ];
+        }
+    }
+
+    /**
+     * Notes Management - Personal notes for doctors
+     */
+    public function notes()
+    {
+        $user = $this->auth->user();
+        
+        $content = $this->view->render('doctor/notes/index', [
+            'user' => $user
+        ]);
+        
+        echo $this->view->render('layouts/main', [
+            'title' => 'Notes - Roaya Clinic',
+            'pageTitle' => 'Notes',
+            'pageSubtitle' => 'Manage your personal notes',
+            'content' => $content
+        ]);
+    }
+
+    /**
+     * Get all notes for current doctor (API endpoint)
+     */
+    public function getNotes()
+    {
+        // Start output buffering IMMEDIATELY - before anything else
+        if (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        ob_start();
+        
+        // Log to error log file
+        $debugLog = function($message) {
+            error_log("[NOTES DEBUG] $message");
+        };
+        
+        $debugLog("=== getNotes() START ===");
+        $debugLog("REQUEST_URI: " . ($_SERVER['REQUEST_URI'] ?? 'N/A'));
+        $debugLog("REQUEST_METHOD: " . ($_SERVER['REQUEST_METHOD'] ?? 'N/A'));
+        $debugLog("HTTP_X_REQUESTED_WITH: " . ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? 'N/A'));
+        $debugLog("HTTP_ACCEPT: " . ($_SERVER['HTTP_ACCEPT'] ?? 'N/A'));
+        
+        try {
+            // Set headers first
+            header('Content-Type: application/json; charset=utf-8');
+            
+            $debugLog("Headers set: Content-Type: application/json");
+            
+            // Check authentication for API (this may exit if auth fails)
+            $debugLog("Checking API authentication...");
+            if (!$this->auth->check()) {
+                ob_clean();
+                http_response_code(401);
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                ob_end_flush();
+                exit;
+            }
+            
+            $user = $this->auth->user();
+            if (!in_array($user['role'], ['doctor', 'admin'])) {
+                ob_clean();
+                http_response_code(403);
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Access denied'
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                ob_end_flush();
+                exit;
+            }
+            
+            $debugLog("Auth check passed. User ID: " . ($user['id'] ?? 'N/A'));
+            
+            // Check for any output before this point
+            $outputBefore = ob_get_contents();
+            if (!empty($outputBefore)) {
+                $debugLog("WARNING: Output detected before query: " . substr($outputBefore, 0, 200));
+                ob_clean();
+            }
+            
+            $debugLog("Preparing SQL query...");
+            $stmt = $this->pdo->prepare("
+                SELECT * FROM notes 
+                WHERE user_id = ? 
+                ORDER BY z_index DESC, created_at DESC
+            ");
+            
+            $debugLog("Executing query with user_id: " . $user['id']);
+            $stmt->execute([$user['id']]);
+            
+            $debugLog("Fetching results...");
+            $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $debugLog("Found " . count($notes) . " notes");
+            
+            // Check for any output before JSON
+            $outputBeforeJson = ob_get_contents();
+            if (!empty($outputBeforeJson)) {
+                $debugLog("ERROR: Output detected before JSON encoding: " . substr($outputBeforeJson, 0, 500));
+                ob_clean();
+            }
+            
+            $response = [
+                'success' => true,
+                'notes' => $notes ?: []
+            ];
+            
+            $debugLog("Encoding JSON response...");
+            $jsonResponse = json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            
+            if ($jsonResponse === false) {
+                $jsonError = json_last_error_msg();
+                $debugLog("ERROR: JSON encoding failed: $jsonError");
+                throw new \Exception("JSON encoding failed: $jsonError");
+            }
+            
+            $debugLog("JSON response length: " . strlen($jsonResponse));
+            
+            // Clear any output before sending JSON
+            ob_clean();
+            
+            echo $jsonResponse;
+            
+            $debugLog("Response sent successfully");
+            $debugLog("=== getNotes() END ===");
+            
+            // End output buffering
+            ob_end_flush();
+            exit;
+            
+        } catch (\Exception $e) {
+            // Clear any output
+            ob_clean();
+            
+            $errorMessage = $e->getMessage();
+            $errorTrace = $e->getTraceAsString();
+            
+            $debugLog("EXCEPTION in getNotes: $errorMessage");
+            $debugLog("Stack trace: $errorTrace");
+            
+            http_response_code(500);
+            header('Content-Type: application/json; charset=utf-8');
+            
+            $errorResponse = [
+                'success' => false,
+                'message' => 'An error occurred while loading notes',
+                'error' => $errorMessage
+            ];
+            
+            echo json_encode($errorResponse, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            
+            $debugLog("Error response sent");
+            $debugLog("=== getNotes() END (ERROR) ===");
+            
+            ob_end_flush();
+            exit;
+        }
+    }
+
+    /**
+     * Get single note by ID (API endpoint)
+     */
+    public function getNote($id)
+    {
+        // Start output buffering IMMEDIATELY
+        if (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        ob_start();
+        
+        header('Content-Type: application/json; charset=utf-8');
+        
+        // Check authentication for API
+        if (!$this->auth->check()) {
+            ob_clean();
+            http_response_code(401);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+        
+        $user = $this->auth->user();
+        if (!in_array($user['role'], ['doctor', 'admin'])) {
+            ob_clean();
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+        
+        try {
+            if (!$id) {
+                ob_clean();
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Note ID is required'
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                ob_end_flush();
+                exit;
+            }
+            
+            $stmt = $this->pdo->prepare("
+                SELECT * FROM notes 
+                WHERE id = ? AND user_id = ?
+            ");
+            $stmt->execute([$id, $user['id']]);
+            $note = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            ob_clean();
+            if ($note) {
+                echo json_encode([
+                    'success' => true,
+                    'note' => $note
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            } else {
+                http_response_code(404);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Note not found'
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
+            ob_end_flush();
+            exit;
+        } catch (\Exception $e) {
+            ob_clean();
+            http_response_code(500);
+            error_log("Error in getNote: " . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'An error occurred while loading the note'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+    }
+
+    /**
+     * Create new note (API endpoint)
+     */
+    public function createNote()
+    {
+        // Start output buffering IMMEDIATELY
+        if (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        ob_start();
+        
+        header('Content-Type: application/json; charset=utf-8');
+        
+        // Check authentication for API
+        if (!$this->auth->check()) {
+            ob_clean();
+            http_response_code(401);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+        
+        $user = $this->auth->user();
+        if (!in_array($user['role'], ['doctor', 'admin'])) {
+            ob_clean();
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+        
+        $data = json_decode(file_get_contents('php://input'), true);
+        
+        if (!$data) {
+            $data = $_POST;
+        }
+        
+        // Validate required fields
+        if (!isset($data['content'])) {
+            ob_clean();
+            echo json_encode([
+                'success' => false,
+                'message' => 'Content is required'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+        
+        try {
+            $title = $data['title'] ?? null;
+            $content = $data['content'] ?? '';
+            $backgroundColor = $data['background_color'] ?? '#fbbf24'; // Default: warning yellow
+            $positionX = intval($data['position_x'] ?? 0);
+            $positionY = intval($data['position_y'] ?? 0);
+            $width = intval($data['width'] ?? 300);
+            $height = intval($data['height'] ?? 200);
+            $zIndex = intval($data['z_index'] ?? 1);
+            
+            $stmt = $this->pdo->prepare("
+                INSERT INTO notes (user_id, title, content, background_color, position_x, position_y, width, height, z_index)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            
+            $stmt->execute([
+                $user['id'],
+                $title,
+                $content,
+                $backgroundColor,
+                $positionX,
+                $positionY,
+                $width,
+                $height,
+                $zIndex
+            ]);
+            
+            $noteId = $this->pdo->lastInsertId();
+            
+            ob_clean();
+            echo json_encode([
+                'success' => true,
+                'message' => 'Note created successfully',
+                'note_id' => $noteId
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        } catch (\Exception $e) {
+            ob_clean();
+            http_response_code(500);
+            error_log("Error in createNote: " . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'An error occurred while creating the note'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+    }
+
+    /**
+     * Update note (API endpoint)
+     */
+    public function updateNote($id)
+    {
+        // Start output buffering IMMEDIATELY
+        if (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        ob_start();
+        
+        header('Content-Type: application/json; charset=utf-8');
+        
+        // Check authentication for API
+        if (!$this->auth->check()) {
+            ob_clean();
+            http_response_code(401);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+        
+        $user = $this->auth->user();
+        if (!in_array($user['role'], ['doctor', 'admin'])) {
+            ob_clean();
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+        
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!$data) {
+            $data = $_POST;
+        }
+        
+        $noteId = $id ?? null;
+        
+        if (!$noteId) {
+            ob_clean();
+            echo json_encode([
+                'success' => false,
+                'message' => 'Note ID is required'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+        
+        try {
+            // Verify note belongs to user
+            $stmt = $this->pdo->prepare("SELECT user_id FROM notes WHERE id = ?");
+            $stmt->execute([$noteId]);
+            $note = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$note) {
+                ob_clean();
+                http_response_code(404);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Note not found'
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                ob_end_flush();
+                exit;
+            }
+            
+            if ($note['user_id'] != $user['id']) {
+                ob_clean();
+                http_response_code(403);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                ob_end_flush();
+                exit;
+            }
+            
+            $updates = [];
+            $params = [];
+            
+            if (isset($data['title'])) {
+                $updates[] = "title = ?";
+                $params[] = $data['title'];
+            }
+            if (isset($data['content'])) {
+                $updates[] = "content = ?";
+                $params[] = $data['content'];
+            }
+            if (isset($data['background_color'])) {
+                $updates[] = "background_color = ?";
+                $params[] = $data['background_color'];
+            }
+            if (isset($data['position_x'])) {
+                $updates[] = "position_x = ?";
+                $params[] = intval($data['position_x']);
+            }
+            if (isset($data['position_y'])) {
+                $updates[] = "position_y = ?";
+                $params[] = intval($data['position_y']);
+            }
+            if (isset($data['width'])) {
+                $updates[] = "width = ?";
+                $params[] = intval($data['width']);
+            }
+            if (isset($data['height'])) {
+                $updates[] = "height = ?";
+                $params[] = intval($data['height']);
+            }
+            if (isset($data['z_index'])) {
+                $updates[] = "z_index = ?";
+                $params[] = intval($data['z_index']);
+            }
+            
+            if (empty($updates)) {
+                ob_clean();
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'No changes to update'
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                ob_end_flush();
+                exit;
+            }
+            
+            $params[] = $noteId;
+            
+            $sql = "UPDATE notes SET " . implode(', ', $updates) . " WHERE id = ? AND user_id = ?";
+            $params[] = $user['id'];
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            
+            ob_clean();
+            echo json_encode([
+                'success' => true,
+                'message' => 'Note updated successfully'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        } catch (\Exception $e) {
+            ob_clean();
+            http_response_code(500);
+            error_log("Error in updateNote: " . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'An error occurred while updating the note'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+    }
+
+    /**
+     * Delete note (API endpoint)
+     */
+    public function deleteNote($id)
+    {
+        // Start output buffering IMMEDIATELY
+        if (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        ob_start();
+        
+        header('Content-Type: application/json; charset=utf-8');
+        
+        // Check authentication for API
+        if (!$this->auth->check()) {
+            ob_clean();
+            http_response_code(401);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+        
+        $user = $this->auth->user();
+        if (!in_array($user['role'], ['doctor', 'admin'])) {
+            ob_clean();
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+        
+        $noteId = $id ?? null;
+        
+        if (!$noteId) {
+            ob_clean();
+            echo json_encode([
+                'success' => false,
+                'message' => 'Note ID is required'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        }
+        
+        try {
+            // Verify note belongs to user
+            $stmt = $this->pdo->prepare("SELECT user_id FROM notes WHERE id = ?");
+            $stmt->execute([$noteId]);
+            $note = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$note) {
+                ob_clean();
+                http_response_code(404);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Note not found'
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                ob_end_flush();
+                exit;
+            }
+            
+            if ($note['user_id'] != $user['id']) {
+                ob_clean();
+                http_response_code(403);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                ob_end_flush();
+                exit;
+            }
+            
+            $stmt = $this->pdo->prepare("DELETE FROM notes WHERE id = ? AND user_id = ?");
+            $result = $stmt->execute([$noteId, $user['id']]);
+            
+            ob_clean();
+            if ($result) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Note deleted successfully'
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            } else {
+                http_response_code(500);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Failed to delete note'
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
+            ob_end_flush();
+            exit;
+        } catch (\Exception $e) {
+            ob_clean();
+            http_response_code(500);
+            error_log("Error deleting note: " . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'An error occurred while deleting the note'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
         }
     }
 }

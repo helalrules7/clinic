@@ -19,6 +19,7 @@ if (file_exists($vendorAutoload)) {
 // Load Controllers
 require_once __DIR__ . '/app/Controllers/SecretaryController.php';
 require_once __DIR__ . '/app/Controllers/AlertController.php';
+// require_once __DIR__ . '/app/Controllers/NotesController.php';
 
 // Load environment variables
 if (file_exists(__DIR__ . '/.env')) {
@@ -133,6 +134,14 @@ try {
     $router->put('/api/alerts/{id}', 'AlertController@update');
     $router->delete('/api/alerts/{id}', 'AlertController@delete');
     
+    // Notes routes - moved to DoctorController
+    $router->get('/doctor/notes', 'DoctorController@notes');
+    $router->get('/api/notes', 'DoctorController@getNotes');
+    $router->get('/api/notes/{id}', 'DoctorController@getNote');
+    $router->post('/api/notes', 'DoctorController@createNote');
+    $router->put('/api/notes/{id}', 'DoctorController@updateNote');
+    $router->delete('/api/notes/{id}', 'DoctorController@deleteNote');
+    
     // Medical History routes
     $router->post('/api/patients/{id}/medical-history', 'ApiController@createMedicalHistory');
     $router->get('/api/patients/{id}/medical-history/{historyId}', 'ApiController@getMedicalHistoryEntry');
@@ -161,6 +170,8 @@ try {
     // API routes
     $router->get('/api/calendar', 'ApiController@getCalendar');
     // More specific routes first
+    // More specific routes first - search must come before {id}
+    $router->get('/api/appointments/search', 'ApiController@searchAppointments');
     $router->get('/api/appointments/{id}/attachments', 'ApiController@getAppointmentAttachments');
     $router->get('/api/appointments/{id}/medications', 'ApiController@getAppointmentMedications');
     $router->get('/api/appointments/{id}/glasses', 'ApiController@getAppointmentGlasses');

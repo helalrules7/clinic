@@ -93,7 +93,7 @@
                                     <li>Efficient pagination and reduced server requests</li>
                                     <li>Better caching strategies and improved response times</li>
                                 </ul>
-                            </div>
+                                    </div>
 
                             <!-- Version 5.1 -->
                             <div class="version-section mb-4">
@@ -125,7 +125,7 @@
                                     <li>Missed appointments tracking and management</li>
                                     <li>Advanced pagination and quantity control</li>
                                 </ul>
-                                    </div>
+                                </div>
 
                             <!-- Version 4.0 -->
                             <div class="version-section mb-4">
@@ -143,7 +143,7 @@
                                     <li>Dynamic print templates</li>
                                     <li>Visit cost management system</li>
                                 </ul>
-                                </div>
+                            </div>
 
                             <!-- Version 3.0 -->
                             <div class="version-section mb-4">
@@ -159,7 +159,7 @@
                                     <li>Improved user interface design</li>
                                     <li>Doctor filter for patients</li>
                                 </ul>
-                            </div>
+                        </div>
 
                             <!-- Version 2.0 -->
                             <div class="version-section mb-4">
@@ -175,7 +175,7 @@
                                     <li>Enhanced dark/light mode support</li>
                                     <li>Font Awesome integration</li>
                                 </ul>
-                        </div>
+                                    </div>
 
                             <!-- Version 1.0 -->
                             <div class="version-section mb-4">
@@ -307,37 +307,37 @@
                         <div class="d-flex align-items-start mb-2">
                             <div class="v6-feature-icon bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; flex-shrink: 0;">
                                 <i class="bi bi-bell"></i>
-                            </div>
-                            <div>
+                                </div>
+                                <div>
                                 <h6 class="fw-bold mb-1">Patient Alert System</h6>
                                 <p class="text-muted small mb-0">Comprehensive alert and notification system with real-time toast notifications</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
                     <div class="v6-feature-item mb-3">
                         <div class="d-flex align-items-start mb-2">
                             <div class="v6-feature-icon bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; flex-shrink: 0;">
                                 <i class="bi bi-person-badge"></i>
-                            </div>
-                            <div>
+                                </div>
+                                <div>
                                 <h6 class="fw-bold mb-1">Enhanced Patient Page UI/UX</h6>
                                 <p class="text-muted small mb-0">Improved timeline markers, reorganized actions, and better visual hierarchy</p>
-                            </div>
-                        </div>
-                    </div>
+            </div>
+        </div>
+    </div>
 
                     <div class="v6-feature-item mb-3">
                         <div class="d-flex align-items-start mb-2">
                             <div class="v6-feature-icon bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; flex-shrink: 0;">
                                 <i class="bi bi-window"></i>
-                            </div>
-                            <div>
+                </div>
+                                    <div>
                                 <h6 class="fw-bold mb-1">Glass Fixed Header System</h6>
                                 <p class="text-muted small mb-0">Beautiful glass-effect header with backdrop blur and scroll effects</p>
-                            </div>
-                        </div>
-                    </div>
+            </div>
+        </div>
+    </div>
 
                     <div class="mt-4 pt-3 border-top">
                         <a href="/whats-new" class="btn btn-primary w-100 mb-2">
@@ -348,8 +348,8 @@
                             <i class="bi bi-stars me-2"></i>
                             Full Features
                         </a>
-                    </div>
-                </div>
+                            </div>
+                        </div>
             </div>
         </div>
     </div>

@@ -123,6 +123,13 @@ class Auth
     public function requireAuth()
     {
         if (!$this->check()) {
+            // Check if this is an API request
+            if ($this->isApiRequest()) {
+                http_response_code(401);
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['error' => 'Unauthorized'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                exit;
+            }
             \App\Lib\UrlHelper::redirect('/login');
         }
     }
@@ -146,6 +153,12 @@ class Auth
             if ($originalRole === 'admin') {
                 return; // Allow access
             } else {
+                if ($this->isApiRequest()) {
+                    http_response_code(403);
+                    header('Content-Type: application/json; charset=utf-8');
+                    echo json_encode(['error' => 'Access denied - Admin privileges required'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    exit;
+                }
                 http_response_code(403);
                 throw new \Exception('Access denied - Admin privileges required');
             }
@@ -153,9 +166,42 @@ class Auth
         
         // Normal role check
         if (!in_array($currentRole, $roles)) {
+            if ($this->isApiRequest()) {
+                http_response_code(403);
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['error' => 'Access denied'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                exit;
+            }
             http_response_code(403);
             throw new \Exception('Access denied');
         }
+    }
+    
+    /**
+     * Check if the current request is an API request
+     */
+    private function isApiRequest()
+    {
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        $acceptHeader = $_SERVER['HTTP_ACCEPT'] ?? '';
+        $requestedWith = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '';
+        
+        // Check if URI starts with /api/
+        if (strpos($uri, '/api/') === 0) {
+            return true;
+        }
+        
+        // Check if Accept header contains application/json
+        if (strpos($acceptHeader, 'application/json') !== false) {
+            return true;
+        }
+        
+        // Check if X-Requested-With header is XMLHttpRequest
+        if (strtolower($requestedWith) === 'xmlhttprequest') {
+            return true;
+        }
+        
+        return false;
     }
 
     /**
