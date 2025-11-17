@@ -113,56 +113,56 @@
             </div>
             <div class="card-body">
                 <div class="row g-2">
-                    <div class="col-auto mb-2">
-                        <a href="/doctor/calendar" class="btn btn-outline-primary quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2">
+                    <div class="col mb-2">
+                        <a href="/doctor/calendar" class="btn btn-outline-primary quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2 w-100">
                             <i class="bi bi-calendar3 mb-1"></i>
                             <span style="font-size: 0.75rem;">View Calendar</span>
                         </a>
                     </div>
-                    <div class="col-auto mb-2">
-                        <a href="/doctor/patients" class="btn btn-outline-success quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2">
+                    <div class="col mb-2">
+                        <a href="/doctor/patients" class="btn btn-outline-success quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2 w-100">
                             <i class="bi bi-people mb-1"></i>
                             <span style="font-size: 0.75rem;">Patient List</span>
                         </a>
                     </div>
-                    <div class="col-auto mb-2">
-                        <a href="/doctor/profile" class="btn btn-outline-info quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2">
+                    <div class="col mb-2">
+                        <a href="/doctor/profile" class="btn btn-outline-info quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2 w-100">
                             <i class="bi bi-person-circle mb-1"></i>
                             <span style="font-size: 0.75rem;">My Profile</span>
                         </a>
                     </div>
-                    <div class="col-auto mb-2">
-                        <a href="/doctor/reports" class="btn btn-outline-warning quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2">
+                    <div class="col mb-2">
+                        <a href="/doctor/reports" class="btn btn-outline-warning quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2 w-100">
                             <i class="bi bi-graph-up mb-1"></i>
                             <span style="font-size: 0.75rem;">Reports</span>
                         </a>
                     </div>
-                    <div class="col-auto mb-2">
-                        <a href="/doctor/alerts" class="btn btn-outline-danger quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2">
+                    <div class="col mb-2">
+                        <a href="/doctor/alerts" class="btn btn-outline-danger quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2 w-100">
                             <i class="bi bi-bell mb-1"></i>
                             <span style="font-size: 0.75rem;">Alerts</span>
                         </a>
                     </div>
-                    <div class="col-auto mb-2">
-                        <a href="/doctor/drugs" class="btn btn-outline-success quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2">
+                    <div class="col mb-2">
+                        <a href="/doctor/drugs" class="btn btn-outline-success quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2 w-100">
                             <i class="bi bi-capsule mb-1"></i>
                             <span style="font-size: 0.75rem;">Drugs</span>
                         </a>
                     </div>
-                    <div class="col-auto mb-2">
-                        <a href="/doctor/notes" class="btn btn-outline-warning quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2">
+                    <div class="col mb-2">
+                        <a href="/doctor/notes" class="btn btn-outline-warning quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2 w-100">
                             <i class="bi bi-sticky mb-1"></i>
                             <span style="font-size: 0.75rem;">Notes</span>
                         </a>
                     </div>
-                    <div class="col-auto mb-2">
-                        <a href="/doctor/medications" class="btn btn-outline-info quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2">
+                    <div class="col mb-2">
+                        <a href="/doctor/medications" class="btn btn-outline-info quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2 w-100">
                             <i class="bi bi-prescription mb-1"></i>
                             <span style="font-size: 0.75rem;">Prescriptions</span>
                         </a>
                     </div>
-                    <div class="col-auto mb-2">
-                        <a href="/doctor/glasses" class="btn btn-outline-primary quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2">
+                    <div class="col mb-2">
+                        <a href="/doctor/glasses" class="btn btn-outline-primary quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2 w-100">
                             <i class="bi bi-eyeglasses mb-1"></i>
                             <span style="font-size: 0.75rem;">Glasses Prescriptions</span>
                         </a>
@@ -757,9 +757,9 @@
     text-decoration: none !important;
     position: relative;
     overflow: hidden;
-    min-width: 100px;
     min-height: 60px;
     white-space: nowrap;
+    width: 100%;
 }
 
 .quick-action-btn:before {
@@ -1407,6 +1407,33 @@ canvas {
     content: attr(data-placeholder);
     opacity: 0.5;
     pointer-events: none;
+}
+
+.dashboard-note-widget-footer {
+    padding: 0.4rem 0.75rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    font-size: 0.7rem;
+    opacity: 0.7;
+}
+
+.dark .dashboard-note-widget-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(30, 41, 59, 0.5);
+}
+
+.dashboard-note-widget.light-text .dashboard-note-widget-footer {
+    border-top-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.dashboard-note-widget.dark-text .dashboard-note-widget-footer {
+    border-top-color: rgba(0, 0, 0, 0.1);
+    color: #0f172a;
 }
 
 /* Ensure autocomplete elements don't interfere with contenteditable */
@@ -2571,7 +2598,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let dashboardIsDragging = false;
     let dashboardCurrentDragNote = null;
     let dashboardDragOffset = { x: 0, y: 0 };
-    const MAX_DASHBOARD_NOTES = 10;
     
     function getDashboardColorClass(backgroundColor) {
         for (const [key, value] of Object.entries(dashboardColorMap)) {
@@ -2591,7 +2617,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return brightness > 128 ? 'dark-text' : 'light-text';
     }
     
-    function createDashboardNoteWidget(note) {
+    function createDashboardNoteWidget(note, index = 0) {
         const bgColor = note.background_color || '#fbbf24';
         const colorClass = getDashboardColorClass(bgColor);
         const textColorClass = getDashboardTextColor(bgColor);
@@ -2600,11 +2626,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const defaultWidth = 300;
         const defaultHeight = 250;
         
+        // Position notes side by side instead of using DB position
+        const spacing = 20; // Space between notes
+        const notesPerRow = 3; // Number of notes per row
+        const row = Math.floor(index / notesPerRow);
+        const col = index % notesPerRow;
+        const x = col * (defaultWidth + spacing) + spacing;
+        const y = row * (defaultHeight + spacing) + spacing;
+        
         const widget = document.createElement('div');
         widget.className = `dashboard-note-widget color-${colorClass} ${textColorClass}`;
         widget.id = `dashboard-note-${note.id}`;
-        widget.style.left = `${note.position_x || 0}px`;
-        widget.style.top = `${note.position_y || 0}px`;
+        widget.style.left = `${x}px`;
+        widget.style.top = `${y}px`;
         widget.style.width = `${defaultWidth}px`;
         widget.style.height = `${defaultHeight}px`;
         widget.style.zIndex = note.z_index || 1;
@@ -2645,6 +2679,10 @@ document.addEventListener('DOMContentLoaded', function() {
                      data-note-id="${note.id}"
                      onblur="dashboardUpdateNoteContent(${note.id}, this.innerHTML)">${note.content || ''}</div>
             </div>
+            <div class="dashboard-note-widget-footer">
+                <span>Created: ${new Date(note.created_at).toLocaleDateString()}</span>
+                <span>Updated: ${new Date(note.updated_at).toLocaleDateString()}</span>
+            </div>
             <div class="dashboard-note-widget-resize" onmousedown="dashboardStartResize(event, ${note.id})"></div>
         `;
         
@@ -2679,15 +2717,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 loading.style.display = 'none';
                 empty.style.display = 'none';
                 
-                // Limit to 5 notes
-                dashboardNotes = data.notes.slice(0, MAX_DASHBOARD_NOTES);
+                // Load all notes (no limit)
+                dashboardNotes = data.notes;
                 
                 // Clear container
                 container.querySelectorAll('.dashboard-note-widget').forEach(w => w.remove());
                 
-                // Add notes
-                dashboardNotes.forEach(note => {
-                    const widget = createDashboardNoteWidget(note);
+                // Add notes (with index for positioning)
+                dashboardNotes.forEach((note, index) => {
+                    const widget = createDashboardNoteWidget(note, index);
                     container.appendChild(widget);
                     
                     // Initialize autocomplete for this contenteditable
@@ -2697,22 +2735,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
                 
-                // Update header button state
+                // Keep header button enabled (no limit)
                 const headerBtn = document.getElementById('dashboardAddNoteBtnHeader');
                 if (headerBtn) {
-                    if (dashboardNotes.length >= MAX_DASHBOARD_NOTES) {
-                        headerBtn.disabled = true;
-                        headerBtn.title = `Maximum ${MAX_DASHBOARD_NOTES} notes allowed on dashboard`;
-                    } else {
-                        headerBtn.disabled = false;
-                        headerBtn.title = '';
-                    }
+                    headerBtn.disabled = false;
+                    headerBtn.title = '';
                 }
             } else {
                 loading.style.display = 'none';
                 empty.style.display = 'block';
                 
-                // Enable header button
+                // Keep header button enabled (no limit)
                 const headerBtn = document.getElementById('dashboardAddNoteBtnHeader');
                 if (headerBtn) {
                     headerBtn.disabled = false;
@@ -2726,24 +2759,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     async function dashboardAddNote() {
-        // Check current count from DOM
         const container = document.getElementById('dashboardNotesContainer');
-        const currentCount = container.querySelectorAll('.dashboard-note-widget').length;
-        
-        if (currentCount >= MAX_DASHBOARD_NOTES) {
-            alert(`Maximum ${MAX_DASHBOARD_NOTES} notes allowed on dashboard. Please use the full Notes Dashboard for more.`);
-            return;
-        }
-        
         const containerRect = container.getBoundingClientRect();
         
         // Default size for new notes
         const defaultWidth = 300;
         const defaultHeight = 250;
         
-        // Center position calculation based on default size
-        const x = Math.max(0, (containerRect.width / 2) - (defaultWidth / 2));
-        const y = Math.max(0, (containerRect.height / 2) - (defaultHeight / 2));
+        // Position new note next to existing notes (side by side)
+        const existingNotes = container.querySelectorAll('.dashboard-note-widget');
+        const spacing = 20;
+        const notesPerRow = 3;
+        const index = existingNotes.length;
+        const row = Math.floor(index / notesPerRow);
+        const col = index % notesPerRow;
+        const x = col * (defaultWidth + spacing) + spacing;
+        const y = row * (defaultHeight + spacing) + spacing;
         
         try {
             const response = await fetch('/api/notes', {
