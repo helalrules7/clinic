@@ -715,24 +715,26 @@
             .quick-access-dock {
                 display: block !important;
                 bottom: auto;
-                top: calc(100vh - 1.5rem - 45px - 0.5rem - 45px);
-                right: auto;
-                left: 1.5rem;
+                top: calc(100vh - 0.1rem - 20px - 0.1rem - 45px);
+                right: 0.1rem;
+                left: auto;
                 transform: none;
                 z-index: 998;
+                transition: all 0.3s ease;
             }
             
+            /* When back to top button is hidden, use its position */
             .quick-access-dock.mobile-minimized {
-                top: calc(100vh - 1.5rem - 45px - 0.5rem - 45px);
-                right: auto;
-                left: 1.5rem;
+                top: calc(100vh - 0.1rem - 20px - 0.1rem - 45px);
+                right: 0.1rem;
+                left: auto;
             }
             
             .quick-access-dock.mobile-expanded {
                 top: auto;
                 bottom: calc(1.5rem + 45px + 0.5rem);
-                right: auto;
-                left: 1.5rem;
+                left: auto;
+                right: 0.1rem;
                 transform: none;
                 width: auto;
                 max-width: 280px;
@@ -823,7 +825,10 @@
                 -webkit-backdrop-filter: blur(20px);
                 border: 1px solid rgba(226, 232, 240, 0.3);
                 box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-                min-width: 100px;
+                width: 100%;
+                min-width: 200px;
+                max-width: 100%;
+                flex-shrink: 0;
             }
             
             .dark .quick-access-dock.mobile-expanded .dock-container {
@@ -849,8 +854,11 @@
                 flex-shrink: 0;
             }
             
-            .quick-access-dock.mobile-expanded .dock-item .htooltip {
-                display: none;
+            /* Hide all tooltips on mobile dock */
+            .quick-access-dock.mobile-expanded .dock-item .htooltip,
+            .quick-access-dock.mobile-minimized .htooltip,
+            .quick-access-dock.mobile-expanded .dock-minimize-btn .htooltip {
+                display: none !important;
             }
             
             /* Show text labels on mobile expanded dock */
@@ -893,8 +901,21 @@
                 width: 100%;
                 height: 48px;
                 border-radius: 12px;
-                justify-content: center;
+                justify-content: flex-start;
+                align-items: center;
+                padding: 0 0.75rem;
                 margin-top: 0.25rem;
+            }
+            
+            .quick-access-dock.mobile-expanded .dock-minimize-btn i {
+                margin-right: 0.75rem;
+            }
+            
+            .quick-access-dock.mobile-expanded .dock-minimize-btn::after {
+                content: "Minimize";
+                color: var(--text);
+                font-size: 0.875rem;
+                font-weight: 500;
             }
         }
         
@@ -2072,6 +2093,23 @@
         
         // Scroll to Top Button
         const scrollToTopBtn = document.getElementById('scrollToTop');
+        const mobileDock = document.getElementById('quickAccessDock');
+        
+        function updateMobileDockPosition() {
+            if (!mobileDock || window.innerWidth > 768) return;
+            
+            if (scrollToTopBtn && scrollToTopBtn.classList.contains('show')) {
+                // Back to top button is visible - move dock to left with different top position
+                mobileDock.style.right = '0.1rem';
+                mobileDock.style.left = 'auto';
+                mobileDock.style.top = 'calc(100vh - 0.1rem - 20px - 0.1rem - 45px)';
+            } else {
+                // Back to top button is hidden - use its position (right) with default top
+                mobileDock.style.left = 'auto';
+                mobileDock.style.right = '0.1rem';
+                mobileDock.style.top = 'calc(100vh - 0.1rem - 20px - 0.1rem - 45px)';
+            }
+        }
         
         if (scrollToTopBtn) {
             // Show/hide button based on scroll position
@@ -2081,6 +2119,8 @@
                 } else {
                     scrollToTopBtn.classList.remove('show');
                 }
+                // Update mobile dock position
+                updateMobileDockPosition();
             });
             
             // Scroll to top when button is clicked
@@ -2090,6 +2130,9 @@
                     behavior: 'smooth'
                 });
             });
+            
+            // Initial position update
+            updateMobileDockPosition();
         }
         
         // Alert System - Real-time notification system like chat
