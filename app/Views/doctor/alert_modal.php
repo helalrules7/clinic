@@ -77,27 +77,74 @@
 </div>
 
 <style>
-/* Alert Modal Dark Mode Support */
+/* Alert Modal Glass Effect - Same as sidebar */
 #alertModal .modal-content {
-    background-color: var(--card) !important;
-    border-color: var(--border) !important;
+    /* Glass effect - similar to sidebar */
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
     color: var(--text) !important;
+}
+
+.dark #alertModal .modal-content {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 }
 
 #alertModal .modal-header {
-    background-color: var(--bg) !important;
-    border-bottom-color: var(--border) !important;
+    background: transparent !important;
+    border-bottom-color: rgba(226, 232, 240, 0.3) !important;
     color: var(--text) !important;
 }
 
+.dark #alertModal .modal-header {
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+/* Close button white in dark mode */
+.dark #alertModal .modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.9;
+}
+
+.dark #alertModal .modal-header .btn-close:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5);
+}
+
+/* Enable dragging */
+#alertModal .modal-content {
+    cursor: move;
+}
+
+#alertModal .modal-dialog {
+    cursor: default;
+    transition: transform 0.2s ease;
+    margin: 1.75rem auto;
+}
+
+#alertModal .modal-header {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
 #alertModal .modal-body {
-    background-color: var(--card) !important;
+    background: transparent !important;
     color: var(--text) !important;
 }
 
 #alertModal .modal-footer {
-    background-color: var(--card) !important;
-    border-top-color: var(--border) !important;
+    background: transparent !important;
+    border-top-color: rgba(226, 232, 240, 0.3) !important;
+}
+
+.dark #alertModal .modal-footer {
+    border-top-color: rgba(51, 65, 85, 0.3) !important;
 }
 
 #alertModal .form-label {
@@ -416,7 +463,157 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('alertPatientSearchResults').innerHTML = '';
         });
     }
+    
+    // Initialize draggable modals
+    initializeDraggableModals();
 });
+
+// Make modals draggable
+function initializeDraggableModals() {
+    const modals = document.querySelectorAll('.modal');
+    
+    modals.forEach(modal => {
+        const modalDialog = modal.querySelector('.modal-dialog');
+        if (!modalDialog) return;
+        
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+        
+        // Make modal header the drag handle
+        const modalHeader = modal.querySelector('.modal-header');
+        if (!modalHeader) return;
+        
+        modalHeader.style.cursor = 'move';
+        
+        modalHeader.addEventListener('mousedown', dragStart);
+        
+        function dragStart(e) {
+            // Don't drag if clicking on buttons or inputs
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.closest('button') || e.target.closest('input') || e.target.closest('.btn-close')) {
+                return;
+            }
+            
+            // Only start dragging if clicking on header (not on title text)
+            if (e.target === modalHeader || (modalHeader.contains(e.target) && e.target.tagName !== 'H5' && !e.target.closest('h5'))) {
+                // Get current transform values
+                const transform = modalDialog.style.transform;
+                if (transform) {
+                    const match = transform.match(/translate\(([^,]+)px,\s*([^)]+)px\)/);
+                    if (match) {
+                        xOffset = parseFloat(match[1]) || 0;
+                        yOffset = parseFloat(match[2]) || 0;
+                    }
+                }
+                
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+                
+                // Store initial mouse position to detect if it's a drag or click
+                const startX = e.clientX;
+                const startY = e.clientY;
+                
+                // Set a flag to track if mouse moved
+                let hasMoved = false;
+                
+                function checkMove(moveEvent) {
+                    const deltaX = Math.abs(moveEvent.clientX - startX);
+                    const deltaY = Math.abs(moveEvent.clientY - startY);
+                    if (deltaX > 5 || deltaY > 5) {
+                        hasMoved = true;
+                        isDragging = true;
+                        modalDialog.style.transition = 'none';
+                        moveEvent.preventDefault();
+                        moveEvent.stopPropagation();
+                    }
+                }
+                
+                function handleMove(moveEvent) {
+                    if (hasMoved) {
+                        drag(moveEvent);
+                    } else {
+                        checkMove(moveEvent);
+                    }
+                }
+                
+                function handleEnd(endEvent) {
+                    if (!hasMoved) {
+                        // It was just a click, allow normal behavior
+                        document.removeEventListener('mousemove', handleMove);
+                        document.removeEventListener('mouseup', handleEnd);
+                        return;
+                    }
+                    dragEnd(endEvent);
+                    document.removeEventListener('mousemove', handleMove);
+                    document.removeEventListener('mouseup', handleEnd);
+                }
+                
+                document.addEventListener('mousemove', handleMove);
+                document.addEventListener('mouseup', handleEnd);
+            }
+        }
+        
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                e.stopPropagation(); // Prevent modal from closing
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+                
+                xOffset = currentX;
+                yOffset = currentY;
+                
+                setTranslate(currentX, currentY, modalDialog);
+            }
+        }
+        
+        function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+            modalDialog.style.transition = '';
+        }
+        
+        function setTranslate(xPos, yPos, el) {
+            // Get viewport dimensions
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            // Get modal dimensions
+            const modalRect = el.getBoundingClientRect();
+            const modalWidth = modalRect.width;
+            const modalHeight = modalRect.height;
+            
+            // Get the original position (center of viewport)
+            const originalLeft = (viewportWidth - modalWidth) / 2;
+            const originalTop = 50; // Keep at least 50px from top
+            
+            // Calculate boundaries relative to original position
+            // Allow movement within viewport bounds
+            const minX = -(originalLeft - 20); // Allow 20px from left edge
+            const maxX = viewportWidth - modalWidth - originalLeft + 20; // Allow 20px from right edge
+            const minY = -(originalTop - 20); // Allow 20px from top
+            const maxY = viewportHeight - modalHeight - originalTop - 20; // Allow 20px from bottom
+            
+            // Constrain movement
+            const constrainedX = Math.max(minX, Math.min(maxX, xPos));
+            const constrainedY = Math.max(minY, Math.min(maxY, yPos));
+            
+            el.style.transform = `translate(${constrainedX}px, ${constrainedY}px)`;
+        }
+        
+        // Reset position when modal is hidden
+        modal.addEventListener('hidden.bs.modal', function() {
+            xOffset = 0;
+            yOffset = 0;
+            modalDialog.style.transform = '';
+        });
+    });
+}
 
 function saveAlert() {
     const form = document.getElementById('alertForm');
@@ -502,6 +699,5 @@ function saveAlert() {
             showToast('error', 'Error', `Failed to ${isEditMode ? 'update' : 'create'} alert. Please try again.`);
         }
     });
-}
 </script>
 

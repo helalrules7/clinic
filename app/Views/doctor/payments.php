@@ -327,13 +327,56 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
 
 /* Modal Styles */
 .modal-content {
-    background-color: var(--card) !important;
-    border-color: var(--border) !important;
+    /* Glass effect - similar to sidebar */
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
+}
+
+.dark .modal-content {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 }
 
 .modal-header {
-    background-color: var(--card) !important;
-    border-bottom-color: var(--border) !important;
+    background: transparent !important;
+    border-bottom-color: rgba(226, 232, 240, 0.3) !important;
+}
+
+.dark .modal-header {
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+/* Close button white in dark mode */
+.dark .modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.9;
+}
+
+.dark .modal-header .btn-close:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5);
+}
+
+/* Enable dragging */
+.modal-content {
+    cursor: move;
+}
+
+.modal-dialog {
+    cursor: default;
+    transition: transform 0.2s ease;
+    margin: 1.75rem auto;
+}
+
+.modal-header {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .modal-footer {
@@ -400,16 +443,33 @@ kbd {
 
 /* Search Modal Styles */
 .modal-content {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
+    /* Glass effect - similar to sidebar */
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
+    color: var(--text) !important;
+}
+
+.dark .modal-content {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 }
 
 .modal-header {
-    background-color: var(--bg-alt);
-    border-bottom-color: var(--border);
-    color: var(--text);
+    background: transparent !important;
+    border-bottom-color: rgba(226, 232, 240, 0.3) !important;
+    color: var(--text) !important;
 }
+
+.dark .modal-header {
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+/* Close button white in dark mode - already added above */
+/* Enable dragging - already added above */
 
 .modal-footer {
     background-color: var(--bg-alt);

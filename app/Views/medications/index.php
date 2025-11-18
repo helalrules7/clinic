@@ -234,22 +234,69 @@
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-/* Prescription Preview Modal Styles */
+/* Prescription Preview Modal Styles - Glass Effect */
 #prescriptionPreviewModal .modal-content {
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: var(--text);
+    /* Glass effect - similar to sidebar */
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
+    color: var(--text) !important;
+}
+
+.dark #prescriptionPreviewModal .modal-content {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 }
 
 #prescriptionPreviewModal .modal-header {
-    background: var(--card);
-    border-bottom: 1px solid var(--border);
-    color: var(--text);
+    background: transparent !important;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.3) !important;
+    color: var(--text) !important;
+}
+
+.dark #prescriptionPreviewModal .modal-header {
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+/* Close button white in dark mode */
+.dark #prescriptionPreviewModal .modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.9;
+}
+
+.dark #prescriptionPreviewModal .modal-header .btn-close:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5);
+}
+
+/* Enable dragging */
+#prescriptionPreviewModal .modal-content {
+    cursor: move;
+}
+
+#prescriptionPreviewModal .modal-dialog {
+    cursor: default;
+    transition: transform 0.2s ease;
+    margin: 1.75rem auto;
+}
+
+#prescriptionPreviewModal .modal-header {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 #prescriptionPreviewModal .modal-footer {
-    background: var(--card);
-    border-top: 1px solid var(--border);
+    background: transparent !important;
+    border-top: 1px solid rgba(226, 232, 240, 0.3) !important;
+}
+
+.dark #prescriptionPreviewModal .modal-footer {
+    border-top-color: rgba(51, 65, 85, 0.3) !important;
 }
 
 #prescriptionPreviewContent {

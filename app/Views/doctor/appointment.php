@@ -309,27 +309,57 @@
     color: var(--text) !important;
 }
 
-/* Dark Mode Modal Styles */
+/* Dark Mode Modal Styles - Glass Effect */
 .dark .modal-content {
-    background-color: var(--card) !important;
-    border-color: var(--border) !important;
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
     color: var(--text) !important;
 }
 
 .dark .modal-header {
-    background-color: var(--bg) !important;
-    border-bottom-color: var(--border) !important;
+    background: transparent !important;
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
     color: var(--text) !important;
 }
 
+/* Close button white in dark mode */
+.dark .modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.9;
+}
+
+.dark .modal-header .btn-close:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5);
+}
+
+/* Enable dragging */
+.modal-content {
+    cursor: move;
+}
+
+.modal-dialog {
+    cursor: default;
+    transition: transform 0.2s ease;
+    margin: 1.75rem auto;
+}
+
+.modal-header {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
 .dark .modal-body {
-    background-color: var(--card) !important;
+    background: transparent !important;
     color: var(--text) !important;
 }
 
 .dark .modal-footer {
-    background-color: var(--card) !important;
-    border-top-color: var(--border) !important;
+    background: transparent !important;
+    border-top-color: rgba(51, 65, 85, 0.3) !important;
 }
 
 /* Dark Mode Button Styles */

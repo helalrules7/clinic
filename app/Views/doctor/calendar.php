@@ -1734,7 +1734,117 @@ function initializeAddPatientModal() {
 // Initialize add patient modal when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     initializeAddPatientModal();
+    // Initialize draggable modals
+    initializeDraggableModals();
 });
+
+// Make modals draggable
+function initializeDraggableModals() {
+    const modals = document.querySelectorAll('.modal');
+    
+    modals.forEach(modal => {
+        const modalDialog = modal.querySelector('.modal-dialog');
+        if (!modalDialog) return;
+        
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+        
+        // Make modal header the drag handle
+        const modalHeader = modal.querySelector('.modal-header');
+        if (!modalHeader) return;
+        
+        modalHeader.style.cursor = 'move';
+        
+        modalHeader.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+        
+        function dragStart(e) {
+            // Don't drag if clicking on buttons or inputs
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.closest('button') || e.target.closest('input') || e.target.closest('.btn-close')) {
+                return;
+            }
+            
+            // Get current transform values
+            const transform = modalDialog.style.transform;
+            if (transform) {
+                const match = transform.match(/translate\(([^,]+)px,\s*([^)]+)px\)/);
+                if (match) {
+                    xOffset = parseFloat(match[1]) || 0;
+                    yOffset = parseFloat(match[2]) || 0;
+                }
+            }
+            
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+            
+            if (e.target === modalHeader || modalHeader.contains(e.target)) {
+                isDragging = true;
+                modalDialog.style.transition = 'none';
+            }
+        }
+        
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+                
+                xOffset = currentX;
+                yOffset = currentY;
+                
+                setTranslate(currentX, currentY, modalDialog);
+            }
+        }
+        
+        function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+            modalDialog.style.transition = '';
+        }
+        
+        function setTranslate(xPos, yPos, el) {
+            // Get viewport dimensions
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            // Get modal dimensions
+            const modalRect = el.getBoundingClientRect();
+            const modalWidth = modalRect.width;
+            const modalHeight = modalRect.height;
+            
+            // Get the original position (center of viewport)
+            const originalLeft = (viewportWidth - modalWidth) / 2;
+            const originalTop = 50; // Keep at least 50px from top
+            
+            // Calculate boundaries relative to original position
+            // Allow movement within viewport bounds
+            const minX = -(originalLeft - 20); // Allow 20px from left edge
+            const maxX = viewportWidth - modalWidth - originalLeft + 20; // Allow 20px from right edge
+            const minY = -(originalTop - 20); // Allow 20px from top
+            const maxY = viewportHeight - modalHeight - originalTop - 20; // Allow 20px from bottom
+            
+            // Constrain movement
+            const constrainedX = Math.max(minX, Math.min(maxX, xPos));
+            const constrainedY = Math.max(minY, Math.min(maxY, yPos));
+            
+            el.style.transform = `translate(${constrainedX}px, ${constrainedY}px)`;
+        }
+        
+        // Reset position when modal is hidden
+        modal.addEventListener('hidden.bs.modal', function() {
+            xOffset = 0;
+            yOffset = 0;
+            modalDialog.style.transform = '';
+        });
+    });
+}
 
 // Cleanup on page unload (any doctor can use cleanup)
 window.addEventListener('beforeunload', () => {
@@ -2112,50 +2222,72 @@ window.addEventListener('beforeunload', () => {
 }
 
 .modal-content {
+    /* Glass effect - similar to sidebar */
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
     border-radius: 12px;
-    border: 1px solid var(--border);
-    background: var(--card);
-    color: var(--text);
+    color: var(--text) !important;
+    /* Enable dragging */
+    cursor: move;
+}
+
+.modal-dialog {
+    /* Enable dragging for modal dialog */
+    cursor: default;
+    transition: transform 0.2s ease;
+    margin: 1.75rem auto;
 }
 
 .modal-header {
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    border-radius: 12px 12px 0 0;
-    color: var(--text);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
-.modal-body {
-    background: var(--card);
-    color: var(--text);
-}
-
-.modal-footer {
-    background: var(--card);
-    border-top: 1px solid var(--border);
-}
-
-/* Dark Mode Modal Styles */
 .dark .modal-content {
-    background: var(--card);
-    border-color: var(--border);
-    color: var(--text);
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.3) !important;
+    border-radius: 12px 12px 0 0;
+    color: var(--text) !important;
 }
 
 .dark .modal-header {
-    background: var(--bg);
-    border-bottom-color: var(--border);
-    color: var(--text);
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
 }
 
-.dark .modal-body {
-    background: var(--card);
-    color: var(--text);
+/* Close button white in dark mode */
+.dark .modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.9;
+}
+
+.dark .modal-header .btn-close:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5);
+}
+
+.modal-body {
+    background: transparent !important;
+    color: var(--text) !important;
+}
+
+.modal-footer {
+    background: transparent !important;
+    border-top: 1px solid rgba(226, 232, 240, 0.3) !important;
 }
 
 .dark .modal-footer {
-    background: var(--card);
-    border-top-color: var(--border);
+    border-top-color: rgba(51, 65, 85, 0.3) !important;
 }
 
 .btn-group .btn {
