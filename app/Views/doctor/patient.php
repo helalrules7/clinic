@@ -3296,6 +3296,81 @@ div.form-text {
 </style>
 
 <script>
+/* Helper function to apply glass style to dynamically created modals */
+function applyGlassStyleToModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    const modalContent = modal.querySelector('.modal-content');
+    const modalHeader = modal.querySelector('.modal-header');
+    const modalBody = modal.querySelector('.modal-body');
+    const modalFooter = modal.querySelector('.modal-footer');
+    const modalDialog = modal.querySelector('.modal-dialog');
+    
+    if (modalContent) {
+        modalContent.style.background = 'rgba(248, 250, 252, 0.35)';
+        modalContent.style.backdropFilter = 'blur(10px)';
+        modalContent.style.webkitBackdropFilter = 'blur(10px)';
+        modalContent.style.border = '1px solid rgba(226, 232, 240, 0.3)';
+        modalContent.style.boxShadow = '2px 0 8px 0 rgba(0, 0, 0, 0.08)';
+        modalContent.style.color = 'var(--text)';
+        modalContent.style.cursor = 'move';
+    }
+    
+    if (modalHeader) {
+        modalHeader.style.background = 'transparent';
+        modalHeader.style.borderBottomColor = 'rgba(226, 232, 240, 0.3)';
+        modalHeader.style.color = 'var(--text)';
+        modalHeader.style.userSelect = 'none';
+    }
+    
+    if (modalBody) {
+        modalBody.style.background = 'transparent';
+        modalBody.style.color = 'var(--text)';
+    }
+    
+    if (modalFooter) {
+        modalFooter.style.background = 'transparent';
+        modalFooter.style.borderTopColor = 'rgba(226, 232, 240, 0.3)';
+    }
+    
+    if (modalDialog) {
+        modalDialog.style.cursor = 'default';
+        modalDialog.style.transition = 'transform 0.2s ease';
+        modalDialog.style.margin = '1.75rem auto';
+    }
+    
+    // Add dark mode styles
+    const styleId = 'glass-style-' + modalId;
+    let style = document.getElementById(styleId);
+    if (!style) {
+        style = document.createElement('style');
+        style.id = styleId;
+        document.head.appendChild(style);
+    }
+    style.textContent = `
+        .dark #${modalId} .modal-content {
+            background: rgba(11, 18, 32, 0.40) !important;
+            border: 1px solid rgba(51, 65, 85, 0.3) !important;
+            box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
+        }
+        .dark #${modalId} .modal-header {
+            border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+        }
+        .dark #${modalId} .modal-header .btn-close {
+            filter: invert(1) brightness(2);
+            opacity: 0.9;
+        }
+        .dark #${modalId} .modal-header .btn-close:hover {
+            opacity: 1;
+            filter: invert(1) brightness(2.5);
+        }
+        .dark #${modalId} .modal-footer {
+            border-top-color: rgba(51, 65, 85, 0.3) !important;
+        }
+    `;
+}
+
 function bookNewAppointment(patientId) {
     // Redirect to calendar with patient pre-selected
     window.location.href = `/doctor/calendar?patient_id=${patientId}`;
@@ -3938,16 +4013,16 @@ function showAddMedicalHistoryModal(patientId) {
     
     const modalHtml = `
         <div class="modal fade" id="${modalId}" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content" style="background: rgba(248, 250, 252, 0.35) !important; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(226, 232, 240, 0.3) !important; box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08); color: var(--text) !important; cursor: move;">
+                    <div class="modal-header" style="background: transparent !important; border-bottom-color: rgba(226, 232, 240, 0.3) !important; color: var(--text) !important; user-select: none;">
                         <h5 class="modal-title">
                             <i class="bi bi-plus-circle me-2"></i>
                             Add Medical History Entry
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body" style="background: transparent !important; color: var(--text) !important;">
                         <form id="addMedicalHistoryForm">
                             <input type="hidden" id="addPatientId" value="${patientId}">
                             
@@ -3991,7 +4066,7 @@ function showAddMedicalHistoryModal(patientId) {
                             </div>
                         </form>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer" style="background: transparent !important; border-top-color: rgba(226, 232, 240, 0.3) !important;">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                             <i class="bi bi-x me-1"></i>Cancel
                         </button>
@@ -4002,14 +4077,49 @@ function showAddMedicalHistoryModal(patientId) {
                 </div>
             </div>
         </div>
+        <style>
+            .dark #${modalId} .modal-content {
+                background: rgba(11, 18, 32, 0.40) !important;
+                border: 1px solid rgba(51, 65, 85, 0.3) !important;
+                box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
+            }
+            .dark #${modalId} .modal-header {
+                border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+            }
+            .dark #${modalId} .modal-header .btn-close {
+                filter: invert(1) brightness(2);
+                opacity: 0.9;
+            }
+            .dark #${modalId} .modal-header .btn-close:hover {
+                opacity: 1;
+                filter: invert(1) brightness(2.5);
+            }
+            .dark #${modalId} .modal-footer {
+                border-top-color: rgba(51, 65, 85, 0.3) !important;
+            }
+            #${modalId} .modal-dialog {
+                cursor: default;
+                transition: transform 0.2s ease;
+                margin: 1.75rem auto;
+            }
+        </style>
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    const modalElement = document.getElementById(modalId);
+    const modal = new bootstrap.Modal(modalElement);
     modal.show();
     
+    // Apply glass style and draggable
+    setTimeout(function() {
+        applyGlassStyleToModal(modalId);
+        if (typeof initializeDraggableModals === 'function') {
+            initializeDraggableModals();
+        }
+    }, 50);
+    
     // Clean up when modal is hidden
-    document.getElementById(modalId).addEventListener('hidden.bs.modal', function() {
+    modalElement.addEventListener('hidden.bs.modal', function() {
         this.remove();
     });
 }
@@ -4165,7 +4275,7 @@ function showPatientUploadModal(patientId) {
                                 <label class="form-label">File</label>
                                 <input type="file" class="form-control" name="patient_file" 
                                        accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.txt" required>
-                                <div class="form-text">
+                                <div class="form-text" style="color: var(--text);">
                                     Supported Files: Images (JPG, PNG, GIF), PDF, Word Documents, Text Files
                                     <br>Maximum File Size: 5 MB
                                 </div>
@@ -4197,8 +4307,17 @@ function showPatientUploadModal(patientId) {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('patientUploadModal'));
+    const modalElement = document.getElementById('patientUploadModal');
+    const modal = new bootstrap.Modal(modalElement);
     modal.show();
+    
+    // Apply glass style and draggable
+    setTimeout(function() {
+        applyGlassStyleToModal('patientUploadModal');
+        if (typeof initializeDraggableModals === 'function') {
+            initializeDraggableModals();
+        }
+    }, 50);
     
     // Handle form submission
     document.getElementById('patientUploadForm').addEventListener('submit', function(e) {
@@ -4337,8 +4456,17 @@ function openPatientCameraModal(patientId) {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('patientCameraModal'));
+    const modalElement = document.getElementById('patientCameraModal');
+    const modal = new bootstrap.Modal(modalElement);
     modal.show();
+    
+    // Apply glass style and draggable
+    setTimeout(function() {
+        applyGlassStyleToModal('patientCameraModal');
+        if (typeof initializeDraggableModals === 'function') {
+            initializeDraggableModals();
+        }
+    }, 50);
     
     // Start camera automatically when modal is shown
     document.getElementById('patientCameraModal').addEventListener('shown.bs.modal', function() {
@@ -4568,8 +4696,17 @@ function showImageModal(imageUrl, attachmentId, isAppointmentAttachment = false)
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+    const modalElement = document.getElementById('imageModal');
+    const modal = new bootstrap.Modal(modalElement);
     modal.show();
+    
+    // Apply glass style and draggable
+    setTimeout(function() {
+        applyGlassStyleToModal('imageModal');
+        if (typeof initializeDraggableModals === 'function') {
+            initializeDraggableModals();
+        }
+    }, 50);
     
     // Clean up modal on hide
     document.getElementById('imageModal').addEventListener('hidden.bs.modal', function() {
@@ -4694,8 +4831,17 @@ function showAddPatientNoteModal(patientId) {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('patientNoteModal'));
+    const modalElement = document.getElementById('patientNoteModal');
+    const modal = new bootstrap.Modal(modalElement);
     modal.show();
+    
+    // Apply glass style and draggable
+    setTimeout(function() {
+        applyGlassStyleToModal('patientNoteModal');
+        if (typeof initializeDraggableModals === 'function') {
+            initializeDraggableModals();
+        }
+    }, 50);
     
     // Handle form submission
     document.getElementById('patientNoteForm').addEventListener('submit', function(e) {
@@ -4768,8 +4914,17 @@ function editPatientNote(noteId, title, content) {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('editPatientNoteModal'));
+    const modalElement = document.getElementById('editPatientNoteModal');
+    const modal = new bootstrap.Modal(modalElement);
     modal.show();
+    
+    // Apply glass style and draggable
+    setTimeout(function() {
+        applyGlassStyleToModal('editPatientNoteModal');
+        if (typeof initializeDraggableModals === 'function') {
+            initializeDraggableModals();
+        }
+    }, 50);
     
     // Handle form submission
     document.getElementById('editPatientNoteForm').addEventListener('submit', function(e) {
@@ -4901,8 +5056,17 @@ function showGeneralDeleteConfirmationModal(title, message, buttonText, onConfir
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    const modalElement = document.getElementById(modalId);
+    const modal = new bootstrap.Modal(modalElement);
     modal.show();
+    
+    // Apply glass style and draggable
+    setTimeout(function() {
+        applyGlassStyleToModal(modalId);
+        if (typeof initializeDraggableModals === 'function') {
+            initializeDraggableModals();
+        }
+    }, 50);
     
     // Handle confirmation
     document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
@@ -4925,19 +5089,19 @@ function showInfoModal(title, message) {
     
     const modalHtml = `
         <div class="modal fade" id="${modalId}" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="background: rgba(248, 250, 252, 0.35) !important; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(226, 232, 240, 0.3) !important; box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08); color: var(--text) !important; cursor: move;">
+                    <div class="modal-header" style="background: transparent !important; border-bottom-color: rgba(226, 232, 240, 0.3) !important; color: var(--text) !important; user-select: none;">
                         <h5 class="modal-title text-primary">
                             <i class="bi bi-info-circle me-2"></i>
                             ${title}
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body" style="background: transparent !important; color: var(--text) !important;">
                         <p class="mb-0">${message}</p>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer" style="background: transparent !important; border-top-color: rgba(226, 232, 240, 0.3) !important;">
                         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
                             <i class="bi bi-check-circle me-2"></i>OK
                         </button>
@@ -4945,11 +5109,44 @@ function showInfoModal(title, message) {
                 </div>
             </div>
         </div>
+        <style>
+            .dark #${modalId} .modal-content {
+                background: rgba(11, 18, 32, 0.40) !important;
+                border: 1px solid rgba(51, 65, 85, 0.3) !important;
+                box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
+            }
+            .dark #${modalId} .modal-header {
+                border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+            }
+            .dark #${modalId} .modal-header .btn-close {
+                filter: invert(1) brightness(2);
+                opacity: 0.9;
+            }
+            .dark #${modalId} .modal-header .btn-close:hover {
+                opacity: 1;
+                filter: invert(1) brightness(2.5);
+            }
+            .dark #${modalId} .modal-footer {
+                border-top-color: rgba(51, 65, 85, 0.3) !important;
+            }
+            #${modalId} .modal-dialog {
+                cursor: default;
+                transition: transform 0.2s ease;
+                margin: 1.75rem auto;
+            }
+        </style>
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     const modal = new bootstrap.Modal(document.getElementById(modalId));
     modal.show();
+    
+    // Initialize draggable for this modal
+    if (typeof initializeDraggableModals === 'function') {
+        setTimeout(function() {
+            initializeDraggableModals();
+        }, 100);
+    }
     
     // Clean up modal on hide
     document.getElementById(modalId).addEventListener('hidden.bs.modal', function() {
@@ -5133,16 +5330,16 @@ function showMedicalHistoryModal(data, mode) {
     
     const modalHtml = `
         <div class="modal fade" id="${modalId}" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content" style="background: rgba(248, 250, 252, 0.35) !important; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(226, 232, 240, 0.3) !important; box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08); color: var(--text) !important; cursor: move;">
+                    <div class="modal-header" style="background: transparent !important; border-bottom-color: rgba(226, 232, 240, 0.3) !important; color: var(--text) !important; user-select: none;">
                         <h5 class="modal-title">
                             <i class="bi bi-clipboard-heart me-2"></i>
                             ${isEdit ? 'Edit' : 'View'} Medical History
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body" style="background: transparent !important; color: var(--text) !important;">
                         <form id="medicalHistoryForm">
                             <input type="hidden" id="historyId" value="${data.id}">
                             
@@ -5196,7 +5393,7 @@ function showMedicalHistoryModal(data, mode) {
                             ` : ''}
                         </form>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer" style="background: transparent !important; border-top-color: rgba(226, 232, 240, 0.3) !important;">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                             ${isView ? 'Close' : 'Cancel'}
                         </button>
@@ -5209,14 +5406,49 @@ function showMedicalHistoryModal(data, mode) {
                 </div>
             </div>
         </div>
+        <style>
+            .dark #${modalId} .modal-content {
+                background: rgba(11, 18, 32, 0.40) !important;
+                border: 1px solid rgba(51, 65, 85, 0.3) !important;
+                box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
+            }
+            .dark #${modalId} .modal-header {
+                border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+            }
+            .dark #${modalId} .modal-header .btn-close {
+                filter: invert(1) brightness(2);
+                opacity: 0.9;
+            }
+            .dark #${modalId} .modal-header .btn-close:hover {
+                opacity: 1;
+                filter: invert(1) brightness(2.5);
+            }
+            .dark #${modalId} .modal-footer {
+                border-top-color: rgba(51, 65, 85, 0.3) !important;
+            }
+            #${modalId} .modal-dialog {
+                cursor: default;
+                transition: transform 0.2s ease;
+                margin: 1.75rem auto;
+            }
+        </style>
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    const modalElement = document.getElementById(modalId);
+    const modal = new bootstrap.Modal(modalElement);
     modal.show();
     
+    // Apply glass style and draggable
+    setTimeout(function() {
+        applyGlassStyleToModal(modalId);
+        if (typeof initializeDraggableModals === 'function') {
+            initializeDraggableModals();
+        }
+    }, 50);
+    
     // Clean up when modal is hidden
-    document.getElementById(modalId).addEventListener('hidden.bs.modal', function() {
+    modalElement.addEventListener('hidden.bs.modal', function() {
         this.remove();
     });
 }
@@ -5316,11 +5548,20 @@ function showDeleteConfirmationModal(historyId) {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    const modalElement = document.getElementById(modalId);
+    const modal = new bootstrap.Modal(modalElement);
     modal.show();
     
+    // Apply glass style and draggable
+    setTimeout(function() {
+        applyGlassStyleToModal(modalId);
+        if (typeof initializeDraggableModals === 'function') {
+            initializeDraggableModals();
+        }
+    }, 50);
+    
     // Clean up when modal is hidden
-    document.getElementById(modalId).addEventListener('hidden.bs.modal', function() {
+    modalElement.addEventListener('hidden.bs.modal', function() {
         this.remove();
     });
 }
@@ -5549,8 +5790,17 @@ function showAddGlassesPrescriptionModal(patientId) {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    const modalElement = document.getElementById(modalId);
+    const modal = new bootstrap.Modal(modalElement);
     modal.show();
+    
+    // Apply glass style and draggable
+    setTimeout(function() {
+        applyGlassStyleToModal(modalId);
+        if (typeof initializeDraggableModals === 'function') {
+            initializeDraggableModals();
+        }
+    }, 50);
     
     // Load patient appointments
     loadPatientAppointments(patientId);
@@ -5898,11 +6148,20 @@ function showGlassesPrescriptionModal(data, mode) {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    const modalElement = document.getElementById(modalId);
+    const modal = new bootstrap.Modal(modalElement);
     modal.show();
     
+    // Apply glass style and draggable
+    setTimeout(function() {
+        applyGlassStyleToModal(modalId);
+        if (typeof initializeDraggableModals === 'function') {
+            initializeDraggableModals();
+        }
+    }, 50);
+    
     // Clean up when modal is hidden
-    document.getElementById(modalId).addEventListener('hidden.bs.modal', function() {
+    modalElement.addEventListener('hidden.bs.modal', function() {
         this.remove();
     });
 }
@@ -6121,10 +6380,19 @@ function viewAllMedicationsForAppointment(button) {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('allMedicationsModal'));
+    const modalElement = document.getElementById('allMedicationsModal');
+    const modal = new bootstrap.Modal(modalElement);
     modal.show();
     
-    document.getElementById('allMedicationsModal').addEventListener('hidden.bs.modal', function() {
+    // Apply glass style and draggable
+    setTimeout(function() {
+        applyGlassStyleToModal('allMedicationsModal');
+        if (typeof initializeDraggableModals === 'function') {
+            initializeDraggableModals();
+        }
+    }, 50);
+    
+    modalElement.addEventListener('hidden.bs.modal', function() {
         this.remove();
     });
 }
@@ -6182,10 +6450,19 @@ function viewMedicationDetails(button) {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('medicationDetailsModal'));
+    const modalElement = document.getElementById('medicationDetailsModal');
+    const modal = new bootstrap.Modal(modalElement);
     modal.show();
     
-    document.getElementById('medicationDetailsModal').addEventListener('hidden.bs.modal', function() {
+    // Apply glass style and draggable
+    setTimeout(function() {
+        applyGlassStyleToModal('medicationDetailsModal');
+        if (typeof initializeDraggableModals === 'function') {
+            initializeDraggableModals();
+        }
+    }, 50);
+    
+    modalElement.addEventListener('hidden.bs.modal', function() {
         this.remove();
     });
 }
@@ -6289,10 +6566,19 @@ function viewGlassesDetails(button) {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('glassesDetailsModal'));
+    const modalElement = document.getElementById('glassesDetailsModal');
+    const modal = new bootstrap.Modal(modalElement);
     modal.show();
     
-    document.getElementById('glassesDetailsModal').addEventListener('hidden.bs.modal', function() {
+    // Apply glass style and draggable
+    setTimeout(function() {
+        applyGlassStyleToModal('glassesDetailsModal');
+        if (typeof initializeDraggableModals === 'function') {
+            initializeDraggableModals();
+        }
+    }, 50);
+    
+    modalElement.addEventListener('hidden.bs.modal', function() {
         this.remove();
     });
 }

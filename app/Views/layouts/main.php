@@ -2043,10 +2043,14 @@
         })();
         
         // Make modals draggable globally
-        function initializeDraggableModals() {
-            const modals = document.querySelectorAll('.modal');
-            
-            modals.forEach(modal => {
+    function initializeDraggableModals() {
+        const modals = document.querySelectorAll('.modal');
+        
+        modals.forEach(modal => {
+            // Skip alertModal - it has its own draggable implementation
+            if (modal.id === 'alertModal') {
+                return;
+            }
                 const modalDialog = modal.querySelector('.modal-dialog');
                 if (!modalDialog) return;
                 
