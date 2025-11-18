@@ -1380,13 +1380,13 @@
 }
 
 .card-header {
-    background-color: var(--bg);
+    background-color: transparent !important;
     border-color: var(--border);
     color: var(--text);
 }
 
 .card-body {
-    background-color: var(--card);
+    background-color: transparent !important;
     color: var(--text);
 }
 

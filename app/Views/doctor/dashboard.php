@@ -1112,6 +1112,28 @@
     .btn-group-sm .btn-outline-primary {
         border-right: 1px solid var(--accent) !important;
     }
+    
+    /* Hide drag handle on mobile */
+    .dashboard-card-drag-handle {
+        display: none !important;
+    }
+    
+    /* Hide all Quick Access Cards except Calendar, Patients, Drugs on mobile */
+    .quick-action-btn[href="/doctor/profile"],
+    .quick-action-btn[href="/doctor/reports"],
+    .quick-action-btn[href="/doctor/alerts"],
+    .quick-action-btn[href="/doctor/notes"],
+    .quick-action-btn[href="/doctor/medications"],
+    .quick-action-btn[href="/doctor/glasses"] {
+        display: none !important;
+    }
+    
+    /* Show only Calendar, Patients, Drugs */
+    .quick-action-btn[href="/doctor/calendar"],
+    .quick-action-btn[href="/doctor/patients"],
+    .quick-action-btn[href="/doctor/drugs"] {
+        display: flex !important;
+    }
 }
 
 /* Pagination Styles */

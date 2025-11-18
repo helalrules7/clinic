@@ -138,23 +138,156 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: var(--accent);
+            position: relative;
+            overflow: visible;
             display: flex;
             align-items: center;
             justify-content: center;
+            background: linear-gradient(135deg, var(--accent), #10b981);
             color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        
+        .user-avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        
+        .user-avatar-fallback {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--accent), #10b981);
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
             font-weight: 600;
             margin-right: 0.75rem;
         }
         
+        /* User Avatar Htooltip for Profile Image Preview */
+        .user-avatar {
+            position: relative;
+        }
+        
+        .user-avatar-htooltip {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            top: calc(100% + 15px);
+            left: 50%;
+            transform: translateX(-50%) translateY(-10px);
+            z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+            padding: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .user-avatar:hover .user-avatar-htooltip {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .user-avatar-preview-image {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+            border-radius: 12px;
+            filter: none !important;
+            -webkit-filter: none !important;
+        }
+        
+        /* Light mode htooltip for avatar */
+        .user-avatar-htooltip {
+            background: rgba(248, 250, 252, 0.95);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+        }
+        
+        /* Dark mode htooltip for avatar */
+        .dark .user-avatar-htooltip {
+            background: rgba(11, 18, 32, 0.95);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+        }
+        
+        /* Arrow for avatar htooltip - pointing upward */
+        .user-avatar-htooltip::after {
+            content: "";
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 0 8px 8px 8px;
+            border-color: transparent transparent rgba(248, 250, 252, 0.95) transparent;
+        }
+        
+        .dark .user-avatar-htooltip::after {
+            border-color: transparent transparent rgba(11, 18, 32, 0.95) transparent;
+        }
+        
+        .user-details {
+            width: 100%;
+            text-align: center;
+        }
+        
         .user-details h6 {
             margin: 0;
-            color: var(--text);
+            color: var(--text) !important;
             font-weight: 600;
         }
         
+        .dark .user-details h6 {
+            color: var(--text) !important;
+        }
+        
         .user-details small {
-            color: var(--muted);
+            color: var(--muted) !important;
+            display: block;
+        }
+        
+        .dark .user-details small {
+            color: #94a3b8 !important;
+        }
+        
+        .user-name-link {
+            text-decoration: none;
+            color: inherit;
+            display: inline-block;
+            transition: all 0.2s ease;
+        }
+        
+        .user-name-link:hover {
+            color: var(--accent) !important;
+            transform: translateY(-1px);
+        }
+        
+        .user-name-link h6 {
+            transition: all 0.2s ease;
+        }
+        
+        .user-name-link:hover h6 {
+            color: var(--accent) !important;
+        }
+        
+        .dark .user-name-link:hover h6 {
+            color: var(--accent) !important;
         }
         
         .nav-menu {
@@ -577,6 +710,192 @@
                 width: 45px;
                 height: 45px;
             }
+            
+            /* Mobile Dock Ring - Minimized by default */
+            .quick-access-dock {
+                display: block !important;
+                bottom: auto;
+                top: calc(100vh - 1.5rem - 45px - 0.5rem - 45px);
+                right: auto;
+                left: 1.5rem;
+                transform: none;
+                z-index: 998;
+            }
+            
+            .quick-access-dock.mobile-minimized {
+                top: calc(100vh - 1.5rem - 45px - 0.5rem - 45px);
+                right: auto;
+                left: 1.5rem;
+            }
+            
+            .quick-access-dock.mobile-expanded {
+                top: auto;
+                bottom: calc(1.5rem + 45px + 0.5rem);
+                right: auto;
+                left: 1.5rem;
+                transform: none;
+                width: auto;
+                max-width: 280px;
+                max-height: calc(100vh - 1.5rem - 45px - 0.5rem - 1.5rem);
+                overflow-y: auto;
+            }
+            
+            .quick-access-dock.mobile-minimized .dock-container {
+                width: 45px;
+                height: 45px;
+                padding: 0;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                background: rgba(248, 250, 252, 0.25);
+                backdrop-filter: blur(15px);
+                -webkit-backdrop-filter: blur(15px);
+                border: 1px solid rgba(226, 232, 240, 0.3);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            }
+            
+            .dark .quick-access-dock.mobile-minimized .dock-container {
+                background: rgba(11, 18, 32, 0.35);
+                border: 1px solid rgba(51, 65, 85, 0.3);
+            }
+            
+            .quick-access-dock.mobile-minimized .dock-item,
+            .quick-access-dock.mobile-minimized .dock-divider,
+            .quick-access-dock.mobile-minimized .dock-minimize-btn i {
+                display: none;
+            }
+            
+            .quick-access-dock.mobile-minimized .dock-minimize-btn {
+                display: flex;
+                width: 100%;
+                height: 100%;
+                align-items: center;
+                justify-content: center;
+                margin: 0;
+                padding: 0;
+                border-radius: 12px;
+                background: transparent;
+                border: none;
+            }
+            
+            .quick-access-dock.mobile-minimized .dock-minimize-btn .minimized-icon {
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: repeat(2, 1fr);
+                gap: 2px;
+                width: 20px;
+                height: 20px;
+            }
+            
+            .quick-access-dock.mobile-minimized .dock-minimize-btn .minimized-icon-rect {
+                background: var(--text);
+                border-radius: 1px;
+            }
+            
+            .dark .quick-access-dock.mobile-minimized .dock-minimize-btn .minimized-icon-rect {
+                background: #ffffff;
+            }
+            
+            /* Hide all dock items on mobile except specific ones */
+            .quick-access-dock.mobile-expanded .dock-item {
+                display: none;
+            }
+            
+            /* Show only specific items on mobile */
+            .quick-access-dock.mobile-expanded .dock-item[href="/doctor/calendar"],
+            .quick-access-dock.mobile-expanded .dock-item[href="/doctor/patients"],
+            .quick-access-dock.mobile-expanded .dock-item[href="/doctor/drugs"],
+            .quick-access-dock.mobile-expanded .dock-item[href="/doctor/profile"] {
+                display: flex !important;
+            }
+            
+            .quick-access-dock.mobile-expanded .dock-container {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 0.75rem;
+                border-radius: 16px;
+                max-height: 70vh;
+                overflow-y: auto;
+                background: rgba(248, 250, 252, 0.4);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border: 1px solid rgba(226, 232, 240, 0.3);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+                min-width: 100px;
+            }
+            
+            .dark .quick-access-dock.mobile-expanded .dock-container {
+                background: rgba(11, 18, 32, 0.95);
+                border: 1px solid rgba(51, 65, 85, 0.3);
+            }
+            
+            .quick-access-dock.mobile-expanded .dock-item {
+                width: 100%;
+                height: auto;
+                min-height: 48px;
+                border-radius: 12px;
+                margin-bottom: 0.5rem;
+                justify-content: flex-start;
+                padding: 0.75rem;
+                flex-direction: row;
+                align-items: center;
+            }
+            
+            .quick-access-dock.mobile-expanded .dock-item i,
+            .quick-access-dock.mobile-expanded .dock-profile-image {
+                margin-right: 0.75rem;
+                flex-shrink: 0;
+            }
+            
+            .quick-access-dock.mobile-expanded .dock-item .htooltip {
+                display: none;
+            }
+            
+            /* Show text labels on mobile expanded dock */
+            .quick-access-dock.mobile-expanded .dock-item::after {
+                content: attr(title);
+                display: block;
+                color: var(--text);
+                font-size: 0.875rem;
+                font-weight: 500;
+                white-space: nowrap;
+                flex: 1;
+            }
+            
+            .quick-access-dock.mobile-expanded .dock-item[href="/doctor/calendar"]::after {
+                content: "Calendar";
+            }
+            
+            .quick-access-dock.mobile-expanded .dock-item[href="/doctor/patients"]::after {
+                content: "Patients";
+            }
+            
+            .quick-access-dock.mobile-expanded .dock-item[href="/doctor/drugs"]::after {
+                content: "Drugs";
+            }
+            
+            .quick-access-dock.mobile-expanded .dock-item[href="/doctor/profile"]::after {
+                content: "Profile";
+            }
+            
+            .quick-access-dock.mobile-expanded .dock-divider {
+                display: block;
+                width: 100%;
+                height: 1px;
+                background: var(--border);
+                margin: 0.5rem 0;
+            }
+            
+            .quick-access-dock.mobile-expanded .dock-minimize-btn {
+                display: flex;
+                width: 100%;
+                height: 48px;
+                border-radius: 12px;
+                justify-content: center;
+                margin-top: 0.25rem;
+            }
         }
         
         /* Alert Toast Glass Effect */
@@ -730,7 +1049,7 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
-            display: none; /* Hidden by default, shown only on desktop */
+            display: none; /* Hidden by default */
         }
         
         .dock-container {
@@ -781,6 +1100,27 @@
             color: var(--text);
             /* Prevent blur on icon - completely remove all filters */
             filter: none !important;
+        }
+        
+        .dock-profile-image {
+            width: 1.6rem;
+            height: 1.6rem;
+            border-radius: 50%;
+            object-fit: cover;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: none !important;
+        }
+        
+        .dock-item:hover .dock-profile-image {
+            transform: scale(1.6);
+            border-color: #1e90ff;
+        }
+        
+        .dock-profile-fallback {
+            font-size: 1.5rem;
+            transition: color 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            color: var(--text);
+            filter: none !important;
             -webkit-filter: none !important;
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
@@ -793,62 +1133,106 @@
             will-change: color, transform;
         }
         
-        /* Tooltip/Label for dock items */
-        .dock-item::before {
-            content: attr(title);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%) translateY(-8px) translateZ(0);
-            -webkit-transform: translateX(-50%) translateY(-8px) translateZ(0);
-            background: rgba(0, 0, 0, 0.4);
-            color: white;
-            padding: 0.4rem 0.75rem;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease 0.5s, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s;
+        /* New Tooltip Style - Top Only - Using htooltip class to avoid conflicts */
+        .dock-item {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .dock-item .htooltip {
+            visibility: hidden;
             z-index: 1001;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            /* Prevent blur on text - remove all text filters */
+            opacity: 0;
+            width: auto;
+            min-width: 80px;
+            padding: 8px 16px;
+            position: absolute;
+            top: -140%;
+            left: 50%;
+            transform: translateX(-50%) translateY(9px);
+            transition: all 0.3s ease-in-out;
+            border-radius: 9px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            white-space: nowrap;
+            pointer-events: none;
+            box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+            /* Ensure text is sharp - no blur on text */
             filter: none !important;
             -webkit-filter: none !important;
             text-rendering: optimizeLegibility;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            /* Force hardware acceleration for crisp text */
-            will-change: opacity, transform;
         }
         
-        .dark .dock-item::before {
-            background: rgba(0, 0, 0, 0.5);
+        /* Light mode htooltip - glass effect with light background */
+        .dock-item .htooltip {
+            background: rgba(248, 250, 252, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #1a1a1a;
+            border: 1px solid rgba(226, 232, 240, 0.3);
         }
         
-        /* Arrow for tooltip */
-        .dock-item::after {
-            content: '';
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%) translateY(-2px);
+        /* Dark mode htooltip - glass effect with dark background */
+        .dark .dock-item .htooltip {
+            background: rgba(11, 18, 32, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #ffffff;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+        }
+        
+        /* Ensure text inside htooltip is always sharp */
+        .dock-item .htooltip * {
+            filter: none !important;
+            -webkit-filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* htooltip arrow */
+        .dock-item .htooltip::after {
+            content: " ";
             width: 0;
             height: 0;
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-top: 6px solid rgba(0, 0, 0, 0.4);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease 0.5s, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s;
-            z-index: 1002;
+            border-style: solid;
+            border-width: 12px 12.5px 0 12.5px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: -12px;
         }
         
-        .dark .dock-item::after {
-            border-top-color: rgba(0, 0, 0, 0.5);
+        /* Light mode arrow */
+        .dock-item .htooltip::after {
+            border-color: rgba(248, 250, 252, 0.85) transparent transparent transparent;
+        }
+        
+        /* Dark mode arrow */
+        .dark .dock-item .htooltip::after {
+            border-color: rgba(11, 18, 32, 0.85) transparent transparent transparent;
+        }
+        
+        /* Show htooltip on hover */
+        .dock-item:hover .htooltip {
+            visibility: visible;
+            transform: translateX(-50%) translateY(-10px);
+            opacity: 1;
+            transition: 0.3s linear;
+            animation: tooltipBounce 1s ease-in-out infinite alternate;
+        }
+        
+        @keyframes tooltipBounce {
+            0% {
+                transform: translateX(-50%) translateY(6px);
+            }
+            100% {
+                transform: translateX(-50%) translateY(1px);
+            }
         }
         
         .dock-item:hover {
@@ -878,25 +1262,6 @@
             will-change: color, transform;
         }
         
-        .dock-item:hover::before {
-            opacity: 1;
-            transform: translateX(-50%) translateY(-12px) translateZ(0);
-            -webkit-transform: translateX(-50%) translateY(-12px) translateZ(0);
-            transition-delay: 0.5s;
-            /* Ensure text is sharp when visible - remove all text filters */
-            filter: none !important;
-            -webkit-filter: none !important;
-            text-rendering: optimizeLegibility;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            will-change: opacity, transform;
-        }
-        
-        .dock-item:hover::after {
-            opacity: 1;
-            transform: translateX(-50%) translateY(-6px);
-            transition-delay: 0.5s;
-        }
         
         .dark .dock-item {
             background: rgba(0, 0, 0, 0.15);
@@ -940,16 +1305,15 @@
             will-change: color, transform;
         }
         
-        /* Show dock only on desktop (min-width: 992px) */
-        @media (min-width: 992px) {
+        /* Show desktop dock only on screens larger than 768px */
+        @media (min-width: 769px) {
             .quick-access-dock {
                 display: block;
             }
-        }
-        
-        /* Hide dock on mobile and tablet */
-        @media (max-width: 991px) {
-            .quick-access-dock {
+            
+            /* Hide mobile dock classes on desktop */
+            .quick-access-dock.mobile-minimized,
+            .quick-access-dock.mobile-expanded {
                 display: none !important;
             }
         }
@@ -1094,6 +1458,95 @@
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
+            position: relative;
+        }
+        
+        /* htooltip for minimize button */
+        .dock-minimize-btn .htooltip {
+            visibility: hidden;
+            z-index: 1001;
+            opacity: 0;
+            width: auto;
+            min-width: 100px;
+            padding: 8px 16px;
+            position: absolute;
+            top: -140%;
+            left: 50%;
+            transform: translateX(-50%) translateY(9px);
+            transition: all 0.3s ease-in-out;
+            border-radius: 9px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            white-space: nowrap;
+            pointer-events: none;
+            box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+            /* Ensure text is sharp - no blur on text */
+            filter: none !important;
+            -webkit-filter: none !important;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Light mode htooltip for minimize button - glass effect */
+        .dock-minimize-btn .htooltip {
+            background: rgba(248, 250, 252, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #1a1a1a;
+            border: 1px solid rgba(226, 232, 240, 0.3);
+        }
+        
+        /* Dark mode htooltip for minimize button - glass effect */
+        .dark .dock-minimize-btn .htooltip {
+            background: rgba(11, 18, 32, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #ffffff;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+        }
+        
+        /* Ensure text inside minimize button htooltip is always sharp */
+        .dock-minimize-btn .htooltip * {
+            filter: none !important;
+            -webkit-filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* htooltip arrow for minimize button */
+        .dock-minimize-btn .htooltip::after {
+            content: " ";
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 12px 12.5px 0 12.5px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: -12px;
+        }
+        
+        /* Light mode arrow for minimize button */
+        .dock-minimize-btn .htooltip::after {
+            border-color: rgba(248, 250, 252, 0.85) transparent transparent transparent;
+        }
+        
+        /* Dark mode arrow for minimize button */
+        .dark .dock-minimize-btn .htooltip::after {
+            border-color: rgba(11, 18, 32, 0.85) transparent transparent transparent;
+        }
+        
+        /* Show htooltip on hover for minimize button */
+        .dock-minimize-btn:hover .htooltip {
+            visibility: visible;
+            transform: translateX(-50%) translateY(-10px);
+            opacity: 1;
+            transition: 0.3s linear;
+            animation: tooltipBounce 1s ease-in-out infinite alternate;
         }
         
         .dark .quick-access-dock.minimized .dock-minimize-btn {
@@ -1145,13 +1598,35 @@
         </div>
         
         <div class="user-info">
-            <div class="d-flex align-items-center">
-                <div class="user-avatar">
-                    <?= strtoupper(substr($this->getCurrentUser()['name'] ?? 'U', 0, 1)) ?>
+            <div class="d-flex flex-column align-items-center text-center">
+                <div class="user-avatar mb-2" id="sidebarUserAvatar">
+                    <?php 
+                    $currentUser = $this->getCurrentUser();
+                    if (!empty($currentUser['profile_image'])): 
+                        $profileImagePath = strpos($currentUser['profile_image'], '/public/') === 0 ? $currentUser['profile_image'] : '/public' . $currentUser['profile_image'];
+                    ?>
+                        <img src="<?= htmlspecialchars($profileImagePath) ?>" 
+                             alt="Profile" 
+                             class="user-avatar-img"
+                             data-profile-image="<?= htmlspecialchars($profileImagePath) ?>"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="user-avatar-fallback" style="display: none;">
+                            <?= strtoupper(substr($currentUser['name'] ?? 'U', 0, 1)) ?>
+                        </div>
+                        <span class="htooltip user-avatar-htooltip">
+                            <img src="<?= htmlspecialchars($profileImagePath) ?>" 
+                                 alt="Profile" 
+                                 class="user-avatar-preview-image">
+                        </span>
+                    <?php else: ?>
+                        <?= strtoupper(substr($currentUser['name'] ?? 'U', 0, 1)) ?>
+                    <?php endif; ?>
                 </div>
                 <div class="user-details">
-                    <h6><?= htmlspecialchars($this->getCurrentUser()['name'] ?? 'User') ?></h6>
-                    <small><?= ucfirst($this->getCurrentUser()['role'] ?? 'user') ?></small>
+                    <a href="/doctor/profile" class="user-name-link">
+                        <h6 class="mb-1"><?= htmlspecialchars($currentUser['name'] ?? 'User') ?></h6>
+                    </a>
+                    <small><?= ucfirst($currentUser['role'] ?? 'user') ?></small>
                 </div>
             </div>
         </div>
@@ -1186,12 +1661,6 @@
                     <a href="/doctor/payments" class="nav-link <?= $this->isActiveRoute('/doctor/payments') ? 'active' : '' ?>">
                         <i class="bi bi-credit-card"></i>
                         Financial Management
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="/doctor/daily-closure" class="nav-link <?= $this->isActiveRoute('/doctor/daily-closure') ? 'active' : '' ?>">
-                        <i class="bi bi-calendar-check"></i>
-                        Daily Closure
                     </a>
                 </div>
                 <div class="nav-item">
@@ -1442,36 +1911,63 @@
         <div class="dock-container">
             <a href="/doctor/calendar" class="dock-item" title="View Calendar">
                 <i class="bi bi-calendar3"></i>
+                <span class="htooltip">View Calendar</span>
             </a>
             <a href="/doctor/patients" class="dock-item" title="Patient List">
                 <i class="bi bi-people"></i>
+                <span class="htooltip">Patient List</span>
             </a>
             <a href="/doctor/drugs" class="dock-item" title="Drugs">
                 <i class="bi bi-capsule"></i>
+                <span class="htooltip">Drugs</span>
             </a>
             <a href="/doctor/notes" class="dock-item" title="Notes">
                 <i class="bi bi-sticky"></i>
+                <span class="htooltip">Notes</span>
             </a>
             <a href="/doctor/medications" class="dock-item" title="Prescriptions">
                 <i class="bi bi-prescription"></i>
+                <span class="htooltip">Prescriptions</span>
             </a>
             <a href="/doctor/glasses" class="dock-item" title="Glasses Prescriptions">
                 <i class="bi bi-eyeglasses"></i>
+                <span class="htooltip">Glasses Prescriptions</span>
+            </a>
+            <a href="/doctor/payments" class="dock-item" title="Financial">
+                <i class="bi bi-credit-card"></i>
+                <span class="htooltip">Financial</span>
             </a>
             <a href="/doctor/media" class="dock-item" title="Media">
                 <i class="bi bi-images"></i>
+                <span class="htooltip">Media</span>
             </a>
             <a href="/doctor/alerts" class="dock-item" title="Alerts">
                 <i class="bi bi-bell"></i>
+                <span class="htooltip">Alerts</span>
             </a>
             <a href="/doctor/reports" class="dock-item" title="Reports">
                 <i class="bi bi-graph-up"></i>
+                <span class="htooltip">Reports</span>
             </a>
             <a href="/doctor/profile" class="dock-item" title="My Profile">
-                <i class="bi bi-person-circle"></i>
+                <?php 
+                $currentUser = $this->getCurrentUser();
+                if (!empty($currentUser['profile_image'])): 
+                    $profileImagePath = strpos($currentUser['profile_image'], '/public/') === 0 ? $currentUser['profile_image'] : '/public' . $currentUser['profile_image'];
+                ?>
+                    <img src="<?= htmlspecialchars($profileImagePath) ?>" 
+                         alt="My Profile" 
+                         class="dock-profile-image"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <i class="bi bi-person-circle dock-profile-fallback" style="display: none;"></i>
+                <?php else: ?>
+                    <i class="bi bi-person-circle"></i>
+                <?php endif; ?>
+                <span class="htooltip">My Profile</span>
             </a>
             <a href="/doctor/settings" class="dock-item" title="Settings">
                 <i class="bi bi-gear"></i>
+                <span class="htooltip">Settings</span>
             </a>
             <div class="dock-divider"></div>
             <button class="dock-minimize-btn" id="dockMinimizeBtn" title="Minimize Dock">
@@ -1482,6 +1978,7 @@
                     <span class="minimized-icon-rect"></span>
                     <span class="minimized-icon-rect"></span>
                 </div>
+                <span class="htooltip" id="dockMinimizeTooltip">Minimize Dock</span>
             </button>
         </div>
     </div>
@@ -1921,12 +2418,85 @@
             const dock = document.getElementById('quickAccessDock');
             const minimizeBtn = document.getElementById('dockMinimizeBtn');
             
+            function isMobile() {
+                return window.innerWidth <= 768;
+            }
+            
+            function initMobileDock() {
+                if (!dock) return;
+                
+                // On mobile, dock is minimized by default
+                if (isMobile()) {
+                    dock.classList.add('mobile-minimized');
+                    dock.classList.remove('mobile-expanded');
+                    
+                    // Add click handler to dock container when minimized
+                    const dockContainer = dock.querySelector('.dock-container');
+                    if (dockContainer) {
+                        // Remove existing listeners by cloning
+                        const newContainer = dockContainer.cloneNode(true);
+                        dockContainer.parentNode.replaceChild(newContainer, dockContainer);
+                        
+                        newContainer.addEventListener('click', function(e) {
+                            // Don't trigger if clicking on a dock item
+                            if (e.target.closest('.dock-item')) {
+                                return;
+                            }
+                            
+                            // Toggle expanded/minimized
+                            if (dock.classList.contains('mobile-minimized')) {
+                                dock.classList.remove('mobile-minimized');
+                                dock.classList.add('mobile-expanded');
+                            } else {
+                                dock.classList.remove('mobile-expanded');
+                                dock.classList.add('mobile-minimized');
+                            }
+                        });
+                    }
+                    
+                    // Close dock when clicking on a dock item
+                    const dockItems = dock.querySelectorAll('.dock-item');
+                    dockItems.forEach(item => {
+                        item.addEventListener('click', function() {
+                            setTimeout(() => {
+                                dock.classList.remove('mobile-expanded');
+                                dock.classList.add('mobile-minimized');
+                            }, 300);
+                        });
+                    });
+                    
+                    // Close dock when clicking minimize button
+                    if (minimizeBtn) {
+                        minimizeBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            dock.classList.remove('mobile-expanded');
+                            dock.classList.add('mobile-minimized');
+                        });
+                    }
+                } else {
+                    // Desktop: remove mobile classes
+                    dock.classList.remove('mobile-minimized', 'mobile-expanded');
+                }
+            }
+            
             function updateDockVisibility() {
                 if (!dock) return;
                 
-                // Show only on desktop (min-width: 992px)
-                if (window.innerWidth >= 992) {
+                // Handle mobile dock (<= 768px)
+                if (isMobile()) {
+                    // Remove desktop minimized class if exists
+                    dock.classList.remove('minimized');
+                    initMobileDock();
+                    return;
+                }
+                
+                // Desktop: show dock and remove mobile classes (>= 769px)
+                if (window.innerWidth >= 769) {
                     dock.style.display = 'block';
+                    dock.classList.remove('mobile-minimized', 'mobile-expanded');
+                    // Load desktop dock state
+                    loadDockState();
                 } else {
                     dock.style.display = 'none';
                 }
@@ -2002,6 +2572,10 @@
                 if (!minimizeBtn || !dock) return;
                 const isMinimized = dock.classList.contains('minimized');
                 minimizeBtn.setAttribute('title', isMinimized ? 'Maximize Dock' : 'Minimize Dock');
+                const htooltip = document.getElementById('dockMinimizeTooltip');
+                if (htooltip) {
+                    htooltip.textContent = isMinimized ? 'Maximize Dock' : 'Minimize Dock';
+                }
             }
             
             // Toggle dock minimized state
@@ -2023,23 +2597,39 @@
             
             // Initialize
             if (minimizeBtn) {
-                minimizeBtn.addEventListener('click', toggleDockMinimize);
+                minimizeBtn.addEventListener('click', function(e) {
+                    // On mobile, handle differently
+                    if (isMobile()) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dock.classList.remove('mobile-expanded');
+                        dock.classList.add('mobile-minimized');
+                    } else {
+                        toggleDockMinimize();
+                    }
+                });
             }
             
             // Load state on page load - wait for DOM to be ready
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', function() {
-                    loadDockState();
+                    if (!isMobile()) {
+                        loadDockState();
+                    }
                     updateDockVisibility();
                 });
             } else {
                 // DOM is already ready
-                loadDockState();
+                if (!isMobile()) {
+                    loadDockState();
+                }
                 updateDockVisibility();
             }
             
             // Update visibility on resize
-            window.addEventListener('resize', updateDockVisibility);
+            window.addEventListener('resize', function() {
+                updateDockVisibility();
+            });
         })();
         
         // Make modals draggable globally

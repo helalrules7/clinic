@@ -32,6 +32,44 @@
     margin-bottom: 2rem;
 }
 
+/* Appointment Doctor Avatar Styles */
+.appointment-doctor-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--accent), #10b981);
+    color: white;
+    font-weight: bold;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.appointment-doctor-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.appointment-doctor-avatar-fallback {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--accent), #10b981);
+    color: white;
+    font-weight: bold;
+    font-size: 0.75rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
 /* Doctor Info Badge */
 .doctor-info-badge {
     position: fixed;
@@ -253,13 +291,16 @@
 }
 
 .dark .card-header {
-    background-color: var(--bg) !important;
+    background-color: transparent !important;
     border-bottom-color: var(--border) !important;
     color: var(--text) !important;
 }
 
+.card-header{
+    background-color: transparent !important;
+}
+
 .dark .card-body {
-    background-color: var(--card) !important;
     color: var(--text) !important;
 }
 
@@ -720,7 +761,7 @@
     
     .action-buttons-group .more-actions-btn .btn {
         width: 100%;
-        justify-content: center;
+    justify-content: center;
     }
     
     /* Ensure dropdown menu is positioned correctly and visible when shown */
@@ -837,7 +878,24 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
             <h2 class="mb-2">
                 <i class="bi bi-calendar-event me-2"></i>
                 Appointment #<?= $appointment['id'] ?>
-                <span class="badge bg-light text-dark ms-2 fs-6 shadow-sm">
+                <span class="badge bg-light text-dark ms-2 fs-6 shadow-sm d-inline-flex align-items-center">
+                    <?php 
+                    $appointmentDoctorImage = $appointment['doctor_profile_image'] ?? null;
+                    if (!empty($appointmentDoctorImage)): 
+                        $doctorImagePath = strpos($appointmentDoctorImage, '/public/') === 0 ? $appointmentDoctorImage : '/public' . $appointmentDoctorImage;
+                    ?>
+                        <img src="<?= htmlspecialchars($doctorImagePath) ?>" 
+                             alt="<?= htmlspecialchars($appointmentDoctorName) ?>" 
+                             class="appointment-doctor-avatar me-2"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="appointment-doctor-avatar-fallback me-2" style="display: none;">
+                            <?= strtoupper(substr($appointmentDoctorName ?? 'D', 0, 1)) ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="appointment-doctor-avatar me-2">
+                            <?= strtoupper(substr($appointmentDoctorName ?? 'D', 0, 1)) ?>
+                        </div>
+                    <?php endif; ?>
                     <i class="bi bi-person-check me-1"></i>
                     <?= htmlspecialchars($appointmentDoctorName) ?>'s Patient
                 </span>
@@ -855,9 +913,9 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
         <div class="col-md-4 text-end">
             <div class="d-flex flex-column align-items-end gap-2">
                 <span class="status-badge d-flex align-items-center gap-2" 
-                      id="appointmentStatusBadge"
+                      id="appointmentStatusBadge" 
                       onclick="showChangeStatusModal(<?= $appointment['id'] ?>)"
-                      style="cursor: pointer;"
+                      style="cursor: pointer;" 
                       data-bs-toggle="tooltip" 
                       data-bs-placement="top" 
                       data-bs-title="Click to change status">
@@ -936,9 +994,9 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                         </li>
                     </ul>
                 </div>
-            </div>
         </div>
     </div>
+</div>
 
 <div class="row">
     <!-- Left Column - Patient & Consultation -->
@@ -1120,18 +1178,18 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                                         <strong>Right Eye:</strong>
                                     </div>
                                     <p class="ms-4 border-start border-success border-3 ps-3"><?= htmlspecialchars($note['visual_acuity_right']) ?></p>
-                                </div>
-                                <?php endif; ?>
+                                    </div>
+                                    <?php endif; ?>
                                 <?php if (!empty($note['visual_acuity_left'])): ?>
                                 <div class="col-md-6">
                                     <div class="d-flex align-items-center mb-2">
                                         <span class="badge bg-info me-2">OS</span>
                                         <strong>Left Eye:</strong>
-                                    </div>
-                                    <p class="ms-4 border-start border-info border-3 ps-3"><?= htmlspecialchars($note['visual_acuity_left']) ?></p>
                                 </div>
-                                <?php endif; ?>
+                                    <p class="ms-4 border-start border-info border-3 ps-3"><?= htmlspecialchars($note['visual_acuity_left']) ?></p>
                             </div>
+                                <?php endif; ?>
+                        </div>
                         </div>
                         <?php endif; ?>
 
@@ -1148,7 +1206,7 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                                     </div>
                                     <p class="ms-4 border-start border-success border-3 ps-3"><?= htmlspecialchars($note['refraction_right']) ?></p>
                                 </div>
-                                <?php endif; ?>
+                            <?php endif; ?>
                                 <?php if (!empty($note['refraction_left'])): ?>
                                 <div class="col-md-6">
                                     <div class="d-flex align-items-center mb-2">
@@ -1157,7 +1215,7 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                                     </div>
                                     <p class="ms-4 border-start border-info border-3 ps-3"><?= htmlspecialchars($note['refraction_left']) ?></p>
                                 </div>
-                                <?php endif; ?>
+                            <?php endif; ?>
                             </div>
                         </div>
                         <?php endif; ?>
@@ -1374,11 +1432,11 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                         <i class="bi bi-capsule me-2"></i>
                         Medications
                     </h5>
-                    <button class="btn btn-sm btn-primary" onclick="addPrescription(<?= $appointment['id'] ?>)">
-                        <i class="bi bi-plus me-1"></i>Add Medication
-                    </button>
+                        <button class="btn btn-sm btn-primary" onclick="addPrescription(<?= $appointment['id'] ?>)">
+                            <i class="bi bi-plus me-1"></i>Add Medication
+                        </button>
+                    </div>
                 </div>
-            </div>
             <div class="card-body" id="medicationsContainer">
                 <?php if (!empty($medications)): ?>
                     <?php foreach ($medications as $med): ?>
@@ -1398,9 +1456,9 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                             <p class="text-muted mb-0">
                                 <small><?= htmlspecialchars($med['notes']) ?></small>
                             </p>
-                        <?php endif; ?>
-                    </div>
-                    <?php endforeach; ?>
+                <?php endif; ?>
+                        </div>
+                        <?php endforeach; ?>
                 <?php else: ?>
                     <div class="text-center" id="emptyMedicationsMessage">
                         <i class="bi bi-capsule text-muted" style="font-size: 2rem;"></i>
@@ -1595,7 +1653,7 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                 <div class="d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         <i class="bi bi-paperclip me-2"></i>
-                        Images & Attachments 
+                        Images & Attachments
                     </h5>
                     <div class="btn-group btn-group-sm" role="group">
                         <button class="btn btn-sm btn-primary" onclick="showUploadModal(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)">
@@ -1612,90 +1670,90 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                 <?php if (!empty($attachments)): ?>
                     <div class="row" id="attachmentsRow">
                         <?php foreach ($attachments as $attachment): ?>
-                        <?php
-                        $fileExt = strtolower(pathinfo($attachment['original_filename'], PATHINFO_EXTENSION));
-                        $fileName = strtolower($attachment['original_filename']);
-                        $description = strtolower($attachment['description'] ?? '');
+                                    <?php
+                                    $fileExt = strtolower(pathinfo($attachment['original_filename'], PATHINFO_EXTENSION));
+                                    $fileName = strtolower($attachment['original_filename']);
+                                    $description = strtolower($attachment['description'] ?? '');
                         $isImage = in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']);
                         $viewUrl = '/api/attachments/view/' . $attachment['id'];
-                        
-                        // تحديد نوع الملف والأيقونة والـ badge
-                        $iconClass = 'bi-file-earmark';
-                        $fileType = 'Document';
-                        $badgeClass = 'bg-secondary';
-                        
+                                    
+                                    // تحديد نوع الملف والأيقونة والـ badge
+                                    $iconClass = 'bi-file-earmark';
+                                    $fileType = 'Document';
+                                    $badgeClass = 'bg-secondary';
+                                    
                         if ($isImage) {
-                            $iconClass = 'bi-image';
-                            // تحديد نوع الصورة بناءً على الاسم أو الوصف
-                            if (strpos($fileName, 'xray') !== false || strpos($fileName, 'x-ray') !== false || 
-                                strpos($description, 'xray') !== false || strpos($description, 'x-ray') !== false ||
-                                strpos($description, 'أشعة') !== false || strpos($description, 'راديو') !== false) {
-                                $fileType = 'X-Ray';
-                                $badgeClass = 'bg-info';
-                            } elseif (strpos($fileName, 'scan') !== false || strpos($fileName, 'ct') !== false || 
-                                      strpos($fileName, 'mri') !== false || strpos($description, 'scan') !== false ||
-                                      strpos($description, 'مسح') !== false || strpos($description, 'رنين') !== false) {
-                                $fileType = 'Scan';
-                                $badgeClass = 'bg-primary';
-                            } elseif (strpos($fileName, 'lab') !== false || strpos($fileName, 'test') !== false ||
-                                      strpos($fileName, 'blood') !== false || strpos($fileName, 'urine') !== false ||
-                                      strpos($description, 'lab') !== false || strpos($description, 'تحليل') !== false ||
-                                      strpos($description, 'فحص') !== false || strpos($description, 'دم') !== false ||
-                                      strpos($description, 'بول') !== false || strpos($description, 'معمل') !== false) {
-                                $fileType = 'Lab Result';
-                                $badgeClass = 'bg-success';
-                            } elseif (strpos($fileName, 'echo') !== false || strpos($fileName, 'ultrasound') !== false ||
-                                      strpos($description, 'echo') !== false || strpos($description, 'سونار') !== false ||
-                                      strpos($description, 'موجات') !== false) {
-                                $fileType = 'Ultrasound';
-                                $badgeClass = 'bg-info';
-                            } elseif (strpos($fileName, 'fundus') !== false || strpos($fileName, 'retina') !== false ||
-                                      strpos($description, 'fundus') !== false || strpos($description, 'قاع العين') !== false ||
-                                      strpos($description, 'شبكية') !== false) {
-                                $fileType = 'Fundus Photo';
-                                $badgeClass = 'bg-primary';
-                            } else {
-                                $fileType = 'Photo';
-                                $badgeClass = 'bg-warning text-dark';
-                            }
-                        } elseif ($fileExt == 'pdf') {
-                            $iconClass = 'bi-file-earmark-pdf';
-                            if (strpos($fileName, 'report') !== false || strpos($fileName, 'result') !== false ||
-                                strpos($description, 'report') !== false || strpos($description, 'تقرير') !== false ||
-                                strpos($description, 'نتيجة') !== false) {
-                                $fileType = 'Report';
-                                $badgeClass = 'bg-success';
-                            } elseif (strpos($fileName, 'prescription') !== false || strpos($fileName, 'rx') !== false ||
-                                      strpos($description, 'prescription') !== false || strpos($description, 'روشتة') !== false ||
-                                      strpos($description, 'وصفة') !== false) {
-                                $fileType = 'Prescription';
-                                $badgeClass = 'bg-danger';
-                            } elseif (strpos($fileName, 'invoice') !== false || strpos($fileName, 'bill') !== false ||
-                                      strpos($description, 'invoice') !== false || strpos($description, 'فاتورة') !== false ||
-                                      strpos($description, 'حساب') !== false) {
-                                $fileType = 'Invoice';
-                                $badgeClass = 'bg-warning text-dark';
-                            } else {
-                                $fileType = 'PDF Document';
-                                $badgeClass = 'bg-danger';
-                            }
-                        } elseif (in_array($fileExt, ['doc', 'docx'])) {
-                            $iconClass = 'bi-file-earmark-word';
-                            $fileType = 'Word Document';
-                            $badgeClass = 'bg-primary';
-                        } elseif (in_array($fileExt, ['xls', 'xlsx'])) {
-                            $iconClass = 'bi-file-earmark-excel';
-                            $fileType = 'Excel Sheet';
-                            $badgeClass = 'bg-success';
-                        } elseif (in_array($fileExt, ['txt'])) {
-                            $iconClass = 'bi-file-earmark-text';
-                            $fileType = 'Text File';
-                            $badgeClass = 'bg-secondary';
-                        }
-                        ?>
+                                        $iconClass = 'bi-image';
+                                        // تحديد نوع الصورة بناءً على الاسم أو الوصف
+                                        if (strpos($fileName, 'xray') !== false || strpos($fileName, 'x-ray') !== false || 
+                                            strpos($description, 'xray') !== false || strpos($description, 'x-ray') !== false ||
+                                            strpos($description, 'أشعة') !== false || strpos($description, 'راديو') !== false) {
+                                            $fileType = 'X-Ray';
+                                            $badgeClass = 'bg-info';
+                                        } elseif (strpos($fileName, 'scan') !== false || strpos($fileName, 'ct') !== false || 
+                                                  strpos($fileName, 'mri') !== false || strpos($description, 'scan') !== false ||
+                                                  strpos($description, 'مسح') !== false || strpos($description, 'رنين') !== false) {
+                                            $fileType = 'Scan';
+                                            $badgeClass = 'bg-primary';
+                                        } elseif (strpos($fileName, 'lab') !== false || strpos($fileName, 'test') !== false ||
+                                                  strpos($fileName, 'blood') !== false || strpos($fileName, 'urine') !== false ||
+                                                  strpos($description, 'lab') !== false || strpos($description, 'تحليل') !== false ||
+                                                  strpos($description, 'فحص') !== false || strpos($description, 'دم') !== false ||
+                                                  strpos($description, 'بول') !== false || strpos($description, 'معمل') !== false) {
+                                            $fileType = 'Lab Result';
+                                            $badgeClass = 'bg-success';
+                                        } elseif (strpos($fileName, 'echo') !== false || strpos($fileName, 'ultrasound') !== false ||
+                                                  strpos($description, 'echo') !== false || strpos($description, 'سونار') !== false ||
+                                                  strpos($description, 'موجات') !== false) {
+                                            $fileType = 'Ultrasound';
+                                            $badgeClass = 'bg-info';
+                                        } elseif (strpos($fileName, 'fundus') !== false || strpos($fileName, 'retina') !== false ||
+                                                  strpos($description, 'fundus') !== false || strpos($description, 'قاع العين') !== false ||
+                                                  strpos($description, 'شبكية') !== false) {
+                                            $fileType = 'Fundus Photo';
+                                            $badgeClass = 'bg-primary';
+                                        } else {
+                                            $fileType = 'Photo';
+                                            $badgeClass = 'bg-warning text-dark';
+                                        }
+                                    } elseif ($fileExt == 'pdf') {
+                                        $iconClass = 'bi-file-earmark-pdf';
+                                        if (strpos($fileName, 'report') !== false || strpos($fileName, 'result') !== false ||
+                                            strpos($description, 'report') !== false || strpos($description, 'تقرير') !== false ||
+                                            strpos($description, 'نتيجة') !== false) {
+                                            $fileType = 'Report';
+                                            $badgeClass = 'bg-success';
+                                        } elseif (strpos($fileName, 'prescription') !== false || strpos($fileName, 'rx') !== false ||
+                                                  strpos($description, 'prescription') !== false || strpos($description, 'روشتة') !== false ||
+                                                  strpos($description, 'وصفة') !== false) {
+                                            $fileType = 'Prescription';
+                                            $badgeClass = 'bg-danger';
+                                        } elseif (strpos($fileName, 'invoice') !== false || strpos($fileName, 'bill') !== false ||
+                                                  strpos($description, 'invoice') !== false || strpos($description, 'فاتورة') !== false ||
+                                                  strpos($description, 'حساب') !== false) {
+                                            $fileType = 'Invoice';
+                                            $badgeClass = 'bg-warning text-dark';
+                                        } else {
+                                            $fileType = 'PDF Document';
+                                            $badgeClass = 'bg-danger';
+                                        }
+                                    } elseif (in_array($fileExt, ['doc', 'docx'])) {
+                                        $iconClass = 'bi-file-earmark-word';
+                                        $fileType = 'Word Document';
+                                        $badgeClass = 'bg-primary';
+                                    } elseif (in_array($fileExt, ['xls', 'xlsx'])) {
+                                        $iconClass = 'bi-file-earmark-excel';
+                                        $fileType = 'Excel Sheet';
+                                        $badgeClass = 'bg-success';
+                                    } elseif (in_array($fileExt, ['txt'])) {
+                                        $iconClass = 'bi-file-earmark-text';
+                                        $fileType = 'Text File';
+                                        $badgeClass = 'bg-secondary';
+                                    }
+                                    ?>
                         <div class="col-md-6 mb-3">
                             <div class="attachment-card p-2 border rounded" data-attachment-id="<?= $attachment['id'] ?>" style="min-height: <?= $isImage ? '200px' : '140px' ?>; display: flex; flex-direction: column;">
-                                <?php if ($isImage): ?>
+                                    <?php if ($isImage): ?>
                                 <!-- Thumbnail for images -->
                                 <div class="mb-2 text-center" style="cursor: pointer;" 
                                      onclick="viewAttachment(<?= $attachment['id'] ?>, '<?= $attachment['file_path'] ?>', '<?= $fileExt ?>')"
@@ -1703,7 +1761,7 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                                      data-bs-placement="top" 
                                      data-bs-title="View Attachement/Photo">
                                     <img src="<?= htmlspecialchars($viewUrl) ?>" 
-                                         alt="<?= htmlspecialchars($attachment['original_filename']) ?>"
+                                             alt="<?= htmlspecialchars($attachment['original_filename']) ?>"
                                          class="img-thumbnail" 
                                          style="max-width: 100%; max-height: 120px; object-fit: cover; border-radius: 8px; cursor: pointer;"
                                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -1712,7 +1770,7 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                                         <small class="text-muted">Image not available</small>
                                     </div>
                                 </div>
-                                <?php endif; ?>
+                                    <?php endif; ?>
                                 
                                 <div class="d-flex align-items-center mb-2 flex-grow-1">
                                     <i class="bi <?= $iconClass ?> text-primary me-2" style="font-size: 1.2rem; flex-shrink: 0;"></i>
@@ -2154,16 +2212,16 @@ function setupDrugNameAutocomplete() {
         }
     });
 }
-
+    
 // Search drugs for autocomplete
-async function searchDrugsAutocomplete(searchTerm) {
-    try {
+    async function searchDrugsAutocomplete(searchTerm) {
+        try {
         const response = await fetch(`/api/searchDrugsAutocomplete?q=${encodeURIComponent(searchTerm)}&limit=6`);
-        const data = await response.json();
+            const data = await response.json();
         
         const suggestionsContainer = document.getElementById('drugSuggestions');
-        
-        if (data.drugs && data.drugs.length > 0) {
+            
+            if (data.drugs && data.drugs.length > 0) {
             suggestionsContainer.innerHTML = '';
             
             data.drugs.forEach(drug => {
@@ -2181,23 +2239,23 @@ async function searchDrugsAutocomplete(searchTerm) {
                 });
                 
                 suggestionItem.addEventListener('mouseenter', function() {
-                    this.style.backgroundColor = '#f8f9fa';
-                });
-                
+                        this.style.backgroundColor = '#f8f9fa';
+                    });
+                    
                 suggestionItem.addEventListener('mouseleave', function() {
-                    this.style.backgroundColor = '';
+                        this.style.backgroundColor = '';
+                    });
+                    
+                suggestionsContainer.appendChild(suggestionItem);
                 });
                 
-                suggestionsContainer.appendChild(suggestionItem);
-            });
-            
             suggestionsContainer.style.display = 'block';
-        } else {
+            } else {
             suggestionsContainer.innerHTML = '<div class="p-2 text-muted text-center">No drugs found</div>';
             suggestionsContainer.style.display = 'block';
-        }
-    } catch (error) {
-        console.error('Error searching drugs:', error);
+            }
+        } catch (error) {
+            console.error('Error searching drugs:', error);
         const suggestionsContainer = document.getElementById('drugSuggestions');
         suggestionsContainer.innerHTML = '<div class="p-2 text-danger text-center">Error loading suggestions</div>';
         suggestionsContainer.style.display = 'block';
@@ -2385,35 +2443,35 @@ function startCamera() {
     }
     
     navigator.mediaDevices.getUserMedia({ 
-        video: { 
+                            video: { 
             width: { ideal: 1280 },
             height: { ideal: 720 },
             facingMode: 'environment' // Use back camera on mobile
         } 
     })
-    .then(function(stream) {
-        cameraStream = stream;
-        video.srcObject = stream;
-        
-        // Show video, hide placeholder
-        placeholder.style.display = 'none';
-        video.style.display = 'block';
-        
-        // Hide photo type field when camera starts
-        if (attachmentTypeContainer) {
-            attachmentTypeContainer.style.display = 'none';
-        }
-        
-        // Update buttons
+        .then(function(stream) {
+            cameraStream = stream;
+            video.srcObject = stream;
+            
+            // Show video, hide placeholder
+            placeholder.style.display = 'none';
+            video.style.display = 'block';
+            
+            // Hide photo type field when camera starts
+            if (attachmentTypeContainer) {
+                attachmentTypeContainer.style.display = 'none';
+            }
+            
+            // Update buttons
         captureBtn.style.display = 'inline-block';
         stopBtn.style.display = 'inline-block';
-        
-        showSuccessMessage('Camera started successfully');
-    })
-    .catch(function(error) {
+            
+            showSuccessMessage('Camera started successfully');
+        })
+        .catch(function(error) {
         console.error('Error accessing camera:', error);
         showErrorMessage('Error accessing camera: ' + error.message);
-    });
+        });
 }
 
 function capturePhoto() {
@@ -2710,7 +2768,7 @@ function showUploadModal(appointmentId, patientId) {
             uploadBtn.disabled = false;
             progressDiv.style.display = 'none';
             
-                    if (xhr.status === 200) {
+            if (xhr.status === 200) {
                 try {
                     const response = JSON.parse(xhr.responseText);
                     if (response.success) {
@@ -2845,12 +2903,12 @@ function deleteAttachment(attachmentId) {
                                 const container = document.getElementById('attachmentsContainer');
                                 container.innerHTML = `
                                     <div class="text-center py-4" id="emptyAttachmentsMessage">
-                                        <i class="bi bi-paperclip text-muted" style="font-size: 3rem;"></i>
+                                            <i class="bi bi-paperclip text-muted" style="font-size: 3rem;"></i>
                                         <p class="text-muted mt-2 mb-0">No images or attachments found</p>
-                                    </div>
-                                `;
+                                        </div>
+                                    `;
+                                }
                             }
-                        }
                     }
                 } else {
                     showErrorMessage('Error: ' + data.message);
@@ -3101,7 +3159,7 @@ function editMedication(medicationId, drugName, notes) {
                                 <div class="col-12 mb-3">
                                     <label class="form-label">Drug Name <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="drug_name" value="${drugName}" required>
-                                </div>
+                                    </div>
                                 <div class="col-md-4 mb-3" style="display: none;">
                                     <label class="form-label">Dose</label>
                                     <input type="text" class="form-control" name="dose" placeholder="e.g., 1 tablet, 2 drops">
@@ -3109,7 +3167,7 @@ function editMedication(medicationId, drugName, notes) {
                                 <div class="col-md-4 mb-3" style="display: none;">
                                     <label class="form-label">Frequency</label>
                                     <input type="text" class="form-control" name="frequency" placeholder="e.g., Twice daily, Every 6 hours">
-                                </div>
+                            </div>
                                 <div class="col-md-4 mb-3" style="display: none;">
                                     <label class="form-label">Duration</label>
                                     <input type="text" class="form-control" name="duration" placeholder="e.g., 7 days, 2 weeks">
@@ -3349,7 +3407,7 @@ function addGlassesPrescription(appointmentId) {
         fetch('/api/prescriptions/glasses', {
             method: 'POST',
             credentials: 'same-origin',
-            headers: {
+                headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             },
             body: formData
@@ -3360,20 +3418,20 @@ function addGlassesPrescription(appointmentId) {
             }
             return response.json();
         })
-        .then(data => {
-            if (data.success) {
+            .then(data => {
+                if (data.success) {
                 modal.hide();
                 showSuccessMessage('Glasses prescription added successfully');
                 setTimeout(() => {
                     reloadGlasses();
                 }, 300);
-            } else {
+                } else {
                 showErrorMessage('Error: ' + (data.error || data.message || 'Unknown error occurred'));
-            }
-        })
-        .catch(error => {
+                }
+            })
+            .catch(error => {
             console.error('Glasses prescription error:', error);
-            showErrorMessage('Error: ' + error.message);
+                showErrorMessage('Error: ' + error.message);
         });
     });
     
@@ -3424,23 +3482,23 @@ function editGlassesPrescription(glassesId, glassesData) {
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <h6 class="text-primary">Right Eye (OD)</h6>
-                                    <div class="row">
+                            <div class="row">
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">SPH</label>
                                             <input type="text" class="form-control" name="distance_sphere_r" value="${glassesData.distance_sphere_r || ''}" placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*">
                                             <div class="form-text">Sphere power</div>
-                                        </div>
+                                </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">CYL</label>
                                             <input type="text" class="form-control" name="distance_cylinder_r" value="${glassesData.distance_cylinder_r || ''}" placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*">
                                             <div class="form-text">Cylinder power</div>
-                                        </div>
+                                </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">AXIS</label>
                                             <input type="text" class="form-control" name="distance_axis_r" value="${glassesData.distance_axis_r || ''}" placeholder="0, 90, 180" pattern="[0-9]*">
                                             <div class="form-text">Axis (0-180)</div>
-                                        </div>
-                                    </div>
+                                </div>
+                                </div>
                                 </div>
                                 
                                 <div class="col-md-6 border-start">
@@ -3450,7 +3508,7 @@ function editGlassesPrescription(glassesId, glassesData) {
                                             <label class="form-label">SPH</label>
                                             <input type="text" class="form-control" name="distance_sphere_l" value="${glassesData.distance_sphere_l || ''}" placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*">
                                             <div class="form-text">Sphere power</div>
-                                        </div>
+                                </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">CYL</label>
                                             <input type="text" class="form-control" name="distance_cylinder_l" value="${glassesData.distance_cylinder_l || ''}" placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*">
@@ -3544,10 +3602,10 @@ function editGlassesPrescription(glassesId, glassesData) {
         }
         
         fetch(`/api/prescriptions/glasses/${glassesId}`, {
-            method: 'PUT',
+                method: 'PUT',
             credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
                 'X-Requested-With': 'XMLHttpRequest'
             },
             body: params.toString()
@@ -4210,9 +4268,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add click event listener for positioning
         moreActionsBtn.addEventListener('click', function(e) {
-            
+        
             // Start continuous positioning after Bootstrap shows it
-            setTimeout(() => {
+        setTimeout(() => {
                 positionDropdownMenu();
                 startPositionTracking();
             }, 10);
@@ -4608,8 +4666,8 @@ function reloadAttachments() {
                         <div class="text-center py-4" id="emptyAttachmentsMessage">
                             <i class="bi bi-paperclip text-muted" style="font-size: 3rem;"></i>
                             <p class="text-muted mt-2 mb-0">No images or attachments found</p>
-                        </div>
-                    `;
+        </div>
+    `;
                 } else {
                     let html = '<div class="row" id="attachmentsRow">';
                     data.attachments.forEach(attachment => {
@@ -4669,8 +4727,8 @@ function reloadAttachments() {
                                         <div style="display: none; width: 100%; height: 120px; background: #f8f9fa; border-radius: 8px; align-items: center; justify-content: center; flex-direction: column;">
                                             <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
                                             <small class="text-muted">Image not available</small>
-                                        </div>
-                                    </div>
+                    </div>
+                        </div>
                                     ` : ''}
                                     <div class="d-flex align-items-center mb-2 flex-grow-1">
                                         <i class="bi ${iconClass} text-primary me-2" style="font-size: 1.2rem; flex-shrink: 0;"></i>
@@ -4685,15 +4743,15 @@ function reloadAttachments() {
                                                 <span class="badge ${badgeClass} ms-2" style="font-size: 0.6rem; flex-shrink: 0; font-weight: 500; border-radius: 8px;">
                                                     ${fileType}
                                                 </span>
-                                            </div>
+                            </div>
                                             <small class="text-muted d-block" style="font-size: 0.65rem; line-height: 1.1;">
                                                 ${fileSize} KB
                                             </small>
                                             <small class="text-muted d-block" style="font-size: 0.65rem; line-height: 1.1;">
                                                 ${createdDate}
-                                            </small>
-                                        </div>
-                                    </div>
+                                </small>
+                            </div>
+                    </div>
                                     ${attachment.description ? `
                                     <div class="flex-grow-1">
                                         <p class="text-muted mb-1 small" style="font-size: 0.7rem; line-height: 1.2;"
@@ -4722,11 +4780,11 @@ function reloadAttachments() {
                                                 onclick="deleteAttachment(${attachment.id})"
                                                 style="font-size: 0.7rem; padding: 0.3rem 0.4rem; flex: 1;">
                                             <i class="bi bi-trash me-1"></i>Delete
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
+                        </button>
+                </div>
+            </div>
+        </div>
+    `;
                     });
                     html += '</div>';
                     container.innerHTML = html;
@@ -4776,9 +4834,9 @@ function reloadMedications() {
                 const container = document.getElementById('medicationsContainer');
                 if (!container) {
                     console.error('medicationsContainer not found');
-                    return;
-                }
-                
+        return;
+    }
+    
                 if (data.medications.length === 0) {
                     container.innerHTML = `
                         <div class="text-center" id="emptyMedicationsMessage">
@@ -4835,7 +4893,7 @@ function reloadGlasses() {
             'X-Requested-With': 'XMLHttpRequest'
         }
     })
-        .then(response => {
+    .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -4856,7 +4914,7 @@ function reloadGlasses() {
                             <p class="text-muted mt-2 mb-0">No glasses prescription</p>
                         </div>
                     `;
-                } else {
+        } else {
                     let html = '';
                     data.glasses.forEach(glass => {
                         const glassData = JSON.stringify(glass).replace(/"/g, '&quot;');
@@ -4941,9 +4999,9 @@ function reloadGlasses() {
                 }
             } else {
                 console.error('Invalid response format:', data);
-            }
-        })
-        .catch(error => {
+        }
+    })
+    .catch(error => {
             console.error('Error reloading glasses:', error);
             showErrorMessage('Error loading glasses');
         });

@@ -43,7 +43,6 @@ $pageSubtitle = 'Review and close daily operations for ' . date('F j, Y', strtot
 }
 
 .card-body {
-    background-color: var(--card) !important;
 }
 
 /* Text Colors */

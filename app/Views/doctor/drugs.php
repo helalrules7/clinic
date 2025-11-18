@@ -636,7 +636,7 @@
 }
 
 .card-header {
-    background-color: var(--bg);
+    background-color: transparent !important;
     border-bottom-color: var(--border);
     color: var(--text);
 }

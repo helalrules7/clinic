@@ -43,7 +43,6 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
 }
 
 .card-body {
-    background-color: var(--card) !important;
 }
 
 /* Text Colors */
@@ -491,12 +490,254 @@ kbd {
         font-size: 0.875rem !important;
     }
 }
+
+/* Day Close Button Glass Style with Blue Gradient */
+.day-close-btn {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(37, 99, 235, 0.5)) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(96, 165, 250, 0.4) !important;
+    box-shadow: 2px 0 8px 0 rgba(59, 130, 246, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    color: white !important;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.day-close-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.day-close-btn:hover::before {
+    left: 100%;
+}
+
+.day-close-btn:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.55), rgba(37, 99, 235, 0.65)) !important;
+    transform: translateY(-2px);
+    box-shadow: 4px 4px 16px 0 rgba(59, 130, 246, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    color: white !important;
+    text-decoration: none;
+    border-color: rgba(96, 165, 250, 0.6) !important;
+}
+
+.day-close-btn i {
+    font-size: 1.3rem;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.dark .day-close-btn {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.5), rgba(29, 78, 216, 0.6)) !important;
+    border: 1px solid rgba(96, 165, 250, 0.5) !important;
+    box-shadow: 2px 0 8px 0 rgba(37, 99, 235, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.dark .day-close-btn:hover {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.65), rgba(29, 78, 216, 0.75)) !important;
+    box-shadow: 4px 4px 16px 0 rgba(37, 99, 235, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    border-color: rgba(96, 165, 250, 0.7) !important;
+}
+
+/* Mobile Responsive for Day Close Button */
+@media (max-width: 768px) {
+    .day-close-btn {
+        width: 100%;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    
+    .row.mb-4 .col-md-6:first-child {
+        margin-bottom: 1rem;
+    }
+    
+    .row.mb-4 .col-md-6:last-child {
+        width: 100%;
+    }
+    
+    .row.mb-4 .col-md-6:last-child .d-flex {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .row.mb-4 .col-md-6:last-child .d-flex .btn {
+        flex: 1 1 calc(50% - 0.25rem);
+        min-width: calc(50% - 0.25rem);
+    }
+    
+    /* Payment Types Summary - Table Style on Mobile */
+    /* Target the row that contains payment type columns with h4 elements that have Count IDs */
+    .card .card-body > .row:has(h4[id="BookingCount"]),
+    .card .card-body > .row:has(h4[id="FollowUpCount"]),
+    .card .card-body > .row:has(h4[id="ConsultationCount"]),
+    .card .card-body > .row:has(h4[id="ProcedureCount"]),
+    .card .card-body > .row:has(h4[id="OtherCount"]),
+    .card .card-body > .row:has(h4[id="withdrawalsCount"]) {
+        display: table !important;
+        width: 100% !important;
+        table-layout: fixed !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        margin: 0 !important;
+        overflow-x: auto;
+    }
+    
+    /* Make all col-md-2 in that row table cells - force override Bootstrap */
+    .card .card-body > .row:has(h4[id="BookingCount"]) > .col-md-2,
+    .card .card-body > .row:has(h4[id="FollowUpCount"]) > .col-md-2,
+    .card .card-body > .row:has(h4[id="ConsultationCount"]) > .col-md-2,
+    .card .card-body > .row:has(h4[id="ProcedureCount"]) > .col-md-2,
+    .card .card-body > .row:has(h4[id="OtherCount"]) > .col-md-2,
+    .card .card-body > .row:has(h4[id="withdrawalsCount"]) > .col-md-2 {
+        display: table-cell !important;
+        float: none !important;
+        width: auto !important;
+        min-width: 75px !important;
+        max-width: none !important;
+        padding: 0.5rem 0.25rem !important;
+        vertical-align: top !important;
+        border-right: 1px solid var(--border) !important;
+        text-align: center !important;
+        position: static !important;
+    }
+    
+    .card .card-body > .row:has(h4[id="BookingCount"]) > .col-md-2:last-child,
+    .card .card-body > .row:has(h4[id="FollowUpCount"]) > .col-md-2:last-child,
+    .card .card-body > .row:has(h4[id="ConsultationCount"]) > .col-md-2:last-child,
+    .card .card-body > .row:has(h4[id="ProcedureCount"]) > .col-md-2:last-child,
+    .card .card-body > .row:has(h4[id="OtherCount"]) > .col-md-2:last-child,
+    .card .card-body > .row:has(h4[id="withdrawalsCount"]) > .col-md-2:last-child {
+        border-right: none !important;
+    }
+    
+    .card .card-body > .row:has(h4[id="BookingCount"]) > .col-md-2 .text-center,
+    .card .card-body > .row:has(h4[id="FollowUpCount"]) > .col-md-2 .text-center,
+    .card .card-body > .row:has(h4[id="ConsultationCount"]) > .col-md-2 .text-center,
+    .card .card-body > .row:has(h4[id="ProcedureCount"]) > .col-md-2 .text-center,
+    .card .card-body > .row:has(h4[id="OtherCount"]) > .col-md-2 .text-center,
+    .card .card-body > .row:has(h4[id="withdrawalsCount"]) > .col-md-2 .text-center {
+        padding: 0.25rem;
+    }
+    
+    .card .card-body > .row:has(h4[id="BookingCount"]) > .col-md-2 .badge,
+    .card .card-body > .row:has(h4[id="FollowUpCount"]) > .col-md-2 .badge,
+    .card .card-body > .row:has(h4[id="ConsultationCount"]) > .col-md-2 .badge,
+    .card .card-body > .row:has(h4[id="ProcedureCount"]) > .col-md-2 .badge,
+    .card .card-body > .row:has(h4[id="OtherCount"]) > .col-md-2 .badge,
+    .card .card-body > .row:has(h4[id="withdrawalsCount"]) > .col-md-2 .badge {
+        font-size: 0.65rem !important;
+        padding: 0.2rem 0.4rem;
+        white-space: nowrap;
+        display: block;
+        margin-bottom: 0.25rem;
+        line-height: 1.2;
+    }
+    
+    .card .card-body > .row:has(h4[id="BookingCount"]) > .col-md-2 h4,
+    .card .card-body > .row:has(h4[id="FollowUpCount"]) > .col-md-2 h4,
+    .card .card-body > .row:has(h4[id="ConsultationCount"]) > .col-md-2 h4,
+    .card .card-body > .row:has(h4[id="ProcedureCount"]) > .col-md-2 h4,
+    .card .card-body > .row:has(h4[id="OtherCount"]) > .col-md-2 h4,
+    .card .card-body > .row:has(h4[id="withdrawalsCount"]) > .col-md-2 h4 {
+        font-size: 0.9rem;
+        margin: 0.25rem 0;
+        line-height: 1.2;
+    }
+    
+    .card .card-body > .row:has(h4[id="BookingCount"]) > .col-md-2 small,
+    .card .card-body > .row:has(h4[id="FollowUpCount"]) > .col-md-2 small,
+    .card .card-body > .row:has(h4[id="ConsultationCount"]) > .col-md-2 small,
+    .card .card-body > .row:has(h4[id="ProcedureCount"]) > .col-md-2 small,
+    .card .card-body > .row:has(h4[id="OtherCount"]) > .col-md-2 small,
+    .card .card-body > .row:has(h4[id="withdrawalsCount"]) > .col-md-2 small {
+        font-size: 0.65rem;
+        display: block;
+        line-height: 1.2;
+    }
+    
+    /* Financial Transactions Log - Mobile Responsive */
+    .card .card-header .row.align-items-center {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    
+    .card .card-header .row.align-items-center .col-md-6:first-child {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    
+    .card .card-header .row.align-items-center .col-md-6:last-child {
+        width: 100%;
+        text-align: left !important;
+    }
+    
+    .card .card-header .row.align-items-center .col-md-6:last-child .d-flex {
+        flex-direction: column;
+        gap: 0.75rem !important;
+        width: 100%;
+        align-items: stretch !important;
+    }
+    
+    .card .card-header .row.align-items-center .col-md-6:last-child .d-flex > button {
+        width: 100%;
+    }
+    
+    .card .card-header .row.align-items-center .col-md-6:last-child .d-flex > div {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .card .card-header .row.align-items-center .col-md-6:last-child .d-flex > div label {
+        margin-bottom: 0;
+        font-size: 0.875rem;
+    }
+    
+    .card .card-header .row.align-items-center .col-md-6:last-child .d-flex > div input,
+    .card .card-header .row.align-items-center .col-md-6:last-child .d-flex > div select {
+        width: 100% !important;
+    }
+    
+    /* Today's Payments - Mobile Responsive */
+    .card .card-header .row.align-items-center .col-md-6:last-child .d-flex input[type="text"] {
+        width: 100% !important;
+        margin-bottom: 0.5rem;
+    }
+    
+    .card .card-header .row.align-items-center .col-md-6:last-child .d-flex .btn {
+        flex: 1 1 auto;
+        min-width: calc(50% - 0.25rem);
+    }
+    
+    /* Make filter buttons wrap on mobile */
+    .card .card-header .row.align-items-center .col-md-6:last-child .d-flex {
+        flex-wrap: wrap;
+    }
+}
 </style>
 
 <div class="container-fluid">
     <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-md-6">
+            <a href="/doctor/daily-closure" class="btn day-close-btn">
+                <i class="bi bi-calendar-check me-2"></i>
+                Day Close
+            </a>
         </div>
         <div class="col-md-6 text-end">
             <div class="d-flex gap-2 justify-content-end">

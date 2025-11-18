@@ -113,9 +113,24 @@
                         $colorIndex++;
                     ?>
                     <button type="button" 
-                            class="btn <?= $colorClass ?>" 
+                            class="btn <?= $colorClass ?> d-flex align-items-center" 
                             data-doctor="<?= $doctor['id'] ?>" 
                             onclick="filterByDoctor('<?= $doctor['id'] ?>')">
+                        <?php if (!empty($doctor['profile_image'])): 
+                            $doctorImagePath = strpos($doctor['profile_image'], '/public/') === 0 ? $doctor['profile_image'] : '/public' . $doctor['profile_image'];
+                        ?>
+                            <img src="<?= htmlspecialchars($doctorImagePath) ?>" 
+                                 alt="<?= htmlspecialchars($doctor['display_name']) ?>" 
+                                 class="doctor-filter-avatar me-2"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="doctor-filter-avatar-fallback me-2" style="display: none;">
+                                <?= strtoupper(substr($doctor['display_name'] ?? 'D', 0, 1)) ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="doctor-filter-avatar me-2">
+                                <?= strtoupper(substr($doctor['display_name'] ?? 'D', 0, 1)) ?>
+                            </div>
+                        <?php endif; ?>
                         <i class="bi bi-person-badge me-1"></i>
                         <?= htmlspecialchars($doctor['display_name']) ?>
                     </button>
@@ -1595,7 +1610,45 @@ kbd[lang="ar"] {
     }
 }
 
-/* Custom Tooltip Styling */
+/* Doctor Filter Avatar Styles */
+.doctor-filter-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--accent), #10b981);
+    color: white;
+    font-weight: bold;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.doctor-filter-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.doctor-filter-avatar-fallback {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--accent), #10b981);
+    color: white;
+    font-weight: bold;
+    font-size: 0.75rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Custom Tooltip Styling - Glass Effect */
 .tooltip {
     font-family: 'Cairo', sans-serif;
     font-size: 0.85rem;
@@ -1603,38 +1656,65 @@ kbd[lang="ar"] {
 }
 
 .tooltip .tooltip-inner {
-    background-color: rgba(33, 37, 41, 0.95);
-    color: #ffffff;
-    border-radius: 8px;
-    padding: 8px 12px;
+    background: rgba(248, 250, 252, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #1a1a1a;
+    border-radius: 9px;
+    padding: 8px 16px;
     max-width: 280px;
     text-align: center;
     line-height: 1.4;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(226, 232, 240, 0.3);
+    /* Ensure text is sharp - no blur on text */
+    filter: none !important;
+    -webkit-filter: none !important;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-/* Dark mode tooltip styling */
+/* Dark mode tooltip styling - Glass Effect */
 .dark .tooltip .tooltip-inner {
-    background-color: rgba(248, 250, 252, 0.95);
-    color: #1e293b;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+    background: rgba(11, 18, 32, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #ffffff;
+    border: 1px solid rgba(51, 65, 85, 0.3);
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+    /* Ensure text is sharp - no blur on text */
+    filter: none !important;
+    -webkit-filter: none !important;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure text inside tooltip is always sharp */
+.tooltip .tooltip-inner * {
+    filter: none !important;
+    -webkit-filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 /* Tooltip arrow styling */
 .tooltip .tooltip-arrow::before {
-    border-top-color: rgba(33, 37, 41, 0.95) !important;
-    border-bottom-color: rgba(33, 37, 41, 0.95) !important;
-    border-left-color: rgba(33, 37, 41, 0.95) !important;
-    border-right-color: rgba(33, 37, 41, 0.95) !important;
+    border-top-color: rgba(248, 250, 252, 0.85) !important;
+    border-bottom-color: rgba(248, 250, 252, 0.85) !important;
+    border-left-color: rgba(248, 250, 252, 0.85) !important;
+    border-right-color: rgba(248, 250, 252, 0.85) !important;
 }
 
 .dark .tooltip .tooltip-arrow::before {
-    border-top-color: rgba(248, 250, 252, 0.95) !important;
-    border-bottom-color: rgba(248, 250, 252, 0.95) !important;
-    border-left-color: rgba(248, 250, 252, 0.95) !important;
-    border-right-color: rgba(248, 250, 252, 0.95) !important;
+    border-top-color: rgba(11, 18, 32, 0.85) !important;
+    border-bottom-color: rgba(11, 18, 32, 0.85) !important;
+    border-left-color: rgba(11, 18, 32, 0.85) !important;
+    border-right-color: rgba(11, 18, 32, 0.85) !important;
 }
 
 /* Improved button hover states with tooltips */

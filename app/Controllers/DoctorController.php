@@ -186,11 +186,28 @@ class DoctorController
         // Get treating doctor info (the doctor who created the patient profile)
         $treatingDoctor = null;
         if (!empty($patient['created_by_doctor_name'])) {
-            $treatingDoctor = [
-                'name' => $patient['created_by_name'],
-                'display_name' => $patient['created_by_doctor_name']
-            ];
-                    } else {
+            // Get full doctor info including profile_image
+            $stmt = $this->pdo->prepare("
+                SELECT u.name, u.profile_image, d.display_name, d.specialty
+                FROM timeline_events te
+                LEFT JOIN users u ON te.actor_user_id = u.id
+                LEFT JOIN doctors d ON u.id = d.user_id
+                WHERE te.patient_id = ? 
+                AND te.event_type = 'Booking' 
+                AND te.event_summary LIKE '%New patient registered%' 
+                ORDER BY te.created_at ASC 
+                LIMIT 1
+            ");
+            $stmt->execute([$id]);
+            $treatingDoctor = $stmt->fetch();
+            if (!$treatingDoctor) {
+                $treatingDoctor = [
+                    'name' => $patient['created_by_name'],
+                    'display_name' => $patient['created_by_doctor_name'],
+                    'profile_image' => null
+                ];
+            }
+        } else {
             // Fallback to current doctor if no creator info available
             $treatingDoctor = $this->getCurrentDoctorInfo($user['id']);
         }
@@ -269,7 +286,7 @@ class DoctorController
     {
         $user = $this->auth->user();
         
-        // Get doctor-specific information
+        // Get doctor-specific information including profile_image
         $stmt = $this->pdo->prepare("
             SELECT u.*, d.display_name as doctor_name, d.specialty 
             FROM users u 
@@ -608,6 +625,79 @@ class DoctorController
         $phone = trim($_POST['phone'] ?? '');
         $doctorName = trim($_POST['doctor_name'] ?? '');
         $specialty = trim($_POST['specialty'] ?? 'Ophthalmology');
+        $profileImage = null;
+        
+        // Handle profile image upload
+        if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
+            $uploadDir = __DIR__ . '/../../public/uploads/users/';
+            
+            // Ensure directory exists
+            if (!is_dir($uploadDir)) {
+                @mkdir($uploadDir, 0777, true);
+            }
+            
+            // Check if directory is writable
+            if (!is_writable($uploadDir)) {
+                @chmod($uploadDir, 0777);
+            }
+            
+            $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            $maxSize = 5 * 1024 * 1024; // 5MB
+            
+            $file = $_FILES['profile_image'];
+            
+            // Log upload attempt
+            error_log("Profile image upload attempt - User ID: {$user['id']}, File: {$file['name']}, Size: {$file['size']}, Error: {$file['error']}");
+            
+            // Validate file type
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+            
+            error_log("Profile image MIME type: $mimeType");
+            
+            if (!in_array($mimeType, $allowedTypes)) {
+                error_log("Invalid file type: $mimeType");
+                header('Location: /doctor/profile?error=Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.');
+                exit;
+            }
+            
+            // Validate file size
+            if ($file['size'] > $maxSize) {
+                error_log("File size exceeds limit: {$file['size']} bytes");
+                header('Location: /doctor/profile?error=File size exceeds 5MB limit.');
+                exit;
+            }
+            
+            // Generate unique filename
+            $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $filename = 'user_' . $user['id'] . '_' . time() . '.' . $extension;
+            $uploadPath = $uploadDir . $filename;
+            
+            error_log("Upload path: $uploadPath");
+            error_log("Directory exists: " . (is_dir($uploadDir) ? 'yes' : 'no'));
+            error_log("Directory writable: " . (is_writable($uploadDir) ? 'yes' : 'no'));
+            
+            // Delete old profile image if exists
+            $stmt = $this->pdo->prepare("SELECT profile_image FROM users WHERE id = ?");
+            $stmt->execute([$user['id']]);
+            $oldImage = $stmt->fetchColumn();
+            if ($oldImage && file_exists(__DIR__ . '/../../public' . $oldImage)) {
+                @unlink(__DIR__ . '/../../public' . $oldImage);
+            }
+            
+            // Move uploaded file
+            if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
+                $profileImage = '/uploads/users/' . $filename;
+                error_log("Profile image uploaded successfully: $profileImage");
+            } else {
+                $errorMsg = "Failed to upload image. Upload dir: $uploadDir, Writable: " . (is_writable($uploadDir) ? 'yes' : 'no');
+                error_log("Profile image upload failed: $errorMsg");
+                error_log("PHP error: " . error_get_last()['message'] ?? 'No error');
+                header('Location: /doctor/profile?error=Failed to upload image. Please check server permissions.');
+                exit;
+            }
+        }
         
         // Validate input
         if (empty($name)) {
@@ -637,13 +727,22 @@ class DoctorController
             // Start transaction
             $this->pdo->beginTransaction();
             
-            // Update user table
-            $stmt = $this->pdo->prepare("
-                UPDATE users 
-                SET name = ?, email = ?, phone = ?, updated_at = NOW() 
-                WHERE id = ?
-            ");
-            $stmt->execute([$name, $email, $phone, $user['id']]);
+            // Update user table with or without profile_image
+            if ($profileImage) {
+                $stmt = $this->pdo->prepare("
+                    UPDATE users 
+                    SET name = ?, email = ?, phone = ?, profile_image = ?, updated_at = NOW() 
+                    WHERE id = ?
+                ");
+                $stmt->execute([$name, $email, $phone, $profileImage, $user['id']]);
+            } else {
+                $stmt = $this->pdo->prepare("
+                    UPDATE users 
+                    SET name = ?, email = ?, phone = ?, updated_at = NOW() 
+                    WHERE id = ?
+                ");
+                $stmt->execute([$name, $email, $phone, $user['id']]);
+            }
             
             // Update doctor table if doctor-specific fields are provided
             if (!empty($doctorName) || !empty($specialty)) {
@@ -665,6 +764,9 @@ class DoctorController
             $_SESSION['user']['name'] = $name;
             $_SESSION['user']['email'] = $email;
             $_SESSION['user']['phone'] = $phone;
+            if ($profileImage) {
+                $_SESSION['user']['profile_image'] = $profileImage;
+            }
             
             // Add doctor-specific data to session if available
             if (!empty($doctorName)) {
@@ -1043,7 +1145,9 @@ class DoctorController
                    CONCAT(p.first_name, ' ', p.last_name) as patient_name,
                    p.first_name, p.last_name, p.phone, p.dob, p.gender,
                    YEAR(CURDATE()) - YEAR(p.dob) as patient_age,
-                   CONCAT(u.name) as doctor_name
+                   CONCAT(u.name) as doctor_name,
+                   u.profile_image as doctor_profile_image,
+                   d.display_name as doctor_display_name
             FROM appointments a
             JOIN patients p ON a.patient_id = p.id
             JOIN doctors d ON a.doctor_id = d.id
@@ -1256,11 +1360,10 @@ class DoctorController
     private function getAllDoctors()
     {
         $stmt = $this->pdo->prepare("
-            SELECT d.id, d.display_name, d.specialty
+            SELECT d.id, d.display_name, d.specialty, u.profile_image
             FROM doctors d
-            WHERE d.user_id IN (
-                SELECT id FROM users WHERE role = 'doctor' AND is_active = 1
-            )
+            JOIN users u ON d.user_id = u.id
+            WHERE u.role = 'doctor' AND u.is_active = 1
             ORDER BY d.display_name
         ");
         $stmt->execute();
@@ -1320,7 +1423,7 @@ class DoctorController
     private function getCurrentDoctorInfo($userId)
     {
         $stmt = $this->pdo->prepare("
-            SELECT u.name, d.display_name, d.specialty
+            SELECT u.name, u.profile_image, d.display_name, d.specialty
             FROM users u
             LEFT JOIN doctors d ON u.id = d.user_id
             WHERE u.id = ?

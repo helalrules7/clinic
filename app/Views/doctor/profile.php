@@ -1,9 +1,40 @@
+<!-- Profile Header with Image -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm profile-header-card">
+            <div class="card-body text-center py-4">
+                <div class="profile-image-container mb-3">
+                    <?php if (!empty($user['profile_image'])): 
+                        $profileImagePath = strpos($user['profile_image'], '/public/') === 0 ? $user['profile_image'] : '/public' . $user['profile_image'];
+                    ?>
+                        <img src="<?= htmlspecialchars($profileImagePath) ?>" 
+                             alt="Profile Picture" 
+                             class="profile-image-large"
+                             id="profileImageDisplay">
+                    <?php else: ?>
+                        <div class="profile-image-placeholder-large" id="profileImageDisplay">
+                            <?= strtoupper(substr($user['name'] ?? 'U', 0, 1)) ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <h4 class="mb-1 profile-name"><?= htmlspecialchars($user['name']) ?></h4>
+                <p class="text-muted mb-0 profile-email">
+                    <?= htmlspecialchars($user['email']) ?>
+                    <?php if (isset($user['doctor_name'])): ?>
+                        <br><span class="badge bg-primary mt-2"><?= htmlspecialchars($user['doctor_name']) ?></span>
+                    <?php endif; ?>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-lg-8 mx-auto">
         <!-- Profile Information -->
-        <div class="card shadow mb-4">
+        <div class="card shadow-sm mb-4">
             <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">
+                <h6 class="m-0 font-weight-bold card-header-title">
                     <i class="bi bi-person-circle me-2"></i>
                     Profile Information
                 </h6>
@@ -90,9 +121,9 @@
         </div>
 
         <!-- Change Password -->
-        <div class="card shadow">
+        <div class="card shadow-sm">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">
+                <h6 class="m-0 font-weight-bold card-header-title">
                     <i class="bi bi-shield-lock me-2"></i>
                     Change Password
                 </h6>
@@ -177,46 +208,6 @@
                 </form>
             </div>
         </div>
-
-        <!-- Security Information -->
-        <div class="card shadow mt-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">
-                    <i class="bi bi-info-circle me-2"></i>
-                    Security Information
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="alert alert-info">
-                            <h6 class="alert-heading">
-                                <i class="bi bi-shield-check me-2"></i>
-                                Password Requirements
-                            </h6>
-                            <ul class="mb-0">
-                                <li>Minimum 8 characters</li>
-                                <li>At least one uppercase letter</li>
-                                <li>At least one lowercase letter</li>
-                                <li>At least one number</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="alert alert-warning">
-                            <h6 class="alert-heading">
-                                <i class="bi bi-exclamation-triangle me-2"></i>
-                                Important Note
-                            </h6>
-                            <p class="mb-0">
-                                Changing your password will log you out of all other devices and sessions. 
-                                You will need to log in again with your new password.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -231,9 +222,45 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="POST" action="/doctor/profile/update" id="editProfileForm">
+            <form method="POST" action="/doctor/profile/update" id="editProfileForm" enctype="multipart/form-data">
                 <div class="modal-body">
                     <?= $this->csrfField() ?>
+                    
+                    <!-- Profile Image Upload -->
+                    <div class="row mb-4">
+                        <div class="col-12 text-center">
+                            <div class="profile-image-upload-container">
+                                <div class="profile-image-preview-wrapper">
+                                    <?php if (!empty($user['profile_image'])): 
+                                        $profileImagePath = strpos($user['profile_image'], '/public/') === 0 ? $user['profile_image'] : '/public' . $user['profile_image'];
+                                    ?>
+                                        <img src="<?= htmlspecialchars($profileImagePath) ?>" 
+                                             alt="Profile Preview" 
+                                             class="profile-image-preview"
+                                             id="profileImagePreview">
+                                    <?php else: ?>
+                                        <div class="profile-image-placeholder" id="profileImagePreview">
+                                            <?= strtoupper(substr($user['name'] ?? 'U', 0, 1)) ?>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div class="profile-image-overlay">
+                                        <i class="bi bi-camera"></i>
+                                        <span>Change Photo</span>
+                                    </div>
+                                </div>
+                                <input type="file" 
+                                       class="form-control d-none" 
+                                       id="profile_image" 
+                                       name="profile_image" 
+                                       accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+                                <label for="profile_image" class="btn btn-outline-primary btn-sm mt-2">
+                                    <i class="bi bi-upload me-1"></i>
+                                    Upload Photo
+                                </label>
+                                <small class="d-block text-muted mt-1">Max 5MB - JPEG, PNG, GIF, WebP</small>
+                            </div>
+                        </div>
+                    </div>
                     
                     <div class="row">
                         <div class="col-md-6">
@@ -312,6 +339,43 @@
 </div>
 
 <script>
+// Profile Image Preview
+document.getElementById('profile_image').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File size exceeds 5MB limit.');
+            this.value = '';
+            return;
+        }
+        
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.');
+            this.value = '';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('profileImagePreview');
+            if (preview.tagName === 'IMG') {
+                preview.src = e.target.result;
+            } else {
+                // Replace placeholder with image
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'profile-image-preview';
+                img.id = 'profileImagePreview';
+                preview.parentNode.replaceChild(img, preview);
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
 document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
     const newPassword = document.getElementById('new_password').value;
     const confirmPassword = document.getElementById('confirm_password').value;
@@ -535,10 +599,22 @@ function updateSidebarUserInfo() {
     }
     
     if (updatedName) {
-        // Update sidebar user avatar (first letter)
+        // Update sidebar user avatar (first letter or image)
         const userAvatar = document.querySelector('.user-avatar');
         if (userAvatar) {
-            userAvatar.textContent = updatedName.charAt(0).toUpperCase();
+            // Check if profile image was updated
+            const profileImageDisplay = document.getElementById('profileImageDisplay');
+            if (profileImageDisplay && profileImageDisplay.tagName === 'IMG') {
+                // Update sidebar with image
+                const sidebarImg = document.createElement('img');
+                sidebarImg.src = profileImageDisplay.src;
+                sidebarImg.className = 'user-avatar-img';
+                sidebarImg.alt = 'Profile';
+                userAvatar.innerHTML = '';
+                userAvatar.appendChild(sidebarImg);
+            } else {
+                userAvatar.textContent = updatedName.charAt(0).toUpperCase();
+            }
             
             // Add animation to avatar
             userAvatar.style.transition = 'all 0.3s ease';
@@ -647,61 +723,215 @@ function showUpdateNotification() {
         }
     }, 3000);
 }
+
+// Profile image click to upload
+document.querySelector('.profile-image-preview-wrapper').addEventListener('click', function() {
+    document.getElementById('profile_image').click();
+});
 </script>
 
 <style>
+/* Profile Header Card */
+.profile-header-card {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.dark .profile-header-card {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(74, 222, 128, 0.15) 100%);
+}
+
+/* Profile Header Text */
+.profile-name {
+    color: var(--text) !important;
+}
+
+.profile-email {
+    color: var(--muted) !important;
+}
+
+.dark .profile-email {
+    color: #94a3b8 !important;
+}
+
+/* Card Header Title */
+.card-header-title, .form-text {
+    color: var(--text) !important;
+}
+
+.dark .card-header-title {
+    color: var(--text) !important;
+}
+
+/* Profile Image Styles */
+.profile-image-container {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-image-large {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--accent);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.profile-image-placeholder-large {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #10b981);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: bold;
+    border: 4px solid var(--accent);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Profile Image Upload Container */
+.profile-image-upload-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.profile-image-preview-wrapper {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    border: 3px solid var(--accent);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.profile-image-preview-wrapper:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.profile-image-preview-wrapper:hover .profile-image-overlay {
+    opacity: 1;
+}
+
+.profile-image-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-image-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--accent), #10b981);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.5rem;
+    font-weight: bold;
+}
+
+.profile-image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 50%;
+}
+
+.profile-image-overlay i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.profile-image-overlay span {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.user-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* Card Styles */
+.card {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    border-radius: 12px;
+    box-shadow: 0 0.15rem 1.75rem 0 var(--shadow) !important;
+}
+
+.card-header {
+    background-color: transparent !important;
+    border-bottom-color: var(--border) !important;
+    border-radius: 12px 12px 0 0;
+    color: var(--text) !important;
+}
+
+.dark .card-header {
+    color: var(--text) !important;
+}
+
+.card-body {
+    background-color: transparent !important;
+}
+
+/* Form Styles */
 .form-control-plaintext {
-    color: var(--text);
+    color: var(--text) !important;
     background: transparent;
     border: none;
     padding: 0.375rem 0;
 }
 
-.alert {
-    border-radius: 8px;
-    border: none;
+.dark .form-control-plaintext {
+    color: var(--text) !important;
 }
 
-.alert-info {
-    background: rgba(14, 165, 233, 0.1);
-    color: var(--accent);
-    border-left: 4px solid var(--accent);
+.form-label {
+    color: var(--text) !important;
+    font-weight: 600;
 }
 
-.alert-warning {
-    background: rgba(245, 158, 11, 0.1);
-    color: #f59e0b;
-    border-left: 4px solid #f59e0b;
+.dark .form-label {
+    color: var(--text) !important;
 }
 
-.form-text {
-    color: var(--muted);
-    font-size: 0.875rem;
+.form-control {
+    background-color: var(--bg);
+    border-color: var(--border);
+    color: var(--text);
 }
 
-.btn {
-    border-radius: 8px;
-    font-weight: 500;
-    transition: all 0.2s ease;
+.form-control:focus {
+    background-color: var(--bg);
+    border-color: var(--accent);
+    color: var(--text);
+    box-shadow: 0 0 0 0.2rem rgba(14, 165, 233, 0.25);
 }
 
-.btn:hover {
-    transform: translateY(-1px);
-}
-
-.card {
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-}
-
-.card-header {
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    border-radius: 12px 12px 0 0;
-}
-
-/* Password Strength Indicator Styles */
+/* Password Strength Indicator */
 .password-strength-container {
     margin-top: 0.5rem;
 }
@@ -712,6 +942,10 @@ function showUpdateNotification() {
     border-radius: 3px;
     overflow: hidden;
     position: relative;
+}
+
+.dark .password-strength-bar {
+    background-color: var(--border);
 }
 
 .password-strength-fill {
@@ -728,12 +962,18 @@ function showUpdateNotification() {
     border-left: 3px solid #6c757d;
 }
 
+.dark .password-requirements {
+    background: rgba(108, 117, 125, 0.1);
+    border-left-color: var(--muted);
+}
+
 .requirement {
     display: flex;
     align-items: center;
     margin-bottom: 0.25rem;
     font-size: 0.875rem;
     transition: all 0.2s ease;
+    color: var(--text);
 }
 
 .requirement:last-child {
@@ -744,45 +984,78 @@ function showUpdateNotification() {
     color: #198754 !important;
 }
 
+.dark .requirement.text-success {
+    color: #4ade80 !important;
+}
+
 .requirement.text-danger {
     color: #dc3545 !important;
 }
 
-.form-control.is-valid {
-    border-color: #198754;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='m2.3 6.73.94-.94 1.44 1.44L7.4 4.5l.94.94L4.66 9.18z'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right calc(0.375em + 0.1875rem) center;
-    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+.dark .requirement.text-danger {
+    color: #fb7185 !important;
 }
 
-.form-control.is-invalid {
-    border-color: #dc3545;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 4.6 2.4 2.4M8.2 4.6l-2.4 2.4'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right calc(0.375em + 0.1875rem) center;
-    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+/* Button Styles */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
 }
 
-.form-control:focus {
-    box-shadow: 0 0 0 0.2rem rgba(14, 165, 233, 0.25);
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn-outline-primary {
+    color: var(--accent);
     border-color: var(--accent);
 }
 
-/* Animate password strength changes */
-@keyframes strengthChange {
-    0% { transform: scale(0.95); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
+.btn-outline-primary:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
 }
 
-.password-strength-fill {
-    animation: strengthChange 0.3s ease when width changes;
+/* Alert Styles */
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+.alert-info {
+    background: rgba(14, 165, 233, 0.1);
+    color: var(--accent);
+    border-left: 4px solid var(--accent);
+}
+
+.dark .alert-info {
+    background: rgba(14, 165, 233, 0.15);
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border-left: 4px solid #10b981;
+}
+
+.dark .alert-success {
+    background: rgba(16, 185, 129, 0.15);
+}
+
+.alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-left: 4px solid #ef4444;
+}
+
+.dark .alert-danger {
+    background: rgba(239, 68, 68, 0.15);
 }
 
 /* Modal Styles - Glass Effect */
 .modal-content {
-    /* Glass effect - similar to sidebar */
     background: rgba(248, 250, 252, 0.35) !important;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -790,6 +1063,7 @@ function showUpdateNotification() {
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
     border-radius: 12px;
     color: var(--text) !important;
+    cursor: move;
 }
 
 [data-theme="dark"] .modal-content {
@@ -803,13 +1077,16 @@ function showUpdateNotification() {
     border-bottom: 1px solid rgba(226, 232, 240, 0.3) !important;
     border-radius: 12px 12px 0 0;
     color: var(--text) !important;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 [data-theme="dark"] .modal-header {
     border-bottom-color: rgba(51, 65, 85, 0.3) !important;
 }
 
-/* Close button white in dark mode */
 [data-theme="dark"] .modal-header .btn-close {
     filter: invert(1) brightness(2);
     opacity: 0.9;
@@ -818,33 +1095,6 @@ function showUpdateNotification() {
 [data-theme="dark"] .modal-header .btn-close:hover {
     opacity: 1;
     filter: invert(1) brightness(2.5);
-}
-
-/* Enable dragging */
-.modal-content {
-    cursor: move;
-}
-
-.modal-dialog {
-    cursor: default;
-    transition: transform 0.2s ease;
-    margin: 1.75rem auto;
-}
-
-.modal-header {
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-}
-
-.modal-header .btn-close {
-    filter: invert(1);
-    opacity: 0.8;
-}
-
-.modal-header .btn-close:hover {
-    opacity: 1;
 }
 
 .modal-body {
@@ -863,6 +1113,13 @@ function showUpdateNotification() {
     border-top-color: rgba(51, 65, 85, 0.3) !important;
 }
 
+.modal-dialog {
+    cursor: default;
+    transition: transform 0.2s ease;
+    margin: 1.75rem auto;
+}
+
+/* Dark Mode Form Styles */
 [data-theme="dark"] .form-control {
     background: var(--bg);
     border-color: var(--border);
@@ -882,16 +1139,6 @@ function showUpdateNotification() {
 
 [data-theme="dark"] .form-label {
     color: var(--text);
-}
-
-[data-theme="dark"] .alert-info {
-    background: rgba(14, 165, 233, 0.15);
-    color: var(--accent);
-    border-left: 4px solid var(--accent);
-}
-
-[data-theme="dark"] .text-danger {
-    color: #ff6b6b !important;
 }
 
 [data-theme="dark"] .btn-secondary {
@@ -916,104 +1163,26 @@ function showUpdateNotification() {
     border-color: #0284c7;
 }
 
-/* Edit button styles */
-.btn-outline-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(14, 165, 233, 0.3);
-}
-
-[data-theme="dark"] .btn-outline-primary {
-    color: var(--accent);
-    border-color: var(--accent);
-}
-
-[data-theme="dark"] .btn-outline-primary:hover {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: white;
-    box-shadow: 0 4px 8px rgba(14, 165, 233, 0.4);
-}
-
-/* Form enhancements */
-.form-label .text-danger {
-    font-size: 0.875rem;
-}
-
-.form-control:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 0.2rem rgba(14, 165, 233, 0.25);
-}
-
-/* Dark mode select dropdown */
-[data-theme="dark"] select.form-control {
-    background: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-[data-theme="dark"] select.form-control option {
-    background: var(--bg);
-    color: var(--text);
-}
-
-/* Dark mode modal backdrop */
-[data-theme="dark"] .modal-backdrop {
-    background-color: rgba(0, 0, 0, 0.7);
-}
-
-/* Dark mode password requirements in modal context */
-[data-theme="dark"] .password-requirements {
-    background: rgba(108, 117, 125, 0.1);
-    border-left: 3px solid var(--muted);
-}
-
-[data-theme="dark"] .password-strength-bar {
-    background-color: var(--border);
-}
-
-/* Dark mode form validation states */
-[data-theme="dark"] .form-control.is-valid {
-    border-color: #20c997;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2320c997' d='m2.3 6.73.94-.94 1.44 1.44L7.4 4.5l.94.94L4.66 9.18z'/%3e%3c/svg%3e");
-}
-
-[data-theme="dark"] .form-control.is-invalid {
-    border-color: #ff6b6b;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23ff6b6b'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 4.6 2.4 2.4M8.2 4.6l-2.4 2.4'/%3e%3c/svg%3e");
-}
-
-/* Responsive adjustments */
+/* Responsive */
 @media (max-width: 768px) {
-    .password-requirements {
-        font-size: 0.8rem;
+    .profile-image-large,
+    .profile-image-placeholder-large {
+        width: 100px;
+        height: 100px;
+        font-size: 2.5rem;
     }
     
-    .requirement {
-        margin-bottom: 0.5rem;
+    .profile-image-preview-wrapper {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .profile-image-placeholder {
+        font-size: 2.5rem;
     }
     
     .modal-body {
         padding: 1.5rem;
     }
-    
-    .card-header {
-        flex-direction: column;
-        gap: 0.5rem;
-        text-align: center;
-    }
-    
-    .card-header .btn {
-        align-self: center;
-    }
-    
-    /* Dark mode responsive adjustments */
-    [data-theme="dark"] .modal-dialog {
-        margin: 1rem;
-    }
-    
-    [data-theme="dark"] .modal-content {
-        border: 1px solid var(--border);
-    }
 }
 </style>
-

@@ -40,7 +40,22 @@
                 <!-- Current Doctor Badge -->
                 <?php if (isset($currentDoctor) && $currentDoctor): ?>
                 <div class="mt-3">
-                    <span class="badge doctor-badge fs-6 px-4 py-2">
+                    <span class="badge doctor-badge fs-6 px-4 py-2 d-flex align-items-center">
+                        <?php if (!empty($currentDoctor['profile_image'])): 
+                            $doctorImagePath = strpos($currentDoctor['profile_image'], '/public/') === 0 ? $currentDoctor['profile_image'] : '/public' . $currentDoctor['profile_image'];
+                        ?>
+                            <img src="<?= htmlspecialchars($doctorImagePath) ?>" 
+                                 alt="<?= htmlspecialchars($currentDoctor['display_name'] ?? $currentDoctor['name']) ?>" 
+                                 class="treating-doctor-avatar me-2"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="treating-doctor-avatar-fallback me-2" style="display: none;">
+                                <?= strtoupper(substr($currentDoctor['display_name'] ?? $currentDoctor['name'] ?? 'D', 0, 1)) ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="treating-doctor-avatar me-2">
+                                <?= strtoupper(substr($currentDoctor['display_name'] ?? $currentDoctor['name'] ?? 'D', 0, 1)) ?>
+                            </div>
+                        <?php endif; ?>
                         <i class="bi bi-person-badge me-2"></i>
                         <strong>Treating Doctor:</strong> 
                         <?= htmlspecialchars($currentDoctor['display_name'] ?? $currentDoctor['name']) ?>
@@ -89,7 +104,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Action Buttons -->
     <div class="col-md-6">
         <div class="card h-100">
@@ -103,16 +118,16 @@
                 <div class="btn-group-responsive d-flex flex-wrap gap-2">
                     <button class="btn btn-primary" 
                             onclick="bookNewAppointment(<?= $patient['id'] ?>)"
-                            data-bs-toggle="tooltip" 
+                                    data-bs-toggle="tooltip" 
                             data-bs-placement="bottom" 
                             data-bs-title="Schedule a new appointment for this patient">
                         <i class="bi bi-calendar-plus me-2"></i>
                         <span class="d-none d-lg-inline">Book Appointment</span>
                         <span class="d-lg-none">Book</span>
-                    </button>
+                            </button>
                     <button class="btn btn-success" 
                             onclick="printPatientSummary()"
-                            data-bs-toggle="tooltip" 
+                                data-bs-toggle="tooltip" 
                             data-bs-placement="bottom" 
                             data-bs-title="Print patient summary report">
                         <i class="bi bi-printer me-2"></i>
@@ -145,8 +160,8 @@
                         <i class="bi bi-bell me-2"></i>
                         <span class="d-none d-lg-inline">Set Alert</span>
                         <span class="d-lg-none">Alert</span>
-                    </button>
-                </div>
+                        </button>
+                    </div>
             </div>
         </div>
     </div>
@@ -169,7 +184,7 @@
                     <i class="bi bi-capsule me-2"></i>Medication Prescriptions
                     <?php if (!empty($allMedications)): ?>
                         <span class="badge bg-success ms-2"><?= count($allMedications) ?></span>
-                    <?php endif; ?>
+            <?php endif; ?>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -193,7 +208,7 @@
             <!-- Medications Tab -->
             <div class="tab-pane fade show active" id="medications" role="tabpanel">
                 <?php if (!empty($allMedications)): ?>
-                    <?php
+            <?php 
                     // Group medications by appointment
                     $groupedMedications = [];
                     foreach ($allMedications as $med) {
@@ -216,10 +231,10 @@
                     <div class="d-flex justify-content-end mb-3">
                         <button class="btn btn-outline-primary btn-sm" id="expandAllMedicationsBtn" onclick="expandCollapseAllMedications()">
                             <i class="bi bi-chevron-double-down me-1"></i><span id="expandAllMedicationsText">Expand All</span>
-                        </button>
+                </button>
                     </div>
                     <div class="prescription-timeline">
-                        <?php 
+            <?php 
                         $medicationIndex = 0;
                         $totalMedications = count($groupedMedications);
                         foreach ($groupedMedications as $appointmentId => $group): 
@@ -248,7 +263,7 @@
                                             Appointment #<?= $group['appointment_info']['id'] ?>
                                             <?php if ($isLatest): ?>
                                             <span class="badge bg-warning text-dark ms-2">Latest Prescription</span>
-                                            <?php endif; ?>
+            <?php endif; ?>
                                             <span class="badge bg-success ms-2"><?= count($group['medications']) ?> Medication<?= count($group['medications']) > 1 ? 's' : '' ?></span>
                                         </h6>
                                         <div class="d-flex flex-wrap gap-2 mb-2">
@@ -265,9 +280,9 @@
                                                 <i class="bi bi-person-badge me-1"></i>
                                                 <?= htmlspecialchars($group['appointment_info']['doctor_name']) ?>
                                             </small>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
+                    <?php endif; ?>
+    </div>
+                        </div>
                                     <div class="btn-group btn-group-sm" role="group" onclick="event.stopPropagation(); event.preventDefault();">
                                         <?php if (count($group['medications']) > 0): ?>
                                         <button class="btn btn-outline-primary btn-sm" 
@@ -282,11 +297,11 @@
                                                 data-bs-title="View All Prescriptions">
                                             <i class="bi bi-eye"></i>
                                         </button>
-                                        <?php endif; ?>
+                                <?php endif; ?>
                                         <a href="/doctor/appointments/<?= $group['appointment_info']['id'] ?>" 
                                            class="btn btn-outline-info btn-sm"
-                                           data-bs-toggle="tooltip" 
-                                           data-bs-placement="top" 
+                                        data-bs-toggle="tooltip" 
+                                        data-bs-placement="top"
                                            data-bs-title="View Appointment"
                                            onclick="event.stopPropagation();">
                                             <i class="bi bi-calendar-event"></i>
@@ -297,10 +312,10 @@
                                                 data-bs-placement="top" 
                                                 data-bs-title="Print Prescription">
                                             <i class="bi bi-printer"></i>
-                                        </button>
-                                    </div>
+                                </button>
+                            </div>
                                     <i class="bi bi-chevron-down collapse-icon ms-2"></i>
-                                </div>
+                        </div>
                                 <div id="<?= $collapseId ?>" 
                                      class="timeline-body collapse <?= $isLatest ? 'show' : '' ?>" 
                                      data-bs-parent=".prescription-timeline">
@@ -318,35 +333,35 @@
                                                     <i class="bi bi-sticky me-1"></i>
                                                     <?= htmlspecialchars($med['notes']) ?>
                                                 </p>
-                                                <?php endif; ?>
-                                            </div>
-                                        </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
+                        <?php endif; ?>
                     </div>
+                            </div>
+                                        <?php endforeach; ?>
+                            </div>
+                                    <?php endif; ?>
+                            </div>
+                            </div>
+                            </div>
+                        <?php endforeach; ?>
+                                </div>
                 <?php else: ?>
                     <div class="text-center py-5">
                         <i class="bi bi-capsule text-muted" style="font-size: 3rem;"></i>
                         <p class="text-muted mt-3 mb-0">No medication prescriptions found</p>
-                    </div>
-                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
             </div>
-
+            
             <!-- Glasses Tab -->
             <div class="tab-pane fade" id="glasses" role="tabpanel">
                 <?php if (!empty($allGlasses)): ?>
                     <div class="d-flex justify-content-end mb-3">
                         <button class="btn btn-outline-primary btn-sm" id="expandAllGlassesBtn" onclick="expandCollapseAllGlasses()">
                             <i class="bi bi-chevron-double-down me-1"></i><span id="expandAllGlassesText">Expand All</span>
-                        </button>
-                    </div>
+                                        </button>
+                                    </div>
                     <div class="prescription-timeline">
-                        <?php 
+                                                        <?php
                         $glassesIndex = 0;
                         $totalGlasses = count($allGlasses);
                         foreach ($allGlasses as $glass): 
@@ -361,7 +376,7 @@
                                  onmouseover="this.style.transform='scale(1.1)'"
                                  onmouseout="this.style.transform='scale(1)'">
                                 <i class="bi bi-eyeglasses text-white"></i>
-                            </div>
+                                                        </div>
                             <div class="timeline-content">
                                 <div class="timeline-header prescription-header <?= $isLatest ? 'expanded' : 'collapsed' ?>" 
                                      data-bs-target="#<?= $collapseId ?>"
@@ -396,8 +411,8 @@
                                                 <i class="bi bi-calendar-event me-1"></i>
                                                 Appointment #<?= $glass['appointment_id'] ?>
                                             </small>
-                                        </div>
-                                    </div>
+                                                    </div>
+                                                </div>
                                     <div class="btn-group btn-group-sm" role="group" onclick="event.stopPropagation(); event.preventDefault();">
                                         <button class="btn btn-outline-primary btn-sm" 
                                                 data-glass-id="<?= $glass['id'] ?>"
@@ -415,9 +430,9 @@
                                                 data-bs-title="Print Prescription">
                                             <i class="bi bi-printer"></i>
                                         </button>
-                                    </div>
+                                                        </div>
                                     <i class="bi bi-chevron-down collapse-icon ms-2"></i>
-                                </div>
+                                                    </div>
                                 <div id="<?= $collapseId ?>" 
                                      class="timeline-body collapse <?= $isLatest ? 'show' : '' ?>" 
                                      data-bs-parent=".prescription-timeline">
@@ -429,7 +444,7 @@
                                                 <strong>CYL:</strong> <?= htmlspecialchars($glass['distance_cylinder_r'] ?? 'N/A') ?><br>
                                                 <strong>AXIS:</strong> <?= htmlspecialchars($glass['distance_axis_r'] ?? 'N/A') ?>
                                             </p>
-                                        </div>
+                                                        </div>
                                         <div class="col-md-6">
                                             <h6 class="text-primary mb-2">Left Eye (OS)</h6>
                                             <p class="mb-1 small">
@@ -437,31 +452,31 @@
                                                 <strong>CYL:</strong> <?= htmlspecialchars($glass['distance_cylinder_l'] ?? 'N/A') ?><br>
                                                 <strong>AXIS:</strong> <?= htmlspecialchars($glass['distance_axis_l'] ?? 'N/A') ?>
                                             </p>
-                                        </div>
-                                    </div>
+                                                    </div>
+                                                        </div>
                                     <?php if (!empty($glass['comments'])): ?>
                                     <p class="mb-0 mt-2 text-muted small">
                                         <i class="bi bi-sticky me-1"></i>
                                         <?= htmlspecialchars($glass['comments']) ?>
                                     </p>
                                     <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                         <?php endforeach; ?>
-                    </div>
-                <?php else: ?>
+                                        </div>
+                                                                <?php else: ?>
                     <div class="text-center py-5">
                         <i class="bi bi-eyeglasses text-muted" style="font-size: 3rem;"></i>
                         <p class="text-muted mt-3 mb-0">No glasses prescriptions found</p>
+                                                    </div>
+                                                <?php endif; ?>
                     </div>
-                <?php endif; ?>
-            </div>
-
+                    
             <!-- All Prescriptions Tab -->
             <div class="tab-pane fade" id="all-prescriptions" role="tabpanel">
                 <?php if (!empty($allMedications) || !empty($allGlasses)): ?>
-                    <?php
+                        <?php 
                     // Group all prescriptions by appointment
                     $groupedAllPrescriptions = [];
                     
@@ -545,12 +560,12 @@
                                             Appointment #<?= $group['appointment_info']['id'] ?>
                                             <?php if ($isLatest): ?>
                                             <span class="badge bg-warning text-dark ms-2">Latest Prescription</span>
-                                            <?php endif; ?>
+                        <?php endif; ?>
                                             <?php if ($totalPrescriptions > 0): ?>
                                             <span class="badge bg-primary ms-2">
                                                 <?= $totalPrescriptions ?> Prescription<?= $totalPrescriptions > 1 ? 's' : '' ?>
                                             </span>
-                                            <?php endif; ?>
+                            <?php endif; ?>
                                         </h6>
                                         <div class="d-flex flex-wrap gap-2 mb-2">
                                             <small class="text-muted">
@@ -566,9 +581,9 @@
                                                 <i class="bi bi-person-badge me-1"></i>
                                                 <?= htmlspecialchars($group['appointment_info']['doctor_name']) ?>
                                             </small>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
                                     <div class="btn-group btn-group-sm" role="group" onclick="event.stopPropagation(); event.preventDefault();">
                                         <?php if (!empty($group['medications']) && count($group['medications']) > 0): ?>
                                         <button class="btn btn-outline-primary btn-sm" 
@@ -579,15 +594,15 @@
                                                 data-doctor-name="<?= htmlspecialchars($group['appointment_info']['doctor_name'] ?? '') ?>"
                                                 onclick="event.stopPropagation(); event.preventDefault(); viewAllMedicationsForAppointment(this)"
                                                 data-bs-toggle="tooltip" 
-                                                data-bs-placement="top" 
+                                                data-bs-placement="top"
                                                 data-bs-title="View All Medication Prescriptions">
                                             <i class="bi bi-eye"></i>
                                         </button>
                                         <?php endif; ?>
                                         <a href="/doctor/appointments/<?= $group['appointment_info']['id'] ?>" 
                                            class="btn btn-outline-info btn-sm"
-                                           data-bs-toggle="tooltip" 
-                                           data-bs-placement="top" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top"
                                            data-bs-title="View Appointment"
                                            onclick="event.stopPropagation();">
                                             <i class="bi bi-calendar-event"></i>
@@ -595,24 +610,24 @@
                                         <?php if (!empty($group['medications'])): ?>
                                         <button class="btn btn-outline-success btn-sm" 
                                                 onclick="event.stopPropagation(); printMedicationPrescription(<?= $group['appointment_info']['id'] ?>)"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-placement="top" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top"
                                                 data-bs-title="Print Medication Prescription">
                                             <i class="bi bi-printer"></i>
-                                        </button>
+                                            </button>
                                         <?php endif; ?>
                                         <?php if (!empty($group['glasses'])): ?>
                                         <button class="btn btn-outline-info btn-sm" 
                                                 onclick="event.stopPropagation(); printGlassesPrescription(<?= $group['appointment_info']['id'] ?>)"
                                                 data-bs-toggle="tooltip" 
-                                                data-bs-placement="top" 
+                                                data-bs-placement="top"
                                                 data-bs-title="Print Glasses Prescription">
                                             <i class="bi bi-printer"></i>
                                         </button>
-                                        <?php endif; ?>
-                                    </div>
+                    <?php endif; ?>
+                </div>
                                     <i class="bi bi-chevron-down collapse-icon ms-2"></i>
-                                </div>
+            </div>
                                 <div id="<?= $collapseId ?>" 
                                      class="timeline-body collapse <?= $isLatest ? 'show' : '' ?>" 
                                      data-bs-parent=".prescription-timeline">
@@ -622,7 +637,7 @@
                                         <h6 class="text-success mb-2">
                                             <i class="bi bi-capsule me-2"></i>Medications
                                             <span class="badge bg-success ms-2"><?= count($group['medications']) ?></span>
-                                        </h6>
+                            </h6>
                                         <div class="medications-list">
                                             <?php foreach ($group['medications'] as $med): ?>
                                             <div class="medication-item p-3 mb-2 rounded" style="background: var(--bg-alt); border-left: 3px solid var(--success);">
@@ -636,14 +651,14 @@
                                                         <i class="bi bi-sticky me-1"></i>
                                                         <?= htmlspecialchars($med['notes']) ?>
                                                     </p>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
                                             <?php endforeach; ?>
-                                        </div>
-                                    </div>
-                                    <?php endif; ?>
-                                    
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                            
                                     <!-- Glasses Section -->
                                     <?php if (!empty($group['glasses'])): ?>
                                     <div class="mb-3">
@@ -662,40 +677,40 @@
                                                     <div class="row mt-2">
                                                         <div class="col-md-6">
                                                             <small class="text-muted">OD: SPH <?= htmlspecialchars($glass['distance_sphere_r'] ?? 'N/A') ?>, CYL <?= htmlspecialchars($glass['distance_cylinder_r'] ?? 'N/A') ?>, AXIS <?= htmlspecialchars($glass['distance_axis_r'] ?? 'N/A') ?></small>
-                                                        </div>
+                                        </div>
                                                         <div class="col-md-6">
                                                             <small class="text-muted">OS: SPH <?= htmlspecialchars($glass['distance_sphere_l'] ?? 'N/A') ?>, CYL <?= htmlspecialchars($glass['distance_cylinder_l'] ?? 'N/A') ?>, AXIS <?= htmlspecialchars($glass['distance_axis_l'] ?? 'N/A') ?></small>
-                                                        </div>
-                                                    </div>
+                                    </div>
+                                </div>
                                                     <?php if (!empty($glass['comments'])): ?>
                                                     <p class="mb-0 mt-2 text-muted small">
                                                         <i class="bi bi-sticky me-1"></i>
                                                         <?= htmlspecialchars($glass['comments']) ?>
                                                     </p>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
-                                            <?php endforeach; ?>
+                            <?php endif; ?>
                                         </div>
                                     </div>
-                                    <?php endif; ?>
+                                            <?php endforeach; ?>
                                 </div>
                             </div>
-                        </div>
+                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
                         <?php endforeach; ?>
-                    </div>
+                            </div>
                 <?php else: ?>
                     <div class="text-center py-5">
                         <i class="bi bi-prescription2 text-muted" style="font-size: 3rem;"></i>
                         <p class="text-muted mt-3 mb-0">No prescriptions found</p>
+                            </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
-                <?php endif; ?>
+                </div>
             </div>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
-
+            <?php endif; ?>
+            
 <!-- Appointment History -->
 <?php if (!empty($allAppointments)): ?>
 <div class="card mb-4">
@@ -713,12 +728,12 @@
                 <button class="btn btn-outline-primary btn-sm" onclick="bookNewAppointment(<?= $patient['id'] ?>)">
                     <i class="bi bi-calendar-plus me-1"></i>Book New Appointment
                 </button>
-            </div>
-        </div>
+                    </div>
+                </div>
     </div>
     <div class="card-body">
         <div class="appointment-timeline">
-            <?php 
+                            <?php
             $appointmentIndex = 0;
             $totalAppointments = count($allAppointments);
             foreach ($allAppointments as $index => $appointment): 
@@ -734,51 +749,51 @@
                      onmouseover="this.style.transform='scale(1.1)'"
                      onmouseout="this.style.transform='scale(1)'">
                     <i class="bi bi-calendar-event text-white"></i>
-                </div>
-                <div class="timeline-content">
+                                    </div>
+                        <div class="timeline-content">
                     <div class="timeline-header appointment-header <?= $isLatest ? 'expanded' : 'collapsed' ?>" 
                          data-bs-target="#<?= $collapseId ?>"
                          aria-expanded="<?= $isLatest ? 'true' : 'false' ?>"
                          aria-controls="<?= $collapseId ?>"
                          onclick="handleAppointmentHeaderClick(event, '<?= $collapseId ?>')"
                          style="cursor: pointer;">
-                        <div class="flex-grow-1">
+                                <div class="flex-grow-1">
                             <h6 class="mb-1">
                                 <a href="/doctor/appointments/<?= $appointment['id'] ?>" class="text-decoration-none" onclick="event.stopPropagation();">
                                     Appointment #<?= $appointment['id'] ?>
                                 </a>
                                 <?php if ($isLatest): ?>
                                 <span class="badge bg-warning text-dark ms-2">Latest Appointment</span>
-                                <?php endif; ?>
+                                    <?php endif; ?>
                                 <span class="badge bg-<?= $statusColor ?> ms-2">
                                     <?= ucfirst($appointment['status']) ?>
-                                </span>
+                                    </span>
                             </h6>
                             <div class="d-flex flex-wrap gap-2 mb-2">
                                 <small class="text-muted">
                                     <i class="bi bi-calendar3 me-1"></i>
                                     <?= date('M d, Y', strtotime($appointment['date'])) ?>
-                                </small>
+                                            </small>
                                 <small class="text-muted">
                                     <i class="bi bi-clock me-1"></i>
                                     <?= date('g:i A', strtotime($appointment['start_time'])) ?>
                                     <?php if (!empty($appointment['end_time'])): ?>
                                         - <?= date('g:i A', strtotime($appointment['end_time'])) ?>
-                                    <?php endif; ?>
+                                        <?php endif; ?>
                                 </small>
                                 <?php if (!empty($appointment['doctor_name']) || !empty($appointment['doctor_display_name'])): ?>
                                 <small class="text-muted">
                                     <i class="bi bi-person-badge me-1"></i>
                                     <?= htmlspecialchars($appointment['doctor_display_name'] ?? $appointment['doctor_name']) ?>
                                 </small>
-                                <?php endif; ?>
+                                    <?php endif; ?>
                                 <?php if (!empty($appointment['visit_type'])): ?>
                                 <small class="text-muted">
                                     <i class="bi bi-tag me-1"></i>
                                     <?= htmlspecialchars($appointment['visit_type']) ?>
-                                </small>
-                                <?php endif; ?>
-                            </div>
+                                        </small>
+                                    <?php endif; ?>
+                                </div>
                         </div>
                         <a href="/doctor/appointments/<?= $appointment['id'] ?>" 
                            class="btn btn-sm btn-outline-primary"
@@ -786,43 +801,43 @@
                             <i class="bi bi-eye me-1"></i>View Details
                         </a>
                         <i class="bi bi-chevron-down collapse-icon ms-2"></i>
-                    </div>
-                    
+                            </div>
+                            
                     <div id="<?= $collapseId ?>" 
                          class="timeline-body collapse <?= $isLatest ? 'show' : '' ?>" 
                          data-bs-parent=".appointment-timeline">
                         <!-- Consultation Notes -->
                         <?php if (!empty($appointment['consultation_note'])): ?>
                         <div class="mb-3 p-3 bg-light rounded">
-                            <h6 class="text-primary mb-2">
+                                        <h6 class="text-primary mb-2">
                                 <i class="bi bi-clipboard-pulse me-2"></i>Consultation Notes
-                            </h6>
+                                        </h6>
                             <?php if (!empty($appointment['consultation_note']['chief_complaint'])): ?>
                             <p class="mb-2">
                                 <strong>Chief Complaint:</strong> <?= htmlspecialchars($appointment['consultation_note']['chief_complaint']) ?>
                             </p>
-                            <?php endif; ?>
+                                                            <?php endif; ?>
                             <?php if (!empty($appointment['consultation_note']['diagnosis'])): ?>
                             <p class="mb-2">
                                 <strong>Diagnosis:</strong> 
                                 <span class="badge bg-danger"><?= htmlspecialchars($appointment['consultation_note']['diagnosis']) ?></span>
                             </p>
-                            <?php endif; ?>
+                                                            <?php endif; ?>
                             <?php if (!empty($appointment['consultation_note']['plan'])): ?>
-                            <p class="mb-0">
+                                                            <p class="mb-0">
                                 <strong>Plan:</strong> <?= nl2br(htmlspecialchars($appointment['consultation_note']['plan'])) ?>
-                            </p>
-                            <?php endif; ?>
-                        </div>
-                        <?php endif; ?>
-                        
+                                                            </p>
+                                                            <?php endif; ?>
+                                    </div>
+                                <?php endif; ?>
+                                
                         <!-- Medications Prescriptions -->
                         <?php if (!empty($appointment['medications'])): ?>
-                        <div class="mb-3">
+                                    <div class="mb-3">
                             <h6 class="text-success mb-2">
                                 <i class="bi bi-capsule me-2"></i>Medications Prescribed
                                 <span class="badge bg-success ms-2"><?= count($appointment['medications']) ?></span>
-                            </h6>
+                                        </h6>
                             <div class="row g-2">
                                 <?php foreach ($appointment['medications'] as $med): ?>
                                 <div class="col-md-6">
@@ -831,57 +846,57 @@
                                             <h6 class="card-title mb-1 text-success"><?= htmlspecialchars($med['drug_name']) ?></h6>
                                             <?php if (!empty($med['notes'])): ?>
                                             <p class="card-text small mb-0 text-muted"><?= htmlspecialchars($med['notes']) ?></p>
-                                            <?php endif; ?>
+                                    <?php endif; ?>
                                         </div>
                                     </div>
-                                </div>
+                                        </div>
                                 <?php endforeach; ?>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-                        
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                                
                         <!-- Glasses Prescriptions -->
                         <?php if (!empty($appointment['glasses'])): ?>
-                        <div class="mb-3">
+                                    <div class="mb-3">
                             <h6 class="text-info mb-2">
                                 <i class="bi bi-eyeglasses me-2"></i>Glasses Prescriptions
                                 <span class="badge bg-info ms-2"><?= count($appointment['glasses']) ?></span>
-                            </h6>
+                                        </h6>
                             <?php foreach ($appointment['glasses'] as $glass): ?>
                             <div class="card border-info border-start border-3 mb-2">
                                 <div class="card-body p-3">
-                                    <div class="row">
-                                        <div class="col-md-6">
+                                        <div class="row">
+                                            <div class="col-md-6">
                                             <h6 class="text-primary mb-2">Right Eye (OD)</h6>
                                             <p class="mb-1 small">
                                                 <strong>SPH:</strong> <?= htmlspecialchars($glass['distance_sphere_r'] ?? 'N/A') ?><br>
                                                 <strong>CYL:</strong> <?= htmlspecialchars($glass['distance_cylinder_r'] ?? 'N/A') ?><br>
                                                 <strong>AXIS:</strong> <?= htmlspecialchars($glass['distance_axis_r'] ?? 'N/A') ?>
                                             </p>
-                                        </div>
-                                        <div class="col-md-6">
+                                            </div>
+                                            <div class="col-md-6">
                                             <h6 class="text-primary mb-2">Left Eye (OS)</h6>
                                             <p class="mb-1 small">
                                                 <strong>SPH:</strong> <?= htmlspecialchars($glass['distance_sphere_l'] ?? 'N/A') ?><br>
                                                 <strong>CYL:</strong> <?= htmlspecialchars($glass['distance_cylinder_l'] ?? 'N/A') ?><br>
                                                 <strong>AXIS:</strong> <?= htmlspecialchars($glass['distance_axis_l'] ?? 'N/A') ?>
                                             </p>
+                                            </div>
                                         </div>
-                                    </div>
                                     <?php if (!empty($glass['lens_type'])): ?>
                                     <p class="mb-0 mt-2">
                                         <strong>Lens Type:</strong> <?= htmlspecialchars($glass['lens_type']) ?>
                                     </p>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
+                                                    <?php endif; ?>
+                                                </div>
+                                        </div>
                             <?php endforeach; ?>
-                        </div>
-                        <?php endif; ?>
-                        
+                                    </div>
+                                    <?php endif; ?>
+                                    
                         <!-- Attachments -->
                         <?php if (!empty($appointment['attachments'])): ?>
-                        <div class="mb-3">
+                                    <div class="mb-3">
                             <h6 class="text-info mb-2">
                                 <i class="bi bi-paperclip me-2"></i>Attachments
                                 <span class="badge bg-info ms-2"><?= count($appointment['attachments']) ?></span>
@@ -911,26 +926,26 @@
                                                 <i class="bi bi-image text-muted" style="font-size: 1.5rem;"></i>
                                                 <small class="text-muted" style="font-size: 0.65rem;">Image not available</small>
                                             </div>
-                                        </div>
+                                            </div>
                                         <?php else: ?>
                                         <!-- Icon for non-image files -->
                                         <div class="text-center mb-2">
                                             <i class="bi bi-file-earmark text-primary" style="font-size: 2rem;"></i>
-                                        </div>
-                                        <?php endif; ?>
+                                    </div>
+                                    <?php endif; ?>
                                         <div class="text-center">
                                             <small class="text-muted d-block" style="font-size: 0.7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" 
                                                    title="<?= htmlspecialchars($attachment['original_filename']) ?>">
                                                 <?= htmlspecialchars(strlen($attachment['original_filename']) > 15 ? substr($attachment['original_filename'], 0, 12) . '...' : $attachment['original_filename']) ?>
                                             </small>
+                                            </div>
+                                            </div>
+                                        </div>
+                                <?php endforeach; ?>
                                         </div>
                                     </div>
-                                </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-                        
+                                    <?php endif; ?>
+                                    
                         <!-- Notes if available -->
                         <?php if (!empty($appointment['notes'])): ?>
                         <div class="mt-2">
@@ -938,17 +953,17 @@
                                 <i class="bi bi-sticky me-1"></i>
                                 <?= htmlspecialchars($appointment['notes']) ?>
                             </small>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
+                                    </div>
+                                    <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
             <?php endforeach; ?>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
-
+                                    </div>
+                                    </div>
+                                    </div>
+                                <?php endif; ?>
+                                
 <!-- Patient Alerts -->
 <div class="card mb-4">
     <div class="card-header">
@@ -961,43 +976,43 @@
             <button class="btn btn-primary btn-sm" onclick="openAlertModal(<?= isset($patient['id']) ? (int)$patient['id'] : 'null' ?>, null)">
                 <i class="bi bi-plus me-1"></i>Add Alert
             </button>
-        </div>
-    </div>
+                                            </div>
+                                        </div>
     <div class="card-body">
         <div id="patientAlertsContainer">
             <div class="text-center py-4">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
-                </div>
+                                    </div>
                 <p class="text-muted mt-2 mb-0">Loading alerts...</p>
-            </div>
-        </div>
-    </div>
-</div>
-
+                                                        </div>
+                                                        </div>
+                                                    </div>
+                </div>
+                
 <!-- Delete Patient Alert Modal -->
 <div class="modal fade" id="deletePatientAlertModal" tabindex="-1" aria-labelledby="deletePatientAlertModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
                 <h5 class="modal-title" id="deletePatientAlertModalLabel">
                     <i class="bi bi-exclamation-triangle text-danger me-2"></i>Confirm Delete
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
             <div class="modal-body">
                 <p>Are you sure you want to delete this alert?</p>
                 <p class="text-muted mb-0"><small>This action cannot be undone.</small></p>
-            </div>
-            <div class="modal-footer">
+                                            </div>
+                                            <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger" id="confirmDeletePatientAlertBtn" onclick="confirmDeletePatientAlert()">
                     <i class="bi bi-trash me-1"></i>Delete Alert
                 </button>
-            </div>
-        </div>
-    </div>
-</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
 <style>
 /* Patient Alerts Dark Mode Styles */
@@ -1505,42 +1520,42 @@
         <?php if (!empty($patientAttachments)): ?>
             <div class="row" id="patientFilesRow">
                 <?php foreach ($patientAttachments as $attachment): ?>
-                <?php
-                $fileExt = strtolower(pathinfo($attachment['original_filename'], PATHINFO_EXTENSION));
-                $fileName = strtolower($attachment['original_filename']);
-                $description = strtolower($attachment['description'] ?? '');
+                            <?php
+                            $fileExt = strtolower(pathinfo($attachment['original_filename'], PATHINFO_EXTENSION));
+                            $fileName = strtolower($attachment['original_filename']);
+                            $description = strtolower($attachment['description'] ?? '');
                 $isImage = in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']);
                 $viewUrl = '/api/attachments/view/' . $attachment['id'];
-                
-                // تحديد نوع الملف والأيقونة والـ badge
-                $iconClass = 'bi-file-earmark';
-                $fileType = 'Document';
-                $badgeClass = 'bg-secondary';
-                
+                            
+                            // تحديد نوع الملف والأيقونة والـ badge
+                            $iconClass = 'bi-file-earmark';
+                            $fileType = 'Document';
+                            $badgeClass = 'bg-secondary';
+                            
                 if ($isImage) {
-                    $iconClass = 'bi-image';
-                    if (strpos($fileName, 'xray') !== false || strpos($description, 'xray') !== false) {
-                        $fileType = 'X-Ray';
-                        $badgeClass = 'bg-info';
-                    } elseif (strpos($fileName, 'scan') !== false || strpos($description, 'scan') !== false) {
-                        $fileType = 'Scan';
-                        $badgeClass = 'bg-primary';
-                    } elseif (strpos($fileName, 'lab') !== false || strpos($description, 'lab') !== false) {
-                        $fileType = 'Lab Result';
-                        $badgeClass = 'bg-success';
-                    } else {
-                        $fileType = 'Photo';
-                        $badgeClass = 'bg-warning text-dark';
-                    }
-                } elseif ($fileExt == 'pdf') {
-                    $iconClass = 'bi-file-earmark-pdf';
-                    $fileType = 'PDF Document';
-                    $badgeClass = 'bg-danger';
-                }
-                ?>
+                                $iconClass = 'bi-image';
+                                if (strpos($fileName, 'xray') !== false || strpos($description, 'xray') !== false) {
+                                    $fileType = 'X-Ray';
+                                    $badgeClass = 'bg-info';
+                                } elseif (strpos($fileName, 'scan') !== false || strpos($description, 'scan') !== false) {
+                                    $fileType = 'Scan';
+                                    $badgeClass = 'bg-primary';
+                                } elseif (strpos($fileName, 'lab') !== false || strpos($description, 'lab') !== false) {
+                                    $fileType = 'Lab Result';
+                                    $badgeClass = 'bg-success';
+                                } else {
+                                    $fileType = 'Photo';
+                                    $badgeClass = 'bg-warning text-dark';
+                                }
+                            } elseif ($fileExt == 'pdf') {
+                                $iconClass = 'bi-file-earmark-pdf';
+                                $fileType = 'PDF Document';
+                                $badgeClass = 'bg-danger';
+                            }
+                            ?>
                 <div class="col-md-6 mb-3">
                     <div class="attachment-card p-2 border rounded" data-attachment-id="<?= $attachment['id'] ?>" style="min-height: <?= $isImage ? '200px' : '140px' ?>; display: flex; flex-direction: column;">
-                        <?php if ($isImage): ?>
+                            <?php if ($isImage): ?>
                         <!-- Thumbnail for images -->
                         <div class="mb-2 text-center" style="cursor: pointer;" 
                              onclick="viewPatientAttachment(<?= $attachment['id'] ?>, '<?= $attachment['file_path'] ?>', '<?= $fileExt ?>')"
@@ -1548,7 +1563,7 @@
                              data-bs-placement="top" 
                              data-bs-title="View Attachement/Photo">
                             <img src="<?= htmlspecialchars($viewUrl) ?>" 
-                                 alt="<?= htmlspecialchars($attachment['original_filename']) ?>"
+                                     alt="<?= htmlspecialchars($attachment['original_filename']) ?>"
                                  class="img-thumbnail" 
                                  style="max-width: 100%; max-height: 120px; object-fit: cover; border-radius: 8px; cursor: pointer;"
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -1557,7 +1572,7 @@
                                 <small class="text-muted">Image not available</small>
                             </div>
                         </div>
-                        <?php endif; ?>
+                            <?php endif; ?>
                         
                         <div class="d-flex align-items-center mb-2 flex-grow-1">
                             <i class="bi <?= $iconClass ?> text-primary me-2" style="font-size: 1.2rem; flex-shrink: 0;"></i>
@@ -3293,6 +3308,44 @@ div.form-text {
     border-color: #0a58ca;
     box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
 }
+
+/* Treating Doctor Avatar Styles */
+.treating-doctor-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--accent), #10b981);
+    color: white;
+    font-weight: bold;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.treating-doctor-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.treating-doctor-avatar-fallback {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--accent), #10b981);
+    color: white;
+    font-weight: bold;
+    font-size: 0.875rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
 </style>
 
 <script>
@@ -4169,8 +4222,8 @@ function saveNewMedicalHistory() {
         showNotification('Error adding medical history: ' + error.message, 'danger');
     });
 }
-
-// Handle edit note buttons
+    
+    // Handle edit note buttons
 document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(e) {
         if (e.target.closest('.edit-note-btn')) {
@@ -4181,8 +4234,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             editPatientNote(noteId, noteTitle, noteContent);
         }
+        });
     });
-});
 
 function clearValidationErrors() {
     document.querySelectorAll('.is-invalid').forEach(el => {
@@ -5149,8 +5202,8 @@ function showInfoModal(title, message) {
     }
     
     // Clean up modal on hide
-    document.getElementById(modalId).addEventListener('hidden.bs.modal', function() {
-        this.remove();
+        document.getElementById(modalId).addEventListener('hidden.bs.modal', function() {
+            this.remove();
     });
 }
 // Initialize Bootstrap Tooltips
@@ -5627,7 +5680,7 @@ function showAddGlassesPrescriptionModal(patientId) {
                                     <select class="form-select" id="glassesAppointmentId" required>
                                         <option value="">Loading appointments...</option>
                                     </select>
-                                </div>
+                            </div>
                                 <div class="col-md-6">
                                     <label for="glassesLensType" class="form-label">Lens Type *</label>
                                     <select class="form-select" id="glassesLensType" required>
@@ -5636,14 +5689,14 @@ function showAddGlassesPrescriptionModal(patientId) {
                                         <option value="Progressive">Progressive</option>
                                         <option value="Reading">Reading</option>
                                     </select>
-                                </div>
                             </div>
+                                </div>
                             
                             <!-- Distance Vision Section -->
                             <div class="card mb-4">
                                 <div class="card-header">
                                     <h6 class="mb-0"><i class="bi bi-eye me-2"></i>Distance Vision</h6>
-                                </div>
+                            </div>
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-md-6">
@@ -5654,21 +5707,21 @@ function showAddGlassesPrescriptionModal(patientId) {
                                                     <input type="text" class="form-control" id="distanceSphereR" 
                                                            placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*">
                                                     <div class="form-text">Sphere power</div>
-                                                </div>
+                            </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Cylinder</label>
                                                     <input type="text" class="form-control" id="distanceCylinderR" 
                                                            placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*">
                                                     <div class="form-text">Cylinder power</div>
-                                                </div>
+                    </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Axis</label>
                                                     <input type="text" class="form-control" id="distanceAxisR" 
                                                            placeholder="0, 90, 180" pattern="[0-9]*">
                                                     <div class="form-text">Axis (0-180)</div>
-                                                </div>
-                                            </div>
-                                        </div>
+                    </div>
+                </div>
+            </div>
                                         <div class="col-md-6">
                                             <h6 class="text-primary">Left Eye (OS)</h6>
                                             <div class="row">
@@ -5677,30 +5730,30 @@ function showAddGlassesPrescriptionModal(patientId) {
                                                     <input type="text" class="form-control" id="distanceSphereL" 
                                                            placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*">
                                                     <div class="form-text">Sphere power</div>
-                                                </div>
+        </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Cylinder</label>
                                                     <input type="text" class="form-control" id="distanceCylinderL" 
                                                            placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*">
                                                     <div class="form-text">Cylinder power</div>
-                                                </div>
+                    </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Axis</label>
                                                     <input type="text" class="form-control" id="distanceAxisL" 
                                                            placeholder="0, 90, 180" pattern="[0-9]*">
                                                     <div class="form-text">Axis (0-180)</div>
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
                             </div>
                             
                             <!-- Near Vision Section -->
                             <div class="card mb-4">
                                 <div class="card-header">
                                     <h6 class="mb-0"><i class="bi bi-book me-2"></i>Near Vision</h6>
-                                </div>
+                    </div>
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-md-6">
@@ -5711,21 +5764,21 @@ function showAddGlassesPrescriptionModal(patientId) {
                                                     <input type="text" class="form-control" id="nearSphereR" 
                                                            placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*">
                                                     <div class="form-text">Sphere power</div>
-                                                </div>
+                    </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Cylinder</label>
                                                     <input type="text" class="form-control" id="nearCylinderR" 
                                                            placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*">
                                                     <div class="form-text">Cylinder power</div>
-                                                </div>
+                </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Axis</label>
                                                     <input type="text" class="form-control" id="nearAxisR" 
                                                            placeholder="0, 90, 180" pattern="[0-9]*">
                                                     <div class="form-text">Axis (0-180)</div>
-                                                </div>
-                                            </div>
-                                        </div>
+            </div>
+        </div>
+                    </div>
                                         <div class="col-md-6">
                                             <h6 class="text-success">Left Eye (OS)</h6>
                                             <div class="row">
@@ -5734,22 +5787,22 @@ function showAddGlassesPrescriptionModal(patientId) {
                                                     <input type="text" class="form-control" id="nearSphereL" 
                                                            placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*">
                                                     <div class="form-text">Sphere power</div>
-                                                </div>
+                        </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Cylinder</label>
                                                     <input type="text" class="form-control" id="nearCylinderL" 
                                                            placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*">
                                                     <div class="form-text">Cylinder power</div>
-                                                </div>
+                    </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Axis</label>
                                                     <input type="text" class="form-control" id="nearAxisL" 
                                                            placeholder="0, 90, 180" pattern="[0-9]*">
                                                     <div class="form-text">Axis (0-180)</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
                                 </div>
                             </div>
                             
@@ -5760,13 +5813,13 @@ function showAddGlassesPrescriptionModal(patientId) {
                                     <input type="text" class="form-control" id="pdDistance" 
                                            placeholder="62.0, +2, -1" pattern="[+-]?[0-9]*\.?[0-9]*">
                                     <div class="form-text">Enter PD value (e.g., 62.0, +2, -1)</div>
-                                </div>
+                    </div>
                                 <div class="col-md-6">
                                     <label for="pdNear" class="form-label">PD Near (mm)</label>
                                     <input type="text" class="form-control" id="pdNear" 
                                            placeholder="60.0, +2, -1" pattern="[+-]?[0-9]*\.?[0-9]*">
                                     <div class="form-text">Enter PD value (e.g., 60.0, +2, -1)</div>
-                                </div>
+                        </div>
                             </div>
                             
                             <div class="mb-3">
@@ -5919,14 +5972,14 @@ function viewGlassesPrescription(prescriptionId) {
             }
             return response.json();
         })
-        .then(data => {
-            if (data.success) {
+    .then(data => {
+        if (data.success) {
                 showGlassesPrescriptionModal(data.data, 'view');
-            } else {
+        } else {
                 showNotification('Error loading prescription details: ' + (data.error || 'Unknown error'), 'error');
-            }
-        })
-        .catch(error => {
+        }
+    })
+    .catch(error => {
             console.error('View Error:', error);
             showNotification('Error: ' + error.message, 'error');
         });
@@ -5952,14 +6005,14 @@ function editGlassesPrescription(prescriptionId) {
             }
             return response.json();
         })
-        .then(data => {
-            if (data.success) {
+    .then(data => {
+        if (data.success) {
                 showGlassesPrescriptionModal(data.data, 'edit');
-            } else {
+        } else {
                 showNotification('Error loading prescription details: ' + (data.error || 'Unknown error'), 'error');
-            }
-        })
-        .catch(error => {
+        }
+    })
+    .catch(error => {
             console.error('Edit Error:', error);
             showNotification('Error: ' + error.message, 'error');
         });
@@ -6008,35 +6061,35 @@ function showGlassesPrescriptionModal(data, mode) {
                                     <label class="form-label">Created Date</label>
                                     <input type="text" class="form-control" value="${new Date(data.created_at).toLocaleString()}" readonly>
                                 </div>
-                            </div>
+                                </div>
                             
                             <!-- Distance Vision Section -->
                             <div class="card mb-4">
                                 <div class="card-header">
                                     <h6 class="mb-0"><i class="bi bi-eye me-2"></i>Distance Vision</h6>
-                                </div>
+                            </div>
                                 <div class="card-body">
                                     <div class="row">
-                                        <div class="col-md-6">
+                                <div class="col-md-6">
                                             <h6 class="text-primary">Right Eye (OD)</h6>
                                             <div class="row">
                                                 <div class="col-4">
                                                     <label class="form-label">Sphere</label>
                                                     <input type="text" class="form-control" id="editDistanceSphereR" 
                                                            placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.distance_sphere_r || ''}" ${readonly}>
-                                                </div>
+                                </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Cylinder</label>
                                                     <input type="text" class="form-control" id="editDistanceCylinderR" 
                                                            placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.distance_cylinder_r || ''}" ${readonly}>
-                                                </div>
+                                </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Axis</label>
                                                     <input type="text" class="form-control" id="editDistanceAxisR" 
                                                            placeholder="0, 90, 180" pattern="[0-9]*" value="${data.distance_axis_r || ''}" ${readonly}>
-                                                </div>
-                                            </div>
-                                        </div>
+                            </div>
+                                </div>
+                                </div>
                                         <div class="col-md-6">
                                             <h6 class="text-primary">Left Eye (OS)</h6>
                                             <div class="row">
@@ -6044,28 +6097,28 @@ function showGlassesPrescriptionModal(data, mode) {
                                                     <label class="form-label">Sphere</label>
                                                     <input type="text" class="form-control" id="editDistanceSphereL" 
                                                            placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.distance_sphere_l || ''}" ${readonly}>
-                                                </div>
+                            </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Cylinder</label>
                                                     <input type="text" class="form-control" id="editDistanceCylinderL" 
                                                            placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.distance_cylinder_l || ''}" ${readonly}>
-                                                </div>
+                            </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Axis</label>
                                                     <input type="text" class="form-control" id="editDistanceAxisL" 
                                                            placeholder="0, 90, 180" pattern="[0-9]*" value="${data.distance_axis_l || ''}" ${readonly}>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
                             </div>
                             
                             <!-- Near Vision Section -->
                             <div class="card mb-4">
                                 <div class="card-header">
                                     <h6 class="mb-0"><i class="bi bi-book me-2"></i>Near Vision</h6>
-                                </div>
+                    </div>
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-md-6">
@@ -6075,19 +6128,19 @@ function showGlassesPrescriptionModal(data, mode) {
                                                     <label class="form-label">Sphere</label>
                                                     <input type="text" class="form-control" id="editNearSphereR" 
                                                            placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.near_sphere_r || ''}" ${readonly}>
-                                                </div>
+                        </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Cylinder</label>
                                                     <input type="text" class="form-control" id="editNearCylinderR" 
                                                            placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.near_cylinder_r || ''}" ${readonly}>
-                                                </div>
+                            </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Axis</label>
                                                     <input type="text" class="form-control" id="editNearAxisR" 
                                                            placeholder="0, 90, 180" pattern="[0-9]*" value="${data.near_axis_r || ''}" ${readonly}>
-                                                </div>
-                                            </div>
-                                        </div>
+                            </div>
+                            </div>
+                    </div>
                                         <div class="col-md-6">
                                             <h6 class="text-success">Left Eye (OS)</h6>
                                             <div class="row">
@@ -6095,63 +6148,63 @@ function showGlassesPrescriptionModal(data, mode) {
                                                     <label class="form-label">Sphere</label>
                                                     <input type="text" class="form-control" id="editNearSphereL" 
                                                            placeholder="0.00, +2.50, -1.25" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.near_sphere_l || ''}" ${readonly}>
-                                                </div>
+                    </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Cylinder</label>
                                                     <input type="text" class="form-control" id="editNearCylinderL" 
                                                            placeholder="0.00, +1.50, -0.75" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.near_cylinder_l || ''}" ${readonly}>
-                                                </div>
+                </div>
                                                 <div class="col-4">
                                                     <label class="form-label">Axis</label>
                                                     <input type="text" class="form-control" id="editNearAxisL" 
                                                            placeholder="0, 90, 180" pattern="[0-9]*" value="${data.near_axis_l || ''}" ${readonly}>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+            </div>
+        </div>
                             </div>
+                                        </div>
+                                        </div>
+                                        </div>
                             
                             <!-- PD and Comments -->
-                            <div class="row mb-3">
-                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
                                     <label class="form-label">PD Distance (mm)</label>
                                     <input type="text" class="form-control" id="editPdDistance" 
                                            placeholder="62.0, +2, -1" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.PD_DISTANCE || ''}" ${readonly}>
-                                </div>
-                                <div class="col-md-6">
+                                        </div>
+                                        <div class="col-md-6">
                                     <label class="form-label">PD Near (mm)</label>
                                     <input type="text" class="form-control" id="editPdNear" 
                                            placeholder="60.0, +2, -1" pattern="[+-]?[0-9]*\.?[0-9]*" value="${data.PD_NEAR || ''}" ${readonly}>
-                                </div>
-                            </div>
+                                        </div>
+                                    </div>
                             
-                            <div class="mb-3">
+                                    <div class="mb-3">
                                 <label class="form-label">Comments</label>
                                 <textarea class="form-control" id="editGlassesComments" rows="3" ${readonly}>${data.comments || ''}</textarea>
+                                    </div>
+                                </form>
                             </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
+                            <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                             ${isView ? 'Close' : 'Cancel'}
-                        </button>
+                                </button>
                         ${isEdit ? `
                             <button type="button" class="btn btn-primary" onclick="updateGlassesPrescription()">
                                 <i class="bi bi-check me-1"></i>Save Changes
                             </button>
                         ` : ''}
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
     const modalElement = document.getElementById(modalId);
     const modal = new bootstrap.Modal(modalElement);
-    modal.show();
-    
+            modal.show();
+            
     // Apply glass style and draggable
     setTimeout(function() {
         applyGlassStyleToModal(modalId);
@@ -6162,7 +6215,7 @@ function showGlassesPrescriptionModal(data, mode) {
     
     // Clean up when modal is hidden
     modalElement.addEventListener('hidden.bs.modal', function() {
-        this.remove();
+                this.remove();
     });
 }
 
@@ -6237,21 +6290,21 @@ function deleteGlassesPrescription(prescriptionId) {
             'Delete Prescription',
             () => {
                 fetch(`/api/prescriptions/glasses/${prescriptionId}`, {
-                    method: 'DELETE',
-                    headers: {
+        method: 'DELETE',
+        headers: {
                         'Content-Type': 'application/json',
-                    }
-                })
-                .then(response => response.json())
+        }
+    })
+    .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         showNotification('Glasses prescription deleted successfully', 'success');
                         setTimeout(() => location.reload(), 1000);
-                    } else {
+        } else {
                         showNotification('Error: ' + (data.error || data.message), 'error');
-                    }
-                })
-                .catch(error => {
+        }
+    })
+    .catch(error => {
                     showNotification('Error: ' + error.message, 'error');
                 });
             }
@@ -6270,10 +6323,10 @@ function clearApiCache() {
         caches.keys().then(function(names) {
             for (let name of names) {
                 caches.delete(name);
-            }
-        });
-    }
-}
+                                }
+                            });
+                        }
+                    }
 
 // Call this when the page loads to ensure fresh data
 document.addEventListener('DOMContentLoaded', function() {
@@ -6336,54 +6389,54 @@ function viewAllMedicationsForAppointment(button) {
             </div>
         `;
     });
-    
-    const modalHtml = `
+            
+            const modalHtml = `
         <div class="modal fade" id="allMedicationsModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
-                <div class="modal-content">
+                        <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">
                             <i class="bi bi-capsule me-2 text-success"></i>
                             All Medication Prescriptions - Appointment #${appointmentId}
-                        </h5>
+                                </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
+                            </div>
+                            <div class="modal-body">
                         <div class="mb-3">
                             <div class="row">
-                                <div class="col-md-6">
+                                    <div class="col-md-6">
                                     <strong>Appointment Date:</strong>
                                     <p class="mb-0">${new Date(appointmentDate).toLocaleDateString()} at ${new Date(appointmentDate + ' ' + appointmentTime).toLocaleTimeString()}</p>
-                                </div>
-                                <div class="col-md-6">
+                                    </div>
+                                    <div class="col-md-6">
                                     <strong>Doctor:</strong>
                                     <p class="mb-0">${escapeHtml(doctorName || 'N/A')}</p>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+                                </div>
                         <hr>
                         <h6 class="mb-3">
                             <i class="bi bi-list-ul me-2"></i>
                             Prescriptions (${medications.length})
                         </h6>
                         ${medicationsHtml}
-                    </div>
-                    <div class="modal-footer">
+                            </div>
+                            <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         <button type="button" class="btn btn-success" onclick="printMedicationPrescription(${appointmentId})">
                             <i class="bi bi-printer me-2"></i>Print All Prescriptions
-                        </button>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
     const modalElement = document.getElementById('allMedicationsModal');
     const modal = new bootstrap.Modal(modalElement);
-    modal.show();
-    
+            modal.show();
+            
     // Apply glass style and draggable
     setTimeout(function() {
         applyGlassStyleToModal('allMedicationsModal');
@@ -6415,7 +6468,7 @@ function viewMedicationDetails(button) {
                             <div class="col-md-6">
                                 <strong>Drug Name:</strong>
                                 <p class="mb-0">${escapeHtml(medData.drug_name || 'N/A')}</p>
-                            </div>
+                                </div>
                             <div class="col-md-6">
                                 <strong>Appointment Date:</strong>
                                 <p class="mb-0">${new Date(medData.appointment_date).toLocaleDateString()} at ${new Date(medData.appointment_date + ' ' + medData.appointment_time).toLocaleTimeString()}</p>
@@ -6489,7 +6542,7 @@ function viewGlassesDetails(button) {
                             <div class="col-md-6">
                                 <strong>Appointment Date:</strong>
                                 <p class="mb-0">${new Date(glassData.appointment_date).toLocaleDateString()} at ${new Date(glassData.appointment_date + ' ' + glassData.appointment_time).toLocaleTimeString()}</p>
-                            </div>
+                        </div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-md-6">
@@ -6602,20 +6655,20 @@ function reloadPatientFiles() {
             'X-Requested-With': 'XMLHttpRequest'
         }
     })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
             if (data.success && data.files !== undefined) {
                 const container = document.getElementById('patientFilesContainer');
                 if (!container) {
                     console.error('patientFilesContainer not found');
-                    return;
-                }
-                
+        return;
+    }
+    
                 if (data.files.length === 0) {
                     container.innerHTML = `
                         <div class="text-center py-4" id="emptyPatientFilesMessage">
@@ -6679,7 +6732,7 @@ function reloadPatientFiles() {
                                         <div style="display: none; width: 100%; height: 120px; background: #f8f9fa; border-radius: 8px; align-items: center; justify-content: center; flex-direction: column;">
                                             <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
                                             <small class="text-muted">Image not available</small>
-                                        </div>
+                    </div>
                                     </div>
                                     ` : ''}
                                     <div class="d-flex align-items-center mb-2 flex-grow-1">
@@ -6695,14 +6748,14 @@ function reloadPatientFiles() {
                                                 <span class="badge ${badgeClass} ms-2" style="font-size: 0.6rem;">
                                                     ${fileType}
                                                 </span>
-                                            </div>
+                                </div>
                                             <small class="text-muted d-block" style="font-size: 0.65rem;">
                                                 ${fileSize} KB
                                             </small>
                                             <small class="text-muted d-block" style="font-size: 0.65rem;">
                                                 ${createdDate}
                                             </small>
-                                        </div>
+                            </div>
                                     </div>
                                     ${file.description ? `
                                     <div class="flex-grow-1">
@@ -6712,7 +6765,7 @@ function reloadPatientFiles() {
                                            data-bs-placement="bottom">
                                            ${file.description.length > 40 ? file.description.substring(0, 37) + '...' : file.description}
                                         </p>
-                                    </div>
+                                </div>
                                     ` : '<div class="flex-grow-1"></div>'}
                                     <div class="btn-group btn-group-sm w-100 mt-auto" role="group">
                                         <button class="btn btn-outline-primary btn-sm" 
@@ -6733,10 +6786,10 @@ function reloadPatientFiles() {
                                                 style="font-size: 0.7rem; padding: 0.3rem 0.4rem; flex: 1;">
                                             <i class="bi bi-trash me-1"></i>Delete
                                         </button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
+                </div>
+            </div>
+        </div>
+    `;
                     });
                     html += '</div>';
                     container.innerHTML = html;
@@ -6772,17 +6825,17 @@ function loadPatientAlerts() {
                 <p class="text-muted mt-2 mb-0">No patient selected</p>
             </div>
         `;
-        return;
-    }
-    
+            return;
+        }
+        
     fetch(`/api/alerts/patient/${patientId}`, {
         method: 'GET',
-        headers: {
+            headers: {
             'Content-Type': 'application/json',
             'X-Requested-With': 'XMLHttpRequest'
-        },
-        credentials: 'same-origin'
-    })
+            },
+            credentials: 'same-origin'
+        })
     .then(response => {
         if (!response.ok) {
             throw new Error('Network response was not ok');
@@ -6809,7 +6862,7 @@ function loadPatientAlerts() {
                     alertStatusClass = 'alert-dismissed';
                 } else if (isActive) {
                     alertStatusClass = 'alert-active';
-                } else {
+            } else {
                     alertStatusClass = 'alert-inactive';
                 }
                 
@@ -6834,7 +6887,7 @@ function loadPatientAlerts() {
                                 <div class="d-flex align-items-center mb-2">
                                     <i class="bi bi-bell-fill me-2"></i>
                                     <h6 class="mb-0">${escapeHtml(alert.message || 'No message')}</h6>
-                                </div>
+                                    </div>
                                 <div class="text-muted small">
                                     <i class="bi bi-calendar me-1"></i>${alertDate}
                                     <i class="bi bi-clock ms-3 me-1"></i>${alertTime}
@@ -6850,15 +6903,15 @@ function loadPatientAlerts() {
                                     <button class="btn btn-outline-danger" onclick="showDeletePatientAlertModal(${alert.id})" title="Delete Alert">
                                         <i class="bi bi-trash"></i>
                                     </button>
-                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
+            </div>
+        </div>
+    `;
             });
             html += '</div>';
             container.innerHTML = html;
-        } else {
+            } else {
             countBadge.textContent = '0';
             container.innerHTML = `
                 <div class="text-center py-4">
@@ -6869,9 +6922,9 @@ function loadPatientAlerts() {
                     </button>
                 </div>
             `;
-        }
-    })
-    .catch(error => {
+            }
+        })
+        .catch(error => {
         console.error('Error loading patient alerts:', error);
         document.getElementById('patientAlertsContainer').innerHTML = `
             <div class="alert alert-danger">
@@ -6885,23 +6938,23 @@ function loadPatientAlerts() {
 function editPatientAlert(alertId) {
     fetch(`/api/alerts/${alertId}`, {
         method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
+            headers: {
+                'Content-Type': 'application/json',
             'X-Requested-With': 'XMLHttpRequest'
-        },
-        credentials: 'same-origin'
-    })
-    .then(response => response.json())
-    .then(data => {
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
         if (data.success && data.alert) {
             const alert = data.alert;
             const patientId = <?= isset($patient['id']) ? (int)$patient['id'] : 'null' ?>;
             openAlertModal(patientId, alert.appointment_id || null, alert);
-        } else {
+            } else {
             alert('Error loading alert details');
-        }
-    })
-    .catch(error => {
+            }
+        })
+        .catch(error => {
         console.error('Error loading alert:', error);
         alert('Error loading alert details');
     });
