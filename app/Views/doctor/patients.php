@@ -1469,6 +1469,15 @@ kbd[lang="ar"] {
 }
 
 @media (max-width: 768px) {
+    /* Add spacing between statistics cards on mobile */
+    .row.mb-4 > .col-md-3 {
+        margin-bottom: 1rem;
+    }
+    
+    .row.mb-4 > .col-md-3:last-child {
+        margin-bottom: 0;
+    }
+    
     .card-header .d-flex.gap-3 {
         flex-direction: column;
         gap: 0.5rem !important;
@@ -1509,6 +1518,203 @@ kbd[lang="ar"] {
 @keyframes spin {
     0% { transform: translate(-50%, -50%) rotate(0deg); }
     100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Patient name link styling */
+.patient-name-link {
+    text-decoration: none;
+    color: var(--accent) !important;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.patient-name-link:hover {
+    color: var(--text) !important;
+    font-weight: 800 !important;
+}
+
+/* Phone Number Tooltip - Same style as htooltip in main.php */
+.phone-number-container {
+    position: relative;
+    display: inline-block;
+}
+
+.phone-number-link {
+    text-decoration: none;
+    color: var(--accent);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.phone-number-link:hover {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.phone-htooltip {
+    visibility: hidden;
+    z-index: 1001;
+    opacity: 0;
+    position: absolute;
+    top: -120%;
+    left: 50%;
+    transform: translateX(-50%) translateY(9px);
+    transition: all 0.3s ease-in-out;
+    border-radius: 9px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+    /* Ensure text is sharp - no blur on text */
+    filter: none !important;
+    -webkit-filter: none !important;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-width: 140px;
+}
+
+/* Light mode phone htooltip - glass effect */
+.phone-htooltip {
+    background: rgba(248, 250, 252, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #1a1a1a;
+    border: 1px solid rgba(226, 232, 240, 0.3);
+}
+
+/* Dark mode phone htooltip - glass effect */
+.dark .phone-htooltip {
+    background: rgba(11, 18, 32, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #ffffff;
+    border: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+/* Ensure text inside phone htooltip is always sharp */
+.phone-htooltip * {
+    filter: none !important;
+    -webkit-filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Phone htooltip arrow */
+.phone-htooltip::after {
+    content: " ";
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 12px 12.5px 0 12.5px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -12px;
+}
+
+/* Light mode arrow */
+.phone-htooltip::after {
+    border-color: rgba(248, 250, 252, 0.85) transparent transparent transparent;
+}
+
+/* Dark mode arrow */
+.dark .phone-htooltip::after {
+    border-color: rgba(11, 18, 32, 0.85) transparent transparent transparent;
+}
+
+/* Show phone htooltip on hover */
+.phone-number-container:hover .phone-htooltip {
+    visibility: visible;
+    transform: translateX(-50%) translateY(-10px);
+    opacity: 1;
+    transition: 0.3s linear;
+    pointer-events: auto;
+}
+
+/* Phone actions container */
+.phone-actions {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Phone action buttons */
+.phone-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+    min-width: 60px;
+    gap: 0.25rem;
+    border: 1px solid rgba(226, 232, 240, 0.2);
+}
+
+.phone-action-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    color: var(--text);
+    text-decoration: none;
+}
+
+.phone-action-btn i {
+    font-size: 1.25rem;
+    margin-bottom: 0.125rem;
+}
+
+.phone-action-btn span {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* WhatsApp button special styling */
+.phone-action-btn.whatsapp-btn {
+    background: rgba(37, 211, 102, 0.15);
+    border-color: rgba(37, 211, 102, 0.3);
+    color: #25d366;
+}
+
+.phone-action-btn.whatsapp-btn:hover {
+    background: rgba(37, 211, 102, 0.25);
+    border-color: rgba(37, 211, 102, 0.5);
+    color: #25d366;
+    box-shadow: 0 4px 8px rgba(37, 211, 102, 0.3);
+}
+
+.dark .phone-action-btn.whatsapp-btn {
+    background: rgba(37, 211, 102, 0.2);
+    color: #25d366;
+}
+
+.dark .phone-action-btn.whatsapp-btn:hover {
+    background: rgba(37, 211, 102, 0.3);
+    color: #25d366;
+}
+
+/* Call button special styling */
+.phone-action-btn:not(.whatsapp-btn) {
+    color: var(--accent);
+}
+
+.phone-action-btn:not(.whatsapp-btn):hover {
+    background: rgba(var(--accent-rgb), 0.15);
+    border-color: rgba(var(--accent-rgb), 0.3);
+    color: var(--accent);
+    box-shadow: 0 4px 8px rgba(var(--accent-rgb), 0.3);
 }
 
 /* Responsive pagination */
@@ -1865,20 +2071,68 @@ function renderPatientsTable() {
                                     ${avatarInitials}
                                 </div>
                                 <div>
-                                    <h6 class="mb-1">${escapeHtml(fullName)}</h6>
+                                    <h6 class="mb-1">
+                                        <a href="/doctor/patients/${patient.id}" 
+                                           class="patient-name-link" 
+                                           style="text-decoration: none; color: var(--accent) !important; font-weight: 600; transition: all 0.2s ease;" 
+                                           onmouseover="this.style.color='var(--text) !important'; this.style.fontWeight='800 !important'; this.style.textDecoration='none';" 
+                                           onmouseout="this.style.color='var(--accent) !important'; this.style.fontWeight='600 !important'; this.style.textDecoration='none';">
+                                            ${escapeHtml(fullName)}
+                                        </a>
+                                    </h6>
                                     <small class="text-muted">ID: #${patient.id}</small>
                                 </div>
                             </div>
                         </td>
                         <td>
-                            <div>
-                                <i class="bi bi-telephone me-1"></i>
-                                ${escapeHtml(patient.phone || 'Not available')}
-                            </div>
-                            ${patient.alt_phone ? `<div class="mt-1">
-                                <i class="bi bi-telephone-plus me-1"></i>
-                                <small class="text-muted">${escapeHtml(patient.alt_phone)}</small>
-                            </div>` : ''}
+                            ${patient.phone ? `
+                                <div class="phone-number-container" style="position: relative; display: inline-block;">
+                                    <a href="tel:${escapeHtml(patient.phone)}" 
+                                       class="phone-number-link" 
+                                       style="text-decoration: none; color: var(--accent); font-weight: 500; cursor: pointer; transition: all 0.2s ease;"
+                                       onmouseover="this.style.color='var(--text)'; this.style.fontWeight='600';"
+                                       onmouseout="this.style.color='var(--accent)'; this.style.fontWeight='500';">
+                                        <i class="bi bi-telephone me-1"></i>
+                                        ${escapeHtml(patient.phone)}
+                                    </a>
+                                    <span class="phone-htooltip">
+                                        <div class="phone-actions">
+                                            <a href="tel:${escapeHtml(patient.phone)}" class="phone-action-btn" title="Call">
+                                                <i class="bi bi-telephone-fill"></i>
+                                                <span>Call</span>
+                                            </a>
+                                            <a href="https://wa.me/${escapeHtml(patient.phone).replace(/[^0-9]/g, '')}" target="_blank" class="phone-action-btn whatsapp-btn" title="WhatsApp">
+                                                <i class="bi bi-whatsapp"></i>
+                                                <span>WhatsApp</span>
+                                            </a>
+                                        </div>
+                                    </span>
+                                </div>
+                            ` : '<span class="text-muted">Not available</span>'}
+                            ${patient.alt_phone ? `
+                                <div class="phone-number-container mt-1" style="position: relative; display: inline-block;">
+                                    <a href="tel:${escapeHtml(patient.alt_phone)}" 
+                                       class="phone-number-link" 
+                                       style="text-decoration: none; color: var(--accent); font-weight: 500; cursor: pointer; transition: all 0.2s ease;"
+                                       onmouseover="this.style.color='var(--text)'; this.style.fontWeight='600';"
+                                       onmouseout="this.style.color='var(--accent)'; this.style.fontWeight='500';">
+                                        <i class="bi bi-telephone-plus me-1"></i>
+                                        <small>${escapeHtml(patient.alt_phone)}</small>
+                                    </a>
+                                    <span class="phone-htooltip">
+                                        <div class="phone-actions">
+                                            <a href="tel:${escapeHtml(patient.alt_phone)}" class="phone-action-btn" title="Call">
+                                                <i class="bi bi-telephone-fill"></i>
+                                                <span>Call</span>
+                                            </a>
+                                            <a href="https://wa.me/${escapeHtml(patient.alt_phone).replace(/[^0-9]/g, '')}" target="_blank" class="phone-action-btn whatsapp-btn" title="WhatsApp">
+                                                <i class="bi bi-whatsapp"></i>
+                                                <span>WhatsApp</span>
+                                            </a>
+                                        </div>
+                                    </span>
+                                </div>
+                            ` : ''}
                         </td>
                         <td>
                             ${age !== 'Not specified' ? `${age} years` : '<span class="text-muted">Not specified</span>'}

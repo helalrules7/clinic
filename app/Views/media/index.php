@@ -73,7 +73,7 @@
 
 <!-- Image Gallery Modal -->
 <div class="modal fade" id="imageGalleryModal" tabindex="-1" aria-labelledby="imageGalleryModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-fullscreen">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content bg-dark">
             <div class="modal-header border-secondary">
                 <h5 class="modal-title text-white" id="galleryModalTitle">
@@ -107,11 +107,11 @@
                     <div class="d-flex align-items-center gap-2">
                         <a href="#" id="viewPatientLink" class="btn btn-outline-info" target="_blank" style="display: none;">
                             <i class="bi bi-person-fill me-2 me-md-2 me-0"></i>
-                            <span class="d-none d-md-inline">View Patient</span>
+                            <span class="d-none d-md-inline">Patient</span>
                         </a>
                         <a href="#" id="viewSourceLink" class="btn btn-outline-light" target="_blank" style="display: none;">
                             <i class="bi bi-box-arrow-up-right me-2 me-md-2 me-0"></i>
-                            <span id="sourceLinkText" class="d-none d-md-inline">View Appointment</span>
+                            <span id="sourceLinkText" class="d-none d-md-inline">Appointment</span>
                         </a>
                     </div>
                 </div>
@@ -502,6 +502,10 @@
     #viewPatientLink span,
     #viewSourceLink span {
         display: none !important;
+    }
+
+    .gap-3{
+        gap:0 !important;
     }
     
     #viewPatientLink i,

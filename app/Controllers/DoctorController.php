@@ -3082,7 +3082,8 @@ class DoctorController
             'notes_dashboard_height',
             'notes_dashboard_width',
             'dashboard_cards_order',
-            'dock_minimized'
+            'dock_minimized',
+            'theme'
         ];
         
         try {

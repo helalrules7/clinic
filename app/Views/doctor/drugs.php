@@ -17,7 +17,7 @@
     </div>
     <div class="col-md-4 text-end">
         <div class="btn-group" role="group">
-            <button class="btn btn-success" id="updateDatabaseBtn" onclick="showUpdateDatabaseModal()">
+            <button class="day-close-btn" id="updateDatabaseBtn" onclick="showUpdateDatabaseModal()">
                 <i class="bi bi-arrow-clockwise me-2"></i>
                 Update Database
             </button>
@@ -269,6 +269,68 @@
 </div>
 
 <style>
+/* Update Database Button Glass Style with Blue Gradient - Same as Day Close Button */
+.day-close-btn {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(37, 99, 235, 0.5)) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(96, 165, 250, 0.4) !important;
+    box-shadow: 2px 0 8px 0 rgba(59, 130, 246, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    color: white !important;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.day-close-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.day-close-btn:hover::before {
+    left: 100%;
+}
+
+.day-close-btn:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.55), rgba(37, 99, 235, 0.65)) !important;
+    transform: translateY(-2px);
+    box-shadow: 4px 4px 16px 0 rgba(59, 130, 246, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    color: white !important;
+    text-decoration: none;
+    border-color: rgba(96, 165, 250, 0.6) !important;
+}
+
+.day-close-btn i {
+    font-size: 1.3rem;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.dark .day-close-btn {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.5), rgba(29, 78, 216, 0.6)) !important;
+    border: 1px solid rgba(96, 165, 250, 0.5) !important;
+    box-shadow: 2px 0 8px 0 rgba(37, 99, 235, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.dark .day-close-btn:hover {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.65), rgba(29, 78, 216, 0.75)) !important;
+    box-shadow: 4px 4px 16px 0 rgba(37, 99, 235, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    border-color: rgba(96, 165, 250, 0.7) !important;
+}
+
 /* Drug Card Styles */
 .drug-card {
     background-color: var(--card);

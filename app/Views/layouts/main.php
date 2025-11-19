@@ -80,6 +80,17 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
         
+        /* Prevent flash of wrong theme - default to dark */
+        html:not(.theme-loaded) {
+            background: #0b1220;
+            color: #f8fafc;
+        }
+        
+        html:not(.theme-loaded) body {
+            background: #0b1220;
+            color: #f8fafc;
+        }
+        
         .sidebar {
             position: fixed;
             top: 0;
@@ -1693,7 +1704,7 @@
                 <div class="nav-item">
                     <a href="/doctor/drugs" class="nav-link <?= $this->isActiveRoute('/doctor/drugs') ? 'active' : '' ?>">
                         <i class="bi bi-capsule"></i>
-                        Drug Search
+                        Drugs Database
                     </a>
                 </div>
                 <div class="nav-item">
@@ -2028,46 +2039,116 @@
     <script>
         // Theme toggle functionality
         const apply = mode => document.documentElement.classList.toggle('dark', mode === 'dark');
-        const saved = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         
-        apply(saved);
-        
-        document.getElementById('themeToggle').onclick = () => {
-            const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
-            apply(next);
-            localStorage.setItem('theme', next);
-            
+        // Function to update UI elements based on theme
+        function updateThemeUI(theme) {
             // Update icon
             const icon = document.querySelector('#themeToggle i');
-            icon.className = next === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+            if (icon) {
+                icon.className = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+            }
             
             // Update logo
             const logo = document.getElementById('clinicLogo');
             if (logo) {
-                logo.src = next === 'dark' ? '/assets/images/Dark.png' : '/assets/images/Light.png';
+                logo.src = theme === 'dark' ? '/assets/images/Dark.png' : '/assets/images/Light.png';
             }
             
             // Update favicon
             const favicon = document.getElementById('favicon');
             if (favicon) {
-                favicon.href = next === 'dark' ? '/assets/fav/Dark.ico' : '/assets/fav/Light.ico';
+                favicon.href = theme === 'dark' ? '/assets/fav/Dark.ico' : '/assets/fav/Light.ico';
             }
-        };
-        
-        // Update initial icon and logo
-        const icon = document.querySelector('#themeToggle i');
-        icon.className = saved === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
-        
-        const logo = document.getElementById('clinicLogo');
-        if (logo) {
-            logo.src = saved === 'dark' ? '/assets/images/Dark.png' : '/assets/images/Light.png';
         }
         
-        // Update initial favicon
-        const favicon = document.getElementById('favicon');
-        if (favicon) {
-            favicon.href = saved === 'dark' ? '/assets/fav/Dark.ico' : '/assets/fav/Light.ico';
+        // Function to save theme to database
+        async function saveThemeToDatabase(theme) {
+            try {
+                const response = await fetch('/api/doctor/settings', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        theme: theme
+                    })
+                });
+                
+                if (!response.ok) {
+                    console.error('Failed to save theme to database');
+                }
+            } catch (error) {
+                console.error('Error saving theme to database:', error);
+            }
         }
+        
+        // Function to load theme from database
+        async function loadThemeFromDatabase() {
+            try {
+                const response = await fetch('/api/doctor/settings', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.settings && data.settings.theme) {
+                        return data.settings.theme;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading theme from database:', error);
+            }
+            return null;
+        }
+        
+        // Initialize theme - Dark by default
+        (async function() {
+            // Set default to dark immediately to prevent flash
+            apply('dark');
+            updateThemeUI('dark');
+            
+            // Load theme from database
+            let savedTheme = await loadThemeFromDatabase();
+            
+            // If no theme in database, default to 'dark'
+            if (!savedTheme) {
+                savedTheme = 'dark';
+                // Save default theme to database
+                await saveThemeToDatabase(savedTheme);
+            }
+            
+            // Apply theme from database (may override default)
+            apply(savedTheme);
+            
+            // Update UI elements
+            updateThemeUI(savedTheme);
+            
+            // Mark theme as loaded to remove flash prevention
+            document.documentElement.classList.add('theme-loaded');
+            
+            // Theme toggle button click handler
+            const themeToggleBtn = document.getElementById('themeToggle');
+            if (themeToggleBtn) {
+                themeToggleBtn.onclick = async () => {
+                    const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                    const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                    
+                    // Apply theme
+                    apply(nextTheme);
+                    
+                    // Update UI elements
+                    updateThemeUI(nextTheme);
+                    
+                    // Save to database
+                    await saveThemeToDatabase(nextTheme);
+                };
+            }
+        })();
         
         // Mobile sidebar toggle
         const sidebarToggle = document.getElementById('sidebarToggle');
