@@ -714,35 +714,53 @@
             /* Mobile Dock Ring - Minimized by default */
             .quick-access-dock {
                 display: block !important;
-                bottom: auto;
-                top: calc(100vh - 0.1rem - 20px - 0.1rem - 45px);
+                bottom: 1.5rem;
                 right: 0.1rem;
                 left: auto;
+                top: auto;
                 transform: none;
                 z-index: 998;
                 transition: all 0.3s ease;
             }
             
-            /* When back to top button is hidden, use its position */
+            /* When back to top button is hidden, use its exact position */
             .quick-access-dock.mobile-minimized {
-                top: calc(100vh - 0.1rem - 20px - 0.1rem - 45px);
+                bottom: 1.5rem;
                 right: 0.1rem;
                 left: auto;
+                top: auto;
+            }
+            
+            /* When back to top button is visible, position dock above it with same right alignment */
+            .quick-access-dock.mobile-minimized.dock-above-button {
+                bottom: calc(1.5rem + 45px + 10px);
+                right: 0.1rem;
+                left: auto;
+                top: auto;
             }
             
             .quick-access-dock.mobile-expanded {
                 top: auto;
-                bottom: calc(1.5rem + 45px + 0.5rem);
+                bottom: calc(1.5rem + 45px + 10px);
                 left: auto;
                 right: 0.1rem;
                 transform: none;
                 width: auto;
                 max-width: 280px;
-                max-height: calc(100vh - 1.5rem - 45px - 0.5rem - 1.5rem);
+                max-height: calc(100vh - 1.5rem - 45px - 10px - 1.5rem);
                 overflow-y: auto;
             }
             
+            /* When back to top is hidden and dock is expanded */
+            .quick-access-dock.mobile-expanded:not(.dock-above-button) {
+                bottom: 1.5rem;
+                right: 0.1rem;
+            }
+            
+            /* Ensure dock container aligns perfectly with scroll-to-top button */
             .quick-access-dock.mobile-minimized .dock-container {
+                box-sizing: border-box;
+                margin: 0;
                 width: 45px;
                 height: 45px;
                 padding: 0;
@@ -2099,15 +2117,11 @@
             if (!mobileDock || window.innerWidth > 768) return;
             
             if (scrollToTopBtn && scrollToTopBtn.classList.contains('show')) {
-                // Back to top button is visible - move dock to left with different top position
-                mobileDock.style.right = '0.1rem';
-                mobileDock.style.left = 'auto';
-                mobileDock.style.top = 'calc(100vh - 0.1rem - 20px - 0.1rem - 45px)';
+                // Back to top button is visible - move dock above it by 10px
+                mobileDock.classList.add('dock-above-button');
             } else {
-                // Back to top button is hidden - use its position (right) with default top
-                mobileDock.style.left = 'auto';
-                mobileDock.style.right = '0.1rem';
-                mobileDock.style.top = 'calc(100vh - 0.1rem - 20px - 0.1rem - 45px)';
+                // Back to top button is hidden - use its exact position
+                mobileDock.classList.remove('dock-above-button');
             }
         }
         

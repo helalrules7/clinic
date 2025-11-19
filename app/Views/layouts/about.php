@@ -22,7 +22,7 @@
     <div class="row mb-5">
         <div class="col-lg-8 mx-auto">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header" style="background-color: transparent !important;">
                     <h3 class="card-title mb-0">
                         <i class="bi bi-info-circle text-primary me-2"></i>
                         System Information
@@ -69,7 +69,7 @@
     <div class="row mb-5">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header" style="background-color: transparent !important;">
                     <h3 class="card-title mb-0">
                         <i class="bi bi-star text-warning me-2"></i>
                         Key Features
@@ -412,7 +412,7 @@
     <div class="row mb-5">
         <div class="col-lg-8 mx-auto">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header" style="background-color: transparent !important;">
                     <h3 class="card-title mb-0">
                         <i class="bi bi-gear text-secondary me-2"></i>
                         Technology Stack
@@ -495,7 +495,7 @@
     <div class="row mb-5">
         <div class="col-12">
             <div class="card border-primary">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-primary text-white" style="background-color: transparent !important;">
                     <h3 class="card-title mb-0">
                         <i class="bi bi-star-fill me-2"></i>
                         Version 5.0 New Features
@@ -640,7 +640,7 @@
     <div class="row mb-5">
         <div class="col-12">
             <div class="card border-success">
-                <div class="card-header bg-success text-white">
+                <div class="card-header bg-success text-white" style="background-color: transparent !important;">
                     <h3 class="card-title mb-0">
                         <i class="bi bi-cash-stack me-2"></i>
                         Advanced Financial Management Features
@@ -698,7 +698,7 @@
     <div class="row mb-5">
         <div class="col-12">
             <div class="card border-success">
-                <div class="card-header bg-success text-white">
+                <div class="card-header bg-success text-white" style="background-color: transparent !important;">
                     <h3 class="card-title mb-0">
                         <i class="bi bi-capsule me-2"></i>
                         Smart Drug Management Features
@@ -756,7 +756,7 @@
     <div class="row mb-5">
         <div class="col-lg-8 mx-auto">
             <div class="card border-primary">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-primary text-white" style="background-color: transparent !important;">
                     <h3 class="card-title mb-0">
                         <i class="bi bi-person-badge me-2"></i>
                         Developer Information
@@ -800,7 +800,7 @@
     <div class="row mb-5">
         <div class="col-lg-8 mx-auto">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header" style="background-color: transparent !important;">
                     <h3 class="card-title mb-0">
                         <i class="bi bi-lightning text-warning me-2"></i>
                         What's New in Version 5.1
@@ -1247,7 +1247,7 @@
     <div class="row mb-5">
         <div class="col-12">
             <div class="card border-info">
-                <div class="card-header bg-info text-white">
+                <div class="card-header bg-info text-white" style="background-color: transparent !important;">
                     <h3 class="card-title mb-0">
                         <i class="bi bi-star-fill me-2"></i>
                         Version 5.1 New Features

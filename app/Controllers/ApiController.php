@@ -6251,6 +6251,27 @@ class ApiController
             $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
             $perPage = isset($_GET['per_page']) ? max(1, min(100, intval($_GET['per_page']))) : 10;
             $offset = ($page - 1) * $perPage;
+            
+            // Get search parameter
+            $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+            
+            // Build WHERE clause with search
+            $whereClause = "WHERE a.doctor_id = ?";
+            $params = [$doctorId];
+            $countParams = [$doctorId];
+            
+            if (!empty($search)) {
+                $searchTerm = '%' . $search . '%';
+                $whereClause .= " AND (
+                    te.event_summary LIKE ? OR
+                    p.first_name LIKE ? OR
+                    p.last_name LIKE ? OR
+                    CONCAT(p.first_name, ' ', p.last_name) LIKE ? OR
+                    p.phone LIKE ?
+                )";
+                $params = array_merge($params, [$searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm]);
+                $countParams = array_merge($countParams, [$searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm]);
+            }
 
             // Get total count
             $countStmt = $this->pdo->prepare("
@@ -6258,22 +6279,24 @@ class ApiController
                 FROM timeline_events te
                 JOIN patients p ON te.patient_id = p.id
                 JOIN appointments a ON te.appointment_id = a.id
-                WHERE a.doctor_id = ?
+                $whereClause
             ");
-            $countStmt->execute([$doctorId]);
+            $countStmt->execute($countParams);
             $total = $countStmt->fetchColumn();
 
             // Get paginated events
             $stmt = $this->pdo->prepare("
-                SELECT te.*, p.first_name, p.last_name, p.phone
+                SELECT te.*, p.first_name, p.last_name, p.phone, p.id as patient_id, a.id as appointment_id
                 FROM timeline_events te
                 JOIN patients p ON te.patient_id = p.id
                 JOIN appointments a ON te.appointment_id = a.id
-                WHERE a.doctor_id = ?
+                $whereClause
                 ORDER BY te.created_at DESC
                 LIMIT ? OFFSET ?
             ");
-            $stmt->execute([$doctorId, $perPage, $offset]);
+            $params[] = $perPage;
+            $params[] = $offset;
+            $stmt->execute($params);
             $events = $stmt->fetchAll();
 
             $totalPages = ceil($total / $perPage);

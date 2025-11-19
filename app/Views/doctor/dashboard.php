@@ -124,58 +124,135 @@
             </div>
             <div class="card-body">
                 <div class="row g-2">
-                    <div class="col mb-2">
-                        <a href="/doctor/calendar" class="btn btn-outline-primary quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2 w-100">
-                            <i class="bi bi-calendar3 mb-1"></i>
-                            <span style="font-size: 0.75rem;">View Calendar</span>
-                        </a>
-                    </div>
-                    <div class="col mb-2">
-                        <a href="/doctor/patients" class="btn btn-outline-success quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2 w-100">
+                    <!-- Main 3 buttons + More Actions - equal sizes on mobile (4 buttons in one row) -->
+                    <div class="col-3 col-md mb-2">
+                        <a href="/doctor/patients" class="btn btn-outline-success quick-action-btn d-flex flex-column align-items-center justify-content-center px-2 py-2 w-100">
                             <i class="bi bi-people mb-1"></i>
-                            <span style="font-size: 0.75rem;">Patient List</span>
+                            <span style="font-size: 0.7rem;">Patients</span>
                         </a>
                     </div>
-                    <div class="col mb-2">
+                    <div class="col-3 col-md mb-2">
+                        <a href="/doctor/drugs" class="btn btn-outline-success quick-action-btn d-flex flex-column align-items-center justify-content-center px-2 py-2 w-100">
+                            <i class="bi bi-capsule mb-1"></i>
+                            <span style="font-size: 0.7rem;">Drugs</span>
+                        </a>
+                    </div>
+                    <div class="col-3 col-md mb-2">
+                        <a href="/doctor/calendar" class="btn btn-outline-primary quick-action-btn d-flex flex-column align-items-center justify-content-center px-2 py-2 w-100">
+                            <i class="bi bi-calendar3 mb-1"></i>
+                            <span style="font-size: 0.7rem;">Calendar</span>
+                        </a>
+                    </div>
+                    <!-- More Actions button - visible on mobile only, same size as other buttons -->
+                    <div class="col-3 col-md mb-2 d-md-none">
+                        <button type="button" class="btn btn-outline-secondary quick-action-btn d-flex flex-column align-items-center justify-content-center px-2 py-2 w-100" data-bs-toggle="modal" data-bs-target="#moreActionsModal">
+                            <i class="bi bi-three-dots mb-1"></i>
+                            <span style="font-size: 0.7rem;">More</span>
+                        </button>
+                    </div>
+                    <!-- Other buttons - hidden on mobile, visible on desktop -->
+                    <div class="col-md mb-2 d-none d-md-block">
                         <a href="/doctor/profile" class="btn btn-outline-info quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2 w-100">
                             <i class="bi bi-person-circle mb-1"></i>
                             <span style="font-size: 0.75rem;">My Profile</span>
                         </a>
                     </div>
-                    <div class="col mb-2">
+                    <div class="col-md mb-2 d-none d-md-block">
                         <a href="/doctor/reports" class="btn btn-outline-warning quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2 w-100">
                             <i class="bi bi-graph-up mb-1"></i>
                             <span style="font-size: 0.75rem;">Reports</span>
                         </a>
                     </div>
-                    <div class="col mb-2">
+                    <div class="col-md mb-2 d-none d-md-block">
                         <a href="/doctor/alerts" class="btn btn-outline-danger quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2 w-100">
                             <i class="bi bi-bell mb-1"></i>
                             <span style="font-size: 0.75rem;">Alerts</span>
                         </a>
                     </div>
-                    <div class="col mb-2">
-                        <a href="/doctor/drugs" class="btn btn-outline-success quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2 w-100">
-                            <i class="bi bi-capsule mb-1"></i>
-                            <span style="font-size: 0.75rem;">Drugs</span>
-                        </a>
-                    </div>
-                    <div class="col mb-2">
+                    <div class="col-md mb-2 d-none d-md-block">
                         <a href="/doctor/notes" class="btn btn-outline-warning quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2 w-100">
                             <i class="bi bi-sticky mb-1"></i>
                             <span style="font-size: 0.75rem;">Notes</span>
                         </a>
                     </div>
-                    <div class="col mb-2">
+                    <div class="col-md mb-2 d-none d-md-block">
                         <a href="/doctor/medications" class="btn btn-outline-info quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2 w-100">
                             <i class="bi bi-prescription mb-1"></i>
                             <span style="font-size: 0.75rem;">Prescriptions</span>
                         </a>
                     </div>
-                    <div class="col mb-2">
+                    <div class="col-md mb-2 d-none d-md-block">
                         <a href="/doctor/glasses" class="btn btn-outline-primary quick-action-btn d-flex flex-column align-items-center justify-content-center px-3 py-2 w-100">
                             <i class="bi bi-eyeglasses mb-1"></i>
                             <span style="font-size: 0.75rem;">Glasses Prescriptions</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- More Actions Modal - Mobile Only -->
+<div class="modal fade" id="moreActionsModal" tabindex="-1" aria-labelledby="moreActionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="moreActionsModalLabel">
+                    <i class="bi bi-lightning me-2"></i>
+                    More Actions
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-4">
+                        <a href="/doctor/profile" class="btn btn-outline-info quick-action-btn d-flex flex-column align-items-center justify-content-center px-2 py-3 w-100" data-bs-dismiss="modal">
+                            <?php 
+                            $currentUser = $this->getCurrentUser();
+                            if (!empty($currentUser['profile_image'])): 
+                                $profileImagePath = strpos($currentUser['profile_image'], '/public/') === 0 ? $currentUser['profile_image'] : '/public' . $currentUser['profile_image'];
+                            ?>
+                                <img src="<?= htmlspecialchars($profileImagePath) ?>" 
+                                     alt="Profile" 
+                                     class="mb-2" 
+                                     style="width: 2rem; height: 2rem; border-radius: 50%; object-fit: cover; border: 1px solid var(--accent);"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                <i class="bi bi-person-circle mb-2" style="font-size: 2rem; display: none;"></i>
+                            <?php else: ?>
+                                <i class="bi bi-person-circle mb-2" style="font-size: 2rem;"></i>
+                            <?php endif; ?>
+                            <span style="font-size: 0.75rem !important; font-weight: 600 !important;">Profile</span>
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a href="/doctor/reports" class="btn btn-outline-warning quick-action-btn d-flex flex-column align-items-center justify-content-center px-2 py-3 w-100" data-bs-dismiss="modal">
+                            <i class="bi bi-graph-up mb-2" style="font-size: 1.5rem;"></i>
+                            <span style="font-size: 0.7rem; font-weight: 600;">Reports</span>
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a href="/doctor/alerts" class="btn btn-outline-danger quick-action-btn d-flex flex-column align-items-center justify-content-center px-2 py-3 w-100" data-bs-dismiss="modal">
+                            <i class="bi bi-bell mb-2" style="font-size: 1.5rem;"></i>
+                            <span style="font-size: 0.7rem; font-weight: 600;">Alerts</span>
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a href="/doctor/notes" class="btn btn-outline-warning quick-action-btn d-flex flex-column align-items-center justify-content-center px-2 py-3 w-100" data-bs-dismiss="modal">
+                            <i class="bi bi-sticky mb-2" style="font-size: 1.5rem;"></i>
+                            <span style="font-size: 0.7rem; font-weight: 600;">Notes</span>
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a href="/doctor/medications" class="btn btn-outline-info quick-action-btn d-flex flex-column align-items-center justify-content-center px-2 py-3 w-100" data-bs-dismiss="modal">
+                            <i class="bi bi-prescription mb-2" style="font-size: 1.5rem;"></i>
+                            <span style="font-size: 0.7rem; font-weight: 600;">Prescriptions</span>
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a href="/doctor/glasses" class="btn btn-outline-primary quick-action-btn d-flex flex-column align-items-center justify-content-center px-2 py-3 w-100" data-bs-dismiss="modal">
+                            <i class="bi bi-eyeglasses mb-2" style="font-size: 1.5rem;"></i>
+                            <span style="font-size: 0.7rem; font-weight: 600;">Glasses</span>
                         </a>
                     </div>
                 </div>
@@ -191,7 +268,7 @@
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">
                     <i class="bi bi-sticky me-2"></i>
-                    Notes Dashboard
+                    Notes Board
                 </h6>
                 <div class="d-flex align-items-center gap-2">
 
@@ -199,7 +276,7 @@
                         <i class="bi bi-plus-circle me-1"></i>Add Note
                     </button>
                     <a href="/doctor/notes" class="btn btn-sm btn-primary">
-                        <i class="bi bi-arrow-right-circle me-1"></i>Open Notes Dashboard
+                        <i class="bi bi-arrow-right-circle me-1"></i>Notes Board
                     </a>
                     <div class="d-flex align-items-center gap-1 me-2">
                         <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardUp('notes-dashboard')" title="Move up">
@@ -461,12 +538,9 @@
                     Recent Activity
                 </h6>
                 <div class="d-flex align-items-center gap-2">
-                    <select class="form-select form-select-sm" id="perPageSelect" style="width: auto;">
-                        <option value="5">5 per page</option>
-                        <option value="10" selected>10 per page</option>
-                        <option value="20">20 per page</option>
-                        <option value="50">50 per page</option>
-                    </select>
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#allActivitiesModal">
+                        <i class="bi bi-list-ul me-1"></i>View All Activities
+                    </button>
                     <div class="d-flex align-items-center gap-1 me-2">
                         <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardUp('recent-activity')" title="Move up">
                             <i class="bi bi-arrow-up"></i>
@@ -488,8 +562,55 @@
                         </div>
                     </div>
                 </div>
-                <nav aria-label="Recent Activity Pagination" id="paginationNav" style="display: none;">
-                    <ul class="pagination justify-content-center mb-0" id="paginationList">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- All Activities Modal - Extra Large -->
+<div class="modal fade" id="allActivitiesModal" tabindex="-1" aria-labelledby="allActivitiesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="allActivitiesModalLabel">
+                    <i class="bi bi-activity me-2"></i>
+                    All Activities
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-funnel"></i>
+                            </span>
+                            <input type="text" class="form-control" id="activitiesFilterInput" placeholder="Filter activities...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="modalPerPageSelect">
+                            <option value="10" selected>10 per page</option>
+                            <option value="20">20 per page</option>
+                            <option value="50">50 per page</option>
+                            <option value="100">100 per page</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <button type="button" class="btn btn-outline-secondary" id="clearActivitiesFilter">
+                            <i class="bi bi-x-circle me-1"></i>Clear Filter
+                        </button>
+                    </div>
+                </div>
+                <div id="allActivitiesContainer">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <nav aria-label="All Activities Pagination" id="modalPaginationNav" style="display: none; margin-top: 1.5rem;">
+                    <ul class="pagination justify-content-center mb-0" id="modalPaginationList">
                     </ul>
                 </nav>
             </div>
@@ -986,6 +1107,222 @@
     color: white !important;
 }
 
+/* More Actions Button - Mobile Only */
+.quick-action-btn.btn-outline-secondary {
+    color: var(--muted) !important;
+    border-color: var(--border) !important;
+}
+
+.quick-action-btn.btn-outline-secondary:hover {
+    background: linear-gradient(135deg, var(--muted), #64748b) !important;
+    border-color: var(--muted) !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(100, 116, 139, 0.3);
+}
+
+.dark .quick-action-btn.btn-outline-secondary {
+    color: #cbd5e1 !important;
+    border-color: #475569 !important;
+}
+
+.dark .quick-action-btn.btn-outline-secondary:hover {
+    background: linear-gradient(135deg, #cbd5e1, #94a3b8) !important;
+    color: #0b1220 !important;
+}
+
+/* All Activities Modal - Extra Large with margins */
+#allActivitiesModal .modal-dialog {
+    margin: 2rem auto;
+    max-width: 90%;
+    max-height: calc(100vh - 4rem);
+}
+
+#allActivitiesModal .modal-content {
+    max-height: calc(100vh - 4rem);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+#allActivitiesModal .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    background: var(--bg);
+}
+
+#allActivitiesModal .modal-header {
+    flex-shrink: 0;
+    padding: 1rem 1.5rem;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    border-radius: 12px 12px 0 0;
+}
+
+#allActivitiesModal .modal-header .modal-title {
+    color: var(--text);
+}
+
+#allActivitiesModal #allActivitiesContainer {
+    min-height: 300px;
+    max-height: calc(100vh - 20rem);
+    overflow-y: auto;
+}
+
+#allActivitiesModal #modalPaginationNav {
+    flex-shrink: 0;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.dark #allActivitiesModal .modal-content {
+    background: var(--card);
+    border-color: var(--border);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3);
+}
+
+.dark #allActivitiesModal .modal-header {
+    background: var(--card);
+    border-bottom-color: var(--border);
+}
+
+.dark #allActivitiesModal .modal-body {
+    background: var(--bg);
+}
+
+.dark #allActivitiesModal #modalPaginationNav {
+    border-top-color: var(--border);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #allActivitiesModal .modal-dialog {
+        margin: 1rem;
+        max-width: calc(100% - 2rem);
+        max-height: calc(100vh - 2rem);
+    }
+    
+    #allActivitiesModal .modal-content {
+        max-height: calc(100vh - 2rem);
+    }
+}
+
+/* More Actions Modal - Glass Effect */
+#moreActionsModal {
+    z-index: 1055 !important;
+}
+
+#moreActionsModal .modal-dialog {
+    margin: 1rem;
+    max-width: calc(100% - 2rem);
+}
+
+#moreActionsModal .modal-content {
+    /* Glass effect - same as main layout modals */
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+}
+
+.dark #moreActionsModal .modal-content {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
+}
+
+#moreActionsModal .modal-header {
+    background: transparent !important;
+    border-bottom-color: rgba(226, 232, 240, 0.3) !important;
+    padding: 1rem 1.5rem;
+}
+
+.dark #moreActionsModal .modal-header {
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+.dark #moreActionsModal .modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.9;
+}
+
+.dark #moreActionsModal .modal-header .btn-close:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5);
+}
+
+#moreActionsModal .modal-body {
+    background: transparent !important;
+    padding: 1.5rem;
+}
+
+#moreActionsModal .modal-body .quick-action-btn {
+    min-height: 80px;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+#moreActionsModal .modal-body .quick-action-btn i {
+    font-size: 1.5rem !important;
+    margin-bottom: 0.5rem;
+}
+
+#moreActionsModal .modal-body .quick-action-btn span {
+    font-size: 0.7rem !important;
+    font-weight: 600;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.2;
+}
+
+/* Mobile specific styles for modal */
+@media (max-width: 767.98px) {
+    #moreActionsModal .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+    
+    #moreActionsModal .modal-body {
+        padding: 1rem;
+    }
+    
+    #moreActionsModal .modal-body .row {
+        margin: 0;
+    }
+    
+    #moreActionsModal .modal-body .col-4 {
+        padding: 0.25rem;
+    }
+    
+    #moreActionsModal .modal-body .quick-action-btn {
+        min-height: 75px;
+        padding: 0.5rem !important;
+    }
+}
+
+/* Mobile Quick Actions - Equal Sizes */
+@media (max-width: 767.98px) {
+    .quick-action-btn {
+        min-height: 70px;
+    }
+    
+    .quick-action-btn span {
+        font-size: 0.7rem !important;
+    }
+    
+    .quick-action-btn i {
+        font-size: 1.25rem;
+    }
+}
+
 /* Patient Name Link Styles */
 .patient-name-link {
     color: var(--accent) !important;
@@ -1221,13 +1558,14 @@
 
 /* Chart Container Styles */
 .chart-container {
-    background-color: #1e293b !important; /* Dark background for charts */
+    background-color: #ffffff !important; /* Light background for charts by default */
     border-radius: 8px;
     padding: 1rem;
+    transition: background-color 0.3s ease;
 }
 
 .dark .chart-container {
-    background-color: #1e293b !important;
+    background-color: #1e293b !important; /* Dark background for charts in dark mode */
 }
 
 .chart-card {
@@ -2255,14 +2593,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                data-bs-toggle="tooltip" 
                                data-bs-placement="top" 
                                data-bs-title="View Appointment Details">
-                                <i class="bi bi-calendar-event me-1"></i>View Appointment
+                                <i class="bi bi-calendar-event me-1"></i>Appointment
                             </a>
                             <a href="/doctor/patients/${appointment.patient_id}" 
                                class="btn btn-outline-info"
                                data-bs-toggle="tooltip" 
                                data-bs-placement="top" 
                                data-bs-title="View Patient Profile">
-                                <i class="bi bi-person-circle me-1"></i>View Patient
+                                <i class="bi bi-person-circle me-1"></i>Patient
                             </a>
                         </div>
                     </div>
@@ -2458,7 +2796,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                data-bs-toggle="tooltip" 
                                data-bs-placement="top" 
                                data-bs-title="View Appointment Details">
-                                <i class="bi bi-calendar-event me-1"></i>View Appointment
+                                <i class="bi bi-calendar-event me-1"></i> Appointment
                             </a>
                             <a href="/doctor/patients/${appointment.patient_id}" 
                                class="btn btn-outline-info"
@@ -2664,34 +3002,31 @@ document.addEventListener('DOMContentLoaded', function() {
         return statusClasses[status] || 'badge-secondary';
     }
     
-    // Recent Activity Pagination
-    let currentPage = 1;
-    let perPage = 10;
+    // Recent Activity - Dashboard (Limited to 5)
+    let dashboardCurrentPage = 1;
+    let dashboardPerPage = 5;
     
-    // Load recent activity on page load
-    loadRecentActivity(currentPage, perPage);
+    // Load recent activity on page load (dashboard - limited to 5)
+    loadRecentActivity(dashboardCurrentPage, dashboardPerPage, 'recentActivityContainer', false);
     
-    // Handle per page change
-    document.getElementById('perPageSelect').addEventListener('change', function() {
-        perPage = parseInt(this.value);
-        currentPage = 1;
-        loadRecentActivity(currentPage, perPage);
-    });
-    
-    function loadRecentActivity(page, limit) {
-        const container = document.getElementById('recentActivityContainer');
-        const paginationNav = document.getElementById('paginationNav');
+    function loadRecentActivity(page, limit, containerId, showPagination = true) {
+        const container = document.getElementById(containerId);
+        const paginationNav = showPagination ? document.getElementById('paginationNav') : null;
+        
+        if (!container) return;
         
         // Show loading
         container.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
-        paginationNav.style.display = 'none';
+        if (paginationNav) paginationNav.style.display = 'none';
         
         fetch(`/api/recent-activity?page=${page}&per_page=${limit}`)
             .then(response => response.json())
             .then(data => {
                 if (data.ok) {
-                    renderRecentActivity(data.data.items);
-                    renderPagination(data.data.pagination);
+                    renderRecentActivity(data.data.items, containerId);
+                    if (showPagination && paginationNav) {
+                        renderPagination(data.data.pagination, 'paginationList', 'loadRecentActivityPage');
+                    }
                 } else {
                     container.innerHTML = '<p class="text-muted text-center py-3">Error loading recent activity</p>';
                 }
@@ -2702,8 +3037,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
     
-    function renderRecentActivity(events) {
-        const container = document.getElementById('recentActivityContainer');
+    function renderRecentActivity(events, containerId = 'recentActivityContainer', filterQuery = '') {
+        const container = document.getElementById(containerId);
+        if (!container) return;
         
         if (!events || events.length === 0) {
             container.innerHTML = '<p class="text-muted text-center py-3">No recent activity</p>';
@@ -2721,6 +3057,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 minute: '2-digit'
             });
             
+            // Patient name - clickable if patient_id exists, with highlight
+            const patientName = (event.first_name || '') + ' ' + (event.last_name || '');
+            let patientNameHtml = patientName;
+            if (event.patient_id) {
+                const highlightedName = highlightText(patientName, filterQuery);
+                patientNameHtml = `<a href="/doctor/patients/${event.patient_id}" class="patient-name-link" style="text-decoration: none; color: var(--accent); font-weight: 600; transition: all 0.2s ease;" onmouseover="this.style.opacity='0.8'; this.style.textDecoration='underline';" onmouseout="this.style.opacity='1'; this.style.textDecoration='none';">${highlightedName}</a>`;
+            } else {
+                patientNameHtml = highlightText(patientName, filterQuery);
+            }
+            
+            // Event summary with highlight
+            const highlightedSummary = highlightText(event.event_summary || '', filterQuery);
+            
+            // Appointment link - clickable if appointment_id exists
+            let appointmentLinkHtml = '';
+            if (event.appointment_id) {
+                appointmentLinkHtml = ` | <a href="/doctor/appointments/${event.appointment_id}" class="text-primary" style="text-decoration: none; font-weight: 600; transition: all 0.2s ease;" onmouseover="this.style.opacity='0.8'; this.style.textDecoration='underline';" onmouseout="this.style.opacity='1'; this.style.textDecoration='none';">
+                    <i class="bi bi-calendar-event me-1"></i>View Appointment
+                </a>`;
+            }
+            
             html += `
                 <div class="timeline-item mb-3">
                     <div class="d-flex">
@@ -2728,14 +3085,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="bg-primary rounded-circle" style="width: 12px; height: 12px;"></div>
                         </div>
                         <div class="flex-grow-1">
-                            <h6 class="mb-1">${escapeHtml(event.event_summary || '')}</h6>
+                            <h6 class="mb-1">${highlightedSummary}</h6>
                             <p class="mb-1 text-muted">
                                 <i class="bi bi-person me-1"></i>
-                                ${escapeHtml((event.first_name || '') + ' ' + (event.last_name || ''))}
+                                ${patientNameHtml}
                             </p>
                             <small class="text-muted">
                                 <i class="bi bi-clock me-1"></i>
                                 ${formattedDate}
+                                ${appointmentLinkHtml}
                             </small>
                         </div>
                     </div>
@@ -2747,16 +3105,41 @@ document.addEventListener('DOMContentLoaded', function() {
         container.innerHTML = html;
     }
     
-    function renderPagination(pagination) {
-        const paginationNav = document.getElementById('paginationNav');
-        const paginationList = document.getElementById('paginationList');
+    function renderPagination(pagination, listId = 'paginationList', pageFunction = 'loadRecentActivityPage', navId = null) {
+        // Determine which nav to use - if navId is provided, use it, otherwise try to detect
+        let paginationNav;
+        if (navId) {
+            paginationNav = document.getElementById(navId);
+        } else {
+            // Auto-detect: if listId contains 'modal', use modal nav, otherwise use dashboard nav
+            paginationNav = listId.includes('modal') ? document.getElementById('modalPaginationNav') : document.getElementById('paginationNav');
+        }
         
-        if (!pagination || pagination.total_pages <= 1) {
-            paginationNav.style.display = 'none';
+        const paginationList = document.getElementById(listId);
+        
+        // Validate inputs
+        if (!pagination) {
+            if (paginationNav) paginationNav.style.display = 'none';
+            if (paginationList) paginationList.innerHTML = '';
             return;
         }
         
-        paginationNav.style.display = 'block';
+        if (!paginationList) {
+            console.error('Pagination list element not found:', listId);
+            return;
+        }
+        
+        // Hide pagination if only one page or no pages
+        if (pagination.total_pages <= 1) {
+            if (paginationNav) paginationNav.style.display = 'none';
+            paginationList.innerHTML = '';
+            return;
+        }
+        
+        // Show pagination nav
+        if (paginationNav) {
+            paginationNav.style.display = 'block';
+        }
         
         let html = '';
         const currentPageNum = pagination.current_page;
@@ -2765,7 +3148,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Previous button
         html += `
             <li class="page-item ${currentPageNum === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="event.preventDefault(); loadRecentActivityPage(${currentPageNum - 1}); return false;">
+                <a class="page-link" href="#" onclick="event.preventDefault(); ${pageFunction}(${currentPageNum - 1}); return false;">
                     <i class="bi bi-chevron-left"></i>
                 </a>
             </li>
@@ -2781,7 +3164,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (startPage > 1) {
-            html += `<li class="page-item"><a class="page-link" href="#" onclick="event.preventDefault(); loadRecentActivityPage(1); return false;">1</a></li>`;
+            html += `<li class="page-item"><a class="page-link" href="#" onclick="event.preventDefault(); ${pageFunction}(1); return false;">1</a></li>`;
             if (startPage > 2) {
                 html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
             }
@@ -2790,7 +3173,7 @@ document.addEventListener('DOMContentLoaded', function() {
         for (let i = startPage; i <= endPage; i++) {
             html += `
                 <li class="page-item ${i === currentPageNum ? 'active' : ''}">
-                    <a class="page-link" href="#" onclick="event.preventDefault(); loadRecentActivityPage(${i}); return false;">${i}</a>
+                    <a class="page-link" href="#" onclick="event.preventDefault(); ${pageFunction}(${i}); return false;">${i}</a>
                 </li>
             `;
         }
@@ -2799,13 +3182,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (endPage < totalPages - 1) {
                 html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
             }
-            html += `<li class="page-item"><a class="page-link" href="#" onclick="event.preventDefault(); loadRecentActivityPage(${totalPages}); return false;">${totalPages}</a></li>`;
+            html += `<li class="page-item"><a class="page-link" href="#" onclick="event.preventDefault(); ${pageFunction}(${totalPages}); return false;">${totalPages}</a></li>`;
         }
         
         // Next button
         html += `
             <li class="page-item ${currentPageNum === totalPages ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="event.preventDefault(); loadRecentActivityPage(${currentPageNum + 1}); return false;">
+                <a class="page-link" href="#" onclick="event.preventDefault(); ${pageFunction}(${currentPageNum + 1}); return false;">
                     <i class="bi bi-chevron-right"></i>
                 </a>
             </li>
@@ -2814,13 +3197,177 @@ document.addEventListener('DOMContentLoaded', function() {
         paginationList.innerHTML = html;
     }
     
-    // Global function for pagination
+    // Global function for dashboard pagination (not used, but kept for compatibility)
     window.loadRecentActivityPage = function(page) {
-        currentPage = page;
-        loadRecentActivity(currentPage, perPage);
-        // Scroll to top of container
-        document.getElementById('recentActivityContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        dashboardCurrentPage = page;
+        loadRecentActivity(dashboardCurrentPage, dashboardPerPage, 'recentActivityContainer', false);
     };
+    
+    // Modal Activities Management
+    let modalCurrentPage = 1;
+    let modalPerPage = 10;
+    let modalFilterQuery = '';
+    let modalFilterTimeout = null;
+    let modalAllActivities = []; // Store all activities for client-side filtering
+    
+    // Load all activities for modal (client-side filtering)
+    function loadModalActivities(page, limit, filter = '') {
+        const container = document.getElementById('allActivitiesContainer');
+        const paginationNav = document.getElementById('modalPaginationNav');
+        
+        if (!container) return;
+        
+        // If we don't have all activities loaded yet, load them first
+        if (modalAllActivities.length === 0) {
+            // Show loading
+            container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+            if (paginationNav) paginationNav.style.display = 'none';
+            
+            // Load all activities (use a large limit to get all)
+            fetch(`/api/recent-activity?page=1&per_page=1000`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ok && data.data && data.data.items) {
+                        modalAllActivities = data.data.items;
+                        applyFilterAndRender(page, limit, filter, container, paginationNav);
+                    } else {
+                        container.innerHTML = '<p class="text-muted text-center py-5">Error loading activities</p>';
+                        if (paginationNav) paginationNav.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading activities:', error);
+                    container.innerHTML = '<p class="text-muted text-center py-5">Error loading activities</p>';
+                    if (paginationNav) paginationNav.style.display = 'none';
+                });
+        } else {
+            // We already have the data, just apply filter and render
+            applyFilterAndRender(page, limit, filter, container, paginationNav);
+        }
+    }
+    
+    // Apply filter and render activities
+    function applyFilterAndRender(page, limit, filter, container, paginationNav) {
+        // Filter activities client-side
+        let filteredActivities = modalAllActivities;
+        
+        if (filter && filter.trim() !== '') {
+            const filterLower = filter.toLowerCase().trim();
+            filteredActivities = modalAllActivities.filter(event => {
+                const eventSummary = (event.event_summary || '').toLowerCase();
+                const firstName = (event.first_name || '').toLowerCase();
+                const lastName = (event.last_name || '').toLowerCase();
+                const fullName = `${firstName} ${lastName}`.toLowerCase();
+                const phone = (event.phone || '').toLowerCase();
+                
+                return eventSummary.includes(filterLower) ||
+                       firstName.includes(filterLower) ||
+                       lastName.includes(filterLower) ||
+                       fullName.includes(filterLower) ||
+                       phone.includes(filterLower);
+            });
+        }
+        
+        // Calculate pagination
+        const total = filteredActivities.length;
+        const totalPages = Math.ceil(total / limit);
+        const offset = (page - 1) * limit;
+        const paginatedActivities = filteredActivities.slice(offset, offset + limit);
+        
+        // Render activities with highlight
+        renderRecentActivity(paginatedActivities, 'allActivitiesContainer', filter);
+        
+        // Render pagination
+        if (paginationNav) {
+            if (totalPages > 1) {
+                const pagination = {
+                    current_page: page,
+                    per_page: limit,
+                    total: total,
+                    total_pages: totalPages,
+                    has_previous: page > 1,
+                    has_next: page < totalPages
+                };
+                renderPagination(pagination, 'modalPaginationList', 'loadModalActivityPage', 'modalPaginationNav');
+            } else {
+                paginationNav.style.display = 'none';
+            }
+        }
+    }
+    
+    // Global function for modal pagination
+    window.loadModalActivityPage = function(page) {
+        modalCurrentPage = page;
+        loadModalActivities(modalCurrentPage, modalPerPage, modalFilterQuery);
+        const container = document.getElementById('allActivitiesContainer');
+        if (container) {
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
+    
+    // Function to highlight text with yellow background
+    function highlightText(text, query) {
+        if (!query || query.trim() === '') {
+            return escapeHtml(text);
+        }
+        
+        const escapedText = escapeHtml(text);
+        const escapedQuery = escapeHtml(query);
+        const regex = new RegExp(`(${escapedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        
+        return escapedText.replace(regex, '<mark style="background-color: #ffeb3b; color: #000; padding: 2px 4px; border-radius: 3px;">$1</mark>');
+    }
+    
+    // Setup modal event listeners
+    const allActivitiesModal = document.getElementById('allActivitiesModal');
+    if (allActivitiesModal) {
+        // Load activities when modal is shown
+        allActivitiesModal.addEventListener('show.bs.modal', function() {
+            modalCurrentPage = 1;
+            modalPerPage = 10;
+            modalFilterQuery = '';
+            modalAllActivities = []; // Reset to reload all activities
+            const filterInput = document.getElementById('activitiesFilterInput');
+            if (filterInput) filterInput.value = '';
+            loadModalActivities(modalCurrentPage, modalPerPage);
+        });
+        
+        // Handle per page change in modal
+        const modalPerPageSelect = document.getElementById('modalPerPageSelect');
+        if (modalPerPageSelect) {
+            modalPerPageSelect.addEventListener('change', function() {
+                modalPerPage = parseInt(this.value);
+                modalCurrentPage = 1;
+                loadModalActivities(modalCurrentPage, modalPerPage, modalFilterQuery);
+            });
+        }
+        
+        // Handle filter input
+        const activitiesFilterInput = document.getElementById('activitiesFilterInput');
+        if (activitiesFilterInput) {
+            activitiesFilterInput.addEventListener('input', function() {
+                clearTimeout(modalFilterTimeout);
+                modalFilterTimeout = setTimeout(() => {
+                    modalFilterQuery = this.value.trim();
+                    modalCurrentPage = 1;
+                    loadModalActivities(modalCurrentPage, modalPerPage, modalFilterQuery);
+                }, 300); // Debounce filter
+            });
+        }
+        
+        // Handle clear filter button
+        const clearActivitiesFilter = document.getElementById('clearActivitiesFilter');
+        if (clearActivitiesFilter) {
+            clearActivitiesFilter.addEventListener('click', function() {
+                modalFilterQuery = '';
+                if (activitiesFilterInput) {
+                    activitiesFilterInput.value = '';
+                }
+                modalCurrentPage = 1;
+                loadModalActivities(modalCurrentPage, modalPerPage, '');
+            });
+        }
+    }
     
     function escapeHtml(text) {
         const div = document.createElement('div');
@@ -4395,22 +4942,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Get current theme colors dynamically
         function getCurrentThemeColors() {
-            return {
-                text: '#ffffff', // Always white for charts as requested
-                muted: '#ffffff',
-                grid: 'rgba(255, 255, 255, 0.15)', // Always white grid for dark chart background
-                border: 'rgba(255, 255, 255, 0.3)', // Always white border
-                background: '#1e293b' // Always dark background for charts
-            };
+            const isDark = document.documentElement.classList.contains('dark');
+            
+            if (isDark) {
+                return {
+                    text: '#ffffff',
+                    muted: '#ffffff',
+                    grid: 'rgba(255, 255, 255, 0.15)',
+                    border: 'rgba(255, 255, 255, 0.3)',
+                    background: '#1e293b',
+                    tooltipBg: 'rgba(0, 0, 0, 0.95)',
+                    tooltipText: '#ffffff'
+                };
+            } else {
+                return {
+                    text: '#0f172a',
+                    muted: '#475569',
+                    grid: 'rgba(0, 0, 0, 0.1)',
+                    border: 'rgba(0, 0, 0, 0.2)',
+                    background: '#ffffff',
+                    tooltipBg: 'rgba(255, 255, 255, 0.95)',
+                    tooltipText: '#0f172a'
+                };
+            }
         }
 
         // Chart.js default configuration
         if (Chart.defaults && Chart.defaults.font) {
             Chart.defaults.font.family = "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
         }
-        if (Chart.defaults) {
-            Chart.defaults.color = '#ffffff'; // Always white for charts
+        
+        // Update Chart.js defaults based on theme
+        function updateChartDefaults() {
+            const themeColors = getCurrentThemeColors();
+            if (Chart.defaults) {
+                Chart.defaults.color = themeColors.text;
+            }
         }
+        
+        // Initialize defaults
+        updateChartDefaults();
 
         // Make functions and variables global
         window.chartColors = chartColors;
@@ -4432,13 +5003,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                 size: 12,
                                 family: "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
                             },
-                            color: '#ffffff' // Always white for charts
+                            color: themeColors.text
                         }
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.95)',
-                        titleColor: '#ffffff',
-                        bodyColor: '#ffffff',
+                        backgroundColor: themeColors.tooltipBg,
+                        titleColor: themeColors.tooltipText,
+                        bodyColor: themeColors.tooltipText,
                         borderColor: themeColors.border,
                         borderWidth: 1,
                         cornerRadius: 8,
@@ -4461,7 +5032,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             drawBorder: false
                         },
                         ticks: {
-                            color: '#ffffff', // Always white for charts
+                            color: themeColors.text,
                             font: {
                                 family: "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
                             }
@@ -4473,7 +5044,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             drawBorder: false
                         },
                         ticks: {
-                            color: '#ffffff', // Always white for charts
+                            color: themeColors.text,
                             font: {
                                 family: "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
                             }
@@ -4498,13 +5069,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                 size: 12,
                                 family: "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
                             },
-                            color: '#ffffff' // Always white for charts
+                            color: themeColors.text
                         }
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.95)',
-                        titleColor: '#ffffff',
-                        bodyColor: '#ffffff',
+                        backgroundColor: themeColors.tooltipBg,
+                        titleColor: themeColors.tooltipText,
+                        bodyColor: themeColors.tooltipText,
                         borderColor: themeColors.border,
                         borderWidth: 1,
                         cornerRadius: 8,
@@ -4560,16 +5131,27 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('statsRatio').textContent = ratio + '%';
         };
 
+        // Store chart instances for theme updates
+        window.chartInstances = {
+            appointmentsChart: null,
+            appointmentsPieChart: null
+        };
+        
         window.renderAppointmentsChart = function(trendData) {
             const ctx = document.getElementById('appointmentsChart');
             if (!ctx || !trendData || trendData.length === 0) return;
+            
+            // Destroy existing chart if it exists
+            if (window.chartInstances.appointmentsChart) {
+                window.chartInstances.appointmentsChart.destroy();
+            }
             
             const dates = trendData.map(item => item.date);
             const totalAppointments = trendData.map(item => item.total_appointments || 0);
             const completed = trendData.map(item => item.completed || 0);
             const missed = trendData.map(item => item.missed || 0);
             
-            new Chart(ctx, {
+            window.chartInstances.appointmentsChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: dates.map(date => new Date(date).toLocaleDateString('en-US', { 
@@ -4611,6 +5193,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const ctx = document.getElementById('appointmentsPieChart');
             if (!ctx || !statusData) return;
             
+            // Destroy existing chart if it exists
+            if (window.chartInstances.appointmentsPieChart) {
+                window.chartInstances.appointmentsPieChart.destroy();
+            }
+            
             const totalCompleted = statusData.completed || 0;
             const totalMissed = statusData.missed || 0;
             
@@ -4619,7 +5206,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            new Chart(ctx, {
+            const themeColors = getCurrentThemeColors();
+            
+            window.chartInstances.appointmentsPieChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Completed', 'Missed'],
@@ -4630,20 +5219,69 @@ document.addEventListener('DOMContentLoaded', function() {
                             '#ef4444'
                         ],
                         borderWidth: 2,
-                        borderColor: '#fff'
+                        borderColor: themeColors.background
                     }]
                 },
                 options: getPieOptions()
             });
         };
         
+        // Function to update charts when theme changes
+        window.updateChartsTheme = function() {
+            updateChartDefaults();
+            
+            // Update chart container background
+            const chartContainers = document.querySelectorAll('.chart-container');
+            const themeColors = getCurrentThemeColors();
+            chartContainers.forEach(container => {
+                container.style.backgroundColor = themeColors.background;
+            });
+            
+            // Reload charts data to redraw with new theme
+            if (window.chartInstances.appointmentsChart || window.chartInstances.appointmentsPieChart) {
+                loadChartsData();
+            }
+        };
+        
         // Load charts when DOM is ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() {
                 loadChartsData();
+                setupThemeListener();
             });
         } else {
             loadChartsData();
+            setupThemeListener();
+        }
+        
+        // Setup theme change listener
+        function setupThemeListener() {
+            // Listen for theme toggle button click
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function() {
+                    // Wait a bit for theme class to be applied
+                    setTimeout(() => {
+                        updateChartsTheme();
+                    }, 100);
+                });
+            }
+            
+            // Also listen for class changes on documentElement (for programmatic theme changes)
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                        setTimeout(() => {
+                            updateChartsTheme();
+                        }, 100);
+                    }
+                });
+            });
+            
+            observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ['class']
+            });
         }
     }
     
