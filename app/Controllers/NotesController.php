@@ -44,6 +44,10 @@ class NotesController
         header('Content-Type: application/json; charset=utf-8');
         
         $user = $this->auth->user();
+        $logFile = '/home/hclinic/web/roaya.hclinic.clinic/logs/roaya.hclinic.clinic.error.log';
+        
+        // Test log
+        error_log("=== getNotes() called for User ID: {$user['id']} ===\n", 3, $logFile);
         
         try {
             $stmt = $this->pdo->prepare("
@@ -54,9 +58,68 @@ class NotesController
             $stmt->execute([$user['id']]);
             $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
+            error_log("Found " . count($notes) . " notes\n", 3, $logFile);
+            
             // Ensure notes is an array
             if (!is_array($notes)) {
                 $notes = [];
+            }
+            
+            // Get doctor ID for alerts
+            $doctorStmt = $this->pdo->prepare("SELECT id FROM doctors WHERE user_id = ?");
+            $doctorStmt->execute([$user['id']]);
+            $doctor = $doctorStmt->fetch(PDO::FETCH_ASSOC);
+            
+            error_log("Doctor ID: " . ($doctor ? $doctor['id'] : 'NULL') . "\n", 3, $logFile);
+            
+            // Get alerts for each note
+            if ($doctor) {
+                $alertModel = new \App\Models\AlertModel();
+                
+                foreach ($notes as &$note) {
+                    // Use HTML content (same as what we send when creating alert)
+                    // Normalize content for comparison (trim whitespace)
+                    $noteContent = trim($note['content'] ?? '');
+                    if (!empty($noteContent)) {
+                        // Log before search
+                        $logMessage = "=== Searching alert for Note ID: {$note['id']} ===\n";
+                        $logMessage .= "Doctor ID: {$doctor['id']}\n";
+                        $logMessage .= "Note Content Length: " . strlen($noteContent) . "\n";
+                        $logMessage .= "Note Content: " . addslashes($noteContent) . "\n";
+                        error_log($logMessage, 3, $logFile);
+                        
+                        $alert = $alertModel->getByMessage($doctor['id'], $noteContent);
+                        
+                        // Log after search
+                        if ($alert) {
+                            $logMessage = "✓ Found Alert ID: {$alert['id']}\n";
+                            $logMessage .= "Alert Message Length: " . strlen($alert['message']) . "\n";
+                            $logMessage .= "Alert Message: " . addslashes($alert['message']) . "\n";
+                        } else {
+                            $logMessage = "✗ No alert found\n";
+                            // Check all alerts for this doctor
+                            $allAlerts = $alertModel->getByDoctor($doctor['id'], []);
+                            $logMessage .= "Total alerts for doctor: " . count($allAlerts) . "\n";
+                            foreach ($allAlerts as $idx => $a) {
+                                if (empty($a['patient_id']) && empty($a['appointment_id'])) {
+                                    $logMessage .= "  Alert #{$idx}: ID={$a['id']}, Message Length=" . strlen($a['message']) . ", Message=" . addslashes($a['message']) . "\n";
+                                }
+                            }
+                        }
+                        error_log($logMessage, 3, $logFile);
+                        
+                        $note['alert'] = $alert ? [
+                            'id' => $alert['id'],
+                            'alert_date' => $alert['alert_date'],
+                            'alert_time' => $alert['alert_time']
+                        ] : null;
+                    } else {
+                        $note['alert'] = null;
+                        error_log("Note ID: {$note['id']} has empty content\n", 3, $logFile);
+                    }
+                }
+            } else {
+                error_log("No doctor found for user ID: {$user['id']}\n", 3, $logFile);
             }
             
             echo json_encode([

@@ -2357,7 +2357,7 @@
                                 <div class="d-flex align-items-start">
                                     <i class="bi bi-bell-fill me-2" style="font-size: 1.5rem; margin-top: 2px;"></i>
                                     <div class="flex-grow-1">
-                                        <strong>${escapeHtml(alert.message)}</strong>
+                                        <div class="alert-message-content">${alert.message}</div>
                                         ${alert.patient_id ? `<br><small><i class="bi bi-person me-1"></i>${escapeHtml(patientName)}</small>` : ''}
                                         ${alert.alert_date && alert.alert_time ? `<br><small><i class="bi bi-clock me-1"></i>${escapeHtml(alert.alert_date)} ${escapeHtml(alert.alert_time)}</small>` : ''}
                                     </div>

@@ -6899,7 +6899,7 @@ function loadPatientAlerts() {
                             <div class="flex-grow-1">
                                 <div class="d-flex align-items-center mb-2">
                                     <i class="bi bi-bell-fill me-2"></i>
-                                    <h6 class="mb-0">${escapeHtml(alert.message || 'No message')}</h6>
+                                    <h6 class="mb-0"><div class="alert-message-content" style="word-wrap: break-word;">${alert.message || 'No message'}</div></h6>
                                     </div>
                                 <div class="text-muted small">
                                     <i class="bi bi-calendar me-1"></i>${alertDate}

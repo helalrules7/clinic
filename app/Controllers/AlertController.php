@@ -169,30 +169,69 @@ class AlertController
             return;
         }
         
-        $alertData = [
-            'doctor_id' => $doctorId,
-            'patient_id' => $data['patient_id'] ?? null,
-            'appointment_id' => $data['appointment_id'] ?? null,
-            'message' => $data['message'],
-            'alert_date' => $data['alert_date'],
-            'alert_time' => $data['alert_time'],
-            'repeat_count' => intval($data['repeat_count'] ?? 1),
-            'repeat_interval' => intval($data['repeat_interval'] ?? 0)
-        ];
+        // Check if alert already exists for this note (by message, no patient/appointment)
+        $existingAlert = null;
+        if (empty($data['patient_id']) && empty($data['appointment_id'])) {
+            // Normalize message for comparison (trim whitespace)
+            $normalizedMessage = trim($data['message']);
+            $existingAlert = $this->alertModel->getByMessage($doctorId, $normalizedMessage);
+        }
         
-        $alertId = $this->alertModel->create($alertData);
-        
-        if ($alertId) {
-            echo json_encode([
-                'success' => true,
-                'message' => 'Alert created successfully',
-                'alert_id' => $alertId
-            ]);
+        if ($existingAlert) {
+            // Update existing alert
+            $updateData = [
+                'message' => $data['message'],
+                'alert_date' => $data['alert_date'],
+                'alert_time' => $data['alert_time'],
+                'repeat_count' => intval($data['repeat_count'] ?? 1),
+                'repeat_interval' => intval($data['repeat_interval'] ?? 0),
+                'is_active' => 1,
+                'is_dismissed' => 0
+            ];
+            
+            $result = $this->alertModel->update($existingAlert['id'], $updateData, $doctorId);
+            
+            if ($result) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Alert updated successfully',
+                    'alert_id' => $existingAlert['id'],
+                    'updated' => true
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Failed to update alert'
+                ]);
+            }
         } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Failed to create alert'
-            ]);
+            // Create new alert
+            $alertData = [
+                'doctor_id' => $doctorId,
+                'patient_id' => $data['patient_id'] ?? null,
+                'appointment_id' => $data['appointment_id'] ?? null,
+                'message' => $data['message'],
+                'alert_date' => $data['alert_date'],
+                'alert_time' => $data['alert_time'],
+                'repeat_count' => intval($data['repeat_count'] ?? 1),
+                'repeat_interval' => intval($data['repeat_interval'] ?? 0)
+            ];
+            
+            $alertId = $this->alertModel->create($alertData);
+            
+            if ($alertId) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Alert created successfully',
+                    'alert_id' => $alertId,
+                    'updated' => false
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Failed to create alert'
+                ]);
+            }
         }
     }
 

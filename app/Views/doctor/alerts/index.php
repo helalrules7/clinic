@@ -338,7 +338,7 @@ function loadAlerts() {
                     
                     html += `
                         <tr class="${alertStatusClass}">
-                            <td>${escapeHtml(alert.message)}</td>
+                            <td><div class="alert-message-content" style="word-wrap: break-word;">${alert.message}</div></td>
                             <td>
                                 <i class="bi bi-calendar me-1"></i>${dateStr}<br>
                                 <i class="bi bi-clock me-1"></i>${timeStr}

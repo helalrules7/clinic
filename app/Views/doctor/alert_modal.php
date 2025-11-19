@@ -28,7 +28,19 @@
                         <label for="alertMessage" class="form-label">
                             <i class="bi bi-chat-text me-1"></i>Alert Message <span class="text-danger">*</span>
                         </label>
-                        <textarea class="form-control" id="alertMessage" name="message" rows="3" required placeholder="Enter alert message..."></textarea>
+                        <div class="alert-editor-wrapper">
+                            <div class="btn-group btn-group-sm mb-2" role="group">
+                                <button type="button" class="btn btn-outline-secondary" onclick="setAlertEditorMode('text')" id="alertEditorTextBtn">
+                                    <i class="bi bi-type"></i> Text
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="setAlertEditorMode('html')" id="alertEditorHtmlBtn">
+                                    <i class="bi bi-code-slash"></i> HTML
+                                </button>
+                            </div>
+                            <textarea class="form-control" id="alertMessage" name="message" rows="3" required placeholder="Enter alert message..."></textarea>
+                            <div id="alertMessageHtmlEditor" class="form-control" contenteditable="true" style="display: none; min-height: 100px; max-height: 300px; overflow-y: auto;" placeholder="Enter HTML content..."></div>
+                            <small class="text-muted">You can use HTML formatting in alerts</small>
+                        </div>
                     </div>
                     
                     <div class="row">
@@ -221,6 +233,58 @@
     background: rgba(13, 110, 253, 0.1);
     padding: 0.75rem;
 }
+
+/* Alert Editor Styles */
+.alert-editor-wrapper {
+    position: relative;
+}
+
+#alertMessageHtmlEditor {
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    padding: 0.75rem;
+    background: var(--card);
+    color: var(--text);
+    min-height: 100px;
+    max-height: 300px;
+    overflow-y: auto;
+    font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.5;
+}
+
+#alertMessageHtmlEditor:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 0.2rem rgba(14, 165, 233, 0.25);
+}
+
+#alertMessageHtmlEditor:empty:before {
+    content: attr(placeholder);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.dark #alertMessageHtmlEditor {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark #alertMessageHtmlEditor:focus {
+    border-color: var(--accent);
+}
+
+.alert-editor-wrapper .btn-group .btn.active {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.dark .alert-editor-wrapper .btn-group .btn.active {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: #0b1220;
+}
 </style>
 
 <script>
@@ -254,7 +318,15 @@ function openAlertModal(patientId, appointmentId, alertData = null) {
     
     if (alertData) {
         // Edit mode - populate form with alert data
-        document.getElementById('alertMessage').value = alertData.message || '';
+        // Check if message contains HTML tags
+        const hasHtml = /<[a-z][\s\S]*>/i.test(alertData.message || '');
+        if (hasHtml) {
+            setAlertEditorMode('html');
+            document.getElementById('alertMessageHtmlEditor').innerHTML = alertData.message || '';
+        } else {
+            setAlertEditorMode('text');
+            document.getElementById('alertMessage').value = alertData.message || '';
+        }
         document.getElementById('alertDate').value = alertData.alert_date || '';
         document.getElementById('alertTime').value = alertData.alert_time || '';
         document.getElementById('alertRepeatCount').value = alertData.repeat_count || '1';
@@ -294,7 +366,9 @@ function openAlertModal(patientId, appointmentId, alertData = null) {
         }
     } else {
         // Create mode - clear form
+        setAlertEditorMode('text');
         document.getElementById('alertMessage').value = '';
+        document.getElementById('alertMessageHtmlEditor').innerHTML = '';
         document.getElementById('alertDate').value = '';
         document.getElementById('alertTime').value = '';
         document.getElementById('alertRepeatCount').value = '1';
@@ -621,6 +695,58 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeAlertModalDraggable();
 });
 
+// Set alert editor mode (text or HTML)
+function setAlertEditorMode(mode) {
+    const textEditor = document.getElementById('alertMessage');
+    const htmlEditor = document.getElementById('alertMessageHtmlEditor');
+    const textBtn = document.getElementById('alertEditorTextBtn');
+    const htmlBtn = document.getElementById('alertEditorHtmlBtn');
+    
+    if (!textEditor || !htmlEditor || !textBtn || !htmlBtn) return;
+    
+    if (mode === 'html') {
+        // Switch to HTML mode
+        textEditor.style.display = 'none';
+        textEditor.removeAttribute('required');
+        htmlEditor.style.display = 'block';
+        htmlEditor.setAttribute('required', 'required');
+        
+        // Transfer content if text editor has content
+        if (textEditor.value && !htmlEditor.innerHTML.trim()) {
+            htmlEditor.innerHTML = escapeHtml(textEditor.value).replace(/\n/g, '<br>');
+        }
+        
+        // Update button states
+        textBtn.classList.remove('active');
+        htmlBtn.classList.add('active');
+    } else {
+        // Switch to text mode
+        htmlEditor.style.display = 'none';
+        htmlEditor.removeAttribute('required');
+        textEditor.style.display = 'block';
+        textEditor.setAttribute('required', 'required');
+        
+        // Transfer content if HTML editor has content
+        if (htmlEditor.innerHTML && !textEditor.value) {
+            // Strip HTML tags and convert <br> to newlines
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlEditor.innerHTML;
+            textEditor.value = tempDiv.textContent || tempDiv.innerText || '';
+        }
+        
+        // Update button states
+        htmlBtn.classList.remove('active');
+        textBtn.classList.add('active');
+    }
+}
+
+// Escape HTML function
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 function saveAlert() {
     const form = document.getElementById('alertForm');
     if (!form || !form.checkValidity()) {
@@ -644,10 +770,23 @@ function saveAlert() {
     const isFuture = alertDateTime > new Date();
     const wasInactive = originalAlertData && (originalAlertData.is_active == 0 || originalAlertData.is_dismissed == 1);
     
+    // Get message from appropriate editor (text or HTML)
+    let alertMessage = '';
+    const htmlEditor = document.getElementById('alertMessageHtmlEditor');
+    const textEditor = document.getElementById('alertMessage');
+    
+    if (htmlEditor && htmlEditor.style.display !== 'none') {
+        // HTML mode
+        alertMessage = htmlEditor.innerHTML;
+    } else {
+        // Text mode
+        alertMessage = textEditor.value;
+    }
+    
     const formData = {
         patient_id: document.getElementById('alertPatientId').value || null,
         appointment_id: document.getElementById('alertAppointmentId').value || null,
-        message: document.getElementById('alertMessage').value,
+        message: alertMessage,
         alert_date: alertDate,
         alert_time: alertTime,
         repeat_count: parseInt(document.getElementById('alertRepeatCount').value) || 1,

@@ -450,10 +450,19 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
     background: rgba(255, 255, 255, 0.3);
     backdrop-filter: blur(10px);
     font-size: 0.75rem;
     opacity: 0.7;
+}
+
+.note-alert-status {
+    color: var(--accent);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
 }
 
 .dark .note-widget.color-white {
@@ -676,6 +685,78 @@
     background: var(--card);
     border-color: var(--border);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Note Alert Picker Styles */
+.note-alert-wrapper {
+    position: relative;
+}
+
+.note-alert-picker-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    /* Glass effect */
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    border-radius: 8px;
+    padding: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    min-width: 220px;
+}
+
+.dark .note-alert-picker-dropdown {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.alert-picker-content .form-label {
+    color: var(--text);
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.alert-picker-content .form-control {
+    background-color: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+    font-size: 0.875rem;
+}
+
+.alert-picker-content .form-control:focus {
+    background-color: var(--card);
+    border-color: var(--accent);
+    color: var(--text);
+    box-shadow: 0 0 0 0.2rem rgba(14, 165, 233, 0.25);
+}
+
+.alert-picker-content .btn {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+}
+
+.dark .note-alert-picker-dropdown {
+    background: var(--card);
+    border-color: var(--border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark .alert-picker-content .form-control {
+    background-color: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark .alert-picker-content .form-control:focus {
+    background-color: var(--card);
+    border-color: var(--accent);
+    color: var(--text);
 }
 
 /* Ensure delete modal is always on top */
@@ -1181,6 +1262,34 @@ function createNoteWidget(note) {
                         <div class="color-option-dropdown success" data-color="success" data-bg="#10b981" onclick="changeNoteColor(${note.id}, '#10b981')" title="Success Green"></div>
                     </div>
                 </div>
+                <div class="note-alert-wrapper" style="position: relative;">
+                    <button class="note-widget-btn" onclick="showNoteAlertPicker(${note.id}, event)" title="Create alert from this note">
+                        <i class="bi bi-bell"></i>
+                    </button>
+                    <div class="note-alert-picker-dropdown" id="alertPicker-${note.id}" style="display: none;">
+                        <div class="alert-picker-content">
+                            <div class="mb-2">
+                                <label class="form-label small">Date:</label>
+                                <input type="date" class="form-control form-control-sm" id="alertDate-${note.id}" value="${note.alert ? note.alert.alert_date : new Date().toISOString().split('T')[0]}">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">Time:</label>
+                                <div class="d-flex gap-1 align-items-center">
+                                    <input type="number" class="form-control form-control-sm" id="alertHour-${note.id}" min="1" max="12" value="${note.alert ? (parseInt(note.alert.alert_time.split(':')[0]) % 12 || 12) : (new Date().getHours() % 12 || 12)}" style="width: 60px;">
+                                    <span>:</span>
+                                    <input type="number" class="form-control form-control-sm" id="alertMinute-${note.id}" min="0" max="59" value="${note.alert ? note.alert.alert_time.split(':')[1] : new Date().getMinutes().toString().padStart(2, '0')}" style="width: 60px;">
+                                    <select class="form-select form-select-sm" id="alertAmPm-${note.id}" style="width: 70px;">
+                                        <option value="AM" ${note.alert ? (parseInt(note.alert.alert_time.split(':')[0]) < 12 ? 'selected' : '') : (new Date().getHours() < 12 ? 'selected' : '')}>AM</option>
+                                        <option value="PM" ${note.alert ? (parseInt(note.alert.alert_time.split(':')[0]) >= 12 ? 'selected' : '') : (new Date().getHours() >= 12 ? 'selected' : '')}>PM</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-primary w-100" onclick="createAlertFromNote(${note.id})">
+                                <i class="bi bi-check-circle me-1"></i>${note.alert ? 'Update Alert' : 'Create Alert'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <button class="note-widget-btn" onclick="bringToFront(${note.id})" title="Bring to front">
                     <i class="bi bi-layers"></i>
                 </button>
@@ -1199,6 +1308,7 @@ function createNoteWidget(note) {
         <div class="note-widget-footer">
             <span>Created: ${new Date(note.created_at).toLocaleDateString()}</span>
             <span>Updated: ${new Date(note.updated_at).toLocaleDateString()}</span>
+            ${note.alert ? `<span class="note-alert-status"><i class="bi bi-bell-fill me-1"></i>Alert: ${new Date(note.alert.alert_date).toLocaleDateString()} ${(function() { const [h, m] = note.alert.alert_time.split(':'); const h12 = parseInt(h) % 12 || 12; const ampm = parseInt(h) < 12 ? 'AM' : 'PM'; return h12 + ':' + m + ' ' + ampm; })()}</span>` : ''}
         </div>
         <div class="note-widget-resize" onmousedown="startResize(event, ${note.id})" ontouchstart="startResize(event, ${note.id})"></div>
     `;
@@ -1256,6 +1366,9 @@ async function loadNotes() {
                 }
                 return;
             }
+
+            // Debug: Log notes with alerts
+            console.log('Notes loaded:', data.notes.map(n => ({ id: n.id, hasAlert: !!n.alert, alert: n.alert })));
 
             // We have notes - hide empty state first
             if (emptyState) {
@@ -2390,5 +2503,136 @@ loadNotes = async function() {
     await originalLoadNotes();
     setTimeout(initAllAutocompletes, 100);
 };
+
+// Show note alert picker dropdown
+function showNoteAlertPicker(noteId, event) {
+    event.stopPropagation();
+    
+    // Close all other alert pickers
+    document.querySelectorAll('.note-alert-picker-dropdown').forEach(picker => {
+        if (picker.id !== `alertPicker-${noteId}`) {
+            picker.style.display = 'none';
+        }
+    });
+    
+    // Close color pickers
+    document.querySelectorAll('.note-color-picker-dropdown').forEach(picker => {
+        picker.style.display = 'none';
+    });
+    
+    // Toggle current picker
+    const picker = document.getElementById(`alertPicker-${noteId}`);
+    if (picker) {
+        if (picker.style.display === 'none' || !picker.style.display) {
+            picker.style.display = 'block';
+            // Close on outside click
+            setTimeout(() => {
+                document.addEventListener('click', function closePicker(e) {
+                    if (!picker.contains(e.target) && !e.target.closest(`#alertPicker-${noteId}`) && !e.target.closest(`button[onclick*="showNoteAlertPicker(${noteId}"]`)) {
+                        picker.style.display = 'none';
+                        document.removeEventListener('click', closePicker);
+                    }
+                });
+            }, 10);
+        } else {
+            picker.style.display = 'none';
+        }
+    }
+}
+
+// Format 24-hour time to 12-hour format
+function format12HourTime(time24) {
+    const [hours, minutes] = time24.split(':');
+    const hour12 = parseInt(hours) % 12 || 12;
+    const ampm = parseInt(hours) < 12 ? 'AM' : 'PM';
+    return `${hour12}:${minutes} ${ampm}`;
+}
+
+// Convert 12-hour time to 24-hour format
+function convertTo24Hour(hour, minute, ampm) {
+    let hour24 = parseInt(hour);
+    if (ampm === 'PM' && hour24 !== 12) {
+        hour24 += 12;
+    } else if (ampm === 'AM' && hour24 === 12) {
+        hour24 = 0;
+    }
+    return `${hour24.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
+}
+
+// Create alert from note
+async function createAlertFromNote(noteId) {
+    const widget = document.getElementById(`note-${noteId}`);
+    if (!widget) return;
+    
+    const noteContent = widget.querySelector('.note-widget-content');
+    if (!noteContent) return;
+    
+    const alertDate = document.getElementById(`alertDate-${noteId}`).value;
+    const alertHour = document.getElementById(`alertHour-${noteId}`).value;
+    const alertMinute = document.getElementById(`alertMinute-${noteId}`).value;
+    const alertAmPm = document.getElementById(`alertAmPm-${noteId}`).value;
+    
+    if (!alertDate || !alertHour || !alertMinute) {
+        alert('Please select date and time for the alert');
+        return;
+    }
+    
+    // Convert to 24-hour format
+    const alertTime = convertTo24Hour(alertHour, alertMinute, alertAmPm);
+    
+    // Get note content (HTML)
+    const noteHtml = noteContent.innerHTML;
+    
+    // Close picker
+    const picker = document.getElementById(`alertPicker-${noteId}`);
+    if (picker) {
+        picker.style.display = 'none';
+    }
+    
+    try {
+        const response = await fetch('/api/alerts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                message: noteHtml, // Send HTML content
+                alert_date: alertDate,
+                alert_time: alertTime,
+                repeat_count: 1,
+                repeat_interval: 0
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            successMsg.style.cssText = 'top: 20px; right: 20px; z-index: 99999; min-width: 300px;';
+            successMsg.innerHTML = `
+                <i class="bi bi-check-circle me-2"></i>Alert ${data.updated ? 'updated' : 'created'} successfully!
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(successMsg);
+            
+            setTimeout(() => {
+                if (successMsg.parentNode) {
+                    successMsg.remove();
+                }
+            }, 3000);
+            
+            // Reload notes to update alert status
+            loadNotes();
+        } else {
+            alert('Failed to create alert: ' + (data.message || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error creating alert:', error);
+        alert('Failed to create alert: ' + error.message);
+    }
+}
 </script>
 
