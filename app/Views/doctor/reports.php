@@ -829,19 +829,46 @@ function getThemeColors() {
 }
 
 // Chart.js default configuration
-Chart.defaults.font.family = "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
-Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--text') || '#0f172a';
+if (Chart.defaults && Chart.defaults.font) {
+    Chart.defaults.font.family = "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+}
 
-// Get current theme colors dynamically
+// Update Chart.js defaults based on theme
+function updateChartDefaults() {
+    const themeColors = getCurrentThemeColors();
+    if (Chart.defaults) {
+        Chart.defaults.color = themeColors.text;
+    }
+}
+
+// Initialize defaults
+updateChartDefaults();
+
+// Get current theme colors dynamically - same as dashboard.php
 function getCurrentThemeColors() {
-    const isDark = document.body.classList.contains('dark');
-    return {
-        text: getComputedStyle(document.documentElement).getPropertyValue('--text') || (isDark ? '#f8fafc' : '#0f172a'),
-        muted: getComputedStyle(document.documentElement).getPropertyValue('--muted') || (isDark ? '#cbd5e1' : '#475569'),
-        grid: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)',
-        border: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.15)',
-        background: isDark ? '#1e293b' : '#ffffff'
-    };
+    const isDark = document.documentElement.classList.contains('dark');
+    
+    if (isDark) {
+        return {
+            text: '#ffffff',
+            muted: '#ffffff',
+            grid: 'rgba(255, 255, 255, 0.15)',
+            border: 'rgba(255, 255, 255, 0.3)',
+            background: '#1e293b',
+            tooltipBg: 'rgba(0, 0, 0, 0.95)',
+            tooltipText: '#ffffff'
+        };
+    } else {
+        return {
+            text: '#0f172a',
+            muted: '#475569',
+            grid: 'rgba(0, 0, 0, 0.1)',
+            border: 'rgba(0, 0, 0, 0.2)',
+            background: '#ffffff',
+            tooltipBg: 'rgba(255, 255, 255, 0.95)',
+            tooltipText: '#0f172a'
+        };
+    }
 }
 
 <?php if (!empty($reportData)): ?>

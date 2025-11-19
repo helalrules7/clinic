@@ -193,12 +193,31 @@
             </div>
         </div>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
+    <div class="card-body p-0" style="min-height: 600px; overflow: hidden;">
+        <div class="table-responsive" style="min-height: 700px; overflow-y: hidden; overflow-x: auto;">
             <table class="table table-hover mb-0">
                 <thead class="table-dark">
                     <tr>
-                        <th>Patient Info</th>
+                        <th>
+                            <div class="d-flex flex-column">
+                                <span>Patient Info</span>
+                                <div class="mt-2 position-relative">
+                                    <input type="text" 
+                                           class="form-control form-control-sm" 
+                                           id="patientNameFilter" 
+                                           placeholder="Filter by name..."
+                                           autocomplete="off"
+                                           style="min-width: 150px; padding-right: 30px;">
+                                    <button type="button" 
+                                            class="btn-close btn-close-white position-absolute" 
+                                            id="clearNameFilter"
+                                            style="top: 50%; right: 5px; transform: translateY(-50%); display: none; font-size: 0.7rem; opacity: 0.7; cursor: pointer;"
+                                            aria-label="Clear filter"
+                                            onclick="clearPatientNameFilter()">
+                                    </button>
+                                </div>
+                            </div>
+                        </th>
                         <th>Contact</th>
                         <th>Age</th>
                         <th>Doctors</th>
@@ -657,6 +676,143 @@
     background-color: var(--bg-dark) !important;
     border-color: var(--border) !important;
     color: var(--text) !important;
+}
+
+/* Table header filter input styling */
+.table thead th input.form-control-sm {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+    padding-right: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.table thead th input.form-control-sm::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.table thead th input.form-control-sm:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: white;
+    box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
+}
+
+/* Light mode - semi gray background */
+:not(.dark) .table thead th input.form-control-sm {
+    background: rgba(108, 117, 125, 0.2) !important;
+    border-color: rgba(108, 117, 125, 0.3) !important;
+    color: white;
+}
+
+:not(.dark) .table thead th input.form-control-sm:focus {
+    background: rgba(108, 117, 125, 0.3) !important;
+    border-color: rgba(108, 117, 125, 0.5) !important;
+    color: white;
+}
+
+.dark .table thead th input.form-control-sm {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.dark .table thead th input.form-control-sm:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Clear filter button styling */
+#clearNameFilter {
+    z-index: 10;
+    padding: 0.2rem;
+    background: transparent;
+    border: none;
+}
+
+#clearNameFilter:hover {
+    opacity: 1 !important;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 0.25rem;
+}
+
+/* Light mode - black X button */
+:not(.dark) #clearNameFilter {
+    filter: brightness(0) !important;
+    opacity: 0.8 !important;
+}
+
+:not(.dark) #clearNameFilter:hover {
+    filter: brightness(0) !important;
+    opacity: 1 !important;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode - white X button */
+.dark #clearNameFilter {
+    filter: brightness(0) invert(1) !important;
+    opacity: 0.7 !important;
+}
+
+.dark #clearNameFilter:hover {
+    filter: brightness(0) invert(1) !important;
+    opacity: 1 !important;
+}
+
+/* Hide scrollbars but keep scrolling functionality */
+.table-responsive {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.table-responsive::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+.card-body {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.card-body::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+#paginationContainer > div > div:nth-child(2){
+    padding-right: 3rem !important;
+}
+
+/* Show horizontal scrollbar on mobile only */
+@media (max-width: 768px) {
+    .table-responsive {
+        scrollbar-width: thin; /* Firefox - show thin scrollbar */
+        -ms-overflow-style: auto; /* IE and Edge - show scrollbar */
+        overflow-x: auto; /* Enable horizontal scrolling */
+    }
+
+    #paginationContainer > div > div:nth-child(2){
+        padding-right: 0rem !important;
+    }
+    
+    .table-responsive::-webkit-scrollbar {
+        display: block; /* Chrome, Safari, Opera - show scrollbar */
+        height: 8px; /* Thin horizontal scrollbar */
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: var(--bg-alt);
+        border-radius: 4px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 4px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: var(--accent);
+    }
 }
 
 .table tbody tr {
@@ -1935,7 +2091,8 @@ let paginationState = {
     totalItems: 0,
     allPatients: [],
     filteredPatients: [],
-    currentDoctorFilter: 'all'
+    currentDoctorFilter: 'all',
+    nameFilter: ''
 };
 
 // Debounce function
@@ -2380,20 +2537,59 @@ function filterByDoctor(doctorId) {
 
 // Apply doctor filter to patients
 function applyDoctorFilter() {
-    const { currentDoctorFilter, allPatients } = paginationState;
+    const { currentDoctorFilter, allPatients, nameFilter } = paginationState;
     
-    if (currentDoctorFilter === 'all') {
-        paginationState.filteredPatients = [...allPatients];
-    } else {
-        // Filter patients by doctor ID based on who created the patient profile
-        paginationState.filteredPatients = allPatients.filter(patient => {
-            // Check if patient was created by the selected doctor
+    let filtered = [...allPatients];
+    
+    // Apply doctor filter
+    if (currentDoctorFilter !== 'all') {
+        filtered = filtered.filter(patient => {
             return patient.created_by_doctor_id == currentDoctorFilter;
         });
     }
     
+    // Apply name filter
+    if (nameFilter) {
+        filtered = filtered.filter(patient => {
+            const firstName = (patient.first_name || '').toLowerCase();
+            const lastName = (patient.last_name || '').toLowerCase();
+            const fullName = `${firstName} ${lastName}`.trim();
+            return fullName.includes(nameFilter) || 
+                   firstName.includes(nameFilter) || 
+                   lastName.includes(nameFilter);
+        });
+    }
+    
+    paginationState.filteredPatients = filtered;
+    paginationState.totalItems = filtered.length;
+    
     // Reset to first page
     paginationState.currentPage = 1;
+}
+
+// Filter patients by name
+function filterByName(nameQuery) {
+    paginationState.nameFilter = nameQuery.toLowerCase().trim();
+    applyDoctorFilter();
+    renderPatientsTable();
+    updatePaginationInfo();
+    renderPaginationNav();
+    
+    // Show/hide clear button
+    const clearBtn = document.getElementById('clearNameFilter');
+    if (clearBtn) {
+        clearBtn.style.display = nameQuery.trim() ? 'block' : 'none';
+    }
+}
+
+// Clear patient name filter
+function clearPatientNameFilter() {
+    const filterInput = document.getElementById('patientNameFilter');
+    if (filterInput) {
+        filterInput.value = '';
+        filterByName('');
+        filterInput.focus();
+    }
 }
 
 // Filter patients locally (for main table pagination)
@@ -2621,6 +2817,30 @@ document.addEventListener('DOMContentLoaded', function() {
     if (paginationLimitSelect) {
         paginationLimitSelect.addEventListener('change', function() {
             changeItemsPerPage(this.value);
+        });
+    }
+    
+    // Setup patient name filter
+    const patientNameFilter = document.getElementById('patientNameFilter');
+    if (patientNameFilter) {
+        const debouncedNameFilter = debounce(function(value) {
+            filterByName(value);
+        }, 300);
+        
+        patientNameFilter.addEventListener('input', function() {
+            debouncedNameFilter(this.value);
+            // Show/hide clear button based on input value
+            const clearBtn = document.getElementById('clearNameFilter');
+            if (clearBtn) {
+                clearBtn.style.display = this.value.trim() ? 'block' : 'none';
+            }
+        });
+        
+        // Clear filter on Escape key
+        patientNameFilter.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                clearPatientNameFilter();
+            }
         });
     }
     

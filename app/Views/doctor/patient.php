@@ -1994,7 +1994,7 @@
 
 .breadcrumb-item a:hover {
     color: #1e90ff !important;
-    text-decoration: underline;
+    text-decoration: none !important;
 }
 
 .breadcrumb-item.active {
@@ -2007,22 +2007,35 @@
     content: ">" !important;
 }
 
-/* Dark Mode Breadcrumb */
+/* Dark Mode Breadcrumb Styles */
+.dark .breadcrumb {
+    background-color: transparent !important;
+    padding: 0.75rem 0 !important;
+}
+
+.dark .breadcrumb-item {
+    color: var(--muted) !important;
+}
+
 .dark .breadcrumb-item a {
-    color: dodgerblue !important;
+    color: var(--accent) !important;
+    text-decoration: none !important;
+    transition: color 0.3s ease !important;
 }
 
 .dark .breadcrumb-item a:hover {
-    color: #87ceeb !important;
+    color: var(--text) !important;
+    text-decoration: none !important;
 }
 
 .dark .breadcrumb-item.active {
-    color: #ffffff !important;
-    font-weight: 600;
+    color: var(--text) !important;
+    font-weight: 500 !important;
 }
 
 .dark .breadcrumb-item + .breadcrumb-item::before {
     color: var(--muted) !important;
+    content: "›" !important;
 }
 
 .avatar-circle-large {

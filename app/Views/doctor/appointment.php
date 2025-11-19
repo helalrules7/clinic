@@ -628,7 +628,7 @@
 
 .dark .breadcrumb-item a:hover {
     color: var(--text) !important;
-    text-decoration: underline !important;
+    text-decoration: none !important;
 }
 
 .dark .breadcrumb-item.active {

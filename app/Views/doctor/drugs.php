@@ -21,10 +21,6 @@
                 <i class="bi bi-arrow-clockwise me-2"></i>
                 Update Database
             </button>
-            <button class="btn btn-outline-primary" id="clearSearchBtn" style="display: none;">
-                <i class="bi bi-x-circle me-2"></i>
-                Clear Search
-            </button>
         </div>
     </div>
 </div>
@@ -56,10 +52,16 @@
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <button class="btn btn-primary btn-lg w-100" id="searchBtn">
-                            <i class="bi bi-search me-2"></i>
-                            Search
-                        </button>
+                        <div class="d-flex gap-2" id="searchButtonsContainer">
+                            <button class="btn btn-primary btn-lg w-100" id="searchBtn">
+                                <i class="bi bi-search me-2"></i>
+                                Search
+                            </button>
+                            <button class="btn btn-outline-primary flex-grow-1" id="clearSearchBtn" style="display: none;">
+                                <i class="bi bi-x-circle me-2"></i>
+                                Clear Search
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -792,6 +794,7 @@ class DrugSearch {
         this.searchInput = document.getElementById('drugSearchInput');
         this.suggestions = document.getElementById('searchSuggestions');
         this.clearBtn = document.getElementById('clearSearchBtn');
+        this.searchBtn = document.getElementById('searchBtn');
         this.resultsContainer = document.getElementById('drugResults');
         this.loadingIndicator = document.getElementById('loadingIndicator');
         this.noResults = document.getElementById('noResults');
@@ -917,11 +920,21 @@ class DrugSearch {
     async handleSearch() {
         const searchTerm = this.searchInput.value.trim();
         
-        // Show/hide clear button
+        // Show/hide clear button and adjust button widths
         if (searchTerm.length > 0) {
             this.clearBtn.style.display = 'block';
+            // Make search button 50% width and clear button 50% width (both in same line)
+            if (this.searchBtn) {
+                this.searchBtn.classList.remove('w-100');
+                this.searchBtn.classList.add('flex-grow-1');
+            }
         } else {
             this.clearBtn.style.display = 'none';
+            // Reset search button to full width
+            if (this.searchBtn) {
+                this.searchBtn.classList.remove('flex-grow-1');
+                this.searchBtn.classList.add('w-100');
+            }
         }
         
         if (searchTerm.length < 2) {
@@ -1205,6 +1218,11 @@ class DrugSearch {
     clearSearch() {
         this.searchInput.value = '';
         this.clearBtn.style.display = 'none';
+        // Reset search button to full width
+        if (this.searchBtn) {
+            this.searchBtn.classList.remove('flex-grow-1');
+            this.searchBtn.classList.add('w-100');
+        }
         this.hideSuggestions();
         this.clearResults();
         this.searchInput.focus();

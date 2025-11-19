@@ -494,31 +494,37 @@
                     
                     <!-- Appointments Statistics Table -->
                     <div class="col-lg-3 mb-4">
-                        <div class="card chart-card">
+                        <div class="card chart-card h-100 d-flex flex-column">
                             <div class="card-header">
                                 <h6 class="mb-0">Statistics</h6>
                             </div>
-                            <div class="card-body" style="background-color: var(--card);">
+                            <div class="card-body d-flex flex-column" style="background-color: var(--card); flex: 1;">
                                 <table class="table table-sm table-borderless mb-0" id="appointmentsStatsTable" style="color: var(--text);">
                                     <tbody>
                                         <tr>
                                             <td class="text-muted" style="color: var(--muted) !important;">All Appointments:</td>
-                                            <td class="text-end fw-bold" style="color: var(--text) !important;" id="statsTotal">-</td>
+                                            <td class="text-end" style="color: var(--text) !important;" id="statsTotal">-</td>
                                         </tr>
                                         <tr>
                                             <td class="text-muted" style="color: var(--muted) !important;">Completed:</td>
-                                            <td class="text-end fw-bold text-success" style="color: var(--success) !important;" id="statsCompleted">-</td>
+                                            <td class="text-end text-success" style="color: var(--success) !important;" id="statsCompleted">-</td>
                                         </tr>
                                         <tr>
                                             <td class="text-muted" style="color: var(--muted) !important;">Missed:</td>
-                                            <td class="text-end fw-bold text-danger" style="color: var(--danger) !important;" id="statsMissed">-</td>
+                                            <td class="text-end text-danger" style="color: var(--danger) !important;" id="statsMissed">-</td>
                                         </tr>
                                         <tr class="border-top" style="border-top-color: var(--border) !important;">
                                             <td class="text-muted" style="color: var(--muted) !important;">Completion Ratio:</td>
-                                            <td class="text-end fw-bold text-primary" style="color: var(--accent) !important;" id="statsRatio">-</td>
+                                            <td class="text-end text-primary" style="color: var(--accent) !important;" id="statsRatio">-</td>
                                         </tr>
                                     </tbody>
                                 </table>
+                                <div class="mt-auto pt-3">
+                                    <a href="/doctor/reports" class="btn btn-primary quick-action-btn w-100 d-flex align-items-center justify-content-center" style="font-size: 1rem; font-weight: 600;">
+                                        <i class="bi bi-graph-up me-2" style="font-size: 1.2rem;"></i>
+                                        <span>All Reports</span>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1011,6 +1017,32 @@
     font-weight: 600;
 }
 
+/* All Reports Button - Same as quick-action-btn */
+.quick-action-btn.btn-primary {
+    background: linear-gradient(135deg, var(--accent), #0284c7) !important;
+    border-color: var(--accent) !important;
+    color: white !important;
+}
+
+.quick-action-btn.btn-primary:hover {
+    background: linear-gradient(135deg, var(--accent), #0284c7) !important;
+    border-color: var(--accent) !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(14, 165, 233, 0.3);
+}
+
+.dark .quick-action-btn.btn-primary {
+    background: linear-gradient(135deg, var(--accent), #0284c7) !important;
+    border-color: var(--accent) !important;
+    color: white !important;
+}
+
+.dark .quick-action-btn.btn-primary:hover {
+    background: linear-gradient(135deg, var(--accent), #0284c7) !important;
+    color: white !important;
+}
+
 /* Enhanced Hover Effects */
 .quick-action-btn.btn-outline-primary:hover {
     background: linear-gradient(135deg, var(--accent), #0284c7) !important;
@@ -1143,24 +1175,30 @@
     border-radius: 12px;
     display: flex;
     flex-direction: column;
-    background: var(--card);
-    border: 1px solid var(--border);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    /* Glass effect - similar to sidebar */
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
+    color: var(--text) !important;
 }
 
 #allActivitiesModal .modal-body {
     flex: 1;
     overflow-y: auto;
     padding: 1.5rem;
-    background: var(--bg);
+    background: transparent !important;
+    color: var(--text) !important;
 }
 
 #allActivitiesModal .modal-header {
     flex-shrink: 0;
     padding: 1rem 1.5rem;
-    background: var(--card);
-    border-bottom: 1px solid var(--border);
+    background: transparent !important;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.3) !important;
     border-radius: 12px 12px 0 0;
+    color: var(--text) !important;
 }
 
 #allActivitiesModal .modal-header .modal-title {
@@ -1181,22 +1219,26 @@
 }
 
 .dark #allActivitiesModal .modal-content {
-    background: var(--card);
-    border-color: var(--border);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3);
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 }
 
 .dark #allActivitiesModal .modal-header {
-    background: var(--card);
-    border-bottom-color: var(--border);
+    background: transparent !important;
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
 }
 
 .dark #allActivitiesModal .modal-body {
-    background: var(--bg);
+    background: transparent !important;
 }
 
 .dark #allActivitiesModal #modalPaginationNav {
-    border-top-color: var(--border);
+    border-top-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+#allActivitiesModal #modalPaginationNav {
+    border-top-color: rgba(226, 232, 240, 0.3) !important;
 }
 
 /* Responsive adjustments */
@@ -1334,7 +1376,9 @@
 
 .patient-name-link:hover {
     color: #0284c7 !important;
-    text-decoration: underline !important;
+    text-decoration: none !important;
+    font-weight: 800 !important;
+
     transform: translateX(2px);
 }
 

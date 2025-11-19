@@ -691,6 +691,47 @@
     z-index: 100000 !important;
 }
 
+/* Glass effect for delete note modal */
+#deleteNoteModal .modal-content {
+    /* Glass effect - similar to sidebar */
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
+    color: var(--text) !important;
+}
+
+.dark #deleteNoteModal .modal-content {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
+}
+
+#deleteNoteModal .modal-header {
+    background: transparent !important;
+    border-bottom-color: rgba(226, 232, 240, 0.3) !important;
+    color: var(--text) !important;
+}
+
+.dark #deleteNoteModal .modal-header {
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+#deleteNoteModal .modal-body {
+    background: transparent !important;
+    color: var(--text) !important;
+}
+
+#deleteNoteModal .modal-footer {
+    background: transparent !important;
+    border-top-color: rgba(226, 232, 240, 0.3) !important;
+}
+
+.dark #deleteNoteModal .modal-footer {
+    border-top-color: rgba(51, 65, 85, 0.3) !important;
+}
+
 /* Autocomplete Portal Styles */
 .note-autocomplete-portal {
     position: fixed !important;
@@ -866,6 +907,149 @@
 .note-content-drug-badge .drug-icon {
     font-size: 0.9rem;
 }
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .notes-container {
+        padding: 1rem;
+        min-height: calc(100vh - 150px);
+    }
+    
+    .notes-toolbar {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .notes-toolbar > div:first-child {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .notes-actions {
+        flex-direction: column;
+        width: 100%;
+        gap: 1rem;
+    }
+    
+    .color-picker-container {
+        flex-direction: column;
+        width: 100%;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .color-picker-label {
+        margin-right: 0;
+        margin-bottom: 0.25rem;
+    }
+    
+    .color-options {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .color-option {
+        width: 35px;
+        height: 35px;
+    }
+    
+    #addNoteBtn {
+        width: 100%;
+        padding: 0.75rem 1rem;
+    }
+    
+    .note-widget {
+        min-width: 250px !important;
+        min-height: 180px !important;
+        max-width: calc(100vw - 2rem) !important;
+    }
+    
+    .note-widget-header {
+        padding: 0.5rem 0.75rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .note-widget-title {
+        font-size: 0.85rem;
+        width: 100%;
+        order: 1;
+    }
+    
+    .note-widget-actions {
+        order: 2;
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .note-widget-body {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .note-widget-content {
+        font-size: 0.9rem;
+        line-height: 28px;
+    }
+    
+    .note-widget-footer {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.7rem;
+        flex-direction: column;
+        gap: 0.25rem;
+        align-items: flex-start;
+    }
+    
+    .note-widget-resize {
+        width: 18px;
+        height: 18px;
+    }
+    
+    /* Improve touch targets on mobile */
+    .note-widget-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+    }
+    
+    .note-widget-header {
+        touch-action: none; /* Prevent default touch behaviors */
+    }
+    
+    .note-widget {
+        touch-action: none; /* Prevent default touch behaviors */
+    }
+    
+    .note-color-picker-dropdown {
+        right: 0;
+        left: auto;
+        min-width: 160px;
+    }
+    
+    .note-autocomplete-portal {
+        max-width: calc(100vw - 2rem);
+        left: 1rem !important;
+        right: 1rem !important;
+        width: auto !important;
+    }
+    
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+    }
+    
+    .empty-state h4 {
+        font-size: 1.25rem;
+    }
+    
+    .empty-state p {
+        font-size: 0.9rem;
+    }
+}
 </style>
 
 <div class="container-fluid">
@@ -980,7 +1164,7 @@ function createNoteWidget(note) {
     widget.setAttribute('data-note-id', note.id);
     
     widget.innerHTML = `
-        <div class="note-widget-header" onmousedown="startDrag(event, ${note.id})">
+        <div class="note-widget-header" onmousedown="startDrag(event, ${note.id})" ontouchstart="startDrag(event, ${note.id})">
             <input type="text" class="note-widget-title" placeholder="Note title..." value="${note.title || ''}" 
                    data-note-id="${note.id}" onblur="updateNoteTitle(${note.id}, this.value)">
             <div class="note-widget-actions">
@@ -1016,7 +1200,7 @@ function createNoteWidget(note) {
             <span>Created: ${new Date(note.created_at).toLocaleDateString()}</span>
             <span>Updated: ${new Date(note.updated_at).toLocaleDateString()}</span>
         </div>
-        <div class="note-widget-resize" onmousedown="startResize(event, ${note.id})"></div>
+        <div class="note-widget-resize" onmousedown="startResize(event, ${note.id})" ontouchstart="startResize(event, ${note.id})"></div>
     `;
     
     return widget;
@@ -1123,8 +1307,11 @@ document.getElementById('addNoteBtn').addEventListener('click', async function()
     
     // Calculate position (center of visible area)
     const containerRect = container.getBoundingClientRect();
-    const x = Math.max(0, (containerRect.width / 2) - 150);
-    const y = Math.max(0, (containerRect.height / 2) - 100);
+    const isMobile = window.innerWidth <= 768;
+    const widgetWidth = isMobile ? 250 : 300;
+    const widgetHeight = isMobile ? 180 : 200;
+    const x = Math.max(0, (containerRect.width / 2) - (widgetWidth / 2));
+    const y = Math.max(0, (containerRect.height / 2) - (widgetHeight / 2));
     
     try {
         const response = await fetch('/api/notes', {
@@ -1139,8 +1326,8 @@ document.getElementById('addNoteBtn').addEventListener('click', async function()
                 background_color: currentNoteColor,
                 position_x: x,
                 position_y: y,
-                width: 300,
-                height: 200,
+                width: widgetWidth,
+                height: widgetHeight,
                 z_index: maxZIndex + 1
             })
         });
@@ -1167,20 +1354,28 @@ function startDrag(event, noteId) {
         return;
     }
     
+    // Support both mouse and touch events
+    const isTouch = event.type === 'touchstart';
+    const clientX = isTouch ? event.touches[0].clientX : event.clientX;
+    const clientY = isTouch ? event.touches[0].clientY : event.clientY;
+    
     isDragging = true;
     currentDragNote = noteId;
     const widget = document.getElementById(`note-${noteId}`);
     const rect = widget.getBoundingClientRect();
     const containerRect = document.getElementById('notesContainer').getBoundingClientRect();
     
-    dragOffset.x = event.clientX - rect.left;
-    dragOffset.y = event.clientY - rect.top;
+    dragOffset.x = clientX - rect.left;
+    dragOffset.y = clientY - rect.top;
     
     widget.classList.add('dragging');
     bringToFront(noteId);
     
+    // Add both mouse and touch event listeners
     document.addEventListener('mousemove', onDrag);
     document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchmove', onDrag, { passive: false });
+    document.addEventListener('touchend', stopDrag);
     
     event.preventDefault();
 }
@@ -1188,19 +1383,31 @@ function startDrag(event, noteId) {
 function onDrag(event) {
     if (!isDragging || !currentDragNote) return;
     
+    // Support both mouse and touch events
+    const isTouch = event.type === 'touchmove';
+    const clientX = isTouch ? event.touches[0].clientX : event.clientX;
+    const clientY = isTouch ? event.touches[0].clientY : event.clientY;
+    
     const widget = document.getElementById(`note-${currentDragNote}`);
     const container = document.getElementById('notesContainer');
     const containerRect = container.getBoundingClientRect();
     
-    let x = event.clientX - containerRect.left - dragOffset.x;
-    let y = event.clientY - containerRect.top - dragOffset.y;
+    let x = clientX - containerRect.left - dragOffset.x;
+    let y = clientY - containerRect.top - dragOffset.y;
     
-    // Constrain to container bounds
-    x = Math.max(0, Math.min(x, containerRect.width - widget.offsetWidth));
-    y = Math.max(0, Math.min(y, containerRect.height - widget.offsetHeight));
+    // Constrain to container bounds (account for mobile)
+    const isMobile = window.innerWidth <= 768;
+    const maxX = containerRect.width - widget.offsetWidth;
+    const maxY = containerRect.height - widget.offsetHeight;
+    x = Math.max(0, Math.min(x, maxX));
+    y = Math.max(0, Math.min(y, maxY));
     
     widget.style.left = `${x}px`;
     widget.style.top = `${y}px`;
+    
+    if (isTouch) {
+        event.preventDefault();
+    }
 }
 
 function stopDrag() {
@@ -1221,6 +1428,8 @@ function stopDrag() {
     
     document.removeEventListener('mousemove', onDrag);
     document.removeEventListener('mouseup', stopDrag);
+    document.removeEventListener('touchmove', onDrag);
+    document.removeEventListener('touchend', stopDrag);
 }
 
 // Resize functionality
@@ -1229,20 +1438,28 @@ let currentResizeNote = null;
 let resizeStart = { x: 0, y: 0, width: 0, height: 0 };
 
 function startResize(event, noteId) {
+    // Support both mouse and touch events
+    const isTouch = event.type === 'touchstart';
+    const clientX = isTouch ? event.touches[0].clientX : event.clientX;
+    const clientY = isTouch ? event.touches[0].clientY : event.clientY;
+    
     isResizing = true;
     currentResizeNote = noteId;
     const widget = document.getElementById(`note-${noteId}`);
     const rect = widget.getBoundingClientRect();
     
-    resizeStart.x = event.clientX;
-    resizeStart.y = event.clientY;
+    resizeStart.x = clientX;
+    resizeStart.y = clientY;
     resizeStart.width = rect.width;
     resizeStart.height = rect.height;
     
     bringToFront(noteId);
     
+    // Add both mouse and touch event listeners
     document.addEventListener('mousemove', onResize);
     document.addEventListener('mouseup', stopResize);
+    document.addEventListener('touchmove', onResize, { passive: false });
+    document.addEventListener('touchend', stopResize);
     
     event.preventDefault();
     event.stopPropagation();
@@ -1251,20 +1468,32 @@ function startResize(event, noteId) {
 function onResize(event) {
     if (!isResizing || !currentResizeNote) return;
     
+    // Support both mouse and touch events
+    const isTouch = event.type === 'touchmove';
+    const clientX = isTouch ? event.touches[0].clientX : event.clientX;
+    const clientY = isTouch ? event.touches[0].clientY : event.clientY;
+    
     const widget = document.getElementById(`note-${currentResizeNote}`);
     const container = document.getElementById('notesContainer');
     const containerRect = container.getBoundingClientRect();
     const widgetRect = widget.getBoundingClientRect();
     
-    const deltaX = event.clientX - resizeStart.x;
-    const deltaY = event.clientY - resizeStart.y;
+    const deltaX = clientX - resizeStart.x;
+    const deltaY = clientY - resizeStart.y;
+    
+    if (isTouch) {
+        event.preventDefault();
+    }
     
     let newWidth = resizeStart.width + deltaX;
     let newHeight = resizeStart.height + deltaY;
     
-    // Constrain to container and min size
-    newWidth = Math.max(300, Math.min(newWidth, containerRect.width - widgetRect.left));
-    newHeight = Math.max(200, Math.min(newHeight, containerRect.height - widgetRect.top));
+    // Constrain to container and min size (smaller on mobile)
+    const isMobile = window.innerWidth <= 768;
+    const minWidth = isMobile ? 250 : 300;
+    const minHeight = isMobile ? 180 : 200;
+    newWidth = Math.max(minWidth, Math.min(newWidth, containerRect.width - widgetRect.left));
+    newHeight = Math.max(minHeight, Math.min(newHeight, containerRect.height - widgetRect.top));
     
     widget.style.width = `${newWidth}px`;
     widget.style.height = `${newHeight}px`;
@@ -1287,6 +1516,8 @@ function stopResize() {
     
     document.removeEventListener('mousemove', onResize);
     document.removeEventListener('mouseup', stopResize);
+    document.removeEventListener('touchmove', onResize);
+    document.removeEventListener('touchend', stopResize);
 }
 
 // Bring to front
@@ -1368,18 +1599,18 @@ function showDeleteConfirmModal(noteId) {
         const modalHtml = `
             <div class="modal fade" id="deleteNoteModal" tabindex="-1" aria-labelledby="deleteNoteModalLabel" aria-hidden="true" style="z-index: 99999;">
                 <div class="modal-dialog modal-dialog-centered" style="z-index: 100000;">
-                    <div class="modal-content" style="background: var(--card); border: 1px solid var(--border); z-index: 100001;">
-                        <div class="modal-header" style="border-bottom: 1px solid var(--border);">
+                    <div class="modal-content" style="z-index: 100001;">
+                        <div class="modal-header">
                             <h5 class="modal-title" id="deleteNoteModalLabel" style="color: var(--text);">
                                 <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
                                 Delete Note
                             </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="modal-body" style="color: var(--text);">
+                        <div class="modal-body">
                             <p>Are you sure you want to delete this note? This action cannot be undone.</p>
                         </div>
-                        <div class="modal-footer" style="border-top: 1px solid var(--border);">
+                        <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                             <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
                                 <i class="bi bi-trash me-2"></i>
