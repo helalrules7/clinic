@@ -7,6 +7,7 @@ use App\Lib\Validator;
 use App\Config\Database;
 use App\Config\Constants;
 use App\Lib\Helpers;
+use App\Models\AlertModel;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Common\Entity\Row;
 
@@ -28,6 +29,7 @@ class ApiController
             $this->auth = new Auth();
             $this->validator = new Validator();
             $this->pdo = Database::getInstance()->getConnection();
+            $this->alertModel = new AlertModel();
             
             // Suppress PHP errors for API responses
             ini_set('display_errors', 0);
@@ -291,12 +293,22 @@ class ApiController
 
     public function updateAppointment($id)
     {
+        // Clear any previous output immediately
+        if (ob_get_level() > 0) {
+            ob_clean();
+        }
+        
         try {
             if (!$this->auth->check()) {
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
 
             $user = $this->auth->user();
+            
+            if (!$user) {
+                return $this->jsonResponse(['error' => 'User not found'], 401);
+            }
+            
             $appointment = $this->getAppointmentDetails($id);
             
             if (!$appointment) {
@@ -308,14 +320,46 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Cannot modify completed or cancelled appointments'], 403);
             }
 
-            $data = json_decode(file_get_contents('php://input'), true);
+            // Handle both JSON and form data
+            $input = file_get_contents('php://input');
+            $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+            $data = [];
+            
+            // Remove charset if present (e.g., "application/json; charset=utf-8")
+            $contentType = trim(explode(';', $contentType)[0]);
+            
+            if ($contentType === 'application/json') {
+                $data = json_decode($input, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    return $this->jsonResponse(['error' => 'Invalid JSON data: ' . json_last_error_msg()], 400);
+                }
+            } else {
+                // Handle form data (application/x-www-form-urlencoded)
+                if (!empty($input)) {
+                    parse_str($input, $data);
+                }
+                // Also check $_POST for form data (fallback)
+                if (empty($data) && !empty($_POST)) {
+                    $data = $_POST;
+                }
+            }
+            
+            // Validate data is not empty
+            if (empty($data)) {
+                error_log("updateAppointment: No data received. Content-Type: $contentType, Input length: " . strlen($input));
+                return $this->jsonResponse(['error' => 'No data provided'], 400);
+            }
+            
+            // Log received data for debugging (remove in production)
+            error_log("updateAppointment: Received data: " . json_encode($data));
+            
             
             if (isset($data['status'])) {
                 $newStatus = $data['status'];
                 $reason = $data['reason'] ?? null;
                 
                 // Validate status
-                $validStatuses = ['Booked', 'CheckedIn', 'InProgress', 'Completed', 'Cancelled', 'NoShow', 'Rescheduled'];
+                $validStatuses = ['Booked', 'CheckedIn', 'InProgress', 'Completed', 'Cancelled', 'NoShow', 'Rescheduled', 'Closed'];
                 if (!in_array($newStatus, $validStatuses)) {
                     return $this->jsonResponse(['error' => 'Invalid appointment status'], 400);
                 }
@@ -332,6 +376,7 @@ class ApiController
                     
                     return $this->jsonResponse([
                         'ok' => true,
+                        'success' => true,
                         'message' => 'Appointment status updated successfully',
                         'status' => $newStatus
                     ]);
@@ -342,8 +387,13 @@ class ApiController
 
             return $this->jsonResponse(['error' => 'No valid updates provided'], 400);
 
+        } catch (\PDOException $e) {
+            error_log("PDOException in updateAppointment: " . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Database error occurred'], 500);
         } catch (\Exception $e) {
-            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+            error_log("Exception in updateAppointment: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return $this->jsonResponse(['error' => 'An error occurred: ' . $e->getMessage()], 500);
         }
     }
 
@@ -1198,16 +1248,24 @@ class ApiController
     // Helper methods
     private function jsonResponse($data, $statusCode = 200)
     {
-        header('Content-Type: application/json');
-        http_response_code($statusCode);
-        
-        $json = json_encode($data);
-        if ($json === false) {
-            error_log("JSON encoding error: " . json_last_error_msg());
-            $data = ['error' => 'JSON encoding failed'];
-            $json = json_encode($data);
+        // Clear any previous output
+        if (ob_get_level() > 0) {
+            ob_clean();
         }
         
+        // Set headers
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code($statusCode);
+        
+        // Encode to JSON
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($json === false) {
+            error_log("JSON encoding error: " . json_last_error_msg());
+            $data = ['error' => 'JSON encoding failed: ' . json_last_error_msg()];
+            $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+        
+        // Output JSON and exit
         echo $json;
         exit;
     }
@@ -1636,41 +1694,434 @@ class ApiController
 
     private function createAppointmentRecord($data)
     {
-        $stmt = $this->pdo->prepare("
-            INSERT INTO appointments (patient_id, doctor_id, booked_by, source, date, start_time, end_time, visit_type, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
-        
-        $endTime = $this->calculateEndTime($data['start_time']);
-        
-        $stmt->execute([
-            $data['patient_id'],
-            $data['doctor_id'],
-            $this->auth->user()['id'],
-            $data['source'],
-            $data['date'],
-            $data['start_time'],
-            $endTime,
-            $data['visit_type'],
-            $data['notes'] ?? null
-        ]);
-        
-        return $this->pdo->lastInsertId();
+        try {
+            $stmt = $this->pdo->prepare("
+                INSERT INTO appointments (patient_id, doctor_id, booked_by, source, date, start_time, end_time, visit_type, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            
+            $endTime = $this->calculateEndTime($data['start_time']);
+            
+            // Use booked_by from data if provided, otherwise use current user
+            $bookedBy = $data['booked_by'] ?? ($this->auth->user()['id'] ?? null);
+            
+            if (!$bookedBy) {
+                throw new \Exception('booked_by is required');
+            }
+            
+            $result = $stmt->execute([
+                $data['patient_id'],
+                $data['doctor_id'],
+                $bookedBy,
+                $data['source'],
+                $data['date'],
+                $data['start_time'],
+                $endTime,
+                $data['visit_type'],
+                $data['notes'] ?? null
+            ]);
+            
+            if (!$result) {
+                $errorInfo = $stmt->errorInfo();
+                error_log("createAppointmentRecord execute failed: " . json_encode($errorInfo));
+                throw new \Exception('Failed to create appointment: ' . ($errorInfo[2] ?? 'Unknown error'));
+            }
+            
+            $appointmentId = $this->pdo->lastInsertId();
+            
+            if (!$appointmentId) {
+                throw new \Exception('Failed to get appointment ID after insert');
+            }
+            
+            return $appointmentId;
+            
+        } catch (\PDOException $e) {
+            error_log("createAppointmentRecord PDO error: " . $e->getMessage());
+            throw new \Exception('Database error creating appointment: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            error_log("createAppointmentRecord error: " . $e->getMessage());
+            throw $e;
+        }
     }
 
     private function updateAppointmentStatus($id, $status, $reason = null)
     {
         // Validate status
-        $validStatuses = ['Booked', 'CheckedIn', 'InProgress', 'Completed', 'Cancelled', 'NoShow', 'Rescheduled'];
+        $validStatuses = ['Booked', 'CheckedIn', 'InProgress', 'Completed', 'Cancelled', 'NoShow', 'Rescheduled', 'Closed'];
         if (!in_array($status, $validStatuses)) {
             throw new \Exception('Invalid appointment status');
         }
+        
+        // Ensure reason is never null (use empty string if null)
+        $reasonText = $reason ?? '';
         
         $stmt = $this->pdo->prepare("
             UPDATE appointments SET status = ?, cancellation_reason = ?, updated_at = NOW()
             WHERE id = ?
         ");
-        return $stmt->execute([$status, $reason, $id]);
+        return $stmt->execute([$status, $reasonText, $id]);
+    }
+
+    public function reschedule($id)
+    {
+        // Clear any previous output immediately
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            if (!$user) {
+                return $this->jsonResponse(['error' => 'User not found'], 401);
+            }
+            
+            $appointment = $this->getAppointmentDetails($id);
+            if (!$appointment) {
+                return $this->jsonResponse(['error' => 'Appointment not found'], 404);
+            }
+            
+            // Check if appointment is completed
+            if ($appointment['status'] === 'Completed') {
+                return $this->jsonResponse(['error' => 'Cannot reschedule a completed appointment'], 400);
+            }
+            
+            // Get JSON or form data
+            $input = file_get_contents('php://input');
+            $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+            $contentType = trim(explode(';', $contentType)[0]);
+            
+            if ($contentType === 'application/json') {
+                $data = json_decode($input, true);
+            } else {
+                if (!empty($input)) {
+                    parse_str($input, $data);
+                } else {
+                    $data = $_POST;
+                }
+            }
+            
+            if (empty($data) || !isset($data['new_date']) || !isset($data['new_time'])) {
+                return $this->jsonResponse(['error' => 'new_date and new_time are required'], 400);
+            }
+            
+            $newDate = trim($data['new_date']);
+            $newTime = trim($data['new_time']);
+            
+            // Validate date format (YYYY-MM-DD)
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $newDate)) {
+                return $this->jsonResponse(['error' => 'Invalid date format. Expected YYYY-MM-DD'], 400);
+            }
+            
+            // Validate time format (HH:MM or HH:MM:SS)
+            if (!preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $newTime)) {
+                return $this->jsonResponse(['error' => 'Invalid time format. Expected HH:MM'], 400);
+            }
+            
+            // Normalize time to HH:MM format (remove seconds if present)
+            if (strlen($newTime) > 5) {
+                $newTime = substr($newTime, 0, 5);
+            }
+            
+            // Validate that new date/time is in the future
+            try {
+                $currentDateTime = new \DateTime();
+                $appointmentDateTime = new \DateTime($appointment['date'] . ' ' . $appointment['start_time']);
+                $newDateTime = new \DateTime($newDate . ' ' . $newTime);
+            } catch (\Exception $e) {
+                error_log("DateTime creation error: " . $e->getMessage());
+                return $this->jsonResponse(['error' => 'Invalid date or time format'], 400);
+            }
+            
+            if ($newDateTime <= $currentDateTime) {
+                return $this->jsonResponse(['error' => 'New appointment date and time must be in the future'], 400);
+            }
+            
+            if ($newDateTime <= $appointmentDateTime) {
+                return $this->jsonResponse(['error' => 'New appointment date and time must be later than the current appointment'], 400);
+            }
+            
+            // Check if time slot is available (use private method instead of Helpers)
+            $endTime = $this->calculateEndTime($newTime);
+            if (!$this->isTimeSlotAvailableGlobal($newDate, $newTime)) {
+                return $this->jsonResponse(['error' => 'Time slot is not available'], 400);
+            }
+            
+            // 1. Create new appointment
+            $newAppointmentData = [
+                'patient_id' => $appointment['patient_id'],
+                'doctor_id' => $appointment['doctor_id'],
+                'booked_by' => $user['id'],
+                'source' => $appointment['source'] ?? 'Walk-in',
+                'date' => $newDate,
+                'start_time' => $newTime,
+                'visit_type' => $appointment['visit_type'] ?? 'FollowUp',
+                'notes' => $appointment['notes'] ?? null
+            ];
+            
+            $newAppointmentId = $this->createAppointmentRecord($newAppointmentData);
+            
+            if (!$newAppointmentId) {
+                return $this->jsonResponse(['error' => 'Failed to create new appointment'], 500);
+            }
+            
+            // 2. Link new appointment to old one (if column exists)
+            try {
+                $columnStmt = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'rescheduled_from'");
+                if ($columnStmt->fetch(PDO::FETCH_ASSOC)) {
+                    $this->pdo->prepare("UPDATE appointments SET rescheduled_from = ? WHERE id = ?")
+                        ->execute([$id, $newAppointmentId]);
+                }
+            } catch (\Exception $e) {
+                // Column doesn't exist, ignore
+            }
+            
+            // 3. Update old appointment status to 'Rescheduled' instead of deleting
+            error_log("Reschedule: Updating appointment {$id} status to Rescheduled");
+            $stmt = $this->pdo->prepare("UPDATE appointments SET status = 'Rescheduled', cancellation_reason = ?, updated_at = NOW() WHERE id = ?");
+            $reason = "Rescheduled to {$newDate} {$newTime}";
+            $result = $stmt->execute([$reason, $id]);
+            
+            if (!$result) {
+                error_log("Reschedule: Failed to update appointment status");
+                throw new \Exception('Failed to update old appointment status');
+            }
+            error_log("Reschedule: Appointment status updated successfully");
+            
+            // 4. Create timeline event for the NEW appointment (same as createAppointment)
+            try {
+                error_log("Reschedule: Creating timeline event for new appointment {$newAppointmentId}");
+                $timelineResult = $this->createTimelineEvent(
+                    $appointment['patient_id'], 
+                    $newAppointmentId, 
+                    'Booking', 
+                    "Appointment rescheduled from {$appointment['date']} {$appointment['start_time']} to {$newDate} {$newTime}"
+                );
+                if ($timelineResult) {
+                    error_log("Reschedule: Timeline event created successfully");
+                } else {
+                    error_log("Reschedule: Timeline event creation failed (non-critical)");
+                }
+            } catch (\Exception $e) {
+                error_log("Reschedule: Timeline event error: " . $e->getMessage());
+                // Continue even if timeline event fails
+            }
+            
+            // Format date/time for display
+            $formattedDate = date('M j, Y', strtotime($newDate));
+            $formattedTime = date('g:i A', strtotime($newTime));
+            
+            return $this->jsonResponse([
+                'ok' => true,
+                'success' => true,
+                'message' => 'Appointment rescheduled successfully',
+                'data' => [
+                    'new_appointment_id' => $newAppointmentId,
+                    'date' => $newDate,
+                    'start_time' => $newTime,
+                    'formatted_date' => $formattedDate,
+                    'formatted_time' => $formattedTime,
+                    'old_appointment_id' => $id
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            error_log("Reschedule error: " . $e->getMessage());
+            error_log("Reschedule error trace: " . $e->getTraceAsString());
+            return $this->jsonResponse(['error' => 'Error rescheduling appointment: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function rescheduleFollowup($id)
+    {
+        // Clear any previous output immediately
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            if (!$user) {
+                return $this->jsonResponse(['error' => 'User not found'], 401);
+            }
+            
+            $appointment = $this->getAppointmentDetails($id);
+            if (!$appointment) {
+                return $this->jsonResponse(['error' => 'Appointment not found'], 404);
+            }
+            
+            // Note: rescheduleFollowup can be done even for completed appointments
+            
+            // Get JSON or form data
+            $input = file_get_contents('php://input');
+            $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+            $contentType = trim(explode(';', $contentType)[0]);
+            
+            if ($contentType === 'application/json') {
+                $data = json_decode($input, true);
+            } else {
+                if (!empty($input)) {
+                    parse_str($input, $data);
+                } else {
+                    $data = $_POST;
+                }
+            }
+            
+            if (empty($data) || !isset($data['new_date']) || !isset($data['new_time'])) {
+                return $this->jsonResponse(['error' => 'new_date and new_time are required'], 400);
+            }
+            
+            $newDate = trim($data['new_date']);
+            $newTime = trim($data['new_time']);
+            
+            // Validate date format (YYYY-MM-DD)
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $newDate)) {
+                return $this->jsonResponse(['error' => 'Invalid date format. Expected YYYY-MM-DD'], 400);
+            }
+            
+            // Validate time format (HH:MM or HH:MM:SS)
+            if (!preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $newTime)) {
+                return $this->jsonResponse(['error' => 'Invalid time format. Expected HH:MM'], 400);
+            }
+            
+            // Normalize time to HH:MM format (remove seconds if present)
+            if (strlen($newTime) > 5) {
+                $newTime = substr($newTime, 0, 5);
+            }
+            
+            // Validate that new date/time is in the future
+            try {
+                $currentDateTime = new \DateTime();
+                $newDateTime = new \DateTime($newDate . ' ' . $newTime);
+            } catch (\Exception $e) {
+                error_log("DateTime creation error: " . $e->getMessage());
+                return $this->jsonResponse(['error' => 'Invalid date or time format'], 400);
+            }
+            
+            if ($newDateTime <= $currentDateTime) {
+                return $this->jsonResponse(['error' => 'New appointment date and time must be in the future'], 400);
+            }
+            
+            // Check if time slot is available (use private method instead of Helpers)
+            $endTime = $this->calculateEndTime($newTime);
+            if (!$this->isTimeSlotAvailableGlobal($newDate, $newTime)) {
+                return $this->jsonResponse(['error' => 'Time slot is not available'], 400);
+            }
+            
+            // Create new appointment with visit_type = 'FollowUp'
+            $newAppointmentData = [
+                'patient_id' => $appointment['patient_id'],
+                'doctor_id' => $appointment['doctor_id'],
+                'booked_by' => $user['id'],
+                'source' => $appointment['source'] ?? 'Walk-in',
+                'date' => $newDate,
+                'start_time' => $newTime,
+                'visit_type' => 'FollowUp',
+                'notes' => $appointment['notes'] ?? null
+            ];
+            
+            $newAppointmentId = $this->createAppointmentRecord($newAppointmentData);
+            
+            if (!$newAppointmentId) {
+                return $this->jsonResponse(['error' => 'Failed to create new appointment'], 500);
+            }
+            
+            // Link new appointment to old one (if column exists)
+            try {
+                $columnStmt = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'rescheduled_from'");
+                if ($columnStmt->fetch(PDO::FETCH_ASSOC)) {
+                    $this->pdo->prepare("UPDATE appointments SET rescheduled_from = ? WHERE id = ?")
+                        ->execute([$id, $newAppointmentId]);
+                }
+            } catch (\Exception $e) {
+                error_log("RescheduleFollowup: rescheduled_from column check error: " . $e->getMessage());
+                // Column doesn't exist, ignore
+            }
+            
+            // Create timeline event for the NEW appointment (same as createAppointment)
+            try {
+                error_log("RescheduleFollowup: Creating timeline event for new appointment {$newAppointmentId}");
+                $timelineResult = $this->createTimelineEvent(
+                    $appointment['patient_id'], 
+                    $newAppointmentId, 
+                    'Booking', 
+                    "Follow-up appointment scheduled for {$newDate} {$newTime}"
+                );
+                if ($timelineResult) {
+                    error_log("RescheduleFollowup: Timeline event created successfully");
+                } else {
+                    error_log("RescheduleFollowup: Timeline event creation failed (non-critical)");
+                }
+            } catch (\Exception $e) {
+                error_log("RescheduleFollowup: Timeline event error: " . $e->getMessage());
+                // Continue even if timeline event fails
+            }
+            
+            // Create alert for follow-up appointment
+            try {
+                error_log("RescheduleFollowup: Creating alert for follow-up appointment");
+                $patientName = trim($appointment['first_name'] . ' ' . $appointment['last_name']);
+                $alertMessage = "متابعة كشف المريض ({$patientName})";
+                
+                // Get doctor_id from appointment (already available in $appointment)
+                $doctorId = $appointment['doctor_id'];
+                error_log("RescheduleFollowup: Doctor ID: {$doctorId}, Patient ID: {$appointment['patient_id']}, Patient Name: {$patientName}");
+                
+                // Set alert date/time to be 1 hour before appointment
+                $alertDateTime = new \DateTime($newDate . ' ' . $newTime);
+                $alertDateTime->sub(new \DateInterval('PT1H'));
+                $alertDate = $alertDateTime->format('Y-m-d');
+                $alertTime = $alertDateTime->format('H:i:s');
+                error_log("RescheduleFollowup: Alert date/time: {$alertDate} {$alertTime}");
+                
+                $alertData = [
+                    'doctor_id' => $doctorId,
+                    'patient_id' => $appointment['patient_id'],
+                    'appointment_id' => $newAppointmentId,
+                    'message' => $alertMessage,
+                    'alert_date' => $alertDate,
+                    'alert_time' => $alertTime,
+                    'repeat_count' => 1,
+                    'repeat_interval' => 0
+                ];
+                
+                error_log("RescheduleFollowup: Alert data: " . json_encode($alertData));
+                $alertId = $this->alertModel->create($alertData);
+                if ($alertId) {
+                    error_log("RescheduleFollowup: Alert created successfully with ID {$alertId}");
+                } else {
+                    error_log("RescheduleFollowup: Alert creation returned false (non-critical)");
+                }
+            } catch (\Exception $e) {
+                error_log("RescheduleFollowup: Alert creation error: " . $e->getMessage());
+                error_log("RescheduleFollowup: Alert creation error trace: " . $e->getTraceAsString());
+                // Continue even if alert creation fails
+            }
+            
+            return $this->jsonResponse([
+                'ok' => true,
+                'success' => true,
+                'message' => 'Follow-up appointment scheduled successfully',
+                'data' => [
+                    'new_appointment_id' => $newAppointmentId,
+                    'date' => $newDate,
+                    'start_time' => $newTime,
+                    'visit_type' => 'FollowUp'
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            error_log("RescheduleFollowup error: " . $e->getMessage());
+            error_log("RescheduleFollowup error trace: " . $e->getTraceAsString());
+            return $this->jsonResponse(['error' => 'Error scheduling follow-up appointment: ' . $e->getMessage()], 500);
+        }
     }
 
     private function createPaymentRecord($data, $userId, $requiresApproval)
@@ -2053,18 +2504,29 @@ class ApiController
 
     private function createTimelineEvent($patientId, $appointmentId, $eventType, $summary)
     {
-        $stmt = $this->pdo->prepare("
-            INSERT INTO timeline_events (patient_id, appointment_id, actor_user_id, event_type, event_summary)
-            VALUES (?, ?, ?, ?, ?)
-        ");
-        
-        return $stmt->execute([
-            $patientId,
-            $appointmentId,
-            $this->auth->user()['id'],
-            $eventType,
-            $summary
-        ]);
+        try {
+            $user = $this->auth->user();
+            if (!$user || !isset($user['id'])) {
+                error_log("createTimelineEvent: User not found or invalid");
+                return false;
+            }
+            
+            $stmt = $this->pdo->prepare("
+                INSERT INTO timeline_events (patient_id, appointment_id, actor_user_id, event_type, event_summary)
+                VALUES (?, ?, ?, ?, ?)
+            ");
+            
+            return $stmt->execute([
+                $patientId,
+                $appointmentId,
+                $user['id'],
+                $eventType,
+                $summary
+            ]);
+        } catch (\Exception $e) {
+            error_log("createTimelineEvent error: " . $e->getMessage());
+            return false;
+        }
     }
 
     // Attachment Management Methods

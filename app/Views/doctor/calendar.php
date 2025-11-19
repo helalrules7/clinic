@@ -585,7 +585,7 @@ function renderAppointmentSlot(appointment) {
     
     // Create detailed tooltip content (any doctor can see appointment details)
     const tooltipContent = `
-        <div class="appointment-tooltip">
+        <div class="appointment-tooltip" style="font-family: 'Cairo', sans-serif; !important;">
             <div class="tooltip-header">
                 <strong>Appointment Details</strong>
             </div>
@@ -2533,7 +2533,7 @@ input[readonly] {
 }
 
 .appointment-tooltip {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Cairo', sans-serif;
 }
 
 .appointment-tooltip .tooltip-header {

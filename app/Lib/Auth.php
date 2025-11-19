@@ -73,10 +73,6 @@ class Auth
 
     public function check()
     {
-        error_log("=== AUTH CHECK START ===");
-        error_log("Session status: " . session_status());
-        error_log("Session data: " . json_encode($_SESSION ?? []));
-        error_log("User object: " . json_encode($this->user));
         
         if ($this->user) {
             error_log("User already loaded: " . json_encode($this->user));

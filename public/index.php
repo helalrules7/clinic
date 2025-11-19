@@ -184,6 +184,8 @@ try {
     $router->post('/api/appointments', 'ApiController@createAppointment');
     $router->put('/api/appointments/{id}', 'ApiController@updateAppointment');
     $router->delete('/api/appointments/{id}', 'ApiController@deleteAppointment');
+    $router->post('/api/appointments/{id}/reschedule', 'ApiController@reschedule');
+    $router->post('/api/appointments/{id}/reschedule-followup', 'ApiController@rescheduleFollowup');
     $router->post('/api/payments', 'ApiController@createPayment');
     $router->post('/api/daily-balance', 'ApiController@createDailyBalance');
     $router->post('/api/daily-closure', 'ApiController@createDailyClosureApi');

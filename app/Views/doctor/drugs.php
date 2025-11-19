@@ -53,10 +53,10 @@
                     </div>
                     <div class="col-md-4">
                         <div class="d-flex gap-2" id="searchButtonsContainer">
-                            <button class="btn btn-primary btn-lg w-100" id="searchBtn">
-                                <i class="bi bi-search me-2"></i>
-                                Search
-                            </button>
+                        <button class="btn btn-primary btn-lg w-100" id="searchBtn">
+                            <i class="bi bi-search me-2"></i>
+                            Search
+                        </button>
                             <button class="btn btn-outline-primary flex-grow-1" id="clearSearchBtn" style="display: none;">
                                 <i class="bi bi-x-circle me-2"></i>
                                 Clear Search

@@ -29,7 +29,8 @@ class Constants
         'Completed' => 'Completed',
         'Cancelled' => 'Cancelled',
         'NoShow' => 'No Show',
-        'Rescheduled' => 'Rescheduled'
+        'Rescheduled' => 'Rescheduled',
+        'Closed' => 'Closed'
     ];
     
     const VISIT_TYPES = [

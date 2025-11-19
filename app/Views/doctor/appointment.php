@@ -32,6 +32,16 @@
     margin-bottom: 2rem;
 }
 
+.appointment-header.closed {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+}
+
+.appointment-header.rescheduled {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+}
+
 /* Appointment Doctor Avatar Styles */
 .appointment-doctor-avatar {
     width: 28px;
@@ -707,6 +717,17 @@
     color: var(--card) !important;
 }
 
+/* Disabled dropdown item styles */
+.dropdown-item.disabled {
+    pointer-events: none;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.dark .dropdown-item.disabled {
+    opacity: 0.5;
+}
+
 /* Dark Mode Progress Bar Styles */
 .dark .progress {
     background-color: var(--border) !important;
@@ -872,7 +893,7 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
 ?>
 
 <!-- Appointment Header -->
-<div class="appointment-header">
+<div class="appointment-header <?= ($appointment['status'] === 'Closed' || $appointment['status'] === 'Rescheduled') ? ($appointment['status'] === 'Closed' ? 'closed' : 'rescheduled') : '' ?>">
     <div class="row align-items-center">
         <div class="col-md-8">
             <h2 class="mb-2">
@@ -948,7 +969,13 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
             <button type="button" class="btn btn-info hide-on-mobile" onclick="printReport(<?= $appointment['id'] ?>)">
                 <i class="bi bi-printer me-1"></i>Print Report
             </button>
-            <button type="button" class="btn btn-warning hide-on-mobile" onclick="rescheduleAppointment(<?= $appointment['id'] ?>)">
+            <button type="button" class="btn btn-warning hide-on-mobile" 
+                    onclick="rescheduleFollowupAppointment(<?= $appointment['id'] ?>)">
+                <i class="bi bi-calendar-check me-1"></i>Reschedule Followup
+            </button>
+            <button type="button" class="btn btn-warning hide-on-mobile" 
+                    onclick="rescheduleAppointment(<?= $appointment['id'] ?>)"
+                    <?= $appointment['status'] === 'Completed' ? 'disabled title="Cannot reschedule completed appointments"' : '' ?>>
                 <i class="bi bi-calendar-plus me-1"></i>Reschedule
             </button>
             <button type="button" class="btn btn-warning hide-on-mobile" onclick="openAlertModal(<?= $appointment['patient_id'] ?? 'null' ?>, <?= $appointment['id'] ?>)">
@@ -977,7 +1004,20 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { rescheduleAppointment(<?= $appointment['id'] ?>); });">
+                        <a class="dropdown-item" 
+                           href="javascript:void(0);" 
+                           onclick="closeDropdownAndExecute('moreActionsDropdown', function() { rescheduleFollowupAppointment(<?= $appointment['id'] ?>); });">
+                            <i class="bi bi-calendar-check me-2"></i>Reschedule Followup
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item <?= $appointment['status'] === 'Completed' ? 'disabled text-muted' : '' ?>" 
+                           href="javascript:void(0);" 
+                           <?php if ($appointment['status'] !== 'Completed'): ?>
+                           onclick="closeDropdownAndExecute('moreActionsDropdown', function() { rescheduleAppointment(<?= $appointment['id'] ?>); });"
+                           <?php else: ?>
+                           onclick="return false;" title="Cannot reschedule completed appointments"
+                           <?php endif; ?>>
                             <i class="bi bi-calendar-plus me-2"></i>Reschedule
                         </a>
                     </li>
@@ -2262,34 +2302,85 @@ function setupDrugNameAutocomplete() {
     }
 }
 
+// Format time for display (HH:mm to 12-hour format) - Global function
+function formatTimeForReschedule(timeStr) {
+    if (!timeStr) return '';
+    const [hours, minutes] = timeStr.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
+}
+
+// Validate date selection (same as calendar.php) - Global function
+function validateDateSelection(dateString) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(dateString + 'T00:00:00');
+    
+    if (selectedDate < today) {
+        return {
+            valid: false,
+            message: 'Cannot select a date before today. Please select today or a future date.'
+        };
+    }
+    return { valid: true };
+}
+
 function showRescheduleModal(appointmentId) {
+    // Get current appointment data
+    const currentDate = '<?= $appointment['date'] ?>';
+    const currentTime = '<?= $appointment['start_time'] ?>';
+    const currentStatus = '<?= $appointment['status'] ?>';
+    const patientName = '<?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?>';
+    
+    // Check if appointment is completed
+    if (currentStatus === 'Completed') {
+        showErrorMessage('Cannot reschedule a completed appointment');
+        return;
+    }
+    
     const modalHtml = `
         <div class="modal fade" id="rescheduleModal" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Reschedule Appointment</h5>
+                        <h5 class="modal-title">
+                            <i class="bi bi-calendar-plus me-2"></i>Reschedule Appointment
+                        </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <form id="rescheduleForm">
                         <div class="modal-body">
-                            <input type="hidden" name="appointment_id" value="${appointmentId}">
-                            <div class="mb-3">
-                                <label class="form-label">New Date</label>
-                                <input type="date" class="form-control" name="new_date" required>
+                            <div class="alert alert-info mb-3">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Patient:</strong> ${patientName}<br>
+                                <strong>Current Appointment:</strong> ${currentDate} at ${currentTime.substring(0, 5)}
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">New Time</label>
-                                <input type="time" class="form-control" name="new_time" required>
+                                <label class="form-label">New Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="new_date" id="newDateInput" required 
+                                       min="${new Date().toISOString().split('T')[0]}">
+                                <div class="form-text" style="color: var(--text-muted);">Must be a future date</div>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Reschedule Reason</label>
-                                <textarea class="form-control" name="reason" rows="3" required></textarea>
+                                <label class="form-label">New Time <span class="text-danger">*</span></label>
+                                <select class="form-select" name="new_time" id="newTimeInput" required>
+                                    <option value="">Select available time slot...</option>
+                                </select>
+                                <div class="form-text" style="color: var(--text-muted);">Only available time slots from calendar are shown</div>
+                                <div id="timeSlotsLoading" class="text-muted mt-2" style="display: none;">
+                                    <i class="bi bi-hourglass-split me-1"></i>Loading available time slots...
+                                </div>
+                                <div id="timeSlotsError" class="alert alert-warning mt-2" style="display: none;"></div>
                             </div>
+                            <div id="rescheduleError" class="alert alert-danger" style="display: none;"></div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-warning">Reschedule</button>
+                            <button type="submit" class="btn btn-warning" id="rescheduleSubmitBtn">
+                                <i class="bi bi-calendar-check me-1"></i>Reschedule
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -2301,32 +2392,510 @@ function showRescheduleModal(appointmentId) {
     const modal = new bootstrap.Modal(document.getElementById('rescheduleModal'));
     modal.show();
     
+    const newDateInput = document.getElementById('newDateInput');
+    const newTimeInput = document.getElementById('newTimeInput');
+    const errorDiv = document.getElementById('rescheduleError');
+    const submitBtn = document.getElementById('rescheduleSubmitBtn');
+    const timeSlotsLoading = document.getElementById('timeSlotsLoading');
+    const timeSlotsError = document.getElementById('timeSlotsError');
+    const doctorId = <?= $appointment['doctor_id'] ?? 'null' ?>;
+    
+    // Set minimum date to tomorrow if current date is today
+    const today = new Date();
+    const appointmentDate = new Date(currentDate);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    if (appointmentDate.toDateString() === today.toDateString()) {
+        // If appointment is today, new date must be tomorrow or later
+        newDateInput.min = tomorrow.toISOString().split('T')[0];
+    } else {
+        // If appointment is in the future, new date must be after appointment date
+        const minDate = new Date(appointmentDate);
+        minDate.setDate(minDate.getDate() + 1);
+        newDateInput.min = minDate.toISOString().split('T')[0];
+    }
+    
+    // Load available time slots from calendar
+    function loadAvailableTimeSlotsForReschedule(selectedDate) {
+        if (!selectedDate || !doctorId) {
+            newTimeInput.innerHTML = '<option value="">Please select a date first</option>';
+            return;
+        }
+        
+        // Validate selected date
+        const validation = validateDateSelection(selectedDate);
+        if (!validation.valid) {
+            timeSlotsError.textContent = validation.message;
+            timeSlotsError.style.display = 'block';
+            newTimeInput.innerHTML = '<option value="">Invalid date</option>';
+            return;
+        }
+        
+        timeSlotsLoading.style.display = 'block';
+        timeSlotsError.style.display = 'none';
+        newTimeInput.disabled = true;
+        newTimeInput.innerHTML = '<option value="">Loading...</option>';
+        
+        // Fetch available slots from calendar API
+        fetch(`/api/calendar?doctor_id=${doctorId}&date=${selectedDate}`)
+            .then(response => response.json())
+            .then(data => {
+                timeSlotsLoading.style.display = 'none';
+                newTimeInput.disabled = false;
+                
+                if (data.ok && data.data && data.data.available_slots) {
+                    const availableSlots = data.data.available_slots;
+                    
+                    if (availableSlots.length === 0) {
+                        newTimeInput.innerHTML = '<option value="">No available time slots for this date</option>';
+                        timeSlotsError.textContent = 'No available time slots found for the selected date. Please choose another date.';
+                        timeSlotsError.style.display = 'block';
+                        return;
+                    }
+                    
+                    // Filter slots that are later than current appointment if same date
+                    const currentDateTime = new Date(currentDate + 'T' + currentTime);
+                    let filteredSlots = availableSlots;
+                    
+                    if (selectedDate === currentDate) {
+                        filteredSlots = availableSlots.filter(slot => {
+                            const slotDateTime = new Date(selectedDate + 'T' + slot);
+                            return slotDateTime > currentDateTime;
+                        });
+                    }
+                    
+                    if (filteredSlots.length === 0) {
+                        newTimeInput.innerHTML = '<option value="">No later time slots available for this date</option>';
+                        timeSlotsError.textContent = 'No later time slots available for the selected date. Please choose another date.';
+                        timeSlotsError.style.display = 'block';
+                        return;
+                    }
+                    
+                    // Populate time slots dropdown
+                    newTimeInput.innerHTML = '<option value="">Select available time slot...</option>';
+                    filteredSlots.forEach(slot => {
+                        const option = document.createElement('option');
+                        option.value = slot;
+                        option.textContent = formatTimeForReschedule(slot);
+                        newTimeInput.appendChild(option);
+                    });
+                    
+                    timeSlotsError.style.display = 'none';
+                } else {
+                    newTimeInput.innerHTML = '<option value="">Error loading time slots</option>';
+                    timeSlotsError.textContent = 'Failed to load available time slots. Please try again.';
+                    timeSlotsError.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                timeSlotsLoading.style.display = 'none';
+                newTimeInput.disabled = false;
+                newTimeInput.innerHTML = '<option value="">Error loading time slots</option>';
+                timeSlotsError.textContent = 'Error loading available time slots: ' + error.message;
+                timeSlotsError.style.display = 'block';
+                console.error('Error loading time slots:', error);
+            });
+    }
+    
+    // Format time for display (HH:mm to 12-hour format)
+    function formatTimeForReschedule(timeStr) {
+        if (!timeStr) return '';
+        const [hours, minutes] = timeStr.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour % 12 || 12;
+        return `${displayHour}:${minutes} ${ampm}`;
+    }
+    
+    // Load time slots when date changes
+    newDateInput.addEventListener('change', function() {
+        const selectedDate = this.value;
+        if (selectedDate) {
+            loadAvailableTimeSlotsForReschedule(selectedDate);
+            // Clear time selection when date changes
+            newTimeInput.value = '';
+        } else {
+            newTimeInput.innerHTML = '<option value="">Please select a date first</option>';
+        }
+        validateRescheduleForm();
+    });
+    
+    // Validation function
+    function validateRescheduleForm() {
+        const newDate = newDateInput.value;
+        const newTime = newTimeInput.value;
+        
+        if (!newDate || !newTime) {
+            errorDiv.style.display = 'none';
+            submitBtn.disabled = false;
+            return;
+        }
+        
+        const currentDateTime = new Date(currentDate + 'T' + currentTime);
+        const newDateTime = new Date(newDate + 'T' + newTime);
+        const now = new Date();
+        
+        // Check if new date/time is in the future
+        if (newDateTime <= now) {
+            errorDiv.textContent = 'New appointment date and time must be in the future';
+            errorDiv.style.display = 'block';
+            submitBtn.disabled = true;
+            return;
+        }
+        
+        // Check if new date/time is later than current appointment
+        if (newDateTime <= currentDateTime) {
+            errorDiv.textContent = 'New appointment date and time must be later than the current appointment';
+            errorDiv.style.display = 'block';
+            submitBtn.disabled = true;
+            return;
+        }
+        
+        errorDiv.style.display = 'none';
+        submitBtn.disabled = false;
+    }
+    
+    // Real-time validation when time changes
+    newTimeInput.addEventListener('change', function() {
+        validateRescheduleForm();
+    });
+    
+    // Load time slots for initial date (if date is pre-filled)
+    if (newDateInput.value) {
+        loadAvailableTimeSlotsForReschedule(newDateInput.value);
+    }
+    
     // Handle form submission
     document.getElementById('rescheduleForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        const formData = new FormData(this);
         
-        fetch('/api/appointments/' + appointmentId, {
-            method: 'PUT',
-            body: formData,
+        // Validate before submission
+        const newDate = newDateInput.value;
+        const newTime = newTimeInput.value;
+        
+        if (!newDate || !newTime) {
+            errorDiv.textContent = 'Please fill in all required fields';
+            errorDiv.style.display = 'block';
+            return;
+        }
+        
+        const currentDateTime = new Date(currentDate + 'T' + currentTime);
+        const newDateTime = new Date(newDate + 'T' + newTime);
+        const now = new Date();
+        
+        // Check if new date/time is in the future
+        if (newDateTime <= now) {
+            errorDiv.textContent = 'New appointment date and time must be in the future';
+            errorDiv.style.display = 'block';
+            return;
+        }
+        
+        // Check if new date/time is later than current appointment
+        if (newDateTime <= currentDateTime) {
+            errorDiv.textContent = 'New appointment date and time must be later than the current appointment';
+            errorDiv.style.display = 'block';
+            return;
+        }
+        
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Rescheduling...';
+        errorDiv.style.display = 'none';
+        
+        console.log('Reschedule: Starting reschedule process', {
+            appointmentId: appointmentId,
+            newDate: newDate,
+            newTime: newTime
+        });
+        
+        // Simple form data - just new_date and new_time
+        const params = new URLSearchParams();
+        params.append('new_date', newDate);
+        params.append('new_time', newTime);
+        
+        fetch('/api/appointments/' + appointmentId + '/reschedule', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: params.toString(),
             credentials: 'same-origin'
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.error || err.message || `HTTP ${response.status}`);
+                });
+            }
+            return response.json();
+        })
         .then(data => {
-            if (data.success) {
+            console.log('Reschedule response:', data);
+            if (data.ok || data.success) {
                 modal.hide();
-                location.reload();
+                
+                // Show toast notification with rescheduled info
+                const formattedDate = data.data?.formatted_date || newDate;
+                const formattedTime = data.data?.formatted_time || formatTimeForReschedule(newTime);
+                const toastMessage = `تم إعادة جدولة الموعد إلى ${formattedDate} الساعة ${formattedTime}`;
+                
+                showRescheduleToast(toastMessage, formattedDate, formattedTime);
+                
+                // Reload page after a short delay
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
             } else {
-                alert('Error: ' + data.message);
+                throw new Error(data.error || data.message || 'Failed to reschedule appointment');
             }
         })
         .catch(error => {
-            alert('Error: ' + error.message);
+            console.error('Reschedule error:', error);
+            errorDiv.textContent = error.message || 'Error rescheduling appointment. Please try again.';
+            errorDiv.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
         });
     });
     
     // Clean up modal on hide
     document.getElementById('rescheduleModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+function rescheduleFollowupAppointment(appointmentId) {
+    // Show reschedule followup modal
+    showRescheduleFollowupModal(appointmentId);
+}
+
+function showRescheduleFollowupModal(appointmentId) {
+    // Get current appointment data
+    const currentDate = '<?= $appointment['date'] ?>';
+    const currentTime = '<?= $appointment['start_time'] ?>';
+    const currentStatus = '<?= $appointment['status'] ?>';
+    const patientName = '<?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?>';
+    
+    // Note: rescheduleFollowup can be done even for completed appointments
+    
+    const modalHtml = `
+        <div class="modal fade" id="rescheduleFollowupModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-calendar-check me-2"></i>Reschedule Follow-up Appointment
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="rescheduleFollowupForm">
+                        <div class="modal-body">
+                            <div class="alert alert-info mb-3">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Patient:</strong> ${patientName}<br>
+                                <strong>Current Appointment:</strong> ${currentDate} at ${currentTime.substring(0, 5)}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">New Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="new_date" id="newDateInputFollowup" required 
+                                       min="${new Date().toISOString().split('T')[0]}">
+                                <div class="form-text" style="color: var(--text-muted);">Must be a future date</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">New Time <span class="text-danger">*</span></label>
+                                <select class="form-select" name="new_time" id="newTimeInputFollowup" required>
+                                    <option value="">Select available time slot...</option>
+                                </select>
+                                <div class="form-text" style="color: var(--text-muted);">Only available time slots from calendar are shown</div>
+                                <div id="timeSlotsLoadingFollowup" class="text-muted mt-2" style="display: none;">
+                                    <i class="bi bi-hourglass-split me-1"></i>Loading available time slots...
+                                </div>
+                                <div id="timeSlotsErrorFollowup" class="alert alert-warning mt-2" style="display: none;"></div>
+                            </div>
+                            <div id="rescheduleFollowupError" class="alert alert-danger" style="display: none;"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-warning" id="rescheduleFollowupSubmitBtn">
+                                <i class="bi bi-calendar-check me-1"></i>Schedule Follow-up
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('rescheduleFollowupModal'));
+    modal.show();
+    
+    const newDateInput = document.getElementById('newDateInputFollowup');
+    const newTimeInput = document.getElementById('newTimeInputFollowup');
+    const errorDiv = document.getElementById('rescheduleFollowupError');
+    const submitBtn = document.getElementById('rescheduleFollowupSubmitBtn');
+    const timeSlotsLoading = document.getElementById('timeSlotsLoadingFollowup');
+    const timeSlotsError = document.getElementById('timeSlotsErrorFollowup');
+    const doctorId = <?= $appointment['doctor_id'] ?? 'null' ?>;
+    
+    // Set minimum date to tomorrow
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    newDateInput.min = tomorrow.toISOString().split('T')[0];
+    
+    // Load available time slots from calendar
+    function loadAvailableTimeSlotsForFollowup(selectedDate) {
+        if (!selectedDate || !doctorId) {
+            newTimeInput.innerHTML = '<option value="">Please select a date first</option>';
+            return;
+        }
+        
+        const validation = validateDateSelection(selectedDate);
+        if (!validation.valid) {
+            timeSlotsError.textContent = validation.message;
+            timeSlotsError.style.display = 'block';
+            newTimeInput.innerHTML = '<option value="">Invalid date</option>';
+            return;
+        }
+        
+        timeSlotsLoading.style.display = 'block';
+        timeSlotsError.style.display = 'none';
+        newTimeInput.disabled = true;
+        newTimeInput.innerHTML = '<option value="">Loading...</option>';
+        
+        fetch(`/api/calendar?doctor_id=${doctorId}&date=${selectedDate}`)
+            .then(response => response.json())
+            .then(data => {
+                timeSlotsLoading.style.display = 'none';
+                newTimeInput.disabled = false;
+                
+                if (data.ok && data.data && data.data.available_slots) {
+                    const availableSlots = data.data.available_slots;
+                    
+                    if (availableSlots.length === 0) {
+                        newTimeInput.innerHTML = '<option value="">No available time slots for this date</option>';
+                        timeSlotsError.textContent = 'No available time slots found for the selected date. Please choose another date.';
+                        timeSlotsError.style.display = 'block';
+                        return;
+                    }
+                    
+                    newTimeInput.innerHTML = '<option value="">Select available time slot...</option>';
+                    availableSlots.forEach(slot => {
+                        const option = document.createElement('option');
+                        option.value = slot;
+                        option.textContent = formatTimeForReschedule(slot);
+                        newTimeInput.appendChild(option);
+                    });
+                    
+                    timeSlotsError.style.display = 'none';
+                } else {
+                    newTimeInput.innerHTML = '<option value="">Error loading time slots</option>';
+                    timeSlotsError.textContent = 'Failed to load available time slots. Please try again.';
+                    timeSlotsError.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                timeSlotsLoading.style.display = 'none';
+                newTimeInput.disabled = false;
+                newTimeInput.innerHTML = '<option value="">Error loading time slots</option>';
+                timeSlotsError.textContent = 'Error loading available time slots: ' + error.message;
+                timeSlotsError.style.display = 'block';
+                console.error('Error loading time slots:', error);
+            });
+    }
+    
+    // Load time slots when date changes
+    newDateInput.addEventListener('change', function() {
+        const selectedDate = this.value;
+        if (selectedDate) {
+            loadAvailableTimeSlotsForFollowup(selectedDate);
+            newTimeInput.value = '';
+        } else {
+            newTimeInput.innerHTML = '<option value="">Please select a date first</option>';
+        }
+    });
+    
+    // Handle form submission
+    document.getElementById('rescheduleFollowupForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const newDate = newDateInput.value;
+        const newTime = newTimeInput.value;
+        
+        if (!newDate || !newTime) {
+            errorDiv.textContent = 'Please fill in all required fields';
+            errorDiv.style.display = 'block';
+            return;
+        }
+        
+        const newDateTime = new Date(newDate + 'T' + newTime);
+        const now = new Date();
+        
+        if (newDateTime <= now) {
+            errorDiv.textContent = 'New appointment date and time must be in the future';
+            errorDiv.style.display = 'block';
+            return;
+        }
+        
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Scheduling...';
+        errorDiv.style.display = 'none';
+        
+        console.log('RescheduleFollowup: Starting followup scheduling process', {
+            appointmentId: appointmentId,
+            newDate: newDate,
+            newTime: newTime
+        });
+        
+        // Simple form data - just new_date and new_time
+        const params = new URLSearchParams();
+        params.append('new_date', newDate);
+        params.append('new_time', newTime);
+        
+        fetch('/api/appointments/' + appointmentId + '/reschedule-followup', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: params.toString(),
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.error || err.message || `HTTP ${response.status}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('RescheduleFollowup response:', data);
+            if (data.ok || data.success) {
+                modal.hide();
+                showSuccessMessage('Follow-up appointment scheduled successfully');
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                throw new Error(data.error || data.message || 'Failed to schedule follow-up appointment');
+            }
+        })
+        .catch(error => {
+            console.error('RescheduleFollowup error:', error);
+            errorDiv.textContent = error.message || 'Error scheduling follow-up appointment. Please try again.';
+            errorDiv.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        });
+    });
+    
+    // Clean up modal on hide
+    document.getElementById('rescheduleFollowupModal').addEventListener('hidden.bs.modal', function() {
         this.remove();
     });
 }
@@ -4083,7 +4652,8 @@ function getStatusBadgeClass(status) {
         'Completed': 'bg-info',
         'Cancelled': 'bg-danger',
         'NoShow': 'bg-secondary',
-        'Rescheduled': 'bg-info'
+        'Rescheduled': 'bg-info',
+        'Closed': 'bg-danger'
     };
     return classes[status] || 'bg-secondary';
 }
@@ -4096,7 +4666,8 @@ function getStatusDisplayText(status) {
         'Completed': 'Completed',
         'Cancelled': 'Cancelled',
         'NoShow': 'No Show',
-        'Rescheduled': 'Rescheduled'
+        'Rescheduled': 'Rescheduled',
+        'Closed': 'Closed'
     };
     return statusTexts[status] || status;
 }
@@ -4109,7 +4680,8 @@ function getStatusIcon(status) {
         'Completed': 'bi-check2-all',
         'Cancelled': 'bi-x-circle-fill',
         'NoShow': 'bi-clock-fill',
-        'Rescheduled': 'bi-arrow-clockwise'
+        'Rescheduled': 'bi-arrow-clockwise',
+        'Closed': 'bi-lock-fill'
     };
     return icons[status] || 'bi-question-circle';
 }
@@ -4510,6 +5082,7 @@ function showChangeStatusModal(appointmentId) {
                                 <option value="Booked" ${currentStatus === 'Booked' ? 'selected' : ''}>Booked</option>
                                 <option value="NoShow" ${currentStatus === 'NoShow' ? 'selected' : ''}>No Show</option>
                                 <option value="Completed" ${currentStatus === 'Completed' ? 'selected' : ''}>Completed</option>
+                                <option value="Closed" ${currentStatus === 'Closed' ? 'selected' : ''}>Closed</option>
                             </select>
                         </div>
                         <div class="mb-3" id="statusReasonSection" style="display: none;">
@@ -5011,6 +5584,56 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Show reschedule toast notification with red styling
+function showRescheduleToast(message, date, time) {
+    console.log('showRescheduleToast called:', { message, date, time });
+    const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+    const toastId = 'toast-reschedule-' + Date.now();
+    
+    const toastHtml = `
+        <div id="${toastId}" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true" style="min-width: 350px;">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-calendar-x me-2" style="font-size: 1.2rem;"></i>
+                        <div>
+                            <strong>تم إعادة جدولة الموعد</strong><br>
+                            <small>${escapeHtml(message)}</small>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <span class="badge bg-light text-dark">${escapeHtml(date)} - ${escapeHtml(time)}</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement, {
+        autohide: false // Don't auto-hide, let user dismiss manually
+    });
+    toast.show();
+    
+    toastElement.addEventListener('hidden.bs.toast', function() {
+        toastElement.remove();
+    });
+}
+
+function createToastContainer() {
+    const container = document.getElementById('toastContainer');
+    if (container) return container;
+    
+    const newContainer = document.createElement('div');
+    newContainer.id = 'toastContainer';
+    newContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+    newContainer.style.zIndex = '9999';
+    document.body.appendChild(newContainer);
+    return newContainer;
 }
 
 // Set current patient info for alert modal

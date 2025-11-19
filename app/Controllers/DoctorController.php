@@ -196,8 +196,8 @@ class DoctorController
                 AND te.event_type = 'Booking' 
                 AND te.event_summary LIKE '%New patient registered%' 
                 ORDER BY te.created_at ASC 
-                LIMIT 1
-            ");
+                    LIMIT 1
+                ");
             $stmt->execute([$id]);
             $treatingDoctor = $stmt->fetch();
             if (!$treatingDoctor) {
@@ -207,7 +207,7 @@ class DoctorController
                     'profile_image' => null
                 ];
             }
-        } else {
+                    } else {
             // Fallback to current doctor if no creator info available
             $treatingDoctor = $this->getCurrentDoctorInfo($user['id']);
         }
@@ -736,12 +736,12 @@ class DoctorController
                 ");
                 $stmt->execute([$name, $email, $phone, $profileImage, $user['id']]);
             } else {
-                $stmt = $this->pdo->prepare("
-                    UPDATE users 
-                    SET name = ?, email = ?, phone = ?, updated_at = NOW() 
-                    WHERE id = ?
-                ");
-                $stmt->execute([$name, $email, $phone, $user['id']]);
+            $stmt = $this->pdo->prepare("
+                UPDATE users 
+                SET name = ?, email = ?, phone = ?, updated_at = NOW() 
+                WHERE id = ?
+            ");
+            $stmt->execute([$name, $email, $phone, $user['id']]);
             }
             
             // Update doctor table if doctor-specific fields are provided
@@ -1529,12 +1529,30 @@ class DoctorController
         // Generate report data specific to this doctor
         $reportData = $this->generateDoctorReport($doctorId, $reportType, $startDate, $endDate);
         
+        // Get additional data for medical and glasses prescriptions
+        $topMedications = [];
+        $glassesLensTypeStats = [];
+        
+        if ($reportType === 'medical_prescriptions') {
+            $topMedications = $this->getTopMedications($doctorId, $startDate, $endDate, 10);
+        } elseif ($reportType === 'glasses_prescriptions') {
+            $glassesLensTypeStats = $this->getGlassesLensTypeStats($doctorId, $startDate, $endDate);
+        }
+        
+        // Get clinic settings and doctor info for PDF export
+        $settings = $this->getSystemSettings();
+        $doctorInfo = $this->getDoctorInfo($doctorId);
+        
         $content = $this->view->render('doctor/reports', [
             'reportData' => $reportData,
             'startDate' => $startDate,
             'endDate' => $endDate,
             'reportType' => $reportType,
-            'doctorId' => $doctorId
+            'doctorId' => $doctorId,
+            'clinicName' => $settings['clinic_name'] ?? 'Clinic',
+            'doctorName' => $doctorInfo['name'] ?? $user['name'] ?? 'Doctor',
+            'topMedications' => $topMedications,
+            'glassesLensTypeStats' => $glassesLensTypeStats
         ]);
         
         echo $this->view->render('layouts/main', [
@@ -1543,6 +1561,27 @@ class DoctorController
             'pageSubtitle' => 'View your practice reports',
             'content' => $content
         ]);
+    }
+
+    private function getDoctorInfo($doctorId)
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT d.display_name, u.name
+                FROM doctors d
+                JOIN users u ON d.user_id = u.id
+                WHERE d.id = ?
+            ");
+            $stmt->execute([$doctorId]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return [
+                'name' => $result['display_name'] ?? $result['name'] ?? 'Doctor',
+                'display_name' => $result['display_name'] ?? ''
+            ];
+        } catch (Exception $e) {
+            error_log("Error getting doctor info: " . $e->getMessage());
+            return ['name' => 'Doctor', 'display_name' => ''];
+        }
     }
 
     public function drugs()
@@ -1777,6 +1816,10 @@ class DoctorController
                 return $this->generateDoctorPatientsReport($doctorId, $startDate, $endDate);
             case 'revenue':
                 return $this->generateDoctorRevenueReport($doctorId, $startDate, $endDate);
+            case 'medical_prescriptions':
+                return $this->generateDoctorMedicalPrescriptionsReport($doctorId, $startDate, $endDate);
+            case 'glasses_prescriptions':
+                return $this->generateDoctorGlassesPrescriptionsReport($doctorId, $startDate, $endDate);
             default:
                 return $this->generateDoctorAppointmentsReport($doctorId, $startDate, $endDate);
         }
@@ -1784,17 +1827,19 @@ class DoctorController
 
     private function generateDoctorAppointmentsReport($doctorId, $startDate, $endDate)
     {
+        // Use the same logic as dashboard.php getDashboardCharts - exclude today
         $stmt = $this->pdo->prepare("
             SELECT 
                 DATE(a.date) as date,
                 COUNT(*) as total_appointments,
                 SUM(CASE WHEN a.status = 'Completed' THEN 1 ELSE 0 END) as completed,
-                SUM(CASE WHEN a.status = 'Cancelled' THEN 1 ELSE 0 END) as cancelled,
-                SUM(CASE WHEN a.status = 'NoShow' THEN 1 ELSE 0 END) as no_show
+                SUM(CASE WHEN a.status != 'Completed' THEN 1 ELSE 0 END) as missed
             FROM appointments a
-            WHERE a.doctor_id = ? AND DATE(a.date) BETWEEN ? AND ?
+            WHERE a.doctor_id = ? 
+            AND DATE(a.date) BETWEEN ? AND ?
+            AND DATE(a.date) < CURDATE()
             GROUP BY DATE(a.date)
-            ORDER BY date
+            ORDER BY date ASC
         ");
         $stmt->execute([$doctorId, $startDate, $endDate]);
         return $stmt->fetchAll();
@@ -1831,6 +1876,90 @@ class DoctorController
             WHERE a.doctor_id = ? AND DATE(p.created_at) BETWEEN ? AND ?
             GROUP BY DATE(p.created_at)
             ORDER BY date
+        ");
+        $stmt->execute([$doctorId, $startDate, $endDate]);
+        return $stmt->fetchAll();
+    }
+
+    private function generateDoctorMedicalPrescriptionsReport($doctorId, $startDate, $endDate)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                DATE(a.date) as date,
+                COUNT(DISTINCT p.id) as total_prescriptions,
+                COUNT(DISTINCT a.id) as appointments_with_prescriptions,
+                COUNT(DISTINCT a.patient_id) as patients_count,
+                GROUP_CONCAT(DISTINCT p.drug_name SEPARATOR ', ') as drugs_list
+            FROM prescriptions p
+            JOIN appointments a ON p.appointment_id = a.id
+            WHERE a.doctor_id = ? 
+            AND DATE(a.date) BETWEEN ? AND ?
+            GROUP BY DATE(a.date)
+            ORDER BY date ASC
+        ");
+        $stmt->execute([$doctorId, $startDate, $endDate]);
+        return $stmt->fetchAll();
+    }
+
+    private function generateDoctorGlassesPrescriptionsReport($doctorId, $startDate, $endDate)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                DATE(a.date) as date,
+                COUNT(DISTINCT gp.id) as total_prescriptions,
+                COUNT(DISTINCT a.id) as appointments_with_prescriptions,
+                COUNT(DISTINCT a.patient_id) as patients_count,
+                COUNT(DISTINCT CASE WHEN gp.lens_type IS NOT NULL AND gp.lens_type != '' THEN gp.id END) as with_lens_type
+            FROM glasses_prescriptions gp
+            JOIN appointments a ON gp.appointment_id = a.id
+            WHERE a.doctor_id = ? 
+            AND DATE(a.date) BETWEEN ? AND ?
+            GROUP BY DATE(a.date)
+            ORDER BY date ASC
+        ");
+        $stmt->execute([$doctorId, $startDate, $endDate]);
+        return $stmt->fetchAll();
+    }
+
+    private function getTopMedications($doctorId, $startDate, $endDate, $limit = 10)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                p.drug_name,
+                COUNT(*) as usage_count,
+                COUNT(DISTINCT p.appointment_id) as prescription_count,
+                COUNT(DISTINCT a.patient_id) as patient_count
+            FROM prescriptions p
+            JOIN appointments a ON p.appointment_id = a.id
+            WHERE a.doctor_id = ? 
+            AND DATE(a.date) BETWEEN ? AND ?
+            AND p.drug_name IS NOT NULL 
+            AND p.drug_name != ''
+            GROUP BY p.drug_name
+            ORDER BY usage_count DESC
+            LIMIT ?
+        ");
+        $stmt->execute([$doctorId, $startDate, $endDate, $limit]);
+        return $stmt->fetchAll();
+    }
+
+    private function getGlassesLensTypeStats($doctorId, $startDate, $endDate)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                CASE 
+                    WHEN gp.lens_type IS NULL OR gp.lens_type = '' THEN 'Not Specified'
+                    ELSE gp.lens_type
+                END as lens_type,
+                COUNT(*) as count,
+                COUNT(DISTINCT gp.appointment_id) as prescription_count,
+                COUNT(DISTINCT a.patient_id) as patient_count
+            FROM glasses_prescriptions gp
+            JOIN appointments a ON gp.appointment_id = a.id
+            WHERE a.doctor_id = ? 
+            AND DATE(a.date) BETWEEN ? AND ?
+            GROUP BY lens_type
+            ORDER BY count DESC
         ");
         $stmt->execute([$doctorId, $startDate, $endDate]);
         return $stmt->fetchAll();

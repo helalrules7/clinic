@@ -564,13 +564,16 @@ $isEditing = !empty($consultation);
 }
 
 .dark .card-header {
-    background-color: var(--bg) !important;
+    background-color: transparent !important;
     border-bottom-color: var(--border) !important;
     color: var(--text) !important;
 }
 
+.card-header{
+    background-color: transparent !important;
+}
+
 .dark .card-body {
-    background-color: var(--card) !important;
     color: var(--text) !important;
 }
 

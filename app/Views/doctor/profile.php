@@ -613,7 +613,7 @@ function updateSidebarUserInfo() {
                 userAvatar.innerHTML = '';
                 userAvatar.appendChild(sidebarImg);
             } else {
-                userAvatar.textContent = updatedName.charAt(0).toUpperCase();
+            userAvatar.textContent = updatedName.charAt(0).toUpperCase();
             }
             
             // Add animation to avatar
@@ -1170,13 +1170,13 @@ document.querySelector('.profile-image-preview-wrapper').addEventListener('click
         width: 100px;
         height: 100px;
         font-size: 2.5rem;
-    }
-    
+}
+
     .profile-image-preview-wrapper {
         width: 120px;
         height: 120px;
-    }
-    
+}
+
     .profile-image-placeholder {
         font-size: 2.5rem;
     }
