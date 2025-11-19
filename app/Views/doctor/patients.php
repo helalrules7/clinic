@@ -1552,6 +1552,11 @@ kbd[lang="ar"] {
     font-weight: 600;
 }
 
+.phone-number-container.active .phone-number-link {
+    color: var(--text);
+    font-weight: 600;
+}
+
 .phone-htooltip {
     visibility: hidden;
     z-index: 1001;
@@ -1605,31 +1610,8 @@ kbd[lang="ar"] {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Phone htooltip arrow */
-.phone-htooltip::after {
-    content: " ";
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 12px 12.5px 0 12.5px;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: -12px;
-}
-
-/* Light mode arrow */
-.phone-htooltip::after {
-    border-color: rgba(248, 250, 252, 0.85) transparent transparent transparent;
-}
-
-/* Dark mode arrow */
-.dark .phone-htooltip::after {
-    border-color: rgba(11, 18, 32, 0.85) transparent transparent transparent;
-}
-
-/* Show phone htooltip on hover */
-.phone-number-container:hover .phone-htooltip {
+/* Show phone htooltip on click */
+.phone-number-container.active .phone-htooltip {
     visibility: visible;
     transform: translateX(-50%) translateY(-10px);
     opacity: 1;
@@ -2089,9 +2071,7 @@ function renderPatientsTable() {
                                 <div class="phone-number-container" style="position: relative; display: inline-block;">
                                     <a href="tel:${escapeHtml(patient.phone)}" 
                                        class="phone-number-link" 
-                                       style="text-decoration: none; color: var(--accent); font-weight: 500; cursor: pointer; transition: all 0.2s ease;"
-                                       onmouseover="this.style.color='var(--text)'; this.style.fontWeight='600';"
-                                       onmouseout="this.style.color='var(--accent)'; this.style.fontWeight='500';">
+                                       style="text-decoration: none; color: var(--accent); font-weight: 500; cursor: pointer; transition: all 0.2s ease;">
                                         <i class="bi bi-telephone me-1"></i>
                                         ${escapeHtml(patient.phone)}
                                     </a>
@@ -2101,7 +2081,7 @@ function renderPatientsTable() {
                                                 <i class="bi bi-telephone-fill"></i>
                                                 <span>Call</span>
                                             </a>
-                                            <a href="https://wa.me/${escapeHtml(patient.phone).replace(/[^0-9]/g, '')}" target="_blank" class="phone-action-btn whatsapp-btn" title="WhatsApp">
+                                            <a href="https://wa.me/+2${escapeHtml(patient.phone).replace(/[^0-9]/g, '')}" target="_blank" class="phone-action-btn whatsapp-btn" title="WhatsApp">
                                                 <i class="bi bi-whatsapp"></i>
                                                 <span>WhatsApp</span>
                                             </a>
@@ -2113,9 +2093,7 @@ function renderPatientsTable() {
                                 <div class="phone-number-container mt-1" style="position: relative; display: inline-block;">
                                     <a href="tel:${escapeHtml(patient.alt_phone)}" 
                                        class="phone-number-link" 
-                                       style="text-decoration: none; color: var(--accent); font-weight: 500; cursor: pointer; transition: all 0.2s ease;"
-                                       onmouseover="this.style.color='var(--text)'; this.style.fontWeight='600';"
-                                       onmouseout="this.style.color='var(--accent)'; this.style.fontWeight='500';">
+                                       style="text-decoration: none; color: var(--accent); font-weight: 500; cursor: pointer; transition: all 0.2s ease;">
                                         <i class="bi bi-telephone-plus me-1"></i>
                                         <small>${escapeHtml(patient.alt_phone)}</small>
                                     </a>
@@ -2125,7 +2103,7 @@ function renderPatientsTable() {
                                                 <i class="bi bi-telephone-fill"></i>
                                                 <span>Call</span>
                                             </a>
-                                            <a href="https://wa.me/${escapeHtml(patient.alt_phone).replace(/[^0-9]/g, '')}" target="_blank" class="phone-action-btn whatsapp-btn" title="WhatsApp">
+                                            <a href="https://wa.me/+2${escapeHtml(patient.alt_phone).replace(/[^0-9]/g, '')}" target="_blank" class="phone-action-btn whatsapp-btn" title="WhatsApp">
                                                 <i class="bi bi-whatsapp"></i>
                                                 <span>WhatsApp</span>
                                             </a>
@@ -2817,6 +2795,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize Add Patient Modal
     initializeAddPatientModal();
+    
+    // Initialize phone tooltip click handlers
+    initializePhoneTooltips();
 });
 
 // Add Patient functionality
@@ -3386,6 +3367,51 @@ displaySearchResults = function(patients, searchTerm) {
         refreshTooltips();
     }, 100);
 };
+
+// Initialize phone tooltip click handlers
+function initializePhoneTooltips() {
+    // Use event delegation for dynamically added phone numbers
+    document.addEventListener('click', function(e) {
+        // Check if click is on a phone number link
+        const phoneLink = e.target.closest('.phone-number-link');
+        if (phoneLink) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const container = phoneLink.closest('.phone-number-container');
+            if (container) {
+                // Toggle tooltip visibility
+                const isActive = container.classList.contains('active');
+                
+                // Close all other tooltips
+                document.querySelectorAll('.phone-number-container.active').forEach(activeContainer => {
+                    if (activeContainer !== container) {
+                        activeContainer.classList.remove('active');
+                    }
+                });
+                
+                // Toggle current tooltip
+                if (isActive) {
+                    container.classList.remove('active');
+                } else {
+                    container.classList.add('active');
+                }
+            }
+        } else {
+            // Close all tooltips when clicking outside
+            document.querySelectorAll('.phone-number-container.active').forEach(container => {
+                container.classList.remove('active');
+            });
+        }
+    });
+    
+    // Prevent tooltip from closing when clicking inside it
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.phone-htooltip') || e.target.closest('.phone-action-btn')) {
+            e.stopPropagation();
+        }
+    });
+}
 
 // Auto-refresh every 30 seconds (pause when modals are open or user is interacting)
 setInterval(() => {
