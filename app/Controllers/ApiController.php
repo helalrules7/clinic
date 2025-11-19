@@ -35,7 +35,6 @@ class ApiController
             ini_set('display_errors', 0);
             error_reporting(E_ERROR | E_PARSE);
         } catch (\Exception $e) {
-            error_log("Exception in ApiController __construct: " . $e->getMessage());
             throw $e;
         }
     }
@@ -44,8 +43,6 @@ class ApiController
     {
         try {
             // Enable debug logging to custom file
-            ini_set('error_log', '/tmp/clinic_debug.log');
-            error_log("=== DEBUG CALENDAR START === " . date('Y-m-d H:i:s'));
             
             // Check authentication
             if (!$this->auth->check()) {
@@ -158,7 +155,6 @@ class ApiController
                     $stmt->execute([$id]);
                 } catch (\PDOException $e) {
                     // Ignore if table doesn't exist
-                    error_log("Radiology tests table not found: " . $e->getMessage());
                 }
 
                 // 5. Delete consultation notes
@@ -181,7 +177,6 @@ class ApiController
                 $this->pdo->commit();
 
                 // Log the deletion
-                error_log("Appointment deleted: ID {$id}, Patient: {$appointment['first_name']} {$appointment['last_name']}, Date: {$appointment['date']}, Time: {$appointment['start_time']}");
 
                 return $this->jsonResponse([
                     'ok' => true,
@@ -442,12 +437,10 @@ class ApiController
             
             // Validate data is not empty
             if (empty($data)) {
-                error_log("updateAppointment: No data received. Content-Type: $contentType, Input length: " . strlen($input));
                 return $this->jsonResponse(['error' => 'No data provided'], 400);
             }
             
             // Log received data for debugging (remove in production)
-            error_log("updateAppointment: Received data: " . json_encode($data));
             
             
             if (isset($data['status'])) {
@@ -484,11 +477,8 @@ class ApiController
             return $this->jsonResponse(['error' => 'No valid updates provided'], 400);
 
         } catch (\PDOException $e) {
-            error_log("PDOException in updateAppointment: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Database error occurred'], 500);
         } catch (\Exception $e) {
-            error_log("Exception in updateAppointment: " . $e->getMessage());
-            error_log("Stack trace: " . $e->getTraceAsString());
             return $this->jsonResponse(['error' => 'An error occurred: ' . $e->getMessage()], 500);
         }
     }
@@ -702,8 +692,6 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Error searching appointments: " . $e->getMessage());
-            error_log("Stack trace: " . $e->getTraceAsString());
             return $this->jsonResponse(['error' => 'Failed to search appointments: ' . $e->getMessage()], 500);
         }
     }
@@ -900,7 +888,6 @@ class ApiController
                     $stmt->execute([$id]);
                 } catch (\PDOException $e) {
                     // Ignore if table doesn't exist
-                    error_log("Radiology tests table not found: " . $e->getMessage());
                 }
                 
                 // 7. Delete consultation notes
@@ -955,7 +942,6 @@ class ApiController
                     'timestamp' => date('Y-m-d H:i:s')
                 ];
                 
-                error_log("Patient deletion completed: " . json_encode($deletionSummary));
                 
                 return $this->jsonResponse([
                     'ok' => true,
@@ -974,7 +960,6 @@ class ApiController
             }
 
         } catch (\Exception $e) {
-            error_log("Error deleting patient: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Failed to delete patient: ' . $e->getMessage()], 500);
         }
     }
@@ -1001,15 +986,12 @@ class ApiController
     public function updateEmergencyContact($id)
     {
         try {
-            error_log("DEBUG: updateEmergencyContact called with ID: " . $id);
             
             if (!$this->auth->check()) {
-                error_log("DEBUG: Auth check failed");
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
 
             if (!$id) {
-                error_log("DEBUG: No patient ID provided");
                 return $this->jsonResponse(['error' => 'Patient ID is required'], 400);
             }
 
@@ -1017,22 +999,18 @@ class ApiController
             $stmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
             $stmt->execute([$id]);
             if (!$stmt->fetch()) {
-                error_log("DEBUG: Patient not found with ID: " . $id);
                 return $this->jsonResponse(['error' => 'Patient not found'], 404);
             }
 
             // Get JSON input
             $rawInput = file_get_contents('php://input');
-            error_log("DEBUG: Raw input: " . $rawInput);
             
             $input = json_decode($rawInput, true);
             
             if (!$input) {
-                error_log("DEBUG: Failed to decode JSON input");
                 return $this->jsonResponse(['error' => 'Invalid JSON input'], 400);
             }
 
-            error_log("DEBUG: Parsed input: " . json_encode($input));
 
             // Validate input
             $rules = [
@@ -1041,7 +1019,6 @@ class ApiController
             ];
 
             if (!$this->validator->validate($input, $rules)) {
-                error_log("DEBUG: Validation failed: " . json_encode($this->validator->getAllErrors()));
                 return $this->jsonResponse([
                     'error' => 'Validation failed',
                     'details' => $this->validator->getAllErrors()
@@ -1055,19 +1032,12 @@ class ApiController
                 WHERE id = ?
             ");
             
-            error_log("DEBUG: Executing update with values: " . json_encode([
-                $input['emergency_contact'],
-                $input['emergency_phone'],
-                $id
-            ]));
-            
             $success = $stmt->execute([
                 $input['emergency_contact'],
                 $input['emergency_phone'],
                 $id
             ]);
 
-            error_log("DEBUG: Update success: " . ($success ? 'true' : 'false') . ", Rows affected: " . $stmt->rowCount());
 
             if ($success) {
                 // Create timeline event
@@ -1078,9 +1048,7 @@ class ApiController
                         'Update', 
                         'Emergency contact information updated'
                     );
-                    error_log("DEBUG: Timeline event created successfully");
                 } catch (\Exception $e) {
-                    error_log("DEBUG: Timeline event failed: " . $e->getMessage());
                     // Continue even if timeline fails
                 }
                 
@@ -1089,13 +1057,10 @@ class ApiController
                     'message' => 'Emergency contact updated successfully'
                 ]);
             } else {
-                error_log("DEBUG: Update failed");
                 return $this->jsonResponse(['error' => 'Failed to update emergency contact'], 500);
             }
 
         } catch (\Exception $e) {
-            error_log("Emergency contact update error: " . $e->getMessage());
-            error_log("Stack trace: " . $e->getTraceAsString());
             return $this->jsonResponse(['error' => 'Server error: ' . $e->getMessage()], 500);
         }
     }
@@ -1356,7 +1321,6 @@ class ApiController
         // Encode to JSON
         $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         if ($json === false) {
-            error_log("JSON encoding error: " . json_last_error_msg());
             $data = ['error' => 'JSON encoding failed: ' . json_last_error_msg()];
             $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
@@ -1382,7 +1346,6 @@ class ApiController
     private function getAppointmentsForDate($doctorId, $date)
     {
         // Set debug log file
-        ini_set('error_log', '/tmp/clinic_debug.log');
         
         $stmt = $this->pdo->prepare("
             SELECT a.*, p.first_name, p.last_name, p.phone, p.dob, p.gender,
@@ -1403,10 +1366,7 @@ class ApiController
             $appointment['end_time'] = $appointment['end_time_formatted'];
         }
         
-        error_log("Debug getAppointmentsForDate - Doctor: $doctorId, Date: $date");
-        error_log("Debug - Found " . count($appointments) . " appointments");
         foreach ($appointments as $apt) {
-            error_log("Debug - Appointment: ID={$apt['id']}, Time={$apt['start_time']} (formatted), Patient={$apt['patient_name']}, Status={$apt['status']}");
         }
         
         return $appointments;
@@ -1415,7 +1375,6 @@ class ApiController
     private function getAllAppointmentsForDate($date)
     {
         // Set debug log file
-        ini_set('error_log', '/tmp/clinic_debug.log');
         
         $stmt = $this->pdo->prepare("
             SELECT a.*, p.first_name, p.last_name, p.phone, p.dob, p.gender,
@@ -1469,10 +1428,7 @@ class ApiController
             }
         }
         
-        error_log("Debug getAllAppointmentsForDate - Date: $date");
-        error_log("Debug - Found " . count($appointments) . " appointments");
         foreach ($appointments as $apt) {
-            error_log("Debug - Appointment: ID={$apt['id']}, Time={$apt['start_time']}, Patient={$apt['patient_name']}, Doctor={$apt['doctor_display_name']}, Status={$apt['status']}, HasFollowup=" . ($apt['has_followup'] ? 'YES' : 'NO') . ", IsFollowup=" . ($apt['is_followup'] ? 'YES' : 'NO'));
         }
         
         return $appointments;
@@ -1481,7 +1437,6 @@ class ApiController
     private function getAvailableTimeSlots($doctorId, $date)
     {
         // Set debug log file
-        ini_set('error_log', '/tmp/clinic_debug.log');
         
         // Get working hours for the doctor on this day
         $weekday = (new \DateTime($date))->format('w');
@@ -1492,11 +1447,8 @@ class ApiController
         $stmt->execute([$doctorId, $weekday]);
         $schedule = $stmt->fetch();
         
-        error_log("Debug getAvailableTimeSlots - Doctor: $doctorId, Date: $date, Weekday: $weekday");
-        error_log("Debug - Schedule found: " . ($schedule ? "YES (Start: {$schedule['work_start']}, End: {$schedule['work_end']})" : "NO"));
         
         if (!$schedule) {
-            error_log("Debug - No schedule found, returning empty array");
             return [];
         }
 
@@ -1512,7 +1464,6 @@ class ApiController
             
             // Check if slot is available
             $isAvailable = $this->isTimeSlotAvailable($doctorId, $date, $timeStr);
-            error_log("Debug - Checking slot $timeStr: " . ($isAvailable ? "AVAILABLE" : "NOT AVAILABLE"));
             
             if ($isAvailable) {
                 $slots[] = $timeStr;
@@ -1521,14 +1472,12 @@ class ApiController
             $current->add($interval);
         }
         
-        error_log("Debug - Generated " . count($slots) . " available slots: " . implode(', ', $slots));
         return $slots;
     }
 
     private function getAvailableTimeSlotsGlobal($date)
     {
         // Set debug log file
-        ini_set('error_log', '/tmp/clinic_debug.log');
         
         // Use default working hours (2 PM to 11 PM) for all doctors
         $slots = [];
@@ -1542,7 +1491,6 @@ class ApiController
             
             // Check if slot is available (no appointments at this time)
             $isAvailable = $this->isTimeSlotAvailableGlobal($date, $timeStr);
-            error_log("Debug - Checking global slot $timeStr: " . ($isAvailable ? "AVAILABLE" : "NOT AVAILABLE"));
             
             if ($isAvailable) {
                 $slots[] = $timeStr;
@@ -1551,7 +1499,6 @@ class ApiController
             $current->add($interval);
         }
         
-        error_log("Debug - Generated " . count($slots) . " global available slots: " . implode(', ', $slots));
         return $slots;
     }
 
@@ -1565,7 +1512,6 @@ class ApiController
         $stmt->execute([$doctorId, $date, $startTime]);
         $count = $stmt->fetchColumn();
         
-        error_log("Debug isTimeSlotAvailable - Doctor: $doctorId, Date: $date, Time: $startTime, Appointments: $count");
         
         return $count == 0;
     }
@@ -1580,7 +1526,6 @@ class ApiController
         $stmt->execute([$date, $startTime]);
         $count = $stmt->fetchColumn();
         
-        error_log("Debug isTimeSlotAvailableGlobal - Date: $date, Time: $startTime, Appointments: $count");
         
         return $count == 0;
     }
@@ -1588,7 +1533,6 @@ class ApiController
     private function getUnavailableSlots($doctorId, $date)
     {
         // Set debug log file
-        ini_set('error_log', '/tmp/clinic_debug.log');
         
         // Get all time slots that are unavailable for this doctor
         $allSlots = $this->getAllTimeSlots($date);
@@ -1596,9 +1540,6 @@ class ApiController
         $unavailableSlots = [];
         
         // Debug logging
-        error_log("Debug getUnavailableSlots - Doctor: $doctorId, Date: $date");
-        error_log("Debug - All slots count: " . count($allSlots));
-        error_log("Debug - Available slots count: " . count($availableSlots));
         
         foreach ($allSlots as $time) {
             if (!in_array($time, $availableSlots)) {
@@ -1617,9 +1558,7 @@ class ApiController
                 $appointment = $stmt->fetch();
                 
                 // Debug logging for each slot
-                error_log("Debug - Time: $time, Appointment found: " . ($appointment ? 'YES' : 'NO'));
                 if ($appointment) {
-                    error_log("Debug - Appointment doctor_id: {$appointment['doctor_id']}, current doctor: $doctorId");
                 }
                 
                 if ($appointment) {
@@ -1631,7 +1570,6 @@ class ApiController
                         $visitType = $appointment['visit_type'];
                         $status = $appointment['status'];
                         
-                        error_log("Debug - Adding reserved slot for: $doctorDisplayName - $patientName");
                         
                         $unavailableSlots[] = [
                             'time' => $time,
@@ -1645,7 +1583,6 @@ class ApiController
                 } else {
                     // Check if it's outside working hours for this doctor
                     $isOutside = $this->isOutsideWorkingHours($doctorId, $date, $time);
-                    error_log("Debug - Time: $time, Outside working hours: " . ($isOutside ? 'YES' : 'NO'));
                     
                     if ($isOutside) {
                         $unavailableSlots[] = [
@@ -1682,7 +1619,6 @@ class ApiController
                         $debugInfo .= "Own appointments: $ownAppointmentCount | ";
                         $debugInfo .= "Weekday: $weekday";
                         
-                        error_log("Debug - Mystery unavailable slot details: $debugInfo");
                         
                         $unavailableSlots[] = [
                             'time' => $time,
@@ -1701,7 +1637,6 @@ class ApiController
     private function getUnavailableSlotsGlobal($date)
     {
         // Set debug log file
-        ini_set('error_log', '/tmp/clinic_debug.log');
         
         // Get all time slots that are unavailable globally
         $allSlots = $this->getAllTimeSlots($date);
@@ -1709,9 +1644,6 @@ class ApiController
         $unavailableSlots = [];
         
         // Debug logging
-        error_log("Debug getUnavailableSlotsGlobal - Date: $date");
-        error_log("Debug - All slots count: " . count($allSlots));
-        error_log("Debug - Available slots count: " . count($availableSlots));
         
         foreach ($allSlots as $time) {
             if (!in_array($time, $availableSlots)) {
@@ -1735,7 +1667,6 @@ class ApiController
                     $visitType = $appointment['visit_type'];
                     $status = $appointment['status'];
                     
-                    error_log("Debug - Adding reserved slot for: $doctorDisplayName - $patientName");
                     
                     $unavailableSlots[] = [
                         'time' => $time,
@@ -1752,7 +1683,6 @@ class ApiController
                     $workEnd = new \DateTime('23:00');
                     
                     $isOutside = $timeObj < $workStart || $timeObj >= $workEnd;
-                    error_log("Debug - Time: $time, Outside working hours: " . ($isOutside ? 'YES' : 'NO'));
                     
                     if ($isOutside) {
                         $unavailableSlots[] = [
@@ -1967,7 +1897,6 @@ class ApiController
             
             if (!$result) {
                 $errorInfo = $stmt->errorInfo();
-                error_log("createAppointmentRecord execute failed: " . json_encode($errorInfo));
                 throw new \Exception('Failed to create appointment: ' . ($errorInfo[2] ?? 'Unknown error'));
             }
             
@@ -1980,10 +1909,8 @@ class ApiController
             return $appointmentId;
             
         } catch (\PDOException $e) {
-            error_log("createAppointmentRecord PDO error: " . $e->getMessage());
             throw new \Exception('Database error creating appointment: ' . $e->getMessage());
         } catch (\Exception $e) {
-            error_log("createAppointmentRecord error: " . $e->getMessage());
             throw $e;
         }
     }
@@ -2076,7 +2003,6 @@ class ApiController
                 $appointmentDateTime = new \DateTime($appointment['date'] . ' ' . $appointment['start_time']);
                 $newDateTime = new \DateTime($newDate . ' ' . $newTime);
             } catch (\Exception $e) {
-                error_log("DateTime creation error: " . $e->getMessage());
                 return $this->jsonResponse(['error' => 'Invalid date or time format'], 400);
             }
             
@@ -2233,7 +2159,6 @@ class ApiController
                 $currentDateTime = new \DateTime();
                 $newDateTime = new \DateTime($newDate . ' ' . $newTime);
             } catch (\Exception $e) {
-                error_log("DateTime creation error: " . $e->getMessage());
                 return $this->jsonResponse(['error' => 'Invalid date or time format'], 400);
             }
             
@@ -2718,7 +2643,6 @@ class ApiController
         try {
             $user = $this->auth->user();
             if (!$user || !isset($user['id'])) {
-                error_log("createTimelineEvent: User not found or invalid");
                 return false;
             }
             
@@ -2735,7 +2659,6 @@ class ApiController
                 $summary
             ]);
         } catch (\Exception $e) {
-            error_log("createTimelineEvent error: " . $e->getMessage());
             return false;
         }
     }
@@ -2849,7 +2772,6 @@ class ApiController
             }
 
         } catch (Exception $e) {
-            error_log("Upload attachment error: " . $e->getMessage());
             return $this->jsonResponse(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
         }
     }
@@ -2887,7 +2809,6 @@ class ApiController
             readfile($filePath);
 
         } catch (Exception $e) {
-            error_log("View attachment error: " . $e->getMessage());
             http_response_code(500);
         }
     }
@@ -2925,7 +2846,6 @@ class ApiController
             readfile($filePath);
 
         } catch (Exception $e) {
-            error_log("Download attachment error: " . $e->getMessage());
             http_response_code(500);
         }
     }
@@ -2974,7 +2894,6 @@ class ApiController
             }
 
         } catch (Exception $e) {
-            error_log("Delete attachment error: " . $e->getMessage());
             return $this->jsonResponse(['success' => false, 'message' => 'Server error']);
         }
     }
@@ -3000,7 +2919,6 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Get appointment attachments error: " . $e->getMessage());
             return $this->jsonResponse(['success' => false, 'message' => 'Server error'], 500);
         }
     }
@@ -3026,7 +2944,6 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Get appointment medications error: " . $e->getMessage());
             return $this->jsonResponse(['success' => false, 'message' => 'Server error'], 500);
         }
     }
@@ -3052,7 +2969,6 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Get appointment glasses error: " . $e->getMessage());
             return $this->jsonResponse(['success' => false, 'message' => 'Server error'], 500);
         }
     }
@@ -3104,7 +3020,6 @@ class ApiController
             }
 
         } catch (Exception $e) {
-            error_log("Delete medication error: " . $e->getMessage());
             return $this->jsonResponse(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
         }
     }
@@ -3159,12 +3074,9 @@ class ApiController
                 $data = $_POST;
             }
             
-            error_log("Parsed data for validation: " . json_encode($data));
             
             if (!$this->validator->validate($data, $rules)) {
                 $errors = $this->validator->getAllErrors();
-                error_log("Validation errors: " . json_encode($errors));
-                error_log("POST data: " . json_encode($data));
                 
                 return $this->jsonResponse([
                     'success' => false,
@@ -3205,7 +3117,6 @@ class ApiController
             }
 
         } catch (Exception $e) {
-            error_log("Update medication error: " . $e->getMessage());
             return $this->jsonResponse(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
         }
     }
@@ -3769,7 +3680,6 @@ class ApiController
             ]);
 
         } catch (Exception $e) {
-            error_log("Get patient files error: " . $e->getMessage());
             return $this->jsonResponse(['success' => false, 'message' => 'Server error'], 500);
         }
     }
@@ -3834,15 +3744,6 @@ class ApiController
 
             $title = $input['title'] ?? null;
             $content = $input['content'] ?? null;
-
-            // Debug logging
-            error_log("DEBUG updatePatientNote: " . json_encode([
-                'noteId' => $noteId,
-                'method' => $_SERVER['REQUEST_METHOD'],
-                'input' => $input,
-                'title' => $title,
-                'content' => $content
-            ]));
 
             if (!$title || !$content) {
                 return $this->jsonResponse([
@@ -3997,8 +3898,6 @@ class ApiController
             }
 
         } catch (\Exception $e) {
-            error_log("Error creating medical history: " . $e->getMessage());
-            error_log("Stack trace: " . $e->getTraceAsString());
             return $this->jsonResponse(['error' => 'Internal server error: ' . $e->getMessage()], 500);
         }
     }
@@ -4092,8 +3991,6 @@ class ApiController
             }
 
         } catch (\Exception $e) {
-            error_log("Error updating medical history: " . $e->getMessage());
-            error_log("Stack trace: " . $e->getTraceAsString());
             return $this->jsonResponse(['error' => 'Internal server error: ' . $e->getMessage()], 500);
         }
     }
@@ -4132,8 +4029,6 @@ class ApiController
             }
 
         } catch (\Exception $e) {
-            error_log("Error deleting medical history: " . $e->getMessage());
-            error_log("Stack trace: " . $e->getTraceAsString());
             return $this->jsonResponse(['error' => 'Internal server error: ' . $e->getMessage()], 500);
         }
     }
@@ -4173,7 +4068,6 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Error fetching medical history entry: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Internal server error'], 500);
         }
     }
@@ -4206,7 +4100,6 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Error fetching patient appointments: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Internal server error'], 500);
         }
     }
@@ -4240,7 +4133,6 @@ class ApiController
             exit;
 
         } catch (\Exception $e) {
-            error_log("Error checking export access: " . $e->getMessage());
             http_response_code(500);
             exit;
         }
@@ -4283,7 +4175,6 @@ class ApiController
             exit;
 
         } catch (\Exception $e) {
-            error_log("Error exporting patient data: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Internal server error: ' . $e->getMessage()], 500);
         }
     }
@@ -4319,7 +4210,6 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Error fetching glasses prescription: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Internal server error'], 500);
         }
     }
@@ -4407,7 +4297,6 @@ class ApiController
             ];
 
         } catch (\Exception $e) {
-            error_log("Error getting patient data: " . $e->getMessage());
             return null;
         }
     }
@@ -4727,7 +4616,6 @@ class ApiController
                     $imagePath = __DIR__ . '/../../' . $attachment['file_path'];
                     if (file_exists($imagePath) && is_readable($imagePath)) {
                         try {
-                            error_log("Processing image: $imagePath");
                             
                             // Get image info
                             $imageInfo = getimagesize($imagePath);
@@ -4739,7 +4627,6 @@ class ApiController
                             $originalHeight = $imageInfo[1];
                             $mimeType = $imageInfo['mime'];
                             
-                            error_log("Original image: {$originalWidth}x{$originalHeight}, MIME: $mimeType");
                             
                             // Create a copy in temp directory with proper permissions
                             $tempImagePath = sys_get_temp_dir() . '/export_image_' . time() . '_' . mt_rand(1000, 9999) . '.jpg';
@@ -4748,7 +4635,6 @@ class ApiController
                             $this->convertImageToJpeg($imagePath, $tempImagePath, 400, 400);
                             
                             if (file_exists($tempImagePath)) {
-                                error_log("Created temp JPEG image: $tempImagePath");
                                 
                                 $section->addTextBreak();
                                 
@@ -4768,7 +4654,6 @@ class ApiController
                                 ]);
                                 
                                 $section->addTextBreak();
-                                error_log("Image successfully added to document: {$displayWidth}x{$displayHeight}");
                                 
                                 // Don't delete the temp image yet - PHPWord may need it during save
                                 // We'll clean it up after the document is generated
@@ -4778,15 +4663,12 @@ class ApiController
                                 throw new \Exception("Failed to create temporary image file");
                             }
                         } catch (\Exception $e) {
-                            error_log("Error adding image to document: " . $e->getMessage());
-                            error_log("Image path was: $imagePath");
                             // Add note that image couldn't be loaded
                             $section->addTextBreak();
                             $section->addText('Note: Image could not be embedded in document. (' . $attachment['original_filename'] . ')', ['italic' => true, 'color' => '666666']);
                             $section->addTextBreak();
                         }
                     } else {
-                        error_log("Image file not accessible: $imagePath");
                     }
                 }
                 
@@ -4816,18 +4698,15 @@ class ApiController
     private function resizeImage($sourcePath, $maxWidth, $maxHeight)
     {
         if (!extension_loaded('gd')) {
-            error_log("GD extension not loaded, returning original image path");
             return $sourcePath; // Return original if GD not available
         }
 
         if (!file_exists($sourcePath)) {
-            error_log("Image file not found: " . $sourcePath);
             return false;
         }
 
         $imageInfo = getimagesize($sourcePath);
         if (!$imageInfo) {
-            error_log("Cannot get image info for: " . $sourcePath);
             return $sourcePath;
         }
 
@@ -4887,10 +4766,8 @@ class ApiController
         imagedestroy($newImage);
 
         if ($saved && file_exists($tempPath)) {
-            error_log("Successfully created resized image: $tempPath");
             return $tempPath;
         } else {
-            error_log("Failed to create resized image, returning original: $sourcePath");
             return $sourcePath;
         }
     }
@@ -4898,13 +4775,11 @@ class ApiController
     private function convertImageToJpeg($sourcePath, $outputPath, $maxWidth, $maxHeight)
     {
         if (!extension_loaded('gd')) {
-            error_log("GD extension not loaded");
             return copy($sourcePath, $outputPath);
         }
 
         $imageInfo = getimagesize($sourcePath);
         if (!$imageInfo) {
-            error_log("Cannot get image info for: $sourcePath");
             return copy($sourcePath, $outputPath);
         }
 
@@ -4927,12 +4802,10 @@ class ApiController
                 $sourceImage = imagecreatefromgif($sourcePath);
                 break;
             default:
-                error_log("Unsupported image type: $imageType");
                 return copy($sourcePath, $outputPath);
         }
 
         if (!$sourceImage) {
-            error_log("Failed to create source image from: $sourcePath");
             return copy($sourcePath, $outputPath);
         }
 
@@ -4952,10 +4825,8 @@ class ApiController
         imagedestroy($newImage);
 
         if ($saved && file_exists($outputPath)) {
-            error_log("Successfully converted image to JPEG: $outputPath ({$newWidth}x{$newHeight})");
             return true;
         } else {
-            error_log("Failed to save JPEG image: $outputPath");
             return false;
         }
     }
@@ -4965,7 +4836,6 @@ class ApiController
         foreach ($this->tempImagesToCleanup as $tempPath) {
             if (file_exists($tempPath)) {
                 unlink($tempPath);
-                error_log("Cleaned up temp image: $tempPath");
             }
         }
         $this->tempImagesToCleanup = [];
@@ -5005,7 +4875,6 @@ class ApiController
             ]);
 
         } catch (Exception $e) {
-            error_log("Error deleting consultation note: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Failed to delete consultation note'], 500);
         }
     }
@@ -5072,16 +4941,9 @@ class ApiController
             $whereClause = implode(' ', $whereConditions);
             
             // Debug logging
-            error_log("Search API Debug - Search Term: " . $searchTerm);
-            error_log("Search API Debug - Category: " . $category);
-            error_log("Search API Debug - Company: " . $company);
-            error_log("Search API Debug - Route: " . $route);
-            error_log("Search API Debug - WHERE Clause: " . $whereClause);
-            error_log("Search API Debug - Params: " . json_encode($params));
             
             // Also log the full SQL query for debugging
             $fullQuery = "SELECT ID, FirstName as drug_name, LastName as active_ingredient, price, Company, Pharmacology as category, Route as administration_route, SRDE, GI FROM drugs WHERE {$whereClause} {$orderBy} LIMIT ?";
-            error_log("Search API Debug - Full Query: " . $fullQuery);
             
             // Build ORDER BY clause
             $orderBy = '';
@@ -5127,15 +4989,12 @@ class ApiController
             
             $drugs = $stmt->fetchAll();
             
-            error_log("Search API Debug - Results Count: " . count($drugs));
             if (count($drugs) > 0) {
-                error_log("Search API Debug - First Result: " . json_encode($drugs[0]));
             }
             
             return $this->jsonResponse(['drugs' => $drugs]);
 
         } catch (Exception $e) {
-            error_log("Error searching drugs: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Failed to search drugs'], 500);
         }
     }
@@ -5184,7 +5043,6 @@ class ApiController
             return $this->jsonResponse(['drug' => $drug]);
 
         } catch (Exception $e) {
-            error_log("Error getting drug details: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Failed to get drug details'], 500);
         }
     }
@@ -5222,7 +5080,6 @@ class ApiController
             ]);
 
         } catch (Exception $e) {
-            error_log("Error getting filter options: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Failed to get filter options'], 500);
         }
     }
@@ -5294,8 +5151,6 @@ class ApiController
             return $this->jsonResponse(['drugs' => $formattedDrugs]);
 
         } catch (\Exception $e) {
-            error_log("Error getting most used drugs: " . $e->getMessage());
-            error_log("Stack trace: " . $e->getTraceAsString());
             return $this->jsonResponse(['error' => 'Failed to get most used drugs: ' . $e->getMessage()], 500);
         }
     }
@@ -5349,8 +5204,6 @@ class ApiController
             return $this->jsonResponse(['drugs' => $drugs]);
 
         } catch (\Exception $e) {
-            error_log("Error searching drugs autocomplete: " . $e->getMessage());
-            error_log("Stack trace: " . $e->getTraceAsString());
             return $this->jsonResponse(['error' => 'Failed to search drugs: ' . $e->getMessage()], 500);
         }
     }
@@ -5408,7 +5261,6 @@ class ApiController
             ]);
             
         } catch (Exception $e) {
-            error_log("Error creating daily balance: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'فشل في تسجيل الرصيد'], 500);
         }
     }
@@ -5447,7 +5299,6 @@ class ApiController
             ]);
             
         } catch (Exception $e) {
-            error_log("Error creating daily closure: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'فشل في إغلاق اليوم'], 500);
         }
     }
@@ -5510,7 +5361,6 @@ class ApiController
             ]);
             
         } catch (Exception $e) {
-            error_log("Error creating expense: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'فشل في تسجيل المصروف'], 500);
         }
     }
@@ -5585,7 +5435,6 @@ class ApiController
             }
             
         } catch (\Exception $e) {
-            error_log("Error updating expense: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Failed to update expense'], 500);
         }
     }
@@ -5619,7 +5468,6 @@ class ApiController
             ]);
             
         } catch (\Exception $e) {
-            error_log("Error deleting expense: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Failed to delete expense'], 500);
         }
     }
@@ -5693,7 +5541,6 @@ class ApiController
             }
             
         } catch (\Exception $e) {
-            error_log("Error updating payment: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Failed to update payment'], 500);
         }
     }
@@ -5727,7 +5574,6 @@ class ApiController
             ]);
             
         } catch (\Exception $e) {
-            error_log("Error deleting payment: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Failed to delete payment'], 500);
         }
     }
@@ -5763,7 +5609,6 @@ class ApiController
             ]);
             
         } catch (\Exception $e) {
-            error_log("Error getting payment: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Failed to get payment'], 500);
         }
     }
@@ -5774,12 +5619,9 @@ class ApiController
     public function getExpense($id)
     {
         try {
-            error_log("getExpense: Checking authentication");
             if (!$this->auth->check()) {
-                error_log("getExpense: Authentication failed");
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
-            error_log("getExpense: Authentication successful");
 
             $stmt = $this->pdo->prepare("
                 SELECT e.*, 
@@ -5795,14 +5637,12 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Expense not found'], 404);
             }
             
-            error_log("getExpense: Returning data: " . print_r($expense, true));
             return $this->jsonResponse([
                 'ok' => true,
                 'data' => $expense
             ]);
             
         } catch (\Exception $e) {
-            error_log("Error getting expense: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Failed to get expense'], 500);
         }
     }
@@ -5962,7 +5802,6 @@ class ApiController
             ]);
             
         } catch (Exception $e) {
-            error_log("Error getting financial transactions: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'فشل في تحميل المعاملات المالية'], 500);
         }
     }
@@ -5979,11 +5818,8 @@ class ApiController
             ini_set('memory_limit', '512M');
             ini_set('max_execution_time', 300);
             
-            error_log("=== EXPORT START ===");
-            error_log("Export function called at: " . date('Y-m-d H:i:s'));
             
             if (!$this->auth->check()) {
-                error_log("EXPORT FAILED: User not authenticated");
                 http_response_code(401);
                 echo "Unauthorized - Please login first";
                 exit;
@@ -5993,12 +5829,10 @@ class ApiController
             $date = $_GET['date'] ?? '';
             $type = $_GET['type'] ?? 'all';
             
-            error_log("Export parameters - date: '$date', type: '$type'");
             
             // Get all transactions
             $transactions = $this->getAllFinancialTransactions($date, $type);
             
-            error_log("Found " . count($transactions) . " transactions");
             
             // Try Excel first, fallback to CSV
             if ($this->tryExcelExport($transactions)) {
@@ -6009,8 +5843,6 @@ class ApiController
             $this->exportAsCSV($transactions);
             
         } catch (Exception $e) {
-            error_log("=== EXPORT ERROR ===");
-            error_log("Error: " . $e->getMessage());
             
             // Clear any previous output
             while (ob_get_level()) {
@@ -6027,11 +5859,9 @@ class ApiController
         try {
             // Check if PhpSpreadsheet is available
             if (!class_exists('PhpOffice\PhpSpreadsheet\Spreadsheet')) {
-                error_log("PhpSpreadsheet not available, using CSV");
                 return false;
             }
             
-            error_log("Trying Excel export with PhpSpreadsheet");
             
             // Create spreadsheet
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
@@ -6199,11 +6029,9 @@ class ApiController
             $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
             $writer->save('php://output');
             
-            error_log("Excel export successful");
             exit;
             
         } catch (Exception $e) {
-            error_log("Excel export failed: " . $e->getMessage());
             return false;
         }
     }
@@ -6349,15 +6177,12 @@ class ApiController
             }
         }
         
-        error_log("CSV export successful");
         exit;
     }
 
     private function getAllFinancialTransactions($date = null, $type = 'all')
     {
         try {
-            error_log("=== GET ALL FINANCIAL TRANSACTIONS START ===");
-            error_log("Parameters - date: '$date', type: '$type'");
             
             $whereConditions = [];
             $params = [];
@@ -6366,7 +6191,6 @@ class ApiController
             if ($date) {
                 $whereConditions[] = "DATE(created_at) = ?";
                 $params[] = $date;
-                error_log("Date filter applied: $date");
             }
             
             // Type filter
@@ -6378,11 +6202,9 @@ class ApiController
                 } elseif ($type === 'balance') {
                     $whereConditions[] = "type = 'balance'";
                 }
-                error_log("Type filter applied: $type");
             }
             
             $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
-            error_log("Where clause: $whereClause");
             
             // Prepare parameters for each subquery
             $paymentParams = [];
@@ -6395,16 +6217,12 @@ class ApiController
                 $balanceParams[] = $date;
             }
             
-            error_log("Payment params: " . json_encode($paymentParams));
-            error_log("Expense params: " . json_encode($expenseParams));
-            error_log("Balance params: " . json_encode($balanceParams));
             
             // Get all transactions with simplified query
             $allTransactions = [];
             
             // Get payments
             try {
-                error_log("=== GETTING PAYMENTS ===");
                 $paymentQuery = "
                     SELECT 
                         p.created_at,
@@ -6416,24 +6234,16 @@ class ApiController
                     LEFT JOIN patients pat ON p.patient_id = pat.id
                     " . ($date ? "WHERE DATE(p.created_at) = ?" : "");
                 
-                error_log("Payment query: " . $paymentQuery);
-                error_log("Payment params: " . json_encode($paymentParams));
                 
                 $stmt = $this->pdo->prepare($paymentQuery);
                 $stmt->execute($paymentParams);
                 $payments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
                 $allTransactions = array_merge($allTransactions, $payments);
-                error_log("Found " . count($payments) . " payments");
-                error_log("Payment sample: " . json_encode(array_slice($payments, 0, 1)));
             } catch (Exception $e) {
-                error_log("ERROR getting payments: " . $e->getMessage());
-                error_log("Payment query: " . $paymentQuery);
-                error_log("Payment params: " . json_encode($paymentParams));
             }
             
             // Get expenses
             try {
-                error_log("=== GETTING EXPENSES ===");
                 $expenseQuery = "
                     SELECT 
                         e.created_at,
@@ -6444,24 +6254,16 @@ class ApiController
                     FROM expenses e
                     " . ($date ? "WHERE DATE(e.created_at) = ?" : "");
                 
-                error_log("Expense query: " . $expenseQuery);
-                error_log("Expense params: " . json_encode($expenseParams));
                 
                 $stmt = $this->pdo->prepare($expenseQuery);
                 $stmt->execute($expenseParams);
                 $expenses = $stmt->fetchAll(\PDO::FETCH_ASSOC);
                 $allTransactions = array_merge($allTransactions, $expenses);
-                error_log("Found " . count($expenses) . " expenses");
-                error_log("Expense sample: " . json_encode(array_slice($expenses, 0, 1)));
             } catch (Exception $e) {
-                error_log("ERROR getting expenses: " . $e->getMessage());
-                error_log("Expense query: " . $expenseQuery);
-                error_log("Expense params: " . json_encode($expenseParams));
             }
             
             // Get daily balances
             try {
-                error_log("=== GETTING DAILY BALANCES ===");
                 $balanceQuery = "
                     SELECT 
                         db.created_at,
@@ -6480,19 +6282,12 @@ class ApiController
                     FROM daily_balances db
                     " . ($date ? "WHERE DATE(db.created_at) = ?" : "");
                 
-                error_log("Balance query: " . $balanceQuery);
-                error_log("Balance params: " . json_encode($balanceParams));
                 
                 $stmt = $this->pdo->prepare($balanceQuery);
                 $stmt->execute($balanceParams);
                 $balances = $stmt->fetchAll(\PDO::FETCH_ASSOC);
                 $allTransactions = array_merge($allTransactions, $balances);
-                error_log("Found " . count($balances) . " balances");
-                error_log("Balance sample: " . json_encode(array_slice($balances, 0, 1)));
             } catch (Exception $e) {
-                error_log("ERROR getting balances: " . $e->getMessage());
-                error_log("Balance query: " . $balanceQuery);
-                error_log("Balance params: " . json_encode($balanceParams));
             }
             
             // Sort by created_at
@@ -6510,15 +6305,10 @@ class ApiController
             $results = $allTransactions;
             
             // Log for debugging
-            error_log("=== GET ALL FINANCIAL TRANSACTIONS END ===");
-            error_log("Total transactions found: " . count($results));
-            error_log("Final results sample: " . json_encode(array_slice($results, 0, 2)));
-            error_log("Export query executed. Found " . count($results) . " transactions for date: " . $date . ", type: " . $type);
             
             return $results;
             
         } catch (Exception $e) {
-            error_log("Error getting all financial transactions: " . $e->getMessage());
         return [];
         }
     }
@@ -6561,14 +6351,11 @@ class ApiController
     private function generateFormattedExcelContent($transactions)
     {
         try {
-            error_log("=== GENERATE EXCEL CONTENT START ===");
-            error_log("Transactions count: " . count($transactions));
             
             require_once 'vendor/autoload.php';
             
             // Create new Spreadsheet object
             $spreadsheet = new Spreadsheet();
-            error_log("Spreadsheet object created successfully");
         $sheet = $spreadsheet->getActiveSheet();
         
         // Set sheet title
@@ -6724,22 +6511,16 @@ class ApiController
         }
         
         // Create writer and save to string
-        error_log("Creating Xlsx writer");
         $writer = new Xlsx($spreadsheet);
-        error_log("Xlsx writer created successfully");
         
         ob_start();
         $writer->save('php://output');
         $excelContent = ob_get_contents();
         ob_end_clean();
         
-        error_log("Excel content generated, length: " . strlen($excelContent));
         return $excelContent;
         
         } catch (Exception $e) {
-            error_log("=== GENERATE EXCEL CONTENT ERROR ===");
-            error_log("Error in generateFormattedExcelContent: " . $e->getMessage());
-            error_log("Error trace: " . $e->getTraceAsString());
             throw $e;
         }
     }
@@ -6813,7 +6594,6 @@ class ApiController
             ]);
             
         } catch (Exception $e) {
-            error_log("Error getting dashboard summary: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'فشل في تحميل ملخص لوحة التحكم'], 500);
         }
     }
@@ -6894,7 +6674,6 @@ class ApiController
             ];
             
         } catch (Exception $e) {
-            error_log("Error getting daily balance: " . $e->getMessage());
             return [
                 'opening_balance' => 0,
                 'total_received' => 0,
@@ -6990,7 +6769,6 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Error getting recent activity: " . $e->getMessage());
             return $this->jsonResponse(['ok' => false, 'error' => 'Failed to load recent activity'], 500);
         }
     }
@@ -7065,7 +6843,6 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Error getting dashboard charts: " . $e->getMessage());
             return $this->jsonResponse(['ok' => false, 'error' => 'Failed to load charts data'], 500);
         }
     }
@@ -7134,7 +6911,6 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Error getting upcoming appointments: " . $e->getMessage());
             return $this->jsonResponse(['ok' => false, 'error' => 'Failed to load upcoming appointments'], 500);
         }
     }
@@ -7205,7 +6981,6 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Error getting missed appointments: " . $e->getMessage());
             return $this->jsonResponse(['ok' => false, 'error' => 'Failed to load missed appointments'], 500);
         }
     }
@@ -7246,7 +7021,6 @@ class ApiController
             return $summary;
             
         } catch (Exception $e) {
-            error_log("Error getting payment types summary: " . $e->getMessage());
             return [];
         }
     }
@@ -7554,8 +7328,6 @@ class ApiController
                     unlink($csvFile);
                 }
                 ob_clean();
-                error_log("SQLite error: " . $e->getMessage());
-                error_log("File size: " . $fileSize . " bytes");
                 
                 http_response_code(500);
                 echo json_encode([
@@ -7625,7 +7397,6 @@ class ApiController
                     
                     // Convert ID to integer if possible, otherwise skip
                     if (!is_numeric($id) || empty($id)) {
-                        error_log("Skipping row " . ($rowIndex + 1) . ": Invalid ID: " . $id);
                         continue;
                     }
                     $id = (int)$id;
@@ -7658,8 +7429,6 @@ class ApiController
                         ]);
                         $inserted++;
                     } catch (\PDOException $e) {
-                        error_log("Error inserting drug row " . ($rowIndex + 1) . ": " . $e->getMessage());
-                        error_log("Row data: ID=$id, FirstName=" . substr($firstName, 0, 50));
                         // Continue with next row
                     }
                 }
@@ -7703,8 +7472,6 @@ class ApiController
             }
             
             ob_clean();
-            error_log("Error in updateDrugsDatabase: " . $e->getMessage());
-            error_log("Stack trace: " . $e->getTraceAsString());
             http_response_code(500);
             echo json_encode([
                 'success' => false,

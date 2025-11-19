@@ -148,10 +148,9 @@ class GlassesController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Get glasses prescriptions error: " . $e->getMessage());
             return $this->jsonResponse([
                 'success' => false,
-                'message' => 'Error loading glasses prescriptions: ' . $e->getMessage()
+                'message' => 'Error loading glasses prescriptions'
             ], 500);
         }
     }
@@ -192,7 +191,6 @@ class GlassesController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Get patient glasses prescriptions error: " . $e->getMessage());
             return $this->jsonResponse([
                 'success' => false,
                 'message' => 'Error loading patient glasses prescriptions'
@@ -207,7 +205,6 @@ class GlassesController
         
         $json = json_encode($data);
         if ($json === false) {
-            error_log("JSON encoding error: " . json_last_error_msg());
             $data = ['error' => 'JSON encoding failed'];
             $json = json_encode($data);
         }

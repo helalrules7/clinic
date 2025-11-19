@@ -150,7 +150,6 @@ class PrintController
             ]);
             
         } catch (Exception $e) {
-            error_log("Error in singleLabTest: " . $e->getMessage());
             http_response_code(500);
             echo "Error generating lab test print";
         }
@@ -595,7 +594,6 @@ class PrintController
             ]);
             
         } catch (Exception $e) {
-            error_log("Error printing payment receipt: " . $e->getMessage());
             http_response_code(500);
             echo "Error generating receipt";
         }
@@ -673,7 +671,6 @@ class PrintController
             ]);
             
         } catch (Exception $e) {
-            error_log("Error printing patient invoice: " . $e->getMessage());
             http_response_code(500);
             echo "Error generating invoice";
         }
@@ -781,7 +778,6 @@ class PrintController
             ]);
             
         } catch (Exception $e) {
-            error_log("Error printing booking details: " . $e->getMessage());
             http_response_code(500);
             echo "Error loading booking details";
         }

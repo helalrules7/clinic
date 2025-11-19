@@ -149,10 +149,9 @@ class MedicationsController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Get medications prescriptions error: " . $e->getMessage());
             return $this->jsonResponse([
                 'success' => false,
-                'message' => 'Error loading medications prescriptions: ' . $e->getMessage()
+                'message' => 'Error loading medications prescriptions'
             ], 500);
         }
     }
@@ -232,7 +231,6 @@ class MedicationsController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Get patient medications prescriptions error: " . $e->getMessage());
             return $this->jsonResponse([
                 'success' => false,
                 'message' => 'Error loading patient medications prescriptions'
@@ -247,7 +245,6 @@ class MedicationsController
         
         $json = json_encode($data);
         if ($json === false) {
-            error_log("JSON encoding error: " . json_last_error_msg());
             $data = ['error' => 'JSON encoding failed'];
             $json = json_encode($data);
         }

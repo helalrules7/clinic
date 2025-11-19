@@ -609,7 +609,6 @@ class DoctorController
             exit;
             
         } catch (\Exception $e) {
-            error_log("Error changing password: " . $e->getMessage());
             header('Location: /doctor/profile?error=Failed to update password');
             exit;
         }
@@ -658,24 +657,20 @@ class DoctorController
             $file = $_FILES['profile_image'];
             
             // Log upload attempt
-            error_log("Profile image upload attempt - User ID: {$user['id']}, File: {$file['name']}, Size: {$file['size']}, Error: {$file['error']}");
             
             // Validate file type
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
             $mimeType = finfo_file($finfo, $file['tmp_name']);
             finfo_close($finfo);
             
-            error_log("Profile image MIME type: $mimeType");
             
             if (!in_array($mimeType, $allowedTypes)) {
-                error_log("Invalid file type: $mimeType");
                 header('Location: /doctor/profile?error=Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.');
                 exit;
             }
             
             // Validate file size
             if ($file['size'] > $maxSize) {
-                error_log("File size exceeds limit: {$file['size']} bytes");
                 header('Location: /doctor/profile?error=File size exceeds 5MB limit.');
                 exit;
             }
@@ -685,9 +680,6 @@ class DoctorController
             $filename = 'user_' . $user['id'] . '_' . time() . '.' . $extension;
             $uploadPath = $uploadDir . $filename;
             
-            error_log("Upload path: $uploadPath");
-            error_log("Directory exists: " . (is_dir($uploadDir) ? 'yes' : 'no'));
-            error_log("Directory writable: " . (is_writable($uploadDir) ? 'yes' : 'no'));
             
             // Delete old profile image if exists
             $stmt = $this->pdo->prepare("SELECT profile_image FROM users WHERE id = ?");
@@ -700,11 +692,8 @@ class DoctorController
             // Move uploaded file
             if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
                 $profileImage = '/uploads/users/' . $filename;
-                error_log("Profile image uploaded successfully: $profileImage");
             } else {
                 $errorMsg = "Failed to upload image. Upload dir: $uploadDir, Writable: " . (is_writable($uploadDir) ? 'yes' : 'no');
-                error_log("Profile image upload failed: $errorMsg");
-                error_log("PHP error: " . error_get_last()['message'] ?? 'No error');
                 header('Location: /doctor/profile?error=Failed to upload image. Please check server permissions.');
                 exit;
             }
@@ -793,8 +782,6 @@ class DoctorController
         } catch (\Exception $e) {
             // Rollback transaction
             $this->pdo->rollBack();
-            error_log("Error updating profile for user {$user['id']}: " . $e->getMessage());
-            error_log("Stack trace: " . $e->getTraceAsString());
             
             // More specific error message for debugging
             $errorMsg = 'Failed to update profile';
@@ -909,7 +896,6 @@ class DoctorController
         } catch (\Exception $e) {
             // Rollback transaction
             $this->pdo->rollBack();
-            error_log("Error updating field {$field} for user {$user['id']}: " . $e->getMessage());
             
             echo json_encode(['success' => false, 'message' => 'Failed to update ' . $field]);
         }
@@ -1627,7 +1613,6 @@ class DoctorController
             }
             
         } catch (Exception $e) {
-            error_log("Error updating patient: " . $e->getMessage());
             http_response_code(500);
             echo json_encode(['success' => false, 'error' => 'Server error']);
         }
@@ -1696,7 +1681,6 @@ class DoctorController
                 'display_name' => $result['display_name'] ?? ''
             ];
         } catch (Exception $e) {
-            error_log("Error getting doctor info: " . $e->getMessage());
             return ['name' => 'Doctor', 'display_name' => ''];
         }
     }
@@ -1755,7 +1739,6 @@ class DoctorController
                 'content' => $content
             ]);
         } catch (Exception $e) {
-            error_log("Settings error: " . $e->getMessage());
             $_SESSION['error_message'] = 'Failed to load settings: ' . $e->getMessage();
             header('Location: /doctor/dashboard');
             exit;
@@ -1816,7 +1799,6 @@ class DoctorController
             
             return array_merge($defaults, $result);
         } catch (Exception $e) {
-            error_log("Error getting settings: " . $e->getMessage());
             return [
                 'clinic_name' => 'Roaya Clinic',
                 'clinic_email' => 'info@roayaclinic.com',
@@ -2166,7 +2148,6 @@ class DoctorController
             ");
             $stmt->execute([$key, $value]);
         } catch (\Exception $e) {
-            error_log("Error updating setting {$key}: " . $e->getMessage());
             throw $e;
         }
     }
@@ -2319,7 +2300,6 @@ class DoctorController
             ];
             
         } catch (Exception $e) {
-            error_log("Error getting daily balance: " . $e->getMessage());
             return [
                 'opening_balance' => 0,
                 'total_received' => 0,
@@ -2358,7 +2338,6 @@ class DoctorController
             return $summary;
             
         } catch (Exception $e) {
-            error_log("Error getting payment types summary: " . $e->getMessage());
             return [];
         }
     }
@@ -2384,7 +2363,6 @@ class DoctorController
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
             
         } catch (Exception $e) {
-            error_log("Error getting today's payments: " . $e->getMessage());
             return [];
         }
     }
@@ -2407,7 +2385,6 @@ class DoctorController
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
             
         } catch (Exception $e) {
-            error_log("Error getting today's expenses: " . $e->getMessage());
             return [];
         }
     }
@@ -2430,7 +2407,6 @@ class DoctorController
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
             
         } catch (Exception $e) {
-            error_log("Error getting today's withdrawals: " . $e->getMessage());
             return [];
         }
     }
@@ -2445,7 +2421,6 @@ class DoctorController
             return $stmt->fetchColumn() > 0;
             
         } catch (Exception $e) {
-            error_log("Error checking if date is closed: " . $e->getMessage());
             return false;
         }
     }
@@ -2539,7 +2514,6 @@ class DoctorController
             ];
             
         } catch (Exception $e) {
-            error_log("Error getting daily summary: " . $e->getMessage());
             return [
                 'opening_balance' => 0,
                 'payments' => [],
@@ -2583,7 +2557,6 @@ class DoctorController
         
         // Log to error log file
         $debugLog = function($message) {
-            error_log("[NOTES DEBUG] $message");
         };
         
         $debugLog("=== getNotes() START ===");
@@ -2789,7 +2762,6 @@ class DoctorController
         } catch (\Exception $e) {
             ob_clean();
             http_response_code(500);
-            error_log("Error in getNote: " . $e->getMessage());
             echo json_encode([
                 'success' => false,
                 'message' => 'An error occurred while loading the note'
@@ -2895,7 +2867,6 @@ class DoctorController
         } catch (\Exception $e) {
             ob_clean();
             http_response_code(500);
-            error_log("Error in createNote: " . $e->getMessage());
             echo json_encode([
                 'success' => false,
                 'message' => 'An error occurred while creating the note'
@@ -3052,7 +3023,6 @@ class DoctorController
         } catch (\Exception $e) {
             ob_clean();
             http_response_code(500);
-            error_log("Error in updateNote: " . $e->getMessage());
                 echo json_encode([
                     'success' => false, 
                 'message' => 'An error occurred while updating the note'
@@ -3162,7 +3132,6 @@ class DoctorController
         } catch (\Exception $e) {
             ob_clean();
             http_response_code(500);
-            error_log("Error deleting note: " . $e->getMessage());
             echo json_encode([
                 'success' => false,
                 'message' => 'An error occurred while deleting the note'
@@ -3252,7 +3221,6 @@ class DoctorController
         } catch (\Exception $e) {
             ob_clean();
             http_response_code(500);
-            error_log("Error getting doctor settings: " . $e->getMessage());
             echo json_encode([
                 'success' => false,
                 'message' => 'An error occurred while loading settings'
@@ -3303,12 +3271,10 @@ class DoctorController
         
         // Get JSON input
         $rawInput = file_get_contents('php://input');
-        error_log("[DOCTOR SETTINGS] Raw input: " . $rawInput);
         
         $input = json_decode($rawInput, true);
         
         if (!$input || !is_array($input)) {
-            error_log("[DOCTOR SETTINGS] Invalid input data. Raw: " . $rawInput);
             ob_clean();
             http_response_code(400);
             echo json_encode([
@@ -3320,8 +3286,6 @@ class DoctorController
             exit;
         }
         
-        error_log("[DOCTOR SETTINGS] Input received: " . json_encode($input));
-        error_log("[DOCTOR SETTINGS] User ID: " . $user['id']);
         
         // Allowed settings keys
         $allowedSettings = [
@@ -3338,7 +3302,6 @@ class DoctorController
             $savedCount = 0;
             foreach ($input as $key => $value) {
                 if (!in_array($key, $allowedSettings)) {
-                    error_log("[DOCTOR SETTINGS] Skipping disallowed key: " . $key);
                     continue;
                 }
                 
@@ -3369,7 +3332,6 @@ class DoctorController
                     }
                 }
                 
-                error_log("[DOCTOR SETTINGS] Saving: key=$key, value=$dbValue, type=$settingType");
                 
                 // Insert or update setting
                 $stmt = $this->pdo->prepare("
@@ -3384,15 +3346,12 @@ class DoctorController
                 
                 if ($result) {
                     $savedCount++;
-                    error_log("[DOCTOR SETTINGS] Successfully saved: $key = $dbValue");
                 } else {
-                    error_log("[DOCTOR SETTINGS] Failed to save: $key");
                 }
             }
             
             $this->pdo->commit();
             
-            error_log("[DOCTOR SETTINGS] Transaction committed. Saved $savedCount settings.");
             
             ob_clean();
             echo json_encode([
@@ -3406,8 +3365,6 @@ class DoctorController
             $this->pdo->rollBack();
             ob_clean();
             http_response_code(500);
-            error_log("[DOCTOR SETTINGS] Error: " . $e->getMessage());
-            error_log("[DOCTOR SETTINGS] Stack trace: " . $e->getTraceAsString());
             echo json_encode([
                 'success' => false,
                 'message' => 'An error occurred while updating settings',

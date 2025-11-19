@@ -123,10 +123,9 @@ class MediaController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Media gallery error: " . $e->getMessage() . " | Trace: " . $e->getTraceAsString());
             $this->jsonResponse([
                 'success' => false,
-                'message' => 'Error loading media: ' . $e->getMessage()
+                'message' => 'Error loading media'
             ], 500);
         }
     }
@@ -187,10 +186,9 @@ class MediaController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Get patient images error: " . $e->getMessage() . " | Trace: " . $e->getTraceAsString());
             $this->jsonResponse([
                 'success' => false,
-                'message' => 'Error loading images: ' . $e->getMessage()
+                'message' => 'Error loading images'
             ], 500);
         }
     }

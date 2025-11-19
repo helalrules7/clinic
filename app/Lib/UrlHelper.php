@@ -17,9 +17,6 @@ class UrlHelper
             $requestUri = $_SERVER['REQUEST_URI'] ?? '';
             $serverName = $_SERVER['SERVER_NAME'] ?? '';
             
-            // Debug: Log the values for troubleshooting
-            error_log("UrlHelper Debug - SCRIPT_NAME: $scriptName, REQUEST_URI: $requestUri, SERVER_NAME: $serverName");
-            
             // Scenario 1: Apache alias /clinic/public access
             if (strpos($scriptName, '/clinic/public/') !== false) {
                 self::$basePath = '/clinic/public';
@@ -36,8 +33,6 @@ class UrlHelper
             else {
                 self::$basePath = '';
             }
-            
-            error_log("UrlHelper Debug - Final basePath: " . self::$basePath);
         }
         
         return self::$basePath;

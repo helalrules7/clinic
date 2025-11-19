@@ -136,7 +136,6 @@ class AlertController
             }
         } catch (\Exception $e) {
             http_response_code(500);
-            error_log("AlertController::get error: " . $e->getMessage());
             echo json_encode([
                 'success' => false,
                 'message' => 'Internal server error'

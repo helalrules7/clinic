@@ -75,36 +75,26 @@ class Auth
     {
         
         if ($this->user) {
-            error_log("User already loaded: " . json_encode($this->user));
             return true;
         }
 
         // Check session
         if (isset($_SESSION['user_id'])) {
-            error_log("Session user_id found: " . $_SESSION['user_id']);
             $this->user = $this->getUserById($_SESSION['user_id']);
             if ($this->user) {
-                error_log("User loaded from session: " . json_encode($this->user));
                 return true;
             }
-        } else {
-            error_log("No session user_id found");
         }
 
         // Check remember me token
         if (isset($_COOKIE['remember_token'])) {
-            error_log("Remember token found: " . $_COOKIE['remember_token']);
             $this->user = $this->getUserByRememberToken($_COOKIE['remember_token']);
             if ($this->user) {
                 $this->createSession($this->user);
-                error_log("User loaded from remember token: " . json_encode($this->user));
                 return true;
             }
-        } else {
-            error_log("No remember token found");
         }
 
-        error_log("=== AUTH CHECK FAILED ===");
         return false;
     }
 

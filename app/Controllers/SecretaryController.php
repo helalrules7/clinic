@@ -206,7 +206,6 @@ class SecretaryController
             ]);
 
         } catch (Exception $e) {
-            error_log("Error creating booking: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Failed to create booking'], 500);
         }
     }
@@ -251,7 +250,6 @@ class SecretaryController
             ]);
 
         } catch (Exception $e) {
-            error_log("Error getting bookings calendar: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Failed to load calendar'], 500);
         }
     }
@@ -288,7 +286,6 @@ class SecretaryController
             }
 
         } catch (Exception $e) {
-            error_log("Error deleting booking: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Failed to delete booking'], 500);
         }
     }
@@ -403,7 +400,6 @@ class SecretaryController
             }
 
         } catch (Exception $e) {
-            error_log("Error confirming attendance: " . $e->getMessage());
             return $this->jsonResponse([
                 'error' => 'خطأ في تأكيد الحضور: ' . $e->getMessage()
             ], 500);
@@ -570,7 +566,6 @@ class SecretaryController
             ]);
             
         } catch (Exception $e) {
-            error_log("Error viewing patient: " . $e->getMessage());
             http_response_code(500);
             echo "Error loading patient details";
         }
@@ -1081,7 +1076,6 @@ class SecretaryController
             
             return array_merge($defaults, $result);
         } catch (Exception $e) {
-            error_log("Error getting system settings: " . $e->getMessage());
             return [
                 'new_visit_cost' => '150',
                 'repeated_visit_cost' => '100',
@@ -1108,7 +1102,6 @@ class SecretaryController
             $stmt->execute([$doctorId, $date]);
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Error getting appointments for date: " . $e->getMessage());
             return [];
         }
     }
@@ -1157,7 +1150,6 @@ class SecretaryController
             
             return $appointments;
         } catch (Exception $e) {
-            error_log("Error getting all appointments for date: " . $e->getMessage());
             return [];
         }
     }
@@ -1180,7 +1172,6 @@ class SecretaryController
             // Filter out booked slots
             return array_diff($allSlots, $bookedSlots);
         } catch (Exception $e) {
-            error_log("Error getting available time slots: " . $e->getMessage());
             return [];
         }
     }
@@ -1203,7 +1194,6 @@ class SecretaryController
             // Filter out booked slots
             return array_diff($allSlots, $bookedSlots);
         } catch (Exception $e) {
-            error_log("Error getting available time slots for all doctors: " . $e->getMessage());
             return [];
         }
     }
@@ -1225,7 +1215,6 @@ class SecretaryController
             
             return $unavailableSlots;
         } catch (Exception $e) {
-            error_log("Error getting unavailable slots: " . $e->getMessage());
             return [];
         }
     }
@@ -1247,7 +1236,6 @@ class SecretaryController
             
             return $unavailableSlots;
         } catch (Exception $e) {
-            error_log("Error getting unavailable slots for all doctors: " . $e->getMessage());
             return [];
         }
     }
@@ -1306,7 +1294,6 @@ class SecretaryController
             $stmt->execute([$doctorId, $date, $startTime]);
             return $stmt->fetchColumn() == 0;
         } catch (Exception $e) {
-            error_log("Error checking time slot availability: " . $e->getMessage());
             return false;
         }
     }
@@ -1336,7 +1323,6 @@ class SecretaryController
             $stmt->execute([$id]);
             return $stmt->fetch(\PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Error getting appointment details: " . $e->getMessage());
             return null;
         }
     }
@@ -1365,7 +1351,6 @@ class SecretaryController
             
             return $this->pdo->lastInsertId();
         } catch (Exception $e) {
-            error_log("Error creating appointment record: " . $e->getMessage());
             throw $e;
         }
     }
@@ -1398,7 +1383,6 @@ class SecretaryController
             
             return $this->pdo->lastInsertId();
         } catch (Exception $e) {
-            error_log("Error creating payment record: " . $e->getMessage());
             throw $e;
         }
     }
@@ -1455,7 +1439,6 @@ class SecretaryController
             ]);
             
         } catch (Exception $e) {
-            error_log("Error getting booking details: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Error getting booking details: ' . $e->getMessage()], 500);
         }
     }
@@ -1546,7 +1529,6 @@ class SecretaryController
             }
             
         } catch (Exception $e) {
-            error_log("Error updating booking: " . $e->getMessage());
             return $this->jsonResponse(['error' => 'Error updating booking: ' . $e->getMessage()], 500);
         }
     }
@@ -1639,7 +1621,6 @@ class SecretaryController
                 'transactions_count' => $transactionsCount
             ];
         } catch (Exception $e) {
-            error_log("Error getting daily balance: " . $e->getMessage());
             return [
                 'opening_balance' => 0,
                 'total_received' => 0,
@@ -1687,7 +1668,6 @@ class SecretaryController
             
             return $summary;
         } catch (Exception $e) {
-            error_log("Error getting payment types summary: " . $e->getMessage());
             return [
                 'new_booking' => 0,
                 'followup' => 0,
@@ -1725,7 +1705,6 @@ class SecretaryController
             
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Error getting today's payments: " . $e->getMessage());
             return [];
         }
     }
@@ -1752,7 +1731,6 @@ class SecretaryController
             
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Error getting payments by patient: " . $e->getMessage());
             return [];
         }
     }
@@ -1781,7 +1759,6 @@ class SecretaryController
             $stmt->execute([$patientId]);
             return $stmt->fetch(\PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Error getting patient details: " . $e->getMessage());
             return null;
         }
     }
@@ -1807,7 +1784,6 @@ class SecretaryController
             $stmt->execute([$patientId]);
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Error getting patient payments: " . $e->getMessage());
             return [];
         }
     }
@@ -1836,7 +1812,6 @@ class SecretaryController
             $stmt->execute([$patientId]);
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
-            error_log("Error getting patient appointments: " . $e->getMessage());
             return [];
         }
     }
@@ -1890,7 +1865,6 @@ class SecretaryController
             ]);
             
         } catch (Exception $e) {
-            error_log("Error viewing payment: " . $e->getMessage());
             http_response_code(500);
             echo "Error loading payment details";
         }
@@ -1930,7 +1904,6 @@ class SecretaryController
             ]);
             
         } catch (Exception $e) {
-            error_log("Error viewing expense: " . $e->getMessage());
             http_response_code(500);
             echo "Error loading expense details";
         }
@@ -2016,7 +1989,6 @@ class SecretaryController
             ]);
             
         } catch (Exception $e) {
-            error_log("Error viewing booking: " . $e->getMessage());
             http_response_code(500);
             echo "Error loading booking details";
         }
@@ -2241,7 +2213,6 @@ class SecretaryController
             }
 
         } catch (\Exception $e) {
-            error_log("Profile update error: " . $e->getMessage());
             header('Location: /secretary/profile?error=' . urlencode($e->getMessage()));
             exit;
         }
@@ -2316,7 +2287,6 @@ class SecretaryController
             }
 
         } catch (\Exception $e) {
-            error_log("Password change error: " . $e->getMessage());
             header('Location: /secretary/profile?error=' . urlencode($e->getMessage()));
             exit;
         }

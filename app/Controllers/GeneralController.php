@@ -80,28 +80,17 @@ class GeneralController
 
     public function home()
     {
-        // Debug: Log session status
-        error_log("GeneralController@home - Session status: " . session_status());
-        error_log("GeneralController@home - Session data: " . json_encode($_SESSION ?? []));
-        
         // Check if user is already logged in
         $isLoggedIn = $this->auth->check();
-        error_log("GeneralController@home - Auth check result: " . ($isLoggedIn ? 'true' : 'false'));
         
         if ($isLoggedIn) {
             $user = $this->auth->user();
-            error_log("GeneralController@home - User data: " . json_encode($user));
             
             if ($user && isset($user['role'])) {
-                error_log("GeneralController@home - Redirecting user with role: " . $user['role']);
                 // Redirect to appropriate dashboard based on role
                 $this->redirectByRole($user['role']);
                 return;
-            } else {
-                error_log("GeneralController@home - User data invalid or missing role");
             }
-        } else {
-            error_log("GeneralController@home - User not logged in, showing welcome page");
         }
         
         // If not logged in, show welcome page

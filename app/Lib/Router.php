@@ -51,13 +51,6 @@ class Router
         $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
         $requestUri = $_SERVER['REQUEST_URI'] ?? '';
         
-        // Debug logging
-        error_log("Router Debug - SCRIPT_NAME: $scriptName, REQUEST_URI: $requestUri, Original URI: $uri");
-        
-
-        
-
-        
         // Remove base path if running in subdirectory or with alias
         if (strpos($scriptName, '/clinic/public/') !== false) {
             // Running via Apache alias /clinic/public
@@ -82,13 +75,6 @@ class Router
             $uri = '/';
         }
         
-        error_log("Router Debug - Final URI: $uri, Method: $method");
-        
-        // Debug: Log the URI for troubleshooting (remove in production)
-        // if (($_ENV['APP_ENV'] ?? 'local') === 'local') {
-        //     error_log("Router Debug - Original URI: " . $_SERVER['REQUEST_URI'] . ", Processed URI: " . $uri . ", Method: " . $method);
-        // }
-        
         // Handle PUT/DELETE methods from forms
         if ($method === 'POST' && isset($_POST['_method'])) {
             $method = strtoupper($_POST['_method']);
@@ -111,12 +97,6 @@ class Router
         $pattern = preg_replace('/\{([^}]+)\}/', '([^/]+)', $routePath);
         $pattern = '#^' . $pattern . '$#';
         
-        // Debug logging for route matching
-        if (strpos($uri, '/api/') === 0) {
-            error_log("Router Debug - Matching route: '$routePath' against URI: '$uri'");
-            error_log("Router Debug - Pattern: '$pattern'");
-        }
-        
         if (preg_match($pattern, $uri, $matches)) {
             // Extract parameter values
             preg_match_all('/\{([^}]+)\}/', $routePath, $paramNames);
@@ -125,15 +105,7 @@ class Router
                 $this->params[$paramNames[1][$i - 1]] = $matches[$i];
             }
             
-            if (strpos($uri, '/api/') === 0) {
-                error_log("Router Debug - Route matched: '$routePath'");
-            }
-            
             return true;
-        }
-
-        if (strpos($uri, '/api/') === 0) {
-            error_log("Router Debug - Route did not match: '$routePath'");
         }
 
         return false;

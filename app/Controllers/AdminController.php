@@ -294,8 +294,7 @@ class AdminController
                 'content' => $content
             ]);
         } catch (Exception $e) {
-            error_log("Settings error: " . $e->getMessage());
-            $_SESSION['error_message'] = 'Failed to load settings: ' . $e->getMessage();
+            $_SESSION['error_message'] = 'Failed to load settings';
             header('Location: /admin/dashboard');
             exit;
         }
@@ -782,7 +781,6 @@ class AdminController
             
             return array_merge($defaults, $result);
         } catch (Exception $e) {
-            error_log("Error getting system settings: " . $e->getMessage());
             // Return defaults if database error
             return [
                 'clinic_name' => 'Roaya Clinic',
@@ -928,7 +926,6 @@ class AdminController
             ");
             $stmt->execute([$key, $value]);
         } catch (\Exception $e) {
-            error_log("Error updating setting {$key}: " . $e->getMessage());
             throw $e;
         }
     }
