@@ -229,6 +229,60 @@ class ApiController
         }
     }
 
+    public function getFollowupAppointment($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $followup = $this->getFollowupAppointmentData($id);
+            
+            if (!$followup) {
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'data' => null,
+                    'message' => 'No follow-up appointment found'
+                ]);
+            }
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => $followup
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getOriginalAppointment($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $original = $this->getOriginalAppointmentData($id);
+            
+            if (!$original) {
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'data' => null,
+                    'message' => 'No original appointment found'
+                ]);
+            }
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => $original
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function createAppointment()
     {
         try {
@@ -276,6 +330,48 @@ class ApiController
             if ($appointmentId) {
                 // Create timeline event
                 $this->createTimelineEvent($data['patient_id'], $appointmentId, 'Booking', 'Appointment booked');
+                
+                // Create alert if appointment is in the future (not today)
+                try {
+                    $appointmentDate = new \DateTime($data['date']);
+                    $today = new \DateTime();
+                    $today->setTime(0, 0, 0);
+                    $appointmentDate->setTime(0, 0, 0);
+                    
+                    // If appointment is in the future (not today), create alert
+                    if ($appointmentDate > $today) {
+                        // Get patient name
+                        $patientStmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
+                        $patientStmt->execute([$data['patient_id']]);
+                        $patient = $patientStmt->fetch(\PDO::FETCH_ASSOC);
+                        
+                        if ($patient) {
+                            $patientName = trim($patient['first_name'] . ' ' . $patient['last_name']);
+                            $alertMessage = "كشف المريض ({$patientName})";
+                            
+                            // Set alert date/time to be 1 hour before appointment
+                            $alertDateTime = new \DateTime($data['date'] . ' ' . $data['start_time']);
+                            $alertDateTime->sub(new \DateInterval('PT1H'));
+                            $alertDate = $alertDateTime->format('Y-m-d');
+                            $alertTime = $alertDateTime->format('H:i:s');
+                            
+                            $alertData = [
+                                'doctor_id' => $data['doctor_id'],
+                                'patient_id' => $data['patient_id'],
+                                'appointment_id' => $appointmentId,
+                                'message' => $alertMessage,
+                                'alert_date' => $alertDate,
+                                'alert_time' => $alertTime,
+                                'repeat_count' => 1,
+                                'repeat_interval' => 0
+                            ];
+                            
+                            $this->alertModel->create($alertData);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Continue even if alert creation fails
+                }
                 
                 return $this->jsonResponse([
                     'ok' => true,
@@ -1249,8 +1345,8 @@ class ApiController
     private function jsonResponse($data, $statusCode = 200)
     {
         // Clear any previous output
-        if (ob_get_level() > 0) {
-            ob_clean();
+        while (ob_get_level() > 0) {
+            ob_end_clean();
         }
         
         // Set headers
@@ -1268,6 +1364,19 @@ class ApiController
         // Output JSON and exit
         echo $json;
         exit;
+    }
+    
+    private function getRouterParam($name, $default = null)
+    {
+        $router = \App\Lib\Router::getInstance();
+        if ($router && method_exists($router, 'getParam')) {
+            return $router->getParam($name, $default);
+        }
+        // Fallback: try to get from global router params
+        if (isset($GLOBALS['router_params'][$name])) {
+            return $GLOBALS['router_params'][$name];
+        }
+        return $default;
     }
 
     private function getAppointmentsForDate($doctorId, $date)
@@ -1324,17 +1433,46 @@ class ApiController
         $stmt->execute([$date]);
         $appointments = $stmt->fetchAll();
         
-        // Format the time fields to match frontend expectations
+        // Check if rescheduled_from column exists
+        $columnStmt = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'rescheduled_from'");
+        $hasRescheduledFrom = $columnStmt->fetch(\PDO::FETCH_ASSOC);
+        
+        // Format the time fields to match frontend expectations and add followup/rescheduled info
         foreach ($appointments as &$appointment) {
             $appointment['start_time'] = $appointment['start_time_formatted'];
             $appointment['end_time'] = $appointment['end_time_formatted'];
             $appointment['doctor_display_name'] = $appointment['user_name'] ?? $appointment['doctor_name'];
+            
+            // Check if appointment has a follow-up
+            $appointment['has_followup'] = false;
+            $appointment['followup_id'] = null;
+            if ($hasRescheduledFrom) {
+                $followupStmt = $this->pdo->prepare("
+                    SELECT id FROM appointments 
+                    WHERE rescheduled_from = ? AND visit_type = 'FollowUp'
+                    LIMIT 1
+                ");
+                $followupStmt->execute([$appointment['id']]);
+                $followup = $followupStmt->fetch(\PDO::FETCH_ASSOC);
+                if ($followup) {
+                    $appointment['has_followup'] = true;
+                    $appointment['followup_id'] = $followup['id'];
+                }
+            }
+            
+            // Check if appointment is a follow-up (has original appointment)
+            $appointment['is_followup'] = false;
+            $appointment['original_appointment_id'] = null;
+            if ($hasRescheduledFrom && $appointment['visit_type'] === 'FollowUp' && !empty($appointment['rescheduled_from'])) {
+                $appointment['is_followup'] = true;
+                $appointment['original_appointment_id'] = $appointment['rescheduled_from'];
+            }
         }
         
         error_log("Debug getAllAppointmentsForDate - Date: $date");
         error_log("Debug - Found " . count($appointments) . " appointments");
         foreach ($appointments as $apt) {
-            error_log("Debug - Appointment: ID={$apt['id']}, Time={$apt['start_time']}, Patient={$apt['patient_name']}, Doctor={$apt['doctor_display_name']}, Status={$apt['status']}");
+            error_log("Debug - Appointment: ID={$apt['id']}, Time={$apt['start_time']}, Patient={$apt['patient_name']}, Doctor={$apt['doctor_display_name']}, Status={$apt['status']}, HasFollowup=" . ($apt['has_followup'] ? 'YES' : 'NO') . ", IsFollowup=" . ($apt['is_followup'] ? 'YES' : 'NO'));
         }
         
         return $appointments;
@@ -1685,6 +1823,112 @@ class ApiController
         return $stmt->fetch();
     }
 
+    private function getFollowupAppointmentData($appointmentId)
+    {
+        try {
+            // Check if rescheduled_from column exists
+            $columnStmt = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'rescheduled_from'");
+            $hasRescheduledFrom = $columnStmt->fetch(\PDO::FETCH_ASSOC);
+            
+            if ($hasRescheduledFrom) {
+                // Check if there's a follow-up appointment with rescheduled_from pointing to this appointment
+                $stmt = $this->pdo->prepare("
+                    SELECT id, date, start_time, visit_type, status
+                    FROM appointments 
+                    WHERE rescheduled_from = ? 
+                    AND visit_type = 'FollowUp'
+                    ORDER BY date DESC, start_time DESC
+                    LIMIT 1
+                ");
+                $stmt->execute([$appointmentId]);
+                $followup = $stmt->fetch(\PDO::FETCH_ASSOC);
+                
+                if ($followup) {
+                    return $followup;
+                }
+            }
+            
+            // Fallback: Check for follow-up appointments with same patient_id created after this appointment
+            $stmt = $this->pdo->prepare("
+                SELECT id, date, start_time, visit_type, status
+                FROM appointments 
+                WHERE patient_id = (
+                    SELECT patient_id FROM appointments WHERE id = ?
+                )
+                AND visit_type = 'FollowUp'
+                AND (date > (SELECT date FROM appointments WHERE id = ?) 
+                     OR (date = (SELECT date FROM appointments WHERE id = ?) 
+                         AND start_time > (SELECT start_time FROM appointments WHERE id = ?)))
+                ORDER BY date ASC, start_time ASC
+                LIMIT 1
+            ");
+            $stmt->execute([$appointmentId, $appointmentId, $appointmentId, $appointmentId]);
+            $followup = $stmt->fetch(\PDO::FETCH_ASSOC);
+            
+            return $followup ?: null;
+        } catch (\Exception $e) {
+            // Return null on error
+            return null;
+        }
+    }
+
+    private function getOriginalAppointmentData($followupAppointmentId)
+    {
+        try {
+            // Check if rescheduled_from column exists
+            $columnStmt = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'rescheduled_from'");
+            $hasRescheduledFrom = $columnStmt->fetch(\PDO::FETCH_ASSOC);
+            
+            if ($hasRescheduledFrom) {
+                // Get the rescheduled_from value for this follow-up appointment
+                $stmt = $this->pdo->prepare("
+                    SELECT rescheduled_from 
+                    FROM appointments 
+                    WHERE id = ?
+                ");
+                $stmt->execute([$followupAppointmentId]);
+                $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+                
+                if ($result && $result['rescheduled_from']) {
+                    // Get the original appointment details
+                    $originalStmt = $this->pdo->prepare("
+                        SELECT id, date, start_time, visit_type, status
+                        FROM appointments 
+                        WHERE id = ?
+                    ");
+                    $originalStmt->execute([$result['rescheduled_from']]);
+                    $original = $originalStmt->fetch(\PDO::FETCH_ASSOC);
+                    
+                    if ($original) {
+                        return $original;
+                    }
+                }
+            }
+            
+            // Fallback: Find the most recent appointment before this follow-up for the same patient
+            $stmt = $this->pdo->prepare("
+                SELECT id, date, start_time, visit_type, status
+                FROM appointments 
+                WHERE patient_id = (
+                    SELECT patient_id FROM appointments WHERE id = ?
+                )
+                AND id != ?
+                AND (date < (SELECT date FROM appointments WHERE id = ?) 
+                     OR (date = (SELECT date FROM appointments WHERE id = ?) 
+                         AND start_time < (SELECT start_time FROM appointments WHERE id = ?)))
+                ORDER BY date DESC, start_time DESC
+                LIMIT 1
+            ");
+            $stmt->execute([$followupAppointmentId, $followupAppointmentId, $followupAppointmentId, $followupAppointmentId, $followupAppointmentId]);
+            $original = $stmt->fetch(\PDO::FETCH_ASSOC);
+            
+            return $original ?: null;
+        } catch (\Exception $e) {
+            // Return null on error
+            return null;
+        }
+    }
+
     private function calculateEndTime($startTime)
     {
         $start = new \DateTime($startTime);
@@ -1871,7 +2115,7 @@ class ApiController
             // 2. Link new appointment to old one (if column exists)
             try {
                 $columnStmt = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'rescheduled_from'");
-                if ($columnStmt->fetch(PDO::FETCH_ASSOC)) {
+                if ($columnStmt->fetch(\PDO::FETCH_ASSOC)) {
                     $this->pdo->prepare("UPDATE appointments SET rescheduled_from = ? WHERE id = ?")
                         ->execute([$id, $newAppointmentId]);
                 }
@@ -1880,33 +2124,23 @@ class ApiController
             }
             
             // 3. Update old appointment status to 'Rescheduled' instead of deleting
-            error_log("Reschedule: Updating appointment {$id} status to Rescheduled");
             $stmt = $this->pdo->prepare("UPDATE appointments SET status = 'Rescheduled', cancellation_reason = ?, updated_at = NOW() WHERE id = ?");
             $reason = "Rescheduled to {$newDate} {$newTime}";
             $result = $stmt->execute([$reason, $id]);
             
             if (!$result) {
-                error_log("Reschedule: Failed to update appointment status");
                 throw new \Exception('Failed to update old appointment status');
             }
-            error_log("Reschedule: Appointment status updated successfully");
             
             // 4. Create timeline event for the NEW appointment (same as createAppointment)
             try {
-                error_log("Reschedule: Creating timeline event for new appointment {$newAppointmentId}");
-                $timelineResult = $this->createTimelineEvent(
+                $this->createTimelineEvent(
                     $appointment['patient_id'], 
                     $newAppointmentId, 
                     'Booking', 
                     "Appointment rescheduled from {$appointment['date']} {$appointment['start_time']} to {$newDate} {$newTime}"
                 );
-                if ($timelineResult) {
-                    error_log("Reschedule: Timeline event created successfully");
-                } else {
-                    error_log("Reschedule: Timeline event creation failed (non-critical)");
-                }
             } catch (\Exception $e) {
-                error_log("Reschedule: Timeline event error: " . $e->getMessage());
                 // Continue even if timeline event fails
             }
             
@@ -1929,8 +2163,6 @@ class ApiController
             ]);
             
         } catch (\Exception $e) {
-            error_log("Reschedule error: " . $e->getMessage());
-            error_log("Reschedule error trace: " . $e->getTraceAsString());
             return $this->jsonResponse(['error' => 'Error rescheduling appointment: ' . $e->getMessage()], 500);
         }
     }
@@ -2036,50 +2268,39 @@ class ApiController
             // Link new appointment to old one (if column exists)
             try {
                 $columnStmt = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'rescheduled_from'");
-                if ($columnStmt->fetch(PDO::FETCH_ASSOC)) {
+                if ($columnStmt->fetch(\PDO::FETCH_ASSOC)) {
                     $this->pdo->prepare("UPDATE appointments SET rescheduled_from = ? WHERE id = ?")
                         ->execute([$id, $newAppointmentId]);
                 }
             } catch (\Exception $e) {
-                error_log("RescheduleFollowup: rescheduled_from column check error: " . $e->getMessage());
                 // Column doesn't exist, ignore
             }
             
             // Create timeline event for the NEW appointment (same as createAppointment)
             try {
-                error_log("RescheduleFollowup: Creating timeline event for new appointment {$newAppointmentId}");
-                $timelineResult = $this->createTimelineEvent(
+                $this->createTimelineEvent(
                     $appointment['patient_id'], 
                     $newAppointmentId, 
                     'Booking', 
                     "Follow-up appointment scheduled for {$newDate} {$newTime}"
                 );
-                if ($timelineResult) {
-                    error_log("RescheduleFollowup: Timeline event created successfully");
-                } else {
-                    error_log("RescheduleFollowup: Timeline event creation failed (non-critical)");
-                }
             } catch (\Exception $e) {
-                error_log("RescheduleFollowup: Timeline event error: " . $e->getMessage());
                 // Continue even if timeline event fails
             }
             
-            // Create alert for follow-up appointment
+            // Create alert for follow-up appointment (always create alert regardless of old appointment status or date)
             try {
-                error_log("RescheduleFollowup: Creating alert for follow-up appointment");
                 $patientName = trim($appointment['first_name'] . ' ' . $appointment['last_name']);
                 $alertMessage = "متابعة كشف المريض ({$patientName})";
                 
-                // Get doctor_id from appointment (already available in $appointment)
+                // Get doctor_id from appointment
                 $doctorId = $appointment['doctor_id'];
-                error_log("RescheduleFollowup: Doctor ID: {$doctorId}, Patient ID: {$appointment['patient_id']}, Patient Name: {$patientName}");
                 
                 // Set alert date/time to be 1 hour before appointment
                 $alertDateTime = new \DateTime($newDate . ' ' . $newTime);
                 $alertDateTime->sub(new \DateInterval('PT1H'));
                 $alertDate = $alertDateTime->format('Y-m-d');
                 $alertTime = $alertDateTime->format('H:i:s');
-                error_log("RescheduleFollowup: Alert date/time: {$alertDate} {$alertTime}");
                 
                 $alertData = [
                     'doctor_id' => $doctorId,
@@ -2092,16 +2313,8 @@ class ApiController
                     'repeat_interval' => 0
                 ];
                 
-                error_log("RescheduleFollowup: Alert data: " . json_encode($alertData));
-                $alertId = $this->alertModel->create($alertData);
-                if ($alertId) {
-                    error_log("RescheduleFollowup: Alert created successfully with ID {$alertId}");
-                } else {
-                    error_log("RescheduleFollowup: Alert creation returned false (non-critical)");
-                }
+                $this->alertModel->create($alertData);
             } catch (\Exception $e) {
-                error_log("RescheduleFollowup: Alert creation error: " . $e->getMessage());
-                error_log("RescheduleFollowup: Alert creation error trace: " . $e->getTraceAsString());
                 // Continue even if alert creation fails
             }
             
@@ -2118,8 +2331,6 @@ class ApiController
             ]);
             
         } catch (\Exception $e) {
-            error_log("RescheduleFollowup error: " . $e->getMessage());
-            error_log("RescheduleFollowup error trace: " . $e->getTraceAsString());
             return $this->jsonResponse(['error' => 'Error scheduling follow-up appointment: ' . $e->getMessage()], 500);
         }
     }

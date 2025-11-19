@@ -920,6 +920,30 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                     <i class="bi bi-person-check me-1"></i>
                     <?= htmlspecialchars($appointmentDoctorName) ?>'s Patient
                 </span>
+                <?php if (!empty($followupAppointment)): ?>
+                <a href="/doctor/appointments/<?= $followupAppointment['id'] ?>" 
+                   class="badge bg-success ms-2 fs-6 shadow-sm d-inline-flex align-items-center text-white text-decoration-none" 
+                   id="followupBadge"
+                   data-bs-toggle="tooltip" 
+                   data-bs-placement="top" 
+                   data-bs-title="Go to follow-up appointment scheduled for <?= date('M j, Y \a\t g:i A', strtotime($followupAppointment['date'] . ' ' . $followupAppointment['start_time'])) ?>">
+                    <i class="bi bi-calendar-check me-1"></i>
+                    Follow-up Scheduled
+                    <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+                <?php endif; ?>
+                <?php if (!empty($originalAppointment)): ?>
+                <a href="/doctor/appointments/<?= $originalAppointment['id'] ?>" 
+                   class="badge bg-info ms-2 fs-6 shadow-sm d-inline-flex align-items-center text-white text-decoration-none" 
+                   id="originalAppointmentBadge"
+                   data-bs-toggle="tooltip" 
+                   data-bs-placement="top" 
+                   data-bs-title="Go to original appointment from <?= date('M j, Y \a\t g:i A', strtotime($originalAppointment['date'] . ' ' . $originalAppointment['start_time'])) ?>">
+                    <i class="bi bi-calendar-event me-1"></i>
+                    Original Appointment
+                    <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+                <?php endif; ?>
             </h2>
             <p class="mb-2">
                 <i class="bi bi-person me-2"></i>
@@ -969,11 +993,13 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
             <button type="button" class="btn btn-info hide-on-mobile" onclick="printReport(<?= $appointment['id'] ?>)">
                 <i class="bi bi-printer me-1"></i>Print Report
             </button>
-            <button type="button" class="btn btn-warning hide-on-mobile" 
-                    onclick="rescheduleFollowupAppointment(<?= $appointment['id'] ?>)">
+            <button type="button" class="btn btn-outline-success hide-on-mobile" 
+                    id="rescheduleFollowupBtn"
+                    onclick="rescheduleFollowupAppointment(<?= $appointment['id'] ?>)"
+                    <?= !empty($followupAppointment) ? 'disabled title="Follow-up appointment already scheduled"' : '' ?>>
                 <i class="bi bi-calendar-check me-1"></i>Reschedule Followup
             </button>
-            <button type="button" class="btn btn-warning hide-on-mobile" 
+            <button type="button" class="btn btn-outline-danger hide-on-mobile" 
                     onclick="rescheduleAppointment(<?= $appointment['id'] ?>)"
                     <?= $appointment['status'] === 'Completed' ? 'disabled title="Cannot reschedule completed appointments"' : '' ?>>
                 <i class="bi bi-calendar-plus me-1"></i>Reschedule
@@ -1004,14 +1030,18 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" 
+                        <a class="dropdown-item text-success <?= !empty($followupAppointment) ? 'disabled text-muted' : '' ?>" 
                            href="javascript:void(0);" 
-                           onclick="closeDropdownAndExecute('moreActionsDropdown', function() { rescheduleFollowupAppointment(<?= $appointment['id'] ?>); });">
+                           <?php if (empty($followupAppointment)): ?>
+                           onclick="closeDropdownAndExecute('moreActionsDropdown', function() { rescheduleFollowupAppointment(<?= $appointment['id'] ?>); });"
+                           <?php else: ?>
+                           onclick="return false;" title="Follow-up appointment already scheduled"
+                           <?php endif; ?>>
                             <i class="bi bi-calendar-check me-2"></i>Reschedule Followup
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item <?= $appointment['status'] === 'Completed' ? 'disabled text-muted' : '' ?>" 
+                        <a class="dropdown-item text-danger <?= $appointment['status'] === 'Completed' ? 'disabled text-muted' : '' ?>" 
                            href="javascript:void(0);" 
                            <?php if ($appointment['status'] !== 'Completed'): ?>
                            onclick="closeDropdownAndExecute('moreActionsDropdown', function() { rescheduleAppointment(<?= $appointment['id'] ?>); });"
@@ -2532,23 +2562,47 @@ function showRescheduleModal(appointmentId) {
             return;
         }
         
-        const currentDateTime = new Date(currentDate + 'T' + currentTime);
-        const newDateTime = new Date(newDate + 'T' + newTime);
-        const now = new Date();
+        // Normalize time format (ensure HH:MM format)
+        const normalizeTime = (timeStr) => {
+            if (!timeStr) return '';
+            // Remove seconds if present (HH:MM:SS -> HH:MM)
+            return timeStr.substring(0, 5);
+        };
         
-        // Check if new date/time is in the future
-        if (newDateTime <= now) {
-            errorDiv.textContent = 'New appointment date and time must be in the future';
-            errorDiv.style.display = 'block';
-            submitBtn.disabled = true;
-            return;
-        }
+        const normalizedCurrentTime = normalizeTime(currentTime);
+        const normalizedNewTime = normalizeTime(newTime);
         
-        // Check if new date/time is later than current appointment
-        if (newDateTime <= currentDateTime) {
-            errorDiv.textContent = 'New appointment date and time must be later than the current appointment';
-            errorDiv.style.display = 'block';
-            submitBtn.disabled = true;
+        try {
+            const currentDateTime = new Date(currentDate + 'T' + normalizedCurrentTime + ':00');
+            const newDateTime = new Date(newDate + 'T' + normalizedNewTime + ':00');
+            const now = new Date();
+            
+            // Check if dates are valid
+            if (isNaN(currentDateTime.getTime()) || isNaN(newDateTime.getTime())) {
+                errorDiv.style.display = 'none';
+                submitBtn.disabled = false;
+                return;
+            }
+            
+            // Check if new date/time is in the future
+            if (newDateTime <= now) {
+                errorDiv.textContent = 'New appointment date and time must be in the future';
+                errorDiv.style.display = 'block';
+                submitBtn.disabled = true;
+                return;
+            }
+            
+            // Check if new date/time is later than current appointment
+            if (newDateTime <= currentDateTime) {
+                errorDiv.textContent = 'New appointment date and time must be later than the current appointment';
+                errorDiv.style.display = 'block';
+                submitBtn.disabled = true;
+                return;
+            }
+        } catch (error) {
+            console.error('Date validation error:', error);
+            errorDiv.style.display = 'none';
+            submitBtn.disabled = false;
             return;
         }
         
@@ -2580,20 +2634,46 @@ function showRescheduleModal(appointmentId) {
             return;
         }
         
-        const currentDateTime = new Date(currentDate + 'T' + currentTime);
-        const newDateTime = new Date(newDate + 'T' + newTime);
-        const now = new Date();
+        // Normalize time format (ensure HH:MM format)
+        const normalizeTime = (timeStr) => {
+            if (!timeStr) return '';
+            // Remove seconds if present (HH:MM:SS -> HH:MM)
+            return timeStr.substring(0, 5);
+        };
         
-        // Check if new date/time is in the future
-        if (newDateTime <= now) {
-            errorDiv.textContent = 'New appointment date and time must be in the future';
-            errorDiv.style.display = 'block';
-            return;
-        }
+        const normalizedCurrentTime = normalizeTime(currentTime);
+        const normalizedNewTime = normalizeTime(newTime);
         
-        // Check if new date/time is later than current appointment
-        if (newDateTime <= currentDateTime) {
-            errorDiv.textContent = 'New appointment date and time must be later than the current appointment';
+        // Validate date/time format before creating Date objects
+        try {
+            const currentDateTime = new Date(currentDate + 'T' + normalizedCurrentTime + ':00');
+            const newDateTime = new Date(newDate + 'T' + normalizedNewTime + ':00');
+            const now = new Date();
+            
+            // Check if dates are valid
+            if (isNaN(currentDateTime.getTime())) {
+                throw new Error('Invalid current appointment date/time');
+            }
+            if (isNaN(newDateTime.getTime())) {
+                throw new Error('Invalid new appointment date/time');
+            }
+        
+            // Check if new date/time is in the future
+            if (newDateTime <= now) {
+                errorDiv.textContent = 'New appointment date and time must be in the future';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            // Check if new date/time is later than current appointment
+            if (newDateTime <= currentDateTime) {
+                errorDiv.textContent = 'New appointment date and time must be later than the current appointment';
+                errorDiv.style.display = 'block';
+                return;
+            }
+        } catch (error) {
+            console.error('Date validation error:', error);
+            errorDiv.textContent = 'Invalid date or time format. Please check your input.';
             errorDiv.style.display = 'block';
             return;
         }
@@ -2602,12 +2682,6 @@ function showRescheduleModal(appointmentId) {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Rescheduling...';
         errorDiv.style.display = 'none';
-        
-        console.log('Reschedule: Starting reschedule process', {
-            appointmentId: appointmentId,
-            newDate: newDate,
-            newTime: newTime
-        });
         
         // Simple form data - just new_date and new_time
         const params = new URLSearchParams();
@@ -2623,23 +2697,39 @@ function showRescheduleModal(appointmentId) {
             body: params.toString(),
             credentials: 'same-origin'
         })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => {
-                    throw new Error(err.error || err.message || `HTTP ${response.status}`);
-                });
+        .then(async response => {
+            const contentType = response.headers.get('content-type');
+            let responseData;
+            
+            if (contentType && contentType.includes('application/json')) {
+                try {
+                    responseData = await response.json();
+                } catch (e) {
+                    console.error('Failed to parse JSON response:', e);
+                    const text = await response.text();
+                    console.error('Response text:', text);
+                    throw new Error('Invalid JSON response from server');
+                }
+            } else {
+                const text = await response.text();
+                console.error('Non-JSON response:', text);
+                throw new Error('Server returned non-JSON response');
             }
-            return response.json();
+            
+            if (!response.ok) {
+                throw new Error(responseData.error || responseData.message || `HTTP ${response.status}`);
+            }
+            
+            return responseData;
         })
         .then(data => {
-            console.log('Reschedule response:', data);
             if (data.ok || data.success) {
                 modal.hide();
                 
                 // Show toast notification with rescheduled info
                 const formattedDate = data.data?.formatted_date || newDate;
                 const formattedTime = data.data?.formatted_time || formatTimeForReschedule(newTime);
-                const toastMessage = `تم إعادة جدولة الموعد إلى ${formattedDate} الساعة ${formattedTime}`;
+                const toastMessage = `Appointment rescheduled to ${formattedDate} at ${formattedTime}`;
                 
                 showRescheduleToast(toastMessage, formattedDate, formattedTime);
                 
@@ -2831,11 +2921,32 @@ function showRescheduleFollowupModal(appointmentId) {
             return;
         }
         
-        const newDateTime = new Date(newDate + 'T' + newTime);
-        const now = new Date();
+        // Normalize time format (ensure HH:MM format)
+        const normalizeTime = (timeStr) => {
+            if (!timeStr) return '';
+            // Remove seconds if present (HH:MM:SS -> HH:MM)
+            return timeStr.substring(0, 5);
+        };
         
-        if (newDateTime <= now) {
-            errorDiv.textContent = 'New appointment date and time must be in the future';
+        const normalizedNewTime = normalizeTime(newTime);
+        
+        try {
+            const newDateTime = new Date(newDate + 'T' + normalizedNewTime + ':00');
+            const now = new Date();
+            
+            // Check if date is valid
+            if (isNaN(newDateTime.getTime())) {
+                throw new Error('Invalid date/time format');
+            }
+            
+            if (newDateTime <= now) {
+                errorDiv.textContent = 'New appointment date and time must be in the future';
+                errorDiv.style.display = 'block';
+                return;
+            }
+        } catch (error) {
+            console.error('Date validation error:', error);
+            errorDiv.textContent = 'Invalid date or time format. Please check your input.';
             errorDiv.style.display = 'block';
             return;
         }
@@ -2844,12 +2955,6 @@ function showRescheduleFollowupModal(appointmentId) {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Scheduling...';
         errorDiv.style.display = 'none';
-        
-        console.log('RescheduleFollowup: Starting followup scheduling process', {
-            appointmentId: appointmentId,
-            newDate: newDate,
-            newTime: newTime
-        });
         
         // Simple form data - just new_date and new_time
         const params = new URLSearchParams();
@@ -2874,7 +2979,6 @@ function showRescheduleFollowupModal(appointmentId) {
             return response.json();
         })
         .then(data => {
-            console.log('RescheduleFollowup response:', data);
             if (data.ok || data.success) {
                 modal.hide();
                 showSuccessMessage('Follow-up appointment scheduled successfully');
@@ -4745,6 +4849,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize status badge
     updateStatusBadge('<?= $appointment['status'] ?>');
     
+    // Show follow-up toast if follow-up appointment exists
+    <?php if (!empty($followupAppointment)): ?>
+    const followupDate = '<?= date('M j, Y', strtotime($followupAppointment['date'])) ?>';
+    const followupTime = '<?= date('g:i A', strtotime($followupAppointment['start_time'])) ?>';
+    const patientName = '<?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?>';
+    
+    setTimeout(function() {
+        showFollowupToast(patientName, followupDate, followupTime);
+    }, 500);
+    <?php endif; ?>
+    
     // Initialize Bootstrap tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -5588,7 +5703,6 @@ function escapeHtml(text) {
 
 // Show reschedule toast notification with red styling
 function showRescheduleToast(message, date, time) {
-    console.log('showRescheduleToast called:', { message, date, time });
     const toastContainer = document.getElementById('toastContainer') || createToastContainer();
     const toastId = 'toast-reschedule-' + Date.now();
     
@@ -5599,7 +5713,7 @@ function showRescheduleToast(message, date, time) {
                     <div class="d-flex align-items-center">
                         <i class="bi bi-calendar-x me-2" style="font-size: 1.2rem;"></i>
                         <div>
-                            <strong>تم إعادة جدولة الموعد</strong><br>
+                            <strong>Appointment rescheduled</strong><br>
                             <small>${escapeHtml(message)}</small>
                         </div>
                     </div>
@@ -5634,6 +5748,44 @@ function createToastContainer() {
     newContainer.style.zIndex = '9999';
     document.body.appendChild(newContainer);
     return newContainer;
+}
+
+// Show follow-up toast notification
+function showFollowupToast(patientName, date, time) {
+    const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+    const toastId = 'toast-followup-' + Date.now();
+    
+    const toastHtml = `
+        <div id="${toastId}" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true" style="min-width: 350px;">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-calendar-check me-2" style="font-size: 1.2rem;"></i>
+                        <div>
+                            <strong>Follow-up appointment scheduled</strong><br>
+                            <small>Follow-up appointment for (${escapeHtml(patientName)})</small>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <span class="badge bg-light text-dark">${escapeHtml(date)} - ${escapeHtml(time)}</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement, {
+        autohide: true,
+        delay: 5000 // Auto-hide after 5 seconds
+    });
+    toast.show();
+    
+    toastElement.addEventListener('hidden.bs.toast', function() {
+        toastElement.remove();
+    });
 }
 
 // Set current patient info for alert modal

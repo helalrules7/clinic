@@ -657,6 +657,39 @@ function renderAppointmentSlot(appointment) {
                        data-bs-title="View Patient Profile">
                         <i class="bi bi-person-circle"></i>
                     </a>
+                    ${appointment.status === 'Rescheduled' ? `
+                    <a href="/doctor/appointments/${appointment.id}" 
+                       class="badge bg-warning text-dark d-flex align-items-center gap-1 ms-1" style="text-decoration: none; font-weight: bold;"
+                       onclick="event.stopPropagation();"
+                       data-bs-toggle="tooltip" 
+                       data-bs-placement="top" 
+                       data-bs-title="This appointment was rescheduled">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        Rescheduled
+                    </a>
+                    ` : ''}
+                    ${appointment.has_followup ? `
+                    <a href="/doctor/appointments/${appointment.followup_id}" 
+                       class="badge bg-success d-flex align-items-center gap-1 ms-1" style="text-decoration: none; font-weight: bold;"
+                       onclick="event.stopPropagation();"
+                       data-bs-toggle="tooltip" 
+                       data-bs-placement="top" 
+                       data-bs-title="Follow-up appointment scheduled - Click to view">
+                        <i class="bi bi-calendar-check"></i>
+                        Follow-up
+                    </a>
+                    ` : ''}
+                    ${appointment.is_followup && appointment.original_appointment_id ? `
+                    <a href="/doctor/appointments/${appointment.original_appointment_id}" 
+                       class="badge bg-info d-flex align-items-center gap-1 ms-1" style="text-decoration: none; font-weight: bold;"
+                       onclick="event.stopPropagation();"
+                       data-bs-toggle="tooltip" 
+                       data-bs-placement="top" 
+                       data-bs-title="Original appointment - Click to view">
+                        <i class="bi bi-calendar-event"></i>
+                        Original
+                    </a>
+                    ` : ''}
                     <span class="badge ${statusClass} d-flex align-items-center gap-1">
                         <i class="bi ${getStatusIcon(appointment.status)}"></i>
                         ${getStatusDisplayText(appointment.status)}
@@ -968,13 +1001,13 @@ function getStatusBadgeClass(status) {
 
 function getStatusDisplayText(status) {
     const statusTexts = {
-        'Booked': 'محجوز',
-        'CheckedIn': 'تم الحضور',
-        'InProgress': 'قيد التنفيذ',
-        'Completed': 'مكتمل',
-        'Cancelled': 'ملغي',
-        'NoShow': 'لم يحضر',
-        'Rescheduled': 'مؤجل'
+        'Booked': 'Booked',
+        'CheckedIn': 'Checked In',
+        'InProgress': 'In Progress',
+        'Completed': 'Completed',
+        'Cancelled': 'Cancelled',
+        'NoShow': 'No Show',
+        'Rescheduled': 'Rescheduled'
     };
     return statusTexts[status] || status;
 }

@@ -263,6 +263,15 @@ class DoctorController
         // Get attachments
         $attachments = $this->getAttachments($id);
         
+        // Check if there's a follow-up appointment created for this appointment
+        $followupAppointment = $this->getFollowupAppointment($id);
+        
+        // Check if this appointment is a follow-up (has original appointment)
+        $originalAppointment = null;
+        if ($appointment['visit_type'] === 'FollowUp') {
+            $originalAppointment = $this->getOriginalAppointment($id);
+        }
+        
         $content = $this->view->render('doctor/appointment', [
             'appointment' => $appointment,
             'patient' => $patient,
@@ -271,7 +280,9 @@ class DoctorController
             'glasses' => $glasses,
             'labTests' => $labTests,
             'attachments' => $attachments,
-            'doctorId' => $user['id']
+            'doctorId' => $user['id'],
+            'followupAppointment' => $followupAppointment,
+            'originalAppointment' => $originalAppointment
         ]);
         
         echo $this->view->render('layouts/main', [
@@ -1296,6 +1307,112 @@ class DoctorController
         ");
         $stmt->execute([$patientId]);
         return $stmt->fetchAll();
+    }
+
+    private function getFollowupAppointment($appointmentId)
+    {
+        try {
+            // Check if rescheduled_from column exists
+            $columnStmt = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'rescheduled_from'");
+            $hasRescheduledFrom = $columnStmt->fetch(\PDO::FETCH_ASSOC);
+            
+            if ($hasRescheduledFrom) {
+                // Check if there's a follow-up appointment with rescheduled_from pointing to this appointment
+                $stmt = $this->pdo->prepare("
+                    SELECT id, date, start_time, visit_type, status
+                    FROM appointments 
+                    WHERE rescheduled_from = ? 
+                    AND visit_type = 'FollowUp'
+                    ORDER BY date DESC, start_time DESC
+                    LIMIT 1
+                ");
+                $stmt->execute([$appointmentId]);
+                $followup = $stmt->fetch(\PDO::FETCH_ASSOC);
+                
+                if ($followup) {
+                    return $followup;
+                }
+            }
+            
+            // Fallback: Check for follow-up appointments with same patient_id created after this appointment
+            $stmt = $this->pdo->prepare("
+                SELECT id, date, start_time, visit_type, status
+                FROM appointments 
+                WHERE patient_id = (
+                    SELECT patient_id FROM appointments WHERE id = ?
+                )
+                AND visit_type = 'FollowUp'
+                AND (date > (SELECT date FROM appointments WHERE id = ?) 
+                     OR (date = (SELECT date FROM appointments WHERE id = ?) 
+                         AND start_time > (SELECT start_time FROM appointments WHERE id = ?)))
+                ORDER BY date ASC, start_time ASC
+                LIMIT 1
+            ");
+            $stmt->execute([$appointmentId, $appointmentId, $appointmentId, $appointmentId]);
+            $followup = $stmt->fetch(\PDO::FETCH_ASSOC);
+            
+            return $followup ?: null;
+        } catch (\Exception $e) {
+            // Return null on error
+            return null;
+        }
+    }
+
+    private function getOriginalAppointment($followupAppointmentId)
+    {
+        try {
+            // Check if rescheduled_from column exists
+            $columnStmt = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'rescheduled_from'");
+            $hasRescheduledFrom = $columnStmt->fetch(\PDO::FETCH_ASSOC);
+            
+            if ($hasRescheduledFrom) {
+                // Get the rescheduled_from value for this follow-up appointment
+                $stmt = $this->pdo->prepare("
+                    SELECT rescheduled_from 
+                    FROM appointments 
+                    WHERE id = ?
+                ");
+                $stmt->execute([$followupAppointmentId]);
+                $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+                
+                if ($result && $result['rescheduled_from']) {
+                    // Get the original appointment details
+                    $originalStmt = $this->pdo->prepare("
+                        SELECT id, date, start_time, visit_type, status
+                        FROM appointments 
+                        WHERE id = ?
+                    ");
+                    $originalStmt->execute([$result['rescheduled_from']]);
+                    $original = $originalStmt->fetch(\PDO::FETCH_ASSOC);
+                    
+                    if ($original) {
+                        return $original;
+                    }
+                }
+            }
+            
+            // Fallback: Find the most recent appointment before this follow-up for the same patient
+            $stmt = $this->pdo->prepare("
+                SELECT id, date, start_time, visit_type, status
+                FROM appointments 
+                WHERE patient_id = (
+                    SELECT patient_id FROM appointments WHERE id = ?
+                )
+                AND id != ?
+                AND (date < (SELECT date FROM appointments WHERE id = ?) 
+                     OR (date = (SELECT date FROM appointments WHERE id = ?) 
+                         AND start_time < (SELECT start_time FROM appointments WHERE id = ?)))
+                ORDER BY date DESC, start_time DESC
+                LIMIT 1
+            ");
+            $stmt->execute([$followupAppointmentId, $followupAppointmentId, $followupAppointmentId, $followupAppointmentId, $followupAppointmentId]);
+            $original = $stmt->fetch(\PDO::FETCH_ASSOC);
+            
+            return $original ?: null;
+        } catch (\Exception $e) {
+            // Return null on error
+            return null;
+        }
     }
 
     private function getAttachments($appointmentId)
