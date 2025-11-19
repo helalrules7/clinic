@@ -67,7 +67,6 @@ class AlertModel
             $result = $stmt->fetch(\PDO::FETCH_ASSOC);
             return $result ? $result : null;
         } catch (\Exception $e) {
-            error_log("AlertModel::getById error: " . $e->getMessage());
             return null;
         }
     }
@@ -333,12 +332,8 @@ class AlertModel
      */
     public function getByMessage($doctorId, $message)
     {
-        $logFile = '/home/hclinic/web/roaya.hclinic.clinic/logs/roaya.hclinic.clinic.error.log';
-        
         // Normalize message (trim whitespace for comparison)
         $normalizedMessage = trim($message);
-        
-        error_log("getByMessage called - Doctor ID: {$doctorId}, Message Length: " . strlen($normalizedMessage) . "\n", 3, $logFile);
         
         // Try exact match first
         $sql = "SELECT * FROM alerts 
@@ -358,19 +353,14 @@ class AlertModel
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
         
         if ($result) {
-            error_log("✓ Exact match found - Alert ID: {$result['id']}\n", 3, $logFile);
             return $result;
         }
-        
-        error_log("✗ No exact match, trying text-only comparison...\n", 3, $logFile);
         
         // If no exact match, try to find by similar content (strip HTML tags and compare)
         if (!empty($normalizedMessage)) {
             // Strip HTML tags and normalize whitespace for comparison
             $textOnly = strip_tags($normalizedMessage);
             $textOnly = preg_replace('/\s+/', ' ', trim($textOnly));
-            
-            error_log("Text-only (no HTML): " . substr($textOnly, 0, 200) . "...\n", 3, $logFile);
             
             if (!empty($textOnly)) {
                 $sql = "SELECT * FROM alerts 
@@ -383,24 +373,18 @@ class AlertModel
                 $stmt->execute([':doctor_id' => $doctorId]);
                 $allAlerts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
                 
-                error_log("Found " . count($allAlerts) . " alerts for doctor (no patient/appointment)\n", 3, $logFile);
-                
                 // Compare text content (without HTML tags)
                 foreach ($allAlerts as $alert) {
                     $alertTextOnly = strip_tags($alert['message']);
                     $alertTextOnly = preg_replace('/\s+/', ' ', trim($alertTextOnly));
                     
-                    error_log("Comparing - Alert ID: {$alert['id']}, Text: " . substr($alertTextOnly, 0, 100) . "...\n", 3, $logFile);
-                    
                     if ($alertTextOnly === $textOnly) {
-                        error_log("✓ Text-only match found - Alert ID: {$alert['id']}\n", 3, $logFile);
                         return $alert;
                     }
                 }
             }
         }
         
-        error_log("✗ No match found\n", 3, $logFile);
         return null;
     }
 }

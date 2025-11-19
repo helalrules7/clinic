@@ -1367,9 +1367,6 @@ async function loadNotes() {
                 return;
             }
 
-            // Debug: Log notes with alerts
-            console.log('Notes loaded:', data.notes.map(n => ({ id: n.id, hasAlert: !!n.alert, alert: n.alert })));
-
             // We have notes - hide empty state first
             if (emptyState) {
                 emptyState.style.display = 'none';

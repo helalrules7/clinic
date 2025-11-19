@@ -44,10 +44,6 @@ class NotesController
         header('Content-Type: application/json; charset=utf-8');
         
         $user = $this->auth->user();
-        $logFile = '/home/hclinic/web/roaya.hclinic.clinic/logs/roaya.hclinic.clinic.error.log';
-        
-        // Test log
-        error_log("=== getNotes() called for User ID: {$user['id']} ===\n", 3, $logFile);
         
         try {
             $stmt = $this->pdo->prepare("
@@ -57,8 +53,6 @@ class NotesController
             ");
             $stmt->execute([$user['id']]);
             $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            error_log("Found " . count($notes) . " notes\n", 3, $logFile);
             
             // Ensure notes is an array
             if (!is_array($notes)) {
@@ -70,8 +64,6 @@ class NotesController
             $doctorStmt->execute([$user['id']]);
             $doctor = $doctorStmt->fetch(PDO::FETCH_ASSOC);
             
-            error_log("Doctor ID: " . ($doctor ? $doctor['id'] : 'NULL') . "\n", 3, $logFile);
-            
             // Get alerts for each note
             if ($doctor) {
                 $alertModel = new \App\Models\AlertModel();
@@ -81,32 +73,7 @@ class NotesController
                     // Normalize content for comparison (trim whitespace)
                     $noteContent = trim($note['content'] ?? '');
                     if (!empty($noteContent)) {
-                        // Log before search
-                        $logMessage = "=== Searching alert for Note ID: {$note['id']} ===\n";
-                        $logMessage .= "Doctor ID: {$doctor['id']}\n";
-                        $logMessage .= "Note Content Length: " . strlen($noteContent) . "\n";
-                        $logMessage .= "Note Content: " . addslashes($noteContent) . "\n";
-                        error_log($logMessage, 3, $logFile);
-                        
                         $alert = $alertModel->getByMessage($doctor['id'], $noteContent);
-                        
-                        // Log after search
-                        if ($alert) {
-                            $logMessage = "✓ Found Alert ID: {$alert['id']}\n";
-                            $logMessage .= "Alert Message Length: " . strlen($alert['message']) . "\n";
-                            $logMessage .= "Alert Message: " . addslashes($alert['message']) . "\n";
-                        } else {
-                            $logMessage = "✗ No alert found\n";
-                            // Check all alerts for this doctor
-                            $allAlerts = $alertModel->getByDoctor($doctor['id'], []);
-                            $logMessage .= "Total alerts for doctor: " . count($allAlerts) . "\n";
-                            foreach ($allAlerts as $idx => $a) {
-                                if (empty($a['patient_id']) && empty($a['appointment_id'])) {
-                                    $logMessage .= "  Alert #{$idx}: ID={$a['id']}, Message Length=" . strlen($a['message']) . ", Message=" . addslashes($a['message']) . "\n";
-                                }
-                            }
-                        }
-                        error_log($logMessage, 3, $logFile);
                         
                         $note['alert'] = $alert ? [
                             'id' => $alert['id'],
@@ -115,11 +82,8 @@ class NotesController
                         ] : null;
                     } else {
                         $note['alert'] = null;
-                        error_log("Note ID: {$note['id']} has empty content\n", 3, $logFile);
                     }
                 }
-            } else {
-                error_log("No doctor found for user ID: {$user['id']}\n", 3, $logFile);
             }
             
             echo json_encode([
@@ -128,7 +92,6 @@ class NotesController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Error in getNotes: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -167,7 +130,6 @@ class NotesController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Error in getNote: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -230,7 +192,6 @@ class NotesController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Error in createNote: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -327,9 +288,47 @@ class NotesController
             
             $params[] = $id;
             
+            // Get old content before update to find associated alert
+            $oldStmt = $this->pdo->prepare("SELECT content FROM notes WHERE id = ?");
+            $oldStmt->execute([$id]);
+            $oldNote = $oldStmt->fetch(PDO::FETCH_ASSOC);
+            $oldContent = trim($oldNote['content'] ?? '');
+            
             $sql = "UPDATE notes SET " . implode(', ', $updates) . " WHERE id = ?";
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute($params);
+            
+            // Update or delete associated alert if content changed
+            if (isset($data['content']) && !empty($oldContent)) {
+                // Get doctor ID
+                $doctorStmt = $this->pdo->prepare("SELECT id FROM doctors WHERE user_id = ?");
+                $doctorStmt->execute([$user['id']]);
+                $doctor = $doctorStmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($doctor) {
+                    $alertModel = new \App\Models\AlertModel();
+                    $oldAlert = $alertModel->getByMessage($doctor['id'], $oldContent);
+                    
+                    if ($oldAlert) {
+                        $newContent = trim($data['content'] ?? '');
+                        if (empty($newContent)) {
+                            // Delete alert if note content is now empty
+                            $alertModel->delete($oldAlert['id'], $doctor['id']);
+                        } else {
+                            // Update alert message with new content
+                            $alertModel->update($oldAlert['id'], [
+                                'message' => $newContent,
+                                'alert_date' => $oldAlert['alert_date'],
+                                'alert_time' => $oldAlert['alert_time'],
+                                'repeat_count' => $oldAlert['repeat_count'],
+                                'repeat_interval' => $oldAlert['repeat_interval'],
+                                'is_active' => $oldAlert['is_active'],
+                                'is_dismissed' => $oldAlert['is_dismissed']
+                            ], $doctor['id']);
+                        }
+                    }
+                }
+            }
             
             echo json_encode([
                 'success' => true,
@@ -337,7 +336,6 @@ class NotesController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Error in updateNote: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -377,10 +375,34 @@ class NotesController
                 exit;
             }
             
+            // Get note content before deletion to find associated alert
+            $contentStmt = $this->pdo->prepare("SELECT content FROM notes WHERE id = ?");
+            $contentStmt->execute([$id]);
+            $noteData = $contentStmt->fetch(PDO::FETCH_ASSOC);
+            $noteContent = trim($noteData['content'] ?? '');
+            
+            // Delete the note
             $stmt = $this->pdo->prepare("DELETE FROM notes WHERE id = ?");
             $result = $stmt->execute([$id]);
             
             if ($result) {
+                // Delete associated alert if exists
+                if (!empty($noteContent)) {
+                    // Get doctor ID
+                    $doctorStmt = $this->pdo->prepare("SELECT id FROM doctors WHERE user_id = ?");
+                    $doctorStmt->execute([$user['id']]);
+                    $doctor = $doctorStmt->fetch(PDO::FETCH_ASSOC);
+                    
+                    if ($doctor) {
+                        $alertModel = new \App\Models\AlertModel();
+                        $alert = $alertModel->getByMessage($doctor['id'], $noteContent);
+                        
+                        if ($alert) {
+                            $alertModel->delete($alert['id'], $doctor['id']);
+                        }
+                    }
+                }
+                
                 echo json_encode([
                     'success' => true,
                     'message' => 'Note deleted successfully'
@@ -394,7 +416,6 @@ class NotesController
             }
             exit;
         } catch (\Exception $e) {
-            error_log("Error deleting note: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,

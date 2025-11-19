@@ -4222,9 +4222,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Load all notes (no limit)
                 dashboardNotes = data.notes;
                 
-                // Debug: Log notes with alerts
-                console.log('Dashboard Notes loaded:', dashboardNotes.map(n => ({ id: n.id, hasAlert: !!n.alert, alert: n.alert })));
-                
                 // Clear container
                 container.querySelectorAll('.dashboard-note-widget').forEach(w => w.remove());
                 
