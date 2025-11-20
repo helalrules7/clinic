@@ -3308,7 +3308,9 @@ class DoctorController
             'dock_minimized',
             'theme',
             'push_notifications_enabled',
-            'push_subscription'
+            'push_subscription',
+            'dont_ask_push_notifications_browsers',
+            'push_notification_remind_later'
         ];
         
         try {
@@ -3322,14 +3324,18 @@ class DoctorController
                 
                 // Determine setting type
                 $settingType = 'string';
-                if (is_int($value) || (is_string($value) && is_numeric($value) && strpos($value, '.') === false)) {
+                if ($key === 'push_notification_remind_later') {
+                    // Always treat as integer (timestamp)
+                    $settingType = 'integer';
+                    $value = is_numeric($value) ? (int) $value : (int) time();
+                } elseif (is_int($value) || (is_string($value) && is_numeric($value) && strpos($value, '.') === false)) {
                     $settingType = 'integer';
                     $value = (int) $value;
                 } elseif (is_bool($value)) {
                     $settingType = 'boolean';
-                } elseif (is_array($value) || $key === 'push_subscription') {
-                    // For push_subscription, always encode as JSON (supports multiple browser subscriptions)
-                    if ($key === 'push_subscription') {
+                } elseif (is_array($value) || $key === 'push_subscription' || $key === 'dont_ask_push_notifications_browsers') {
+                    // For push_subscription and dont_ask_push_notifications_browsers, always encode as JSON
+                    if ($key === 'push_subscription' || $key === 'dont_ask_push_notifications_browsers') {
                         // If it's already a JSON string, validate it first
                         if (is_string($value)) {
                             $decoded = json_decode($value, true);
@@ -3358,12 +3364,15 @@ class DoctorController
                 // Convert boolean to string for database storage
                 if ($settingType === 'boolean') {
                     $dbValue = $value ? '1' : '0';
+                } elseif ($settingType === 'integer') {
+                    // For integer type (like push_notification_remind_later), store as string representation
+                    $dbValue = (string) $value;
                 } else {
                     // For dashboard_cards_order, it's already a JSON string, keep it as is
                     if ($key === 'dashboard_cards_order' && is_string($value)) {
                         $dbValue = $value; // Keep the JSON string as is
-                    } elseif ($key === 'push_subscription') {
-                        // push_subscription is already a JSON string (array of subscriptions)
+                    } elseif ($key === 'push_subscription' || $key === 'dont_ask_push_notifications_browsers') {
+                        // push_subscription and dont_ask_push_notifications_browsers are already JSON strings
                         $dbValue = $value;
                     } else {
                         $dbValue = (string) $value;

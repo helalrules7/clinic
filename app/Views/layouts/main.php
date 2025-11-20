@@ -371,7 +371,7 @@
         }
         
         .top-bar.scrolled {
-            padding-top: 1rem;
+            padding-top: 2rem;
         }
         
         .dark .top-bar {
@@ -556,7 +556,7 @@
                 margin-top: -1rem;
                 margin-left: -1rem;
                 margin-right: -1rem;
-                padding-top: 0;
+                padding-top: 2rem;
                 padding-left: 1rem;
                 padding-right: 1rem;
                 padding-bottom: 1rem;
@@ -832,15 +832,15 @@
             
             .quick-access-dock.mobile-minimized .dock-minimize-btn .minimized-icon {
                 display: grid !important;
-                grid-template-columns: repeat(2, 1fr);
-                grid-template-rows: repeat(2, 1fr);
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: repeat(3, 1fr);
                 gap: 2px;
-                width: 20px;
-                height: 20px;
+                width: 24px;
+                height: 24px;
             }
             
             .quick-access-dock.mobile-minimized .dock-minimize-btn .minimized-icon-rect {
-                background: var(--text);
+                background: #000000;
                 border-radius: 1px;
             }
             
@@ -1047,11 +1047,15 @@
             width: auto;
         }
         
-        /* Push Notification Toast Container (Top) */
+        /* Push Notification Toast Container - Top Center */
         #pushToastContainer {
-            top: 1rem;
+            top: 2rem !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
             max-width: calc(100% - 2rem);
             width: 100%;
+            position: fixed;
+            z-index: 10000;
         }
         
         #pushToastContainer .toast {
@@ -1059,6 +1063,192 @@
             width: 100%;
             max-width: 600px;
             margin: 0 auto;
+        }
+        
+        /* Push Notification Toast - Glass Effect */
+        /* Light Mode: Dock-like effect (macOS style) */
+        .push-notification-toast {
+            background: rgba(248, 250, 252, 0.35) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            border: 1px solid rgba(226, 232, 240, 0.3) !important;
+            box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+            color: #000 !important;
+            animation: slideDownFromTop 0.5s ease-out forwards;
+        }
+        
+        /* Dark Mode: Modal-like effect with sky blue gradient */
+        .dark .push-notification-toast {
+            background: linear-gradient(135deg, rgba(135, 206, 235, 0.15) 0%, rgba(70, 130, 180, 0.15) 50%, rgba(30, 58, 95, 0.40) 100%) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            border: 1px solid rgba(51, 65, 85, 0.3) !important;
+            box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+            color: var(--text) !important;
+        }
+        
+        @keyframes slideDownFromTop {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        
+        /* Header - Light Mode */
+        .push-notification-toast .push-toast-header {
+            background: transparent !important;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.3) !important;
+            color: #000 !important;
+            padding: 1rem 1.25rem !important;
+        }
+        
+        /* Header - Dark Mode */
+        .dark .push-notification-toast .push-toast-header {
+            border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+            color: var(--text) !important;
+        }
+        
+        /* Body - Light Mode */
+        .push-notification-toast .toast-body {
+            color: #000 !important;
+            padding: 1.25rem !important;
+        }
+        
+        /* Body - Dark Mode */
+        .dark .push-notification-toast .toast-body {
+            color: var(--text) !important;
+        }
+        
+        /* Footer - Light Mode */
+        .push-notification-toast .push-toast-footer {
+            background: transparent !important;
+            border-top: 1px solid rgba(226, 232, 240, 0.3) !important;
+            padding: 1rem 1.25rem !important;
+        }
+        
+        /* Footer - Dark Mode */
+        .dark .push-notification-toast .push-toast-footer {
+            border-top-color: rgba(51, 65, 85, 0.3) !important;
+        }
+        
+        /* Buttons - Light Mode */
+        .push-notification-toast .btn-light {
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: none !important;
+            color: #4682B4 !important;
+            font-weight: 600 !important;
+            transition: all 0.2s ease;
+        }
+        
+        .push-notification-toast .btn-light:hover {
+            background: rgba(255, 255, 255, 1) !important;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .push-notification-toast .btn-outline-light {
+            border: 1px solid rgba(70, 130, 180, 0.5) !important;
+            color: #4682B4 !important;
+            background: rgba(255, 255, 255, 0.3) !important;
+            transition: all 0.2s ease;
+        }
+        
+        .push-notification-toast .btn-outline-light:hover {
+            background: rgba(255, 255, 255, 0.5) !important;
+            border-color: #4682B4 !important;
+            transform: translateY(-1px);
+        }
+        
+        /* Buttons - Dark Mode */
+        .dark .push-notification-toast .btn-light {
+            background: rgba(255, 255, 255, 0.15) !important;
+            color: var(--text) !important;
+        }
+        
+        .dark .push-notification-toast .btn-light:hover {
+            background: rgba(255, 255, 255, 0.25) !important;
+        }
+        
+        .dark .push-notification-toast .btn-outline-light {
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            color: var(--text) !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        .dark .push-notification-toast .btn-outline-light:hover {
+            background: rgba(255, 255, 255, 0.2) !important;
+            border-color: rgba(255, 255, 255, 0.5) !important;
+        }
+        
+        /* Close Button - Light Mode */
+        .push-notification-toast .btn-close {
+            filter: none !important;
+            opacity: 0.7;
+            transition: all 0.2s ease;
+            background-color: transparent !important;
+        }
+        
+        .push-notification-toast .btn-close:hover {
+            opacity: 1;
+        }
+        
+        /* Close Button - Dark Mode - White Color */
+        .dark .push-notification-toast .btn-close {
+            filter: invert(1) brightness(2) !important;
+            opacity: 0.9;
+            background-color: transparent !important;
+        }
+        
+        .dark .push-notification-toast .btn-close:hover {
+            opacity: 1;
+            filter: invert(1) brightness(2.5) !important;
+        }
+        
+        /* Exit Animation for Push Notification Toast */
+        .push-notification-toast.hiding {
+            animation: slideUpToTop 0.3s ease-in forwards !important;
+        }
+        
+        @keyframes slideUpToTop {
+            from {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-30px);
+            }
+        }
+        
+        /* Mobile responsive for push notification toast */
+        @media (max-width: 768px) {
+            #pushToastContainer {
+                top: 1rem !important;
+                transform: translateX(-50%) !important;
+                padding: 0.5rem;
+                max-width: calc(100% - 1rem);
+            }
+            
+            .push-notification-toast .push-toast-footer {
+                padding: 0.75rem !important;
+            }
+            
+            .push-notification-toast .push-toast-footer .d-flex {
+                flex-direction: column;
+            }
+            
+            .push-notification-toast .btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+            
+            .push-notification-toast .btn:last-child {
+                margin-bottom: 0;
+            }
         }
         
         /* Alert Toast Container (Bottom) */
@@ -1714,23 +1904,23 @@
             font-size: 1.75rem;
         }
         
-        /* Minimized Dock Icon - 4 Squares */
+        /* Minimized Dock Icon - Custom Pattern (3-4-3) */
         .dock-minimize-btn .minimized-icon {
             display: none;
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             position: relative;
         }
         
-        .quick-access-dock.minimized .dock-minimize-btn .bi-dash {
+        .quick-access-dock.minimized .dock-minimize-btn .bi-fullscreen-exit {
             display: none;
         }
         
         .quick-access-dock.minimized .dock-minimize-btn .minimized-icon {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-            gap: 2px;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 1px;
         }
         
         .minimized-icon-rect {
@@ -1742,6 +1932,18 @@
         .dark .minimized-icon-rect {
             background: #ffffff;
         }
+        
+        /* Grid positions for custom pattern */
+        .minimized-icon-rect.rect-r1-c1 { grid-column: 1; grid-row: 1; }
+        .minimized-icon-rect.rect-r1-c2 { grid-column: 2; grid-row: 1; }
+        .minimized-icon-rect.rect-r1-c3 { grid-column: 3; grid-row: 1; }
+        .minimized-icon-rect.rect-r2-c1 { grid-column: 1; grid-row: 2; }
+        .minimized-icon-rect.rect-r2-c2 { grid-column: 2; grid-row: 2; }
+        .minimized-icon-rect.rect-r2-c3 { grid-column: 3; grid-row: 2; }
+        .minimized-icon-rect.rect-r2-c4 { grid-column: 4; grid-row: 2; }
+        .minimized-icon-rect.rect-r3-c2 { grid-column: 2; grid-row: 3; }
+        .minimized-icon-rect.rect-r3-c3 { grid-column: 3; grid-row: 3; }
+        .minimized-icon-rect.rect-r3-c4 { grid-column: 4; grid-row: 3; }
     </style>
 </head>
 <body>
@@ -2128,12 +2330,21 @@
             </a>
             <div class="dock-divider"></div>
             <button class="dock-minimize-btn" id="dockMinimizeBtn" title="Minimize Dock">
-                <i class="bi bi-dash"></i>
+                <i class="bi bi-fullscreen-exit"></i>
                 <div class="minimized-icon">
-                    <span class="minimized-icon-rect"></span>
-                    <span class="minimized-icon-rect"></span>
-                    <span class="minimized-icon-rect"></span>
-                    <span class="minimized-icon-rect"></span>
+                    <!-- Row 1: 3 squares (columns 1, 2, 3) -->
+                    <span class="minimized-icon-rect rect-r1-c1"></span>
+                    <span class="minimized-icon-rect rect-r1-c2"></span>
+                    <span class="minimized-icon-rect rect-r1-c3"></span>
+                    <!-- Row 2: 4 squares (columns 1, 2, 3, 4) -->
+                    <span class="minimized-icon-rect rect-r2-c1"></span>
+                    <span class="minimized-icon-rect rect-r2-c2"></span>
+                    <span class="minimized-icon-rect rect-r2-c3"></span>
+                    <span class="minimized-icon-rect rect-r2-c4"></span>
+                    <!-- Row 3: 3 squares starting from column 2 (columns 2, 3, 4) -->
+                    <span class="minimized-icon-rect rect-r3-c2"></span>
+                    <span class="minimized-icon-rect rect-r3-c3"></span>
+                    <span class="minimized-icon-rect rect-r3-c4"></span>
                 </div>
                 <span class="htooltip" id="dockMinimizeTooltip">Minimize Dock</span>
             </button>
@@ -2813,6 +3024,12 @@
                 }
             }
             
+            // Get browser identifier (unique for each browser)
+            function getBrowserIdentifier() {
+                // Use user agent + origin as browser identifier
+                return navigator.userAgent + '|' + window.location.origin;
+            }
+            
             // Load push notification settings (supports multiple browsers)
             async function loadPushSettings() {
                 try {
@@ -2844,13 +3061,48 @@
                                 }
                             }
                             
-                            return { enabled: isPushEnabled, subscription: subscriptionData };
+                            // Get browsers that declined push notifications
+                            let declinedBrowsers = [];
+                            if (data.settings.dont_ask_push_notifications_browsers) {
+                                declinedBrowsers = typeof data.settings.dont_ask_push_notifications_browsers === 'string' 
+                                    ? JSON.parse(data.settings.dont_ask_push_notifications_browsers)
+                                    : data.settings.dont_ask_push_notifications_browsers;
+                                
+                                // Handle backward compatibility: if it's not an array, convert to array
+                                if (!Array.isArray(declinedBrowsers)) {
+                                    declinedBrowsers = [];
+                                }
+                            }
+                            
+                            // Get remind later timestamp
+                            let remindLaterTimestamp = null;
+                            if (data.settings.push_notification_remind_later) {
+                                remindLaterTimestamp = parseInt(data.settings.push_notification_remind_later) || null;
+                            }
+                            
+                            // Check if current browser is in declined list
+                            const currentBrowserId = getBrowserIdentifier();
+                            const isDeclined = declinedBrowsers.includes(currentBrowserId);
+                            
+                            // Check if remind later is still active (24 hours)
+                            const now = Date.now();
+                            const oneDayInMs = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+                            const shouldRemind = !remindLaterTimestamp || (now - remindLaterTimestamp) >= oneDayInMs;
+                            
+                            return { 
+                                enabled: isPushEnabled, 
+                                subscription: subscriptionData, 
+                                declinedBrowsers: declinedBrowsers, 
+                                isDeclined: isDeclined,
+                                remindLaterTimestamp: remindLaterTimestamp,
+                                shouldRemind: shouldRemind
+                            };
                         }
                     }
                 } catch (error) {
                     console.error('Failed to load push settings:', error);
                 }
-                return { enabled: false, subscription: null };
+                return { enabled: false, subscription: null, declinedBrowsers: [], isDeclined: false, remindLaterTimestamp: null, shouldRemind: true };
             }
             
             // Compare two subscriptions to check if they're the same
@@ -2940,15 +3192,89 @@
                 }
             }
             
+            // Save "Remind me later" setting (24 hours)
+            async function saveRemindLater() {
+                try {
+                    const timestamp = Date.now(); // Current timestamp
+                    
+                    const response = await fetch('/api/doctor/settings', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            push_notification_remind_later: timestamp
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        return data.success;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('Failed to save remind later setting:', error);
+                    return false;
+                }
+            }
+            
+            // Save "Don't ask for this browser" setting
+            async function saveDontAskForThisBrowser() {
+                try {
+                    // Get current browser identifier
+                    const currentBrowserId = getBrowserIdentifier();
+                    
+                    // Load current settings
+                    const settings = await loadPushSettings();
+                    let declinedBrowsers = settings.declinedBrowsers || [];
+                    
+                    // Add current browser to declined list if not already there
+                    if (!declinedBrowsers.includes(currentBrowserId)) {
+                        declinedBrowsers.push(currentBrowserId);
+                    }
+                    
+                    const response = await fetch('/api/doctor/settings', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            dont_ask_push_notifications_browsers: declinedBrowsers
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        return data.success;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('Failed to save dont ask for this browser setting:', error);
+                    return false;
+                }
+            }
+            
             // Show toast to enable push notifications
-            function showPushNotificationToast() {
-                // Create separate toast container at the top for push notifications
+            async function showPushNotificationToast() {
+                // Check if current browser has declined push notifications
+                const settings = await loadPushSettings();
+                if (settings.isDeclined) {
+                    return; // Don't show toast if this browser declined
+                }
+                
+                // Check if remind later is still active (24 hours)
+                if (!settings.shouldRemind) {
+                    return; // Don't show toast if remind later is still active
+                }
+                
+                // Create separate toast container in the center of screen for push notifications
                 let pushToastContainer = document.getElementById('pushToastContainer');
                 if (!pushToastContainer) {
                     pushToastContainer = document.createElement('div');
                     pushToastContainer.id = 'pushToastContainer';
-                    pushToastContainer.className = 'toast-container position-fixed top-0 start-50 translate-middle-x p-3';
-                    pushToastContainer.style.zIndex = '10000';
+                    pushToastContainer.className = 'toast-container';
                     document.body.appendChild(pushToastContainer);
                 }
                 const toastId = 'push-notification-toast';
@@ -2959,22 +3285,28 @@
                 }
                 
                 const toastHtml = `
-                    <div id="${toastId}" class="toast align-items-center text-white bg-info border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">
-                        <div class="d-flex">
-                            <div class="toast-body flex-grow-1">
-                                <div class="d-flex align-items-start">
-                                    <i class="bi bi-bell-fill me-2" style="font-size: 1.5rem; margin-top: 2px;"></i>
-                                    <div class="flex-grow-1">
-                                        <strong>Enable Push Notifications</strong>
-                                        <div class="mt-1">Get notified with your alers, notes, appointments and more even when the browser is closed<br>You can disable this in your browser settings.</div>
-                                    </div>
-                                </div>
+                    <div id="${toastId}" class="toast align-items-center text-white push-notification-toast border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">
+                        <div class="toast-header push-toast-header">
+                            <div class="d-flex align-items-center flex-grow-1">
+                                <i class="bi bi-bell-fill me-2" style="font-size: 1.5rem;"></i>
+                                <strong class="me-auto">Enable Push Notifications</strong>
                             </div>
-                            <div class="d-flex align-items-center gap-2 me-2" style="flex-shrink: 0;">
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            <div>Get notified with your alerts, notes, appointments and more even when the browser is closed<br>You can disable this in your browser settings.</div>
+                        </div>
+                        <div class="toast-footer push-toast-footer">
+                            <div class="d-flex align-items-center gap-2 w-100 flex-wrap">
                                 <button type="button" class="btn btn-sm btn-light" id="enablePushBtn">
                                     <i class="bi bi-check-circle me-1"></i>Enable
                                 </button>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                                <button type="button" class="btn btn-sm btn-outline-light" id="remindMeLaterBtn" style="font-size: 0.75rem; white-space: nowrap;">
+                                    <i class="bi bi-clock me-1"></i>Remind me later
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-light" id="dontAskForThisBrowserBtn" style="font-size: 0.75rem; white-space: nowrap;">
+                                    <i class="bi bi-x-circle me-1"></i>Don't ask for this browser
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -2986,6 +3318,8 @@
                 if (toastElement) {
                     const enableBtn = toastElement.querySelector('#enablePushBtn');
                     const closeBtn = toastElement.querySelector('.btn-close');
+                    const remindMeLaterBtn = toastElement.querySelector('#remindMeLaterBtn');
+                    const dontAskForThisBrowserBtn = toastElement.querySelector('#dontAskForThisBrowserBtn');
                     
                     if (enableBtn) {
                         enableBtn.addEventListener('click', async function() {
@@ -2999,9 +3333,14 @@
                                 const subscription = await subscribeToPush(registration);
                                 
                                 if (subscription) {
+                                    // Add hiding class for exit animation
+                                    toastElement.classList.add('hiding');
                                     const toast = bootstrap.Toast.getInstance(toastElement);
                                     if (toast) {
-                                        toast.hide();
+                                        // Wait for animation to complete before hiding
+                                        setTimeout(() => {
+                                            toast.hide();
+                                        }, 300);
                                     }
                                     showToast('success', 'Push Notifications Enabled', 'You will now receive notifications even when the browser is closed.');
                                 } else {
@@ -3017,11 +3356,66 @@
                         });
                     }
                     
+                    if (remindMeLaterBtn) {
+                        remindMeLaterBtn.addEventListener('click', async function() {
+                            this.disabled = true;
+                            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+                            
+                            const saved = await saveRemindLater();
+                            
+                            if (saved) {
+                                // Add hiding class for exit animation
+                                toastElement.classList.add('hiding');
+                                const toast = bootstrap.Toast.getInstance(toastElement);
+                                if (toast) {
+                                    // Wait for animation to complete before hiding
+                                    setTimeout(() => {
+                                        toast.hide();
+                                    }, 300);
+                                }
+                            } else {
+                                this.disabled = false;
+                                this.innerHTML = '<i class="bi bi-clock me-1"></i>Remind me later';
+                                showToast('error', 'Error', 'Failed to save preference. Please try again.');
+                            }
+                        });
+                    }
+                    
+                    if (dontAskForThisBrowserBtn) {
+                        dontAskForThisBrowserBtn.addEventListener('click', async function() {
+                            this.disabled = true;
+                            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+                            
+                            const saved = await saveDontAskForThisBrowser();
+                            
+                            if (saved) {
+                                // Add hiding class for exit animation
+                                toastElement.classList.add('hiding');
+                                const toast = bootstrap.Toast.getInstance(toastElement);
+                                if (toast) {
+                                    // Wait for animation to complete before hiding
+                                    setTimeout(() => {
+                                        toast.hide();
+                                    }, 300);
+                                }
+                            } else {
+                                this.disabled = false;
+                                this.innerHTML = '<i class="bi bi-x-circle me-1"></i>Don\'t ask for this browser';
+                                showToast('error', 'Error', 'Failed to save preference. Please try again.');
+                            }
+                        });
+                    }
+                    
                     if (closeBtn) {
                         closeBtn.addEventListener('click', function() {
+                            // Add hiding class for exit animation
+                            toastElement.classList.add('hiding');
                             const toast = bootstrap.Toast.getInstance(toastElement);
                             if (toast) {
-                                toast.hide();
+                                // Wait for animation to complete before hiding
+                                setTimeout(() => {
+                                    toast.hide();
+                                }, 300);
                             }
                         });
                     }
@@ -3031,6 +3425,13 @@
                         delay: 0
                     });
                     toast.show();
+                    
+                    // Add exit animation when toast is being hidden
+                    toastElement.addEventListener('hide.bs.toast', function() {
+                        if (!toastElement.classList.contains('hiding')) {
+                            toastElement.classList.add('hiding');
+                        }
+                    });
                     
                     toastElement.addEventListener('hidden.bs.toast', function() {
                         toastElement.remove();
@@ -3104,6 +3505,17 @@
             async function initPushNotifications() {
                 if (!isPushSupported()) {
                     return;
+                }
+                
+                // Check if current browser has declined push notifications
+                const settings = await loadPushSettings();
+                if (settings.isDeclined) {
+                    return; // Don't show toast if this browser declined
+                }
+                
+                // Check if remind later is still active (24 hours)
+                if (!settings.shouldRemind) {
+                    return; // Don't show toast if remind later is still active
                 }
                 
                 // Register service worker
