@@ -123,6 +123,24 @@ class DoctorController
         ]);
     }
     
+    public function organizer()
+    {
+        $this->requireDoctorRole();
+        $user = $this->auth->user();
+        $doctorId = $this->getDoctorId($user['id']);
+        
+        $content = $this->view->render('doctor/organizer', [
+            'doctorId' => $doctorId
+        ]);
+        
+        echo $this->view->render('layouts/main', [
+            'title' => 'Organizer - Doctor Dashboard',
+            'pageTitle' => 'Organizer',
+            'pageSubtitle' => 'Monthly calendar with appointments, notes, and alerts',
+            'content' => $content
+        ]);
+    }
+    
     public function patients()
     {
         $user = $this->auth->user();

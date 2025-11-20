@@ -326,43 +326,38 @@ class ApiController
                 // Create timeline event
                 $this->createTimelineEvent($data['patient_id'], $appointmentId, 'Booking', 'Appointment booked');
                 
-                // Create alert if appointment is in the future (not today)
+                // Create alert for appointment (always create alert regardless of date, same as rescheduleFollowup)
                 try {
-                    $appointmentDate = new \DateTime($data['date']);
-                    $today = new \DateTime();
-                    $today->setTime(0, 0, 0);
-                    $appointmentDate->setTime(0, 0, 0);
+                    // Get patient name
+                    $patientStmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
+                    $patientStmt->execute([$data['patient_id']]);
+                    $patient = $patientStmt->fetch(\PDO::FETCH_ASSOC);
                     
-                    // If appointment is in the future (not today), create alert
-                    if ($appointmentDate > $today) {
-                        // Get patient name
-                        $patientStmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
-                        $patientStmt->execute([$data['patient_id']]);
-                        $patient = $patientStmt->fetch(\PDO::FETCH_ASSOC);
+                    if ($patient) {
+                        $patientName = trim($patient['first_name'] . ' ' . $patient['last_name']);
+                        $alertMessage = "Appointment for patient ({$patientName})";
                         
-                        if ($patient) {
-                            $patientName = trim($patient['first_name'] . ' ' . $patient['last_name']);
-                            $alertMessage = "كشف المريض ({$patientName})";
-                            
-                            // Set alert date/time to be 1 hour before appointment
-                            $alertDateTime = new \DateTime($data['date'] . ' ' . $data['start_time']);
-                            $alertDateTime->sub(new \DateInterval('PT1H'));
-                            $alertDate = $alertDateTime->format('Y-m-d');
-                            $alertTime = $alertDateTime->format('H:i:s');
-                            
-                            $alertData = [
-                                'doctor_id' => $data['doctor_id'],
-                                'patient_id' => $data['patient_id'],
-                                'appointment_id' => $appointmentId,
-                                'message' => $alertMessage,
-                                'alert_date' => $alertDate,
-                                'alert_time' => $alertTime,
-                                'repeat_count' => 1,
-                                'repeat_interval' => 0
-                            ];
-                            
-                            $this->alertModel->create($alertData);
-                        }
+                        // Get doctor_id from appointment data
+                        $doctorId = $data['doctor_id'];
+                        
+                        // Set alert date/time to be 1 hour before appointment
+                        $alertDateTime = new \DateTime($data['date'] . ' ' . $data['start_time']);
+                        $alertDateTime->sub(new \DateInterval('PT1H'));
+                        $alertDate = $alertDateTime->format('Y-m-d');
+                        $alertTime = $alertDateTime->format('H:i:s');
+                        
+                        $alertData = [
+                            'doctor_id' => $doctorId,
+                            'patient_id' => $data['patient_id'],
+                            'appointment_id' => $appointmentId,
+                            'message' => $alertMessage,
+                            'alert_date' => $alertDate,
+                            'alert_time' => $alertTime,
+                            'repeat_count' => 1,
+                            'repeat_interval' => 0
+                        ];
+                        
+                        $this->alertModel->create($alertData);
                     }
                 } catch (\Exception $e) {
                     // Continue even if alert creation fails
@@ -7077,6 +7072,146 @@ class ApiController
         $stmt->execute([$userId]);
         $result = $stmt->fetch();
         return $result ? $result['id'] : null;
+    }
+
+    public function getOrganizerMonth()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            $doctorId = $this->getDoctorId($user['id']);
+            
+            if (!$doctorId) {
+                return $this->jsonResponse(['error' => 'Doctor not found'], 404);
+            }
+
+            $year = (int)($_GET['year'] ?? date('Y'));
+            $month = (int)($_GET['month'] ?? date('m'));
+            
+            // Validate month and year
+            if ($month < 1 || $month > 12) {
+                return $this->jsonResponse(['error' => 'Invalid month'], 400);
+            }
+            
+            if ($year < 2020 || $year > 2100) {
+                return $this->jsonResponse(['error' => 'Invalid year'], 400);
+            }
+
+            // Get first and last day of the month
+            $firstDay = sprintf('%04d-%02d-01', $year, $month);
+            $lastDay = date('Y-m-t', strtotime($firstDay));
+            
+            // Get appointments for the month
+            $appointmentsStmt = $this->pdo->prepare("
+                SELECT 
+                    a.id,
+                    a.date,
+                    a.start_time,
+                    a.end_time,
+                    a.visit_type,
+                    a.status,
+                    a.notes as appointment_notes,
+                    CONCAT(p.first_name, ' ', p.last_name) as patient_name,
+                    p.id as patient_id
+                FROM appointments a
+                LEFT JOIN patients p ON a.patient_id = p.id
+                WHERE a.doctor_id = ? AND a.date >= ? AND a.date <= ?
+                AND a.status NOT IN ('Cancelled', 'NoShow')
+                ORDER BY a.date, a.start_time
+            ");
+            $appointmentsStmt->execute([$doctorId, $firstDay, $lastDay]);
+            $appointments = $appointmentsStmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            // Get notes for the month (from notes table)
+            $notesStmt = $this->pdo->prepare("
+                SELECT 
+                    id,
+                    content,
+                    created_at,
+                    DATE(created_at) as note_date
+                FROM notes
+                WHERE user_id = ? AND DATE(created_at) >= ? AND DATE(created_at) <= ?
+                ORDER BY created_at DESC
+            ");
+            $notesStmt->execute([$user['id'], $firstDay, $lastDay]);
+            $notes = $notesStmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            // Get alerts for the month
+            $alertsStmt = $this->pdo->prepare("
+                SELECT 
+                    id,
+                    alert_date,
+                    alert_time,
+                    message,
+                    patient_id,
+                    appointment_id,
+                    is_dismissed
+                FROM alerts
+                WHERE doctor_id = ? AND alert_date >= ? AND alert_date <= ?
+                ORDER BY alert_date, alert_time
+            ");
+            $alertsStmt->execute([$doctorId, $firstDay, $lastDay]);
+            $alerts = $alertsStmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            // Organize data by date
+            $dataByDate = [];
+            
+            // Process appointments
+            foreach ($appointments as $appointment) {
+                $date = $appointment['date'];
+                if (!isset($dataByDate[$date])) {
+                    $dataByDate[$date] = [
+                        'appointments' => [],
+                        'notes' => [],
+                        'alerts' => []
+                    ];
+                }
+                $dataByDate[$date]['appointments'][] = $appointment;
+            }
+            
+            // Process notes
+            foreach ($notes as $note) {
+                $date = $note['note_date'];
+                if (!isset($dataByDate[$date])) {
+                    $dataByDate[$date] = [
+                        'appointments' => [],
+                        'notes' => [],
+                        'alerts' => []
+                    ];
+                }
+                $dataByDate[$date]['notes'][] = $note;
+            }
+            
+            // Process alerts
+            foreach ($alerts as $alert) {
+                $date = $alert['alert_date'];
+                if (!isset($dataByDate[$date])) {
+                    $dataByDate[$date] = [
+                        'appointments' => [],
+                        'notes' => [],
+                        'alerts' => []
+                    ];
+                }
+                $dataByDate[$date]['alerts'][] = $alert;
+            }
+            
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => [
+                    'year' => $year,
+                    'month' => $month,
+                    'firstDay' => $firstDay,
+                    'lastDay' => $lastDay,
+                    'dataByDate' => $dataByDate
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
     }
 
     private function getPaymentTypesSummary()

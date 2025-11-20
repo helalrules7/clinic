@@ -2005,6 +2005,12 @@
                     </a>
                 </div>
                 <div class="nav-item">
+                    <a href="/doctor/organizer" class="nav-link <?= $this->isActiveRoute('/doctor/organizer') ? 'active' : '' ?>">
+                        <i class="bi bi-calendar-month"></i>
+                        Organizer
+                    </a>
+                </div>
+                <div class="nav-item">
                     <a href="/doctor/patients" class="nav-link <?= $this->isActiveRoute('/doctor/patients') ? 'active' : '' ?>">
                         <i class="bi bi-people"></i>
                         Patients
@@ -2043,7 +2049,7 @@
                 <div class="nav-item">
                     <a href="/doctor/medications" class="nav-link <?= $this->isActiveRoute('/doctor/medications') ? 'active' : '' ?>">
                         <i class="bi bi-capsule"></i>
-                        Medications Prescriptions
+                        Prescriptions
                     </a>
                 </div>
                 <div class="nav-item">
@@ -2129,7 +2135,7 @@
                 <div class="nav-item">
                     <a href="/doctor/medications" class="nav-link <?= $this->isActiveRoute('/doctor/medications') ? 'active' : '' ?>">
                         <i class="bi bi-capsule"></i>
-                        Medications Prescriptions
+                        Prescriptions
                     </a>
                 </div>
                 <div class="nav-item">
@@ -2271,6 +2277,10 @@
             <a href="/doctor/calendar" class="dock-item" title="View Calendar">
                 <i class="bi bi-calendar3"></i>
                 <span class="htooltip">View Calendar</span>
+            </a>
+            <a href="/doctor/organizer" class="dock-item" title="Organizer">
+                <i class="bi bi-calendar-month"></i>
+                <span class="htooltip">Organizer</span>
             </a>
             <a href="/doctor/patients" class="dock-item" title="Patient List">
                 <i class="bi bi-people"></i>
