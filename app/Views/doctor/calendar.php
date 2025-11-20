@@ -9,12 +9,12 @@
         </div>
     </div>
     <div class="col-md-6 text-end">
-        <div class="d-flex gap-2 justify-content-end">
-            <button type="button" class="btn btn-outline-info" id="goToDateBtn" 
+        <div class="d-flex gap-2 justify-content-end flex-wrap">
+            <button type="button" class="btn btn-info" id="goToDateBtn" 
                     data-bs-toggle="popover" 
                     data-bs-placement="bottom" 
                     data-bs-html="true"
-                    data-bs-content="<div class='date-picker-tooltip'><label class='form-label mb-2'>Select Date:</label><input type='date' id='tooltipDatePicker' class='form-control'><button class='btn btn-sm btn-primary w-100 mt-2' onclick='goToSelectedDate()'>Go to Date</button></div>"
+                    data-bs-content="<div class='date-picker-tooltip'><label class='form-label mb-2'>Select Date:</label><input type='date' id='tooltipDatePicker' class='form-control'><button class='btn btn-sm btn-outline-info w-100 mt-2' onclick='goToSelectedDate()'>Go to Date</button></div>"
                     data-bs-trigger="click">
                 <i class="bi bi-calendar-event me-1"></i>
                 Go to Date
@@ -32,6 +32,48 @@
                     <i class="bi bi-chevron-right"></i>
                 </button>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <!-- Desktop Filters -->
+        <div class="d-none d-md-flex gap-2 flex-wrap align-items-center">
+            <span class="text-muted me-2"><i class="bi bi-funnel me-1"></i>Filter Times:</span>
+            <button type="button" class="btn btn-sm btn-outline-info filter-time-btn" data-filter="2pm-6pm" id="filter2pm6pm">
+                <i class="bi bi-clock me-1"></i>
+                2:00 PM - 6:00 PM
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-success filter-time-btn" data-filter="6pm-1045pm" id="filter6pm1045pm">
+                <i class="bi bi-clock me-1"></i>
+                6:00 PM - 10:45 PM
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary filter-time-btn" data-filter="available" id="filterAvailable">
+                <i class="bi bi-check-circle me-1"></i>
+                Available Only
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-warning filter-time-btn" data-filter="unavailable" id="filterUnavailable">
+                <i class="bi bi-x-circle me-1"></i>
+                Appointments Only
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary filter-time-btn" data-filter="none" id="filterNone">
+                <i class="bi bi-x-lg me-1"></i>
+                Clear Filters
+            </button>
+        </div>
+        
+        <!-- Mobile Filter Button -->
+        <div class="d-md-none">
+            <button type="button" class="btn btn-sm btn-outline-primary w-100" id="mobileFilterBtn" 
+                    data-bs-toggle="popover" 
+                    data-bs-placement="bottom" 
+                    data-bs-html="true"
+                    data-bs-trigger="click"
+                    data-bs-content="">
+                <i class="bi bi-funnel me-2"></i>
+                Filter Times
+            </button>
         </div>
     </div>
 </div>
@@ -413,6 +455,8 @@ let selectedAppointment = null;
 let refreshInterval;
 let preselectedPatient = <?= $preselectedPatient ? json_encode($preselectedPatient) : 'null' ?>;
 let highlightedAppointmentId = null; // Store appointment ID from URL to highlight
+let currentTimeFilter = null; // Current time filter: '2pm-6pm', '6pm-1045pm', 'available', 'unavailable', or null
+let calendarData = null; // Store calendar data for filtering
 
 // Function to initialize date from URL parameter
 function initializeDateFromURL() {
@@ -504,6 +548,105 @@ function setupEventListeners() {
             addPatientModal.show();
         }, 300);
     });
+    
+    // Time filter buttons
+    document.querySelectorAll('.filter-time-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const filter = this.getAttribute('data-filter');
+            applyTimeFilter(filter);
+        });
+    });
+    
+    // Mobile filter popover
+    const mobileFilterBtn = document.getElementById('mobileFilterBtn');
+    if (mobileFilterBtn) {
+        // Create filter buttons HTML for popover
+        const filterButtonsHTML = `
+            <div class="mobile-filter-popover">
+                <div class="mb-3">
+                    <h6 class="mb-3"><i class="bi bi-funnel me-2"></i>Filter Times</h6>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-info filter-time-btn w-100" data-filter="2pm-6pm">
+                            <i class="bi bi-clock me-1"></i>
+                            2:00 PM - 6:00 PM
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-success filter-time-btn w-100" data-filter="6pm-1045pm">
+                            <i class="bi bi-clock me-1"></i>
+                            6:00 PM - 10:45 PM
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary filter-time-btn w-100" data-filter="available">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Available Only
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-warning filter-time-btn w-100" data-filter="unavailable">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Appointments Only
+                        </button>
+                        <button type="button" class="btn btn-sm btn-secondary filter-time-btn w-100" data-filter="none">
+                            <i class="bi bi-x-lg me-1"></i>
+                            Clear Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Initialize popover
+        const popoverInstance = new bootstrap.Popover(mobileFilterBtn, {
+            html: true,
+            content: filterButtonsHTML,
+            placement: 'bottom',
+            trigger: 'click',
+            container: 'body',
+            sanitize: false
+        });
+        
+        // Add event listener for when popover is shown
+        mobileFilterBtn.addEventListener('shown.bs.popover', function() {
+            // Attach event listeners to filter buttons inside popover
+            const popoverElement = document.querySelector('.popover');
+            if (popoverElement) {
+                // Add glass effect class to popover
+                popoverElement.classList.add('mobile-filter-popover-glass');
+                
+                // Attach event listeners to filter buttons
+                popoverElement.querySelectorAll('.filter-time-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const filter = this.getAttribute('data-filter');
+                        applyTimeFilter(filter);
+                        // Close popover after selection
+                        setTimeout(() => {
+                            popoverInstance.hide();
+                        }, 300);
+                    });
+                });
+            }
+        });
+        
+        // Remove glass effect class when popover is hidden
+        mobileFilterBtn.addEventListener('hidden.bs.popover', function() {
+            const popoverElement = document.querySelector('.popover');
+            if (popoverElement) {
+                popoverElement.classList.remove('mobile-filter-popover-glass');
+            }
+        });
+        
+        // Update filter button states when filter changes
+        mobileFilterBtn.addEventListener('hidden.bs.popover', function() {
+            // Update button states when popover is closed
+            updateFilterButtonStates();
+        });
+    }
+}
+
+function updateFilterButtonStates() {
+    // Update all filter buttons (both desktop and mobile) to reflect current filter
+    document.querySelectorAll('.filter-time-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-filter') === currentTimeFilter) {
+            btn.classList.add('active');
+        }
+    });
 }
 
 function loadCalendar() {
@@ -516,6 +659,7 @@ function loadCalendar() {
         .then(response => response.json())
         .then(data => {
             if (data.ok) {
+                calendarData = data.data; // Store calendar data for filtering
                 renderCalendar(data.data);
                 updateDateDisplay();
                 updateLastUpdate();
@@ -532,7 +676,7 @@ function loadCalendar() {
             }
         })
         .catch(error => {
-            console.error('Error loading calendar:', error);
+console.error('Error loading calendar:', error);
         });
 }
 
@@ -574,6 +718,11 @@ function renderCalendar(data) {
     } else {
         // Normal day processing (any doctor can see all appointments)
         timeSlots.forEach(time => {
+            // Apply time filter
+            if (!shouldDisplayTimeSlot(time, data)) {
+                return; // Skip this time slot if it doesn't match the filter
+            }
+            
             const appointment = data.appointments.find(apt => apt.start_time === time);
             const isAvailable = data.available_slots.includes(time);
             const unavailableSlot = data.unavailable_slots ? data.unavailable_slots.find(slot => slot.time === time) : null;
@@ -817,6 +966,69 @@ function generateTimeSlots() {
     }
     
     return slots;
+}
+
+// Time filter functions
+function timeInRange(time, startTime, endTime) {
+    // Convert time string (HH:MM) to minutes for comparison
+    const timeToMinutes = (t) => {
+        const [hours, minutes] = t.split(':').map(Number);
+        return hours * 60 + minutes;
+    };
+    
+    const timeMins = timeToMinutes(time);
+    const startMins = timeToMinutes(startTime);
+    const endMins = timeToMinutes(endTime);
+    
+    return timeMins >= startMins && timeMins <= endMins;
+}
+
+function shouldDisplayTimeSlot(time, data) {
+    // If no filter is active, show all slots
+    if (!currentTimeFilter || currentTimeFilter === 'none') {
+        return true;
+    }
+    
+    const appointment = data.appointments.find(apt => apt.start_time === time);
+    const isAvailable = data.available_slots.includes(time);
+    
+    // Filter by time range
+    if (currentTimeFilter === '2pm-6pm') {
+        return timeInRange(time, '14:00', '18:00');
+    }
+    
+    if (currentTimeFilter === '6pm-1045pm') {
+        return timeInRange(time, '18:00', '22:45');
+    }
+    
+    // Filter by availability
+    if (currentTimeFilter === 'available') {
+        return isAvailable && !appointment;
+    }
+    
+    if (currentTimeFilter === 'unavailable') {
+        return !isAvailable || !!appointment;
+    }
+    
+    return true;
+}
+
+function applyTimeFilter(filter) {
+    // Update current filter
+    currentTimeFilter = filter === 'none' ? null : filter;
+    
+    // Update button styles (both desktop and mobile)
+    updateFilterButtonStates();
+    
+    // Re-render calendar with filter applied
+    if (calendarData) {
+        renderCalendar(calendarData);
+        updateDateDisplay();
+        // Initialize tooltips after calendar is re-rendered
+        setTimeout(() => {
+            initializeTooltips();
+        }, 100);
+    }
 }
 
 function navigateToAppointment(appointmentId) {
@@ -2124,7 +2336,7 @@ window.addEventListener('beforeunload', () => {
     cursor: pointer;
     transition: all 0.2s ease;
     border: 1px solid var(--border);
-    background: var(--card);
+    background: var(--bg) !important;
     color: var(--text);
 }
 
@@ -2136,6 +2348,13 @@ window.addEventListener('beforeunload', () => {
     position: relative;
     z-index: 10;
 }
+
+#prevDayBtn, #nextDayBtn, #todayBtn{
+        margin-right: 1px !important;
+        margin-left: 10px !important;
+        border-right-color:rgb(56, 189, 248) !important;
+        border-left-color:rgb(56, 189, 248) !important;
+    }
 
 .appointment-card.highlighted-appointment::before {
     content: '';
@@ -2188,7 +2407,7 @@ window.addEventListener('beforeunload', () => {
 
 /* Dark Mode Appointment Cards */
 .dark .appointment-card {
-    background: var(--card);
+    background: var(--bg) !important;
     border-color: var(--border);
     color: var(--text);
 }
@@ -3263,41 +3482,162 @@ input[readonly] {
 }
 
 /* Custom Popover Styling for Date Picker */
-.popover {
-    background: rgba(248, 250, 252, 0.95) !important;
+.popover:not(.mobile-filter-popover) {
+    background: rgba(11, 18, 32, 0.40) !important;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(226, 232, 240, 0.5) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
     border-radius: 12px !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
     color: var(--text) !important;
     max-width: 300px;
 }
 
-.dark .popover {
-    background: rgba(30, 41, 59, 0.95) !important;
-    border-color: rgba(51, 65, 85, 0.5) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+.dark .popover:not(.mobile-filter-popover) {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
 }
 
 .popover .popover-body {
     padding: 1rem;
     color: var(--text);
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
 }
 
 .popover .popover-arrow::before {
-    border-bottom-color: rgba(248, 250, 252, 0.95) !important;
+    border-bottom-color: rgba(248, 250, 252, 0.3) !important;
 }
 
 .dark .popover .popover-arrow::before {
-    border-bottom-color: rgba(30, 41, 59, 0.95) !important;
+    border-bottom-color: rgba(30, 41, 59, 0.3) !important;
 }
 
 .popover .popover-arrow::after {
-    border-bottom-color: rgba(248, 250, 252, 0.95) !important;
+    border-bottom-color: rgba(248, 250, 252, 0.4) !important;
 }
 
 .dark .popover .popover-arrow::after {
-    border-bottom-color: rgba(30, 41, 59, 0.95) !important;
+    border-bottom-color: rgba(30, 41, 59, 0.4) !important;
+}
+
+/* Filter Buttons Styles */
+.filter-time-btn {
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.filter-time-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.filter-time-btn.active {
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.filter-time-btn.active.btn-outline-primary {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.filter-time-btn.active.btn-outline-secondary {
+    background-color: var(--muted);
+    border-color: var(--muted);
+    color: white;
+}
+
+.filter-time-btn.active.btn-outline-warning {
+    background-color: #f59e0b;
+    border-color: #f59e0b;
+    color: white;
+}
+
+.filter-time-btn.active.btn-secondary {
+    background-color: #6b7280;
+    border-color: #6b7280;
+    color: white;
+}
+
+.dark .filter-time-btn.active.btn-outline-primary {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.dark .filter-time-btn.active.btn-outline-secondary {
+    background-color: var(--muted);
+    border-color: var(--muted);
+    color: var(--text);
+}
+
+.dark .filter-time-btn.active.btn-outline-warning {
+    background-color: #f59e0b;
+    border-color: #f59e0b;
+    color: var(--text);
+}
+
+.dark .filter-time-btn.active.btn-secondary {
+    background-color: #6b7280;
+    border-color: #6b7280;
+    color: var(--text);
+}
+
+/* Mobile Filter Popover Glass Effect */
+.popover.mobile-filter-popover-glass {
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+    border-radius: 12px !important;
+    color: var(--text) !important;
+}
+
+.popover.mobile-filter-popover-glass .popover-body {
+    background: transparent !important;
+    padding: 1rem;
+}
+
+.popover.mobile-filter-popover-glass .mobile-filter-popover h6 {
+    color: var(--text);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.popover.mobile-filter-popover-glass .mobile-filter-popover .btn {
+    margin-bottom: 0.5rem;
+}
+
+.popover.mobile-filter-popover-glass .mobile-filter-popover .btn:last-child {
+    margin-bottom: 0;
+}
+
+/* Dark Mode Mobile Filter Popover */
+.dark .popover.mobile-filter-popover-glass {
+    background: rgba(11, 18, 32, 0.6) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    color: var(--text) !important;
+}
+
+.dark .popover.mobile-filter-popover-glass .popover-body {
+    background: transparent !important;
+}
+
+/* Ensure popover appears above other elements on mobile */
+@media (max-width: 767.98px) {
+    .popover {
+        z-index: 1060 !important;
+        max-width: calc(100vw - 2rem);
+        margin: 0 1rem;
+    }
+    
+    .popover .popover-body {
+        padding: 1rem;
+    }
 }
 </style>

@@ -103,13 +103,13 @@
             -webkit-backdrop-filter: blur(10px);
             border-right: 1px solid rgba(226, 232, 240, 0.3);
             box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
-            z-index: 1000;
+            z-index: 1000001 !important;
             transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
             overflow-y: auto;
         }
         
         .dark .sidebar {
-            background: rgba(11, 18, 32, 0.70);
+            background: rgba(11, 18, 32, 0.6);
             border-right: 1px solid rgba(51, 65, 85, 0.3);
             box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
         }
@@ -347,8 +347,15 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-top: -2rem;
             margin-bottom: 2rem;
+            margin-left: -2rem;
+            margin-right: -2rem;
+            padding-top: 2rem;
+            padding-left: 2rem;
+            padding-right: 2rem;
             padding-bottom: 1rem;
+            width: calc(100% + 4rem);
             border-bottom: 1px solid var(--border);
             position: sticky;
             top: 0;
@@ -358,8 +365,9 @@
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(226, 232, 240, 0.3);
-            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
+            box-shadow: 0 0px 10px 0 rgba(0, 0, 0, 0.08);
+
         }
         
         .top-bar.scrolled {
@@ -542,6 +550,17 @@
             .main-content {
                 margin-left: 0;
                 padding: 1rem;
+            }
+            
+            .top-bar {
+                margin-top: -1rem;
+                margin-left: -1rem;
+                margin-right: -1rem;
+                padding-top: 0;
+                padding-left: 1rem;
+                padding-right: 1rem;
+                padding-bottom: 1rem;
+                width: calc(100% + 2rem);
             }
             
             .sidebar-toggle {
