@@ -3306,7 +3306,9 @@ class DoctorController
             'notes_dashboard_width',
             'dashboard_cards_order',
             'dock_minimized',
-            'theme'
+            'theme',
+            'push_notifications_enabled',
+            'push_subscription'
         ];
         
         try {
@@ -3325,9 +3327,29 @@ class DoctorController
                     $value = (int) $value;
                 } elseif (is_bool($value)) {
                     $settingType = 'boolean';
-                } elseif (is_array($value)) {
-                    $value = json_encode($value);
-                    $settingType = 'json';
+                } elseif (is_array($value) || $key === 'push_subscription') {
+                    // For push_subscription, always encode as JSON (supports multiple browser subscriptions)
+                    if ($key === 'push_subscription') {
+                        // If it's already a JSON string, validate it first
+                        if (is_string($value)) {
+                            $decoded = json_decode($value, true);
+                            if (json_last_error() === JSON_ERROR_NONE) {
+                                // It's valid JSON, re-encode to ensure proper format
+                                $value = json_encode($decoded);
+                            } else {
+                                // Invalid JSON, treat as new array
+                                $value = json_encode([$value]);
+                            }
+                        } else {
+                            // It's an array or object, encode it
+                            $value = json_encode($value);
+                        }
+                        $settingType = 'json';
+                    } else {
+                        // Other arrays
+                        $value = json_encode($value);
+                        $settingType = 'json';
+                    }
                 } elseif ($key === 'dashboard_cards_order' && is_string($value)) {
                     // dashboard_cards_order is already a JSON string, keep it as string
                     $settingType = 'string';
@@ -3340,6 +3362,9 @@ class DoctorController
                     // For dashboard_cards_order, it's already a JSON string, keep it as is
                     if ($key === 'dashboard_cards_order' && is_string($value)) {
                         $dbValue = $value; // Keep the JSON string as is
+                    } elseif ($key === 'push_subscription') {
+                        // push_subscription is already a JSON string (array of subscriptions)
+                        $dbValue = $value;
                     } else {
                         $dbValue = (string) $value;
                     }

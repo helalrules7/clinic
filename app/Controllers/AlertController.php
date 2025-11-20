@@ -6,18 +6,21 @@ use App\Lib\Auth;
 use App\Lib\View;
 use App\Config\Database;
 use App\Models\AlertModel;
+use App\Services\PushNotificationService;
 
 class AlertController
 {
     private $auth;
     private $view;
     private $alertModel;
+    private $pushService;
 
     public function __construct()
     {
         $this->auth = new Auth();
         $this->view = new View();
         $this->alertModel = new AlertModel();
+        $this->pushService = new PushNotificationService();
         
         // Require doctor authentication
         $this->auth->requireRole(['doctor', 'admin']);
@@ -267,10 +270,53 @@ class AlertController
         
         $alerts = $this->alertModel->getActiveAlertsForTime($doctorId, $date, $time);
         
+        // Send push notifications for new alerts
+        if (!empty($alerts)) {
+            foreach ($alerts as $alert) {
+                // Check if this alert was already sent (to avoid duplicates)
+                $alertKey = 'push_sent_' . $alert['id'] . '_' . $alert['alert_date'] . '_' . $alert['alert_time'];
+                if (!isset($_SESSION[$alertKey])) {
+                    $this->sendPushNotificationForAlert($user['id'], $alert);
+                    $_SESSION[$alertKey] = true;
+                }
+            }
+        }
+        
         echo json_encode([
             'success' => true,
             'alerts' => $alerts
         ]);
+    }
+    
+    /**
+     * Send push notification for an alert
+     */
+    private function sendPushNotificationForAlert($userId, $alert)
+    {
+        try {
+            $patientName = '';
+            if (!empty($alert['patient_first_name']) && !empty($alert['patient_last_name'])) {
+                $patientName = $alert['patient_first_name'] . ' ' . $alert['patient_last_name'];
+            }
+            
+            $title = 'New Alert';
+            $body = $alert['message'] ?? 'You have a new alert';
+            if ($patientName) {
+                $body .= ' - ' . $patientName;
+            }
+            
+            $data = [
+                'alert_id' => $alert['id'],
+                'patient_id' => $alert['patient_id'] ?? null,
+                'url' => !empty($alert['patient_id']) 
+                    ? '/doctor/patients/' . $alert['patient_id'] 
+                    : '/doctor/alerts'
+            ];
+            
+            $this->pushService->sendPushNotification($userId, $title, $body, $data);
+        } catch (\Exception $e) {
+            error_log("Error sending push notification for alert: " . $e->getMessage());
+        }
     }
 
     /**

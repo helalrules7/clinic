@@ -1041,6 +1041,94 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
         
+        /* Toast Container Styles */
+        .toast-container {
+            max-width: 100%;
+            width: auto;
+        }
+        
+        /* Push Notification Toast Container (Top) */
+        #pushToastContainer {
+            top: 1rem;
+            max-width: calc(100% - 2rem);
+            width: 100%;
+        }
+        
+        #pushToastContainer .toast {
+            min-width: auto;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        /* Alert Toast Container (Bottom) */
+        #toastContainer {
+            bottom: 1rem;
+            max-width: calc(100% - 2rem);
+            width: 100%;
+        }
+        
+        #toastContainer .toast {
+            min-width: auto;
+            width: 100%;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        /* Mobile Responsive Toast Styles */
+        @media (max-width: 768px) {
+            #pushToastContainer {
+                top: 0.5rem;
+                padding: 0.5rem;
+                max-width: calc(100% - 1rem);
+            }
+            
+            #pushToastContainer .toast {
+                max-width: 100%;
+                font-size: 0.875rem;
+            }
+            
+            #pushToastContainer .toast-body {
+                padding: 0.75rem;
+            }
+            
+            #pushToastContainer .btn-sm {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+            }
+            
+            #pushToastContainer .btn-sm i {
+                font-size: 0.875rem;
+            }
+            
+            #toastContainer {
+                bottom: 0.5rem;
+                padding: 0.5rem;
+                max-width: calc(100% - 1rem);
+            }
+            
+            #toastContainer .toast {
+                max-width: 100%;
+                font-size: 0.875rem;
+            }
+            
+            #toastContainer .toast-body {
+                padding: 0.75rem;
+            }
+            
+            #toastContainer .alert-toast-glass {
+                min-width: auto !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            
+            #toastContainer .alert-toast-btn {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+                white-space: nowrap;
+            }
+        }
+        
         /* Global Modal Glass Effect - Same as sidebar */
         .modal-content {
             /* Glass effect - similar to sidebar */
@@ -2444,6 +2532,13 @@
                     toastElement.addEventListener('hidden.bs.toast', function() {
                         toastElement.remove();
                     });
+                    
+                    // Send push notification if enabled
+                    if (window.sendPushNotification) {
+                        window.sendPushNotification(alert).catch(error => {
+                            console.debug('Push notification failed:', error);
+                        });
+                    }
                 }
             }
             
@@ -2568,6 +2663,484 @@
             
             // Make checkAlerts available globally for manual triggering
             window.checkAlerts = checkAlerts;
+        })();
+        
+        // Push Notifications System
+        (function() {
+            let pushSubscription = null;
+            let isPushEnabled = false;
+            
+            // Check if browser supports Push Notifications
+            function isPushSupported() {
+                return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+            }
+            
+            // Register Service Worker
+            async function registerServiceWorker() {
+                if (!isPushSupported()) {
+                    return null;
+                }
+                
+                try {
+                    const registration = await navigator.serviceWorker.register('/sw.js');
+                    console.log('Service Worker registered:', registration);
+                    return registration;
+                } catch (error) {
+                    console.error('Service Worker registration failed:', error);
+                    return null;
+                }
+            }
+            
+            // Request notification permission
+            async function requestNotificationPermission() {
+                if (!('Notification' in window)) {
+                    return 'denied';
+                }
+                
+                if (Notification.permission === 'granted') {
+                    return 'granted';
+                }
+                
+                const permission = await Notification.requestPermission();
+                return permission;
+            }
+            
+            // Subscribe to Push Notifications
+            async function subscribeToPush(registration) {
+                try {
+                    const subscription = await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(getVapidPublicKey())
+                    });
+                    
+                    pushSubscription = subscription;
+                    await savePushSubscription(subscription);
+                    return subscription;
+                } catch (error) {
+                    console.error('Push subscription failed:', error);
+                    return null;
+                }
+            }
+            
+            // Convert VAPID key from base64 URL to Uint8Array
+            function urlBase64ToUint8Array(base64String) {
+                const padding = '='.repeat((4 - base64String.length % 4) % 4);
+                const base64 = (base64String + padding)
+                    .replace(/\-/g, '+')
+                    .replace(/_/g, '/');
+                
+                const rawData = window.atob(base64);
+                const outputArray = new Uint8Array(rawData.length);
+                
+                for (let i = 0; i < rawData.length; ++i) {
+                    outputArray[i] = rawData.charCodeAt(i);
+                }
+                return outputArray;
+            }
+            
+            // Get VAPID public key
+            // To generate VAPID keys, use one of these methods:
+            // 1. PHP script: php generate_vapid_keys.php (in project root)
+            // 2. Node.js: npx web-push generate-vapid-keys
+            // 3. Online tool: https://tools.reactpwa.com/vapid
+            // 4. Python: pip install py-vapid && python -c "from py_vapid import Vapid01; v=Vapid01(); v.generate_keys(); print(v.public_key)"
+            function getVapidPublicKey() {
+                // VAPID Public Key - Generated using: php generate_vapid_keys.php
+                return 'BM81HP8k4re4ObeiBgk2BSdC3FDx5Ke8-XbtPF_RbsEF5M6SC0OyHcygclxzQbPeiY8re_q6Hco16kLvol-4ozg';
+            }
+            
+            // Save push subscription to database (supports multiple browsers)
+            async function savePushSubscription(subscription) {
+                try {
+                    // Get current subscriptions array
+                    const settings = await loadPushSettings();
+                    let subscriptionsArray = [];
+                    
+                    // If there are existing subscriptions, load them
+                    if (settings.subscription) {
+                        // Check if it's an array or single subscription (for backward compatibility)
+                        if (Array.isArray(settings.subscription)) {
+                            subscriptionsArray = settings.subscription;
+                        } else {
+                            // Convert single subscription to array for backward compatibility
+                            subscriptionsArray = [settings.subscription];
+                        }
+                    }
+                    
+                    // Check if this subscription already exists (by endpoint)
+                    const subscriptionEndpoint = subscription.endpoint;
+                    const existingIndex = subscriptionsArray.findIndex(sub => {
+                        const subEndpoint = typeof sub === 'string' ? JSON.parse(sub).endpoint : sub.endpoint;
+                        return subEndpoint === subscriptionEndpoint;
+                    });
+                    
+                    // Convert subscription to object if needed
+                    const subscriptionObj = typeof subscription === 'string' ? JSON.parse(subscription) : subscription;
+                    
+                    if (existingIndex >= 0) {
+                        // Update existing subscription
+                        subscriptionsArray[existingIndex] = subscriptionObj;
+                    } else {
+                        // Add new subscription
+                        subscriptionsArray.push(subscriptionObj);
+                    }
+                    
+                    // Save updated subscriptions array
+                    const response = await fetch('/api/doctor/settings', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            push_notifications_enabled: true,
+                            push_subscription: subscriptionsArray
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            isPushEnabled = true;
+                            pushSubscription = subscriptionObj;
+                            return true;
+                        }
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('Failed to save push subscription:', error);
+                    return false;
+                }
+            }
+            
+            // Load push notification settings (supports multiple browsers)
+            async function loadPushSettings() {
+                try {
+                    const response = await fetch('/api/doctor/settings', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success && data.settings) {
+                            isPushEnabled = data.settings.push_notifications_enabled === true || 
+                                          data.settings.push_notifications_enabled === '1' ||
+                                          data.settings.push_notifications_enabled === 1;
+                            
+                            let subscriptionData = null;
+                            if (data.settings.push_subscription) {
+                                // Parse subscription data
+                                subscriptionData = typeof data.settings.push_subscription === 'string' 
+                                    ? JSON.parse(data.settings.push_subscription)
+                                    : data.settings.push_subscription;
+                                
+                                // Handle backward compatibility: if it's a single subscription, convert to array
+                                if (!Array.isArray(subscriptionData) && subscriptionData.endpoint) {
+                                    subscriptionData = [subscriptionData];
+                                }
+                            }
+                            
+                            return { enabled: isPushEnabled, subscription: subscriptionData };
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to load push settings:', error);
+                }
+                return { enabled: false, subscription: null };
+            }
+            
+            // Compare two subscriptions to check if they're the same
+            function compareSubscriptions(sub1, sub2) {
+                if (!sub1 || !sub2) return false;
+                
+                // Compare endpoint (unique identifier for each browser/device)
+                const endpoint1 = sub1.endpoint || '';
+                const endpoint2 = sub2.endpoint || '';
+                
+                return endpoint1 === endpoint2;
+            }
+            
+            // Get current browser subscription
+            async function getCurrentBrowserSubscription(registration) {
+                try {
+                    const subscription = await registration.pushManager.getSubscription();
+                    return subscription;
+                } catch (error) {
+                    console.error('Failed to get current subscription:', error);
+                    return null;
+                }
+            }
+            
+            // Find subscription in array by endpoint
+            function findSubscriptionByEndpoint(subscriptionsArray, endpoint) {
+                if (!subscriptionsArray || !Array.isArray(subscriptionsArray)) {
+                    return null;
+                }
+                
+                for (let i = 0; i < subscriptionsArray.length; i++) {
+                    const sub = subscriptionsArray[i];
+                    const subEndpoint = typeof sub === 'string' ? JSON.parse(sub).endpoint : sub.endpoint;
+                    if (subEndpoint === endpoint) {
+                        return typeof sub === 'string' ? JSON.parse(sub) : sub;
+                    }
+                }
+                
+                return null;
+            }
+            
+            // Check if current browser has valid subscription (supports multiple browsers)
+            async function checkBrowserSubscription(registration) {
+                try {
+                    // Get current browser's subscription
+                    const currentSubscription = await getCurrentBrowserSubscription(registration);
+                    
+                    if (!currentSubscription) {
+                        // No subscription in this browser
+                        return { isValid: false, needsSetup: true, reason: 'no_subscription' };
+                    }
+                    
+                    // Load saved subscriptions from database
+                    const settings = await loadPushSettings();
+                    const savedSubscriptions = settings.subscription;
+                    
+                    // If push is enabled but no saved subscriptions, show toast
+                    if (settings.enabled && (!savedSubscriptions || (Array.isArray(savedSubscriptions) && savedSubscriptions.length === 0))) {
+                        return { isValid: false, needsSetup: true, reason: 'no_saved_subscriptions' };
+                    }
+                    
+                    // If push is enabled, check if current subscription exists in saved subscriptions
+                    if (settings.enabled && savedSubscriptions) {
+                        const subscriptionsArray = Array.isArray(savedSubscriptions) ? savedSubscriptions : [savedSubscriptions];
+                        const currentEndpoint = currentSubscription.endpoint;
+                        const foundSubscription = findSubscriptionByEndpoint(subscriptionsArray, currentEndpoint);
+                        
+                        if (foundSubscription) {
+                            // Current browser subscription found - all good
+                            pushSubscription = currentSubscription;
+                            return { isValid: true, needsSetup: false };
+                        } else {
+                            // Different browser/device - needs new subscription
+                            return { isValid: false, needsSetup: true, reason: 'different_browser' };
+                        }
+                    }
+                    
+                    // If push is not enabled
+                    if (!settings.enabled) {
+                        return { isValid: false, needsSetup: true, reason: 'not_enabled' };
+                    }
+                    
+                    return { isValid: true, needsSetup: false };
+                } catch (error) {
+                    console.error('Failed to check browser subscription:', error);
+                    return { isValid: false, needsSetup: true };
+                }
+            }
+            
+            // Show toast to enable push notifications
+            function showPushNotificationToast() {
+                // Create separate toast container at the top for push notifications
+                let pushToastContainer = document.getElementById('pushToastContainer');
+                if (!pushToastContainer) {
+                    pushToastContainer = document.createElement('div');
+                    pushToastContainer.id = 'pushToastContainer';
+                    pushToastContainer.className = 'toast-container position-fixed top-0 start-50 translate-middle-x p-3';
+                    pushToastContainer.style.zIndex = '10000';
+                    document.body.appendChild(pushToastContainer);
+                }
+                const toastId = 'push-notification-toast';
+                
+                // Check if toast already exists
+                if (document.getElementById(toastId)) {
+                    return;
+                }
+                
+                const toastHtml = `
+                    <div id="${toastId}" class="toast align-items-center text-white bg-info border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">
+                        <div class="d-flex">
+                            <div class="toast-body flex-grow-1">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-bell-fill me-2" style="font-size: 1.5rem; margin-top: 2px;"></i>
+                                    <div class="flex-grow-1">
+                                        <strong>Enable Push Notifications</strong>
+                                        <div class="mt-1">Get notified with your alers, notes, appointments and more even when the browser is closed<br>You can disable this in your browser settings.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 me-2" style="flex-shrink: 0;">
+                                <button type="button" class="btn btn-sm btn-light" id="enablePushBtn">
+                                    <i class="bi bi-check-circle me-1"></i>Enable
+                                </button>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                pushToastContainer.insertAdjacentHTML('beforeend', toastHtml);
+                const toastElement = document.getElementById(toastId);
+                
+                if (toastElement) {
+                    const enableBtn = toastElement.querySelector('#enablePushBtn');
+                    const closeBtn = toastElement.querySelector('.btn-close');
+                    
+                    if (enableBtn) {
+                        enableBtn.addEventListener('click', async function() {
+                            this.disabled = true;
+                            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Enabling...';
+                            
+                            const permission = await requestNotificationPermission();
+                            
+                            if (permission === 'granted') {
+                                const registration = await navigator.serviceWorker.ready;
+                                const subscription = await subscribeToPush(registration);
+                                
+                                if (subscription) {
+                                    const toast = bootstrap.Toast.getInstance(toastElement);
+                                    if (toast) {
+                                        toast.hide();
+                                    }
+                                    showToast('success', 'Push Notifications Enabled', 'You will now receive notifications even when the browser is closed.');
+                                } else {
+                                    this.disabled = false;
+                                    this.innerHTML = '<i class="bi bi-check-circle me-1"></i>Enable';
+                                    showToast('error', 'Error', 'Failed to enable push notifications. Please try again.');
+                                }
+                            } else {
+                                this.disabled = false;
+                                this.innerHTML = '<i class="bi bi-check-circle me-1"></i>Enable';
+                                showToast('error', 'Permission Denied', 'Please allow notifications in your browser settings.');
+                            }
+                        });
+                    }
+                    
+                    if (closeBtn) {
+                        closeBtn.addEventListener('click', function() {
+                            const toast = bootstrap.Toast.getInstance(toastElement);
+                            if (toast) {
+                                toast.hide();
+                            }
+                        });
+                    }
+                    
+                    const toast = new bootstrap.Toast(toastElement, {
+                        autohide: false,
+                        delay: 0
+                    });
+                    toast.show();
+                    
+                    toastElement.addEventListener('hidden.bs.toast', function() {
+                        toastElement.remove();
+                    });
+                }
+            }
+            
+            // Send push notification using Service Worker
+            // NOTE: This shows a local notification. For true push notifications from server,
+            // you need to implement server-side push sending with VAPID keys
+            async function sendPushNotification(alert) {
+                if (!isPushEnabled) {
+                    return false;
+                }
+                
+                try {
+                    // Get service worker registration
+                    const registration = await navigator.serviceWorker.ready;
+                    
+                    // Prepare notification data
+                    const patientName = alert.patient_first_name && alert.patient_last_name 
+                        ? `${alert.patient_first_name} ${alert.patient_last_name}` 
+                        : '';
+                    const notificationTitle = 'New Alert';
+                    let notificationBody = alert.message || 'You have a new alert';
+                    if (patientName) {
+                        notificationBody += ` - ${patientName}`;
+                    }
+                    
+                    const notificationData = {
+                        title: notificationTitle,
+                        body: notificationBody,
+                        icon: '/assets/images/Light.png',
+                        badge: '/assets/images/Light.png',
+                        tag: `alert-${alert.id}-${alert.alert_date}-${alert.alert_time}`,
+                        requireInteraction: false,
+                        data: {
+                            alert_id: alert.id,
+                            patient_id: alert.patient_id,
+                            url: alert.patient_id ? `/doctor/patients/${alert.patient_id}` : '/doctor/alerts'
+                        },
+                        actions: alert.patient_id ? [
+                            {
+                                action: 'view',
+                                title: 'View Patient'
+                            },
+                            {
+                                action: 'dismiss',
+                                title: 'Dismiss'
+                            }
+                        ] : [
+                            {
+                                action: 'view',
+                                title: 'View Alerts'
+                            }
+                        ]
+                    };
+                    
+                    // Show notification using Service Worker
+                    // This works even when the page is in background or closed
+                    await registration.showNotification(notificationTitle, notificationData);
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Failed to send push notification:', error);
+                    return false;
+                }
+            }
+            
+            // Initialize push notifications system
+            async function initPushNotifications() {
+                if (!isPushSupported()) {
+                    return;
+                }
+                
+                // Register service worker
+                const registration = await registerServiceWorker();
+                if (!registration) {
+                    return;
+                }
+                
+                // Check current browser's subscription
+                const subscriptionCheck = await checkBrowserSubscription(registration);
+                
+                if (subscriptionCheck.needsSetup) {
+                    // New browser or subscription mismatch - show toast to enable
+                    // Wait a bit before showing toast to avoid overwhelming user
+                    setTimeout(() => {
+                        showPushNotificationToast();
+                    }, 3000);
+                } else if (subscriptionCheck.isValid) {
+                    // Subscription is valid - pushSubscription is already set in checkBrowserSubscription
+                    isPushEnabled = true;
+                } else {
+                    // Push not enabled - show toast
+                    setTimeout(() => {
+                        showPushNotificationToast();
+                    }, 3000);
+                }
+            }
+            
+            // Initialize on page load
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initPushNotifications);
+            } else {
+                initPushNotifications();
+            }
+            
+            // Make sendPushNotification available globally
+            window.sendPushNotification = sendPushNotification;
         })();
         
         // Quick Access Dock - Show only on desktop and Minimize functionality
