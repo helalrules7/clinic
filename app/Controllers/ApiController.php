@@ -4104,6 +4104,92 @@ class ApiController
         }
     }
 
+    public function getPatientAppointmentsHistory($patientId)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                return $this->jsonResponse(['error' => 'Permission denied'], 403);
+            }
+
+            // Check if rescheduled_from column exists
+            $columnStmt = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'rescheduled_from'");
+            $hasRescheduledFrom = $columnStmt->rowCount() > 0;
+            
+            // Build query with optional exclusion
+            $sql = "
+                SELECT a.*, 
+                       CONCAT(u.name) as doctor_name,
+                       d.display_name as doctor_display_name
+                FROM appointments a
+                LEFT JOIN doctors d ON a.doctor_id = d.id
+                LEFT JOIN users u ON d.user_id = u.id
+                WHERE a.patient_id = ?
+            ";
+            
+            $params = [$patientId];
+            
+            // Get excludeAppointmentId from query string
+            $excludeAppointmentId = $_GET['exclude'] ?? null;
+            if ($excludeAppointmentId) {
+                $sql .= " AND a.id != ?";
+                $params[] = $excludeAppointmentId;
+            }
+            
+            $sql .= " ORDER BY a.date DESC, a.start_time DESC";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            $appointments = $stmt->fetchAll();
+            
+            // For each appointment, get prescriptions, glasses, consultation notes, and follow-up info
+            foreach ($appointments as &$appointment) {
+                // Determine if this is a follow-up appointment
+                $appointment['is_followup'] = false;
+                $appointment['original_appointment_id'] = null;
+                
+                if ($hasRescheduledFrom && $appointment['visit_type'] === 'FollowUp' && !empty($appointment['rescheduled_from'])) {
+                    $appointment['is_followup'] = true;
+                    $appointment['original_appointment_id'] = $appointment['rescheduled_from'];
+                }
+                
+                // Get medication prescriptions
+                $medStmt = $this->pdo->prepare("SELECT * FROM prescriptions WHERE appointment_id = ?");
+                $medStmt->execute([$appointment['id']]);
+                $appointment['medications'] = $medStmt->fetchAll();
+                
+                // Get glasses prescriptions
+                $glassesStmt = $this->pdo->prepare("SELECT * FROM glasses_prescriptions WHERE appointment_id = ?");
+                $glassesStmt->execute([$appointment['id']]);
+                $appointment['glasses'] = $glassesStmt->fetchAll();
+                
+                // Get consultation notes
+                $notesStmt = $this->pdo->prepare("SELECT * FROM consultation_notes WHERE appointment_id = ? ORDER BY created_at DESC LIMIT 1");
+                $notesStmt->execute([$appointment['id']]);
+                $appointment['consultation_note'] = $notesStmt->fetch();
+                
+                // Get attachments
+                $attachmentsStmt = $this->pdo->prepare("SELECT id, filename, original_filename, file_path, mime_type, description FROM patient_attachments WHERE appointment_id = ? ORDER BY created_at DESC");
+                $attachmentsStmt->execute([$appointment['id']]);
+                $appointment['attachments'] = $attachmentsStmt->fetchAll();
+                $appointment['attachments_count'] = count($appointment['attachments']);
+            }
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'success' => true,
+                'data' => $appointments
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => 'Internal server error: ' . $e->getMessage()], 500);
+        }
+    }
+
     public function checkExportAccess($patientId)
     {
         try {

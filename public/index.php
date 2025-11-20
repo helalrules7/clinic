@@ -258,6 +258,7 @@ try {
     
     // Patient Appointments API routes
     $router->get('/api/patients/{id}/appointments', 'ApiController@getPatientAppointments');
+    $router->get('/api/patients/{id}/appointments/history', 'ApiController@getPatientAppointmentsHistory');
     
     // Individual Glasses Prescription API routes
     $router->get('/api/prescriptions/glasses/{id}', 'ApiController@getGlassesPrescription');

@@ -1237,6 +1237,10 @@ class DoctorController
     
     private function getAllPatientAppointmentsWithDetails($patientId)
     {
+        // Check if rescheduled_from column exists
+        $columnStmt = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'rescheduled_from'");
+        $hasRescheduledFrom = $columnStmt->rowCount() > 0;
+        
         // Get all appointments for the patient
         $stmt = $this->pdo->prepare("
             SELECT a.*, 
@@ -1251,8 +1255,17 @@ class DoctorController
         $stmt->execute([$patientId]);
         $appointments = $stmt->fetchAll();
         
-        // For each appointment, get prescriptions, glasses, and attachments
+        // For each appointment, get prescriptions, glasses, attachments, and follow-up info
         foreach ($appointments as &$appointment) {
+            // Determine if this is a follow-up appointment
+            $appointment['is_followup'] = false;
+            $appointment['original_appointment_id'] = null;
+            
+            if ($hasRescheduledFrom && $appointment['visit_type'] === 'FollowUp' && !empty($appointment['rescheduled_from'])) {
+                $appointment['is_followup'] = true;
+                $appointment['original_appointment_id'] = $appointment['rescheduled_from'];
+            }
+            
             // Get medication prescriptions
             $medStmt = $this->pdo->prepare("SELECT * FROM prescriptions WHERE appointment_id = ?");
             $medStmt->execute([$appointment['id']]);

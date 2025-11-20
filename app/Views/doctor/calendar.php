@@ -10,6 +10,15 @@
     </div>
     <div class="col-md-6 text-end">
         <div class="d-flex gap-2 justify-content-end">
+            <button type="button" class="btn btn-outline-info" id="goToDateBtn" 
+                    data-bs-toggle="popover" 
+                    data-bs-placement="bottom" 
+                    data-bs-html="true"
+                    data-bs-content="<div class='date-picker-tooltip'><label class='form-label mb-2'>Select Date:</label><input type='date' id='tooltipDatePicker' class='form-control'><button class='btn btn-sm btn-primary w-100 mt-2' onclick='goToSelectedDate()'>Go to Date</button></div>"
+                    data-bs-trigger="click">
+                <i class="bi bi-calendar-event me-1"></i>
+                Go to Date
+            </button>
             <button type="button" class="btn btn-success" id="addAppointmentBtn">
                 <i class="bi bi-plus-circle me-2"></i>
                 Add Appointment
@@ -395,16 +404,42 @@ const SERVER_DATE = '<?= $serverDate ?>';
 const SERVER_DATETIME = '<?= $serverDateTime ?>';
 const SERVER_TIMESTAMP = <?= $serverTimestamp ?>;
 
+// Initialize currentDate - will be set based on URL parameter or today
 let currentDate = new Date();
-// Ensure currentDate is set to today at noon to avoid timezone issues
 const today = new Date();
 currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0);
+
 let selectedAppointment = null;
 let refreshInterval;
 let preselectedPatient = <?= $preselectedPatient ? json_encode($preselectedPatient) : 'null' ?>;
+let highlightedAppointmentId = null; // Store appointment ID from URL to highlight
+
+// Function to initialize date from URL parameter
+function initializeDateFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const dateParam = urlParams.get('date');
+    const appointmentIdParam = urlParams.get('appointment_id');
+    
+    // Store appointment ID if provided
+    if (appointmentIdParam) {
+        highlightedAppointmentId = parseInt(appointmentIdParam);
+    }
+    
+    if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+        // Use date from URL parameter
+        const [year, month, day] = dateParam.split('-').map(Number);
+        currentDate = new Date(year, month - 1, day, 12, 0, 0);
+    } else {
+        // Default to today at noon to avoid timezone issues
+        const today = new Date();
+        currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0);
+    }
+}
 
 // Initialize calendar
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize date from URL FIRST before loading calendar
+    initializeDateFromURL();
     loadCalendar();
     startAutoRefresh();
     setupEventListeners();
@@ -486,6 +521,12 @@ function loadCalendar() {
                 updateLastUpdate();
                 // Initialize tooltips after calendar is loaded
                 initializeTooltips();
+                // Scroll to highlighted appointment if exists
+                if (highlightedAppointmentId) {
+                    setTimeout(() => {
+                        scrollToHighlightedAppointment();
+                    }, 300);
+                }
             } else {
                 console.error('Error loading calendar:', data.error);
             }
@@ -583,6 +624,10 @@ function renderAppointmentSlot(appointment) {
     const statusClass = getStatusBadgeClass(appointment.status);
     const visitTypeClass = getVisitTypeBadgeClass(appointment.visit_type);
     
+    // Check if this is the highlighted appointment
+    const isHighlighted = highlightedAppointmentId && appointment.id === highlightedAppointmentId;
+    const highlightClass = isHighlighted ? 'highlighted-appointment' : '';
+    
     // Create detailed tooltip content (any doctor can see appointment details)
     const tooltipContent = `
         <div class="appointment-tooltip" style="font-family: 'Cairo', sans-serif; !important;">
@@ -636,7 +681,8 @@ function renderAppointmentSlot(appointment) {
     `.replace(/\n\s+/g, ' ').trim();
     
     return `
-        <div class="appointment-card ${appointment.status.toLowerCase()}" 
+        <div class="appointment-card ${appointment.status.toLowerCase()} ${highlightClass}" 
+             data-appointment-id="${appointment.id}"
              data-bs-toggle="tooltip" 
              data-bs-placement="right" 
              data-bs-html="true"
@@ -708,6 +754,50 @@ function renderAppointmentSlot(appointment) {
             </div>
         </div>
     `;
+}
+
+function scrollToHighlightedAppointment() {
+    if (!highlightedAppointmentId) return;
+    
+    const appointmentCard = document.querySelector(`[data-appointment-id="${highlightedAppointmentId}"]`);
+    if (appointmentCard) {
+        // Scroll to the appointment card with smooth behavior
+        appointmentCard.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'nearest'
+        });
+        
+        // Add a pulse animation to draw attention
+        appointmentCard.style.animation = 'pulseHighlight 2s ease-in-out 3';
+        
+        // Remove animation after it completes
+        setTimeout(() => {
+            appointmentCard.style.animation = '';
+        }, 6000);
+    }
+}
+
+// Go to selected date function
+function goToSelectedDate() {
+    const datePicker = document.getElementById('tooltipDatePicker');
+    if (!datePicker || !datePicker.value) {
+        return;
+    }
+    
+    const selectedDate = datePicker.value;
+    
+    // Hide popover
+    const goToDateBtn = document.getElementById('goToDateBtn');
+    if (goToDateBtn) {
+        const popover = bootstrap.Popover.getInstance(goToDateBtn);
+        if (popover) {
+            popover.hide();
+        }
+    }
+    
+    // Navigate to the selected date
+    window.location.href = `/doctor/calendar?date=${selectedDate}`;
 }
 
 function generateTimeSlots() {
@@ -871,6 +961,58 @@ function initializeTooltips() {
             container: 'body'
         });
     });
+    
+    // Initialize popover for "Go to Date" button
+    const goToDateBtn = document.getElementById('goToDateBtn');
+    if (goToDateBtn) {
+        // Dispose existing popover if any
+        const existingPopover = bootstrap.Popover.getInstance(goToDateBtn);
+        if (existingPopover) {
+            existingPopover.dispose();
+        }
+        
+        // Create new popover
+        const popover = new bootstrap.Popover(goToDateBtn, {
+            html: true,
+            trigger: 'click',
+            placement: 'bottom',
+            container: 'body',
+            sanitize: false
+        });
+        
+        // Set current date when popover is shown
+        goToDateBtn.addEventListener('shown.bs.popover', function() {
+            setTimeout(() => {
+                const datePicker = document.getElementById('tooltipDatePicker');
+                if (datePicker) {
+                    const currentDateStr = currentDate.toISOString().split('T')[0];
+                    datePicker.value = currentDateStr;
+                    
+                    // Focus on date picker
+                    datePicker.focus();
+                    
+                    // Add Enter key support
+                    datePicker.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            goToSelectedDate();
+                        }
+                    });
+                }
+            }, 100);
+        });
+        
+        // Close popover when clicking outside
+        document.addEventListener('click', function(e) {
+            const popoverInstance = bootstrap.Popover.getInstance(goToDateBtn);
+            if (popoverInstance && popoverInstance._isShown()) {
+                const popoverElement = document.querySelector('.popover');
+                if (popoverElement && !goToDateBtn.contains(e.target) && !popoverElement.contains(e.target)) {
+                    popoverInstance.hide();
+                }
+            }
+        });
+    }
 }
 
 function showAppointmentDetails(appointmentId) {
@@ -1986,6 +2128,64 @@ window.addEventListener('beforeunload', () => {
     color: var(--text);
 }
 
+/* Highlighted Appointment Styles */
+.appointment-card.highlighted-appointment {
+    border: 3px solid var(--accent);
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.5), 0 0 40px rgba(14, 165, 233, 0.3);
+    animation: pulseHighlight 2s ease-in-out infinite;
+    position: relative;
+    z-index: 10;
+}
+
+.appointment-card.highlighted-appointment::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    border-radius: 8px;
+    background: linear-gradient(45deg, var(--accent), var(--success), var(--accent));
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+    z-index: -1;
+    opacity: 0.6;
+}
+
+@keyframes pulseHighlight {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(14, 165, 233, 0.5), 0 0 40px rgba(14, 165, 233, 0.3);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(14, 165, 233, 0.7), 0 0 60px rgba(14, 165, 233, 0.5);
+        transform: scale(1.02);
+    }
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Dark Mode Highlighted Appointment */
+.dark .appointment-card.highlighted-appointment {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.6), 0 0 40px rgba(56, 189, 248, 0.4);
+}
+
+.dark .appointment-card.highlighted-appointment::before {
+    background: linear-gradient(45deg, var(--accent), var(--success), var(--accent));
+    opacity: 0.4;
+}
+
 /* Dark Mode Appointment Cards */
 .dark .appointment-card {
     background: var(--card);
@@ -3005,5 +3205,99 @@ input[readonly] {
 
 #deleteAppointmentModal .card-body {
     background-color: var(--bg);
+}
+
+/* Date Picker Tooltip with Glass Effect */
+.date-picker-tooltip {
+    min-width: 250px;
+    padding: 0;
+}
+
+.date-picker-tooltip .form-label {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+    display: block;
+}
+
+.date-picker-tooltip .form-control {
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem;
+    color: var(--text);
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.date-picker-tooltip .form-control:focus {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 0.2rem rgba(14, 165, 233, 0.25);
+    outline: none;
+}
+
+.date-picker-tooltip .btn {
+    margin-top: 0.75rem;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.date-picker-tooltip .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Dark Mode Date Picker Tooltip */
+.dark .date-picker-tooltip .form-control {
+    background: rgba(30, 41, 59, 0.9);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark .date-picker-tooltip .form-control:focus {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: var(--accent);
+}
+
+/* Custom Popover Styling for Date Picker */
+.popover {
+    background: rgba(248, 250, 252, 0.95) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.5) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+    color: var(--text) !important;
+    max-width: 300px;
+}
+
+.dark .popover {
+    background: rgba(30, 41, 59, 0.95) !important;
+    border-color: rgba(51, 65, 85, 0.5) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+
+.popover .popover-body {
+    padding: 1rem;
+    color: var(--text);
+}
+
+.popover .popover-arrow::before {
+    border-bottom-color: rgba(248, 250, 252, 0.95) !important;
+}
+
+.dark .popover .popover-arrow::before {
+    border-bottom-color: rgba(30, 41, 59, 0.95) !important;
+}
+
+.popover .popover-arrow::after {
+    border-bottom-color: rgba(248, 250, 252, 0.95) !important;
+}
+
+.dark .popover .popover-arrow::after {
+    border-bottom-color: rgba(30, 41, 59, 0.95) !important;
 }
 </style>

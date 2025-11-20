@@ -41,6 +41,9 @@
     background: linear-gradient(135deg, #dc3545, #c82333);
     color: white;
 }
+.text-muted, .form-text{
+    color: var(--text) !important;
+}
 
 /* Appointment Doctor Avatar Styles */
 .appointment-doctor-avatar {
@@ -316,6 +319,22 @@
 
 .dark .text-muted {
     color: var(--muted) !important;
+    opacity: 0.85;
+}
+
+.dark small.text-muted {
+    color: var(--muted) !important;
+    opacity: 0.9;
+}
+
+.dark .text-muted i {
+    opacity: 0.8;
+}
+
+.dark .card-text.text-muted,
+.dark p.text-muted {
+    color: var(--muted) !important;
+    opacity: 0.85;
 }
 
 .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
@@ -394,7 +413,25 @@
     cursor: default;
     transition: transform 0.2s ease;
     margin: 1.75rem auto;
+    position: relative;
 }
+
+.modal-header {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    cursor: move;
+}
+
+.modal-header button {
+    cursor: pointer;
+}
+
+.modal-dialog.dragging {
+    transition: none !important;
+}
+
 
 .modal-header {
     user-select: none;
@@ -818,7 +855,7 @@
     }
     
     .dark .action-buttons-group .more-actions-btn .dropdown-menu {
-        background: rgba(30, 41, 59, 0.85) !important;
+        background: rgba(30, 41, 59, 0.7) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
     
@@ -864,6 +901,341 @@
     .hide-edit-on-mobile, .hide-pa-on-mobile {
         display: none !important;
     }
+}
+
+/* Appointment History Popover Styles */
+.appointment-history-popover {
+    min-width: 600px;
+    max-width: 800px;
+    max-height: 600px;
+}
+
+.appointment-timeline-popover {
+    padding: 0.5rem;
+}
+
+.appointment-timeline-popover .appointment-timeline {
+    position: relative;
+    padding-left: 30px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.appointment-timeline-popover .appointment-timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+}
+
+.appointment-timeline-popover .timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.appointment-history-popover-wrapper {
+    color: var(--text);
+    min-width: 600px;
+    max-width: 800px;
+}
+
+.appointment-history-header {
+    padding: 0.75rem 1rem;
+    margin-bottom: 0;
+    border-bottom: 2px solid var(--border);
+    background: transparent !important;
+}
+
+.appointment-history-header h6 {
+    color: var(--text);
+    margin: 0;
+    font-weight: 600;
+}
+
+.dark .appointment-history-header {
+    border-bottom-color: var(--border);
+    background: var(--bg);
+}
+
+.appointment-history-content {
+    padding: 1rem;
+    color: var(--text);
+    background: transparent !important;
+}
+
+.appointment-history-item {
+    transition: transform 0.2s ease;
+}
+
+.appointment-history-item:hover {
+    transform: translateY(-2px);
+}
+
+.appointment-history-item .card {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+    transition: all 0.3s ease;
+}
+
+.appointment-history-item .card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.dark .appointment-history-item .card {
+    background: var(--card);
+    border-color: var(--border);
+}
+
+.appointment-history-item .card-header {
+    background: var(--bg-alt);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.appointment-history-item .card-header:hover {
+    background: var(--bg);
+}
+
+.dark .appointment-history-item .card-header {
+    background: var(--bg-alt);
+    border-bottom-color: var(--border);
+}
+
+.dark .appointment-history-item .card-header:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.appointment-history-item .card-header .collapse-icon {
+    transition: transform 0.3s ease;
+    color: var(--muted);
+    font-size: 1.2rem;
+}
+
+.appointment-history-item .card-header.expanded .collapse-icon {
+    transform: rotate(180deg);
+}
+
+.appointment-history-item .card-body {
+    padding: 1.5rem;
+    background: transparent !important;
+    color: var(--text);
+}
+
+/* Image Modal Glass Effect */
+.image-modal-glass {
+    background: rgba(248, 250, 252, 0.7) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(226, 232, 240, 0.4) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.15);
+    color: var(--text) !important;
+    z-index: 9999 !important;
+}
+
+.dark .image-modal-glass {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
+    color: var(--text) !important;
+}
+
+.image-modal-header {
+    background: transparent !important;
+    border-bottom-color: rgba(226, 232, 240, 0.4) !important;
+    color: var(--text) !important;
+}
+
+.dark .image-modal-header {
+    background: transparent !important;
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+    color: var(--text) !important;
+}
+
+.image-modal-header .modal-title {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.image-modal-body {
+    background: transparent;
+    padding: 2rem;
+    color: var(--text) !important;
+}
+
+.image-modal-footer {
+    background: transparent !important;
+    border-top-color: rgba(226, 232, 240, 0.4) !important;
+}
+
+.dark .image-modal-footer {
+    background: transparent !important;
+    border-top-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+.dark .image-modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.9;
+}
+
+.dark .image-modal-header .btn-close:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5);
+}
+
+/* Ensure image modal is above all other elements */
+#imageModal {
+    z-index: 9999 !important;
+}
+
+#imageModal .modal-backdrop {
+    z-index: 9998 !important;
+}
+
+.appointment-history-popover .timeline-body .bg-outline-primary {
+border: 1px solid var(--primary) !important;
+    color: var(--text);
+}
+
+.dark .appointment-history-popover .timeline-body .bg-outline-primary {
+    border: 1px solid var(--primary) !important;
+}
+
+#div.mb-3.p-3.bg-outline-primary.rounded{
+    border: 1px solid var(--primary) !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+}
+
+.bg-outline-primary{
+    border: 1px solid var(--primary) !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+}
+
+.appointment-history-popover .timeline-body .text-muted {
+    color: var(--muted) !important;
+}
+
+.appointment-history-popover .timeline-body .text-primary {
+    color: var(--accent) !important;
+}
+
+.appointment-history-popover .timeline-body .text-success {
+    color: var(--success) !important;
+}
+
+.appointment-history-popover .timeline-body .text-info {
+    color: var(--info) !important;
+}
+
+.appointment-history-popover .timeline-body .text-warning {
+    color: var(--warning) !important;
+}
+
+.appointment-history-popover .timeline-body .text-danger {
+    color: var(--danger) !important;
+}
+
+.appointment-history-popover .timeline-body .card {
+    background-color: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.appointment-history-popover .timeline-body .card-title {
+    color: var(--text);
+}
+
+.appointment-history-popover .timeline-body .card-text {
+    color: var(--muted);
+}
+
+.appointment-history-popover .timeline-body .border-success {
+    border-color: var(--success) !important;
+}
+
+.appointment-history-popover .timeline-body .border-info {
+    border-color: var(--info) !important;
+}
+
+.appointment-history-popover .timeline-body .border-warning {
+    border-color: var(--warning) !important;
+}
+
+.appointment-history-popover .timeline-body .row {
+    color: var(--text);
+}
+
+.appointment-history-item .card-header h6 a {
+    color: var(--accent);
+    transition: color 0.3s ease;
+}
+
+.appointment-history-item .card-header h6 a:hover {
+    color: var(--success);
+    text-decoration: underline;
+}
+
+/* Popover Glass Effect */
+.popover {
+    background: rgba(248, 250, 252, 0.7) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(226, 232, 240, 0.4) !important;
+    border-radius: 12px !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.15) !important;
+    color: var(--text) !important;
+    max-width: 800px !important;
+}
+
+.dark .popover {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.popover .popover-body {
+    padding: 1rem;
+    color: var(--text) !important;
+    background: transparent !important;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.dark .popover .popover-body {
+    color: var(--text) !important;
+}
+
+.dark .popover .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.9;
+}
+
+.dark .popover .btn-close:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5);
+}
+
+.popover .popover-arrow::before {
+    border-bottom-color: rgba(248, 250, 252, 0.95) !important;
+}
+
+.dark .popover .popover-arrow::before {
+    border-bottom-color: rgba(11, 18, 32, 0.95) !important;
+}
+
+.popover .popover-arrow::after {
+    border-bottom-color: rgba(248, 250, 252, 0.95) !important;
+}
+
+.dark .popover .popover-arrow::after {
+    border-bottom-color: rgba(11, 18, 32, 0.95) !important;
 }
 </style>
 
@@ -947,12 +1319,18 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
             </h2>
             <p class="mb-2">
                 <i class="bi bi-person me-2"></i>
-                <strong><?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></strong>
+                <strong><a href="/doctor/patients/<?= $patient['id'] ?? '' ?>"  style="color: var(--text); font-weight: 600; text-decoration: none; hover: color: var(--accent);"><?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></a></strong>
                 (ID: #<?= $patient['id'] ?>)
             </p>
             <p class="mb-0">
-                <i class="bi bi-clock me-2"></i>
-                <?= date('l, M j, Y \a\t g:i A', strtotime($appointment['date'] . ' ' . $appointment['start_time'])) ?>
+                <a href="/doctor/calendar?date=<?= $appointment['date'] ?>&appointment_id=<?= $appointment['id'] ?>"
+                   style="color: var(--text); text-decoration: none; cursor: pointer; hover: color: var(--accent); font-weight: 600;"
+                   data-bs-toggle="tooltip" 
+                   data-bs-placement="top" 
+                   data-bs-title="Click to view calendar for this date">
+                    <i class="bi bi-clock me-2"></i>
+                    <?= date('l, M j, Y \a\t g:i A', strtotime($appointment['date'] . ' ' . $appointment['start_time'])) ?>
+                </a>
             </p>
         </div>
         <div class="col-md-4 text-end">
@@ -984,28 +1362,28 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
             <button type="button" class="btn btn-primary hide-on-mobile" onclick="editConsultation(<?= $appointment['id'] ?>)">
                 <i class="bi bi-pencil me-1"></i>Edit Consultation
             </button>
-            <button type="button" class="btn btn-success hide-on-mobile" onclick="addPrescription(<?= $appointment['id'] ?>)">
-                <i class="bi bi-prescription2 me-1"></i>Add Prescription
-            </button>
-            <button type="button" class="btn btn-danger hide-on-mobile" onclick="addGlassesPrescription(<?= $appointment['id'] ?>)">
-                <i class="bi bi-eyeglasses me-1"></i>Add Glasses
-            </button>
-            <button type="button" class="btn btn-info hide-on-mobile" onclick="printReport(<?= $appointment['id'] ?>)">
+<button type="button" class="btn btn-info hide-on-mobile" onclick="printReport(<?= $appointment['id'] ?>)">
                 <i class="bi bi-printer me-1"></i>Print Report
             </button>
-            <button type="button" class="btn btn-outline-success hide-on-mobile" 
+            <button type="button" class="btn btn-success hide-on-mobile" 
                     id="rescheduleFollowupBtn"
                     onclick="rescheduleFollowupAppointment(<?= $appointment['id'] ?>)"
                     <?= !empty($followupAppointment) ? 'disabled title="Follow-up appointment already scheduled"' : '' ?>>
                 <i class="bi bi-calendar-check me-1"></i>Reschedule Followup
             </button>
-            <button type="button" class="btn btn-outline-danger hide-on-mobile" 
+            <button type="button" class="btn btn-danger hide-on-mobile" 
                     onclick="rescheduleAppointment(<?= $appointment['id'] ?>)"
                     <?= $appointment['status'] === 'Completed' ? 'disabled title="Cannot reschedule completed appointments"' : '' ?>>
                 <i class="bi bi-calendar-plus me-1"></i>Reschedule
             </button>
             <button type="button" class="btn btn-warning hide-on-mobile" onclick="openAlertModal(<?= $appointment['patient_id'] ?? 'null' ?>, <?= $appointment['id'] ?>)">
                 <i class="bi bi-bell me-1"></i>Set Alert
+            </button>
+            <button type="button" class="btn btn-outline-info hide-on-mobile" 
+                    id="appointmentHistoryBtn" 
+                    data-patient-id="<?= $appointment['patient_id'] ?? 'null' ?>"
+                    data-appointment-id="<?= $appointment['id'] ?>">
+                <i class="bi bi-clock-history me-1"></i>Appointment History
             </button>
             
             <!-- More Actions Dropdown for Mobile -->
@@ -1014,23 +1392,13 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                     <i class="bi bi-three-dots-vertical me-1"></i>Appointment Actions
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="moreActionsDropdown">
-                    <li>
-                        <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { addPrescription(<?= $appointment['id'] ?>); });">
-                            <i class="bi bi-prescription2 me-2"></i>Add Prescription
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { addGlassesPrescription(<?= $appointment['id'] ?>); });">
-                            <i class="bi bi-eyeglasses me-2"></i>Add Glasses
-                        </a>
-                    </li>
-                    <li>
+<li>
                         <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { printReport(<?= $appointment['id'] ?>); });">
                             <i class="bi bi-printer me-2"></i>Print Report
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item text-success <?= !empty($followupAppointment) ? 'disabled text-muted' : '' ?>" 
+                        <a class="dropdown-item text-success fw-bold <?= !empty($followupAppointment) ? 'disabled text-muted' : '' ?>" 
                            href="javascript:void(0);" 
                            <?php if (empty($followupAppointment)): ?>
                            onclick="closeDropdownAndExecute('moreActionsDropdown', function() { rescheduleFollowupAppointment(<?= $appointment['id'] ?>); });"
@@ -1041,7 +1409,7 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item text-danger <?= $appointment['status'] === 'Completed' ? 'disabled text-muted' : '' ?>" 
+                        <a class="dropdown-item text-danger fw-bold <?= $appointment['status'] === 'Completed' ? 'disabled text-muted' : '' ?>" 
                            href="javascript:void(0);" 
                            <?php if ($appointment['status'] !== 'Completed'): ?>
                            onclick="closeDropdownAndExecute('moreActionsDropdown', function() { rescheduleAppointment(<?= $appointment['id'] ?>); });"
@@ -2391,14 +2759,14 @@ function showRescheduleModal(appointmentId) {
                                 <label class="form-label">New Date <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control" name="new_date" id="newDateInput" required 
                                        min="${new Date().toISOString().split('T')[0]}">
-                                <div class="form-text" style="color: var(--text-muted);">Must be a future date</div>
+                                <div class="text-muted" style="color: var(--text-muted);">Must be a future date</div>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">New Time <span class="text-danger">*</span></label>
                                 <select class="form-select" name="new_time" id="newTimeInput" required>
                                     <option value="">Select available time slot...</option>
                                 </select>
-                                <div class="form-text" style="color: var(--text-muted);">Only available time slots from calendar are shown</div>
+                                <div class="text-muted" style="color: var(--text-muted);">Only available time slots from calendar are shown</div>
                                 <div id="timeSlotsLoading" class="text-muted mt-2" style="display: none;">
                                     <i class="bi bi-hourglass-split me-1"></i>Loading available time slots...
                                 </div>
@@ -2791,14 +3159,14 @@ function showRescheduleFollowupModal(appointmentId) {
                                 <label class="form-label">New Date <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control" name="new_date" id="newDateInputFollowup" required 
                                        min="${new Date().toISOString().split('T')[0]}">
-                                <div class="form-text" style="color: var(--text-muted);">Must be a future date</div>
+                                <div class="text-muted" style="color: var(--text-muted);">Must be a future date</div>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">New Time <span class="text-danger">*</span></label>
                                 <select class="form-select" name="new_time" id="newTimeInputFollowup" required>
                                     <option value="">Select available time slot...</option>
                                 </select>
-                                <div class="form-text" style="color: var(--text-muted);">Only available time slots from calendar are shown</div>
+                                <div class="text-muted" style="color: var(--text-muted);">Only available time slots from calendar are shown</div>
                                 <div id="timeSlotsLoadingFollowup" class="text-muted mt-2" style="display: none;">
                                     <i class="bi bi-hourglass-split me-1"></i>Loading available time slots...
                                 </div>
@@ -3498,19 +3866,20 @@ function viewAttachment(attachmentId, filePath, fileExt) {
     }
 }
 
-function showImageModal(imageUrl, attachmentId) {
+function showImageModal(imageUrl, attachmentId, filename) {
+    filename = filename || 'View Image';
     const modalHtml = `
         <div class="modal fade" id="imageModal" tabindex="-1">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">View Image</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content image-modal-glass">
+                    <div class="modal-header image-modal-header">
+                        <h5 class="modal-title"><i class="bi bi-image me-2"></i>${escapeHtml(filename)}</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body text-center">
-                        <img src="${imageUrl}" class="img-fluid" style="max-height: 80vh;" alt="Medical Image">
+                    <div class="modal-body text-center image-modal-body">
+                        <img src="${imageUrl}" class="img-fluid" style="max-height: 80vh; border-radius: 8px;" alt="Medical Image">
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer image-modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         <button type="button" class="btn btn-primary" onclick="downloadAttachment(${attachmentId})">
                             <i class="bi bi-download me-2"></i>Download
@@ -5018,6 +5387,67 @@ document.addEventListener('DOMContentLoaded', function() {
             this.style.transform = '';
         });
     });
+    
+    // Initialize popover for Appointment History button
+    const appointmentHistoryBtn = document.getElementById('appointmentHistoryBtn');
+    
+    if (appointmentHistoryBtn) {
+        const patientId = appointmentHistoryBtn.getAttribute('data-patient-id');
+        const appointmentId = appointmentHistoryBtn.getAttribute('data-appointment-id');
+        
+        // Set initial content
+        const initialContent = '<div id="appointmentHistoryContent" class="appointment-history-popover-wrapper"><div class="appointment-history-header d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom"><h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Appointment History</h6><button type="button" class="btn-close btn-close-white" onclick="bootstrap.Popover.getInstance(document.getElementById(\'appointmentHistoryBtn\')).hide()" aria-label="Close"></button></div><div class="appointment-history-content"><div class="text-center py-4"><i class="bi bi-hourglass-split text-muted" style="font-size: 2rem;"></i><p class="text-muted mt-2">Loading appointment history...</p></div></div></div>';
+        
+        const popover = new bootstrap.Popover(appointmentHistoryBtn, {
+            html: true,
+            trigger: 'manual',
+            placement: 'bottom',
+            container: 'body',
+            sanitize: false,
+            content: initialContent,
+            dismissible: true
+        });
+        
+        // Handle button click to toggle popover
+        appointmentHistoryBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const popoverInstance = bootstrap.Popover.getInstance(appointmentHistoryBtn);
+            const isShown = popoverInstance && document.querySelector('.popover[data-bs-popper]');
+            
+            if (popoverInstance) {
+                if (isShown) {
+                    popoverInstance.hide();
+                } else {
+                    popoverInstance.show();
+                    
+                    // Load appointment history after showing
+                    setTimeout(() => {                        if (typeof loadAppointmentHistory === 'function') {                            loadAppointmentHistory(patientId, appointmentId);
+                        } else {                        }
+                    }, 100);
+                }
+            } else {            }
+        });
+        
+        // Also listen to shown event as backup
+        appointmentHistoryBtn.addEventListener('shown.bs.popover', function() {            setTimeout(() => {
+                if (typeof loadAppointmentHistory === 'function') {
+                    loadAppointmentHistory(patientId, appointmentId);
+                }
+            }, 100);
+        });        // Close popover when clicking outside
+        document.addEventListener('click', function(e) {
+            const popoverInstance = bootstrap.Popover.getInstance(appointmentHistoryBtn);
+            const isPopoverShown = popoverInstance && document.querySelector('.popover[data-bs-popper]');
+            if (popoverInstance && isPopoverShown) {
+                const popoverElement = document.querySelector('.popover');
+                if (popoverElement && !appointmentHistoryBtn.contains(e.target) && !popoverElement.contains(e.target)) {
+                    popoverInstance.hide();
+                }
+            }
+        });
+    } else {    }
 });
 
 // Toggle consultation note details
@@ -5557,7 +5987,17 @@ function reloadMedications() {
                         `;
                     });
                     container.innerHTML = html;
-                }
+    
+    // Add event delegation for collapse triggers
+    container.querySelectorAll('.history-collapse-trigger').forEach(trigger => {
+        trigger.addEventListener('click', function() {
+            const collapseId = this.getAttribute('data-collapse-id');
+            if (collapseId) {
+                toggleHistoryCollapse(collapseId);
+            }
+        });
+    });
+}
             } else {
                 console.error('Invalid response format:', data);
             }
@@ -5684,7 +6124,17 @@ function reloadGlasses() {
                         `;
                     });
                     container.innerHTML = html;
-                }
+    
+    // Add event delegation for collapse triggers
+    container.querySelectorAll('.history-collapse-trigger').forEach(trigger => {
+        trigger.addEventListener('click', function() {
+            const collapseId = this.getAttribute('data-collapse-id');
+            if (collapseId) {
+                toggleHistoryCollapse(collapseId);
+            }
+        });
+    });
+}
             } else {
                 console.error('Invalid response format:', data);
         }
@@ -5797,6 +6247,375 @@ window.currentPatientInfo = {
     age: <?= isset($patient['dob']) ? date_diff(date_create($patient['dob']), date_create('now'))->y : 'null' ?>
 };
 
-    </script>
+    
+// Load appointment history for popover
+function loadAppointmentHistory(patientId, excludeAppointmentId) {
+    const contentDiv = document.getElementById("appointmentHistoryContent");
+    if (!contentDiv) {
+        return;
+    }
+    
+    contentDiv.innerHTML = '<div class="text-center py-4"><i class="bi bi-hourglass-split text-muted" style="font-size: 2rem;"></i><p class="text-muted mt-2">Loading appointment history...</p></div>';
+    fetch(`/api/patients/${patientId}/appointments/history?exclude=${excludeAppointmentId}`, {
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok && data.data && data.data.length > 0) {
+            renderAppointmentHistory(data.data, contentDiv);
+        } else {
+            contentDiv.innerHTML = '<div class="text-center py-4"><i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i><p class="text-muted mt-2">No other appointments found</p></div>';
+        }
+    })
+    .catch(error => {
+        contentDiv.innerHTML = '<div class="text-center py-4"><i class="bi bi-exclamation-triangle text-danger" style="font-size: 2rem;"></i><p class="text-danger mt-2">Error loading appointment history</p></div>';
+    });
+}
+
+function renderAppointmentHistory(appointments, container) {
+    let html = '<div class="appointment-history-popover-wrapper">';
+    html += '<div class="appointment-history-header d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">';
+    html += '<h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Appointment History</h6>';
+    html += '<div class="d-flex align-items-center gap-2">';
+    html += '<span class="badge bg-primary">' + appointments.length + '</span>';
+    html += '<button type="button" class="btn-close btn-close-white" onclick="bootstrap.Popover.getInstance(document.getElementById(\'appointmentHistoryBtn\')).hide()" aria-label="Close"></button>';
+    html += '</div>';
+    html += '</div>';
+    html += '<div class="appointment-history-content" style="max-height: 500px; overflow-y: auto;">';
+    
+    appointments.forEach((appointment, index) => {
+        const statusColor = appointment.status === "Completed" ? "success" : (appointment.status === "Cancelled" ? "danger" : (appointment.status === "InProgress" ? "warning" : "primary"));
+        const isFollowup = appointment.is_followup === true || appointment.is_followup === 1;
+        const collapseId = "historyCollapse" + appointment.id;
+        
+        html += '<div class="appointment-history-item mb-3">';
+        html += '<div class="card border-' + statusColor + ' border-start border-3">';
+        html += '<div class="card-header appointment-header collapsed history-collapse-trigger" data-collapse-id="' + collapseId + '" style="cursor: pointer;">';
+        html += '<div class="d-flex justify-content-between align-items-start w-100">';
+        html += '<div class="flex-grow-1">';
+        html += '<h6 class="mb-1">';
+        html += '<a href="/doctor/appointments/' + appointment.id + '" class="text-decoration-none" onclick="event.stopPropagation();">';
+        html += 'Appointment #' + appointment.id;
+        html += '</a>';
+        if (isFollowup) {
+            html += '<span class="badge bg-info ms-2"><i class="bi bi-arrow-return-right me-1"></i>Follow-up</span>';
+        }
+        html += '<span class="badge bg-' + statusColor + ' ms-2">' + (appointment.status || "N/A") + '</span>';
+        html += '</h6>';
+        html += '<div class="d-flex flex-wrap gap-2 mb-2">';
+        html += '<small class="text-muted"><i class="bi bi-calendar3 me-1"></i>' + formatDate(appointment.date) + '</small>';
+        html += '<small class="text-muted"><i class="bi bi-clock me-1"></i>' + formatTime(appointment.start_time) + '</small>';
+        if (appointment.doctor_display_name || appointment.doctor_name) {
+            html += '<small class="text-muted"><i class="bi bi-person-badge me-1"></i>' + escapeHtml(appointment.doctor_display_name || appointment.doctor_name) + '</small>';
+        }
+        if (appointment.visit_type) {
+            html += '<small class="text-muted"><i class="bi bi-tag me-1"></i>' + escapeHtml(appointment.visit_type) + '</small>';
+        }
+        html += '</div>';
+        html += '</div>';
+        html += '<div class="d-flex align-items-center gap-2">';
+        html += '<a href="/doctor/appointments/' + appointment.id + '" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();">';
+        html += '<i class="bi bi-eye me-1"></i>View';
+        html += '</a>';
+        html += '<i class="bi bi-chevron-down collapse-icon"></i>';
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        html += '<div id="' + collapseId + '" class="card-body collapse">';
+        
+        if (appointment.consultation_note) {
+            html += '<div class="mb-3 p-3 bg-outline-primary rounded">';
+            html += '<h6 class="text-primary mb-2"><i class="bi bi-clipboard-pulse me-2"></i>Consultation Notes</h6>';
+            if (appointment.consultation_note.chief_complaint) {
+                html += '<p class="mb-2"><strong>Chief Complaint:</strong> ' + escapeHtml(appointment.consultation_note.chief_complaint) + '</p>';
+            }
+            if (appointment.consultation_note.diagnosis) {
+                html += '<p class="mb-2"><strong>Diagnosis:</strong> <span class="badge bg-danger">' + escapeHtml(appointment.consultation_note.diagnosis) + '</span></p>';
+            }
+            if (appointment.consultation_note.plan) {
+                html += '<p class="mb-0"><strong>Plan:</strong> ' + escapeHtml(appointment.consultation_note.plan).replace(/\n/g, "<br>") + '</p>';
+            }
+            html += '</div>';
+        }
+        
+        if (appointment.medications && appointment.medications.length > 0) {
+            html += '<div class="mb-3">';
+            html += '<h6 class="text-success mb-2"><i class="bi bi-capsule me-2"></i>Medications <span class="badge bg-success ms-2">' + appointment.medications.length + '</span></h6>';
+            appointment.medications.forEach(med => {
+                html += '<div class="card border-success border-start border-3 mb-2">';
+                html += '<div class="card-body p-2">';
+                html += '<h6 class="card-title mb-1 text-success">' + escapeHtml(med.drug_name) + '</h6>';
+                if (med.notes) {
+                    html += '<p class="card-text small mb-0 text-muted">' + escapeHtml(med.notes) + '</p>';
+                }
+                html += '</div></div>';
+            });
+            html += '</div>';
+        }
+        
+        if (appointment.glasses && appointment.glasses.length > 0) {
+            html += '<div class="mb-3">';
+            html += '<h6 class="text-info mb-2"><i class="bi bi-eyeglasses me-2"></i>Glasses <span class="badge bg-info ms-2">' + appointment.glasses.length + '</span></h6>';
+            appointment.glasses.forEach(glass => {
+                html += '<div class="card border-info border-start border-3 mb-2">';
+                html += '<div class="card-body p-2">';
+                html += '<h6 class="card-title mb-1 text-info">Glasses Prescription</h6>';
+                if (glass.right_sphere || glass.left_sphere) {
+                    html += '<p class="card-text small mb-1 text-muted">';
+                    if (glass.right_sphere) {
+                        html += '<strong>OD:</strong> ' + escapeHtml(glass.right_sphere);
+                        if (glass.right_cylinder) html += ' / ' + escapeHtml(glass.right_cylinder);
+                        if (glass.right_axis) html += ' x ' + escapeHtml(glass.right_axis);
+                    }
+                    if (glass.left_sphere) {
+                        if (glass.right_sphere) html += ' | ';
+                        html += '<strong>OS:</strong> ' + escapeHtml(glass.left_sphere);
+                        if (glass.left_cylinder) html += ' / ' + escapeHtml(glass.left_cylinder);
+                        if (glass.left_axis) html += ' x ' + escapeHtml(glass.left_axis);
+                    }
+                    html += '</p>';
+                }
+                if (glass.notes) {
+                    html += '<p class="card-text small mb-0 text-muted">' + escapeHtml(glass.notes) + '</p>';
+                }
+                html += '</div></div>';
+            });
+            html += '</div>';
+        }
+        
+        if (appointment.attachments && appointment.attachments.length > 0) {
+            html += '<div class="mb-3">';
+            html += '<h6 class="text-warning mb-2"><i class="bi bi-paperclip me-2"></i>Attachments <span class="badge bg-warning ms-2">' + appointment.attachments.length + '</span></h6>';
+            html += '<div class="row g-2">';
+            appointment.attachments.forEach(attachment => {
+                const isImage = attachment.mime_type && attachment.mime_type.startsWith('image/');
+                const viewUrl = '/api/attachments/view/' + attachment.id;
+                const downloadUrl = '/api/attachments/download/' + attachment.id;
+                
+                if (isImage) {
+                    html += '<div class="col-6 col-md-4">';
+                    html += '<div class="card border-warning border-start border-3 mb-2">';
+                    html += '<img src="' + viewUrl + '" class="card-img-top" style="height: 100px; object-fit: cover; cursor: pointer;" alt="' + escapeHtml(attachment.original_filename || attachment.filename) + '" onclick="event.stopPropagation(); showImageModal(\'' + viewUrl + '\', ' + attachment.id + ', \'' + escapeHtml(attachment.original_filename || attachment.filename) + '\');">';
+                    html += '<div class="card-body p-2">';
+                    html += '<p class="card-text small mb-0 text-muted" style="font-size: 0.7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="' + escapeHtml(attachment.original_filename || attachment.filename) + '">';
+                    html += escapeHtml(attachment.original_filename || attachment.filename);
+                    html += '</p>';
+                    if (attachment.description) {
+                        html += '<p class="card-text small mb-0 text-muted" style="font-size: 0.65rem;">' + escapeHtml(attachment.description) + '</p>';
+                    }
+                    html += '</div>';
+                    html += '</div>';
+                    html += '</div>';
+                } else {
+                    html += '<div class="col-12">';
+                    html += '<div class="card border-warning border-start border-3 mb-2">';
+                    html += '<div class="card-body p-2">';
+                    html += '<div class="d-flex align-items-center justify-content-between">';
+                    html += '<div class="flex-grow-1">';
+                    html += '<h6 class="card-title mb-1 text-warning" style="font-size: 0.85rem;">';
+                    html += '<i class="bi bi-file-earmark me-1"></i>' + escapeHtml(attachment.original_filename || attachment.filename);
+                    html += '</h6>';
+                    if (attachment.description) {
+                        html += '<p class="card-text small mb-0 text-muted" style="font-size: 0.7rem;">' + escapeHtml(attachment.description) + '</p>';
+                    }
+                    html += '</div>';
+                    html += '<a href="' + downloadUrl + '" class="btn btn-sm btn-outline-warning" onclick="event.stopPropagation();" download>';
+                    html += '<i class="bi bi-download"></i>';
+                    html += '</a>';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '</div>';
+                }
+            });
+            html += '</div>';
+            html += '</div>';
+        }
+        
+        html += '</div>'; // Close card-body
+        html += '</div>'; // Close card
+        html += '</div>'; // Close appointment-history-item
+    });
+    
+    html += '</div>'; // Close appointment-history-content
+    html += '</div>'; // Close appointment-history-popover-wrapper
+    
+    container.innerHTML = html;
+    
+    // Add event delegation for collapse triggers
+    container.querySelectorAll('.history-collapse-trigger').forEach(trigger => {
+        trigger.addEventListener('click', function() {
+            const collapseId = this.getAttribute('data-collapse-id');
+            if (collapseId) {
+                toggleHistoryCollapse(collapseId);
+            }
+        });
+    });
+}
+
+function toggleHistoryCollapse(collapseId) {
+    const collapseElement = document.getElementById(collapseId);
+    if (collapseElement) {
+        const bsCollapse = new bootstrap.Collapse(collapseElement, { toggle: true });
+    }
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return "N/A";
+    const date = new Date(dateStr + "T00:00:00");
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function formatTime(timeStr) {
+    if (!timeStr) return "N/A";
+    const [hours, minutes] = timeStr.split(":");
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const displayHour = hour % 12 || 12;
+    return displayHour + ":" + minutes + " " + ampm;
+}
+
+// Make all modals draggable
+function makeModalDraggable(modalElement) {
+    const modalDialog = modalElement.querySelector('.modal-dialog');
+    if (!modalDialog) return;
+    
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let xOffset = 0;
+    let yOffset = 0;
+    
+    // Reset position when modal is shown
+    modalElement.addEventListener('show.bs.modal', function() {
+        xOffset = 0;
+        yOffset = 0;
+        modalDialog.style.transform = 'translate(0px, 0px)';
+        modalDialog.style.transition = 'none';
+    });
+    
+    // Make modal header draggable
+    const modalHeader = modalElement.querySelector('.modal-header');
+    if (modalHeader) {
+        modalHeader.style.cursor = 'move';
+        
+        modalHeader.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+    }
+    
+    function dragStart(e) {
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+            return; // Don't drag if clicking on buttons
+        }
+        
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
+        
+        if (e.target === modalHeader || modalHeader.contains(e.target)) {
+            isDragging = true;
+            modalDialog.style.transition = 'none';
+        }
+    }
+    
+    function drag(e) {
+        if (isDragging) {
+            e.preventDefault();
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+            
+            xOffset = currentX;
+            yOffset = currentY;
+            
+            modalDialog.style.transform = `translate(${currentX}px, ${currentY}px)`;
+        }
+    }
+    
+    function dragEnd(e) {
+        initialX = currentX;
+        initialY = currentY;
+        isDragging = false;
+    }
+}
+
+// Initialize draggable for all existing modals
+document.addEventListener('DOMContentLoaded', function() {
+    // Make all existing modals draggable
+    document.querySelectorAll('.modal').forEach(function(modal) {
+        makeModalDraggable(modal);
+    });
+    
+    // Watch for dynamically created modals
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1) { // Element node
+                    if (node.classList && node.classList.contains('modal')) {
+                        makeModalDraggable(node);
+                    }
+                    // Also check for modals inside added nodes
+                    const modals = node.querySelectorAll ? node.querySelectorAll('.modal') : [];
+                    modals.forEach(function(modal) {
+                        makeModalDraggable(modal);
+                    });
+                }
+            });
+        });
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+});
+
+// Override showImageModal to make the modal draggable
+const originalShowImageModal = window.showImageModal;
+if (originalShowImageModal) {
+    window.showImageModal = function(imageUrl, attachmentId, filename) {
+        originalShowImageModal.call(this, imageUrl, attachmentId, filename);
+        // Wait a bit for modal to be added to DOM
+        setTimeout(function() {
+            const imageModal = document.getElementById('imageModal');
+            if (imageModal) {
+                makeModalDraggable(imageModal);
+            }
+        }, 100);
+    };
+}
+
+// Override showUploadModal to make the modal draggable
+const originalShowUploadModal = window.showUploadModal;
+if (originalShowUploadModal) {
+    window.showUploadModal = function(appointmentId, patientId) {
+        originalShowUploadModal.call(this, appointmentId, patientId);
+        setTimeout(function() {
+            const uploadModal = document.getElementById('uploadModal');
+            if (uploadModal) {
+                makeModalDraggable(uploadModal);
+            }
+        }, 100);
+    };
+}
+
+// Override openCameraModal to make the modal draggable
+const originalOpenCameraModal = window.openCameraModal;
+if (originalOpenCameraModal) {
+    window.openCameraModal = function(appointmentId, patientId) {
+        originalOpenCameraModal.call(this, appointmentId, patientId);
+        setTimeout(function() {
+            const cameraModal = document.getElementById('cameraModal');
+            if (cameraModal) {
+                makeModalDraggable(cameraModal);
+            }
+        }, 100);
+    };
+}
+
+</script>
 
 <?php include __DIR__ . '/alert_modal.php'; ?>

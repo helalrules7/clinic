@@ -741,8 +741,9 @@
                 $appointmentIndex++;
                 $collapseId = 'appointmentCollapse' . $appointment['id'];
                 $statusColor = $appointment['status'] === 'Completed' ? 'success' : ($appointment['status'] === 'Cancelled' ? 'danger' : ($appointment['status'] === 'InProgress' ? 'warning' : 'primary'));
+                $isFollowup = !empty($appointment['is_followup']) && $appointment['is_followup'] === true;
             ?>
-            <div class="timeline-item appointment-timeline-item">
+            <div class="timeline-item appointment-timeline-item <?= $isFollowup ? 'followup-appointment' : '' ?>">
                 <div class="timeline-marker <?= $isLatest ? 'bg-warning' : 'bg-' . $statusColor ?>" 
                      onclick="handleAppointmentHeaderClick(event, '<?= $collapseId ?>')"
                      style="cursor: pointer; transition: transform 0.2s ease;"
@@ -764,6 +765,11 @@
                                 </a>
                                 <?php if ($isLatest): ?>
                                 <span class="badge bg-warning text-dark ms-2">Latest Appointment</span>
+                                    <?php endif; ?>
+                                <?php if ($isFollowup): ?>
+                                <span class="badge bg-info ms-2">
+                                    <i class="bi bi-arrow-return-right me-1"></i>Follow-up
+                                </span>
                                     <?php endif; ?>
                                 <span class="badge bg-<?= $statusColor ?> ms-2">
                                     <?= ucfirst($appointment['status']) ?>
@@ -2119,6 +2125,40 @@
 
 .appointment-timeline-item:last-child {
     margin-bottom: 0;
+}
+
+/* Follow-up appointment styling - lower level */
+.appointment-timeline-item.followup-appointment {
+    margin-left: 2.5rem;
+    opacity: 0.95;
+    position: relative;
+}
+
+.appointment-timeline-item.followup-appointment::before {
+    content: '';
+    position: absolute;
+    left: -2.5rem;
+    top: 15px;
+    width: 2rem;
+    height: 2px;
+    background: var(--border);
+    opacity: 0.5;
+}
+
+.appointment-timeline-item.followup-appointment .timeline-marker {
+    width: 24px;
+    height: 24px;
+    left: -19px;
+    border-width: 2px;
+}
+
+.appointment-timeline-item.followup-appointment .timeline-content {
+    border-left: 3px solid var(--info);
+    margin-left: 15px;
+}
+
+.appointment-timeline-item.followup-appointment .timeline-content:hover {
+    border-left-color: var(--accent);
 }
 
 .appointment-timeline-item .timeline-marker {
@@ -7127,7 +7167,7 @@ window.currentPatientInfo = {
     first_name: <?= isset($patient['first_name']) ? json_encode($patient['first_name'], JSON_UNESCAPED_UNICODE) : 'null' ?>,
     last_name: <?= isset($patient['last_name']) ? json_encode($patient['last_name'], JSON_UNESCAPED_UNICODE) : 'null' ?>,
     phone: <?= isset($patient['phone']) ? json_encode($patient['phone'], JSON_UNESCAPED_UNICODE) : 'null' ?>,
-    age: <?= isset($patient['dob']) ? date_diff(date_create($patient['dob']), date_create('now'))->y : 'null' ?>
+    age: <?= (isset($patient['dob']) && !empty($patient['dob'])) ? date_diff(date_create($patient['dob']), date_create('now'))->y : 'null' ?>
 };
 
 // Load alerts when page loads
