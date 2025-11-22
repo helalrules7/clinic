@@ -1815,7 +1815,7 @@ async function loadSidebarItems() {
         { key: 'medications', label: 'Prescriptions', icon: 'bi-capsule', fixed: false },
         { key: 'alerts', label: 'Alerts', icon: 'bi-bell', fixed: false },
         { key: 'notes', label: 'Notes', icon: 'bi-sticky', fixed: false },
-        { key: 'settings', label: 'Settings', icon: 'bi-gear', fixed: false },
+        { key: 'settings', label: 'Settings', icon: 'bi-gear', fixed: true },
         { key: 'profile', label: 'Profile', icon: 'bi-person-circle', fixed: false },
         { key: 'about', label: 'About', icon: 'bi-info-circle', fixed: true },
         { key: 'logout', label: 'Logout', icon: 'bi-box-arrow-right', fixed: true }
