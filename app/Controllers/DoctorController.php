@@ -3328,7 +3328,13 @@ class DoctorController
             'push_notifications_enabled',
             'push_subscription',
             'dont_ask_push_notifications_browsers',
-            'push_notification_remind_later'
+            'push_notification_remind_later',
+            'dont_create_alert_for_appointments',
+            'back_to_top_display',
+            'desktop_dock_enabled',
+            'mobile_dock_enabled',
+            'dashboard_rearrange_mobile',
+            'sidebar_items_enabled'
         ];
         
         try {
@@ -3389,8 +3395,8 @@ class DoctorController
                     // For dashboard_cards_order, it's already a JSON string, keep it as is
                     if ($key === 'dashboard_cards_order' && is_string($value)) {
                         $dbValue = $value; // Keep the JSON string as is
-                    } elseif ($key === 'push_subscription' || $key === 'dont_ask_push_notifications_browsers') {
-                        // push_subscription and dont_ask_push_notifications_browsers are already JSON strings
+                    } elseif ($key === 'push_subscription' || $key === 'dont_ask_push_notifications_browsers' || $key === 'sidebar_items_enabled') {
+                        // push_subscription, dont_ask_push_notifications_browsers, and sidebar_items_enabled are already JSON strings
                         $dbValue = $value;
                     } else {
                         $dbValue = (string) $value;

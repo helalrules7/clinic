@@ -40,7 +40,7 @@
                 </h6>
                 <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editProfileModal">
                     <i class="bi bi-pencil-square me-1"></i>
-                    Edit Profile
+                    Edit Your Info
                 </button>
             </div>
             <div class="card-body">
@@ -257,7 +257,7 @@
                                     <i class="bi bi-upload me-1"></i>
                                     Upload Photo
                                 </label>
-                                <small class="d-block text-muted mt-1">Max 5MB - JPEG, PNG, GIF, WebP</small>
+                                <small class="d-block text-muted mt-1" style="color: var(--text) !important;">Max 5MB - JPEG, PNG, GIF, WebP</small>
                             </div>
                         </div>
                     </div>
@@ -731,6 +731,36 @@ document.querySelector('.profile-image-preview-wrapper').addEventListener('click
 </script>
 
 <style>
+:root {
+    --bg: #f8fafc;
+    --text: #0f172a;
+    --card: #ffffff;
+    --muted: #475569;
+    --accent: #0ea5e9;
+    --success: #10b981;
+    --danger: #ef4444;
+    --border: #e2e8f0;
+}
+
+.dark {
+    --bg: #0b1220;
+    --text: #f8fafc;
+    --card: #1e293b;
+    --muted: #cbd5e1;
+    --accent: #38bdf8;
+    --success: #4ade80;
+    --danger: #fb7185;
+    --border: #334155;
+}
+
+.text-muted {
+    color: var(--text) !important;
+}
+
+.dark .text-muted {
+    color: var(--muted) !important;
+}
+
 /* Profile Header Card */
 .profile-header-card {
     background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);

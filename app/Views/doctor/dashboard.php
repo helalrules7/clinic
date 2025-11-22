@@ -3998,6 +3998,63 @@ document.addEventListener('DOMContentLoaded', function() {
     window.moveCardUp = moveCardUp;
     window.moveCardDown = moveCardDown;
     
+    // Toggle dashboard rearrange buttons visibility on mobile
+    async function toggleDashboardRearrangeButtons() {
+        try {
+            const response = await fetch('/api/doctor/settings', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.settings) {
+                    const rearrangeEnabled = data.settings.dashboard_rearrange_mobile || false;
+                    const isMobile = window.innerWidth <= 768;
+                    
+                    // Get all rearrange buttons and drag handles
+                    const moveButtons = document.querySelectorAll('.dashboard-card-move-btn');
+                    const dragHandles = document.querySelectorAll('.dashboard-card-drag-handle');
+                    
+                    if (isMobile) {
+                        // On mobile: show/hide based on setting
+                        moveButtons.forEach(btn => {
+                            btn.style.display = rearrangeEnabled ? 'flex' : 'none';
+                        });
+                        dragHandles.forEach(handle => {
+                            handle.style.display = rearrangeEnabled ? 'flex' : 'none';
+                        });
+                    } else {
+                        // On desktop: always show
+                        moveButtons.forEach(btn => {
+                            btn.style.display = 'flex';
+                        });
+                        dragHandles.forEach(handle => {
+                            handle.style.display = 'flex';
+                        });
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error loading dashboard rearrange setting:', error);
+        }
+    }
+    
+    // Call on page load and window resize
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleDashboardRearrangeButtons();
+        });
+    } else {
+        toggleDashboardRearrangeButtons();
+    }
+    
+    // Update on window resize
+    window.addEventListener('resize', toggleDashboardRearrangeButtons);
+    
     // Save card order to database
     async function saveDashboardCardOrder() {
         try {

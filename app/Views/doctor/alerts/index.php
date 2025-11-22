@@ -101,79 +101,147 @@
     color: var(--text) !important;
 }
 
-/* Delete Modal Dark Mode */
-#deleteAlertModal .modal-content {
-    /* Glass effect - similar to sidebar */
-    background: rgba(248, 250, 252, 0.35) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(226, 232, 240, 0.3) !important;
-    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
+/* Alerts Modals Glass Effect */
+.alerts-modal-glass .modal-content {
+    background: rgba(248, 250, 252, 0.7) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(226, 232, 240, 0.4) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.15);
     color: var(--text) !important;
 }
 
-.dark #deleteAlertModal .modal-content {
+.dark .alerts-modal-glass .modal-content {
     background: rgba(11, 18, 32, 0.40) !important;
     border: 1px solid rgba(51, 65, 85, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
-}
-
-#deleteAlertModal .modal-header {
-    background: transparent !important;
-    border-bottom-color: rgba(226, 232, 240, 0.3) !important;
     color: var(--text) !important;
 }
 
-.dark #deleteAlertModal .modal-header {
+.alerts-modal-glass .modal-header {
+    background: transparent !important;
+    border-bottom-color: rgba(226, 232, 240, 0.4) !important;
+    color: var(--text) !important;
+}
+
+.dark .alerts-modal-glass .modal-header {
     background: transparent !important;
     border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+    color: var(--text) !important;
+}
+
+.alerts-modal-glass .modal-body {
+    background: transparent !important;
+    color: var(--text) !important;
+}
+
+.alerts-modal-glass .modal-footer {
+    background: transparent !important;
+    border-top-color: rgba(226, 232, 240, 0.4) !important;
+}
+
+.dark .alerts-modal-glass .modal-footer {
+    border-top-color: rgba(51, 65, 85, 0.3) !important;
 }
 
 /* Close button white in dark mode */
-.dark #deleteAlertModal .modal-header .btn-close {
+.dark .alerts-modal-glass .modal-header .btn-close {
     filter: invert(1) brightness(2);
     opacity: 0.9;
 }
 
-.dark #deleteAlertModal .modal-header .btn-close:hover {
+.dark .alerts-modal-glass .modal-header .btn-close:hover {
     opacity: 1;
     filter: invert(1) brightness(2.5);
 }
 
 /* Enable dragging */
-#deleteAlertModal .modal-content {
+.alerts-modal-glass .modal-content {
     cursor: move;
 }
 
-#deleteAlertModal .modal-dialog {
+.alerts-modal-glass .modal-dialog {
     cursor: default;
     transition: transform 0.2s ease;
     margin: 1.75rem auto;
+    position: relative;
 }
 
-#deleteAlertModal .modal-header {
+.alerts-modal-glass .modal-header {
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    cursor: move;
 }
 
-#deleteAlertModal .modal-body {
-    background: transparent !important;
-    color: var(--text) !important;
+.alerts-modal-glass .modal-header button {
+    cursor: pointer;
 }
 
-#deleteAlertModal .modal-footer {
-    background: transparent !important;
-    border-top-color: rgba(226, 232, 240, 0.3) !important;
+.alerts-modal-glass .modal-dialog.dragging {
+    transition: none !important;
 }
 
-.dark #deleteAlertModal .modal-footer {
-    border-top-color: rgba(51, 65, 85, 0.3) !important;
-}
-
-#deleteAlertModal .text-muted {
+.alerts-modal-glass .text-muted {
     color: var(--muted) !important;
+}
+
+/* Pagination Styles */
+.pagination {
+    margin-top: 1rem;
+}
+
+.page-link {
+    color: var(--accent);
+    background-color: var(--card);
+    border-color: var(--border);
+    transition: all 0.3s ease;
+}
+
+.page-link:hover {
+    color: white;
+    background-color: var(--accent);
+    border-color: var(--accent);
+    transform: translateY(-1px);
+}
+
+.page-item.active .page-link {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.page-item.disabled .page-link {
+    color: var(--muted);
+    background-color: var(--card);
+    border-color: var(--border);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.dark .page-link {
+    color: var(--accent);
+    background-color: var(--card);
+    border-color: var(--border);
+}
+
+.dark .page-link:hover {
+    color: white;
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.dark .page-item.active .page-link {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.dark .page-item.disabled .page-link {
+    color: var(--muted);
+    background-color: var(--card);
+    border-color: var(--border);
 }
 
 /* Alert Status Styling in Table */
@@ -224,10 +292,27 @@
 
     <!-- Alerts List -->
     <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">
-                <i class="bi bi-list-ul me-2"></i>All Alerts
-            </h5>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul me-2"></i>All Alerts
+                </h5>
+                <button class="btn btn-sm btn-outline-warning" onclick="showDisableAllConfirmation()" title="Disable All Alerts">
+                    <i class="bi bi-pause-circle me-1"></i>Disable All
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="showDeleteAllConfirmation()" title="Delete All Alerts">
+                    <i class="bi bi-trash me-1"></i>Delete All
+                </button>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <select class="form-select form-select-sm" id="alertsPerPageSelect" style="width: auto;">
+                    <option value="10">10 per page</option>
+                    <option value="20">20 per page</option>
+                    <option value="50">50 per page</option>
+                    <option value="100">100 per page</option>
+                    <option value="all">All</option>
+                </select>
+            </div>
         </div>
         <div class="card-body">
             <div id="alertsListContainer">
@@ -237,6 +322,10 @@
                     </div>
                 </div>
             </div>
+            <nav aria-label="Alerts Pagination" id="alertsPaginationNav" style="display: none;">
+                <ul class="pagination justify-content-center mb-0" id="alertsPaginationList">
+                </ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -244,7 +333,7 @@
 <?php include __DIR__ . '/../alert_modal.php'; ?>
 
 <!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteAlertModal" tabindex="-1" aria-labelledby="deleteAlertModalLabel" aria-hidden="true">
+<div class="modal fade alerts-modal-glass" id="deleteAlertModal" tabindex="-1" aria-labelledby="deleteAlertModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -267,112 +356,128 @@
     </div>
 </div>
 
+<!-- Disable All Confirmation Modal -->
+<div class="modal fade alerts-modal-glass" id="disableAllAlertsModal" tabindex="-1" aria-labelledby="disableAllAlertsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="disableAllAlertsModalLabel">
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>Confirm Disable All
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to disable all alerts?</p>
+                <p class="text-muted mb-0"><small>All alerts will be set to inactive. You can reactivate them individually later.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" id="confirmDisableAllBtn" onclick="confirmDisableAllAlerts()">
+                    <i class="bi bi-pause-circle me-1"></i>Disable All Alerts
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete All Confirmation Modal -->
+<div class="modal fade alerts-modal-glass" id="deleteAllAlertsModal" tabindex="-1" aria-labelledby="deleteAllAlertsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteAllAlertsModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>Confirm Delete All
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong>ALL</strong> alerts?</p>
+                <p class="text-muted mb-0"><small>This action cannot be undone. All alerts will be permanently deleted.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteAllBtn" onclick="confirmDeleteAllAlerts()">
+                    <i class="bi bi-trash me-1"></i>Delete All Alerts
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 let currentAlertIdToDelete = null;
+let currentPage = 1;
+let perPage = 10;
 // Note: currentAlertIdToEdit is declared in alert_modal.php
 
 document.addEventListener('DOMContentLoaded', function() {
-    loadAlerts();
+    loadAlerts(currentPage, perPage);
+    
+    // Handle per page change
+    document.getElementById('alertsPerPageSelect').addEventListener('change', function() {
+        const value = this.value;
+        if (value === 'all') {
+            perPage = 999999; // Large number to show all
+        } else {
+            perPage = parseInt(value);
+        }
+        currentPage = 1;
+        loadAlerts(currentPage, perPage);
+    });
+    
+    // Initialize draggable modals
+    initializeAlertsModalsDraggable();
     
     // Reset currentAlertIdToDelete when modal is closed without deleting
     const deleteModal = document.getElementById('deleteAlertModal');
     if (deleteModal) {
         deleteModal.addEventListener('hidden.bs.modal', function() {
-            // Only reset if deletion wasn't successful (check if alerts were reloaded)
-            // We'll keep the ID until deletion is confirmed
             setTimeout(() => {
-                // Reset after a short delay to ensure deletion process completed
                 if (deleteModal.classList.contains('show') === false) {
                     // Only reset if modal is still closed after delay
-                    // This prevents resetting during the deletion process
                 }
             }, 100);
         });
     }
 });
 
-function loadAlerts() {
-    fetch('/api/alerts')
+function loadAlerts(page = 1, limit = 10) {
+    const container = document.getElementById('alertsListContainer');
+    const paginationNav = document.getElementById('alertsPaginationNav');
+    
+    // Show loading
+    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+    paginationNav.style.display = 'none';
+    
+    const url = limit >= 999999 
+        ? '/api/alerts' 
+        : `/api/alerts?page=${page}&per_page=${limit}`;
+    
+    fetch(url)
         .then(response => response.json())
         .then(data => {
-            const container = document.getElementById('alertsListContainer');
             if (data.success && data.alerts && data.alerts.length > 0) {
-                let html = '<div class="table-responsive"><table class="table table-hover"><thead><tr>';
-                html += '<th>Message</th><th>Date & Time</th><th>Patient</th><th>Repeat</th><th>Status</th><th>Actions</th>';
-                html += '</tr></thead><tbody>';
-                
-                data.alerts.forEach(alert => {
-                    const patientName = alert.patient_first_name && alert.patient_last_name 
-                        ? `${alert.patient_first_name} ${alert.patient_last_name}` 
-                        : 'N/A';
-                    const alertDateTime = new Date(`${alert.alert_date}T${alert.alert_time}`);
-                    const dateStr = alertDateTime.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-                    const timeStr = alertDateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                // If pagination data exists, use it
+                if (data.pagination) {
+                    renderAlerts(data.alerts);
+                    renderAlertsPagination(data.pagination);
+                } else {
+                    // Fallback: if no pagination, show all and paginate client-side
+                    const start = (page - 1) * limit;
+                    const end = start + limit;
+                    const paginatedAlerts = data.alerts.slice(start, end);
+                    renderAlerts(paginatedAlerts);
                     
-                    // Determine alert status (same logic as patient.php)
-                    const isActive = alert.is_active == 1;
-                    const isDismissed = alert.is_dismissed == 1;
-                    const isPast = alertDateTime && alertDateTime < new Date();
-                    
-                    // Determine alert status class for styling
-                    let alertStatusClass = '';
-                    if (isDismissed) {
-                        alertStatusClass = 'alert-dismissed';
-                    } else if (isActive) {
-                        alertStatusClass = 'alert-active';
-                    } else {
-                        alertStatusClass = 'alert-inactive';
+                    if (data.alerts.length > limit) {
+                        const totalPages = Math.ceil(data.alerts.length / limit);
+                        renderAlertsPagination({
+                            current_page: page,
+                            total_pages: totalPages,
+                            total_items: data.alerts.length,
+                            per_page: limit
+                        });
                     }
-                    
-                    const statusBadge = isDismissed 
-                        ? '<span class="badge bg-secondary">Dismissed</span>' 
-                        : (isActive 
-                            ? (isPast 
-                                ? '<span class="badge bg-warning">Past Due</span>' 
-                                : '<span class="badge bg-success">Active</span>')
-                            : '<span class="badge bg-secondary">Inactive</span>');
-                    
-                    const repeatInfo = alert.repeat_count > 0 
-                        ? `${alert.current_repeat}/${alert.repeat_count}` 
-                        : 'Infinite';
-                    
-                    html += `
-                        <tr class="${alertStatusClass}">
-                            <td><div class="alert-message-content" style="word-wrap: break-word;">${alert.message}</div></td>
-                            <td>
-                                <i class="bi bi-calendar me-1"></i>${dateStr}<br>
-                                <i class="bi bi-clock me-1"></i>${timeStr}
-                            </td>
-                            <td>
-                                ${alert.patient_id ? `
-                                    <a href="/doctor/patients/${alert.patient_id}" class="text-decoration-none">
-                                        <i class="bi bi-person me-1"></i>${escapeHtml(patientName)}
-                                    </a>
-                                ` : '<span class="text-muted">-</span>'}
-                            </td>
-                            <td>${repeatInfo}${alert.repeat_interval > 0 ? ` (every ${alert.repeat_interval} days)` : ''}</td>
-                            <td>${statusBadge}</td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    ${alert.patient_id ? `
-                                        <a href="/doctor/patients/${alert.patient_id}" class="btn btn-outline-primary" title="View Patient">
-                                            <i class="bi bi-person"></i>
-                                        </a>
-                                    ` : ''}
-                                    <button class="btn btn-outline-info" onclick="editAlert(${alert.id})" title="Edit Alert">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button class="btn btn-outline-danger" onclick="showDeleteConfirmation(${alert.id})" title="Delete">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                });
-                
-                html += '</tbody></table></div>';
-                container.innerHTML = html;
+                }
             } else {
                 container.innerHTML = `
                     <div class="text-center py-5">
@@ -384,15 +489,353 @@ function loadAlerts() {
                         </button>
                     </div>
                 `;
+                paginationNav.style.display = 'none';
             }
         })
         .catch(error => {
-            document.getElementById('alertsListContainer').innerHTML = `
+            container.innerHTML = `
                 <div class="alert alert-danger">
                     <i class="bi bi-exclamation-triangle me-2"></i>Error loading alerts
                 </div>
             `;
+            paginationNav.style.display = 'none';
         });
+}
+
+function renderAlerts(alerts) {
+    const container = document.getElementById('alertsListContainer');
+    if (!alerts || alerts.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bi bi-bell-slash text-muted" style="font-size: 4rem;"></i>
+                <h5 class="mt-3 text-muted">No alerts found</h5>
+                <p class="text-muted">Create your first alert to get started</p>
+                <button class="btn btn-primary mt-3" onclick="openAlertModal(null, null)">
+                    <i class="bi bi-plus-circle me-2"></i>Create Alert
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="table-responsive"><table class="table table-hover"><thead><tr>';
+    html += '<th>Message</th><th>Date & Time</th><th>Patient</th><th>Repeat</th><th>Status</th><th>Actions</th>';
+    html += '</tr></thead><tbody>';
+    
+    alerts.forEach(alert => {
+        const patientName = alert.patient_first_name && alert.patient_last_name 
+            ? `${alert.patient_first_name} ${alert.patient_last_name}` 
+            : 'N/A';
+        const alertDateTime = new Date(`${alert.alert_date}T${alert.alert_time}`);
+        const dateStr = alertDateTime.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        const timeStr = alertDateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        
+        // Determine alert status (same logic as patient.php)
+        const isActive = alert.is_active == 1;
+        const isDismissed = alert.is_dismissed == 1;
+        const isPast = alertDateTime && alertDateTime < new Date();
+        
+        // Determine alert status class for styling
+        let alertStatusClass = '';
+        if (isDismissed) {
+            alertStatusClass = 'alert-dismissed';
+        } else if (isActive) {
+            alertStatusClass = 'alert-active';
+        } else {
+            alertStatusClass = 'alert-inactive';
+        }
+        
+        const statusBadge = isDismissed 
+            ? '<span class="badge bg-secondary">Dismissed</span>' 
+            : (isActive 
+                ? (isPast 
+                    ? '<span class="badge bg-warning">Past Due</span>' 
+                    : '<span class="badge bg-success">Active</span>')
+                : '<span class="badge bg-secondary">Inactive</span>');
+        
+        const repeatInfo = alert.repeat_count > 0 
+            ? `${alert.current_repeat}/${alert.repeat_count}` 
+            : 'Infinite';
+        
+        html += `
+            <tr class="${alertStatusClass}">
+                <td><div class="alert-message-content" style="word-wrap: break-word;">${alert.message}</div></td>
+                <td>
+                    <i class="bi bi-calendar me-1"></i>${dateStr}<br>
+                    <i class="bi bi-clock me-1"></i>${timeStr}
+                </td>
+                <td>
+                    ${alert.patient_id ? `
+                        <a href="/doctor/patients/${alert.patient_id}" class="text-decoration-none">
+                            <i class="bi bi-person me-1"></i>${escapeHtml(patientName)}
+                        </a>
+                    ` : '<span class="text-muted">-</span>'}
+                </td>
+                <td>${repeatInfo}${alert.repeat_interval > 0 ? ` (every ${alert.repeat_interval} days)` : ''}</td>
+                <td>${statusBadge}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        ${alert.patient_id ? `
+                            <a href="/doctor/patients/${alert.patient_id}" class="btn btn-outline-primary" title="View Patient">
+                                <i class="bi bi-person"></i>
+                            </a>
+                        ` : ''}
+                        <button class="btn btn-outline-info" onclick="editAlert(${alert.id})" title="Edit Alert">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="showDeleteConfirmation(${alert.id})" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+function renderAlertsPagination(pagination) {
+    const paginationNav = document.getElementById('alertsPaginationNav');
+    const paginationList = document.getElementById('alertsPaginationList');
+    
+    if (!pagination || pagination.total_pages <= 1) {
+        paginationNav.style.display = 'none';
+        return;
+    }
+    
+    paginationNav.style.display = 'block';
+    
+    let html = '';
+    const currentPageNum = pagination.current_page;
+    const totalPages = pagination.total_pages;
+    
+    // Previous button
+    html += `
+        <li class="page-item ${currentPageNum === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="event.preventDefault(); loadAlertsPage(${currentPageNum - 1}); return false;">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
+    `;
+    
+    // Page numbers
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentPageNum - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    
+    if (endPage - startPage < maxVisible - 1) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+    
+    if (startPage > 1) {
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="event.preventDefault(); loadAlertsPage(1); return false;">1</a></li>`;
+        if (startPage > 2) {
+            html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        html += `
+            <li class="page-item ${i === currentPageNum ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="event.preventDefault(); loadAlertsPage(${i}); return false;">${i}</a>
+            </li>
+        `;
+    }
+    
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="event.preventDefault(); loadAlertsPage(${totalPages}); return false;">${totalPages}</a></li>`;
+    }
+    
+    // Next button
+    html += `
+        <li class="page-item ${currentPageNum === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="event.preventDefault(); loadAlertsPage(${currentPageNum + 1}); return false;">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+    `;
+    
+    paginationList.innerHTML = html;
+}
+
+// Global function for pagination
+window.loadAlertsPage = function(page) {
+    currentPage = page;
+    loadAlerts(currentPage, perPage);
+    // Scroll to top of container
+    document.getElementById('alertsListContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+// Show disable all confirmation
+function showDisableAllConfirmation() {
+    const modal = new bootstrap.Modal(document.getElementById('disableAllAlertsModal'));
+    modal.show();
+}
+
+// Confirm disable all alerts
+function confirmDisableAllAlerts() {
+    const confirmBtn = document.getElementById('confirmDisableAllBtn');
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Disabling...';
+    }
+    
+    fetch('/api/alerts/disable-all', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('disableAllAlertsModal'));
+        
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="bi bi-pause-circle me-1"></i>Disable All Alerts';
+        }
+        
+        if (data.success) {
+            modal.hide();
+            showToast('success', 'Alerts Disabled', 'All alerts have been disabled successfully.');
+            loadAlerts(currentPage, perPage);
+        } else {
+            showToast('error', 'Error', data.message || 'Failed to disable all alerts');
+        }
+    })
+    .catch(error => {
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="bi bi-pause-circle me-1"></i>Disable All Alerts';
+        }
+        const modal = bootstrap.Modal.getInstance(document.getElementById('disableAllAlertsModal'));
+        modal.hide();
+        showToast('error', 'Error', 'Failed to disable all alerts. Please try again.');
+    });
+}
+
+// Show delete all confirmation
+function showDeleteAllConfirmation() {
+    const modal = new bootstrap.Modal(document.getElementById('deleteAllAlertsModal'));
+    modal.show();
+}
+
+// Confirm delete all alerts
+function confirmDeleteAllAlerts() {
+    const confirmBtn = document.getElementById('confirmDeleteAllBtn');
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Deleting...';
+    }
+    
+    fetch('/api/alerts/delete-all', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('deleteAllAlertsModal'));
+        
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete All Alerts';
+        }
+        
+        if (data.success) {
+            modal.hide();
+            showToast('success', 'Alerts Deleted', 'All alerts have been deleted successfully.');
+            loadAlerts(currentPage, perPage);
+        } else {
+            showToast('error', 'Error', data.message || 'Failed to delete all alerts');
+        }
+    })
+    .catch(error => {
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete All Alerts';
+        }
+        const modal = bootstrap.Modal.getInstance(document.getElementById('deleteAllAlertsModal'));
+        modal.hide();
+        showToast('error', 'Error', 'Failed to delete all alerts. Please try again.');
+    });
+}
+
+// Initialize draggable modals
+function initializeAlertsModalsDraggable() {
+    const modals = document.querySelectorAll('.alerts-modal-glass');
+    modals.forEach(modal => {
+        makeAlertsModalDraggable(modal);
+    });
+}
+
+function makeAlertsModalDraggable(modalElement) {
+    const modalDialog = modalElement.querySelector('.modal-dialog');
+    if (!modalDialog) return;
+    
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let xOffset = 0;
+    let yOffset = 0;
+    
+    const modalHeader = modalElement.querySelector('.modal-header');
+    if (!modalHeader) return;
+    
+    modalHeader.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', dragEnd);
+    
+    function dragStart(e) {
+        if (e.target.closest('button')) return; // Don't drag if clicking buttons
+        
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
+        
+        if (e.target === modalHeader || modalHeader.contains(e.target)) {
+            isDragging = true;
+            modalDialog.classList.add('dragging');
+        }
+    }
+    
+    function drag(e) {
+        if (isDragging) {
+            e.preventDefault();
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+            
+            xOffset = currentX;
+            yOffset = currentY;
+            
+            setTranslate(currentX, currentY, modalDialog);
+        }
+    }
+    
+    function dragEnd(e) {
+        initialX = currentX;
+        initialY = currentY;
+        isDragging = false;
+        modalDialog.classList.remove('dragging');
+    }
+    
+    function setTranslate(xPos, yPos, el) {
+        el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+    }
+    
+    // Reset position when modal is hidden
+    modalElement.addEventListener('hidden.bs.modal', function() {
+        xOffset = 0;
+        yOffset = 0;
+        modalDialog.style.transform = '';
+    });
 }
 
 function showDeleteConfirmation(alertId) {
@@ -460,7 +903,7 @@ function confirmDeleteAlert() {
             if (confirmBtn) {
                 confirmBtn.removeAttribute('data-alert-id');
             }
-            loadAlerts(); // Reload without page refresh
+            loadAlerts(currentPage, perPage); // Reload without page refresh
         } else {
             showToast('error', 'Error', data.message || 'Failed to delete alert');
             // Don't hide modal on error so user can try again

@@ -49,7 +49,7 @@ class AlertController
     }
     
     /**
-     * Get all alerts for doctor (API endpoint)
+     * Get all alerts for doctor (API endpoint) with pagination
      */
     public function getAllAlerts()
     {
@@ -58,11 +58,38 @@ class AlertController
         $user = $this->auth->user();
         $doctorId = $this->getDoctorId($user['id']);
         
-        $alerts = $this->alertModel->getByDoctor($doctorId, []);
+        // Get pagination parameters
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $perPage = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 10;
+        
+        if ($page < 1) $page = 1;
+        if ($perPage < 1) $perPage = 10;
+        
+        // Get all alerts
+        $allAlerts = $this->alertModel->getByDoctor($doctorId, []);
+        $totalItems = count($allAlerts);
+        
+        // Calculate pagination
+        $totalPages = $perPage > 0 ? ceil($totalItems / $perPage) : 1;
+        $offset = ($page - 1) * $perPage;
+        
+        // Paginate alerts
+        if ($perPage > 0 && $perPage < $totalItems) {
+            $alerts = array_slice($allAlerts, $offset, $perPage);
+        } else {
+            $alerts = $allAlerts;
+            $totalPages = 1;
+        }
         
         echo json_encode([
             'success' => true,
-            'alerts' => $alerts
+            'alerts' => $alerts,
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => $totalPages,
+                'total_items' => $totalItems,
+                'per_page' => $perPage
+            ]
         ]);
     }
 
@@ -390,6 +417,98 @@ class AlertController
             echo json_encode([
                 'success' => false,
                 'message' => 'Failed to delete alert'
+            ]);
+        }
+    }
+
+    /**
+     * Disable all alerts for doctor
+     */
+    public function disableAllAlerts()
+    {
+        header('Content-Type: application/json');
+        
+        $user = $this->auth->user();
+        $doctorId = $this->getDoctorId($user['id']);
+        
+        if (!$doctorId) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Doctor not found'
+            ]);
+            return;
+        }
+        
+        $db = Database::getInstance();
+        $pdo = $db->getConnection();
+        
+        try {
+            $stmt = $pdo->prepare("UPDATE alerts SET is_active = 0 WHERE doctor_id = ?");
+            $result = $stmt->execute([$doctorId]);
+            $affectedRows = $stmt->rowCount();
+            
+            if ($result) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => "All alerts have been disabled successfully",
+                    'affected_rows' => $affectedRows
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Failed to disable all alerts'
+                ]);
+            }
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Delete all alerts for doctor
+     */
+    public function deleteAllAlerts()
+    {
+        header('Content-Type: application/json');
+        
+        $user = $this->auth->user();
+        $doctorId = $this->getDoctorId($user['id']);
+        
+        if (!$doctorId) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Doctor not found'
+            ]);
+            return;
+        }
+        
+        $db = Database::getInstance();
+        $pdo = $db->getConnection();
+        
+        try {
+            $stmt = $pdo->prepare("DELETE FROM alerts WHERE doctor_id = ?");
+            $result = $stmt->execute([$doctorId]);
+            $affectedRows = $stmt->rowCount();
+            
+            if ($result) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => "All alerts have been deleted successfully",
+                    'affected_rows' => $affectedRows
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Failed to delete all alerts'
+                ]);
+            }
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
             ]);
         }
     }

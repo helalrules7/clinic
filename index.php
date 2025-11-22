@@ -130,6 +130,8 @@ try {
     $router->get('/api/alerts/active', 'AlertController@getActiveAlerts');
     $router->post('/api/alerts/dismiss', 'AlertController@dismiss');
     $router->get('/api/alerts/patient/{patientId}', 'AlertController@getPatientAlerts');
+    $router->post('/api/alerts/disable-all', 'AlertController@disableAllAlerts');
+    $router->delete('/api/alerts/delete-all', 'AlertController@deleteAllAlerts');
     $router->get('/api/alerts', 'AlertController@getAllAlerts');
     $router->get('/api/alerts/{id}', 'AlertController@get');
     $router->post('/api/alerts', 'AlertController@create');
@@ -143,6 +145,7 @@ try {
     $router->post('/api/notes', 'NotesController@createNote');
     $router->put('/api/notes/{id}', 'NotesController@updateNote');
     $router->delete('/api/notes/{id}', 'NotesController@deleteNote');
+    $router->delete('/api/notes/delete-all', 'NotesController@deleteAllNotes');
     
     // Doctor settings routes
     $router->get('/api/doctor/settings', 'DoctorController@getDoctorSettings');

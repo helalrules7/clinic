@@ -424,5 +424,53 @@ class NotesController
             exit;
         }
     }
+
+    /**
+     * Delete all notes for the current user
+     */
+    public function deleteAllNotes()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        
+        $user = $this->auth->user();
+        
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
+        }
+        
+        try {
+            // Delete all notes for this user
+            $stmt = $this->pdo->prepare("DELETE FROM notes WHERE user_id = ?");
+            $result = $stmt->execute([$user['id']]);
+            $affectedRows = $stmt->rowCount();
+            
+            if ($result) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => "All notes have been deleted successfully",
+                    'affected_rows' => $affectedRows
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            } else {
+                http_response_code(500);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Failed to delete all notes'
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
+            exit;
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'An error occurred while deleting all notes: ' . $e->getMessage()
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
+        }
+    }
 }
 

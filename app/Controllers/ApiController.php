@@ -326,38 +326,59 @@ class ApiController
                 // Create timeline event
                 $this->createTimelineEvent($data['patient_id'], $appointmentId, 'Booking', 'Appointment booked');
                 
-                // Create alert for appointment (always create alert regardless of date, same as rescheduleFollowup)
+                // Create alert for appointment (check user preference first)
                 try {
-                    // Get patient name
-                    $patientStmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
-                    $patientStmt->execute([$data['patient_id']]);
-                    $patient = $patientStmt->fetch(\PDO::FETCH_ASSOC);
+                    // Get user settings to check if alerts should be created
+                    $user = $this->auth->user();
+                    $dontCreateAlert = false;
                     
-                    if ($patient) {
-                        $patientName = trim($patient['first_name'] . ' ' . $patient['last_name']);
-                        $alertMessage = "Appointment for patient ({$patientName})";
+                    if ($user) {
+                        $settingsStmt = $this->pdo->prepare("
+                            SELECT setting_value 
+                            FROM doctor_settings 
+                            WHERE user_id = ? AND setting_key = 'dont_create_alert_for_appointments'
+                        ");
+                        $settingsStmt->execute([$user['id']]);
+                        $setting = $settingsStmt->fetch(\PDO::FETCH_ASSOC);
                         
-                        // Get doctor_id from appointment data
-                        $doctorId = $data['doctor_id'];
+                        if ($setting && $setting['setting_value'] == '1') {
+                            $dontCreateAlert = true;
+                        }
+                    }
+                    
+                    // Only create alert if user hasn't disabled it
+                    if (!$dontCreateAlert) {
+                        // Get patient name
+                        $patientStmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
+                        $patientStmt->execute([$data['patient_id']]);
+                        $patient = $patientStmt->fetch(\PDO::FETCH_ASSOC);
                         
-                        // Set alert date/time to be 1 hour before appointment
-                        $alertDateTime = new \DateTime($data['date'] . ' ' . $data['start_time']);
-                        $alertDateTime->sub(new \DateInterval('PT1H'));
-                        $alertDate = $alertDateTime->format('Y-m-d');
-                        $alertTime = $alertDateTime->format('H:i:s');
-                        
-                        $alertData = [
-                            'doctor_id' => $doctorId,
-                            'patient_id' => $data['patient_id'],
-                            'appointment_id' => $appointmentId,
-                            'message' => $alertMessage,
-                            'alert_date' => $alertDate,
-                            'alert_time' => $alertTime,
-                            'repeat_count' => 1,
-                            'repeat_interval' => 0
-                        ];
-                        
-                        $this->alertModel->create($alertData);
+                        if ($patient) {
+                            $patientName = trim($patient['first_name'] . ' ' . $patient['last_name']);
+                            $alertMessage = "Appointment for patient ({$patientName})";
+                            
+                            // Get doctor_id from appointment data
+                            $doctorId = $data['doctor_id'];
+                            
+                            // Set alert date/time to be 1 hour before appointment
+                            $alertDateTime = new \DateTime($data['date'] . ' ' . $data['start_time']);
+                            $alertDateTime->sub(new \DateInterval('PT1H'));
+                            $alertDate = $alertDateTime->format('Y-m-d');
+                            $alertTime = $alertDateTime->format('H:i:s');
+                            
+                            $alertData = [
+                                'doctor_id' => $doctorId,
+                                'patient_id' => $data['patient_id'],
+                                'appointment_id' => $appointmentId,
+                                'message' => $alertMessage,
+                                'alert_date' => $alertDate,
+                                'alert_time' => $alertTime,
+                                'repeat_count' => 1,
+                                'repeat_interval' => 0
+                            ];
+                            
+                            $this->alertModel->create($alertData);
+                        }
                     }
                 } catch (\Exception $e) {
                     // Continue even if alert creation fails

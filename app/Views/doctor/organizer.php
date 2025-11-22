@@ -27,6 +27,28 @@
     </div>
 </div>
 
+<!-- Mobile Navigation Buttons (visible on mobile only) -->
+<div class="row mb-3 d-md-none">
+    <div class="col-12">
+        <div class="d-flex justify-content-center gap-2 align-items-center">
+            <button type="button" class="btn btn-outline-info organizer-mobile-nav-btn" id="mobilePrevDayBtn" title="Previous day">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            <button type="button" class="btn btn-info organizer-mobile-nav-btn" id="mobileGoToDateBtn" title="Go to specific date">
+                <i class="bi bi-calendar-event me-1"></i>
+                Go to Date
+            </button>
+            <button type="button" class="btn btn-success organizer-mobile-nav-btn" id="mobileGoToTodayBtn" title="Go to today">
+                <i class="bi bi-calendar-check me-1"></i>
+                Today
+            </button>
+            <button type="button" class="btn btn-outline-info organizer-mobile-nav-btn" id="mobileNextDayBtn" title="Next day">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -40,6 +62,61 @@
                         <p class="mt-3 text-muted">Loading calendar...</p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Fullscreen Navigation Overlay (for day name/date display during navigation only) -->
+<div id="mobileNavigationOverlay" class="organizer-mobile-navigation-overlay d-md-none">
+    <div class="organizer-mobile-navigation-overlay-content">
+        <div id="mobileNavigationOverlayDayName" class="organizer-mobile-navigation-overlay-day-name"></div>
+        <div id="mobileNavigationOverlayDate" class="organizer-mobile-navigation-overlay-date"></div>
+    </div>
+</div>
+
+<!-- Date Picker Popover (Mobile only) -->
+<div class="modal fade organizer-modal-glass" id="datePickerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Select Date</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="datePickerYear" class="form-label">Year</label>
+                    <select class="form-select" id="datePickerYear">
+                        <!-- Will be populated by JavaScript -->
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="datePickerMonth" class="form-label">Month</label>
+                    <select class="form-select" id="datePickerMonth">
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="datePickerDay" class="form-label">Day</label>
+                    <select class="form-select" id="datePickerDay">
+                        <!-- Will be populated by JavaScript -->
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="datePickerGoBtn">Go</button>
             </div>
         </div>
     </div>
@@ -94,10 +171,22 @@
 .organizer-day {
     background: var(--card);
     min-height: 120px;
+    height: 120px;
     padding: 0.5rem;
     position: relative;
     border: 1px solid var(--border);
     transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ensure all days have equal size on desktop */
+@media (min-width: 769px) {
+    .organizer-day {
+        min-height: 120px;
+        height: 120px;
+        max-height: 120px;
+    }
 }
 
 .organizer-day:hover {
@@ -115,6 +204,174 @@
 .organizer-day.today {
     background: rgba(14, 165, 233, 0.1);
     border: 2px solid var(--accent);
+}
+
+/* Glowing border effect for focused days (mobile only) */
+.organizer-day.focused {
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 15px rgba(14, 165, 233, 0.5),
+                0 0 30px rgba(14, 165, 233, 0.3),
+                0 0 45px rgba(14, 165, 233, 0.2);
+    z-index: 10;
+    transform: scale(1);
+}
+
+.dark .organizer-day.focused {
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.6),
+                0 0 30px rgba(56, 189, 248, 0.4),
+                0 0 45px rgba(56, 189, 248, 0.3);
+}
+
+/* Show All button (mobile only) */
+.organizer-day-show-all-btn {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.6rem 1rem;
+    background: rgba(14, 165, 233, 0.1);
+    border: 1px solid rgba(14, 165, 233, 0.3);
+    color: var(--accent);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .organizer-day-show-all-btn {
+        display: block;
+    }
+}
+
+.organizer-day-show-all-btn:hover {
+    background: rgba(14, 165, 233, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(14, 165, 233, 0.2);
+}
+
+.dark .organizer-day-show-all-btn {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.4);
+    color: var(--accent);
+}
+
+.dark .organizer-day-show-all-btn:hover {
+    background: rgba(56, 189, 248, 0.25);
+}
+
+/* Day name and date display during navigation (mobile only) */
+.organizer-day-navigation-info {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 20;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.organizer-day.navigating .organizer-day-navigation-info {
+    opacity: 1;
+}
+
+.organizer-day-navigation-info-day-name {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
+}
+
+.organizer-day-navigation-info-date {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.dark .organizer-day-navigation-info-day-name {
+    color: var(--accent);
+    text-shadow: 0 2px 8px rgba(56, 189, 248, 0.4);
+}
+
+/* Hide items during navigation */
+.organizer-day.navigating .organizer-day-items,
+.organizer-day.navigating .organizer-day-show-all-btn,
+.organizer-day.navigating .organizer-day-view-btn,
+.organizer-day.navigating .organizer-day-add-alert-btn {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Mobile navigation buttons */
+.organizer-mobile-nav-btn {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+}
+
+@media (min-width: 769px) {
+    .organizer-mobile-nav-btn {
+        display: none !important;
+    }
+}
+
+/* Mobile Fullscreen Navigation Overlay (for day name/date display during navigation only) */
+.organizer-mobile-navigation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 9999;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.organizer-mobile-navigation-overlay.active {
+    display: flex;
+    opacity: 1;
+    align-items: center;
+    justify-content: center;
+}
+
+.organizer-mobile-navigation-overlay-content {
+    text-align: center;
+    pointer-events: none;
+}
+
+.organizer-mobile-navigation-overlay-day-name {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    text-shadow: 0 2px 8px rgba(14, 165, 233, 0.5);
+}
+
+.organizer-mobile-navigation-overlay-date {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dark .organizer-mobile-navigation-overlay-day-name {
+    text-shadow: 0 2px 8px rgba(56, 189, 248, 0.6);
+}
+
+/* Disable delete buttons when day is not fully expanded */
+@media (max-width: 768px) {
+    .organizer-day:not(.focused) .organizer-item-delete,
+    .organizer-day.navigating .organizer-item-delete {
+        display: none !important;
+        pointer-events: none;
+    }
 }
 
 .organizer-day-number {
@@ -325,89 +582,163 @@
         font-size: 1.25rem;
     }
     
-    /* Calendar grid adjustments */
+    /* Calendar grid adjustments - Mobile specific layout */
     .organizer-calendar {
-        gap: 0.5px;
+        display: flex !important;
+        flex-direction: row !important;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        gap: 1rem;
+        padding: 1rem 0;
     }
     
+    /* Hide day headers on mobile */
     .organizer-day-header {
-        padding: 0.5rem 0.25rem;
-        font-size: 0.7rem;
-        font-weight: 600;
+        display: none;
     }
     
-    /* Day cell adjustments */
+    /* Each day as a card in mobile */
     .organizer-day {
-        min-height: 80px;
-        padding: 0.25rem;
+        min-width: 85vw;
+        max-width: 85vw;
+        min-height: 60vh;
+        max-height: 60vh;
+        padding: 1rem;
+        margin-right: 1rem;
+        scroll-snap-align: center;
+        flex-shrink: 0;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
     
+    /* Other days (not focused) - smaller */
+    .organizer-day:not(.focused) {
+        min-width: 20vw;
+        max-width: 20vw;
+        min-height: 15vh;
+        max-height: 15vh;
+        padding: 0.5rem;
+        opacity: 0.6;
+        transform: scale(0.85);
+    }
+    
+    /* Focused day - larger and centered */
+    .organizer-day.focused {
+        min-width: 85vw;
+        max-width: 85vw;
+        min-height: 60vh;
+        max-height: 60vh;
+        opacity: 1;
+        transform: scale(1);
+        border-radius: 12px;
+    }
+    
+    /* Day number on mobile */
     .organizer-day-number {
-        font-size: 0.75rem;
-        margin-bottom: 0.25rem;
+        font-size: 1.2rem;
+        margin-bottom: 0.75rem;
+        font-weight: 700;
+    }
+    
+    .organizer-day.focused .organizer-day-number {
+        font-size: 1.5rem;
     }
     
     /* Day items adjustments */
     .organizer-day-items {
-        max-height: 60px;
-        gap: 0.15rem;
+        max-height: calc(60vh - 100px);
+        gap: 0.5rem;
+        overflow-y: auto;
+    }
+    
+    .organizer-day:not(.focused) .organizer-day-items {
+        max-height: calc(15vh - 50px);
+        overflow: hidden;
+    }
+    
+    /* When focused, show all items without height limit */
+    .organizer-day.focused .organizer-day-items {
+        max-height: calc(60vh - 120px);
+        overflow-y: auto;
     }
     
     .organizer-item {
-        font-size: 0.65rem;
-        padding: 0.15rem 0.3rem;
-        gap: 0.15rem;
+        font-size: 0.85rem;
+        padding: 0.4rem 0.6rem;
+        gap: 0.4rem;
+    }
+    
+    .organizer-day:not(.focused) .organizer-item {
+        font-size: 0.6rem;
+        padding: 0.2rem 0.3rem;
     }
     
     .organizer-item i {
-        font-size: 0.6rem;
+        font-size: 0.8rem;
+    }
+    
+    .organizer-day:not(.focused) .organizer-item i {
+        font-size: 0.5rem;
     }
     
     .organizer-item-text {
-        font-size: 0.6rem;
+        font-size: 0.8rem;
+    }
+    
+    .organizer-day:not(.focused) .organizer-item-text {
+        font-size: 0.55rem;
     }
     
     .organizer-item-delete {
-        padding: 0.05rem 0.2rem;
-        font-size: 0.6rem;
+        padding: 0.2rem 0.4rem;
+        font-size: 0.7rem;
     }
     
     /* Buttons adjustments */
     .organizer-day-view-btn,
     .organizer-day-add-alert-btn {
-        padding: 0.15rem 0.3rem;
-        font-size: 0.65rem;
-        top: 0.15rem;
+        padding: 0.4rem 0.6rem;
+        font-size: 0.85rem;
+        top: 0.5rem;
+        opacity: 1 !important;
+    }
+    
+    .organizer-day:not(.focused) .organizer-day-view-btn,
+    .organizer-day:not(.focused) .organizer-day-add-alert-btn {
+        display: none;
     }
     
     .organizer-day-view-btn {
-        right: 0.15rem;
+        right: 0.5rem;
     }
     
     .organizer-day-add-alert-btn {
-        right: 1.8rem;
+        right: 3rem;
     }
+    
     
     /* Show more text */
     .organizer-day-more {
-        font-size: 0.6rem;
-        margin-top: 0.15rem;
+        font-size: 0.75rem;
+        margin-top: 0.5rem;
     }
     
     /* Overlay adjustments */
     .organizer-day-overlay {
-        border-radius: 4px;
+        border-radius: 8px;
     }
     
     .organizer-day-overlay-text {
-        font-size: 0.75rem;
-        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+        padding: 0.6rem 1rem;
     }
     
-    /* Make buttons always visible on mobile for better UX */
-    .organizer-day-view-btn,
-    .organizer-day-add-alert-btn {
-        opacity: 1 !important;
+    /* Hide overlay on mobile completely */
+    .organizer-day-overlay {
+        display: none !important;
     }
     
     /* Card body padding */
@@ -548,6 +879,12 @@
     z-index: 15;
 }
 
+@media (min-width: 769px) {
+    .organizer-day-add-alert-btn {
+        right: 2.3rem;
+    }
+}
+
 .organizer-day:hover .organizer-day-add-alert-btn {
     opacity: 1;
 }
@@ -682,26 +1019,64 @@ document.addEventListener('DOMContentLoaded', function() {
         currentMonth = today.getMonth() + 1;
         loadOrganizerMonth();
     });
+    
+    // Mobile navigation buttons
+    document.getElementById('mobilePrevDayBtn')?.addEventListener('click', () => {
+        navigateToDay(-1);
+    });
+    
+    document.getElementById('mobileNextDayBtn')?.addEventListener('click', () => {
+        navigateToDay(1);
+    });
+    
+    document.getElementById('mobileGoToTodayBtn')?.addEventListener('click', () => {
+        goToToday();
+    });
+    
+    document.getElementById('mobileGoToDateBtn')?.addEventListener('click', () => {
+        openDatePicker();
+    });
+    
+    // Date picker handlers
+    document.getElementById('datePickerGoBtn')?.addEventListener('click', () => {
+        const year = parseInt(document.getElementById('datePickerYear').value);
+        const month = parseInt(document.getElementById('datePickerMonth').value);
+        const day = parseInt(document.getElementById('datePickerDay').value);
+        goToSpecificDate(year, month, day);
+    });
+    
+    // Update day options when month changes
+    document.getElementById('datePickerMonth')?.addEventListener('change', () => {
+        updateDatePickerDays();
+    });
+    
+    document.getElementById('datePickerYear')?.addEventListener('change', () => {
+        updateDatePickerDays();
+    });
+    
 });
 
 function loadOrganizerMonth() {
     const container = document.getElementById('organizerCalendar');
     container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3 text-muted">Loading calendar...</p></div>';
     
-    fetch(`/api/organizer/month?year=${currentYear}&month=${currentMonth}`)
+    return fetch(`/api/organizer/month?year=${currentYear}&month=${currentMonth}`)
         .then(response => response.json())
         .then(data => {
             if (data.ok && data.data) {
                 organizerData = data.data.dataByDate || {};
                 renderCalendar(data.data);
                 updateMonthDisplay();
+                return Promise.resolve();
             } else {
                 container.innerHTML = '<div class="alert alert-danger">Failed to load calendar data</div>';
+                return Promise.reject('Failed to load calendar data');
             }
         })
         .catch(error => {
             console.error('Error loading organizer:', error);
             container.innerHTML = '<div class="alert alert-danger">Error loading calendar</div>';
+            return Promise.reject(error);
         });
 }
 
@@ -721,7 +1096,7 @@ function renderCalendar(data) {
     
     // Empty cells for days before month starts
     for (let i = 0; i < startDayOfWeek; i++) {
-        html += '<div class="organizer-day other-month"></div>';
+        html += '<div class="organizer-day other-month" onclick="event.stopPropagation();"></div>';
     }
     
     // Days of the month
@@ -733,13 +1108,22 @@ function renderCalendar(data) {
         const isToday = isCurrentMonth && day === today.getDate();
         const dayData = organizerData[dateStr] || { appointments: [], notes: [], alerts: [] };
         
-        html += `<div class="organizer-day ${isToday ? 'today' : ''}">`;
-        html += `<button class="organizer-day-view-btn" onclick="showDayDetails('${dateStr}')" title="View all day details">
+        // Get day name
+        const dayDate = new Date(data.year, data.month - 1, day);
+        const dayName = dayNames[dayDate.getDay()];
+        const fullDateStr = `${dayName}, ${day} ${monthNames[data.month - 1]} ${data.year}`;
+        
+        html += `<div class="organizer-day ${isToday ? 'today' : ''}" data-date="${dateStr}" data-day-name="${dayName}" data-full-date="${fullDateStr}" onclick="handleDayClick('${dateStr}', event)">`;
+        html += `<button class="organizer-day-view-btn" onclick="event.stopPropagation(); showDayDetails('${dateStr}')" title="View all day details">
             <i class="bi bi-eye"></i>
         </button>`;
-        html += `<button class="organizer-day-add-alert-btn" onclick="openAddAlertModal('${dateStr}')" title="Add alert for this day">
+        html += `<button class="organizer-day-add-alert-btn" onclick="event.stopPropagation(); openAddAlertModal('${dateStr}')" title="Add alert for this day">
             <i class="bi bi-bell"></i>
         </button>`;
+        html += `<div class="organizer-day-navigation-info">
+            <div class="organizer-day-navigation-info-day-name">${dayName}</div>
+            <div class="organizer-day-navigation-info-date">${day} ${monthNames[data.month - 1]} ${data.year}</div>
+        </div>`;
         html += `<div class="organizer-day-number">${day}</div>`;
         html += '<div class="organizer-day-items">';
         
@@ -753,62 +1137,95 @@ function renderCalendar(data) {
             return true;
         });
         
-        // Show alerts first (at the top, sorted by time, newest first)
+        // Combine all items for unified display logic
         const sortedAlerts = [...filteredAlerts].sort((a, b) => {
             const timeA = a.alert_time || '00:00:00';
             const timeB = b.alert_time || '00:00:00';
             return timeB.localeCompare(timeA); // Descending order (newest first)
         });
-        sortedAlerts.slice(0, 2).forEach(alert => {
-            const alertText = alert.message.length > 20 ? alert.message.substring(0, 20) + '...' : alert.message;
-            html += `
-                <div class="organizer-item alert" onclick="viewAlert(${alert.id})" title="${alert.message}">
-                    <i class="bi bi-bell"></i>
-                    <span class="organizer-item-text">${alertText}</span>
-                </div>
-            `;
+        
+        // Create combined items array
+        const allItems = [];
+        
+        // Add alerts first
+        sortedAlerts.forEach(alert => {
+            allItems.push({ type: 'alert', data: alert });
         });
         
-        // Show appointments
-        dayData.appointments.slice(0, 3).forEach(appointment => {
-            const time = appointment.start_time.substring(0, 5);
-            html += `
-                <div class="organizer-item appointment" onclick="viewAppointment(${appointment.id})" title="${appointment.patient_name} - ${time}">
-                    <i class="bi bi-calendar-event"></i>
-                    <span class="organizer-item-text">${time} - ${appointment.patient_name}</span>
-                    <button class="organizer-item-delete" onclick="event.stopPropagation(); deleteAppointment(${appointment.id}, '${appointment.patient_name}', '${dateStr}')" title="Delete appointment">
-                        <i class="bi bi-x"></i>
-                    </button>
-                </div>
-            `;
+        // Add appointments
+        dayData.appointments.forEach(appointment => {
+            allItems.push({ type: 'appointment', data: appointment });
         });
         
-        // Show notes
-        dayData.notes.slice(0, 2).forEach(note => {
-            const noteText = note.content.length > 20 ? note.content.substring(0, 20) + '...' : note.content;
-            html += `
-                <div class="organizer-item note" onclick="viewNote(${note.id})" title="${note.content}">
-                    <i class="bi bi-sticky"></i>
-                    <span class="organizer-item-text">${noteText}</span>
-                    <button class="organizer-item-delete" onclick="event.stopPropagation(); deleteNote(${note.id}, '${dateStr}')" title="Delete note">
-                        <i class="bi bi-x"></i>
-                    </button>
-                </div>
-            `;
+        // Add notes
+        dayData.notes.forEach(note => {
+            allItems.push({ type: 'note', data: note });
         });
         
-        // Show "more" indicator if there are more items
-        // Use filtered alerts count for calculation
-        const totalItems = dayData.appointments.length + dayData.notes.length + filteredAlerts.length;
-        const shownItems = Math.min(dayData.appointments.length, 3) + Math.min(dayData.notes.length, 2) + Math.min(filteredAlerts.length, 2);
-        if (totalItems > shownItems) {
-            html += `<div class="organizer-day-more" onclick="showDayDetails('${dateStr}')">+${totalItems - shownItems} more</div>`;
+        const totalItems = allItems.length;
+        const isMobile = window.innerWidth <= 768;
+        
+        // Determine how many items to show
+        // On mobile: show all items (will be handled in renderFocusedDayContent when focused)
+        // On desktop: show limited items
+        let itemsToShow;
+        if (isMobile) {
+            // On mobile, show all items initially (they will be limited by CSS max-height)
+            itemsToShow = totalItems;
+        } else {
+            const maxItemsToShow = Math.min(dayData.appointments.length, 3) + Math.min(dayData.notes.length, 2) + Math.min(filteredAlerts.length, 2);
+            itemsToShow = maxItemsToShow;
         }
+        
+        // Show items
+        allItems.slice(0, itemsToShow).forEach(item => {
+            if (item.type === 'alert') {
+                const alert = item.data;
+                const alertText = alert.message.length > 20 ? alert.message.substring(0, 20) + '...' : alert.message;
+                html += `
+                    <div class="organizer-item alert" onclick="viewAlert(${alert.id})" title="${alert.message}">
+                        <i class="bi bi-bell"></i>
+                        <span class="organizer-item-text">${alertText}</span>
+                    </div>
+                `;
+            } else if (item.type === 'appointment') {
+                const appointment = item.data;
+                const time = appointment.start_time.substring(0, 5);
+                // Don't show delete button on mobile in calendar view
+                const deleteBtn = isMobile ? '' : `<button class="organizer-item-delete" onclick="event.stopPropagation(); deleteAppointment(${appointment.id}, '${appointment.patient_name}', '${dateStr}')" title="Delete appointment">
+                            <i class="bi bi-x"></i>
+                        </button>`;
+                html += `
+                    <div class="organizer-item appointment" onclick="viewAppointment(${appointment.id})" title="${appointment.patient_name} - ${time}">
+                        <i class="bi bi-calendar-event"></i>
+                        <span class="organizer-item-text">${time} - ${appointment.patient_name}</span>
+                        ${deleteBtn}
+                    </div>
+                `;
+            } else if (item.type === 'note') {
+                const note = item.data;
+                const noteText = note.content.length > 20 ? note.content.substring(0, 20) + '...' : note.content;
+                // Don't show delete button on mobile in calendar view
+                const deleteBtn = isMobile ? '' : `<button class="organizer-item-delete" onclick="event.stopPropagation(); deleteNote(${note.id}, '${dateStr}')" title="Delete note">
+                            <i class="bi bi-x"></i>
+                        </button>`;
+                html += `
+                    <div class="organizer-item note" onclick="viewNote(${note.id})" title="${note.content}">
+                        <i class="bi bi-sticky"></i>
+                        <span class="organizer-item-text">${noteText}</span>
+                        ${deleteBtn}
+                    </div>
+                `;
+            }
+        });
         
         html += '</div>';
         
-        // Add semi-transparent overlay if there are more than 3 events
-        if (totalItems > 3) {
+        // Show "Show All" button on mobile only if day is focused (not during navigation)
+        // This will be handled dynamically in renderFocusedDayContent
+        
+        // Add semi-transparent overlay on desktop if there are more than 3 events
+        if (!isMobile && totalItems > 3) {
             html += `<div class="organizer-day-overlay" onclick="showDayDetails('${dateStr}')">
                 <span class="organizer-day-overlay-text">Show All</span>
             </div>`;
@@ -821,17 +1238,409 @@ function renderCalendar(data) {
     const totalCells = startDayOfWeek + daysInMonth;
     const remainingCells = 42 - totalCells; // 6 weeks * 7 days
     for (let i = 0; i < remainingCells && totalCells < 42; i++) {
-        html += '<div class="organizer-day other-month"></div>';
+        html += '<div class="organizer-day other-month" onclick="event.stopPropagation();"></div>';
     }
     
     html += '</div>';
     container.innerHTML = html;
+    
+        // On mobile, focus today's date by default
+        if (window.innerWidth <= 768) {
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            if (isCurrentMonth && today.getDate() <= daysInMonth) {
+                setTimeout(() => {
+                    focusDay(todayStr, false);
+                }, 100);
+            } else if (daysInMonth > 0) {
+                // Focus first day of month if today is not in current month
+                const firstDayStr = `${data.year}-${String(data.month).padStart(2, '0')}-01`;
+                setTimeout(() => {
+                    focusDay(firstDayStr, false);
+                }, 100);
+            }
+        }
 }
 
 function updateMonthDisplay() {
     const displayText = `${monthNames[currentMonth - 1]} ${currentYear}`;
     document.getElementById('currentMonthDisplay').textContent = displayText;
     document.getElementById('monthYearHeader').textContent = displayText;
+}
+
+// Handle day click - different behavior for mobile vs desktop
+function handleDayClick(dateStr, event) {
+    // Check if we're on mobile
+    if (window.innerWidth <= 768) {
+        // Mobile: open fullscreen overlay
+        focusDay(dateStr, false);
+    }
+    // Desktop: do nothing on day click
+}
+
+// Focus day on mobile - center it and make it larger
+let currentFocusedDate = null;
+
+function focusDay(dateStr, showNavigationInfo = false) {
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+        if (showNavigationInfo) {
+            // Show navigation overlay with day name and date
+            showNavigationOverlay(dateStr);
+            // After delay, hide overlay and focus the day
+            setTimeout(() => {
+                hideNavigationOverlay();
+                focusDayInCalendar(dateStr);
+            }, 500);
+        } else {
+            // Directly focus the day in calendar
+            focusDayInCalendar(dateStr);
+        }
+    } else {
+        // Desktop behavior (keep existing)
+        document.querySelectorAll('.organizer-day').forEach(day => {
+            day.classList.remove('focused', 'navigating');
+        });
+        
+        const dayElement = document.querySelector(`.organizer-day[data-date="${dateStr}"]`);
+        if (dayElement) {
+            dayElement.classList.add('focused');
+            currentFocusedDate = dateStr;
+        }
+    }
+}
+
+// Focus day in calendar (mobile) - expand it and show all content
+function focusDayInCalendar(dateStr) {
+    currentFocusedDate = dateStr;
+    
+    // Remove focused class from all days
+    document.querySelectorAll('.organizer-day').forEach(day => {
+        day.classList.remove('focused');
+    });
+    
+    // Add focused class to selected day
+    const dayElement = document.querySelector(`.organizer-day[data-date="${dateStr}"]`);
+    if (dayElement) {
+        dayElement.classList.add('focused');
+        
+        // Render all content for focused day
+        renderFocusedDayContent(dateStr);
+        
+        // Scroll page to show the focused day completely with all its content visible
+        setTimeout(() => {
+            // Wait for content to render
+            setTimeout(() => {
+                // Scroll the entire page to show the focused day
+                const dayRect = dayElement.getBoundingClientRect();
+                const currentScrollY = window.scrollY || window.pageYOffset;
+                
+                // Calculate scroll position to show the day's bottom edge
+                const scrollToY = currentScrollY + dayRect.top - (window.innerHeight * 0.1); // Leave 10% margin at top
+                
+                window.scrollTo({
+                    top: scrollToY,
+                    behavior: 'smooth'
+                });
+                
+                // Also scroll calendar container horizontally if needed
+                const calendarContainer = document.querySelector('.organizer-calendar');
+                if (calendarContainer) {
+                    const containerRect = calendarContainer.getBoundingClientRect();
+                    const scrollLeft = calendarContainer.scrollLeft + (dayRect.right - containerRect.right);
+                    
+                    calendarContainer.scrollTo({
+                        left: scrollLeft,
+                        behavior: 'smooth'
+                    });
+                }
+            }, 200);
+        }, 100);
+    }
+}
+
+// Show navigation overlay (day name and date only)
+function showNavigationOverlay(dateStr) {
+    const overlay = document.getElementById('mobileNavigationOverlay');
+    const dayNameEl = document.getElementById('mobileNavigationOverlayDayName');
+    const dateEl = document.getElementById('mobileNavigationOverlayDate');
+    
+    if (!overlay || !dayNameEl || !dateEl) return;
+    
+    const dayDate = new Date(dateStr);
+    const dayName = dayNames[dayDate.getDay()];
+    const dayNumber = dayDate.getDate();
+    const monthName = monthNames[dayDate.getMonth()];
+    const year = dayDate.getFullYear();
+    
+    dayNameEl.textContent = dayName;
+    dateEl.textContent = `${dayNumber} ${monthName} ${year}`;
+    
+    overlay.classList.add('active');
+}
+
+// Hide navigation overlay
+function hideNavigationOverlay() {
+    const overlay = document.getElementById('mobileNavigationOverlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+}
+
+// Render focused day content with all items
+function renderFocusedDayContent(dateStr) {
+    const isMobile = window.innerWidth <= 768;
+    
+    const dayElement = document.querySelector(`.organizer-day[data-date="${dateStr}"]`);
+    if (!dayElement) return;
+    
+    const dayData = organizerData[dateStr] || { appointments: [], notes: [], alerts: [] };
+    
+    // Filter alerts
+    const appointmentIds = dayData.appointments.map(apt => apt.id);
+    const filteredAlerts = dayData.alerts.filter(alert => {
+        if (alert.appointment_id && appointmentIds.includes(parseInt(alert.appointment_id))) {
+            return false;
+        }
+        return true;
+    });
+    
+    // Combine all items
+    const sortedAlerts = [...filteredAlerts].sort((a, b) => {
+        const timeA = a.alert_time || '00:00:00';
+        const timeB = b.alert_time || '00:00:00';
+        return timeB.localeCompare(timeA);
+    });
+    
+    const allItems = [];
+    sortedAlerts.forEach(alert => {
+        allItems.push({ type: 'alert', data: alert });
+    });
+    dayData.appointments.forEach(appointment => {
+        allItems.push({ type: 'appointment', data: appointment });
+    });
+    dayData.notes.forEach(note => {
+        allItems.push({ type: 'note', data: note });
+    });
+    
+    const totalItems = allItems.length;
+    
+    // Get items container
+    const itemsContainer = dayElement.querySelector('.organizer-day-items');
+    if (!itemsContainer) return;
+    
+    // Clear existing items
+    itemsContainer.innerHTML = '';
+    
+    // Render all items (on mobile, show all items when focused)
+    allItems.forEach(item => {
+        if (item.type === 'alert') {
+            const alert = item.data;
+            const alertText = isMobile ? alert.message : (alert.message.length > 20 ? alert.message.substring(0, 20) + '...' : alert.message);
+            itemsContainer.innerHTML += `
+                <div class="organizer-item alert" onclick="viewAlert(${alert.id})" title="${alert.message}">
+                    <i class="bi bi-bell"></i>
+                    <span class="organizer-item-text">${alertText}</span>
+                </div>
+            `;
+        } else if (item.type === 'appointment') {
+            const appointment = item.data;
+            const time = appointment.start_time.substring(0, 5);
+            // On mobile, show delete button only when focused
+            const deleteBtn = isMobile ? `<button class="organizer-item-delete" onclick="event.stopPropagation(); deleteAppointment(${appointment.id}, '${appointment.patient_name}', '${dateStr}')" title="Delete appointment">
+                        <i class="bi bi-x"></i>
+                    </button>` : `<button class="organizer-item-delete" onclick="event.stopPropagation(); deleteAppointment(${appointment.id}, '${appointment.patient_name}', '${dateStr}')" title="Delete appointment">
+                        <i class="bi bi-x"></i>
+                    </button>`;
+            itemsContainer.innerHTML += `
+                <div class="organizer-item appointment" onclick="viewAppointment(${appointment.id})" title="${appointment.patient_name} - ${time}">
+                    <i class="bi bi-calendar-event"></i>
+                    <span class="organizer-item-text">${time} - ${appointment.patient_name}</span>
+                    ${deleteBtn}
+                </div>
+            `;
+        } else if (item.type === 'note') {
+            const note = item.data;
+            const noteText = isMobile ? note.content : (note.content.length > 20 ? note.content.substring(0, 20) + '...' : note.content);
+            // On mobile, show delete button only when focused
+            const deleteBtn = isMobile ? `<button class="organizer-item-delete" onclick="event.stopPropagation(); deleteNote(${note.id}, '${dateStr}')" title="Delete note">
+                        <i class="bi bi-x"></i>
+                    </button>` : `<button class="organizer-item-delete" onclick="event.stopPropagation(); deleteNote(${note.id}, '${dateStr}')" title="Delete note">
+                        <i class="bi bi-x"></i>
+                    </button>`;
+            itemsContainer.innerHTML += `
+                <div class="organizer-item note" onclick="viewNote(${note.id})" title="${note.content}">
+                    <i class="bi bi-sticky"></i>
+                    <span class="organizer-item-text">${noteText}</span>
+                    ${deleteBtn}
+                </div>
+            `;
+        }
+    });
+    
+    // Remove existing Show All button if any
+    const existingShowAllBtn = dayElement.querySelector('.organizer-day-show-all-btn');
+    if (existingShowAllBtn) {
+        existingShowAllBtn.remove();
+    }
+    
+    // On mobile, check if items exceed view height and add Show All button if needed
+    if (isMobile) {
+        setTimeout(() => {
+            const itemsHeight = itemsContainer.scrollHeight;
+            const containerHeight = itemsContainer.clientHeight;
+            
+            // Only show "Show All" button if items actually exceed the visible height
+            // This means user can scroll within the day to see all items
+            if (itemsHeight > containerHeight) {
+                // Items exceed view height, add Show All button to open modal
+                const showAllBtn = document.createElement('button');
+                showAllBtn.className = 'organizer-day-show-all-btn';
+                showAllBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    showDayDetails(dateStr);
+                };
+                const remainingItems = Math.ceil((itemsHeight - containerHeight) / 50); // Approximate items not visible
+                showAllBtn.innerHTML = `<i class="bi bi-arrow-down-circle me-1"></i>Show All (${totalItems} items)`;
+                dayElement.appendChild(showAllBtn);
+            }
+        }, 300);
+    }
+}
+
+
+// Navigate to previous/next day
+function navigateToDay(direction) {
+    if (!currentFocusedDate) {
+        // If no day is focused, focus today
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        focusDay(todayStr, false);
+        return;
+    }
+    
+    const currentDate = new Date(currentFocusedDate);
+    currentDate.setDate(currentDate.getDate() + direction);
+    
+    // Check if we need to load a different month
+    const newYear = currentDate.getFullYear();
+    const newMonth = currentDate.getMonth() + 1;
+    
+    if (newYear !== currentYear || newMonth !== currentMonth) {
+        currentYear = newYear;
+        currentMonth = newMonth;
+        loadOrganizerMonth().then(() => {
+            const dateStr = `${newYear}-${String(newMonth).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
+            setTimeout(() => {
+                focusDay(dateStr, false);
+            }, 300);
+        });
+    } else {
+        const dateStr = `${newYear}-${String(newMonth).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
+        focusDay(dateStr, false);
+    }
+}
+
+// Go to today
+function goToToday() {
+    const today = new Date();
+    const todayYear = today.getFullYear();
+    const todayMonth = today.getMonth() + 1;
+    const todayDay = today.getDate();
+    
+    if (todayYear !== currentYear || todayMonth !== currentMonth) {
+        currentYear = todayYear;
+        currentMonth = todayMonth;
+        loadOrganizerMonth().then(() => {
+            const dateStr = `${todayYear}-${String(todayMonth).padStart(2, '0')}-${String(todayDay).padStart(2, '0')}`;
+            setTimeout(() => {
+                focusDay(dateStr, false);
+            }, 300);
+        });
+    } else {
+        const dateStr = `${todayYear}-${String(todayMonth).padStart(2, '0')}-${String(todayDay).padStart(2, '0')}`;
+        focusDay(dateStr, false);
+    }
+}
+
+// Open date picker modal
+function openDatePicker() {
+    // Populate year dropdown
+    const yearSelect = document.getElementById('datePickerYear');
+    if (yearSelect) {
+        yearSelect.innerHTML = '';
+        const currentYearNum = new Date().getFullYear();
+        for (let year = currentYearNum - 5; year <= currentYearNum + 5; year++) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            if (year === currentYear) {
+                option.selected = true;
+            }
+            yearSelect.appendChild(option);
+        }
+    }
+    
+    // Set month
+    const monthSelect = document.getElementById('datePickerMonth');
+    if (monthSelect) {
+        monthSelect.value = currentMonth;
+    }
+    
+    // Update days
+    updateDatePickerDays();
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('datePickerModal'));
+    modal.show();
+}
+
+// Update day options based on selected year and month
+function updateDatePickerDays() {
+    const yearSelect = document.getElementById('datePickerYear');
+    const monthSelect = document.getElementById('datePickerMonth');
+    const daySelect = document.getElementById('datePickerDay');
+    
+    if (!yearSelect || !monthSelect || !daySelect) return;
+    
+    const year = parseInt(yearSelect.value);
+    const month = parseInt(monthSelect.value);
+    const daysInMonth = new Date(year, month, 0).getDate();
+    
+    daySelect.innerHTML = '';
+    for (let day = 1; day <= daysInMonth; day++) {
+        const option = document.createElement('option');
+        option.value = day;
+        option.textContent = day;
+        if (day === new Date().getDate() && year === currentYear && month === currentMonth) {
+            option.selected = true;
+        }
+        daySelect.appendChild(option);
+    }
+}
+
+// Go to specific date
+function goToSpecificDate(year, month, day) {
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('datePickerModal'));
+    if (modal) {
+        modal.hide();
+    }
+    
+    if (year !== currentYear || month !== currentMonth) {
+        currentYear = year;
+        currentMonth = month;
+        loadOrganizerMonth().then(() => {
+            const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            setTimeout(() => {
+                focusDay(dateStr, false);
+            }, 300);
+        });
+    } else {
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        focusDay(dateStr, false);
+    }
 }
 
 function viewAppointment(appointmentId) {
@@ -981,6 +1790,8 @@ function deleteAppointment(appointmentId, patientName, date) {
 }
 
 function confirmDeleteAppointment(appointmentId) {
+    const overlayDate = currentFocusedDate;
+    
     fetch(`/api/appointments/${appointmentId}`, {
         method: 'DELETE',
         headers: {
@@ -992,7 +1803,14 @@ function confirmDeleteAppointment(appointmentId) {
     .then(data => {
         if (data.ok || data.success) {
             showToast('success', 'Appointment Deleted', 'The appointment has been deleted successfully.');
-            loadOrganizerMonth();
+            loadOrganizerMonth().then(() => {
+                // Reopen overlay if it was open
+                if (wasOverlayOpen && overlayDate) {
+                    setTimeout(() => {
+                        focusDay(overlayDate, false);
+                    }, 300);
+                }
+            });
         } else {
             showToast('error', 'Error', data.error || 'Failed to delete appointment');
         }
@@ -1008,6 +1826,8 @@ function deleteNote(noteId, date) {
 }
 
 function confirmDeleteNote(noteId) {
+    const overlayDate = currentFocusedDate;
+    
     fetch(`/api/notes/${noteId}`, {
         method: 'DELETE',
         headers: {
@@ -1019,7 +1839,14 @@ function confirmDeleteNote(noteId) {
     .then(data => {
         if (data.success) {
             showToast('success', 'Note Deleted', 'The note has been deleted successfully.');
-            loadOrganizerMonth();
+            loadOrganizerMonth().then(() => {
+                // Reopen overlay if it was open
+                if (wasOverlayOpen && overlayDate) {
+                    setTimeout(() => {
+                        focusDay(overlayDate, false);
+                    }, 300);
+                }
+            });
         } else {
             showToast('error', 'Error', data.message || 'Failed to delete note');
         }

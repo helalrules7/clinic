@@ -759,58 +759,114 @@
     color: var(--text);
 }
 
-/* Ensure delete modal is always on top */
-#deleteNoteModal {
+/* Ensure delete modals are always on top */
+#deleteNoteModal,
+#deleteAllNotesModal {
     z-index: 99999 !important;
 }
 
-#deleteNoteModal .modal-backdrop {
+#deleteNoteModal .modal-backdrop,
+#deleteAllNotesModal .modal-backdrop {
     z-index: 99998 !important;
 }
 
-#deleteNoteModal .modal-dialog {
+#deleteNoteModal .modal-dialog,
+#deleteAllNotesModal .modal-dialog {
     z-index: 100000 !important;
 }
 
-/* Glass effect for delete note modal */
-#deleteNoteModal .modal-content {
+/* Glass effect for delete note modals */
+#deleteNoteModal .modal-content,
+#deleteAllNotesModal .modal-content {
     /* Glass effect - similar to sidebar */
-    background: rgba(248, 250, 252, 0.35) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(226, 232, 240, 0.3) !important;
-    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
+    background: rgba(248, 250, 252, 0.7) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(226, 232, 240, 0.4) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.15);
     color: var(--text) !important;
 }
 
-.dark #deleteNoteModal .modal-content {
+.dark #deleteNoteModal .modal-content,
+.dark #deleteAllNotesModal .modal-content {
     background: rgba(11, 18, 32, 0.40) !important;
     border: 1px solid rgba(51, 65, 85, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 }
 
-#deleteNoteModal .modal-header {
+#deleteNoteModal .modal-header,
+#deleteAllNotesModal .modal-header {
     background: transparent !important;
-    border-bottom-color: rgba(226, 232, 240, 0.3) !important;
+    border-bottom-color: rgba(226, 232, 240, 0.4) !important;
     color: var(--text) !important;
 }
 
-.dark #deleteNoteModal .modal-header {
+.dark #deleteNoteModal .modal-header,
+.dark #deleteAllNotesModal .modal-header {
     border-bottom-color: rgba(51, 65, 85, 0.3) !important;
 }
 
-#deleteNoteModal .modal-body {
+#deleteNoteModal .modal-body,
+#deleteAllNotesModal .modal-body {
     background: transparent !important;
     color: var(--text) !important;
 }
 
-#deleteNoteModal .modal-footer {
+#deleteNoteModal .modal-footer,
+#deleteAllNotesModal .modal-footer {
     background: transparent !important;
-    border-top-color: rgba(226, 232, 240, 0.3) !important;
+    border-top-color: rgba(226, 232, 240, 0.4) !important;
 }
 
-.dark #deleteNoteModal .modal-footer {
+.dark #deleteNoteModal .modal-footer,
+.dark #deleteAllNotesModal .modal-footer {
     border-top-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+/* Close button white in dark mode */
+.dark #deleteNoteModal .modal-header .btn-close,
+.dark #deleteAllNotesModal .modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.9;
+}
+
+.dark #deleteNoteModal .modal-header .btn-close:hover,
+.dark #deleteAllNotesModal .modal-header .btn-close:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5);
+}
+
+/* Enable dragging */
+#deleteNoteModal .modal-content,
+#deleteAllNotesModal .modal-content {
+    cursor: move;
+}
+
+#deleteNoteModal .modal-dialog,
+#deleteAllNotesModal .modal-dialog {
+    cursor: default;
+    transition: transform 0.2s ease;
+    margin: 1.75rem auto;
+    position: relative;
+}
+
+#deleteNoteModal .modal-header,
+#deleteAllNotesModal .modal-header {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    cursor: move;
+}
+
+#deleteNoteModal .modal-header button,
+#deleteAllNotesModal .modal-header button {
+    cursor: pointer;
+}
+
+#deleteNoteModal .modal-dialog.dragging,
+#deleteAllNotesModal .modal-dialog.dragging {
+    transition: none !important;
 }
 
 /* Autocomplete Portal Styles */
@@ -1154,9 +1210,14 @@
                     <div class="color-option success" data-color="success" data-bg="#10b981" title="Success Green"></div>
                 </div>
             </div>
+
             <button class="btn btn-primary" id="addNoteBtn">
                 <i class="bi bi-plus-circle me-2"></i>
                 Add Note
+            </button>
+
+            <button class="btn btn-sm btn-outline-danger" onclick="showDeleteAllNotesConfirmation()" title="Delete All Notes">
+                <i class="bi bi-trash me-1"></i>Delete All
             </button>
         </div>
     </div>
@@ -2630,6 +2691,204 @@ async function createAlertFromNote(noteId) {
         console.error('Error creating alert:', error);
         alert('Failed to create alert: ' + error.message);
     }
+}
+
+// Show delete all notes confirmation
+function showDeleteAllNotesConfirmation() {
+    const modal = document.getElementById('deleteAllNotesModal');
+    if (!modal) {
+        // Create modal if it doesn't exist
+        const modalHtml = `
+            <div class="modal fade" id="deleteAllNotesModal" tabindex="-1" aria-labelledby="deleteAllNotesModalLabel" aria-hidden="true" style="z-index: 99999;">
+                <div class="modal-dialog modal-dialog-centered" style="z-index: 100000;">
+                    <div class="modal-content" style="z-index: 100001;">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="deleteAllNotesModalLabel" style="color: var(--text);">
+                                <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+                                Delete All Notes
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to delete <strong>ALL</strong> notes?</p>
+                            <p class="text-muted mb-0"><small>This action cannot be undone. All notes will be permanently deleted.</small></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-danger" id="confirmDeleteAllNotesBtn">
+                                <i class="bi bi-trash me-2"></i>
+                                Delete All Notes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Initialize draggable for the modal
+        makeNotesModalDraggable(document.getElementById('deleteAllNotesModal'));
+    }
+    
+    const modalInstance = new bootstrap.Modal(document.getElementById('deleteAllNotesModal'));
+    const confirmBtn = document.getElementById('confirmDeleteAllNotesBtn');
+    
+    // Remove previous event listeners
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    
+    // Add new event listener
+    newConfirmBtn.addEventListener('click', async function() {
+        await performDeleteAllNotes();
+        modalInstance.hide();
+    });
+    
+    modalInstance.show();
+}
+
+// Perform the actual delete all
+async function performDeleteAllNotes() {
+    const confirmBtn = document.getElementById('confirmDeleteAllNotesBtn');
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting...';
+    }
+    
+    try {
+        const response = await fetch('/api/notes/delete-all', {
+            method: 'DELETE',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Network error' }));
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="bi bi-trash me-2"></i>Delete All Notes';
+        }
+        
+        if (data.success) {
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            successMsg.style.cssText = 'top: 20px; right: 20px; z-index: 99999; min-width: 300px;';
+            successMsg.innerHTML = `
+                <i class="bi bi-check-circle me-2"></i>All notes have been deleted successfully!
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(successMsg);
+            
+            setTimeout(() => {
+                if (successMsg.parentNode) {
+                    successMsg.remove();
+                }
+            }, 3000);
+            
+            // Clear all widgets and show empty state
+            const container = document.getElementById('notesContainer');
+            const emptyState = document.getElementById('emptyState');
+            const widgets = container.querySelectorAll('.note-widget');
+            
+            widgets.forEach(widget => {
+                widget.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                widget.style.opacity = '0';
+                widget.style.transform = 'scale(0.8)';
+            });
+            
+            setTimeout(() => {
+                widgets.forEach(widget => widget.remove());
+                if (emptyState) {
+                    emptyState.style.display = 'block';
+                }
+            }, 300);
+        } else {
+            throw new Error(data.message || 'Failed to delete all notes');
+        }
+    } catch (error) {
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="bi bi-trash me-2"></i>Delete All Notes';
+        }
+        console.error('Error deleting all notes:', error);
+        alert('Failed to delete all notes: ' + error.message);
+    }
+}
+
+// Make modal draggable
+function makeNotesModalDraggable(modalElement) {
+    const modalDialog = modalElement.querySelector('.modal-dialog');
+    if (!modalDialog) return;
+    
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let xOffset = 0;
+    let yOffset = 0;
+    
+    const modalHeader = modalElement.querySelector('.modal-header');
+    if (!modalHeader) return;
+    
+    modalHeader.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', dragEnd);
+    
+    function dragStart(e) {
+        if (e.target.closest('button')) return;
+        
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
+        
+        if (e.target === modalHeader || modalHeader.contains(e.target)) {
+            isDragging = true;
+            modalDialog.classList.add('dragging');
+        }
+    }
+    
+    function drag(e) {
+        if (isDragging) {
+            e.preventDefault();
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+            
+            xOffset = currentX;
+            yOffset = currentY;
+            
+            setTranslate(currentX, currentY, modalDialog);
+        }
+    }
+    
+    function dragEnd(e) {
+        initialX = currentX;
+        initialY = currentY;
+        isDragging = false;
+        modalDialog.classList.remove('dragging');
+    }
+    
+    function setTranslate(xPos, yPos, el) {
+        el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+    }
+    
+    // Reset position when modal is hidden
+    modalElement.addEventListener('hidden.bs.modal', function() {
+        xOffset = 0;
+        yOffset = 0;
+        modalDialog.style.transform = '';
+    });
+}
+
+// Initialize draggable for existing delete note modal
+if (document.getElementById('deleteNoteModal')) {
+    makeNotesModalDraggable(document.getElementById('deleteNoteModal'));
 }
 </script>
 

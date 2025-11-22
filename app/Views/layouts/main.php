@@ -351,7 +351,7 @@
             margin-bottom: 2rem;
             margin-left: -2rem;
             margin-right: -2rem;
-            padding-top: 2rem;
+            padding-top: 1rem;
             padding-left: 2rem;
             padding-right: 2rem;
             padding-bottom: 1rem;
@@ -371,7 +371,7 @@
         }
         
         .top-bar.scrolled {
-            padding-top: 2rem;
+            padding-top: 1rem;
         }
         
         .dark .top-bar {
@@ -395,25 +395,271 @@
             align-items: center;
         }
         
-        .theme-toggle {
-            background: var(--card);
-            border: 1px solid var(--border);
-            color: var(--text);
+        /* Theme Toggle Switch */
+        :root {
+            --scale: 1;
         }
         
-        .theme-toggle:hover {
-            background: var(--bg);
-            border-color: var(--accent);
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: calc(var(--scale) * 60px);
+            height: calc(var(--scale) * 34px);
         }
         
-        /* Light mode: moon icon should be black on hover */
-        .theme-toggle:hover i.bi-moon {
-            color: #000000 !important;
+        .switch #themeToggleInput {
+            opacity: 0;
+            width: 0;
+            height: 0;
         }
         
-        /* Dark mode: sun icon keeps normal color on hover */
-        .dark .theme-toggle:hover i.bi-sun {
-            color: var(--text) !important;
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background-color: #2196f3;
+            transition: 0.4s;
+            z-index: 0;
+            overflow: hidden;
+        }
+        
+        .sun-moon {
+            position: absolute;
+            content: "";
+            height: calc(var(--scale) * 26px);
+            width: calc(var(--scale) * 26px);
+            left: calc(var(--scale) * 4px);
+            bottom: calc(var(--scale) * 4px);
+            background-color: yellow;
+            transition: 0.4s;
+        }
+        
+        #themeToggleInput:checked + .slider {
+            background-color: black;
+        }
+        
+        #themeToggleInput:focus + .slider {
+            box-shadow: 0 0 calc(var(--scale) * 1px) #2196f3;
+        }
+        
+        #themeToggleInput:checked + .slider .sun-moon {
+            transform: translateX(calc(var(--scale) * 26px));
+            background-color: white;
+            animation: rotate-center 0.6s ease-in-out both;
+        }
+        
+        .moon-dot {
+            opacity: 0;
+            transition: 0.4s;
+            fill: gray;
+        }
+        
+        #themeToggleInput:checked + .slider .sun-moon .moon-dot {
+            opacity: 1;
+        }
+        
+        .slider.round {
+            border-radius: calc(var(--scale) * 34px);
+        }
+        
+        .slider.round .sun-moon {
+            border-radius: 50%;
+        }
+        
+        #moon-dot-1 {
+            left: calc(var(--scale) * 10px);
+            top: calc(var(--scale) * 3px);
+            position: absolute;
+            width: calc(var(--scale) * 6px);
+            height: calc(var(--scale) * 6px);
+            z-index: 4;
+        }
+        
+        #moon-dot-2 {
+            left: calc(var(--scale) * 2px);
+            top: calc(var(--scale) * 10px);
+            position: absolute;
+            width: calc(var(--scale) * 10px);
+            height: calc(var(--scale) * 10px);
+            z-index: 4;
+        }
+        
+        #moon-dot-3 {
+            left: calc(var(--scale) * 16px);
+            top: calc(var(--scale) * 18px);
+            position: absolute;
+            width: calc(var(--scale) * 3px);
+            height: calc(var(--scale) * 3px);
+            z-index: 4;
+        }
+        
+        #light-ray-1,
+        #light-ray-3,
+        #light-ray-2 {
+            position: absolute;
+            z-index: -1;
+            fill: white;
+            opacity: 10%;
+        }
+        
+        #light-ray-1 {
+            left: calc(var(--scale) * -8px);
+            top: calc(var(--scale) * -8px);
+            width: calc(var(--scale) * 43px);
+            height: calc(var(--scale) * 43px);
+        }
+        
+        #light-ray-2 {
+            left: -50%;
+            top: -50%;
+            width: calc(var(--scale) * 55px);
+            height: calc(var(--scale) * 55px);
+        }
+        
+        #light-ray-3 {
+            left: calc(var(--scale) * -18px);
+            top: calc(var(--scale) * -18px);
+            width: calc(var(--scale) * 60px);
+            height: calc(var(--scale) * 60px);
+        }
+        
+        .cloud-light,
+        .cloud-dark {
+            position: absolute;
+            animation-name: cloud-move;
+            animation-duration: 6s;
+            animation-iteration-count: infinite;
+        }
+        
+        .cloud-light {
+            fill: #eee;
+        }
+        
+        .cloud-dark {
+            fill: #ccc;
+            animation-delay: 1s;
+        }
+        
+        #cloud-1 {
+            left: calc(var(--scale) * 30px);
+            top: calc(var(--scale) * 15px);
+            width: calc(var(--scale) * 40px);
+        }
+        
+        #cloud-2 {
+            left: calc(var(--scale) * 44px);
+            top: calc(var(--scale) * 10px);
+            width: calc(var(--scale) * 20px);
+        }
+        
+        #cloud-3 {
+            left: calc(var(--scale) * 18px);
+            top: calc(var(--scale) * 24px);
+            width: calc(var(--scale) * 30px);
+        }
+        
+        #cloud-4 {
+            left: calc(var(--scale) * 36px);
+            top: calc(var(--scale) * 18px);
+            width: calc(var(--scale) * 40px);
+        }
+        
+        #cloud-5 {
+            left: calc(var(--scale) * 48px);
+            top: calc(var(--scale) * 14px);
+            width: calc(var(--scale) * 20px);
+        }
+        
+        #cloud-6 {
+            left: calc(var(--scale) * 22px);
+            top: calc(var(--scale) * 26px);
+            width: calc(var(--scale) * 30px);
+        }
+        
+        @keyframes cloud-move {
+            0% {
+                transform: translateX(0px);
+            }
+            40% {
+                transform: translateX(calc(var(--scale) * 4px));
+            }
+            80% {
+                transform: translateX(calc(var(--scale) * -4px));
+            }
+            100% {
+                transform: translateX(0px);
+            }
+        }
+        
+        @keyframes rotate-center {
+            0% {
+                transform: translateX(calc(var(--scale) * 26px)) rotate(0);
+            }
+            100% {
+                transform: translateX(calc(var(--scale) * 26px)) rotate(360deg);
+            }
+        }
+        
+        .stars {
+            transform: translateY(calc(var(--scale) * -32px));
+            opacity: 0;
+            transition: 0.4s;
+        }
+        
+        .star {
+            fill: white;
+            position: absolute;
+            transition: 0.4s;
+            animation-name: star-twinkle;
+            animation-duration: 2s;
+            animation-iteration-count: infinite;
+        }
+        
+        #themeToggleInput:checked + .slider .stars {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        #star-1 {
+            width: calc(var(--scale) * 20px);
+            top: calc(var(--scale) * 2px);
+            left: calc(var(--scale) * 3px);
+            animation-delay: 0.3s;
+        }
+        
+        #star-2 {
+            width: calc(var(--scale) * 6px);
+            top: calc(var(--scale) * 16px);
+            left: calc(var(--scale) * 3px);
+        }
+        
+        #star-3 {
+            width: calc(var(--scale) * 12px);
+            top: calc(var(--scale) * 20px);
+            left: calc(var(--scale) * 10px);
+            animation-delay: 0.6s;
+        }
+        
+        #star-4 {
+            width: calc(var(--scale) * 18px);
+            top: calc(var(--scale) * 0px);
+            left: calc(var(--scale) * 18px);
+            animation-delay: 1.3s;
+        }
+        
+        @keyframes star-twinkle {
+            0% {
+                transform: scale(1);
+            }
+            40% {
+                transform: scale(1.2);
+            }
+            80% {
+                transform: scale(0.8);
+            }
+            100% {
+                transform: scale(1);
+            }
         }
         
         .card {
@@ -556,7 +802,7 @@
                 margin-top: -1rem;
                 margin-left: -1rem;
                 margin-right: -1rem;
-                padding-top: 2rem;
+                padding-top: 1rem;
                 padding-left: 1rem;
                 padding-right: 1rem;
                 padding-bottom: 1rem;
@@ -2256,9 +2502,63 @@
                     </a>
                 <?php endif; ?>
                 
-                <button id="themeToggle" class="btn btn-outline-secondary theme-toggle">
-                    <i class="bi bi-moon"></i>
-                </button>
+                <label class="switch" for="themeToggleInput">
+                    <input id="themeToggleInput" type="checkbox" />
+                    <div class="slider round">
+                        <div class="sun-moon">
+                            <svg id="moon-dot-1" class="moon-dot" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="50"></circle>
+                            </svg>
+                            <svg id="moon-dot-2" class="moon-dot" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="50"></circle>
+                            </svg>
+                            <svg id="moon-dot-3" class="moon-dot" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="50"></circle>
+                            </svg>
+                            <svg id="light-ray-1" class="light-ray" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="50"></circle>
+                            </svg>
+                            <svg id="light-ray-2" class="light-ray" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="50"></circle>
+                            </svg>
+                            <svg id="light-ray-3" class="light-ray" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="50"></circle>
+                            </svg>
+                            <svg id="cloud-1" class="cloud-dark" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="50"></circle>
+                            </svg>
+                            <svg id="cloud-2" class="cloud-dark" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="50"></circle>
+                            </svg>
+                            <svg id="cloud-3" class="cloud-dark" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="50"></circle>
+                            </svg>
+                            <svg id="cloud-4" class="cloud-light" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="50"></circle>
+                            </svg>
+                            <svg id="cloud-5" class="cloud-light" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="50"></circle>
+                            </svg>
+                            <svg id="cloud-6" class="cloud-light" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="50"></circle>
+                            </svg>
+                        </div>
+                        <div class="stars">
+                            <svg id="star-1" class="star" viewBox="0 0 20 20">
+                                <path d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"></path>
+                            </svg>
+                            <svg id="star-2" class="star" viewBox="0 0 20 20">
+                                <path d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"></path>
+                            </svg>
+                            <svg id="star-3" class="star" viewBox="0 0 20 20">
+                                <path d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"></path>
+                            </svg>
+                            <svg id="star-4" class="star" viewBox="0 0 20 20">
+                                <path d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </label>
             </div>
         </div>
         
@@ -2370,10 +2670,10 @@
         
         // Function to update UI elements based on theme
         function updateThemeUI(theme) {
-            // Update icon
-            const icon = document.querySelector('#themeToggle i');
-            if (icon) {
-                icon.className = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+            // Update checkbox state
+            const themeToggleInput = document.getElementById('themeToggleInput');
+            if (themeToggleInput) {
+                themeToggleInput.checked = theme === 'dark';
             }
             
             // Update logo
@@ -2459,12 +2759,11 @@
             // Mark theme as loaded to remove flash prevention
             document.documentElement.classList.add('theme-loaded');
             
-            // Theme toggle button click handler
-            const themeToggleBtn = document.getElementById('themeToggle');
-            if (themeToggleBtn) {
-                themeToggleBtn.onclick = async () => {
-                    const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-                    const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            // Theme toggle checkbox change handler
+            const themeToggleInput = document.getElementById('themeToggleInput');
+            if (themeToggleInput) {
+                themeToggleInput.addEventListener('change', async function() {
+                    const nextTheme = this.checked ? 'dark' : 'light';
                     
                     // Apply theme
                     apply(nextTheme);
@@ -2474,7 +2773,7 @@
                     
                     // Save to database
                     await saveThemeToDatabase(nextTheme);
-                };
+                });
             }
         })();
         
@@ -2534,29 +2833,173 @@
             }
         }
         
-        if (scrollToTopBtn) {
-            // Show/hide button based on scroll position
-            window.addEventListener('scroll', () => {
-                if (window.pageYOffset > 300) {
-                    scrollToTopBtn.classList.add('show');
-                } else {
-                    scrollToTopBtn.classList.remove('show');
+        // Load and apply personal preferences
+        async function loadAndApplyPersonalPreferences() {
+            try {
+                const response = await fetch('/api/doctor/settings', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.settings) {
+                        const settings = data.settings;
+                        
+                        // 1. Back to Top Display
+                        if (scrollToTopBtn) {
+                            const backToTopEnabled = settings.back_to_top_display !== false; // Default true
+                            if (!backToTopEnabled) {
+                                scrollToTopBtn.style.display = 'none';
+                            } else {
+                                scrollToTopBtn.style.display = '';
+                                // Show/hide button based on scroll position
+                                window.addEventListener('scroll', () => {
+                                    if (window.pageYOffset > 300) {
+                                        scrollToTopBtn.classList.add('show');
+                                    } else {
+                                        scrollToTopBtn.classList.remove('show');
+                                    }
+                                    // Update mobile dock position
+                                    updateMobileDockPosition();
+                                });
+                                
+                                // Scroll to top when button is clicked
+                                scrollToTopBtn.addEventListener('click', () => {
+                                    window.scrollTo({
+                                        top: 0,
+                                        behavior: 'smooth'
+                                    });
+                                });
+                            }
+                            // Initial position update
+                            updateMobileDockPosition();
+                        }
+                        
+                        // 2. Desktop Dock & Mobile Dock
+                        const dock = document.getElementById('quickAccessDock');
+                        if (dock) {
+                            const dockEnabled = settings.desktop_dock_enabled !== false; // Default true
+                            const mobileDockEnabled = settings.mobile_dock_enabled !== false; // Default true
+                            
+                            function updateDockVisibility() {
+                                const isMobile = window.innerWidth <= 768;
+                                
+                                if (isMobile) {
+                                    // Mobile: check mobile_dock_enabled
+                                    // Control visibility using mobile-minimized class
+                                    if (mobileDockEnabled !== false) {
+                                        dock.style.display = '';
+                                        // Ensure mobile-minimized class is present for mobile
+                                        if (!dock.classList.contains('mobile-minimized') && !dock.classList.contains('mobile-expanded')) {
+                                            dock.classList.add('mobile-minimized');
+                                        }
+                                    } else {
+                                        dock.style.display = 'none';
+                                    }
+                                } else {
+                                    // Desktop: check desktop_dock_enabled
+                                    dock.style.display = dockEnabled !== false ? '' : 'none';
+                                    // Remove mobile classes on desktop
+                                    dock.classList.remove('mobile-minimized', 'mobile-expanded');
+                                }
+                            }
+                            
+                            // Initial update
+                            updateDockVisibility();
+                            
+                            // Listen for window resize to update dock visibility
+                            let resizeTimeout;
+                            window.addEventListener('resize', function() {
+                                clearTimeout(resizeTimeout);
+                                resizeTimeout = setTimeout(updateDockVisibility, 100);
+                            });
+                        }
+                        
+                        // 3. Sidebar Items
+                        applySidebarItems(settings.sidebar_items_enabled);
+                    }
                 }
-                // Update mobile dock position
-                updateMobileDockPosition();
-            });
+            } catch (error) {
+                console.error('Error loading personal preferences:', error);
+            }
+        }
+        
+        // Apply sidebar items visibility
+        function applySidebarItems(enabledItems) {
+            if (!enabledItems) {
+                // Default: all items enabled
+                return;
+            }
             
-            // Scroll to top when button is clicked
-            scrollToTopBtn.addEventListener('click', () => {
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
+            // Parse if string
+            if (typeof enabledItems === 'string') {
+                enabledItems = JSON.parse(enabledItems);
+            }
+            
+            // Define sidebar item mappings
+            const sidebarMappings = {
+                'dashboard': '/doctor/dashboard',
+                'calendar': '/doctor/calendar',
+                'patients': '/doctor/patients',
+                'organizer': '/doctor/organizer',
+                'drugs': '/doctor/drugs',
+                'payments': '/doctor/payments',
+                'reports': '/doctor/reports',
+                'media': '/doctor/media',
+                'glasses': '/doctor/glasses',
+                'medications': '/doctor/medications',
+                'alerts': '/doctor/alerts',
+                'notes': '/doctor/notes',
+                'settings': '/doctor/settings',
+                'profile': '/doctor/profile',
+                'about': '/about',
+                'logout': '/logout'
+            };
+            
+            // Hide/show sidebar items
+            Object.keys(sidebarMappings).forEach(key => {
+                const url = sidebarMappings[key];
+                const navItems = document.querySelectorAll(`.nav-menu .nav-item a[href="${url}"]`);
+                navItems.forEach(item => {
+                    const navItem = item.closest('.nav-item');
+                    if (navItem) {
+                        if (enabledItems.includes(key)) {
+                            navItem.style.display = '';
+                        } else {
+                            navItem.style.display = 'none';
+                        }
+                    }
                 });
             });
-            
-            // Initial position update
-            updateMobileDockPosition();
         }
+        
+        // Callback for settings page to apply preferences
+        window.applyPersonalPreferencesCallback = function(preferences) {
+            if (preferences.back_to_top_display !== undefined) {
+                const scrollToTopBtn = document.getElementById('scrollToTop');
+                if (scrollToTopBtn) {
+                    scrollToTopBtn.style.display = preferences.back_to_top_display !== false ? '' : 'none';
+                }
+            }
+            
+            if (preferences.desktop_dock_enabled !== undefined) {
+                const dock = document.getElementById('quickAccessDock');
+                if (dock) {
+                    dock.style.display = preferences.desktop_dock_enabled !== false ? '' : 'none';
+                }
+            }
+            
+            if (preferences.sidebar_items_enabled) {
+                applySidebarItems(preferences.sidebar_items_enabled);
+            }
+        };
+        
+        // Load preferences on page load
+        loadAndApplyPersonalPreferences();
         
         // Alert System - Real-time notification system like chat
         (function() {
