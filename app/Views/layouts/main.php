@@ -2844,6 +2844,101 @@
             will-change: color, transform;
         }
         
+        /* Dock Stack Menu (macOS-style genie effect) */
+        .dock-item-stack {
+            cursor: pointer;
+        }
+        
+        .dock-stack-menu {
+            position: absolute;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            transform-origin: bottom center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: rgba(248, 250, 252, 0.95);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(226, 232, 240, 0.3);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            min-width: 200px;
+        }
+        
+        .dark .dock-stack-menu {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        
+        .dock-item-stack.active .dock-stack-menu {
+            transform: translateX(-50%) scale(1);
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        
+        .dock-stack-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .dock-stack-item i {
+            font-size: 1.25rem;
+            width: 24px;
+            text-align: center;
+            color: var(--accent);
+        }
+        
+        .dock-stack-item span {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .dock-stack-item:hover {
+            background: rgba(30, 144, 255, 0.1);
+            color: var(--accent);
+            transform: translateX(4px);
+        }
+        
+        .dark .dock-stack-item:hover {
+            background: rgba(30, 144, 255, 0.2);
+        }
+        
+        /* Genie effect animation */
+        @keyframes genieExpand {
+            0% {
+                transform: translateX(-50%) scaleY(0) scaleX(0.8);
+                opacity: 0;
+            }
+            50% {
+                transform: translateX(-50%) scaleY(0.5) scaleX(1.1);
+            }
+            100% {
+                transform: translateX(-50%) scaleY(1) scaleX(1);
+                opacity: 1;
+            }
+        }
+        
+        .dock-item-stack.active .dock-stack-menu {
+            animation: genieExpand 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        
         /* Show desktop dock only on screens larger than 768px */
         @media (min-width: 769px) {
             .quick-access-dock {
@@ -3234,7 +3329,7 @@
                 </div>
                 <div class="nav-item has-submenu <?= ($this->isActiveRoute('/doctor/glasses') || $this->isActiveRoute('/doctor/medications')) ? 'active' : '' ?>">
                     <a href="#" class="nav-link nav-link-toggle">
-                        <i class="bi bi-prescription"></i>
+                        <i class="bi bi-archive"></i>
                         Medical Storage
                         <i class="bi bi-chevron-down submenu-arrow"></i>
                     </a>
@@ -3613,7 +3708,7 @@
                     </a>
                     <a href="/doctor/media" class="dock-stack-item">
                         <i class="bi bi-images"></i>
-                        <span>Patients Media</span>
+                        <span>Media</span>
                     </a>
                 </div>
             </div>
@@ -3851,6 +3946,41 @@
                     navItem.classList.add('expanded');
                 }
             });
+        })();
+        
+        // Dock Stack Menu functionality (macOS-style genie effect)
+        (function() {
+            const medicalStorageDockItem = document.getElementById('medicalStorageDockItem');
+            const medicalStorageStackMenu = document.getElementById('medicalStorageStackMenu');
+            
+            if (medicalStorageDockItem && medicalStorageStackMenu) {
+                // Toggle stack menu on click
+                medicalStorageDockItem.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.classList.toggle('active');
+                });
+                
+                // Close stack menu when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!medicalStorageDockItem.contains(e.target)) {
+                        medicalStorageDockItem.classList.remove('active');
+                    }
+                });
+                
+                // Close stack menu when clicking on a stack item
+                const stackItems = medicalStorageStackMenu.querySelectorAll('.dock-stack-item');
+                stackItems.forEach(item => {
+                    item.addEventListener('click', function() {
+                        medicalStorageDockItem.classList.remove('active');
+                    });
+                });
+                
+                // Prevent closing when clicking inside the stack menu
+                medicalStorageStackMenu.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
         })();
         
         // Top-bar scroll effect
