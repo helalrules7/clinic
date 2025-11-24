@@ -47,6 +47,24 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Theme initialization script - Must run before CSS to prevent flash -->
+    <script>
+        (function() {
+            // Read theme from localStorage immediately (before page renders)
+            const savedTheme = localStorage.getItem('appTheme');
+            
+            if (savedTheme === 'light' || savedTheme === 'dark') {
+                // Apply theme immediately
+                document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+                document.documentElement.classList.add('theme-loaded');
+            } else {
+                // Default to dark if no saved theme
+                document.documentElement.classList.add('dark');
+                document.documentElement.classList.add('theme-loaded');
+            }
+        })();
+    </script>
+    
     <style>
         :root {
             --bg: #f8fafc;
@@ -336,6 +354,81 @@
             text-align: center;
         }
         
+        /* Submenu Styles */
+        .nav-item.has-submenu {
+            position: relative;
+        }
+        
+        .nav-link-toggle {
+            justify-content: space-between;
+        }
+        
+        .submenu-arrow {
+            margin-left: auto;
+            margin-right: 0;
+            transition: transform 0.3s ease;
+            font-size: 0.875rem;
+        }
+        
+        .nav-item.has-submenu.expanded .submenu-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .nav-submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            margin-left: 1rem;
+            margin-top: 0.25rem;
+        }
+        
+        .nav-item.has-submenu.expanded .nav-submenu {
+            max-height: 200px;
+        }
+        
+        .nav-submenu-link {
+            display: flex;
+            align-items: center;
+            padding: 0.625rem 1rem;
+            border-radius: 6px;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            margin: 0.25rem 0;
+        }
+        
+        .nav-submenu-link:hover {
+            background: var(--bg);
+            color: var(--accent);
+            transform: translateX(4px);
+        }
+        
+        .nav-submenu-link.active {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .nav-submenu-link i {
+            margin-right: 0.75rem;
+            width: 18px;
+            text-align: center;
+            font-size: 0.875rem;
+        }
+        
+        /* Auto-expand if active */
+        .nav-item.has-submenu.active .nav-submenu {
+            max-height: 200px;
+        }
+        
+        .nav-item.has-submenu.active .submenu-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .nav-item.has-submenu.active.expanded .nav-submenu {
+            max-height: 200px;
+        }
+        
         .main-content {
             margin-left: var(--sidebar-width);
             padding: 2rem;
@@ -393,6 +486,57 @@
             display: flex;
             gap: 1rem;
             align-items: center;
+        }
+        
+        /* Notifications Toggle Button - Bell icon without borders */
+        .notifications-toggle {
+            position: relative;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+        }
+        
+        .notifications-toggle:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--accent);
+            transform: scale(1.1);
+        }
+        
+        .dark .notifications-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .notifications-toggle i {
+            font-size: 1.25rem;
+        }
+        
+        .notifications-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border: 2px solid var(--card);
+        }
+        
+        .dark .notifications-badge {
+            border-color: var(--card);
         }
         
         /* Theme Toggle Switch */
@@ -659,6 +803,636 @@
             }
             100% {
                 transform: scale(1);
+            }
+        }
+        
+        /* Notifications Panel - Full Transparency with Liquid Glass Effect */
+        .notifications-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            z-index: 1000000;
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            pointer-events: none;
+        }
+        
+        .notifications-panel.show {
+            right: 0;
+            pointer-events: auto;
+        }
+        
+        .notifications-panel-content {
+            pointer-events: auto;
+        }
+        
+        .notifications-panel-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 999999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            background: rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            pointer-events: none;
+        }
+        
+        .notifications-panel-overlay.show {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        
+        .notifications-panel-content {
+            width: 100%;
+            height: 100%;
+            /* Completely Transparent - Only header visible */
+            background: transparent;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            border: none;
+            box-shadow: none;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            pointer-events: auto;
+        }
+        
+        .dark .notifications-panel-content {
+            background: transparent;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            border: none;
+            box-shadow: none;
+        }
+        
+        .notifications-panel-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            /* Visible header with glass effect */
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 0 0 20px 20px;
+            margin-bottom: 1rem;
+        }
+        
+        .dark .notifications-panel-header {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+            background: rgba(11, 18, 32, 0.35) !important;
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+        }
+        
+        .notifications-panel-header h5 {
+            margin: 0;
+            color: #1a1a1a;
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+        
+        .dark .notifications-panel-header h5 {
+            color: rgba(255, 255, 255, 0.95);
+        }
+        
+        .notifications-panel-header-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .notifications-panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            padding-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            background: transparent;
+            /* Height will be calculated dynamically via JavaScript */
+        }
+        
+        /* Notification Item - Real Liquid Glass Card - Maximum opacity with glass effect */
+        .notification-item {
+            position: relative;
+            padding: 12px 16px;
+            border-radius: 30px;
+            /* Glass effect - Maximum opacity while maintaining glass effect */
+            background: rgba(248, 250, 252, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(255, 255, 255, 0.2) inset;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            overflow: hidden;
+            min-height: auto;
+            max-height: none;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .notification-item::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.2) 0%,
+                rgba(255, 255, 255, 0.05) 30%,
+                transparent 50%,
+                rgba(255, 255, 255, 0.05) 70%,
+                rgba(255, 255, 255, 0.15) 100%);
+            border-radius: 30px;
+            filter: blur(0.5px);
+            z-index: -1;
+            opacity: 0.9;
+            transition: all 0.3s ease;
+        }
+        
+        .notification-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, 
+                rgba(255, 255, 255, 0.12) 0%,
+                rgba(255, 255, 255, 0.04) 50%,
+                transparent 100%);
+            border-radius: 30px 30px 32px 32px;
+            pointer-events: none;
+            opacity: 0.9;
+        }
+        
+        .dark .notification-item {
+            /* Glass effect - Maximum opacity for dark mode */
+            background: rgba(11, 18, 32, 0.98);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.3),
+                0 1px 2px rgba(255, 255, 255, 0.15) inset;
+        }
+        
+        .notification-item:hover {
+            transform: translateY(-4px) scale(1.02);
+            background: rgba(248, 250, 252, 0.95);
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.18),
+                0 2px 4px rgba(255, 255, 255, 0.2) inset;
+        }
+        
+        .notification-item:hover::before {
+            opacity: 0.9;
+        }
+        
+        .dark .notification-item:hover {
+            background: rgba(11, 18, 32, 1);
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.5),
+                0 2px 4px rgba(255, 255, 255, 0.15) inset;
+        }
+        
+        .notification-item.unread::before {
+            border-left: 4px solid var(--accent);
+        }
+        
+        .notification-item.read {
+            opacity: 0.7;
+        }
+        
+        /* Notification Icon */
+        .notification-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 0.5px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 2px 6px rgba(0, 0, 0, 0.1),
+                0 1px 1px rgba(255, 255, 255, 0.2) inset;
+            flex-shrink: 0;
+        }
+        
+        .notification-body {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow: hidden;
+        }
+        
+        .notification-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        
+        .notification-item-title {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-size: 0.95rem;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin: 0;
+            flex: 1;
+        }
+        
+        .dark .notification-item-title {
+            color: rgba(255, 255, 255, 0.95);
+        }
+        
+        .notification-item-time {
+            font-size: 0.7rem;
+            color: #666;
+            font-weight: 400;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        .dark .notification-item-time {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .notification-item-message {
+            color: #333;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            margin: 0;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            max-width: 100%;
+        }
+        
+        .dark .notification-item-message {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .notification-item-close {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 0.5px solid rgba(0, 0, 0, 0.2);
+            color: #333;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            opacity: 0;
+            z-index: 11;
+        }
+        
+        .dark .notification-item-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: 0.5px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+        
+        .notification-item:hover .notification-item-close {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .notification-item-close:hover {
+            background: rgba(255, 99, 99, 0.8);
+            color: white;
+            transform: scale(1.1);
+            border-color: rgba(255, 99, 99, 0.5);
+        }
+        
+        .notification-item-patient {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 0.75rem;
+            color: #666;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        .dark .notification-item-patient {
+            border-top-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        /* Modal z-index fix */
+        #allNotificationsModal {
+            z-index: 10000001 !important;
+        }
+        
+        #allNotificationsModal + .modal-backdrop {
+            z-index: 10000000 !important;
+        }
+        
+        
+        
+        .notifications-empty {
+            text-align: center;            
+            background: rgba(248, 250, 252, 0.35);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+            padding: 3rem 1rem;
+            color: var(--text) !important;
+            border-radius: 50px !important;
+        }
+        
+        .dark .notifications-empty {
+            background: rgba(11, 18, 32, 0.35) !important;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border:none !important;
+            color:var(--text) !important;∂
+        }
+        
+        .notifications-empty i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+            color: #999;
+        }
+        
+        .dark .notifications-empty i {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Aqua Glass Button - Maximum opacity with glass effect */
+        .view-all-notifications-btn {
+            margin-top: 1rem;
+            padding: 16px;
+            border-radius: 30px;
+            border: none;
+            /* Glass effect - Maximum opacity while maintaining glass effect */
+            background: rgba(248, 250, 252, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+            color: #1a1a1a;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(255, 255, 255, 0.2) inset;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .view-all-notifications-btn::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.2) 0%,
+                rgba(255, 255, 255, 0.05) 30%,
+                transparent 50%,
+                rgba(255, 255, 255, 0.05) 70%,
+                rgba(255, 255, 255, 0.15) 100%);
+            border-radius: 30px;
+            filter: blur(0.5px);
+            z-index: -1;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+        
+        .view-all-notifications-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, 
+                rgba(255, 255, 255, 0.12) 0%,
+                rgba(255, 255, 255, 0.04) 50%,
+                transparent 100%);
+            border-radius: 30px 30px 32px 32px;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+        
+        .dark .view-all-notifications-btn {
+            /* Glass effect - Maximum opacity for dark mode */
+            background: rgba(11, 18, 32, 0.35) !important;
+                border: 1px solid rgba(51, 65, 85, 0.5);
+            color: var(--text) !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.3),
+                0 1px 2px rgba(255, 255, 255, 0.15) inset;
+        }
+        
+        .view-all-notifications-btn:hover {
+            transform: translateY(-4px) scale(1.02);
+            background: rgba(248, 250, 252, 0.95);
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.18),
+                0 2px 4px rgba(255, 255, 255, 0.2) inset;
+        }
+        
+        .view-all-notifications-btn:hover::before {
+            opacity: 0.9;
+        }
+        
+        .dark .view-all-notifications-btn:hover {
+            background: rgba(11, 18, 32, 1);
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.5),
+                0 2px 4px rgba(255, 255, 255, 0.15) inset;
+            color: var(--text) !important;
+            border:none !important;
+            background: rgba(11, 18, 32, 0.35) !important;
+        }
+        
+        .view-all-notifications-btn::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, 
+                transparent 30%,
+                rgba(255, 255, 255, 0.3) 50%,
+                transparent 70%);
+            transform: rotate(45deg);
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
+        
+        .view-all-notifications-btn:hover::before {
+            opacity: 1;
+            animation: shimmer 1.5s infinite;
+        }
+        
+        .view-all-notifications-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(0, 150, 255, 0.2) 0%,
+                rgba(0, 150, 255, 0.1) 50%,
+                transparent 100%);
+            border-radius: 20px;
+            pointer-events: none;
+        }
+        
+        .view-all-notifications-btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            background: rgba(0, 150, 255, 0.25);
+            box-shadow: 
+                0 8px 25px rgba(0, 150, 255, 0.3),
+                0 2px 5px rgba(0, 150, 255, 0.2) inset;
+            border-color: rgba(0, 150, 255, 0.4);
+        }
+        
+        .dark .view-all-notifications-btn {
+            background: rgba(0, 150, 255, 0.2);
+            border-color: rgba(0, 150, 255, 0.4);
+            color: #66b3ff;
+        }
+        
+        .dark .view-all-notifications-btn:hover {
+            background: rgba(0, 150, 255, 0.3);
+            box-shadow: 
+                0 8px 25px rgba(0, 150, 255, 0.4),
+                0 2px 5px rgba(0, 150, 255, 0.3) inset;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .notifications-panel {
+                width: 75%;
+                right: -75%;
+            }
+            
+            .notifications-panel-body {
+                max-height: 80vh;
+            }
+            
+            .notification-item {
+                padding: 12px;
+                min-height: 60px;
+                border-radius: 20px;
+            }
+            
+            .notification-item-title {
+                font-size: 0.9rem;
+            }
+            
+            .notification-item-message {
+                font-size: 0.85rem;
+            }
+            
+            .notification-icon {
+                font-size: 1.2rem;
+                width: 35px;
+                height: 35px;
+            }
+            
+            .notification-item-close {
+                width: 24px;
+                height: 24px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .notifications-panel {
+                width: 80%;
+                right: -80%;
+            }
+            
+            .notifications-panel-body {
+                max-height: 80vh;
+                padding: 0.75rem;
+            }
+            
+            .notification-item {
+                padding: 8px 10px;
+                min-height: auto;
+                border-radius: 15px;
+                align-items: flex-start;
+            }
+            
+            .notification-item-title {
+                font-size: 0.8rem;
+            }
+            
+            .notification-item-message {
+                font-size: 0.7rem;
+                line-height: 1.3;
+            }
+            
+            .notification-item-time {
+                font-size: 0.6rem;
+            }
+            
+            .notification-icon {
+                font-size: 1rem;
+                width: 28px;
+                height: 28px;
+                flex-shrink: 0;
+            }
+            
+            .notification-item-close {
+                width: 20px;
+                height: 20px;
+                font-size: 0.75rem;
+            }
+            
+            .notification-item-patient {
+                font-size: 0.65rem;
             }
         }
         
@@ -1287,6 +2061,33 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
         
+        /* Snooze button - Dark/Light mode responsive */
+        .snooze-btn {
+            background: rgba(255, 255, 255, 0.3) !important;
+            border: 1px solid rgba(70, 130, 180, 0.5) !important;
+            color: #4682B4 !important;
+            transition: all 0.2s ease;
+        }
+        
+        .snooze-btn:hover {
+            background: rgba(255, 255, 255, 0.5) !important;
+            border-color: #4682B4 !important;
+            color: #4682B4 !important;
+        }
+        
+        /* Dark mode snooze button */
+        .dark .snooze-btn {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            color: var(--text) !important;
+        }
+        
+        .dark .snooze-btn:hover {
+            background: rgba(255, 255, 255, 0.2) !important;
+            border-color: rgba(255, 255, 255, 0.5) !important;
+            color: var(--text) !important;
+        }
+        
         /* Toast Container Styles */
         .toast-container {
             max-width: 100%;
@@ -1494,6 +2295,151 @@
             
             .push-notification-toast .btn:last-child {
                 margin-bottom: 0;
+            }
+        }
+        
+        /* Forum Notification Toast Container - Top Right */
+        #forumToastContainer {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 10001;
+            max-width: 400px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            pointer-events: none;
+        }
+        
+        #forumToastContainer .toast {
+            pointer-events: auto;
+            min-width: 300px;
+            max-width: 400px;
+            margin: 0;
+        }
+        
+        /* Forum Toast - Liquid Glass Effect */
+        .forum-toast {
+            background: rgba(248, 250, 252, 0.85) !important;
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(226, 232, 240, 0.5) !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(255, 255, 255, 0.2) inset;
+            color: var(--text) !important;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .forum-toast::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.2) 0%,
+                rgba(255, 255, 255, 0.05) 30%,
+                transparent 50%,
+                rgba(255, 255, 255, 0.05) 70%,
+                rgba(255, 255, 255, 0.15) 100%);
+            border-radius: 16px;
+            filter: blur(0.5px);
+            z-index: -1;
+            opacity: 0.9;
+        }
+        
+        .forum-toast::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, 
+                rgba(255, 255, 255, 0.12) 0%,
+                rgba(255, 255, 255, 0.04) 50%,
+                transparent 100%);
+            border-radius: 16px 16px 18px 18px;
+            pointer-events: none;
+            opacity: 0.9;
+        }
+        
+        .dark .forum-toast {
+            background: rgba(11, 18, 32, 0.98) !important;
+            border: 1px solid rgba(51, 65, 85, 0.5) !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.3),
+                0 1px 2px rgba(255, 255, 255, 0.15) inset;
+        }
+        
+        .forum-toast .toast-header {
+            background: transparent !important;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.3) !important;
+            color: var(--text) !important;
+            padding: 0.75rem 1rem !important;
+        }
+        
+        .dark .forum-toast .toast-header {
+            border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+        }
+        
+        .forum-toast .toast-body {
+            color: var(--text) !important;
+            padding: 0.75rem 1rem !important;
+        }
+        
+        .forum-toast .btn-close {
+            filter: none !important;
+            opacity: 0.7;
+            transition: all 0.2s ease;
+        }
+        
+        .forum-toast .btn-close:hover {
+            opacity: 1;
+        }
+        
+        .dark .forum-toast .btn-close {
+            filter: invert(1) brightness(2) !important;
+            opacity: 0.9;
+        }
+        
+        .dark .forum-toast .btn-close:hover {
+            opacity: 1;
+            filter: invert(1) brightness(2.5) !important;
+        }
+        
+        /* Forum Toast Animation */
+        @keyframes slideInFromRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .forum-toast {
+            animation: slideInFromRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        
+        /* Mobile responsive for forum toast */
+        @media (max-width: 768px) {
+            #forumToastContainer {
+                top: 1rem;
+                right: 1rem;
+                max-width: calc(100% - 2rem);
+            }
+            
+            #forumToastContainer .toast {
+                min-width: auto;
+                max-width: 100%;
             }
         }
         
@@ -2263,6 +3209,12 @@
                     </a>
                 </div>
                 <div class="nav-item">
+                    <a href="/doctor/forum" class="nav-link <?= $this->isActiveRoute('/doctor/forum') ? 'active' : '' ?>">
+                        <i class="bi bi-chat-dots"></i>
+                        Discussions
+                    </a>
+                </div>
+                <div class="nav-item">
                     <a href="/doctor/drugs" class="nav-link <?= $this->isActiveRoute('/doctor/drugs') ? 'active' : '' ?>">
                         <i class="bi bi-capsule"></i>
                         Drugs Database
@@ -2280,23 +3232,26 @@
                         Reports
                     </a>
                 </div>
-                <div class="nav-item">
-                    <a href="/doctor/media" class="nav-link <?= $this->isActiveRoute('/doctor/media') ? 'active' : '' ?>">
-                        <i class="bi bi-images"></i>
-                        Media
+                <div class="nav-item has-submenu <?= ($this->isActiveRoute('/doctor/glasses') || $this->isActiveRoute('/doctor/medications')) ? 'active' : '' ?>">
+                    <a href="#" class="nav-link nav-link-toggle">
+                        <i class="bi bi-prescription"></i>
+                        Medical Storage
+                        <i class="bi bi-chevron-down submenu-arrow"></i>
                     </a>
-                </div>
-                <div class="nav-item">
-                    <a href="/doctor/glasses" class="nav-link <?= $this->isActiveRoute('/doctor/glasses') ? 'active' : '' ?>">
-                        <i class="bi bi-eyeglasses"></i>
-                        Glasses Prescriptions
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="/doctor/medications" class="nav-link <?= $this->isActiveRoute('/doctor/medications') ? 'active' : '' ?>">
-                        <i class="bi bi-capsule"></i>
-                        Prescriptions
-                    </a>
+                    <div class="nav-submenu">
+                        <a href="/doctor/medications" class="nav-submenu-link <?= $this->isActiveRoute('/doctor/medications') ? 'active' : '' ?>">
+                            <i class="bi bi-capsule"></i>
+                            Medical Prescriptions
+                        </a>
+                        <a href="/doctor/glasses" class="nav-submenu-link <?= $this->isActiveRoute('/doctor/glasses') ? 'active' : '' ?>">
+                            <i class="bi bi-eyeglasses"></i>
+                            Glasses Prescriptions
+                        </a>
+                        <a href="/doctor/media" class="nav-submenu-link <?= $this->isActiveRoute('/doctor/media') ? 'active' : '' ?>">
+                            <i class="bi bi-images"></i>
+                            Patients Media
+                        </a>
+                    </div>
                 </div>
                 <div class="nav-item">
                     <a href="/doctor/alerts" class="nav-link <?= $this->isActiveRoute('/doctor/alerts') ? 'active' : '' ?>">
@@ -2382,6 +3337,12 @@
                     <a href="/doctor/medications" class="nav-link <?= $this->isActiveRoute('/doctor/medications') ? 'active' : '' ?>">
                         <i class="bi bi-capsule"></i>
                         Prescriptions
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/notifications" class="nav-link <?= $this->isActiveRoute('/admin/notifications') ? 'active' : '' ?>">
+                        <i class="bi bi-bell"></i>
+                        System Notifications
                     </a>
                 </div>
                 <div class="nav-item">
@@ -2502,6 +3463,12 @@
                     </a>
                 <?php endif; ?>
                 
+                <!-- Notifications Icon -->
+                <button class="btn btn-outline-secondary notifications-toggle" id="notificationsToggle" title="Notifications">
+                    <i class="bi bi-bell"></i>
+                    <span class="notifications-badge" id="notificationsBadge" style="display: none;">0</span>
+                </button>
+                
                 <label class="switch" for="themeToggleInput">
                     <input id="themeToggleInput" type="checkbox" />
                     <div class="slider round">
@@ -2566,10 +3533,40 @@
         <?= $content ?>
     </div>
     
+    <!-- Forum Toast Container (Top Right) -->
+    <div id="forumToastContainer"></div>
+    
     <!-- Scroll to Top Button -->
     <button class="scroll-to-top" id="scrollToTop" aria-label="Scroll to top">
         <i class="bi bi-arrow-up"></i>
     </button>
+    
+    <!-- Notifications Panel -->
+    <div class="notifications-panel-overlay" id="notificationsOverlay"></div>
+    <div class="notifications-panel" id="notificationsPanel">
+        <div class="notifications-panel-content">
+            <div class="notifications-panel-header">
+                <h5><i class="bi bi-bell me-2"></i>Notifications</h5>
+                <div class="notifications-panel-header-actions">
+                    <button class="btn btn-sm btn-outline-secondary" id="markAllReadBtn" title="Mark All Read">
+                        <i class="bi bi-check-all"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" id="clearAllBtn" title="Clear All">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" id="closeNotificationsBtn" title="Close">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="notifications-panel-body" id="notificationsBody">
+                <div class="notifications-empty">
+                    <i class="bi bi-bell-slash"></i>
+                    <p>No notifications</p>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <!-- Quick Access Dock (Desktop Only) -->
     <div class="quick-access-dock" id="quickAccessDock">
@@ -2594,22 +3591,32 @@
                 <i class="bi bi-sticky"></i>
                 <span class="htooltip">Notes</span>
             </a>
-            <a href="/doctor/medications" class="dock-item" title="Prescriptions">
-                <i class="bi bi-prescription"></i>
-                <span class="htooltip">Prescriptions</span>
-            </a>
-            <a href="/doctor/glasses" class="dock-item" title="Glasses Prescriptions">
-                <i class="bi bi-eyeglasses"></i>
-                <span class="htooltip">Glasses Prescriptions</span>
+            <a href="/doctor/forum" class="dock-item" title="Doctor Forum">
+                <i class="bi bi-chat-dots"></i>
+                <span class="htooltip">Doctor Forum</span>
             </a>
             <a href="/doctor/payments" class="dock-item" title="Financial">
                 <i class="bi bi-credit-card"></i>
                 <span class="htooltip">Financial</span>
             </a>
-            <a href="/doctor/media" class="dock-item" title="Media">
-                <i class="bi bi-images"></i>
-                <span class="htooltip">Media</span>
-            </a>
+            <div class="dock-item dock-item-stack" id="medicalStorageDockItem" title="Medical Storage">
+                <i class="bi bi-archive"></i>
+                <span class="htooltip">Medical Storage</span>
+                <div class="dock-stack-menu" id="medicalStorageStackMenu">
+                    <a href="/doctor/medications" class="dock-stack-item">
+                        <i class="bi bi-prescription"></i>
+                        <span>Medical Prescriptions</span>
+                    </a>
+                    <a href="/doctor/glasses" class="dock-stack-item">
+                        <i class="bi bi-eyeglasses"></i>
+                        <span>Glasses Prescriptions</span>
+                    </a>
+                    <a href="/doctor/media" class="dock-stack-item">
+                        <i class="bi bi-images"></i>
+                        <span>Patients Media</span>
+                    </a>
+                </div>
+            </div>
             <a href="/doctor/alerts" class="dock-item" title="Alerts">
                 <i class="bi bi-bell"></i>
                 <span class="htooltip">Alerts</span>
@@ -2689,8 +3696,11 @@
             }
         }
         
-        // Function to save theme to database
+        // Function to save theme to database and localStorage
         async function saveThemeToDatabase(theme) {
+            // Save to localStorage immediately (synchronous, no delay)
+            localStorage.setItem('appTheme', theme);
+            
             try {
                 const response = await fetch('/api/doctor/settings', {
                     method: 'PUT',
@@ -2734,23 +3744,27 @@
             return null;
         }
         
-        // Initialize theme - Dark by default
+        // Initialize theme - Load from localStorage first, then sync with database
         (async function() {
-            // Set default to dark immediately to prevent flash
-            apply('dark');
-            updateThemeUI('dark');
+            // Read theme from localStorage first (fast, synchronous)
+            let savedTheme = localStorage.getItem('appTheme');
             
-            // Load theme from database
-            let savedTheme = await loadThemeFromDatabase();
-            
-            // If no theme in database, default to 'dark'
-            if (!savedTheme) {
-                savedTheme = 'dark';
-                // Save default theme to database
-                await saveThemeToDatabase(savedTheme);
+            // If no theme in localStorage, load from database
+            if (!savedTheme || (savedTheme !== 'light' && savedTheme !== 'dark')) {
+                savedTheme = await loadThemeFromDatabase();
+                
+                // If no theme in database, default to 'dark'
+                if (!savedTheme) {
+                    savedTheme = 'dark';
+                    // Save default theme to database and localStorage
+                    await saveThemeToDatabase(savedTheme);
+                } else {
+                    // Save to localStorage for next time
+                    localStorage.setItem('appTheme', savedTheme);
+                }
             }
             
-            // Apply theme from database (may override default)
+            // Apply theme (should already be applied by inline script, but ensure it's correct)
             apply(savedTheme);
             
             // Update UI elements
@@ -2759,19 +3773,29 @@
             // Mark theme as loaded to remove flash prevention
             document.documentElement.classList.add('theme-loaded');
             
+            // Sync with database in background (in case localStorage and database are out of sync)
+            loadThemeFromDatabase().then(dbTheme => {
+                if (dbTheme && dbTheme !== savedTheme) {
+                    // Database has different theme, update localStorage and apply
+                    localStorage.setItem('appTheme', dbTheme);
+                    apply(dbTheme);
+                    updateThemeUI(dbTheme);
+                }
+            });
+            
             // Theme toggle checkbox change handler
             const themeToggleInput = document.getElementById('themeToggleInput');
             if (themeToggleInput) {
                 themeToggleInput.addEventListener('change', async function() {
                     const nextTheme = this.checked ? 'dark' : 'light';
                     
-                    // Apply theme
+                    // Apply theme immediately
                     apply(nextTheme);
                     
                     // Update UI elements
                     updateThemeUI(nextTheme);
                     
-                    // Save to database
+                    // Save to localStorage and database
                     await saveThemeToDatabase(nextTheme);
                 });
             }
@@ -2804,6 +3828,30 @@
         } else {
             console.error('Sidebar toggle elements not found');
         }
+        
+        // Submenu toggle functionality
+        (function() {
+            const submenuToggles = document.querySelectorAll('.nav-link-toggle');
+            
+            submenuToggles.forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const navItem = this.closest('.nav-item.has-submenu');
+                    if (navItem) {
+                        navItem.classList.toggle('expanded');
+                    }
+                });
+            });
+            
+            // Auto-expand if any submenu item is active
+            const activeSubmenuItems = document.querySelectorAll('.nav-submenu-link.active');
+            activeSubmenuItems.forEach(item => {
+                const navItem = item.closest('.nav-item.has-submenu');
+                if (navItem) {
+                    navItem.classList.add('expanded');
+                }
+            });
+        })();
         
         // Top-bar scroll effect
         const topBar = document.querySelector('.top-bar');
@@ -2954,6 +4002,7 @@
                 'medications': '/doctor/medications',
                 'alerts': '/doctor/alerts',
                 'notes': '/doctor/notes',
+                'forum': '/doctor/forum',
                 'settings': '/doctor/settings',
                 'profile': '/doctor/profile',
                 'about': '/about',
@@ -3073,6 +4122,7 @@
                             
                             // Check if this exact alert instance was already shown
                             if (!shownAlertIds.has(alertKey)) {
+                                playNotificationSound(); // Play sound for new alert
                                 showAlertToast(alert);
                                 shownAlertIds.add(alertKey);
                             }
@@ -3140,7 +4190,7 @@
                                         <i class="bi bi-person me-1"></i>View Patient
                                     </a>
                                 ` : ''}
-                                <button type="button" class="btn btn-sm btn-outline-light alert-toast-btn snooze-btn" data-alert-id="${alert.id}" data-toast-id="${toastId}" style="white-space: nowrap;">
+                                <button type="button" class="btn btn-sm alert-toast-btn snooze-btn" data-alert-id="${alert.id}" data-toast-id="${toastId}" style="white-space: nowrap;">
                                     <i class="bi bi-clock me-1"></i>Snooze
                                 </button>
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close" data-alert-id="${alert.id}" data-toast-id="${toastId}"></button>
@@ -4384,6 +5434,1178 @@
         } else {
             initializeDraggableModals();
         }
+        
+        // Notifications System
+        (function() {
+            const notificationsToggle = document.getElementById('notificationsToggle');
+            const notificationsPanel = document.getElementById('notificationsPanel');
+            const notificationsOverlay = document.getElementById('notificationsOverlay');
+            const notificationsBody = document.getElementById('notificationsBody');
+            const notificationsBadge = document.getElementById('notificationsBadge');
+            const closeNotificationsBtn = document.getElementById('closeNotificationsBtn');
+            const markAllReadBtn = document.getElementById('markAllReadBtn');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const viewAllNotificationsBtn = document.getElementById('viewAllNotificationsBtn');
+            
+            let notificationsPollingInterval = null;
+            let isNotificationsOpen = false;
+            
+            // Calculate panel height dynamically
+            function calculatePanelHeight() {
+                if (!notificationsBody) return;
+                
+                const panelHeader = document.querySelector('.notifications-panel-header');
+                const headerHeight = panelHeader ? panelHeader.offsetHeight : 80;
+                const buttonHeight = 60; // Height for "View All" button
+                const padding = 32; // Top and bottom padding
+                const availableHeight = window.innerHeight - headerHeight - buttonHeight - padding;
+                
+                // Set max-height for notifications panel body
+                notificationsBody.style.maxHeight = Math.max(300, availableHeight) + 'px';
+            }
+            
+            // Toggle notifications panel
+            function toggleNotifications() {
+                isNotificationsOpen = !isNotificationsOpen;
+                if (isNotificationsOpen) {
+                    notificationsPanel.classList.add('show');
+                    notificationsOverlay.classList.add('show');
+                    // Calculate and set panel height dynamically
+                    setTimeout(() => {
+                        calculatePanelHeight();
+                    }, 100);
+                    loadNotifications();
+                    startNotificationsPolling();
+                } else {
+                    notificationsPanel.classList.remove('show');
+                    notificationsOverlay.classList.remove('show');
+                    stopNotificationsPolling();
+                }
+            }
+            
+            // Close notifications
+            function closeNotifications() {
+                isNotificationsOpen = false;
+                notificationsPanel.classList.remove('show');
+                notificationsOverlay.classList.remove('show');
+                stopNotificationsPolling();
+            }
+            
+            // Recalculate on window resize
+            window.addEventListener('resize', function() {
+                if (isNotificationsOpen) {
+                    calculatePanelHeight();
+                }
+            });
+            
+            // Event listeners
+            if (notificationsToggle) {
+                notificationsToggle.addEventListener('click', toggleNotifications);
+            }
+            
+            if (closeNotificationsBtn) {
+                closeNotificationsBtn.addEventListener('click', closeNotifications);
+            }
+            
+            if (notificationsOverlay) {
+                notificationsOverlay.addEventListener('click', function(e) {
+                    // Only close if clicking directly on overlay, not on panel content
+                    if (e.target === notificationsOverlay) {
+                        closeNotifications();
+                    }
+                });
+            }
+            
+            // Load notifications
+            async function loadNotifications() {
+                try {
+                    const response = await fetch('/api/notifications?limit=50');
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const text = await response.text();
+                    let data;
+                    
+                    try {
+                        data = JSON.parse(text);
+                    } catch (parseError) {
+                        console.error('JSON parse error:', parseError);
+                        console.error('Response text:', text);
+                        return;
+                    }
+                    
+                    if (data.success) {
+                        const previousUnreadCount = parseInt(notificationsBadge?.textContent || '0');
+                        const currentUnreadCount = data.unread_count || 0;
+                        
+                        // Play notification sound if new unread notifications
+                        if (currentUnreadCount > previousUnreadCount) {
+                            playNotificationSound();
+                        }
+                        
+                        console.log('Notifications loaded:', data.notifications);
+                        console.log('Unread count:', data.unread_count);
+                        renderNotifications(data.notifications);
+                        updateBadge(data.unread_count);
+                    } else {
+                        console.error('API error:', data.message);
+                        if (data.error) {
+                            console.error('Error details:', data.error);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading notifications:', error);
+                }
+            }
+            
+            // Update unread count badge
+            async function updateUnreadCount() {
+                try {
+                    const response = await fetch('/api/notifications/unread-count');
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const text = await response.text();
+                    let data;
+                    
+                    try {
+                        data = JSON.parse(text);
+                    } catch (parseError) {
+                        console.error('JSON parse error:', parseError);
+                        console.error('Response text:', text);
+                        return;
+                    }
+                    
+                    if (data.success) {
+                        updateBadge(data.unread_count);
+                    }
+                } catch (error) {
+                    console.error('Error updating unread count:', error);
+                }
+            }
+            
+            // Update badge
+            function updateBadge(count) {
+                const previousCount = parseInt(notificationsBadge?.textContent || '0');
+                
+                if (notificationsBadge) {
+                    if (count > 0) {
+                        notificationsBadge.textContent = count > 99 ? '99+' : count;
+                        notificationsBadge.style.display = 'flex';
+                        
+                        // Play notification sound if new unread notifications
+                        if (count > previousCount) {
+                            playNotificationSound();
+                        }
+                    } else {
+                        notificationsBadge.style.display = 'none';
+                    }
+                }
+            }
+            
+            // Play notification sound
+            function playNotificationSound() {
+                try {
+                    // Create a simple notification sound using Web Audio API
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    // Simple pleasant notification tone
+                    oscillator.frequency.value = 800; // Hz
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                } catch (error) {
+                    console.debug('Could not play notification sound:', error);
+                }
+            }
+            
+            // Render notifications - calculate view height and show limited notifications
+            function renderNotifications(notifications) {
+                if (!notificationsBody) return;
+                
+                if (!notifications || notifications.length === 0) {
+                    notificationsBody.innerHTML = `
+                        <div class="notifications-empty">
+                            <i class="bi bi-bell-slash"></i>
+                            <p>No notifications</p>
+                        </div>
+                        <button class="view-all-notifications-btn" onclick="showAllNotifications()">
+                            <i class="bi bi-list-ul me-2"></i>View All Notifications
+                        </button>
+                    `;
+                    return;
+                }
+                
+                // Sort by date (newest first)
+                const sortedNotifications = [...notifications].sort((a, b) => {
+                    return new Date(b.created_at) - new Date(a.created_at);
+                });
+                
+                // Calculate available height dynamically
+                const panelHeader = document.querySelector('.notifications-panel-header');
+                const headerHeight = panelHeader ? panelHeader.offsetHeight : 80;
+                const buttonHeight = 60; // Height for "View All" button
+                const padding = 32; // Top and bottom padding
+                const availableHeight = window.innerHeight - headerHeight - buttonHeight - padding;
+                
+                // Set max-height for notifications panel body if not already set
+                if (notificationsBody && !notificationsBody.style.maxHeight) {
+                    notificationsBody.style.maxHeight = Math.max(300, availableHeight) + 'px';
+                }
+                
+                // Estimate notification height (average ~80px per notification)
+                const notificationHeight = 80;
+                const maxVisible = Math.max(3, Math.floor(availableHeight / notificationHeight));
+                
+                // Get visible notifications
+                const visibleNotifications = sortedNotifications.slice(0, maxVisible);
+                const hasMore = sortedNotifications.length > maxVisible;
+                
+                let html = '';
+                
+                // Render visible notifications
+                visibleNotifications.forEach(notif => {
+                    html += renderNotificationItem(notif);
+                });
+                
+                // Always add "View All" button at the bottom
+                html += `<button class="view-all-notifications-btn" onclick="showAllNotifications()">
+                    <i class="bi bi-list-ul me-2"></i>View All Notifications${hasMore ? ` (${sortedNotifications.length - maxVisible} more)` : ''}
+                </button>`;
+                
+                notificationsBody.innerHTML = html;
+                
+                // Add event listeners to close buttons (now delete)
+                notificationsBody.querySelectorAll('.notification-item-close').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        const notificationId = this.getAttribute('data-notification-id');
+                        if (notificationId) {
+                            deleteNotification(notificationId);
+                        } else {
+                            console.error('Notification ID not found on close button');
+                        }
+                    });
+                });
+                
+                // Add hover listeners for notification items
+                notificationsBody.querySelectorAll('.notification-item').forEach(item => {
+                    // Add click listener for appointment-related notifications
+                    const appointmentId = item.getAttribute('data-appointment-id');
+                    if (appointmentId) {
+                        item.addEventListener('click', function(e) {
+                            // Don't trigger if clicking on buttons
+                            if (e.target.closest('.notification-item-close') || 
+                                e.target.closest('.notification-item-patient')) {
+                                return;
+                            }
+                            
+                            // Navigate to appointment page
+                            window.location.href = `/doctor/appointments/${appointmentId}`;
+                        });
+                    }
+                    
+                    // Add swipe gesture for mobile
+                    let touchStartX = 0;
+                    let touchStartY = 0;
+                    let touchEndX = 0;
+                    let touchEndY = 0;
+                    
+                    item.addEventListener('touchstart', function(e) {
+                        touchStartX = e.changedTouches[0].screenX;
+                        touchStartY = e.changedTouches[0].screenY;
+                    }, { passive: true });
+                    
+                    item.addEventListener('touchend', function(e) {
+                        touchEndX = e.changedTouches[0].screenX;
+                        touchEndY = e.changedTouches[0].screenY;
+                        handleSwipe(item);
+                    }, { passive: true });
+                    
+                    function handleSwipe(element) {
+                        const deltaX = touchEndX - touchStartX;
+                        const deltaY = touchEndY - touchStartY;
+                        
+                        // Check if it's a horizontal swipe (more horizontal than vertical)
+                        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+                            // Swipe right to delete (left to right swipe)
+                            if (deltaX > 50) {
+                                const notificationId = element.getAttribute('data-notification-id');
+                                if (notificationId) {
+                                    deleteNotification(notificationId);
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Add click listener for patient names
+                notificationsBody.querySelectorAll('.notification-item-patient[data-patient-id]').forEach(patientElement => {
+                    patientElement.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const patientId = this.getAttribute('data-patient-id');
+                        if (patientId) {
+                            window.location.href = `/doctor/patients/${patientId}`;
+                        }
+                    });
+                });
+            }
+            
+            // Get notification icon based on type
+            function getNotificationIcon(type) {
+                const icons = {
+                    'appointment': '📅',
+                    'alert': '🔔',
+                    'system': '⚙️',
+                    'default': '📬'
+                };
+                // Check title for login/logout
+                if (type === 'system') {
+                    // Will be determined by title in renderNotificationItem
+                    return '⚙️';
+                }
+                return icons[type] || icons['default'];
+            }
+            
+            // Get icon from notification title/type
+            function getIconFromNotification(notif) {
+                const title = (notif.title || '').toLowerCase();
+                if (title.includes('login')) return '🔓';
+                if (title.includes('logout')) return '🔒';
+                if (notif.type === 'appointment') return '📅';
+                if (notif.type === 'alert') return '🔔';
+                if (notif.type === 'system') return '⚙️';
+                return '📬';
+            }
+            
+            // Shorten date and time in message
+            function shortenDateTime(message) {
+                if (!message) return message;
+                
+                // Replace "on YYYY-MM-DD at HH:MM:SS" with "on YYYY-MM-DD HH:MM"
+                message = message.replace(/on (\d{4}-\d{2}-\d{2}) at (\d{2}):(\d{2}):\d{2}/g, 'on $1 $2:$3');
+                
+                // Replace "on YYYY-MM-DD HH:MM" with shorter format "on MM/DD HH:MM"
+                message = message.replace(/on (\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/g, function(match, year, month, day, hour, minute) {
+                    return `on ${month}/${day} ${hour}:${minute}`;
+                });
+                
+                return message;
+            }
+            
+            // Render single notification item
+            function renderNotificationItem(notif) {
+                const timeAgo = getTimeAgo(notif.created_at);
+                const icon = getIconFromNotification(notif);
+                const patientInfo = notif.patient_first_name && notif.patient_last_name 
+                    ? `<div class="notification-item-patient" ${notif.patient_id ? `data-patient-id="${notif.patient_id}" style="cursor: pointer;"` : ''}>
+                        <i class="bi bi-person me-1"></i>${escapeHtml(notif.patient_first_name + ' ' + notif.patient_last_name)}
+                    </div>`
+                    : '';
+                
+                // Check if notification is related to an appointment
+                const isAppointmentRelated = notif.related_type === 'appointment' && notif.related_id;
+                const appointmentId = isAppointmentRelated ? notif.related_id : null;
+                
+                // Shorten message if it contains long date/time
+                let message = escapeHtml(notif.message);
+                message = shortenDateTime(message);
+                
+                return `
+                    <div class="notification-item ${notif.is_read ? 'read' : 'unread'}" 
+                         data-notification-id="${notif.id}"
+                         ${isAppointmentRelated ? `data-appointment-id="${appointmentId}" style="cursor: pointer;"` : ''}
+                         data-related-type="${notif.related_type || ''}"
+                         data-related-id="${notif.related_id || ''}"
+                         data-patient-id="${notif.patient_id || ''}">
+                        <button class="notification-item-close" data-notification-id="${notif.id}" title="Delete notification">
+                            <i class="bi bi-x"></i>
+                        </button>
+                        <div class="notification-icon">${icon}</div>
+                        <div class="notification-body">
+                            <div class="notification-item-header">
+                                <h6 class="notification-item-title">${escapeHtml(notif.title)}</h6>
+                                <span class="notification-item-time">${timeAgo}</span>
+                            </div>
+                            <p class="notification-item-message">${message}</p>
+                            ${patientInfo}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Delete notification
+            async function deleteNotification(notificationId) {
+                if (!notificationId) {
+                    console.error('deleteNotification: notificationId is missing');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`/api/notifications/${notificationId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const text = await response.text();
+                    let data;
+                    
+                    try {
+                        data = JSON.parse(text);
+                    } catch (parseError) {
+                        console.error('JSON parse error:', parseError);
+                        console.error('Response text:', text);
+                        return;
+                    }
+                    
+                    if (data.success) {
+                        // Remove notification from DOM
+                        const notificationItem = notificationsBody.querySelector(`[data-notification-id="${notificationId}"]`);
+                        if (notificationItem) {
+                            notificationItem.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                            notificationItem.style.opacity = '0';
+                            notificationItem.style.transform = 'translateX(100%)';
+                            setTimeout(() => {
+                                notificationItem.remove();
+                                // Recalculate panel height after deletion
+                                calculatePanelHeight();
+                                // Always reload notifications to ensure sync with database
+                                setTimeout(() => {
+                                    loadNotifications();
+                                }, 100);
+                            }, 300);
+                        } else {
+                            // If item not found in DOM, reload to sync
+                            loadNotifications();
+                        }
+                        updateUnreadCount();
+                    } else {
+                        console.error('Error deleting notification: ' + (data.message || 'Unknown error'));
+                        // Reload notifications to restore state
+                        loadNotifications();
+                    }
+                } catch (error) {
+                    console.error('Error deleting notification:', error);
+                    // Reload notifications to restore state on error
+                    loadNotifications();
+                }
+            }
+            
+            // Mark as read and hide
+            async function markAsReadAndHide(notificationId) {
+                try {
+                    const response = await fetch(`/api/notifications/${notificationId}/read`, {
+                        method: 'PUT'
+                    });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Remove notification from DOM
+                        const notifElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+                        if (notifElement) {
+                            notifElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                            notifElement.style.opacity = '0';
+                            notifElement.style.transform = 'translateX(20px)';
+                            setTimeout(() => {
+                                notifElement.remove();
+                                // Recalculate panel height after deletion
+                                calculatePanelHeight();
+                                // Reload if empty
+                                if (notificationsBody.children.length === 0) {
+                                    loadNotifications();
+                                }
+                            }, 300);
+                        }
+                        updateUnreadCount();
+                    }
+                } catch (error) {
+                    console.error('Error marking notification as read:', error);
+                }
+            }
+            
+            // Mark all as read
+            if (markAllReadBtn) {
+                markAllReadBtn.addEventListener('click', async function() {
+                    try {
+                        const response = await fetch('/api/notifications/read-all', {
+                            method: 'PUT'
+                        });
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            loadNotifications();
+                            updateUnreadCount();
+                        }
+                    } catch (error) {
+                        console.error('Error marking all as read:', error);
+                    }
+                });
+            }
+            
+            // Clear all
+            if (clearAllBtn) {
+                clearAllBtn.addEventListener('click', async function() {
+                    try {
+                        // Get all notification items
+                        const notificationItems = notificationsBody.querySelectorAll('.notification-item');
+                        
+                        if (notificationItems.length === 0) {
+                            return;
+                        }
+                        
+                        // First, delete from server (same way as deleteNotification)
+                        const response = await fetch('/api/notifications/clear-all', {
+                            method: 'DELETE',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        
+                        const text = await response.text();
+                        let data;
+                        
+                        try {
+                            data = JSON.parse(text);
+                        } catch (parseError) {
+                            console.error('JSON parse error:', parseError);
+                            console.error('Response text:', text);
+                            return;
+                        }
+                        
+                        if (data.success) {
+                            // Apply delete animation to all notifications
+                            notificationItems.forEach((item, index) => {
+                                setTimeout(() => {
+                                    item.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                                    item.style.opacity = '0';
+                                    item.style.transform = 'translateX(100%)';
+                                }, index * 50); // Stagger animations
+                            });
+                            
+                            // Wait for animations to complete, then remove from DOM
+                            setTimeout(() => {
+                                // Remove all items from DOM
+                                notificationItems.forEach(item => {
+                                    item.remove();
+                                });
+                                
+                                // Recalculate panel height
+                                calculatePanelHeight();
+                                
+                                // Reload to show empty state and ensure sync with database
+                                setTimeout(() => {
+                                    loadNotifications();
+                                    updateUnreadCount();
+                                }, 100);
+                            }, (notificationItems.length * 50) + 300); // Wait for all animations
+                        } else {
+                            console.error('Error clearing all notifications:', data);
+                            console.error('Error message: ' + (data.message || 'Unknown error'));
+                            // Reload to restore state
+                            loadNotifications();
+                        }
+                    } catch (error) {
+                        console.error('Error clearing all notifications:', error);
+                        console.error('Error details:', error.message, error.stack);
+                        // Reload to restore state on error
+                        loadNotifications();
+                    }
+                });
+            }
+            
+            
+            // Show all notifications modal
+            window.showAllNotifications = async function() {
+                try {
+                    const response = await fetch('/api/notifications?limit=1000');
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const text = await response.text();
+                    let data;
+                    
+                    try {
+                        data = JSON.parse(text);
+                    } catch (parseError) {
+                        console.error('JSON parse error:', parseError);
+                        console.error('Response text:', text);
+                        return;
+                    }
+                    
+                    if (data.success && data.notifications) {
+                        showAllNotificationsModal(data.notifications);
+                    }
+                } catch (error) {
+                    console.error('Error loading all notifications:', error);
+                }
+            };
+            
+            // Show all notifications for specific patient
+            window.showAllNotificationsForPatient = async function(patientId) {
+                try {
+                    const response = await fetch('/api/notifications?limit=1000');
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const text = await response.text();
+                    let data;
+                    
+                    try {
+                        data = JSON.parse(text);
+                    } catch (parseError) {
+                        console.error('JSON parse error:', parseError);
+                        return;
+                    }
+                    
+                    if (data.success && data.notifications) {
+                        const patientNotifs = data.notifications.filter(n => n.patient_id == patientId);
+                        const patientName = patientNotifs.length > 0 && patientNotifs[0].patient_first_name 
+                            ? `${patientNotifs[0].patient_first_name} ${patientNotifs[0].patient_last_name || ''}`.trim()
+                            : 'Patient';
+                        showAllNotificationsModal(patientNotifs, `Notifications for ${patientName}`);
+                    }
+                } catch (error) {
+                    console.error('Error loading patient notifications:', error);
+                }
+            };
+            
+            // Show all notifications modal
+            function showAllNotificationsModal(notifications, title = 'All Notifications') {
+                // Close notifications panel immediately
+                closeNotifications();
+                
+                let modalHtml = `
+                    <div class="modal fade" id="allNotificationsModal" tabindex="-1" aria-labelledby="allNotificationsModalLabel" aria-hidden="true" style="z-index: 10000001;">
+                        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                            <div class="modal-content" style="background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(40px) saturate(180%); border: 0.5px solid rgba(255, 255, 255, 0.15);">
+                                <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                                    <h5 class="modal-title" id="allNotificationsModalLabel" style="color: white;">
+                                        <i class="bi bi-bell me-2"></i>${escapeHtml(title)}
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body" id="allNotificationsModalBody" style="max-height: 70vh; overflow-y: auto;">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <span style="color: rgba(255, 255, 255, 0.8);">Total: ${notifications.length} notification${notifications.length !== 1 ? 's' : ''}</span>
+                                        <button class="btn btn-sm btn-primary" onclick="markAllNotificationsAsRead()">
+                                            <i class="bi bi-check-all me-1"></i>Mark All Read
+                                        </button>
+                                    </div>
+                                    <div id="allNotificationsList" style="display: flex; flex-direction: column; gap: 12px;">
+                `;
+                
+                if (notifications.length === 0) {
+                    modalHtml += `
+                        <div class="text-center py-5">
+                            <i class="bi bi-bell-slash" style="font-size: 3rem; opacity: 0.3; color: rgba(255, 255, 255, 0.5);"></i>
+                            <p class="mt-3" style="color: rgba(255, 255, 255, 0.7);">No notifications</p>
+                        </div>
+                    `;
+                } else {
+                    notifications.forEach(notif => {
+                        modalHtml += renderNotificationItem(notif);
+                    });
+                }
+                
+                modalHtml += `
+                                    </div>
+                                </div>
+                                <div class="modal-footer" style="border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Remove existing modal if any
+                const existingModal = document.getElementById('allNotificationsModal');
+                if (existingModal) {
+                    existingModal.remove();
+                }
+                
+                // Add modal backdrop with higher z-index
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                backdrop.style.zIndex = '10000000';
+                document.body.appendChild(backdrop);
+                
+                // Add modal to body
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                
+                // Initialize modal
+                const modalElement = document.getElementById('allNotificationsModal');
+                const modal = new bootstrap.Modal(modalElement, {
+                    backdrop: true,
+                    keyboard: true
+                });
+                modal.show();
+                
+                // Add event listeners to close buttons
+                document.querySelectorAll('#allNotificationsModal .notification-item-close').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const notificationId = this.getAttribute('data-notification-id');
+                        markAsReadAndHide(notificationId);
+                    });
+                });
+                
+                // Clean up on hide
+                modalElement.addEventListener('hidden.bs.modal', function() {
+                    this.remove();
+                    if (backdrop && backdrop.parentNode) {
+                        backdrop.parentNode.removeChild(backdrop);
+                    }
+                });
+            }
+            
+            // Mark all notifications as read (from modal)
+            window.markAllNotificationsAsRead = async function() {
+                try {
+                    const response = await fetch('/api/notifications/read-all', {
+                        method: 'PUT'
+                    });
+                    const text = await response.text();
+                    let data;
+                    
+                    try {
+                        data = JSON.parse(text);
+                    } catch (parseError) {
+                        console.error('JSON parse error:', parseError);
+                        return;
+                    }
+                    
+                    if (data.success) {
+                        // Reload notifications in modal
+                        if (window.showAllNotifications) {
+                            window.showAllNotifications();
+                        }
+                        // Reload main panel
+                        loadNotifications();
+                        updateUnreadCount();
+                    }
+                } catch (error) {
+                    console.error('Error marking all as read:', error);
+                }
+            };
+            
+            // Get time ago
+            function getTimeAgo(dateString) {
+                const now = new Date();
+                const date = new Date(dateString);
+                const diff = Math.floor((now - date) / 1000);
+                
+                if (diff < 60) return 'Just now';
+                if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+                if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+                if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+                return date.toLocaleDateString();
+            }
+            
+            // Escape HTML
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+            
+            // Start polling
+            function startNotificationsPolling() {
+                if (notificationsPollingInterval) return;
+                
+                notificationsPollingInterval = setInterval(() => {
+                    if (isNotificationsOpen) {
+                        loadNotifications();
+                    } else {
+                        updateUnreadCount();
+                    }
+                }, 10000); // Poll every 10 seconds
+            }
+            
+            // Stop polling
+            function stopNotificationsPolling() {
+                if (notificationsPollingInterval) {
+                    clearInterval(notificationsPollingInterval);
+                    notificationsPollingInterval = null;
+                }
+            }
+            
+            // Initialize: Load unread count on page load
+            updateUnreadCount();
+            
+            // Start polling for unread count (when panel is closed)
+            setInterval(() => {
+                if (!isNotificationsOpen) {
+                    updateUnreadCount();
+                }
+            }, 30000); // Check every 30 seconds when panel is closed
+        })();
+        
+        // Forum Notification Toast System
+        (function() {
+            const STORAGE_KEY = 'shownNotificationToasts';
+            let shownNotificationIds = new Set();
+            const POLLING_INTERVAL = 5000; // Check every 5 seconds
+            
+            // Load shown notification IDs from localStorage
+            function loadShownNotificationIds() {
+                try {
+                    const stored = localStorage.getItem(STORAGE_KEY);
+                    if (stored) {
+                        const ids = JSON.parse(stored);
+                        shownNotificationIds = new Set(ids);
+                    }
+                } catch (error) {
+                    console.debug('Error loading shown notification IDs:', error);
+                    shownNotificationIds = new Set();
+                }
+            }
+            
+            // Save shown notification IDs to localStorage
+            function saveShownNotificationIds() {
+                try {
+                    const ids = Array.from(shownNotificationIds);
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+                    
+                    // Keep only last 1000 IDs to prevent localStorage from growing too large
+                    if (ids.length > 1000) {
+                        const recentIds = ids.slice(-1000);
+                        shownNotificationIds = new Set(recentIds);
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(recentIds));
+                    }
+                } catch (error) {
+                    console.debug('Error saving shown notification IDs:', error);
+                }
+            }
+            
+            // Load on initialization
+            loadShownNotificationIds();
+            
+            // Create forum toast container
+            function createForumToastContainer() {
+                let container = document.getElementById('forumToastContainer');
+                if (!container) {
+                    container = document.createElement('div');
+                    container.id = 'forumToastContainer';
+                    document.body.appendChild(container);
+                }
+                return container;
+            }
+            
+            // Initialize container
+            createForumToastContainer();
+            
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+            
+            // Show forum notification toast
+            function showForumToast(notification) {
+                if (!notification || !notification.id) return;
+                
+                // Check if already shown
+                if (shownNotificationIds.has(notification.id)) {
+                    return;
+                }
+                
+                const container = createForumToastContainer();
+                const toastId = 'forum-toast-' + notification.id + '-' + Date.now();
+                
+                // Check if toast already exists
+                if (document.getElementById(toastId)) {
+                    return;
+                }
+                
+                // Determine icon based on notification type
+                let icon = '💬';
+                if (notification.type === 'forum_topic') {
+                    icon = '📝';
+                } else if (notification.type === 'forum_post') {
+                    icon = '💬';
+                }
+                
+                // Create link to forum topic if available
+                const topicLink = notification.related_id ? `/doctor/forum/topic/${notification.related_id}` : '/doctor/forum';
+                
+                const toastHtml = `
+                    <div id="${toastId}" class="toast forum-toast align-items-center" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000">
+                        <div class="toast-header">
+                            <i class="bi bi-chat-dots me-2" style="font-size: 1.25rem;"></i>
+                            <strong class="me-auto">${escapeHtml(notification.title || 'Forum Notification')}</strong>
+                            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${escapeHtml(notification.message || '')}
+                            ${notification.related_id ? `
+                                <div class="mt-2">
+                                    <a href="${topicLink}" class="btn btn-sm btn-primary" style="text-decoration: none;">
+                                        <i class="bi bi-arrow-right me-1"></i>View Topic
+                                    </a>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                
+                container.insertAdjacentHTML('beforeend', toastHtml);
+                const toastElement = document.getElementById(toastId);
+                
+                if (toastElement) {
+                    const toast = new bootstrap.Toast(toastElement, {
+                        autohide: true,
+                        delay: 5000
+                    });
+                    
+                    toast.show();
+                    
+                    // Mark as shown and save to localStorage
+                    shownNotificationIds.add(notification.id);
+                    saveShownNotificationIds();
+                    
+                    // Play notification sound
+                    playNotificationSound();
+                    
+                    // Remove from DOM after hiding
+                    toastElement.addEventListener('hidden.bs.toast', function() {
+                        toastElement.remove();
+                    });
+                    
+                    // Add click handler to view topic button
+                    const viewTopicBtn = toastElement.querySelector('a[href]');
+                    if (viewTopicBtn) {
+                        viewTopicBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            toast.hide();
+                            setTimeout(() => {
+                                window.location.href = topicLink;
+                            }, 300);
+                        });
+                    }
+                }
+            }
+            
+            // Show general notification toast (for non-forum notifications)
+            function showGeneralNotificationToast(notification) {
+                if (!notification || !notification.id) return;
+                
+                // Check if already shown
+                if (shownNotificationIds.has(notification.id)) {
+                    return;
+                }
+                
+                const container = createForumToastContainer();
+                const toastId = 'notification-toast-' + notification.id + '-' + Date.now();
+                
+                // Check if toast already exists
+                if (document.getElementById(toastId)) {
+                    return;
+                }
+                
+                // Determine icon based on notification type
+                let icon = '🔔';
+                if (notification.type === 'appointment') {
+                    icon = '📅';
+                } else if (notification.type === 'alert') {
+                    icon = '⚠️';
+                } else if (notification.type === 'system') {
+                    const title = (notification.title || '').toLowerCase();
+                    if (title.includes('login')) icon = '🔓';
+                    else if (title.includes('logout')) icon = '🔒';
+                    else icon = '⚙️';
+                }
+                
+                // Create link based on notification type
+                let actionLink = null;
+                let actionText = null;
+                if (notification.related_type === 'appointment' && notification.related_id) {
+                    actionLink = `/doctor/appointments/${notification.related_id}`;
+                    actionText = 'View Appointment';
+                } else if (notification.patient_id) {
+                    actionLink = `/doctor/patients/${notification.patient_id}`;
+                    actionText = 'View Patient';
+                }
+                
+                const toastHtml = `
+                    <div id="${toastId}" class="toast forum-toast align-items-center" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="3000">
+                        <div class="toast-header">
+                            <i class="bi bi-bell me-2" style="font-size: 1.25rem;"></i>
+                            <strong class="me-auto">${escapeHtml(notification.title || 'Notification')}</strong>
+                            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${escapeHtml(notification.message || '')}
+                            ${actionLink ? `
+                                <div class="mt-2">
+                                    <a href="${actionLink}" class="btn btn-sm btn-primary" style="text-decoration: none;">
+                                        <i class="bi bi-arrow-right me-1"></i>${actionText}
+                                    </a>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                
+                container.insertAdjacentHTML('beforeend', toastHtml);
+                const toastElement = document.getElementById(toastId);
+                
+                if (toastElement) {
+                    const toast = new bootstrap.Toast(toastElement, {
+                        autohide: true,
+                        delay: 3000
+                    });
+                    
+                    toast.show();
+                    
+                    // Mark as shown and save to localStorage
+                    shownNotificationIds.add(notification.id);
+                    saveShownNotificationIds();
+                    
+                    // Play notification sound (check if function exists)
+                    if (typeof playNotificationSound === 'function') {
+                        try {
+                            playNotificationSound();
+                        } catch (error) {
+                            console.debug('Could not play notification sound:', error);
+                        }
+                    }
+                    
+                    // Remove from DOM after hiding
+                    toastElement.addEventListener('hidden.bs.toast', function() {
+                        toastElement.remove();
+                    });
+                    
+                    // Add click handler to action button
+                    const actionBtn = toastElement.querySelector('a[href]');
+                    if (actionBtn) {
+                        actionBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            toast.hide();
+                            setTimeout(() => {
+                                window.location.href = actionLink;
+                            }, 300);
+                        });
+                    }
+                }
+            }
+            
+            // Check for new forum notifications
+            async function checkForumNotifications() {
+                try {
+                    const response = await fetch('/api/notifications?limit=10');
+                    
+                    if (!response.ok) {
+                        return;
+                    }
+                    
+                    const text = await response.text();
+                    let data;
+                    
+                    try {
+                        data = JSON.parse(text);
+                    } catch (parseError) {
+                        return;
+                    }
+                    
+                    if (data.success && data.notifications && data.notifications.length > 0) {
+                        // Filter forum notifications
+                        const forumNotifications = data.notifications.filter(n => 
+                            (n.type === 'forum_topic' || n.type === 'forum_post') && 
+                            !shownNotificationIds.has(n.id)
+                        );
+                        
+                        // Show toast for each new forum notification
+                        forumNotifications.forEach(notification => {
+                            showForumToast(notification);
+                        });
+                        
+                        // Filter general notifications (non-forum)
+                        const generalNotifications = data.notifications.filter(n => 
+                            n.type !== 'forum_topic' && 
+                            n.type !== 'forum_post' && 
+                            !shownNotificationIds.has(n.id)
+                        );
+                        
+                        // Show toast for each new general notification
+                        generalNotifications.forEach(notification => {
+                            showGeneralNotificationToast(notification);
+                        });
+                    }
+                } catch (error) {
+                    // Silently fail
+                    console.debug('Forum notification check failed:', error);
+                }
+            }
+            
+            // Start polling for forum notifications
+            function startForumNotificationPolling() {
+                // Check immediately
+                checkForumNotifications();
+                
+                // Set up continuous polling
+                setInterval(() => {
+                    checkForumNotifications();
+                }, POLLING_INTERVAL);
+            }
+            
+            // Initialize on page load
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', startForumNotificationPolling);
+            } else {
+                startForumNotificationPolling();
+            }
+            
+            // Check when page becomes visible
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    setTimeout(() => {
+                        checkForumNotifications();
+                    }, 500);
+                }
+            });
+            
+            // Check on window focus
+            window.addEventListener('focus', function() {
+                setTimeout(() => {
+                    checkForumNotifications();
+                }, 500);
+            });
+        })();
     </script>
 </body>
+</html>
+
 </html>

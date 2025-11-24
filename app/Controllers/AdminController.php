@@ -301,6 +301,33 @@ class AdminController
     }
 
     /**
+     * Admin Notifications Page - Send system notifications
+     */
+    public function notifications()
+    {
+        $user = $this->auth->user();
+        
+        if (!$user || $user['role'] !== 'admin') {
+            header('Location: /admin/dashboard');
+            exit;
+        }
+        
+        // Get all users for selection
+        $users = $this->getUsers(1, '', '');
+        
+        $content = $this->view->render('admin/notifications', [
+            'users' => $users['users'] ?? []
+        ]);
+        
+        echo $this->view->render('layouts/main', [
+            'title' => 'System Notifications',
+            'pageTitle' => 'System Notifications',
+            'pageSubtitle' => 'Send notifications to users',
+            'content' => $content
+        ]);
+    }
+    
+    /**
      * View As functionality - Switch to different role view
      */
     public function viewAs()

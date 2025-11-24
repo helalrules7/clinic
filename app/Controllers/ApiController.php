@@ -176,6 +176,22 @@ class ApiController
                 // Commit transaction
                 $this->pdo->commit();
 
+                // Create notification for appointment deletion
+                try {
+                    $patientName = trim($appointment['first_name'] . ' ' . $appointment['last_name']);
+                    \App\Controllers\NotificationController::create(
+                        $user['id'],
+                        'appointment',
+                        'Appointment Deleted',
+                        "Appointment for {$patientName} on {$appointment['date']} at {$appointment['start_time']} has been deleted",
+                        'appointment',
+                        $id,
+                        $appointment['patient_id']
+                    );
+                } catch (\Exception $e) {
+                    // Continue even if notification creation fails
+                }
+
                 // Log the deletion
 
                 return $this->jsonResponse([
@@ -325,6 +341,31 @@ class ApiController
             if ($appointmentId) {
                 // Create timeline event
                 $this->createTimelineEvent($data['patient_id'], $appointmentId, 'Booking', 'Appointment booked');
+                
+                // Create notification
+                try {
+                    $user = $this->auth->user();
+                    if ($user) {
+                        $patientStmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
+                        $patientStmt->execute([$data['patient_id']]);
+                        $patient = $patientStmt->fetch(\PDO::FETCH_ASSOC);
+                        
+                        if ($patient) {
+                            $patientName = trim($patient['first_name'] . ' ' . $patient['last_name']);
+                            \App\Controllers\NotificationController::create(
+                                $user['id'],
+                                'appointment',
+                                'New Appointment Created',
+                                "Appointment scheduled for {$patientName} on {$data['date']} at {$data['start_time']}",
+                                'appointment',
+                                $appointmentId,
+                                $data['patient_id']
+                            );
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Continue even if notification creation fails
+                }
                 
                 // Create alert for appointment (check user preference first)
                 try {
@@ -478,6 +519,34 @@ class ApiController
                         'StatusChange', 
                         "Status changed from {$appointment['status']} to {$newStatus}" . ($reason ? " - Reason: {$reason}" : '')
                     );
+                    
+                    // Create notification for appointment status update
+                    try {
+                        $patientName = trim($appointment['first_name'] . ' ' . $appointment['last_name']);
+                        $statusMessages = [
+                            'Booked' => 'Appointment booked',
+                            'CheckedIn' => 'Patient checked in',
+                            'InProgress' => 'Appointment in progress',
+                            'Completed' => 'Appointment completed',
+                            'Cancelled' => 'Appointment cancelled',
+                            'NoShow' => 'Patient did not show up',
+                            'Rescheduled' => 'Appointment rescheduled',
+                            'Closed' => 'Appointment closed'
+                        ];
+                        $statusMessage = $statusMessages[$newStatus] ?? "Status changed to {$newStatus}";
+                        
+                        \App\Controllers\NotificationController::create(
+                            $user['id'],
+                            'appointment',
+                            'Appointment Status Updated',
+                            "{$statusMessage} for {$patientName} on {$appointment['date']} at {$appointment['start_time']}" . ($reason ? " - {$reason}" : ''),
+                            'appointment',
+                            $id,
+                            $appointment['patient_id']
+                        );
+                    } catch (\Exception $e) {
+                        // Continue even if notification creation fails
+                    }
                     
                     return $this->jsonResponse([
                         'ok' => true,
@@ -2086,6 +2155,22 @@ class ApiController
                 // Continue even if timeline event fails
             }
             
+            // Create notification for reschedule
+            try {
+                $patientName = trim($appointment['first_name'] . ' ' . $appointment['last_name']);
+                \App\Controllers\NotificationController::create(
+                    $user['id'],
+                    'appointment',
+                    'Appointment Rescheduled',
+                    "Appointment for {$patientName} rescheduled to {$newDate} at {$newTime}",
+                    'appointment',
+                    $newAppointmentId,
+                    $appointment['patient_id']
+                );
+            } catch (\Exception $e) {
+                // Continue even if notification creation fails
+            }
+            
             // Format date/time for display
             $formattedDate = date('M j, Y', strtotime($newDate));
             $formattedTime = date('g:i A', strtotime($newTime));
@@ -2232,7 +2317,7 @@ class ApiController
             // Create alert for follow-up appointment (always create alert regardless of old appointment status or date)
             try {
                 $patientName = trim($appointment['first_name'] . ' ' . $appointment['last_name']);
-                $alertMessage = "متابعة كشف المريض ({$patientName})";
+                $alertMessage = "Follow-up appointment for patient ({$patientName})";
                 
                 // Get doctor_id from appointment
                 $doctorId = $appointment['doctor_id'];
@@ -2257,6 +2342,22 @@ class ApiController
                 $this->alertModel->create($alertData);
             } catch (\Exception $e) {
                 // Continue even if alert creation fails
+            }
+            
+            // Create notification for follow-up reschedule
+            try {
+                $patientName = trim($appointment['first_name'] . ' ' . $appointment['last_name']);
+                \App\Controllers\NotificationController::create(
+                    $user['id'],
+                    'appointment',
+                    'Follow-up Appointment Rescheduled',
+                    "Follow-up appointment for {$patientName} rescheduled to {$newDate} at {$newTime}",
+                    'appointment',
+                    $newAppointmentId,
+                    $appointment['patient_id']
+                );
+            } catch (\Exception $e) {
+                // Continue even if notification creation fails
             }
             
             return $this->jsonResponse([

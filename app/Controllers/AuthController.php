@@ -62,6 +62,21 @@ class AuthController
                 $this->auth->setRememberMe($user['id']);
             }
 
+            // Create login notification
+            try {
+                \App\Controllers\NotificationController::create(
+                    $user['id'],
+                    'system',
+                    'Login Successful',
+                    "You have successfully logged in to the system",
+                    null,
+                    null,
+                    null
+                );
+            } catch (\Exception $e) {
+                // Continue even if notification creation fails
+            }
+
             // Redirect based on role
             $this->redirectByRole($user['role']);
 
@@ -76,6 +91,24 @@ class AuthController
 
     public function logout()
     {
+        // Create logout notification before destroying session
+        try {
+            $user = $this->auth->user();
+            if ($user) {
+                \App\Controllers\NotificationController::create(
+                    $user['id'],
+                    'system',
+                    'Logout Successful',
+                    "You have successfully logged out from the system",
+                    null,
+                    null,
+                    null
+                );
+            }
+        } catch (\Exception $e) {
+            // Continue even if notification creation fails
+        }
+        
         $this->auth->logout();
         UrlHelper::redirect('/login');
     }

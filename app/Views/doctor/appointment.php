@@ -673,6 +673,17 @@
     transition: color 0.3s ease !important;
 }
 
+.breadcrumb-item a {
+    color: var(--accent) !important;
+    text-decoration: none !important;
+    transition: color 0.3s ease !important;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--text) !important;
+    text-decoration: none !important;
+}
+
 .dark .breadcrumb-item a:hover {
     color: var(--text) !important;
     text-decoration: none !important;
@@ -772,6 +783,13 @@
 
 .dark .progress-bar {
     background-color: var(--accent) !important;
+}
+
+#appointmentHistoryContent > div > div.appointment-history-header.d-flex.justify-content-between.align-items-center.mb-3.pb-2.border-bottom > div > button{
+    color: var(--text) !important;
+}
+.dark #appointmentHistoryContent > div > div.appointment-history-header.d-flex.justify-content-between.align-items-center.mb-3.pb-2.border-bottom > div > button{
+    color: #ffffff !important;
 }
 
 /* Responsive Action Buttons */
@@ -958,6 +976,34 @@
 .dark .appointment-history-header {
     border-bottom-color: var(--border);
     background: var(--bg);
+}
+
+/* Close button for appointment history popover - Dark/Light mode responsive */
+.appointment-history-close-btn {
+    filter: none !important;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    background-color: transparent !important;
+}
+
+.appointment-history-close-btn:hover {
+    opacity: 1;
+}
+
+/* Light mode: dark close button */
+.appointment-history-close-btn {
+    filter: brightness(0) !important;
+}
+
+/* Dark mode: white close button */
+.dark .appointment-history-close-btn {
+    filter: invert(1) brightness(2) !important;
+    opacity: 0.9;
+}
+
+.dark .appointment-history-close-btn:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5) !important;
 }
 
 .appointment-history-content {
@@ -1246,7 +1292,7 @@ border: 1px solid var(--primary) !important;
             <li class="breadcrumb-item"><a href="/doctor/dashboard">Dashboard</a></li>
             <li class="breadcrumb-item"><a href="/doctor/patients">Patients</a></li>
             <li class="breadcrumb-item"><a href="/doctor/patients/<?= $appointment['patient_id'] ?? '' ?>"><?= htmlspecialchars($appointment['patient_name'] ?? '') ?></a></li>
-            <li class="breadcrumb-item active">Appointment</li>
+            <li class="breadcrumb-item active">Appointment #<?= $appointment['id'] ?></li>
         </ol>
     </nav>
     <div class="d-flex gap-2">
@@ -5396,7 +5442,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const appointmentId = appointmentHistoryBtn.getAttribute('data-appointment-id');
         
         // Set initial content
-        const initialContent = '<div id="appointmentHistoryContent" class="appointment-history-popover-wrapper"><div class="appointment-history-header d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom"><h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Appointment History</h6><button type="button" class="btn-close btn-close-white" onclick="bootstrap.Popover.getInstance(document.getElementById(\'appointmentHistoryBtn\')).hide()" aria-label="Close"></button></div><div class="appointment-history-content"><div class="text-center py-4"><i class="bi bi-hourglass-split text-muted" style="font-size: 2rem;"></i><p class="text-muted mt-2">Loading appointment history...</p></div></div></div>';
+        const initialContent = '<div id="appointmentHistoryContent" class="appointment-history-popover-wrapper"><div class="appointment-history-header d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom"><h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Appointment History</h6><button type="button" class="btn-close appointment-history-close-btn" onclick="bootstrap.Popover.getInstance(document.getElementById(\'appointmentHistoryBtn\')).hide()" aria-label="Close"></button></div><div class="appointment-history-content"><div class="text-center py-4"><i class="bi bi-hourglass-split text-muted" style="font-size: 2rem;"></i><p class="text-muted mt-2">Loading appointment history...</p></div></div></div>';
         
         const popover = new bootstrap.Popover(appointmentHistoryBtn, {
             html: true,
@@ -6279,7 +6325,7 @@ function renderAppointmentHistory(appointments, container) {
     html += '<h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Appointment History</h6>';
     html += '<div class="d-flex align-items-center gap-2">';
     html += '<span class="badge bg-primary">' + appointments.length + '</span>';
-    html += '<button type="button" class="btn-close btn-close-white" onclick="bootstrap.Popover.getInstance(document.getElementById(\'appointmentHistoryBtn\')).hide()" aria-label="Close"></button>';
+    html += '<button type="button" class="btn-close appointment-history-close-btn" onclick="bootstrap.Popover.getInstance(document.getElementById(\'appointmentHistoryBtn\')).hide()" aria-label="Close"></button>';
     html += '</div>';
     html += '</div>';
     html += '<div class="appointment-history-content" style="max-height: 500px; overflow-y: auto;">';
@@ -6616,6 +6662,110 @@ if (originalOpenCameraModal) {
     };
 }
 
+// Forum Topics Section
+document.addEventListener('DOMContentLoaded', function() {
+    loadAppointmentForumTopics();
+});
+
+async function loadAppointmentForumTopics() {
+    const appointmentId = <?= isset($appointment['id']) ? (int)$appointment['id'] : 'null' ?>;
+    if (!appointmentId) return;
+    
+    try {
+        const response = await fetch(`/api/forum/topics/appointment/${appointmentId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            renderAppointmentForumTopics(data.topics);
+        }
+    } catch (error) {
+        console.error('Error loading forum topics:', error);
+    }
+}
+
+function renderAppointmentForumTopics(topics) {
+    const container = document.getElementById('appointmentForumTopics');
+    if (!container) return;
+    
+    if (topics.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <p class="text-muted">No forum topics yet for this appointment.</p>
+                <button class="btn btn-primary btn-sm" onclick="createAppointmentForumTopic()">
+                    <i class="bi bi-plus-circle me-1"></i>Create Topic
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="list-group">';
+    topics.forEach(topic => {
+        const timeAgo = getTimeAgo(topic.created_at);
+        html += `
+            <a href="/doctor/forum/topic/${topic.id}" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">${escapeHtml(topic.title)}</h6>
+                    <small>${timeAgo}</small>
+                </div>
+                <p class="mb-1">${escapeHtml(topic.content.substring(0, 100))}${topic.content.length > 100 ? '...' : ''}</p>
+                <small><i class="bi bi-chat"></i> ${topic.replies_count || 0} replies</small>
+            </a>
+        `;
+    });
+    html += '</div>';
+    html += `
+        <div class="mt-3 text-center">
+            <button class="btn btn-primary btn-sm" onclick="createAppointmentForumTopic()">
+                <i class="bi bi-plus-circle me-1"></i>Create New Topic
+            </button>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+function createAppointmentForumTopic() {
+    window.location.href = `/doctor/forum?appointment_id=<?= isset($appointment['id']) ? (int)$appointment['id'] : '' ?>&create=true`;
+}
+
+function getTimeAgo(dateString) {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diff = Math.floor((now - date) / 1000);
+    
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+    return date.toLocaleDateString();
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 </script>
+
+<!-- Forum Topics Section -->
+<div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-chat-dots me-2"></i>Forum Topics
+        </h5>
+    </div>
+    <div class="card-body">
+        <div id="appointmentForumTopics">
+            <div class="text-center py-4">
+                <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php include __DIR__ . '/alert_modal.php'; ?>

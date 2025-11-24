@@ -1388,17 +1388,17 @@
                                         <small class="text-muted">Ahmed Mohamed - Follow-up appointment</small>
                                     </div>
                                 </div>
-                                <button class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-x"></i>
+                                <button class="btn btn-sm btn-outline-secondary" style="color: var(--text);">
+                                    <i class="bi bi-x" style="color: var(--text);"></i>
                                 </button>
                             </div>
                             <p class="mb-2">Reminder: Patient follow-up scheduled for today at 2:00 PM</p>
                             <div class="d-flex align-items-center gap-2">
-                                <button class="btn btn-sm btn-primary">
-                                    <i class="bi bi-person me-1"></i>View Patient
+                                <button class="btn btn-sm btn-primary" style="color: var(--text);">
+                                    <i class="bi bi-person me-1" style="color: var(--text);"></i>View Patient
                                 </button>
-                                <button class="btn btn-sm btn-outline-warning">
-                                    <i class="bi bi-clock me-1"></i>Snooze
+                                <button class="btn btn-sm btn-outline-warning" style=color:var(--text)>
+                                    <i class="bi bi-clock me-1" style="color: var(--text);"></i>Snooze
                                 </button>
                             </div>
                         </div>

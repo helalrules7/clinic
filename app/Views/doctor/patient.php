@@ -7173,6 +7173,7 @@ window.currentPatientInfo = {
 // Load alerts when page loads
 document.addEventListener('DOMContentLoaded', function() {
     loadPatientAlerts();
+    loadPatientForumTopics();
     
     // Reload alerts after alert modal is closed (if alert was created/updated)
     const alertModal = document.getElementById('alertModal');
@@ -7186,6 +7187,106 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Forum Topics Section
+async function loadPatientForumTopics() {
+    const patientId = <?= isset($patient['id']) ? (int)$patient['id'] : 'null' ?>;
+    if (!patientId) return;
+    
+    try {
+        const response = await fetch(`/api/forum/topics/patient/${patientId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            renderPatientForumTopics(data.topics);
+        }
+    } catch (error) {
+        console.error('Error loading forum topics:', error);
+    }
+}
+
+function renderPatientForumTopics(topics) {
+    const container = document.getElementById('patientForumTopics');
+    if (!container) return;
+    
+    if (topics.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <p class="text-muted">No forum topics yet for this patient.</p>
+                <button class="btn btn-primary btn-sm" onclick="createPatientForumTopic()">
+                    <i class="bi bi-plus-circle me-1"></i>Create Topic
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="list-group">';
+    topics.forEach(topic => {
+        const timeAgo = getTimeAgo(topic.created_at);
+        html += `
+            <a href="/doctor/forum/topic/${topic.id}" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">${escapeHtml(topic.title)}</h6>
+                    <small>${timeAgo}</small>
+                </div>
+                <p class="mb-1">${escapeHtml(topic.content.substring(0, 100))}${topic.content.length > 100 ? '...' : ''}</p>
+                <small><i class="bi bi-chat"></i> ${topic.replies_count || 0} replies</small>
+            </a>
+        `;
+    });
+    html += '</div>';
+    html += `
+        <div class="mt-3 text-center">
+            <button class="btn btn-primary btn-sm" onclick="createPatientForumTopic()">
+                <i class="bi bi-plus-circle me-1"></i>Create New Topic
+            </button>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+function createPatientForumTopic() {
+    window.location.href = `/doctor/forum?patient_id=<?= isset($patient['id']) ? (int)$patient['id'] : '' ?>&create=true`;
+}
+
+function getTimeAgo(dateString) {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diff = Math.floor((now - date) / 1000);
+    
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+    return date.toLocaleDateString();
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 </script>
+
+<!-- Forum Topics Section -->
+<div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-chat-dots me-2"></i>Forum Topics
+        </h5>
+    </div>
+    <div class="card-body">
+        <div id="patientForumTopics">
+            <div class="text-center py-4">
+                <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php include __DIR__ . '/alert_modal.php'; ?>

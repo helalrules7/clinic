@@ -489,6 +489,15 @@
                             </div>
                         </div>
 
+                        <!-- System Notifications -->
+                        <div class="settings-section mb-4">
+                            <h5><i class="bi bi-bell me-2"></i>System Notifications</h5>
+                            <p class="text-muted">Send notifications to users</p>
+                            <a href="/admin/notifications" class="btn btn-primary">
+                                <i class="bi bi-bell me-2"></i>Manage Notifications
+                            </a>
+                        </div>
+                        
                         <!-- System Settings -->
                         <div class="settings-section">
                             <h5><i class="fas fa-cogs me-2"></i>System Settings</h5>

@@ -249,6 +249,38 @@ class AlertController
             $alertId = $this->alertModel->create($alertData);
             
             if ($alertId) {
+                // Create notification for alert
+                try {
+                    $patientName = '';
+                    if (!empty($data['patient_id'])) {
+                        $pdo = \App\Config\Database::getInstance()->getConnection();
+                        $patientStmt = $pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
+                        $patientStmt->execute([$data['patient_id']]);
+                        $patient = $patientStmt->fetch(\PDO::FETCH_ASSOC);
+                        if ($patient) {
+                            $patientName = trim($patient['first_name'] . ' ' . $patient['last_name']);
+                        }
+                    }
+                    
+                    $notificationTitle = 'New Alert Created';
+                    $notificationMessage = $data['message'];
+                    if ($patientName) {
+                        $notificationMessage .= " - Patient: {$patientName}";
+                    }
+                    
+                    \App\Controllers\NotificationController::create(
+                        $user['id'],
+                        'alert',
+                        $notificationTitle,
+                        $notificationMessage,
+                        'alert',
+                        $alertId,
+                        $data['patient_id'] ?? null
+                    );
+                } catch (\Exception $e) {
+                    // Continue even if notification creation fails
+                }
+                
                 echo json_encode([
                     'success' => true,
                     'message' => 'Alert created successfully',
@@ -551,6 +583,38 @@ class AlertController
         $result = $this->alertModel->update($alertId, $updateData, $doctorId);
         
         if ($result) {
+            // Create notification for alert update
+            try {
+                $patientName = '';
+                if (!empty($data['patient_id'])) {
+                    $pdo = \App\Config\Database::getInstance()->getConnection();
+                    $patientStmt = $pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
+                    $patientStmt->execute([$data['patient_id']]);
+                    $patient = $patientStmt->fetch(\PDO::FETCH_ASSOC);
+                    if ($patient) {
+                        $patientName = trim($patient['first_name'] . ' ' . $patient['last_name']);
+                    }
+                }
+                
+                $notificationTitle = 'Alert Updated';
+                $notificationMessage = $data['message'];
+                if ($patientName) {
+                    $notificationMessage .= " - Patient: {$patientName}";
+                }
+                
+                \App\Controllers\NotificationController::create(
+                    $user['id'],
+                    'alert',
+                    $notificationTitle,
+                    $notificationMessage,
+                    'alert',
+                    $alertId,
+                    $data['patient_id'] ?? null
+                );
+            } catch (\Exception $e) {
+                // Continue even if notification creation fails
+            }
+            
             echo json_encode([
                 'success' => true,
                 'message' => 'Alert updated successfully'
