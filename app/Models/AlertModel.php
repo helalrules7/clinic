@@ -354,8 +354,8 @@ class AlertModel
         
         if ($result) {
             return $result;
-        }
-        
+            }
+            
         // If no exact match, try to find by similar content (strip HTML tags and compare)
         if (!empty($normalizedMessage)) {
             // Strip HTML tags and normalize whitespace for comparison
@@ -380,10 +380,10 @@ class AlertModel
                     
                     if ($alertTextOnly === $textOnly) {
                         return $alert;
-                    }
                 }
             }
         }
+    }
         
         return null;
     }

@@ -285,95 +285,227 @@ $topicId = $topicId ?? null;
     border: 1px solid rgba(251, 191, 36, 0.2);
 }
 
-/* Posts/Replies */
+/* Posts/Replies - Redesigned to match reference code */
 .forum-posts-container {
     margin-top: 2rem;
 }
 
-.forum-post {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    transition: all 0.3s ease;
-}
-
-.forum-post:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.forum-post.reply {
-    margin-left: 3rem;
-    border-left: 3px solid var(--accent);
-}
-
-.forum-post.reply.reply-2 {
-    margin-left: 6rem;
-}
-
-.forum-post.reply.reply-3 {
-    margin-left: 9rem;
-}
-
-.forum-post-header {
+/* Comment row - main container */
+.forum-post-row {
     display: flex;
-    justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border);
+    margin-bottom: 15px;
+    position: relative;
 }
 
-.forum-post-author-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+/* Reply styling with margin-left */
+.forum-post-row.reply {
+    margin-left: 50px;
+}
+
+.forum-post-row.reply.reply-2 {
+    margin-left: 100px;
+}
+
+.forum-post-row.reply.reply-3 {
+    margin-left: 150px;
+}
+
+/* Reply arrow - SVG icon */
+.forum-reply-arrow {
+    color: #555;
+    font-size: 20px;
+    margin-right: 10px;
+    margin-top: 15px;
+    display: none;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+}
+
+.dark .forum-reply-arrow {
+    color: #9ca3af;
+}
+
+.forum-post-row.reply .forum-reply-arrow {
+    display: block;
+}
+
+.forum-reply-arrow svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Avatar */
+.forum-post-avatar-wrapper {
+    flex-shrink: 0;
+    margin-right: 15px;
 }
 
 .forum-post-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    border-radius: 6px;
     object-fit: cover;
-    border: 2px solid var(--border);
+    border: 1px solid #ddd;
+    padding: 2px;
+    background: #fff;
+}
+
+.dark .forum-post-avatar {
+    border-color: #374151;
+    background: #1f2937;
 }
 
 .forum-post-avatar-placeholder {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--muted);
-    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 6px;
+    background: #e5e7eb;
+    color: #6b7280;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
-    border: 2px solid var(--border);
+    font-size: 1.25rem;
+    border: 1px solid #ddd;
+}
+
+.dark .forum-post-avatar-placeholder {
+    background: #374151;
+    color: #9ca3af;
+    border-color: #4b5563;
+}
+
+/* Comment content box */
+.forum-post {
+    flex: 1;
+    background-color: #fff;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    padding: 10px 15px;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.dark .forum-post {
+    background-color: #1f2937;
+    border-color: #374151;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Comment header - name and time */
+.forum-post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 5px;
+}
+
+.dark .forum-post-header {
+    border-bottom-color: #374151;
 }
 
 .forum-post-author {
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 0.25rem;
+    font-weight: bold;
+    color: #333;
+    font-size: 14px;
+}
+
+.dark .forum-post-author {
+    color: #f9fafb;
+}
+
+.forum-post-author::after {
+    content: ' said:';
+    font-weight: 400;
 }
 
 .forum-post-time {
-    font-size: 0.875rem;
-    color: var(--muted);
+    font-size: 12px;
+    color: #888;
+}
+
+.dark .forum-post-time {
+    color: #9ca3af;
 }
 
 .forum-post-content {
-    color: var(--text);
-    line-height: 1.8;
-    margin-bottom: 1rem;
+    color: #555;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-top: 5px;
+}
+
+.dark .forum-post-content {
+    color: #d1d5db;
+}
+
+/* Mentions in content */
+.forum-post-content .mention {
+    font-weight: bold;
+    color: #333;
+}
+
+.dark .forum-post-content .mention {
+    color: #f9fafb;
+}
+
+.forum-post-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.forum-post-content img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.forum-content-image-wrapper {
+    margin: 1rem 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--card);
+}
+
+.forum-content-image-title {
+    padding: 0.5rem 0.75rem;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-align: center;
+}
+
+.forum-content-image-container {
+    padding: 0.5rem;
+    text-align: center;
+}
+
+.forum-content-image-container img {
+    max-width: 100%;
+    max-height: 500px;
+    height: auto;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.forum-content-image-container img:hover {
+    transform: scale(1.05);
 }
 
 .forum-post-images {
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .forum-post-image {
@@ -426,11 +558,16 @@ $topicId = $topicId ?? null;
 
 .forum-post-actions {
     display: flex;
-    gap: 1rem;
+    gap: 0.75rem;
     align-items: center;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border);
+    padding-top: 0.75rem;
+    margin-top: 0.5rem;
+    border-top: 1px solid #f0f0f0;
     flex-wrap: wrap;
+}
+
+.dark .forum-post-actions {
+    border-top-color: #374151;
 }
 
 .forum-post-actions-header {
@@ -488,46 +625,82 @@ $topicId = $topicId ?? null;
 .forum-post-like,
 .forum-post-dislike {
     background: none;
-    border: 1px solid var(--border);
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.375rem;
     transition: all 0.2s ease;
+    font-size: 0.875rem;
+}
+
+.dark .forum-post-like,
+.dark .forum-post-dislike {
+    border-color: #374151;
 }
 
 .forum-post-like:hover {
-    background: rgba(16, 185, 129, 0.1);
-    border-color: var(--success);
+    background: rgba(16, 185, 129, 0.08);
+    border-color: #10b981;
+}
+
+.dark .forum-post-like:hover {
+    background: rgba(16, 185, 129, 0.15);
 }
 
 .forum-post-dislike:hover {
-    background: rgba(239, 68, 68, 0.1);
-    border-color: var(--danger);
+    background: rgba(239, 68, 68, 0.08);
+    border-color: #ef4444;
+}
+
+.dark .forum-post-dislike:hover {
+    background: rgba(239, 68, 68, 0.15);
 }
 
 .forum-post-like.active {
-    background: rgba(16, 185, 129, 0.2);
-    border-color: var(--success);
-    color: var(--success);
+    background: rgba(16, 185, 129, 0.15);
+    border-color: #10b981;
+    color: #10b981;
+}
+
+.dark .forum-post-like.active {
+    background: rgba(16, 185, 129, 0.25);
 }
 
 .forum-post-dislike.active {
-    background: rgba(239, 68, 68, 0.2);
-    border-color: var(--danger);
-    color: var(--danger);
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.dark .forum-post-dislike.active {
+    background: rgba(239, 68, 68, 0.25);
 }
 
 .forum-post-reply-btn {
-    background: var(--accent);
+    background: #3b82f6;
     color: white;
     border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.forum-post-reply-btn:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
+.dark .forum-post-reply-btn {
+    background: #2563eb;
+}
+
+.dark .forum-post-reply-btn:hover {
+    background: #1d4ed8;
 }
 
 /* Reply Form */
@@ -783,6 +956,17 @@ $topicId = $topicId ?? null;
     color: var(--text);
 }
 
+.forum-form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--text);
+    font-size: 1rem;
+    font-family: inherit;
+}
+
 .forum-form-textarea {
     width: 100%;
     padding: 0.75rem;
@@ -834,17 +1018,41 @@ $topicId = $topicId ?? null;
 }
 
 /* Autocomplete */
-.forum-autocomplete-portal {
-    position: fixed;
+/* Autocomplete - Meta Tags (Absolute Positioning like Drugs) */
+.forum-meta-autocomplete-portal {
+    position: absolute;
+    z-index: 99999;
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    z-index: 10001;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     max-height: 300px;
     overflow-y: auto;
-    min-width: 300px;
+    min-width: 250px;
+    max-width: 400px;
     display: none;
+}
+
+/* Autocomplete - Content Textarea (Fixed Positioning like Notes) */
+.forum-content-autocomplete-portal {
+    position: fixed !important;
+    z-index: 99999 !important;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    min-width: 250px;
+    max-width: 400px;
+    display: none;
+}
+
+.dark .forum-meta-autocomplete-portal,
+.dark .forum-content-autocomplete-portal {
+    background: var(--card);
+    border-color: var(--border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .forum-autocomplete-item {
@@ -940,19 +1148,28 @@ $topicId = $topicId ?? null;
         </div>
         <div id="replyContent" class="forum-reply-content" contenteditable="true" placeholder="Type your reply here. Use @ for patients, # for appointments, $ for drugs..."></div>
         <div class="forum-reply-actions">
-            <div class="forum-image-upload">
-                <input type="file" id="replyImageInput" accept="image/*" multiple onchange="handleImageUpload(event)">
-                <label for="replyImageInput" class="forum-image-upload-label">
-                    <i class="bi bi-image"></i> Add Images
-                </label>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <div class="forum-image-upload">
+                    <input type="file" id="replyImageInput" accept="image/*" multiple onchange="handleImageUpload(event)">
+                    <label for="replyImageInput" class="forum-image-upload-label">
+                        <i class="bi bi-image"></i> Add Images
+                    </label>
+                </div>
+                <div class="forum-image-upload">
+                    <input type="file" id="replyAttachmentsInput" accept="image/*,.pdf,.doc,.docx" multiple onchange="handleReplyAttachments(event)" style="display: none;">
+                    <label for="replyAttachmentsInput" class="forum-image-upload-label" style="background: var(--muted);">
+                        <i class="bi bi-paperclip"></i> Add Files
+                    </label>
+                </div>
             </div>
+            <div id="replyAttachmentsPreview" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;"></div>
             <button class="forum-reply-submit" onclick="submitReply()">Post Reply</button>
         </div>
     </div>
 </div>
 
 <!-- Autocomplete Portal -->
-<div id="forumAutocompletePortal" class="forum-autocomplete-portal"></div>
+<div id="forumAutocompletePortal" class="forum-content-autocomplete-portal"></div>
 
 <script>
 const topicId = <?= json_encode($topicId) ?>;
@@ -1002,7 +1219,8 @@ function renderTopic() {
     
     const tagsHtml = currentTopic.tags ? currentTopic.tags.map(tag => {
         const tagName = tag.tag_name || (tag.tag_type === 'appointment' ? `#${tag.tag_id}` : '');
-        return `<span class="forum-tag ${tag.tag_type}">${getTagIcon(tag.tag_type)} ${escapeHtml(tagName)}</span>`;
+        const tagClass = tag.tag_type === 'custom' ? 'forum-tag custom' : `forum-tag ${tag.tag_type}`;
+        return `<span class="${tagClass}">${getTagIcon(tag.tag_type)} ${escapeHtml(tagName)}</span>`;
     }).join('') : '';
     
     const timeAgo = getTimeAgo(currentTopic.created_at);
@@ -1072,6 +1290,30 @@ function renderTopic() {
             ` : ''}
             <div class="forum-topic-content">${currentTopic.content}</div>
             ${tagsHtml ? `<div class="forum-topic-tags">${tagsHtml}</div>` : ''}
+            ${currentTopic.attachments && currentTopic.attachments.length > 0 ? `
+                <div class="forum-topic-attachments" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; color: var(--muted); font-size: 0.875rem; font-weight: 600;">
+                        <i class="bi bi-paperclip"></i>
+                        <span>Attachments (${currentTopic.attachments.length})</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        ${currentTopic.attachments.map(attach => `
+                            <a href="/api/forum/attachments/view/${attach.id}" 
+                               class="forum-attachment-item" 
+                               style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: var(--card); border: 1px solid var(--border); border-radius: 8px; text-decoration: none; color: var(--text); transition: all 0.2s ease;"
+                               download="${escapeHtml(attach.original_filename)}"
+                               target="_blank">
+                                <i class="bi ${getAttachmentIcon(attach.mime_type)}" style="font-size: 1.5rem; color: var(--accent);"></i>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-weight: 500; margin-bottom: 0.25rem; word-break: break-word;">${escapeHtml(attach.original_filename)}</div>
+                                    <div style="font-size: 0.75rem; color: var(--muted);">${formatFileSize(attach.file_size)}</div>
+                                </div>
+                                <i class="bi bi-download" style="color: var(--accent); font-size: 1.25rem;"></i>
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
         </div>
     `;
 }
@@ -1084,19 +1326,22 @@ async function loadPosts() {
         if (data.success) {
             forumPosts = data.posts;
             renderPosts();
+            return true;
         } else {
             showError('Failed to load posts');
+            return false;
         }
     } catch (error) {
         console.error('Error loading posts:', error);
         showError('Error loading posts');
+        return false;
     }
 }
 
 function renderPosts() {
     const container = document.getElementById('postsContainer');
     
-    if (forumPosts.length === 0) {
+    if (!forumPosts || forumPosts.length === 0) {
         container.innerHTML = `
             <div class="forum-empty">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">💬</div>
@@ -1107,7 +1352,16 @@ function renderPosts() {
         return;
     }
     
+    // Debug: Log posts structure
+    console.log('Forum renderPosts: Total top-level posts:', forumPosts.length);
+    forumPosts.forEach((post, index) => {
+        const childrenCount = post.children && Array.isArray(post.children) ? post.children.length : 0;
+        console.log(`Forum renderPosts: Post ${index + 1} (ID: ${post.id}) has ${childrenCount} children`);
+    });
+    
     let html = '';
+    // forumPosts should already be a tree structure from buildPostTree
+    // Only top-level posts are in the array, children are nested
     forumPosts.forEach(post => {
         html += renderPost(post, 0);
     });
@@ -1117,9 +1371,74 @@ function renderPosts() {
 
 function renderPost(post, depth) {
     const timeAgo = getTimeAgo(post.created_at);
-    const imagesHtml = post.images && post.images.length > 0 ? post.images.map(img => 
-        `<img src="${escapeHtml(img.image_path)}" alt="${escapeHtml(img.original_filename)}" class="forum-post-image" onclick="openImageModal('${escapeHtml(img.image_path)}', '${escapeHtml(img.original_filename)}')">`
-    ).join('') : '';
+    
+    // Process content to extract and format images
+    let processedContent = post.content || '';
+    const imagePathsInContent = new Set();
+    
+    // Extract and replace images in content HTML string
+    // Match <img> tags with various attributes
+    const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*(?:alt=["']([^"']*)["'])?[^>]*>/gi;
+    processedContent = processedContent.replace(imgRegex, (match, src, alt) => {
+        if (src) {
+            imagePathsInContent.add(src);
+            const imageName = alt || 'Image';
+            // Replace img tag with wrapped version
+            return `
+                <div class="forum-content-image-wrapper">
+                    <div class="forum-content-image-title">${escapeHtml(imageName)}</div>
+                    <div class="forum-content-image-container">
+                        <img src="${escapeHtml(src)}" alt="${escapeHtml(imageName)}" onclick="openImageModal('${escapeHtml(src)}', '${escapeHtml(imageName)}')" style="cursor: pointer;">
+                    </div>
+                </div>
+            `;
+        }
+        return match;
+    });
+    
+    // Only show images from post.images that are NOT in content
+    // Normalize paths for comparison (remove leading /storage or /public if present)
+    const normalizePath = (path) => {
+        if (!path) return '';
+        return path.replace(/^\/?(storage|public)\//, '').replace(/^\//, '');
+    };
+    
+    const imagesHtml = post.images && post.images.length > 0 ? post.images
+        .filter(img => {
+            const normalizedImagePath = normalizePath(img.image_path);
+            // Check if this image path is in content
+            for (const contentPath of imagePathsInContent) {
+                const normalizedContentPath = normalizePath(contentPath);
+                if (normalizedImagePath === normalizedContentPath || 
+                    contentPath.includes(normalizedImagePath) || 
+                    normalizedImagePath.includes(normalizedContentPath)) {
+                    return false; // Image is in content, don't show in forum-post-images
+                }
+            }
+            return true; // Image not in content, show it
+        })
+        .map(img => 
+            `<img src="${escapeHtml(img.image_path)}" alt="${escapeHtml(img.original_filename)}" class="forum-post-image" onclick="openImageModal('${escapeHtml(img.image_path)}', '${escapeHtml(img.original_filename)}')">`
+        ).join('') : '';
+    
+    // Attachments HTML
+    const attachmentsHtml = post.attachments && post.attachments.length > 0 ? post.attachments.map(attach => {
+        const icon = getAttachmentIcon(attach.mime_type);
+        return `
+            <a href="/api/forum/attachments/view/${attach.id}" 
+               class="forum-attachment-item" 
+               style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: var(--card); border: 1px solid var(--border); border-radius: 8px; text-decoration: none; color: var(--text); transition: all 0.2s ease; margin-bottom: 0.5rem;"
+               download="${escapeHtml(attach.original_filename)}"
+               target="_blank">
+                <i class="bi ${icon}" style="font-size: 1.25rem; color: var(--accent);"></i>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 500; word-break: break-word;">${escapeHtml(attach.original_filename)}</div>
+                    <div style="font-size: 0.75rem; color: var(--muted);">${formatFileSize(attach.file_size)}</div>
+                </div>
+                <i class="bi bi-download" style="color: var(--accent);"></i>
+            </a>
+        `;
+    }).join('') : '';
     
     const userLike = post.user_like || null;
     const likeClass = userLike === 'like' ? 'active' : '';
@@ -1136,50 +1455,68 @@ function renderPost(post, depth) {
     const canEdit = isAuthor || isAdmin;
     const canDelete = isAuthor || isAdmin;
     
+    // Build HTML structure matching the reference code
+    const isReply = depth > 0;
+    const rowClass = isReply ? `reply ${depthClass2} ${depthClass3}` : '';
+    
     let html = `
-        <div class="forum-post ${depthClass} ${depthClass2} ${depthClass3}" data-post-id="${post.id}">
-            <div class="forum-post-header">
-                <div class="forum-post-author-info">
-                    ${post.creator_image ? (() => {
-                        const imagePath = post.creator_image.startsWith('/public/') ? post.creator_image : '/public' + post.creator_image;
-                        return `<img src="${escapeHtml(imagePath)}" alt="${escapeHtml(post.creator_name || 'Unknown')}" class="forum-post-avatar">`;
-                    })() : '<div class="forum-post-avatar-placeholder"><i class="bi bi-person"></i></div>'}
-                    <div>
-                        <div class="forum-post-author">${escapeHtml(post.creator_name || 'Unknown')}</div>
-                        <div class="forum-post-time">${timeAgo}</div>
-                    </div>
+        <div class="forum-post-row ${rowClass}" data-post-id="${post.id}" data-parent-id="${post.parent_post_id || ''}">
+            ${isReply ? `
+                <div class="forum-reply-arrow">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 10 4 15 9 20"></polyline>
+                        <path d="M20 4v7a4 4 0 0 1-4 4H4"></path>
+                    </svg>
                 </div>
-                ${canEdit || canDelete ? `
-                    <div class="forum-post-actions-header" onclick="event.stopPropagation();">
-                        ${canEdit ? `<button class="forum-post-action-btn edit-btn" onclick="editPost(${post.id})" title="Edit">
-                            <i class="bi bi-pencil"></i>
-                        </button>` : ''}
-                        ${canDelete ? `<button class="forum-post-action-btn delete-btn" onclick="deletePostConfirm(${post.id})" title="Delete">
-                            <i class="bi bi-trash"></i>
-                        </button>` : ''}
-                    </div>
-                ` : ''}
+            ` : ''}
+            <div class="forum-post-avatar-wrapper">
+                ${post.creator_image ? (() => {
+                    const imagePath = post.creator_image.startsWith('/public/') ? post.creator_image : '/public' + post.creator_image;
+                    return `<img src="${escapeHtml(imagePath)}" alt="${escapeHtml(post.creator_name || 'Unknown')}" class="forum-post-avatar">`;
+                })() : '<div class="forum-post-avatar-placeholder"><i class="bi bi-person"></i></div>'}
             </div>
-            <div class="forum-post-content">${post.content}</div>
-            ${imagesHtml ? `<div class="forum-post-images">${imagesHtml}</div>` : ''}
-            <div class="forum-post-actions">
-                <button class="forum-post-like ${likeClass}" onclick="toggleLike(${post.id}, true)">
-                    <i class="bi bi-hand-thumbs-up"></i>
-                    <span>${post.likes_count || 0}</span>
-                </button>
-                <button class="forum-post-dislike ${dislikeClass}" onclick="toggleLike(${post.id}, false)">
-                    <i class="bi bi-hand-thumbs-down"></i>
-                    <span>${post.dislikes_count || 0}</span>
-                </button>
-                <button class="forum-post-reply-btn" onclick="showReplyForm(${post.id})">
-                    <i class="bi bi-reply"></i> Reply
-                </button>
+            <div class="forum-post">
+                <div class="forum-post-header">
+                    <span class="forum-post-author">${escapeHtml(post.creator_name || 'Unknown')}${isAuthor ? ' <span style="color: #888; font-weight: normal;">(you)</span>' : ''}</span>
+                    <span class="forum-post-time">${timeAgo}</span>
+                    ${canEdit || canDelete ? `
+                        <div class="forum-post-actions-header" onclick="event.stopPropagation();" style="position: absolute; top: 10px; right: 15px; display: flex; gap: 0.5rem;">
+                            ${canEdit ? `<button class="forum-post-action-btn edit-btn" onclick="editPost(${post.id})" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>` : ''}
+                            ${canDelete ? `<button class="forum-post-action-btn delete-btn" onclick="deletePostConfirm(${post.id})" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>` : ''}
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="forum-post-content">${processedContent}</div>
+                ${imagesHtml ? `<div class="forum-post-images" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">${imagesHtml}</div>` : ''}
+                ${attachmentsHtml ? `<div class="forum-post-attachments" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">${attachmentsHtml}</div>` : ''}
+                <div class="forum-post-actions">
+                    <button class="forum-post-like ${likeClass}" onclick="toggleLike(${post.id}, true)">
+                        <i class="bi bi-hand-thumbs-up"></i>
+                        <span>${post.likes_count || 0}</span>
+                    </button>
+                    <button class="forum-post-dislike ${dislikeClass}" onclick="toggleLike(${post.id}, false)">
+                        <i class="bi bi-hand-thumbs-down"></i>
+                        <span>${post.dislikes_count || 0}</span>
+                    </button>
+                    <button class="forum-post-reply-btn" onclick="showReplyForm(${post.id})">
+                        <i class="bi bi-reply"></i> Reply
+                    </button>
+                </div>
             </div>
         </div>
     `;
     
-    if (post.children && post.children.length > 0) {
-        post.children.forEach(child => {
+    // Render children recursively - ensure all replies are rendered
+    if (post.children && Array.isArray(post.children) && post.children.length > 0) {
+        // Sort children by created_at to maintain order
+        const sortedChildren = [...post.children].sort((a, b) => {
+            return new Date(a.created_at) - new Date(b.created_at);
+        });
+        sortedChildren.forEach(child => {
             html += renderPost(child, depth + 1);
         });
     }
@@ -1189,15 +1526,335 @@ function renderPost(post, depth) {
 
 function showReplyForm(parentId = null) {
     currentReplyParentId = parentId;
-    document.getElementById('replyForm').classList.remove('hidden');
+    const replyForm = document.getElementById('replyForm');
+    replyForm.classList.remove('hidden');
+    
+    // Show parent post info if replying to a specific post
+    let parentInfoHtml = '';
+    if (parentId) {
+        const findPost = (posts, id) => {
+            for (const p of posts) {
+                if (p.id === id) return p;
+                if (p.children) {
+                    const found = findPost(p.children, id);
+                    if (found) return found;
+                }
+            }
+            return null;
+        };
+        const parentPost = findPost(forumPosts, parentId);
+        if (parentPost) {
+            parentInfoHtml = `
+                <div style="padding: 0.75rem; background: rgba(14, 165, 233, 0.1); border-left: 3px solid var(--accent); border-radius: 4px; margin-bottom: 1rem; font-size: 0.875rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <i class="bi bi-reply" style="color: var(--accent);"></i>
+                        <strong style="color: var(--text);">Replying to ${escapeHtml(parentPost.creator_name || 'Unknown')}</strong>
+                    </div>
+                    <div style="color: var(--muted); max-height: 100px; overflow: hidden; text-overflow: ellipsis;">
+                        ${parentPost.content.substring(0, 200)}${parentPost.content.length > 200 ? '...' : ''}
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    // Insert parent info before reply content
+    const replyContent = document.getElementById('replyContent');
+    const existingParentInfo = replyForm.querySelector('.reply-parent-info');
+    if (existingParentInfo) {
+        existingParentInfo.remove();
+    }
+    if (parentInfoHtml) {
+        const parentInfoDiv = document.createElement('div');
+        parentInfoDiv.className = 'reply-parent-info';
+        parentInfoDiv.innerHTML = parentInfoHtml;
+        // Insert before the toolbar (which is before replyContent)
+        const toolbar = replyForm.querySelector('.forum-editor-toolbar');
+        if (toolbar && toolbar.parentNode) {
+            toolbar.parentNode.insertBefore(parentInfoDiv, toolbar);
+        } else if (replyContent && replyContent.parentNode) {
+            replyContent.parentNode.insertBefore(parentInfoDiv, replyContent);
+        } else {
+            replyForm.insertBefore(parentInfoDiv, replyForm.firstChild);
+        }
+    }
+    
     document.getElementById('replyContent').focus();
 }
 
-function hideReplyForm() {
+async function hideReplyForm() {
+    // Delete uploaded attachments if any
+    if (replyUploadedAttachmentIds.length > 0) {
+        for (const uploaded of replyUploadedAttachmentIds) {
+            try {
+                await fetch(`/api/forum/attachments/${uploaded.id}`, {
+                    method: 'DELETE'
+                });
+            } catch (error) {
+                console.error('Error deleting attachment:', error);
+            }
+        }
+        replyUploadedAttachmentIds = [];
+    }
+    
     currentReplyParentId = null;
     document.getElementById('replyForm').classList.add('hidden');
     document.getElementById('replyContent').innerHTML = '';
     uploadedImages = [];
+    replyAttachments = [];
+    const preview = document.getElementById('replyAttachmentsPreview');
+    if (preview) {
+        preview.innerHTML = '';
+    }
+}
+
+let replyAttachments = [];
+let replyUploadedAttachmentIds = []; // Store uploaded attachment IDs for deletion on cancel
+
+// Handle reply attachments with immediate upload
+async function handleReplyAttachments(event) {
+    const files = Array.from(event.target.files);
+    const preview = document.getElementById('replyAttachmentsPreview');
+    if (!preview) return;
+    
+    // Disable buttons during upload
+    const submitBtn = document.querySelector('.forum-reply-submit');
+    const closeBtn = document.querySelector('.forum-reply-form-close');
+    if (submitBtn) submitBtn.disabled = true;
+    if (closeBtn) closeBtn.disabled = true;
+    
+    let uploadPromises = [];
+    
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileIndex = replyAttachments.length;
+        replyAttachments.push(file);
+        
+        // Create preview item with progress bar
+        const previewItem = document.createElement('div');
+        previewItem.id = `reply-attachment-${fileIndex}`;
+        previewItem.style.cssText = 'position: relative; margin: 0.5rem; width: 100px;';
+        
+        const isImage = file.type.startsWith('image/');
+        let previewHtml = '';
+        
+        if (isImage) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewHtml = `
+                    <img src="${e.target.result}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);">
+                    <div class="upload-progress" style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 2px; font-size: 0.7rem; text-align: center; border-radius: 0 0 8px 8px;">
+                        <div class="progress-bar" style="width: 0%; background: var(--accent); height: 2px; margin-top: 2px;"></div>
+                        <span class="progress-text">Uploading...</span>
+                    </div>
+                    <button type="button" onclick="removeReplyAttachment(${fileIndex})" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem; display: none;">×</button>
+                `;
+                previewItem.innerHTML = previewHtml;
+                preview.appendChild(previewItem);
+                
+                // Start upload
+                uploadFileToReply(file, fileIndex, previewItem);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            previewHtml = `
+                <div style="width: 100px; height: 100px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 0.5rem;">
+                    <i class="bi bi-file-earmark" style="font-size: 2rem; color: var(--muted);"></i>
+                    <small style="font-size: 0.7rem; color: var(--muted); text-align: center; word-break: break-all;">${escapeHtml(file.name)}</small>
+                </div>
+                <div class="upload-progress" style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 2px; font-size: 0.7rem; text-align: center; border-radius: 0 0 8px 8px;">
+                    <div class="progress-bar" style="width: 0%; background: var(--accent); height: 2px; margin-top: 2px;"></div>
+                    <span class="progress-text">Uploading...</span>
+                </div>
+                <button type="button" onclick="removeReplyAttachment(${fileIndex})" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem; display: none;">×</button>
+            `;
+            previewItem.innerHTML = previewHtml;
+            preview.appendChild(previewItem);
+            
+            // Start upload
+            uploadFileToReply(file, fileIndex, previewItem);
+        }
+    }
+}
+
+// Upload file to reply with progress
+async function uploadFileToReply(file, fileIndex, previewItem) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', 'post');
+    // post_id will be null for now, will be linked after post creation
+    
+    const progressBar = previewItem.querySelector('.progress-bar');
+    const progressText = previewItem.querySelector('.progress-text');
+    
+    try {
+        const xhr = new XMLHttpRequest();
+        
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                if (progressBar) progressBar.style.width = percentComplete + '%';
+                if (progressText) progressText.textContent = Math.round(percentComplete) + '%';
+            }
+        });
+        
+        const uploadPromise = new Promise((resolve, reject) => {
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    if (data.success) {
+                        // Store attachment ID for potential deletion
+                        replyUploadedAttachmentIds.push({
+                            id: data.attachment_id,
+                            fileIndex: fileIndex
+                        });
+                        
+                        // Update preview to show success
+                        if (progressBar) progressBar.style.width = '100%';
+                        if (progressBar) progressBar.style.background = 'var(--success)';
+                        if (progressText) progressText.textContent = 'Uploaded';
+                        
+                        // Show remove button
+                        const removeBtn = previewItem.querySelector('button');
+                        if (removeBtn) removeBtn.style.display = 'block';
+                        
+                        // Hide progress after a moment
+                        setTimeout(() => {
+                            const progressDiv = previewItem.querySelector('.upload-progress');
+                            if (progressDiv) progressDiv.style.display = 'none';
+                        }, 1000);
+                        
+                        resolve(data.attachment_id);
+                    } else {
+                        reject(new Error(data.message || 'Upload failed'));
+                    }
+                } else {
+                    reject(new Error('Upload failed'));
+                }
+                
+                // Re-enable buttons when all uploads complete
+                checkReplyUploadsComplete();
+            };
+            
+            xhr.onerror = function() {
+                if (progressText) progressText.textContent = 'Error';
+                if (progressBar) progressBar.style.background = 'var(--danger)';
+                reject(new Error('Upload failed'));
+                checkReplyUploadsComplete();
+            };
+        });
+        
+        xhr.open('POST', '/api/forum/attachments/upload');
+        xhr.send(formData);
+        
+        await uploadPromise;
+    } catch (error) {
+        console.error('Error uploading attachment:', error);
+        if (progressText) progressText.textContent = 'Error';
+        if (progressBar) progressBar.style.background = 'var(--danger)';
+        checkReplyUploadsComplete();
+    }
+}
+
+// Check if all reply uploads are complete
+function checkReplyUploadsComplete() {
+    const preview = document.getElementById('replyAttachmentsPreview');
+    if (!preview) return;
+    
+    const allProgressBars = preview.querySelectorAll('.upload-progress');
+    const allComplete = Array.from(allProgressBars).every(progress => {
+        return progress.style.display === 'none' || progress.querySelector('.progress-text').textContent === 'Uploaded' || progress.querySelector('.progress-text').textContent.includes('Error');
+    });
+    
+    if (allComplete) {
+        const submitBtn = document.querySelector('.forum-reply-submit');
+        const closeBtn = document.querySelector('.forum-reply-form-close');
+        if (submitBtn) submitBtn.disabled = false;
+        if (closeBtn) closeBtn.disabled = false;
+    }
+}
+
+// Remove reply attachment
+async function removeReplyAttachment(index) {
+    // Prevent deletion if arrays are already cleared (e.g., after successful post)
+    if (!replyAttachments || replyAttachments.length === 0) {
+        return;
+    }
+    
+    // Check if this attachment was uploaded
+    const uploadedAttachment = replyUploadedAttachmentIds.find(a => a.fileIndex === index);
+    
+    if (uploadedAttachment) {
+        // Delete from server
+        try {
+            const response = await fetch(`/api/forum/attachments/${uploadedAttachment.id}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (!data.success) {
+                    console.error('Error deleting attachment:', data.message);
+                }
+            }
+            // Remove from array
+            replyUploadedAttachmentIds = replyUploadedAttachmentIds.filter(a => a.id !== uploadedAttachment.id);
+        } catch (error) {
+            console.error('Error deleting attachment:', error);
+            // Don't show error to user if it's just a network issue
+        }
+    }
+    
+    // Remove from local array
+    replyAttachments.splice(index, 1);
+    
+    // Remove preview item
+    const previewItem = document.getElementById(`reply-attachment-${index}`);
+    if (previewItem) {
+        previewItem.remove();
+    }
+    
+    // Re-render preview with correct indices - but we need to map fileIndex correctly
+    const preview = document.getElementById('replyAttachmentsPreview');
+    if (preview && replyAttachments.length > 0) {
+        preview.innerHTML = '';
+        replyAttachments.forEach((file, idx) => {
+            // Find the original fileIndex for this file
+            // We need to track which fileIndex corresponds to which position
+            // Since we're removing by index, we need to recalculate fileIndex
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const isImage = file.type.startsWith('image/');
+                const previewItem = document.createElement('div');
+                // Use idx as the new fileIndex after removal
+                previewItem.id = `reply-attachment-${idx}`;
+                previewItem.style.cssText = 'position: relative; margin: 0.5rem; width: 100px;';
+                
+                if (isImage) {
+                    previewItem.innerHTML = `
+                        <img src="${e.target.result}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);">
+                        <button type="button" onclick="removeReplyAttachment(${idx})" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem;">×</button>
+                    `;
+                } else {
+                    previewItem.innerHTML = `
+                        <div style="width: 100px; height: 100px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 0.5rem;">
+                            <i class="bi bi-file-earmark" style="font-size: 2rem; color: var(--muted);"></i>
+                            <small style="font-size: 0.7rem; color: var(--muted); text-align: center; word-break: break-all;">${escapeHtml(file.name)}</small>
+                        </div>
+                        <button type="button" onclick="removeReplyAttachment(${idx})" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem;">×</button>
+                    `;
+                }
+                preview.appendChild(previewItem);
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        // Update fileIndex in replyUploadedAttachmentIds to match new indices
+        replyUploadedAttachmentIds.forEach(uploaded => {
+            if (uploaded.fileIndex > index) {
+                uploaded.fileIndex = uploaded.fileIndex - 1;
+            }
+        });
+    }
 }
 
 async function submitReply() {
@@ -1217,7 +1874,8 @@ async function submitReply() {
             body: JSON.stringify({
                 topic_id: topicId,
                 parent_post_id: currentReplyParentId,
-                content: content
+                content: content,
+                attachment_ids: replyUploadedAttachmentIds.map(u => u.id)
             })
         });
         
@@ -1233,8 +1891,38 @@ async function submitReply() {
                 }
             }
             
-            hideReplyForm();
-            loadPosts();
+            // Attachments are already uploaded, just need to link them via attachment_ids
+            // This is handled in the createPost request
+            
+            // Clear form but keep it visible for next reply
+            currentReplyParentId = null;
+            document.getElementById('replyContent').innerHTML = '';
+            uploadedImages = [];
+            
+            // Clear attachments arrays BEFORE clearing preview to prevent any onclick handlers from firing
+            const attachmentIdsToClear = [...replyUploadedAttachmentIds]; // Copy array
+            replyUploadedAttachmentIds = []; // Clear uploaded attachment IDs first
+            replyAttachments = [];
+            
+            // Clear preview after clearing arrays
+            const preview = document.getElementById('replyAttachmentsPreview');
+            if (preview) {
+                preview.innerHTML = '';
+            }
+            
+            // Remove parent info if exists
+            const replyForm = document.getElementById('replyForm');
+            const existingParentInfo = replyForm.querySelector('.reply-parent-info');
+            if (existingParentInfo) {
+                existingParentInfo.remove();
+            }
+            
+            // Reload posts
+            await loadPosts();
+            
+            // Keep form visible
+            replyForm.classList.remove('hidden');
+            
             showToast('Reply posted successfully', 'success');
         } else {
             showError(data.message || 'Failed to post reply');
@@ -1378,9 +2066,15 @@ function handleContentEditableInput(event) {
 async function showAutocomplete(contentEditable, rect, query) {
     if (!autocompletePortal) return;
     
+    // Position right beside the cursor - use fixed positioning for accurate placement
+    const x = rect.left + window.scrollX;
+    const y = rect.bottom + window.scrollY + 5;
+    
     autocompletePortal.style.display = 'block';
-    autocompletePortal.style.left = rect.left + 'px';
-    autocompletePortal.style.top = (rect.bottom + 5) + 'px';
+    autocompletePortal.style.position = 'fixed';
+    autocompletePortal.style.left = `${x}px`;
+    autocompletePortal.style.top = `${y}px`;
+    autocompletePortal.style.zIndex = '9999999';
     
     try {
         let url = '';
@@ -1489,6 +2183,31 @@ function handleContentEditableKeydown(event) {
         event.preventDefault();
         if (selectedAutocompleteIndex >= 0) {
             selectAutocompleteItem(selectedAutocompleteIndex);
+        } else {
+            // If Enter is pressed without selection, ensure we're not inside a special tag
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                let node = range.startContainer;
+                if (node.nodeType === Node.TEXT_NODE) {
+                    node = node.parentNode;
+                }
+                if (node.tagName === 'A' || node.tagName === 'SPAN') {
+                    const spaceNode = document.createTextNode('\u00A0');
+                    if (node.nextSibling) {
+                        node.parentNode.insertBefore(spaceNode, node.nextSibling);
+                    } else {
+                        node.parentNode.appendChild(spaceNode);
+                    }
+                    range.setStartAfter(spaceNode);
+                    range.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    document.execCommand('insertLineBreak');
+                } else {
+                    document.execCommand('insertLineBreak');
+                }
+            }
         }
     } else if (event.key === 'Escape') {
         hideAutocomplete();
@@ -1536,8 +2255,17 @@ function selectAutocompleteItem(index) {
         
         if (replacement) {
             range.insertNode(replacement);
+            
+            // Insert a space after the replacement to break the style
+            const spaceNode = document.createTextNode('\u00A0'); // Non-breaking space
+            if (replacement.nextSibling) {
+                replacement.parentNode.insertBefore(spaceNode, replacement.nextSibling);
+            } else {
+                replacement.parentNode.appendChild(spaceNode);
+            }
+            
             const newRange = document.createRange();
-            newRange.setStartAfter(replacement);
+            newRange.setStartAfter(spaceNode);
             newRange.collapse(true);
             const selection = window.getSelection();
             selection.removeAllRanges();
@@ -1897,6 +2625,510 @@ async function editTopic(topicId) {
     }
 }
 
+// Handle edit meta input
+function handleEditMetaInput(input) {
+    const text = input.textContent || '';
+    const selection = window.getSelection();
+    if (!selection.rangeCount) {
+        hideEditMetaAutocomplete();
+        return;
+    }
+    const range = selection.getRangeAt(0).cloneRange();
+    const fullRange = document.createRange();
+    fullRange.selectNodeContents(input);
+    fullRange.setEnd(range.startContainer, range.startOffset);
+    const textBeforeCursor = fullRange.toString();
+
+    const match = textBeforeCursor.match(/(@|#|\$|~)([^\s@#$~]*)$/);
+
+    if (match) {
+        const trigger = match[1];
+        const query = match[2];
+
+        if (trigger === '~') {
+            return;
+        }
+
+        const minLength = trigger === '#' && /^\d+$/.test(query) ? 1 : 2;
+        if (query.length >= minLength) {
+            const type = trigger === '@' ? 'patient' : (trigger === '#' ? 'appointment' : 'drug');
+            showEditMetaAutocomplete(input, type, query, range);
+        } else {
+            hideEditMetaAutocomplete();
+        }
+    } else {
+        hideEditMetaAutocomplete();
+    }
+}
+
+// Show edit meta autocomplete
+async function showEditMetaAutocomplete(input, type, query, range) {
+    let autocompletePortal = document.getElementById('editTopicMetaAutocomplete');
+    if (!autocompletePortal) return;
+
+    // Move to body to ensure positioning works correctly
+    if (autocompletePortal.parentNode !== document.body) {
+        document.body.appendChild(autocompletePortal);
+    }
+
+    // Position below the input field directly
+    if (!input) return;
+    
+    const inputRect = input.getBoundingClientRect();
+    // Use absolute positioning (scrollY + rect.bottom)
+    const x = inputRect.left + window.scrollX;
+    const y = inputRect.bottom + window.scrollY;
+
+    console.log('Topic Edit Meta Autocomplete Position (Absolute):', {
+        inputRect: inputRect,
+        calculatedX: x,
+        calculatedY: y
+    });
+
+    // Remove any inline styles that might interfere
+    autocompletePortal.style.removeProperty('top');
+    autocompletePortal.style.removeProperty('left');
+    autocompletePortal.style.removeProperty('bottom');
+    autocompletePortal.style.removeProperty('right');
+
+    autocompletePortal.style.display = 'block';
+    autocompletePortal.style.position = 'absolute';
+    autocompletePortal.style.left = `${x}px`;
+    autocompletePortal.style.top = `${y}px`;
+    // Ensure width matches or is reasonable
+    autocompletePortal.style.minWidth = `${Math.max(inputRect.width, 250)}px`;
+    autocompletePortal.style.zIndex = '9999999';
+
+    try {
+        let url = '';
+        if (type === 'patient') {
+            url = `/api/patients/search?q=${encodeURIComponent(query)}`;
+        } else if (type === 'appointment') {
+            url = `/api/appointments/search?q=${encodeURIComponent(query)}&limit=10`;
+        } else if (type === 'drug') {
+            url = `/api/searchDrugsAutocomplete?q=${encodeURIComponent(query)}&limit=10`;
+        }
+
+        if (!url) return;
+
+        const response = await fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status !== 400 && response.status !== 404) {
+                console.error('Error loading edit meta autocomplete:', response.status);
+            }
+            return;
+        }
+
+        const data = await response.json();
+
+        let items = [];
+        if (type === 'patient' && data.ok && data.data) {
+            items = data.data.map(p => ({
+                type: 'patient',
+                id: p.id,
+                title: `${p.first_name} ${p.last_name}`,
+                subtitle: p.phone || ''
+            }));
+        } else if (type === 'appointment' && data.ok && data.data) {
+            items = data.data.map(a => ({
+                type: 'appointment',
+                id: a.id,
+                title: `#${a.id}`,
+                subtitle: `${a.patient_name || ''} - ${a.date || ''}`
+            }));
+        } else if (type === 'drug' && data.drugs) {
+            items = data.drugs.map(drug => ({
+                type: 'drug',
+                id: drug.ID,
+                title: drug.drug_name,
+                subtitle: drug.active_ingredient || drug.Company || ''
+            }));
+        }
+
+        window.editMetaAutocompleteItems = items;
+        renderEditMetaAutocomplete(items, type);
+    } catch (error) {
+        console.error('Error loading edit meta autocomplete:', error);
+        hideEditMetaAutocomplete();
+    }
+}
+
+// Render edit meta autocomplete
+function renderEditMetaAutocomplete(items, type) {
+    const portal = document.getElementById('editTopicMetaAutocomplete');
+    if (!portal) return;
+
+    if (items.length === 0) {
+        portal.innerHTML = '<div class="forum-autocomplete-list" style="background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem;">No results</div>';
+        return;
+    }
+
+    let html = '<div class="forum-autocomplete-list" style="background: var(--card); border: 1px solid var(--border); border-radius: 8px; max-height: 200px; overflow-y: auto;">';
+    items.forEach((item, index) => {
+        const icon = type === 'patient' ? 'bi-person' : type === 'appointment' ? 'bi-calendar-event' : 'bi-capsule';
+        html += `
+            <div class="forum-autocomplete-item" onclick="selectEditMetaItem(${index}, '${type}')" style="padding: 0.75rem; cursor: pointer; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.75rem;">
+                <i class="bi ${icon}" style="font-size: 1.25rem; color: var(--accent);"></i>
+                <div>
+                    <div style="font-weight: 500; color: var(--text);">${escapeHtml(item.title)}</div>
+                    ${item.subtitle ? `<div style="font-size: 0.875rem; color: var(--muted);">${escapeHtml(item.subtitle)}</div>` : ''}
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    portal.innerHTML = html;
+}
+
+// Hide edit meta autocomplete
+function hideEditMetaAutocomplete() {
+    const portal = document.getElementById('editTopicMetaAutocomplete');
+    if (portal) {
+        portal.style.display = 'none';
+        portal.innerHTML = '';
+    }
+}
+
+// Select edit meta item
+function selectEditMetaItem(index, type) {
+    const items = window.editMetaAutocompleteItems || [];
+    if (!items[index]) return;
+
+    const item = items[index];
+    addMetaTagBadgeToEdit(item.type, item.id, item.title);
+
+    const input = document.getElementById('editTopicMetaInput');
+    if (input) {
+        input.textContent = '';
+        input.focus();
+    }
+
+    hideEditMetaAutocomplete();
+}
+
+// Add meta tag badge to edit
+function addMetaTagBadgeToEdit(type, id, name) {
+    const container = document.getElementById('editTopicMetaContainer');
+    if (!container) return;
+
+    const badge = document.createElement('span');
+    badge.className = `forum-tag ${type}`;
+    badge.setAttribute('data-meta-type', type);
+    badge.setAttribute('data-meta-id', id);
+    badge.style.cssText = 'display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; margin: 0.25rem;';
+
+    const icon = type === 'patient' ? 'bi-person' : type === 'appointment' ? 'bi-calendar-event' : type === 'drug' ? 'bi-capsule' : 'bi-tag';
+    badge.innerHTML = `
+        <i class="bi ${icon}"></i>
+        <span>${escapeHtml(name)}</span>
+        <button type="button" onclick="removeMetaTagBadge(this)" style="background: none; border: none; color: inherit; cursor: pointer; margin-left: 0.25rem; padding: 0;">×</button>
+    `;
+
+    const input = document.getElementById('editTopicMetaInput');
+    if (input && container.contains(input)) {
+        container.insertBefore(badge, input);
+    } else {
+        container.appendChild(badge);
+    }
+}
+
+// Remove meta tag badge
+function removeMetaTagBadge(button) {
+    const badge = button.closest('[data-meta-type]');
+    if (badge) {
+        badge.remove();
+    }
+}
+
+// Handle edit meta tag creation
+function handleEditMetaTagCreation(input, isTrigger) {
+    let text = input.textContent.trim();
+    if (!text) return;
+
+    // Clean up text if it ends with ;
+    if (text.endsWith(';')) {
+        text = text.slice(0, -1).trim();
+    }
+    
+    if (!text) return;
+
+    if (isTrigger) {
+        addCustomMetaTagBadgeToEdit(text);
+        input.textContent = '';
+    }
+}
+
+// Add custom meta tag badge to edit
+function addCustomMetaTagBadgeToEdit(name) {
+    const container = document.getElementById('editTopicMetaContainer');
+    if (!container) return;
+
+    const badge = document.createElement('span');
+    badge.className = 'forum-tag';
+    badge.setAttribute('data-meta-type', 'custom');
+    badge.setAttribute('data-meta-name', name);
+    // Use danger color (red) for custom tags background
+    badge.style.cssText = 'display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; margin: 0.25rem; background: rgba(233, 14, 186, 0.1); color: var(--accent); border: 1px solid rgba(200, 14, 233, 0.2);';
+    badge.innerHTML = `
+        <i class="bi bi-tag"></i>
+        <span>${escapeHtml(name)}</span>
+        <button type="button" onclick="removeMetaTagBadge(this)" style="background: none; border: none; color: inherit; cursor: pointer; margin-left: 0.25rem; padding: 0;">×</button>
+    `;
+
+    const input = document.getElementById('editTopicMetaInput');
+    if (input && container.contains(input)) {
+        container.insertBefore(badge, input);
+    } else {
+        container.appendChild(badge);
+    }
+}
+
+// Handle edit topic attachments with immediate upload
+async function handleEditTopicAttachments(event) {
+    const files = Array.from(event.target.files);
+    const preview = document.getElementById('editTopicAttachmentsPreview');
+    if (!preview) return;
+
+    // Disable buttons during upload
+    const submitBtn = document.querySelector('#editTopicForm button[type="submit"]');
+    const cancelBtn = document.querySelector('#editTopicModal .btn-cancel');
+    if (submitBtn) submitBtn.disabled = true;
+    if (cancelBtn) cancelBtn.disabled = true;
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileIndex = editTopicAttachments.filter(a => !a.existing).length;
+        
+        // Create preview item with progress bar
+        const previewItem = document.createElement('div');
+        previewItem.id = `edit-topic-attachment-new-${fileIndex}`;
+        previewItem.style.cssText = 'position: relative; margin: 0.5rem; width: 100px;';
+        
+        const isImage = file.type.startsWith('image/');
+        
+        if (isImage) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewItem.innerHTML = `
+                    <img src="${e.target.result}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);">
+                    <div class="upload-progress" style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 2px; font-size: 0.7rem; text-align: center; border-radius: 0 0 8px 8px;">
+                        <div class="progress-bar" style="width: 0%; background: var(--accent); height: 2px; margin-top: 2px;"></div>
+                        <span class="progress-text">Uploading...</span>
+                    </div>
+                    <button type="button" onclick="removeEditTopicAttachment('new-${fileIndex}')" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem; display: none;">×</button>
+                `;
+                preview.appendChild(previewItem);
+                uploadFileToEditTopic(file, fileIndex, previewItem);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            previewItem.innerHTML = `
+                <div style="width: 100px; height: 100px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 0.5rem;">
+                    <i class="bi bi-file-earmark" style="font-size: 2rem; color: var(--muted);"></i>
+                    <small style="font-size: 0.7rem; color: var(--muted); text-align: center; word-break: break-all;">${escapeHtml(file.name)}</small>
+                </div>
+                <div class="upload-progress" style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 2px; font-size: 0.7rem; text-align: center; border-radius: 0 0 8px 8px;">
+                    <div class="progress-bar" style="width: 0%; background: var(--accent); height: 2px; margin-top: 2px;"></div>
+                    <span class="progress-text">Uploading...</span>
+                </div>
+                <button type="button" onclick="removeEditTopicAttachment('new-${fileIndex}')" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem; display: none;">×</button>
+            `;
+            preview.appendChild(previewItem);
+            uploadFileToEditTopic(file, fileIndex, previewItem);
+        }
+    }
+}
+
+// Upload file to edit topic with progress
+async function uploadFileToEditTopic(file, fileIndex, previewItem) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', 'topic');
+    // topic_id will be linked after topic update
+    
+    const progressBar = previewItem.querySelector('.progress-bar');
+    const progressText = previewItem.querySelector('.progress-text');
+    
+    try {
+        const xhr = new XMLHttpRequest();
+        
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                if (progressBar) progressBar.style.width = percentComplete + '%';
+                if (progressText) progressText.textContent = Math.round(percentComplete) + '%';
+            }
+        });
+        
+        await new Promise((resolve, reject) => {
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    if (data.success) {
+                        editTopicUploadedAttachmentIds.push({
+                            id: data.attachment_id,
+                            fileIndex: fileIndex
+                        });
+                        
+                        // Add to editTopicAttachments array
+                        editTopicAttachments.push({
+                            id: data.attachment_id,
+                            file: file,
+                            existing: false,
+                            fileIndex: fileIndex
+                        });
+                        
+                        if (progressBar) progressBar.style.width = '100%';
+                        if (progressBar) progressBar.style.background = 'var(--success)';
+                        if (progressText) progressText.textContent = 'Uploaded';
+                        
+                        const removeBtn = previewItem.querySelector('button');
+                        if (removeBtn) removeBtn.style.display = 'block';
+                        
+                        setTimeout(() => {
+                            const progressDiv = previewItem.querySelector('.upload-progress');
+                            if (progressDiv) progressDiv.style.display = 'none';
+                        }, 1000);
+                        
+                        checkEditTopicUploadsComplete();
+                        resolve(data.attachment_id);
+                    } else {
+                        reject(new Error(data.message || 'Upload failed'));
+                    }
+                } else {
+                    reject(new Error('Upload failed'));
+                }
+            };
+            
+            xhr.onerror = function() {
+                if (progressText) progressText.textContent = 'Error';
+                if (progressBar) progressBar.style.background = 'var(--danger)';
+                checkEditTopicUploadsComplete();
+                reject(new Error('Upload failed'));
+            };
+            
+            xhr.open('POST', '/api/forum/attachments/upload');
+            xhr.send(formData);
+        });
+    } catch (error) {
+        console.error('Error uploading attachment:', error);
+        if (progressText) progressText.textContent = 'Error';
+        if (progressBar) progressBar.style.background = 'var(--danger)';
+        checkEditTopicUploadsComplete();
+    }
+}
+
+// Check if all edit topic uploads are complete
+function checkEditTopicUploadsComplete() {
+    const preview = document.getElementById('editTopicAttachmentsPreview');
+    if (!preview) return;
+    
+    const allProgressBars = preview.querySelectorAll('.upload-progress');
+    const allComplete = Array.from(allProgressBars).every(progress => {
+        return progress.style.display === 'none' || progress.querySelector('.progress-text').textContent === 'Uploaded' || progress.querySelector('.progress-text').textContent.includes('Error');
+    });
+    
+    if (allComplete) {
+        const submitBtn = document.querySelector('#editTopicForm button[type="submit"]');
+        const cancelBtn = document.querySelector('#editTopicModal .btn-cancel');
+        if (submitBtn) submitBtn.disabled = false;
+        if (cancelBtn) cancelBtn.disabled = false;
+    }
+}
+
+// Remove edit topic attachment
+async function removeEditTopicAttachment(idOrIndex) {
+    if (typeof idOrIndex === 'string' && idOrIndex.startsWith('new-')) {
+        // Newly uploaded attachment - delete from server
+        const fileIndex = parseInt(idOrIndex.replace('new-', ''));
+        if (editTopicUploadedAttachmentIds && editTopicUploadedAttachmentIds.length > 0) {
+            const uploadedAttachment = editTopicUploadedAttachmentIds.find(a => a.fileIndex === fileIndex);
+            
+            if (uploadedAttachment) {
+                try {
+                    const response = await fetch(`/api/forum/attachments/${uploadedAttachment.id}`, {
+                        method: 'DELETE'
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (!data.success) {
+                            console.error('Error deleting attachment:', data.message);
+                        }
+                    }
+                    editTopicUploadedAttachmentIds = editTopicUploadedAttachmentIds.filter(a => a.id !== uploadedAttachment.id);
+                } catch (error) {
+                    console.error('Error deleting attachment:', error);
+                }
+            }
+        }
+        
+        // Remove from array
+        editTopicAttachments = editTopicAttachments.filter(attach => !(attach.fileIndex === fileIndex && !attach.existing));
+        
+        // Remove preview item
+        const previewItem = document.getElementById(`edit-topic-attachment-${idOrIndex}`);
+        if (previewItem) {
+            previewItem.remove();
+        }
+    } else if (typeof idOrIndex === 'string') {
+        // Existing attachment by ID
+        editTopicAttachments = editTopicAttachments.filter(attach => attach.id !== idOrIndex);
+        renderEditTopicAttachmentsPreview();
+    } else {
+        // New attachment by index (legacy)
+        const attach = editTopicAttachments[idOrIndex];
+        if (attach && !attach.existing && attach.id) {
+            // Delete from server if it was uploaded
+            try {
+                await fetch(`/api/forum/attachments/${attach.id}`, {
+                    method: 'DELETE'
+                });
+            } catch (error) {
+                console.error('Error deleting attachment:', error);
+            }
+        }
+        editTopicAttachments.splice(idOrIndex, 1);
+        renderEditTopicAttachmentsPreview();
+    }
+}
+
+// Render edit topic attachments preview
+function renderEditTopicAttachmentsPreview() {
+    const preview = document.getElementById('editTopicAttachmentsPreview');
+    if (!preview) return;
+    preview.innerHTML = '';
+
+    editTopicAttachments.forEach((attach, index) => {
+        const file = attach.file || { name: attach.original_filename, type: attach.mime_type };
+        const isImage = file.type && file.type.startsWith('image/');
+        const previewItem = document.createElement('div');
+        previewItem.style.cssText = 'position: relative; margin: 0.5rem;';
+
+        const src = attach.existing ? attach.file_path : (file instanceof File ? URL.createObjectURL(file) : '');
+
+        if (isImage) {
+            previewItem.innerHTML = `
+                <img src="${escapeHtml(src)}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);">
+                <button type="button" onclick="removeEditTopicAttachment(${attach.existing ? `'${attach.id}'` : index})" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem;">×</button>
+            `;
+        } else {
+            previewItem.innerHTML = `
+                <div style="width: 100px; height: 100px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 0.5rem;">
+                    <i class="bi bi-file-earmark" style="font-size: 2rem; color: var(--muted);"></i>
+                    <small style="font-size: 0.7rem; color: var(--muted); text-align: center; word-break: break-all;">${escapeHtml(file.name)}</small>
+                </div>
+                <button type="button" onclick="removeEditTopicAttachment(${attach.existing ? `'${attach.id}'` : index})" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem;">×</button>
+            `;
+        }
+        preview.appendChild(previewItem);
+    });
+}
+
 function showEditTopicModal(topic) {
     const modal = document.getElementById('editTopicModal');
     if (!modal) {
@@ -1911,6 +3143,25 @@ function showEditTopicModal(topic) {
                         <div class="forum-form-group">
                             <label class="forum-form-label" for="editTopicTitle">Title</label>
                             <input type="text" id="editTopicTitle" class="forum-form-input" required placeholder="Enter topic title">
+                        </div>
+                        <div class="forum-form-group">
+                            <label class="forum-form-label" for="editTopicCategory">Category</label>
+                            <select id="editTopicCategory" class="forum-form-input" required>
+                                <option value="General Discussion">General Discussion</option>
+                                <option value="Clinical Case">Clinical Case</option>
+                                <option value="Procedure Feedback">Procedure Feedback</option>
+                                <option value="Protocol Update">Protocol Update</option>
+                                <option value="Drug Interaction">Drug Interaction</option>
+                                <option value="Prescription Inquiry">Prescription Inquiry</option>
+                                <option value="Lab/Imaging Interpretation">Lab/Imaging Interpretation</option>
+                            </select>
+                        </div>
+                        <div class="forum-form-group">
+                            <label class="forum-form-label" for="editTopicMeta">Meta Tags <small style="color: var(--muted);">(Use @ for patients, # for appointments, $ for drugs, or type custom tags and then press ; or Enter to add)</small></label>
+                            <div id="editTopicMetaContainer" class="forum-meta-container" style="min-height: 60px; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; background: var(--card); display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: flex-start;">
+                                <div id="editTopicMetaInput" contenteditable="true" style="flex: 1; min-width: 200px; outline: none; padding: 0.25rem;" placeholder="Type @, #, $ or custom tag..."></div>
+                            </div>
+                            <div id="editTopicMetaAutocomplete" class="forum-meta-autocomplete-portal"></div>
                         </div>
                         <div class="forum-form-group">
                             <label class="forum-form-label" for="editTopicContent">Content</label>
@@ -1949,6 +3200,14 @@ function showEditTopicModal(topic) {
                             </div>
                             <div id="editTopicContent" class="forum-form-textarea" contenteditable="true" placeholder="Type your message here. Use @ for patients, # for appointments, $ for drugs..."></div>
                         </div>
+                        <div class="forum-form-group">
+                            <label class="forum-form-label">Attachments</label>
+                            <input type="file" id="editTopicAttachments" multiple accept="image/*,.pdf,.doc,.docx" style="display: none;">
+                            <label for="editTopicAttachments" class="btn-cancel" style="display: inline-block; cursor: pointer; margin-bottom: 0.5rem;">
+                                <i class="bi bi-paperclip"></i> Add Files
+                            </label>
+                            <div id="editTopicAttachmentsPreview" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;"></div>
+                        </div>
                         <div class="forum-form-actions">
                             <button type="button" class="btn-cancel" onclick="hideEditTopicModal()">Cancel</button>
                             <button type="submit" class="btn-submit">Update Topic</button>
@@ -1975,22 +3234,156 @@ function showEditTopicModal(topic) {
     
     const modalElement = document.getElementById('editTopicModal');
     document.getElementById('editTopicTitle').value = topic.title;
+    document.getElementById('editTopicCategory').value = topic.category || 'General Discussion';
     document.getElementById('editTopicContent').innerHTML = topic.content;
     document.getElementById('editTopicForm').setAttribute('data-topic-id', topic.id);
+    
+    // Load existing tags
+    const metaContainer = document.getElementById('editTopicMetaContainer');
+    const metaInput = document.getElementById('editTopicMetaInput');
+    if (metaContainer && topic.tags) {
+        // Clear existing badges except input
+        const existingBadges = metaContainer.querySelectorAll('[data-meta-type]');
+        existingBadges.forEach(badge => badge.remove());
+        
+        // Add existing tags as badges
+        topic.tags.forEach(tag => {
+            if (tag.tag_type === 'custom') {
+                // Custom tags: use tag_name directly, no id
+                if (tag.tag_name) {
+                    addCustomMetaTagBadgeToEdit(tag.tag_name);
+                }
+            } else {
+                const tagName = tag.tag_name || (tag.tag_type === 'appointment' ? `#${tag.tag_id}` : (tag.tag_type === 'drug' ? tag.tag_name : ''));
+                if (tagName) {
+                    addMetaTagBadgeToEdit(tag.tag_type, tag.tag_id, tagName);
+                }
+            }
+        });
+    }
+    
+    // Initialize meta autocomplete for edit modal
+    if (metaInput) {
+        // Remove existing listeners to avoid duplicates
+        const newInput = metaInput.cloneNode(true);
+        metaInput.parentNode.replaceChild(newInput, metaInput);
+        
+        // Monitor input for semicolon to create custom tags (similar to email to/cc/bcc)
+        newInput.addEventListener('input', function(e) {
+            const text = this.textContent;
+            
+            // Check if text ends with semicolon (custom tag creation)
+            if (text.endsWith(';')) {
+                handleEditMetaTagCreation(this, true);
+                return; // Don't process autocomplete if we just created a tag
+            }
+            
+            // Otherwise, handle autocomplete
+            handleEditMetaInput(this);
+        });
+        
+        // Also check on keyup for immediate response
+        newInput.addEventListener('keyup', function(e) {
+            const text = this.textContent;
+            
+            // Check for semicolon or Enter
+            if (e.key === ';' || e.key === 'Enter' || text.endsWith(';')) {
+                const cleanText = text.replace(/;+$/, '').trim();
+                if (cleanText.length > 0) {
+                    handleEditMetaTagCreation(this, true);
+                }
+            }
+        });
+        
+        newInput.addEventListener('keydown', function(e) {
+            // Handle Backspace to remove last tag if input is empty
+            if (e.key === 'Backspace') {
+                const text = this.textContent.trim();
+                if (text === '') {
+                    const container = document.getElementById('editTopicMetaContainer');
+                    if (container) {
+                        const badges = container.querySelectorAll('[data-meta-type="custom"]');
+                        if (badges.length > 0) {
+                            e.preventDefault();
+                            badges[badges.length - 1].remove();
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Load existing attachments
+    editTopicAttachments = [];
+    editTopicUploadedAttachmentIds = []; // Reset uploaded attachment IDs
+    const attachmentsPreview = document.getElementById('editTopicAttachmentsPreview');
+    if (attachmentsPreview && topic.attachments) {
+        attachmentsPreview.innerHTML = '';
+        topic.attachments.forEach(attach => {
+            const previewItem = document.createElement('div');
+            previewItem.style.cssText = 'position: relative; margin: 0.5rem;';
+            const isImage = attach.mime_type && attach.mime_type.startsWith('image/');
+            if (isImage) {
+                previewItem.innerHTML = `
+                    <img src="${escapeHtml(attach.file_path)}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);">
+                    <button type="button" onclick="removeEditTopicAttachment('${attach.id}')" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem;">×</button>
+                `;
+            } else {
+                previewItem.innerHTML = `
+                    <div style="width: 100px; height: 100px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 0.5rem;">
+                        <i class="bi bi-file-earmark" style="font-size: 2rem; color: var(--muted);"></i>
+                        <small style="font-size: 0.7rem; color: var(--muted); text-align: center; word-break: break-all;">${escapeHtml(attach.original_filename)}</small>
+                    </div>
+                    <button type="button" onclick="removeEditTopicAttachment('${attach.id}')" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem;">×</button>
+                `;
+            }
+            attachmentsPreview.appendChild(previewItem);
+            editTopicAttachments.push({ id: attach.id, existing: true, file_path: attach.file_path, original_filename: attach.original_filename, mime_type: attach.mime_type });
+        });
+    }
+    
+    // Handle file attachments
+    const editAttachmentsInput = document.getElementById('editTopicAttachments');
+    if (editAttachmentsInput) {
+        editAttachmentsInput.onchange = function(e) {
+            handleEditTopicAttachments(e);
+        };
+    }
+    
     modalElement.classList.add('show');
 }
 
-function hideEditTopicModal() {
+async function hideEditTopicModal() {
+    // Delete newly uploaded attachments if any
+    if (editTopicUploadedAttachmentIds && editTopicUploadedAttachmentIds.length > 0) {
+        for (const uploaded of editTopicUploadedAttachmentIds) {
+            try {
+                await fetch(`/api/forum/attachments/${uploaded.id}`, {
+                    method: 'DELETE'
+                });
+            } catch (error) {
+                console.error('Error deleting attachment:', error);
+            }
+        }
+        editTopicUploadedAttachmentIds = [];
+    }
+    
     const modal = document.getElementById('editTopicModal');
     if (modal) {
         modal.classList.remove('show');
     }
 }
 
+let editTopicAttachments = [];
+let editTopicUploadedAttachmentIds = []; // Store uploaded attachment IDs for deletion on cancel
+
 async function updateTopic(topicId) {
     const title = document.getElementById('editTopicTitle').value.trim();
+    const category = document.getElementById('editTopicCategory')?.value || 'General Discussion';
     const contentDiv = document.getElementById('editTopicContent');
-    const content = contentDiv.innerHTML.trim();
+    const content = extractContentWithTags(contentDiv);
+    const metaContainer = document.getElementById('editTopicMetaContainer');
+    const metaTags = extractMetaTagsFromContainer(metaContainer);
     
     if (!title || !content) {
         showError('Title and content are required');
@@ -1999,6 +3392,29 @@ async function updateTopic(topicId) {
     
     try {
         const tags = extractTagsFromContent(contentDiv);
+        
+        // Add meta tags
+        metaTags.forEach(meta => {
+            if (meta.type === 'custom' && meta.name) {
+                tags.push({ type: 'custom', name: meta.name });
+            } else if (meta.type && meta.id) {
+                tags.push({ type: meta.type, id: meta.id });
+            }
+        });
+        
+        // Attachments are already uploaded, just collect IDs
+        let attachmentIds = [];
+        
+        // Add newly uploaded attachment IDs
+        if (editTopicUploadedAttachmentIds && editTopicUploadedAttachmentIds.length > 0) {
+            editTopicUploadedAttachmentIds.forEach(uploaded => {
+                attachmentIds.push(uploaded.id);
+            });
+        }
+        
+        // Add existing attachment IDs
+        const existingAttachments = editTopicAttachments.filter(a => a.existing && a.id);
+        existingAttachments.forEach(a => attachmentIds.push(a.id));
         
         const response = await fetch(`/api/forum/topics/${topicId}`, {
             method: 'PUT',
@@ -2009,7 +3425,9 @@ async function updateTopic(topicId) {
             body: JSON.stringify({
                 title: title,
                 content: content,
-                tags: tags
+                category: category,
+                tags: tags,
+                attachment_ids: attachmentIds
             })
         });
         
@@ -2027,6 +3445,32 @@ async function updateTopic(topicId) {
         console.error('Error updating topic:', error);
         showError('Error updating topic');
     }
+}
+
+// Extract content with tags
+function extractContentWithTags(contentDiv) {
+    return contentDiv.innerHTML;
+}
+
+// Extract meta tags from meta container
+function extractMetaTagsFromContainer(container) {
+    if (!container) return [];
+    const tags = [];
+    const badges = container.querySelectorAll('[data-meta-type]');
+    badges.forEach(badge => {
+        const type = badge.getAttribute('data-meta-type');
+        const id = badge.getAttribute('data-meta-id');
+        const name = badge.getAttribute('data-meta-name');
+        
+        if (type === 'custom' && name) {
+            // Custom tags have name but no id
+            tags.push({ type: 'custom', name: name });
+        } else if (type && id) {
+            // Regular tags (patient, appointment, drug) have id
+            tags.push({ type: type, id: parseInt(id) });
+        }
+    });
+    return tags;
 }
 
 function extractTagsFromContent(contentDiv) {
@@ -2067,6 +3511,26 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function getAttachmentIcon(mimeType) {
+    if (!mimeType) return 'bi-file-earmark';
+    if (mimeType.startsWith('image/')) return 'bi-file-image';
+    if (mimeType.startsWith('video/')) return 'bi-file-play';
+    if (mimeType.startsWith('audio/')) return 'bi-file-music';
+    if (mimeType.includes('pdf')) return 'bi-file-pdf';
+    if (mimeType.includes('word') || mimeType.includes('document')) return 'bi-file-word';
+    if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return 'bi-file-excel';
+    if (mimeType.includes('zip') || mimeType.includes('archive')) return 'bi-file-zip';
+    return 'bi-file-earmark';
+}
+
+function formatFileSize(bytes) {
+    if (!bytes) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 }
 
 function showError(message) {

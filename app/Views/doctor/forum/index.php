@@ -582,18 +582,41 @@
     border: 1px solid rgba(251, 191, 36, 0.2);
 }
 
-/* Autocomplete portal */
-.forum-autocomplete-portal {
-    position: fixed;
+/* Autocomplete - Meta Tags (Absolute Positioning like Drugs) */
+.forum-meta-autocomplete-portal {
+    position: absolute;
+    z-index: 99999;
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    z-index: 10001;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     max-height: 300px;
     overflow-y: auto;
-    min-width: 300px;
+    min-width: 250px;
+    max-width: 400px;
     display: none;
+}
+
+/* Autocomplete - Content Textarea (Fixed Positioning like Notes) */
+.forum-content-autocomplete-portal {
+    position: fixed !important;
+    z-index: 99999 !important;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    min-width: 250px;
+    max-width: 400px;
+    display: none;
+}
+
+.dark .forum-meta-autocomplete-portal,
+.dark .forum-content-autocomplete-portal {
+    background: var(--card);
+    border-color: var(--border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .forum-autocomplete-item {
@@ -639,9 +662,54 @@
     }
     
     .forum-toolbar {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: stretch;
+        flex-direction: row;
+        gap: 0.5rem;
+        align-items: center;
+        padding: 0.5rem;
+        flex-wrap: nowrap;
+    }
+    
+    .forum-toolbar h3 {
+        font-size: 1rem;
+        margin: 0 !important;
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .forum-actions {
+        flex-shrink: 0;
+        gap: 0.5rem;
+    }
+    
+    .btn-new-topic {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        white-space: nowrap;
+        gap: 0.375rem;
+    }
+    
+    .btn-new-topic i {
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .btn-new-topic .btn-text {
+        display: inline;
+    }
+    
+    @media (max-width: 480px) {
+        .btn-new-topic .btn-text {
+            display: none;
+        }
+        
+        .btn-new-topic {
+            padding: 0.5rem;
+            min-width: 40px;
+            justify-content: center;
+        }
     }
     
     .forum-topic-card {
@@ -675,11 +743,11 @@
     </div>
 
     <div class="forum-toolbar">
-        <h3 style="margin: 0; color: var(--text); margin-left: 1rem !important; margin-right: 1rem !important;">Discussions</h3>
-        <div class="forum-actions">
+        <h3 style="margin: 0; color: var(--text); margin-left: 1rem !important; margin-right: 1rem !important; flex: 1; min-width: 0;">Discussions</h3>
+        <div class="forum-actions" style="flex-shrink: 0;">
             <button class="btn-new-topic" onclick="showNewTopicModal()">
                 <i class="bi bi-plus-circle"></i>
-                New Discussion
+                <span class="btn-text">New Discussion</span>
             </button>
         </div>
     </div>
@@ -733,11 +801,11 @@
                 </select>
             </div>
             <div class="forum-form-group">
-                <label class="forum-form-label" for="topicMeta">Meta Tags <small style="color: var(--muted);">(Use @ for patients, # for appointments, $ for drugs, or type custom tags)</small></label>
+                <label class="forum-form-label" for="topicMeta">Meta Tags <small style="color: var(--muted);">(Use @ for patients, # for appointments, $ for drugs, or type custom tags and then press ; or Enter to add)</small></label>
                 <div id="topicMetaContainer" class="forum-meta-container" style="min-height: 60px; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; background: var(--card); display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: flex-start;">
                     <div id="topicMetaInput" contenteditable="true" style="flex: 1; min-width: 200px; outline: none; padding: 0.25rem;" placeholder="Type @, #, $ or custom tag..."></div>
                 </div>
-                <div id="topicMetaAutocomplete" class="forum-autocomplete-portal" style="position: relative;"></div>
+                <div id="topicMetaAutocomplete" class="forum-meta-autocomplete-portal"></div>
             </div>
             <div class="forum-form-group">
                 <label class="forum-form-label" for="topicContent">Content</label>
@@ -793,7 +861,7 @@
 </div>
 
 <!-- Autocomplete Portal -->
-<div id="forumAutocompletePortal" class="forum-autocomplete-portal"></div>
+<div id="forumAutocompletePortal" class="forum-content-autocomplete-portal"></div>
 
 <script>
 // Forum state
@@ -812,6 +880,7 @@ let currentSearchQuery = '';
 let currentCategoryFilter = null;
 let currentMetaFilter = null;
 let topicAttachments = [];
+let topicUploadedAttachmentIds = []; // Store uploaded attachment IDs for deletion on cancel
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -876,6 +945,15 @@ document.addEventListener('DOMContentLoaded', function() {
 async function loadCategoryStats() {
     try {
         const response = await fetch('/api/forum/stats/categories');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Expected JSON but got:', text.substring(0, 200));
+            throw new Error('Response is not JSON');
+        }
         const data = await response.json();
         
         if (data.success && data.stats) {
@@ -968,6 +1046,15 @@ function filterByCategory(category) {
 async function loadTopMetaTags() {
     try {
         const response = await fetch('/api/forum/stats/top-meta?limit=5');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Expected JSON but got:', text.substring(0, 200));
+            throw new Error('Response is not JSON');
+        }
         const data = await response.json();
         
         if (data.success && data.tags) {
@@ -1033,6 +1120,15 @@ async function loadTopics(patientId = null, appointmentId = null) {
         url += params.toString();
         
         const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Expected JSON but got:', text.substring(0, 200));
+            throw new Error('Response is not JSON');
+        }
         const data = await response.json();
         
         if (data.success) {
@@ -1081,7 +1177,8 @@ function renderTopics() {
     forumTopics.forEach(topic => {
         const tagsHtml = topic.tags ? topic.tags.map(tag => {
             const tagName = tag.tag_name || (tag.tag_type === 'appointment' ? `#${tag.tag_id}` : '');
-            return `<span class="forum-tag ${tag.tag_type}">${getTagIcon(tag.tag_type)} ${escapeHtml(tagName)}</span>`;
+            const tagClass = tag.tag_type === 'custom' ? 'forum-tag custom' : `forum-tag ${tag.tag_type}`;
+            return `<span class="${tagClass}">${getTagIcon(tag.tag_type)} ${escapeHtml(tagName)}</span>`;
         }).join('') : '';
         
         // Add patient badge if topic is related to a patient
@@ -1194,6 +1291,7 @@ function renderTopics() {
                     <div class="forum-topic-stats" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                         <span><i class="bi bi-eye"></i> ${topic.views_count || 0}</span>
                         <span><i class="bi bi-chat"></i> ${topic.replies_count || 0}</span>
+                        ${topic.attachments_count > 0 ? `<span style="display: flex; align-items: center; gap: 0.25rem; color: var(--accent);"><i class="bi bi-paperclip"></i> ${topic.attachments_count}</span>` : ''}
                         <button class="forum-topic-like ${topic.user_like === 'like' ? 'active' : ''}" onclick="event.stopPropagation(); toggleTopicLike(${topic.id}, true)" style="background: ${topic.user_like === 'like' ? 'rgba(14, 165, 233, 0.2)' : 'transparent'}; border: 1px solid ${topic.user_like === 'like' ? 'var(--accent)' : 'var(--border)'}; color: ${topic.user_like === 'like' ? 'var(--accent)' : 'var(--text)'}; padding: 0.25rem 0.5rem; border-radius: 5px; font-size: 0.875rem; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 0.25rem;">
                             <i class="bi bi-hand-thumbs-up"></i>
                             <span>${topic.likes_count || 0}</span>
@@ -1309,6 +1407,7 @@ function renderPinnedTopics() {
                     <div class="forum-topic-stats" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                         <span><i class="bi bi-eye"></i> ${topic.views_count || 0}</span>
                         <span><i class="bi bi-chat"></i> ${topic.replies_count || 0}</span>
+                        ${topic.attachments_count > 0 ? `<span style="display: flex; align-items: center; gap: 0.25rem; color: var(--accent);"><i class="bi bi-paperclip"></i> ${topic.attachments_count}</span>` : ''}
                         <button class="forum-topic-like ${topic.user_like === 'like' ? 'active' : ''}" onclick="event.stopPropagation(); toggleTopicLike(${topic.id}, true)" style="background: ${topic.user_like === 'like' ? 'rgba(14, 165, 233, 0.2)' : 'transparent'}; border: 1px solid ${topic.user_like === 'like' ? 'var(--accent)' : 'var(--border)'}; color: ${topic.user_like === 'like' ? 'var(--accent)' : 'var(--text)'}; padding: 0.25rem 0.5rem; border-radius: 5px; font-size: 0.875rem; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 0.25rem;">
                             <i class="bi bi-hand-thumbs-up"></i>
                             <span>${topic.likes_count || 0}</span>
@@ -1484,51 +1583,228 @@ async function toggleTopicLike(topicId, isLike) {
 }
 
 // Handle topic attachments
-function handleTopicAttachments(event) {
+// Handle topic attachments with immediate upload
+async function handleTopicAttachments(event) {
     const files = Array.from(event.target.files);
     const preview = document.getElementById('topicAttachmentsPreview');
     if (!preview) return;
     
-    topicAttachments = files;
+    // Disable buttons during upload
+    const submitBtn = document.querySelector('#newTopicForm button[type="submit"]');
+    const cancelBtn = document.querySelector('#newTopicModal .btn-cancel');
+    if (submitBtn) submitBtn.disabled = true;
+    if (cancelBtn) cancelBtn.disabled = true;
     
-    preview.innerHTML = '';
-    files.forEach((file, index) => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const isImage = file.type.startsWith('image/');
-            const previewItem = document.createElement('div');
-            previewItem.style.cssText = 'position: relative; margin: 0.5rem;';
-            
-            if (isImage) {
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileIndex = topicAttachments.length;
+        topicAttachments.push(file);
+        
+        // Create preview item with progress bar
+        const previewItem = document.createElement('div');
+        previewItem.id = `topic-attachment-${fileIndex}`;
+        previewItem.style.cssText = 'position: relative; margin: 0.5rem; width: 100px;';
+        
+        const isImage = file.type.startsWith('image/');
+        
+        if (isImage) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
                 previewItem.innerHTML = `
                     <img src="${e.target.result}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);">
-                    <button type="button" onclick="removeTopicAttachment(${index})" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem;">×</button>
-                `;
-            } else {
-                previewItem.innerHTML = `
-                    <div style="width: 100px; height: 100px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 0.5rem;">
-                        <i class="bi bi-file-earmark" style="font-size: 2rem; color: var(--muted);"></i>
-                        <small style="font-size: 0.7rem; color: var(--muted); text-align: center; word-break: break-all;">${escapeHtml(file.name)}</small>
+                    <div class="upload-progress" style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 2px; font-size: 0.7rem; text-align: center; border-radius: 0 0 8px 8px;">
+                        <div class="progress-bar" style="width: 0%; background: var(--accent); height: 2px; margin-top: 2px;"></div>
+                        <span class="progress-text">Uploading...</span>
                     </div>
-                    <button type="button" onclick="removeTopicAttachment(${index})" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem;">×</button>
+                    <button type="button" onclick="removeTopicAttachment(${fileIndex})" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem; display: none;">×</button>
                 `;
-            }
+                preview.appendChild(previewItem);
+                uploadFileToTopic(file, fileIndex, previewItem);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            previewItem.innerHTML = `
+                <div style="width: 100px; height: 100px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 0.5rem;">
+                    <i class="bi bi-file-earmark" style="font-size: 2rem; color: var(--muted);"></i>
+                    <small style="font-size: 0.7rem; color: var(--muted); text-align: center; word-break: break-all;">${escapeHtml(file.name)}</small>
+                </div>
+                <div class="upload-progress" style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 2px; font-size: 0.7rem; text-align: center; border-radius: 0 0 8px 8px;">
+                    <div class="progress-bar" style="width: 0%; background: var(--accent); height: 2px; margin-top: 2px;"></div>
+                    <span class="progress-text">Uploading...</span>
+                </div>
+                <button type="button" onclick="removeTopicAttachment(${fileIndex})" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem; display: none;">×</button>
+            `;
             preview.appendChild(previewItem);
-        };
-        reader.readAsDataURL(file);
+            uploadFileToTopic(file, fileIndex, previewItem);
+        }
+    }
+}
+
+// Upload file to topic with progress
+async function uploadFileToTopic(file, fileIndex, previewItem) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', 'topic');
+    // topic_id will be null for now, will be linked after topic creation
+    
+    const progressBar = previewItem.querySelector('.progress-bar');
+    const progressText = previewItem.querySelector('.progress-text');
+    
+    try {
+        const xhr = new XMLHttpRequest();
+        
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                if (progressBar) progressBar.style.width = percentComplete + '%';
+                if (progressText) progressText.textContent = Math.round(percentComplete) + '%';
+            }
+        });
+        
+        await new Promise((resolve, reject) => {
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    if (data.success) {
+                        topicUploadedAttachmentIds.push({
+                            id: data.attachment_id,
+                            fileIndex: fileIndex
+                        });
+                        
+                        if (progressBar) progressBar.style.width = '100%';
+                        if (progressBar) progressBar.style.background = 'var(--success)';
+                        if (progressText) progressText.textContent = 'Uploaded';
+                        
+                        const removeBtn = previewItem.querySelector('button');
+                        if (removeBtn) removeBtn.style.display = 'block';
+                        
+                        setTimeout(() => {
+                            const progressDiv = previewItem.querySelector('.upload-progress');
+                            if (progressDiv) progressDiv.style.display = 'none';
+                        }, 1000);
+                        
+                        checkTopicUploadsComplete();
+                        resolve(data.attachment_id);
+                    } else {
+                        reject(new Error(data.message || 'Upload failed'));
+                    }
+                } else {
+                    reject(new Error('Upload failed'));
+                }
+            };
+            
+            xhr.onerror = function() {
+                if (progressText) progressText.textContent = 'Error';
+                if (progressBar) progressBar.style.background = 'var(--danger)';
+                checkTopicUploadsComplete();
+                reject(new Error('Upload failed'));
+            };
+            
+            xhr.open('POST', '/api/forum/attachments/upload');
+            xhr.send(formData);
+        });
+    } catch (error) {
+        console.error('Error uploading attachment:', error);
+        if (progressText) progressText.textContent = 'Error';
+        if (progressBar) progressBar.style.background = 'var(--danger)';
+        checkTopicUploadsComplete();
+    }
+}
+
+// Check if all topic uploads are complete
+function checkTopicUploadsComplete() {
+    const preview = document.getElementById('topicAttachmentsPreview');
+    if (!preview) return;
+    
+    const allProgressBars = preview.querySelectorAll('.upload-progress');
+    const allComplete = Array.from(allProgressBars).every(progress => {
+        return progress.style.display === 'none' || progress.querySelector('.progress-text').textContent === 'Uploaded' || progress.querySelector('.progress-text').textContent.includes('Error');
     });
+    
+    if (allComplete) {
+        const submitBtn = document.querySelector('#newTopicForm button[type="submit"]');
+        const cancelBtn = document.querySelector('#newTopicModal .btn-cancel');
+        if (submitBtn) submitBtn.disabled = false;
+        if (cancelBtn) cancelBtn.disabled = false;
+    }
 }
 
 // Remove topic attachment
-function removeTopicAttachment(index) {
-    topicAttachments.splice(index, 1);
-    const input = document.getElementById('topicAttachments');
-    if (input) {
-        const dt = new DataTransfer();
-        topicAttachments.forEach(file => dt.items.add(file));
-        input.files = dt.files;
+async function removeTopicAttachment(index) {
+    // Prevent deletion if arrays are already cleared (e.g., after successful topic creation)
+    if (!topicAttachments || topicAttachments.length === 0) {
+        return;
     }
-    handleTopicAttachments({ target: { files: input ? input.files : [] } });
+    
+    // Check if this attachment was uploaded
+    const uploadedAttachment = topicUploadedAttachmentIds.find(a => a.fileIndex === index);
+    
+    if (uploadedAttachment) {
+        // Delete from server
+        try {
+            const response = await fetch(`/api/forum/attachments/${uploadedAttachment.id}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (!data.success) {
+                    console.error('Error deleting attachment:', data.message);
+                }
+            }
+            topicUploadedAttachmentIds = topicUploadedAttachmentIds.filter(a => a.id !== uploadedAttachment.id);
+        } catch (error) {
+            console.error('Error deleting attachment:', error);
+            // Don't show error to user if it's just a network issue
+        }
+    }
+    
+    // Remove from local array
+    topicAttachments.splice(index, 1);
+    
+    // Remove preview item
+    const previewItem = document.getElementById(`topic-attachment-${index}`);
+    if (previewItem) {
+        previewItem.remove();
+    }
+    
+    // Re-render preview with correct indices
+    const preview = document.getElementById('topicAttachmentsPreview');
+    if (preview && topicAttachments.length > 0) {
+        preview.innerHTML = '';
+        topicAttachments.forEach((file, idx) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const isImage = file.type.startsWith('image/');
+                const previewItem = document.createElement('div');
+                previewItem.id = `topic-attachment-${idx}`;
+                previewItem.style.cssText = 'position: relative; margin: 0.5rem; width: 100px;';
+                
+                if (isImage) {
+                    previewItem.innerHTML = `
+                        <img src="${e.target.result}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);">
+                        <button type="button" onclick="removeTopicAttachment(${idx})" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem;">×</button>
+                    `;
+                } else {
+                    previewItem.innerHTML = `
+                        <div style="width: 100px; height: 100px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 0.5rem;">
+                            <i class="bi bi-file-earmark" style="font-size: 2rem; color: var(--muted);"></i>
+                            <small style="font-size: 0.7rem; color: var(--muted); text-align: center; word-break: break-all;">${escapeHtml(file.name)}</small>
+                        </div>
+                        <button type="button" onclick="removeTopicAttachment(${idx})" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem;">×</button>
+                    `;
+                }
+                preview.appendChild(previewItem);
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        // Update fileIndex in topicUploadedAttachmentIds to match new indices
+        topicUploadedAttachmentIds.forEach(uploaded => {
+            if (uploaded.fileIndex > index) {
+                uploaded.fileIndex = uploaded.fileIndex - 1;
+            }
+        });
+    }
 }
 
 // Create new topic
@@ -1550,7 +1826,9 @@ async function createTopic() {
         
         // Add meta tags
         metaTags.forEach(meta => {
-            if (meta.type && meta.id) {
+            if (meta.type === 'custom' && meta.name) {
+                tags.push({ type: 'custom', name: meta.name });
+            } else if (meta.type && meta.id) {
                 tags.push({ type: meta.type, id: meta.id });
             }
         });
@@ -1567,25 +1845,7 @@ async function createTopic() {
         const patientId = urlParams.get('patient_id');
         const appointmentId = urlParams.get('appointment_id');
         
-        // Upload attachments first if any
-        let attachmentIds = [];
-        if (topicAttachments && topicAttachments.length > 0) {
-            for (const file of topicAttachments) {
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('type', 'topic');
-                
-                const uploadResponse = await fetch('/api/forum/attachments/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                const uploadData = await uploadResponse.json();
-                if (uploadData.success) {
-                    attachmentIds.push(uploadData.attachment_id);
-                }
-            }
-        }
-        
+        // Create topic first
         const response = await fetch('/api/forum/topics', {
             method: 'POST',
             headers: {
@@ -1598,21 +1858,32 @@ async function createTopic() {
                 patient_id: patientId ? parseInt(patientId) : null,
                 appointment_id: appointmentId ? parseInt(appointmentId) : null,
                 tags: tags,
-                attachment_ids: attachmentIds
+                attachment_ids: topicUploadedAttachmentIds.map(u => u.id)
             })
         });
         
         const data = await response.json();
         
         if (data.success) {
+            const topicId = data.topic_id;
+            
+            // Attachments are already uploaded, just need to link them via attachment_ids
+            // This is handled in the createTopic request
+            
             hideNewTopicModal();
             document.getElementById('newTopicForm').reset();
             contentDiv.innerHTML = '';
+            topicAttachments = [];
+            topicUploadedAttachmentIds = []; // Clear uploaded attachment IDs
+            const attachmentsPreview = document.getElementById('topicAttachmentsPreview');
+            if (attachmentsPreview) {
+                attachmentsPreview.innerHTML = '';
+            }
             window.autoTagPatientId = null;
             window.autoTagAppointmentId = null;
             
             // Redirect to topic page
-            window.location.href = `/doctor/forum/topic/${data.topic_id}`;
+            window.location.href = `/doctor/forum/topic/${topicId}`;
         } else {
             showError(data.message || 'Failed to create topic');
         }
@@ -1654,7 +1925,13 @@ function extractMetaTagsFromContainer(container) {
     badges.forEach(badge => {
         const type = badge.getAttribute('data-meta-type');
         const id = badge.getAttribute('data-meta-id');
-        if (type && id) {
+        const name = badge.getAttribute('data-meta-name');
+        
+        if (type === 'custom' && name) {
+            // Custom tags have name but no id
+            tags.push({ type: 'custom', name: name });
+        } else if (type && id) {
+            // Regular tags (patient, appointment, drug) have id
             tags.push({ type: type, id: parseInt(id) });
         }
     });
@@ -1680,8 +1957,19 @@ function initMetaAutocomplete() {
 
 // Handle meta input
 function handleMetaInput(input) {
-    const text = input.textContent || '';
-    const match = text.match(/(@|#|\$|~)([^\s@#$~]*)$/);
+    const selection = window.getSelection();
+    if (!selection.rangeCount) {
+        hideMetaAutocomplete();
+        return;
+    }
+    
+    const range = selection.getRangeAt(0).cloneRange();
+    const fullRange = document.createRange();
+    fullRange.selectNodeContents(input);
+    fullRange.setEnd(range.startContainer, range.startOffset);
+    const textBeforeCursor = fullRange.toString();
+    
+    const match = textBeforeCursor.match(/(@|#|\$|~)([^\s@#$~]*)$/);
     
     if (match) {
         const trigger = match[1];
@@ -1695,7 +1983,7 @@ function handleMetaInput(input) {
         const minLength = trigger === '#' && /^\d+$/.test(query) ? 1 : 2;
         if (query.length >= minLength) {
             const type = trigger === '@' ? 'patient' : (trigger === '#' ? 'appointment' : 'drug');
-            showMetaAutocomplete(input, type, query);
+            showMetaAutocomplete(input, type, query, range);
         } else {
             hideMetaAutocomplete();
         }
@@ -1705,16 +1993,42 @@ function handleMetaInput(input) {
 }
 
 // Show meta autocomplete
-async function showMetaAutocomplete(input, type, query) {
-    const autocompletePortal = document.getElementById('topicMetaAutocomplete');
+async function showMetaAutocomplete(input, type, query, range) {
+    let autocompletePortal = document.getElementById('topicMetaAutocomplete');
     if (!autocompletePortal) return;
     
-    const rect = input.getBoundingClientRect();
+    // Move to body to ensure positioning works correctly
+    if (autocompletePortal.parentNode !== document.body) {
+        document.body.appendChild(autocompletePortal);
+    }
+    
+    // Position below the input field directly
+    if (!input) return;
+    
+    const inputRect = input.getBoundingClientRect();
+    // Use absolute positioning (scrollY + rect.bottom)
+    const x = inputRect.left + window.scrollX;
+    const y = inputRect.bottom + window.scrollY;
+    
+    console.log('Meta Autocomplete Position (Absolute):', {
+        inputRect: inputRect,
+        calculatedX: x,
+        calculatedY: y
+    });
+
+    // Remove any inline styles that might interfere
+    autocompletePortal.style.removeProperty('top');
+    autocompletePortal.style.removeProperty('left');
+    autocompletePortal.style.removeProperty('bottom');
+    autocompletePortal.style.removeProperty('right');
+    
     autocompletePortal.style.display = 'block';
     autocompletePortal.style.position = 'absolute';
-    autocompletePortal.style.left = '0';
-    autocompletePortal.style.top = (rect.bottom - rect.top + 5) + 'px';
-    autocompletePortal.style.zIndex = '10000';
+    autocompletePortal.style.left = `${x}px`;
+    autocompletePortal.style.top = `${y}px`;
+    // Ensure width matches or is reasonable
+    autocompletePortal.style.minWidth = `${Math.max(inputRect.width, 250)}px`;
+    autocompletePortal.style.zIndex = '9999999';
     
     try {
         let url = '';
@@ -1728,30 +2042,42 @@ async function showMetaAutocomplete(input, type, query) {
         
         if (!url) return;
         
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (!response.ok) {
+            if (response.status !== 400 && response.status !== 404) {
+                console.error('Error loading meta autocomplete:', response.status);
+            }
+            return;
+        }
+        
         const data = await response.json();
         
         let items = [];
-        if (type === 'patient' && data.patients) {
-            items = data.patients.map(p => ({
+        if (type === 'patient' && data.ok && data.data) {
+            items = data.data.map(p => ({
                 type: 'patient',
                 id: p.id,
                 title: `${p.first_name} ${p.last_name}`,
                 subtitle: p.phone || ''
             }));
-        } else if (type === 'appointment' && data.appointments) {
-            items = data.appointments.map(a => ({
+        } else if (type === 'appointment' && data.ok && data.data) {
+            items = data.data.map(a => ({
                 type: 'appointment',
                 id: a.id,
-                title: `Appointment #${a.id}`,
-                subtitle: a.date || ''
+                title: `#${a.id}`,
+                subtitle: `${a.patient_name || ''} - ${a.date || ''}`
             }));
         } else if (type === 'drug' && data.drugs) {
             items = data.drugs.map(d => ({
                 type: 'drug',
                 id: d.ID,
                 title: d.drug_name,
-                subtitle: d.active_ingredient || ''
+                subtitle: d.active_ingredient || d.Company || ''
             }));
         }
         
@@ -1843,6 +2169,32 @@ function addMetaTagBadge(type, id, name) {
     }
 }
 
+// Add meta tag badge to edit modal
+function addMetaTagBadgeToEdit(type, id, name) {
+    const container = document.getElementById('editTopicMetaContainer');
+    if (!container) return;
+    
+    const badge = document.createElement('span');
+    badge.className = `forum-tag ${type}`;
+    badge.setAttribute('data-meta-type', type);
+    badge.setAttribute('data-meta-id', id);
+    badge.style.cssText = 'display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; margin: 0.25rem;';
+    
+    const icon = type === 'patient' ? 'bi-person' : type === 'appointment' ? 'bi-calendar-event' : type === 'drug' ? 'bi-capsule' : 'bi-tag';
+    badge.innerHTML = `
+        <i class="bi ${icon}"></i>
+        <span>${escapeHtml(name)}</span>
+        <button type="button" onclick="removeMetaTagBadge(this)" style="background: none; border: none; color: inherit; cursor: pointer; margin-left: 0.25rem; padding: 0;">×</button>
+    `;
+    
+    const input = document.getElementById('editTopicMetaInput');
+    if (input && container.contains(input)) {
+        container.insertBefore(badge, input);
+    } else {
+        container.appendChild(badge);
+    }
+}
+
 // Remove meta tag badge
 function removeMetaTagBadge(button) {
     const badge = button.closest('[data-meta-type]');
@@ -1851,24 +2203,22 @@ function removeMetaTagBadge(button) {
     }
 }
 
-// Handle meta tag creation (for custom tags with ~)
-function handleMetaTagCreation(input, isEnter) {
-    const text = input.textContent.trim();
+// Handle meta tag creation (for custom tags)
+function handleMetaTagCreation(input, isTrigger) {
+    let text = input.textContent.trim();
     if (!text) return;
     
-    // Check if it's a custom tag (starts with ~)
-    if (text.startsWith('~')) {
-        const tagName = text.substring(1).trim();
-        if (tagName) {
-            addCustomMetaTagBadge(tagName);
-            input.textContent = '';
-        }
-    } else if (isEnter) {
-        // Try to create custom tag
-        if (text.length > 0) {
-            addCustomMetaTagBadge(text);
-            input.textContent = '';
-        }
+    // Clean up text if it ends with ;
+    if (text.endsWith(';')) {
+        text = text.slice(0, -1).trim();
+    }
+    
+    if (!text) return;
+    
+    if (isTrigger) {
+        // Create custom tag
+        addCustomMetaTagBadge(text);
+        input.textContent = '';
     }
 }
 
@@ -1881,7 +2231,7 @@ function addCustomMetaTagBadge(name) {
     badge.className = 'forum-tag';
     badge.setAttribute('data-meta-type', 'custom');
     badge.setAttribute('data-meta-name', name);
-    badge.style.cssText = 'display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; margin: 0.25rem; background: rgba(14, 165, 233, 0.1); color: var(--accent); border: 1px solid rgba(14, 165, 233, 0.2);';
+    badge.style.cssText = 'display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; margin: 0.25rem; background: rgba(233, 14, 186, 0.1); color: var(--accent); border: 1px solid rgba(200, 14, 233, 0.2);';
     badge.innerHTML = `
         <i class="bi bi-tag"></i>
         <span>${escapeHtml(name)}</span>
@@ -1896,13 +2246,316 @@ function addCustomMetaTagBadge(name) {
     }
 }
 
+// Handle edit meta input
+function handleEditMetaInput(input) {
+    const text = input.textContent || '';
+    const selection = window.getSelection();
+    if (!selection.rangeCount) {
+        hideEditMetaAutocomplete();
+        return;
+    }
+    const range = selection.getRangeAt(0).cloneRange();
+    const fullRange = document.createRange();
+    fullRange.selectNodeContents(input);
+    fullRange.setEnd(range.startContainer, range.startOffset);
+    const textBeforeCursor = fullRange.toString();
+
+    const match = textBeforeCursor.match(/(@|#|\$|~)([^\s@#$~]*)$/);
+
+    if (match) {
+        const trigger = match[1];
+        const query = match[2];
+
+        if (trigger === '~') {
+            return;
+        }
+
+        const minLength = trigger === '#' && /^\d+$/.test(query) ? 1 : 2;
+        if (query.length >= minLength) {
+            const type = trigger === '@' ? 'patient' : (trigger === '#' ? 'appointment' : 'drug');
+            showEditMetaAutocomplete(input, type, query, range);
+        } else {
+            hideEditMetaAutocomplete();
+        }
+    } else {
+        hideEditMetaAutocomplete();
+    }
+}
+
+// Show edit meta autocomplete
+async function showEditMetaAutocomplete(input, type, query, range) {
+    let autocompletePortal = document.getElementById('editTopicMetaAutocomplete');
+    if (!autocompletePortal) return;
+
+    // Move to body to ensure positioning works correctly
+    if (autocompletePortal.parentNode !== document.body) {
+        document.body.appendChild(autocompletePortal);
+    }
+
+    // Position below the input field directly
+    if (!input) return;
+    
+    const inputRect = input.getBoundingClientRect();
+    // Use absolute positioning (scrollY + rect.bottom)
+    const x = inputRect.left + window.scrollX;
+    const y = inputRect.bottom + window.scrollY;
+
+    console.log('Edit Meta Autocomplete Position (Absolute):', {
+        inputRect: inputRect,
+        calculatedX: x,
+        calculatedY: y
+    });
+
+    // Remove any inline styles that might interfere
+    autocompletePortal.style.removeProperty('top');
+    autocompletePortal.style.removeProperty('left');
+    autocompletePortal.style.removeProperty('bottom');
+    autocompletePortal.style.removeProperty('right');
+
+    autocompletePortal.style.display = 'block';
+    autocompletePortal.style.position = 'absolute';
+    autocompletePortal.style.left = `${x}px`;
+    autocompletePortal.style.top = `${y}px`;
+    // Ensure width matches or is reasonable
+    autocompletePortal.style.minWidth = `${Math.max(inputRect.width, 250)}px`;
+    autocompletePortal.style.zIndex = '9999999';
+
+    try {
+        let url = '';
+        if (type === 'patient') {
+            url = `/api/patients/search?q=${encodeURIComponent(query)}`;
+        } else if (type === 'appointment') {
+            url = `/api/appointments/search?q=${encodeURIComponent(query)}&limit=10`;
+        } else if (type === 'drug') {
+            url = `/api/searchDrugsAutocomplete?q=${encodeURIComponent(query)}&limit=10`;
+        }
+
+        if (!url) return;
+
+        const response = await fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status !== 400 && response.status !== 404) {
+                console.error('Error loading edit meta autocomplete:', response.status);
+            }
+            return;
+        }
+
+        const data = await response.json();
+
+        let items = [];
+        if (type === 'patient' && data.ok && data.data) {
+            items = data.data.map(p => ({
+                type: 'patient',
+                id: p.id,
+                title: `${p.first_name} ${p.last_name}`,
+                subtitle: p.phone || ''
+            }));
+        } else if (type === 'appointment' && data.ok && data.data) {
+            items = data.data.map(a => ({
+                type: 'appointment',
+                id: a.id,
+                title: `#${a.id}`,
+                subtitle: `${a.patient_name || ''} - ${a.date || ''}`
+            }));
+        } else if (type === 'drug' && data.drugs) {
+            items = data.drugs.map(drug => ({
+                type: 'drug',
+                id: drug.ID,
+                title: drug.drug_name,
+                subtitle: drug.active_ingredient || drug.Company || ''
+            }));
+        }
+
+        window.editMetaAutocompleteItems = items;
+        renderEditMetaAutocomplete(items, type);
+    } catch (error) {
+        console.error('Error loading edit meta autocomplete:', error);
+        hideEditMetaAutocomplete();
+    }
+}
+
+// Render edit meta autocomplete
+function renderEditMetaAutocomplete(items, type) {
+    const portal = document.getElementById('editTopicMetaAutocomplete');
+    if (!portal) return;
+
+    if (items.length === 0) {
+        portal.innerHTML = '<div class="forum-autocomplete-list" style="background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem;">No results</div>';
+        return;
+    }
+
+    let html = '<div class="forum-autocomplete-list" style="background: var(--card); border: 1px solid var(--border); border-radius: 8px; max-height: 200px; overflow-y: auto;">';
+    items.forEach((item, index) => {
+        const icon = type === 'patient' ? 'bi-person' : type === 'appointment' ? 'bi-calendar-event' : 'bi-capsule';
+        html += `
+            <div class="forum-autocomplete-item" onclick="selectEditMetaItem(${index}, '${type}')" style="padding: 0.75rem; cursor: pointer; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.75rem;">
+                <i class="bi ${icon}" style="font-size: 1.25rem; color: var(--accent);"></i>
+                <div>
+                    <div style="font-weight: 500; color: var(--text);">${escapeHtml(item.title)}</div>
+                    ${item.subtitle ? `<div style="font-size: 0.875rem; color: var(--muted);">${escapeHtml(item.subtitle)}</div>` : ''}
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    portal.innerHTML = html;
+}
+
+// Hide edit meta autocomplete
+function hideEditMetaAutocomplete() {
+    const portal = document.getElementById('editTopicMetaAutocomplete');
+    if (portal) {
+        portal.style.display = 'none';
+        portal.innerHTML = '';
+    }
+}
+
+// Select edit meta item
+function selectEditMetaItem(index, type) {
+    const items = window.editMetaAutocompleteItems || [];
+    if (!items[index]) return;
+
+    const item = items[index];
+    addMetaTagBadgeToEdit(item.type, item.id, item.title);
+
+    const input = document.getElementById('editTopicMetaInput');
+    if (input) {
+        input.textContent = '';
+        input.focus();
+    }
+
+    hideEditMetaAutocomplete();
+}
+
+// Handle edit meta tag creation
+function handleEditMetaTagCreation(input, isTrigger) {
+    let text = input.textContent.trim();
+    if (!text) return;
+
+    // Clean up text if it ends with ;
+    if (text.endsWith(';')) {
+        text = text.slice(0, -1).trim();
+    }
+    
+    if (!text) return;
+
+    if (isTrigger) {
+        addCustomMetaTagBadgeToEdit(text);
+        input.textContent = '';
+    }
+}
+
+// Add custom meta tag badge to edit
+function addCustomMetaTagBadgeToEdit(name) {
+    const container = document.getElementById('editTopicMetaContainer');
+    if (!container) return;
+
+    const badge = document.createElement('span');
+    badge.className = 'forum-tag';
+    badge.setAttribute('data-meta-type', 'custom');
+    badge.setAttribute('data-meta-name', name);
+    badge.style.cssText = 'display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; margin: 0.25rem; background: rgba(239, 68, 68, 0.1) !important; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2);';
+    badge.innerHTML = `
+        <i class="bi bi-tag"></i>
+        <span>${escapeHtml(name)}</span>
+        <button type="button" onclick="removeMetaTagBadge(this)" style="background: none; border: none; color: inherit; cursor: pointer; margin-left: 0.25rem; padding: 0;">×</button>
+    `;
+
+    const input = document.getElementById('editTopicMetaInput');
+    if (input && container.contains(input)) {
+        container.insertBefore(badge, input);
+    } else {
+        container.appendChild(badge);
+    }
+}
+
+// Handle edit topic attachments
+function handleEditTopicAttachments(event) {
+    const files = Array.from(event.target.files);
+    const preview = document.getElementById('editTopicAttachmentsPreview');
+    if (!preview) return;
+
+    // Add new files to editTopicAttachments array, marking them as new
+    files.forEach(file => {
+        editTopicAttachments.push({ file: file, existing: false });
+    });
+
+    renderEditTopicAttachmentsPreview();
+}
+
+// Remove edit topic attachment
+function removeEditTopicAttachment(idOrIndex) {
+    if (typeof idOrIndex === 'string') { // Existing attachment by ID
+        editTopicAttachments = editTopicAttachments.filter(attach => attach.id !== idOrIndex);
+    } else { // New attachment by index
+        editTopicAttachments.splice(idOrIndex, 1);
+    }
+    renderEditTopicAttachmentsPreview();
+}
+
+// Render edit topic attachments preview
+function renderEditTopicAttachmentsPreview() {
+    const preview = document.getElementById('editTopicAttachmentsPreview');
+    if (!preview) return;
+    preview.innerHTML = '';
+
+    editTopicAttachments.forEach((attach, index) => {
+        const file = attach.file || { name: attach.original_filename, type: attach.mime_type };
+        const isImage = file.type && file.type.startsWith('image/');
+        const previewItem = document.createElement('div');
+        previewItem.style.cssText = 'position: relative; margin: 0.5rem;';
+
+        const src = attach.existing ? attach.file_path : (file instanceof File ? URL.createObjectURL(file) : '');
+
+        if (isImage) {
+            previewItem.innerHTML = `
+                <img src="${escapeHtml(src)}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);">
+                <button type="button" onclick="removeEditTopicAttachment(${attach.existing ? `'${attach.id}'` : index})" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem;">×</button>
+            `;
+        } else {
+            previewItem.innerHTML = `
+                <div style="width: 100px; height: 100px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 0.5rem;">
+                    <i class="bi bi-file-earmark" style="font-size: 2rem; color: var(--muted);"></i>
+                    <small style="font-size: 0.7rem; color: var(--muted); text-align: center; word-break: break-all;">${escapeHtml(file.name)}</small>
+                </div>
+                <button type="button" onclick="removeEditTopicAttachment(${attach.existing ? `'${attach.id}'` : index})" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem;">×</button>
+            `;
+        }
+        preview.appendChild(previewItem);
+    });
+}
+
 // Show/Hide modal
 function showNewTopicModal() {
     document.getElementById('newTopicModal').classList.add('show');
 }
 
-function hideNewTopicModal() {
+async function hideNewTopicModal() {
+    // Delete uploaded attachments if any
+    if (topicUploadedAttachmentIds.length > 0) {
+        for (const uploaded of topicUploadedAttachmentIds) {
+            try {
+                await fetch(`/api/forum/attachments/${uploaded.id}`, {
+                    method: 'DELETE'
+                });
+            } catch (error) {
+                console.error('Error deleting attachment:', error);
+            }
+        }
+        topicUploadedAttachmentIds = [];
+    }
+    
     document.getElementById('newTopicModal').classList.remove('show');
+    topicAttachments = [];
+    const attachmentsPreview = document.getElementById('topicAttachmentsPreview');
+    if (attachmentsPreview) {
+        attachmentsPreview.innerHTML = '';
+    }
 }
 
 // Close modal on outside click
@@ -1977,9 +2630,15 @@ function handleContentEditableInput(event) {
 async function showAutocomplete(contentEditable, rect, query) {
     if (!autocompletePortal) return;
     
+    // Position right beside the cursor - use getBoundingClientRect for accurate positioning
+    const x = rect.left + window.scrollX;
+    const y = rect.bottom + window.scrollY + 5;
+    
     autocompletePortal.style.display = 'block';
-    autocompletePortal.style.left = rect.left + 'px';
-    autocompletePortal.style.top = (rect.bottom + 5) + 'px';
+    autocompletePortal.style.position = 'fixed';
+    autocompletePortal.style.left = `${x}px`;
+    autocompletePortal.style.top = `${y}px`;
+    autocompletePortal.style.zIndex = '9999999';
     
     try {
         let url = '';
@@ -2088,6 +2747,36 @@ function handleContentEditableKeydown(event) {
         event.preventDefault();
         if (selectedAutocompleteIndex >= 0) {
             selectAutocompleteItem(selectedAutocompleteIndex);
+        } else {
+            // If Enter is pressed without selection, ensure we're not inside a special tag
+            // This helps break out of styling if cursor is trapped
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                let node = range.startContainer;
+                if (node.nodeType === Node.TEXT_NODE) {
+                    node = node.parentNode;
+                }
+                if (node.tagName === 'A' || node.tagName === 'SPAN') {
+                    // If inside a link/span, insert a space after it
+                    const spaceNode = document.createTextNode('\u00A0');
+                    if (node.nextSibling) {
+                        node.parentNode.insertBefore(spaceNode, node.nextSibling);
+                    } else {
+                        node.parentNode.appendChild(spaceNode);
+                    }
+                    range.setStartAfter(spaceNode);
+                    range.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    // Don't prevent default here to allow new line if needed, 
+                    // but we already did preventing default at start of block.
+                    // Since we want new line behavior for normal enter:
+                    document.execCommand('insertLineBreak');
+                } else {
+                    document.execCommand('insertLineBreak');
+                }
+            }
         }
     } else if (event.key === 'Escape') {
         hideAutocomplete();
@@ -2135,8 +2824,17 @@ function selectAutocompleteItem(index) {
         
         if (replacement) {
             range.insertNode(replacement);
+            
+            // Insert a space after the replacement to break the style
+            const spaceNode = document.createTextNode('\u00A0'); // Non-breaking space
+            if (replacement.nextSibling) {
+                replacement.parentNode.insertBefore(spaceNode, replacement.nextSibling);
+            } else {
+                replacement.parentNode.appendChild(spaceNode);
+            }
+            
             const newRange = document.createRange();
-            newRange.setStartAfter(replacement);
+            newRange.setStartAfter(spaceNode);
             newRange.collapse(true);
             const selection = window.getSelection();
             selection.removeAllRanges();
@@ -2163,6 +2861,7 @@ function getTagIcon(type) {
     if (type === 'patient') return '👤';
     if (type === 'appointment') return '📅';
     if (type === 'drug') return '💊';
+    if (type === 'custom') return '🏷️';
     return '';
 }
 
@@ -2355,6 +3054,25 @@ function showEditTopicModal(topic) {
                             <input type="text" id="editTopicTitle" class="forum-form-input" required placeholder="Enter topic title">
                         </div>
                         <div class="forum-form-group">
+                            <label class="forum-form-label" for="editTopicCategory">Category</label>
+                            <select id="editTopicCategory" class="forum-form-input" required>
+                                <option value="General Discussion">General Discussion</option>
+                                <option value="Clinical Case">Clinical Case</option>
+                                <option value="Procedure Feedback">Procedure Feedback</option>
+                                <option value="Protocol Update">Protocol Update</option>
+                                <option value="Drug Interaction">Drug Interaction</option>
+                                <option value="Prescription Inquiry">Prescription Inquiry</option>
+                                <option value="Lab/Imaging Interpretation">Lab/Imaging Interpretation</option>
+                            </select>
+                        </div>
+                        <div class="forum-form-group">
+                            <label class="forum-form-label" for="editTopicMeta">Meta Tags <small style="color: var(--muted);">(Use @ for patients, # for appointments, $ for drugs, or type custom tags)</small></label>
+                            <div id="editTopicMetaContainer" class="forum-meta-container" style="min-height: 60px; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; background: var(--card); display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: flex-start;">
+                                <div id="editTopicMetaInput" contenteditable="true" style="flex: 1; min-width: 200px; outline: none; padding: 0.25rem;" placeholder="Type @, #, $ or custom tag..."></div>
+                            </div>
+                            <div id="editTopicMetaAutocomplete" class="forum-meta-autocomplete-portal"></div>
+                        </div>
+                        <div class="forum-form-group">
                             <label class="forum-form-label" for="editTopicContent">Content</label>
                             <!-- Rich Text Editor Toolbar -->
                             <div class="forum-editor-toolbar">
@@ -2391,6 +3109,14 @@ function showEditTopicModal(topic) {
                             </div>
                             <div id="editTopicContent" class="forum-form-textarea" contenteditable="true" placeholder="Type your message here. Use @ for patients, # for appointments, $ for drugs..."></div>
                         </div>
+                        <div class="forum-form-group">
+                            <label class="forum-form-label">Attachments</label>
+                            <input type="file" id="editTopicAttachments" multiple accept="image/*,.pdf,.doc,.docx" style="display: none;">
+                            <label for="editTopicAttachments" class="btn-cancel" style="display: inline-block; cursor: pointer; margin-bottom: 0.5rem;">
+                                <i class="bi bi-paperclip"></i> Add Files
+                            </label>
+                            <div id="editTopicAttachmentsPreview" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;"></div>
+                        </div>
                         <div class="forum-form-actions">
                             <button type="button" class="btn-cancel" onclick="hideEditTopicModal()">Cancel</button>
                             <button type="submit" class="btn-submit">Update Topic</button>
@@ -2417,8 +3143,121 @@ function showEditTopicModal(topic) {
     
     const modalElement = document.getElementById('editTopicModal');
     document.getElementById('editTopicTitle').value = topic.title;
+    document.getElementById('editTopicCategory').value = topic.category || 'General Discussion';
     document.getElementById('editTopicContent').innerHTML = topic.content;
     document.getElementById('editTopicForm').setAttribute('data-topic-id', topic.id);
+    
+    // Load existing tags
+    const metaContainer = document.getElementById('editTopicMetaContainer');
+    const metaInput = document.getElementById('editTopicMetaInput');
+    if (metaContainer && topic.tags) {
+        // Clear existing badges except input
+        const existingBadges = metaContainer.querySelectorAll('[data-meta-type]');
+        existingBadges.forEach(badge => badge.remove());
+        
+        // Add existing tags as badges
+        topic.tags.forEach(tag => {
+            if (tag.tag_type === 'custom') {
+                // Custom tags: use tag_name directly, no id
+                if (tag.tag_name) {
+                    addCustomMetaTagBadgeToEdit(tag.tag_name);
+                }
+            } else {
+                const tagName = tag.tag_name || (tag.tag_type === 'appointment' ? `#${tag.tag_id}` : (tag.tag_type === 'drug' ? tag.tag_name : ''));
+                if (tagName) {
+                    addMetaTagBadgeToEdit(tag.tag_type, tag.tag_id, tagName);
+                }
+            }
+        });
+    }
+    
+    // Initialize meta autocomplete for edit modal
+    if (metaInput) {
+        // Remove existing listeners to avoid duplicates
+        const newInput = metaInput.cloneNode(true);
+        metaInput.parentNode.replaceChild(newInput, metaInput);
+        
+        // Monitor input for semicolon to create custom tags (similar to email to/cc/bcc)
+        newInput.addEventListener('input', function(e) {
+            const text = this.textContent;
+            
+            // Check if text ends with semicolon (custom tag creation)
+            if (text.endsWith(';')) {
+                handleEditMetaTagCreation(this, true);
+                return; // Don't process autocomplete if we just created a tag
+            }
+            
+            // Otherwise, handle autocomplete
+            handleEditMetaInput(this);
+        });
+        
+        // Also check on keyup for immediate response
+        newInput.addEventListener('keyup', function(e) {
+            const text = this.textContent;
+            
+            // Check for semicolon or Enter
+            if (e.key === ';' || e.key === 'Enter' || text.endsWith(';')) {
+                const cleanText = text.replace(/;+$/, '').trim();
+                if (cleanText.length > 0) {
+                    handleEditMetaTagCreation(this, true);
+                }
+            }
+        });
+        
+        newInput.addEventListener('keydown', function(e) {
+            // Handle Backspace to remove last tag if input is empty
+            if (e.key === 'Backspace') {
+                const text = this.textContent.trim();
+                if (text === '') {
+                    const container = document.getElementById('editTopicMetaContainer');
+                    if (container) {
+                        const badges = container.querySelectorAll('[data-meta-type="custom"]');
+                        if (badges.length > 0) {
+                            e.preventDefault();
+                            badges[badges.length - 1].remove();
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Load existing attachments
+    editTopicAttachments = [];
+    const attachmentsPreview = document.getElementById('editTopicAttachmentsPreview');
+    if (attachmentsPreview && topic.attachments) {
+        attachmentsPreview.innerHTML = '';
+        topic.attachments.forEach(attach => {
+            const previewItem = document.createElement('div');
+            previewItem.style.cssText = 'position: relative; margin: 0.5rem;';
+            const isImage = attach.mime_type && attach.mime_type.startsWith('image/');
+            if (isImage) {
+                previewItem.innerHTML = `
+                    <img src="${escapeHtml(attach.file_path)}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);">
+                    <button type="button" onclick="removeEditTopicAttachment('${attach.id}')" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem;">×</button>
+                `;
+            } else {
+                previewItem.innerHTML = `
+                    <div style="width: 100px; height: 100px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 0.5rem;">
+                        <i class="bi bi-file-earmark" style="font-size: 2rem; color: var(--muted);"></i>
+                        <small style="font-size: 0.7rem; color: var(--muted); text-align: center; word-break: break-all;">${escapeHtml(attach.original_filename)}</small>
+                    </div>
+                    <button type="button" onclick="removeEditTopicAttachment('${attach.id}')" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.75rem;">×</button>
+                `;
+            }
+            attachmentsPreview.appendChild(previewItem);
+            editTopicAttachments.push({ id: attach.id, existing: true });
+        });
+    }
+    
+    // Handle file attachments
+    const editAttachmentsInput = document.getElementById('editTopicAttachments');
+    if (editAttachmentsInput) {
+        editAttachmentsInput.onchange = function(e) {
+            handleEditTopicAttachments(e);
+        };
+    }
+    
     modalElement.classList.add('show');
 }
 
@@ -2429,10 +3268,15 @@ function hideEditTopicModal() {
     }
 }
 
+let editTopicAttachments = [];
+
 async function updateTopic(topicId) {
     const title = document.getElementById('editTopicTitle').value.trim();
+    const category = document.getElementById('editTopicCategory')?.value || 'General Discussion';
     const contentDiv = document.getElementById('editTopicContent');
     const content = extractContentWithTags(contentDiv);
+    const metaContainer = document.getElementById('editTopicMetaContainer');
+    const metaTags = extractMetaTagsFromContainer(metaContainer);
     
     if (!title || !content) {
         showError('Title and content are required');
@@ -2441,6 +3285,42 @@ async function updateTopic(topicId) {
     
     try {
         const tags = extractTagsFromContent(contentDiv);
+        
+        // Add meta tags
+        metaTags.forEach(meta => {
+            if (meta.type === 'custom' && meta.name) {
+                tags.push({ type: 'custom', name: meta.name });
+            } else if (meta.type && meta.id) {
+                tags.push({ type: meta.type, id: meta.id });
+            }
+        });
+        
+        // Upload new attachments first if any
+        let attachmentIds = [];
+        const newAttachments = editTopicAttachments.filter(a => !a.existing);
+        if (newAttachments.length > 0) {
+            for (const attach of newAttachments) {
+                if (attach.file) {
+                    const formData = new FormData();
+                    formData.append('file', attach.file);
+                    formData.append('type', 'topic');
+                    formData.append('topic_id', topicId);
+                    
+                    const uploadResponse = await fetch('/api/forum/attachments/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const uploadData = await uploadResponse.json();
+                    if (uploadData.success) {
+                        attachmentIds.push(uploadData.attachment_id);
+                    }
+                }
+            }
+        }
+        
+        // Add existing attachment IDs
+        const existingAttachments = editTopicAttachments.filter(a => a.existing && a.id);
+        existingAttachments.forEach(a => attachmentIds.push(a.id));
         
         const response = await fetch(`/api/forum/topics/${topicId}`, {
             method: 'PUT',
@@ -2451,7 +3331,9 @@ async function updateTopic(topicId) {
             body: JSON.stringify({
                 title: title,
                 content: content,
-                tags: tags
+                category: category,
+                tags: tags,
+                attachment_ids: attachmentIds
             })
         });
         

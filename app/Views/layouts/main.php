@@ -2604,6 +2604,8 @@
             border-radius: 20px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
+            z-index: 1000001 !important;
+            
         }
         
         .dark .dock-container {

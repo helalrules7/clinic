@@ -511,8 +511,8 @@ class ApiController
                 }
                 
                 $result = $this->updateAppointmentStatus($id, $newStatus, $reason);
-                
-                if ($result) {
+
+        if ($result) {
                     $this->createTimelineEvent(
                         $appointment['patient_id'], 
                         $id, 
@@ -550,11 +550,11 @@ class ApiController
                     
                     return $this->jsonResponse([
                         'ok' => true,
-                        'success' => true,
+                'success' => true,
                         'message' => 'Appointment status updated successfully',
                         'status' => $newStatus
-                    ]);
-                } else {
+            ]);
+        } else {
                     return $this->jsonResponse(['error' => 'Failed to update appointment status'], 500);
                 }
             }
@@ -698,7 +698,7 @@ class ApiController
                             LIMIT ?
                         ");
                         $stmt->execute([$query, $limit]);
-                    } else {
+        } else {
                         // Doctor can only see their own appointments
                         $stmt = $this->pdo->prepare("
                             SELECT 
@@ -1029,7 +1029,7 @@ class ApiController
                 
                 
                 return $this->jsonResponse([
-                    'ok' => true,
+                'ok' => true,
                     'message' => 'Patient and all related data deleted successfully',
                     'data' => [
                         'patient_name' => "{$patient['first_name']} {$patient['last_name']}",
@@ -1037,8 +1037,8 @@ class ApiController
                         'files_deleted' => count($patientFiles)
                     ]
                 ]);
-                
-            } catch (\Exception $e) {
+            
+        } catch (\Exception $e) {
                 // Rollback transaction on error
                 $this->pdo->rollback();
                 throw $e;
@@ -1190,14 +1190,14 @@ class ApiController
                 );
                 
                 return $this->jsonResponse([
-                    'ok' => true,
+                'ok' => true,
                     'data' => ['id' => $consultationId],
                     'message' => 'Consultation created successfully'
                 ]);
             } else {
                 return $this->jsonResponse(['error' => 'Failed to create consultation'], 500);
             }
-
+            
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
@@ -1299,14 +1299,14 @@ class ApiController
                 );
                 
                 return $this->jsonResponse([
-                    'success' => true,
+                'success' => true,
                     'data' => ['id' => $prescriptionId],
                     'message' => 'Glasses prescription created successfully'
                 ]);
             } else {
                             return $this->jsonResponse(['error' => 'Failed to create glasses prescription'], 500);
         }
-
+            
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
@@ -1761,7 +1761,7 @@ class ApiController
                         'status' => $status,
                         'reason' => 'Reserved for ' . $doctorDisplayName . ' - Patient: ' . $patientName . ' - Type: (' . $visitType . ')'
                     ];
-                } else {
+            } else {
                     // Check if it's outside working hours (before 2 PM or after 11 PM)
                     $timeObj = new \DateTime($time);
                     $workStart = new \DateTime('14:00');
@@ -1881,7 +1881,7 @@ class ApiController
             $followup = $stmt->fetch(\PDO::FETCH_ASSOC);
             
             return $followup ?: null;
-        } catch (\Exception $e) {
+                } catch (\Exception $e) {
             // Return null on error
             return null;
         }
@@ -1938,7 +1938,7 @@ class ApiController
             $original = $stmt->fetch(\PDO::FETCH_ASSOC);
             
             return $original ?: null;
-        } catch (\Exception $e) {
+                } catch (\Exception $e) {
             // Return null on error
             return null;
         }
@@ -2361,18 +2361,18 @@ class ApiController
             }
             
             return $this->jsonResponse([
-                'ok' => true,
-                'success' => true,
+                    'ok' => true,
+                    'success' => true,
                 'message' => 'Follow-up appointment scheduled successfully',
-                'data' => [
+                    'data' => [
                     'new_appointment_id' => $newAppointmentId,
                     'date' => $newDate,
                     'start_time' => $newTime,
                     'visit_type' => 'FollowUp'
                 ]
             ]);
-            
-        } catch (\Exception $e) {
+                
+            } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Error scheduling follow-up appointment: ' . $e->getMessage()], 500);
         }
     }
@@ -3034,7 +3034,7 @@ class ApiController
                 'success' => true,
                 'attachments' => $attachments
             ]);
-
+            
         } catch (\Exception $e) {
             return $this->jsonResponse(['success' => false, 'message' => 'Server error'], 500);
         }
@@ -3187,7 +3187,7 @@ class ApiController
                 if (empty($data) && !empty($_POST)) {
                     $data = $_POST;
                 }
-            } else {
+                    } else {
                 $data = $_POST;
             }
             
@@ -3628,12 +3628,12 @@ class ApiController
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0755, true);
             }
-
+            
             // Generate unique filename
             $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
             $filename = 'patient_' . $patientId . '_' . time() . '_' . uniqid() . '.' . $extension;
             $filePath = $uploadDir . $filename;
-
+            
             // Move uploaded file
             if (!move_uploaded_file($file['tmp_name'], $filePath)) {
                 return $this->jsonResponse(['error' => 'Failed to save file'], 500);
@@ -3654,7 +3654,7 @@ class ApiController
                 $description,
                 $this->auth->user()['id']
             ]);
-
+            
             return $this->jsonResponse([
                 'success' => true,
                 'message' => 'File uploaded successfully',
@@ -3696,7 +3696,7 @@ class ApiController
             
             // Output file
             readfile($filePath);
-            exit;
+                exit;
 
         } catch (Exception $e) {
             return $this->jsonResponse(['error' => $e->getMessage()], 500);
@@ -3733,7 +3733,7 @@ class ApiController
             
             // Output file
             readfile($filePath);
-            exit;
+                exit;
 
         } catch (Exception $e) {
             return $this->jsonResponse(['error' => $e->getMessage()], 500);
@@ -4014,7 +4014,7 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Failed to create medical history'], 500);
             }
 
-        } catch (\Exception $e) {
+            } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Internal server error: ' . $e->getMessage()], 500);
         }
     }
@@ -4215,7 +4215,7 @@ class ApiController
                 'success' => true,
                 'data' => $appointments
             ]);
-
+            
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Internal server error'], 500);
         }
@@ -4314,13 +4314,13 @@ class ApiController
                 http_response_code(401);
                 exit;
             }
-
+            
             $user = $this->auth->user();
             if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
                 http_response_code(403);
                 exit;
             }
-
+            
             // Check if patient exists
             $stmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
             $stmt->execute([$patientId]);
@@ -4330,17 +4330,17 @@ class ApiController
                 http_response_code(404);
                 exit;
             }
-
+            
             // If we reach here, access is allowed
             http_response_code(200);
             exit;
-
+            
         } catch (\Exception $e) {
             http_response_code(500);
             exit;
         }
     }
-
+    
     public function exportPatientData($patientId)
     {
         try {
@@ -4375,7 +4375,7 @@ class ApiController
             unlink($filename);
             $this->cleanupTempImages();
             
-            exit;
+                exit;
 
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Internal server error: ' . $e->getMessage()], 500);
@@ -4411,7 +4411,7 @@ class ApiController
                 'success' => true,
                 'data' => $prescription
             ]);
-
+            
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Internal server error'], 500);
         }
@@ -4498,7 +4498,7 @@ class ApiController
                 'glasses_prescriptions' => $glassesPrescriptions,
                 'attachments' => $attachments
             ];
-
+            
         } catch (\Exception $e) {
             return null;
         }
@@ -5089,7 +5089,7 @@ class ApiController
             if (!$this->auth->check()) {
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
-
+            
             $searchTerm = $_GET['q'] ?? '';
             $limit = min((int)($_GET['limit'] ?? 20), 50); // Max 50 results
             $category = $_GET['category'] ?? '';
@@ -5100,7 +5100,7 @@ class ApiController
             if (strlen($searchTerm) < 2 && empty($category) && empty($company) && empty($route)) {
                 return $this->jsonResponse(['drugs' => []]);
             }
-
+            
             // Connect to drugs database
             $drugsPdo = $this->getDrugsDatabaseConnection();
             
@@ -5209,7 +5209,7 @@ class ApiController
             if (!$this->auth->check()) {
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
-
+            
             $drugId = $_GET['id'] ?? null;
             
             if (!$drugId) {
@@ -5352,7 +5352,7 @@ class ApiController
             }, $drugs);
 
             return $this->jsonResponse(['drugs' => $formattedDrugs]);
-
+            
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Failed to get most used drugs: ' . $e->getMessage()], 500);
         }
@@ -5405,7 +5405,7 @@ class ApiController
             $drugs = $stmt->fetchAll();
             
             return $this->jsonResponse(['drugs' => $drugs]);
-
+            
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Failed to search drugs: ' . $e->getMessage()], 500);
         }
@@ -5505,7 +5505,7 @@ class ApiController
             return $this->jsonResponse(['error' => 'فشل في إغلاق اليوم'], 500);
         }
     }
-
+    
     /**
      * Create expense entry
      */
@@ -5641,7 +5641,7 @@ class ApiController
             return $this->jsonResponse(['error' => 'Failed to update expense'], 500);
         }
     }
-
+    
     /**
      * Delete expense entry
      */
@@ -6027,7 +6027,7 @@ class ApiController
                 echo "Unauthorized - Please login first";
                 exit;
             }
-
+            
             // Get parameters
             $date = $_GET['date'] ?? '';
             $type = $_GET['type'] ?? 'all';
@@ -6232,7 +6232,7 @@ class ApiController
             $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
             $writer->save('php://output');
             
-            exit;
+                exit;
             
         } catch (Exception $e) {
             return false;
@@ -6370,7 +6370,7 @@ class ApiController
         
         if (empty($transactions)) {
             echo '"لا توجد معاملات للتصدير","","","",""' . "\n";
-        } else {
+            } else {
             foreach ($transactions as $transaction) {
                 echo '"' . $transaction['created_at'] . '",' .
                      '"' . $transaction['type'] . '",' .
@@ -6380,8 +6380,8 @@ class ApiController
             }
         }
         
-        exit;
-    }
+                        exit;
+                    }
 
     private function getAllFinancialTransactions($date = null, $type = 'all')
     {
@@ -6970,7 +6970,7 @@ class ApiController
                     ]
                 ]
             ]);
-
+            
         } catch (\Exception $e) {
             return $this->jsonResponse(['ok' => false, 'error' => 'Failed to load recent activity'], 500);
         }
@@ -7182,7 +7182,7 @@ class ApiController
                     ]
                 ]
             ]);
-
+            
         } catch (\Exception $e) {
             return $this->jsonResponse(['ok' => false, 'error' => 'Failed to load missed appointments'], 500);
         }
@@ -7430,29 +7430,29 @@ class ApiController
                 if (file_exists($tempFile)) {
                     unlink($tempFile);
                 }
-                ob_clean();
+            ob_clean();
                 http_response_code(500);
-                echo json_encode([
+            echo json_encode([
                     'success' => false,
                     'error' => 'Failed to download file',
                     'message' => 'cURL Error: ' . $curlError
-                ], JSON_UNESCAPED_UNICODE);
-                exit;
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
             }
             
             if ($httpCode !== 200) {
                 if (file_exists($tempFile)) {
                     unlink($tempFile);
                 }
-                ob_clean();
-                http_response_code(500);
-                echo json_encode([
-                    'success' => false,
+            ob_clean();
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
                     'error' => 'Failed to download file',
                     'message' => 'HTTP Code: ' . $httpCode
-                ], JSON_UNESCAPED_UNICODE);
-                exit;
-            }
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
             
             // Verify file exists and has content
             if (!file_exists($tempFile) || filesize($tempFile) === 0) {
@@ -7489,14 +7489,14 @@ class ApiController
                     if (file_exists($tempFile)) {
                         unlink($tempFile);
                     }
-                    ob_clean();
+                ob_clean();
                     http_response_code(500);
                     echo json_encode([
                         'success' => false,
                         'error' => 'SQLite3 command line tool is not available',
                         'message' => 'Please install sqlite3: sudo apt-get install sqlite3'
                     ], JSON_UNESCAPED_UNICODE);
-                    exit;
+                exit;
                 }
             }
             

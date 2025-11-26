@@ -19,8 +19,54 @@ class ForumController
         $this->view = new View();
         $this->pdo = Database::getInstance()->getConnection();
         
-        // Require doctor authentication
+        // Don't require role in constructor - let each method handle it
+        // This allows API methods to handle authentication differently
+    }
+    
+    /**
+     * Helper method to require doctor/admin role for non-API methods
+     */
+    private function requireDoctorRole()
+    {
         $this->auth->requireRole(['doctor', 'admin']);
+    }
+    
+    /**
+     * Helper method to check authentication for API methods
+     * Returns true if authenticated, false otherwise
+     */
+    private function checkApiAuth()
+    {
+        if (!$this->auth->check()) {
+            // Clear any output buffers
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+            http_response_code(401);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
+        }
+        
+        $user = $this->auth->user();
+        if (!in_array($user['role'], ['doctor', 'admin'])) {
+            // Clear any output buffers
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
+        }
+        
+        return true;
     }
 
     /**
@@ -28,6 +74,7 @@ class ForumController
      */
     public function index()
     {
+        $this->requireDoctorRole();
         $user = $this->auth->user();
         
         $content = $this->view->render('doctor/forum/index', [
@@ -47,6 +94,7 @@ class ForumController
      */
     public function topic($id)
     {
+        $this->requireDoctorRole();
         $user = $this->auth->user();
         
         $content = $this->view->render('doctor/forum/topic', [
@@ -67,13 +115,16 @@ class ForumController
      */
     public function getTopics()
     {
+        // Clear any output buffers
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
         header('Content-Type: application/json; charset=utf-8');
         
+        // Check authentication for API
+        $this->checkApiAuth();
         $user = $this->auth->user();
-        if (!$user) {
-            echo json_encode(['success' => false, 'message' => 'Unauthorized'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            return;
-        }
 
         $patientId = isset($_GET['patient_id']) ? (int)$_GET['patient_id'] : null;
         $appointmentId = isset($_GET['appointment_id']) ? (int)$_GET['appointment_id'] : null;
@@ -146,7 +197,7 @@ class ForumController
             $stmt->execute();
             $topics = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Get tags and user like for each topic
+            // Get tags, user like, and attachments count for each topic
             $userId = $user['id'] ?? null;
             foreach ($topics as &$topic) {
                 $topic['tags'] = $this->getTopicTags($topic['id']);
@@ -155,6 +206,11 @@ class ForumController
                 } else {
                     $topic['user_like'] = null;
                 }
+                // Get attachments count
+                $stmtAttach = $this->pdo->prepare("SELECT COUNT(*) as count FROM doctor_forum_topic_attachments WHERE topic_id = ?");
+                $stmtAttach->execute([$topic['id']]);
+                $attachCount = $stmtAttach->fetch(PDO::FETCH_ASSOC);
+                $topic['attachments_count'] = (int)($attachCount['count'] ?? 0);
             }
             
             echo json_encode([
@@ -178,12 +234,18 @@ class ForumController
      */
     public function getTopic($id)
     {
+        // Clear any output buffers
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
         header('Content-Type: application/json; charset=utf-8');
         
         $user = $this->auth->user();
         if (!$user) {
+            http_response_code(401);
             echo json_encode(['success' => false, 'message' => 'Unauthorized'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            return;
+            exit;
         }
 
         try {
@@ -218,6 +280,16 @@ class ForumController
             
             $topic['tags'] = $this->getTopicTags($id);
             $topic['user_like'] = $this->getUserTopicLike($id, $user['id']);
+            
+            // Get attachments
+            $stmtAttach = $this->pdo->prepare("
+                SELECT id, file_path, original_filename, file_size, mime_type, created_at as uploaded_at
+                FROM doctor_forum_topic_attachments
+                WHERE topic_id = ?
+                ORDER BY created_at ASC
+            ");
+            $stmtAttach->execute([$id]);
+            $topic['attachments'] = $stmtAttach->fetchAll(PDO::FETCH_ASSOC);
             
             echo json_encode([
                 'success' => true,
@@ -366,15 +438,41 @@ class ForumController
                 $params[] = $data['is_locked'] ? 1 : 0;
             }
             
+            if (isset($data['category'])) {
+                $updateFields[] = "category = ?";
+                $params[] = $data['category'];
+            }
+            
             if (empty($updateFields)) {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'No fields to update'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 exit;
             }
             
+            $this->pdo->beginTransaction();
+            
             $params[] = $id;
             $stmt = $this->pdo->prepare("UPDATE doctor_forum_topics SET " . implode(", ", $updateFields) . " WHERE id = ?");
             $stmt->execute($params);
+            
+            // Update tags if provided
+            if (isset($data['tags']) && is_array($data['tags'])) {
+                // Remove existing tags
+                $stmt = $this->pdo->prepare("DELETE FROM doctor_forum_tags WHERE topic_id = ?");
+                $stmt->execute([$id]);
+                // Add new tags
+                $this->addTagsToTopic($id, $data['tags']);
+            }
+            
+            // Handle attachments if provided
+            if (isset($data['attachment_ids']) && is_array($data['attachment_ids'])) {
+                foreach ($data['attachment_ids'] as $attachmentId) {
+                    $stmt = $this->pdo->prepare("UPDATE doctor_forum_topic_attachments SET topic_id = ? WHERE id = ?");
+                    $stmt->execute([$id, $attachmentId]);
+                }
+            }
+            
+            $this->pdo->commit();
             
             echo json_encode([
                 'success' => true,
@@ -575,10 +673,22 @@ class ForumController
             $stmt->execute([$topicId]);
             $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Get images and likes for each post
+            // Get images, likes, and attachments for each post
             foreach ($posts as &$post) {
                 $post['images'] = $this->getPostImages($post['id']);
                 $post['user_like'] = $this->getUserLike($post['id'], $user['id']);
+                // Get attachments
+                $stmtAttach = $this->pdo->prepare("
+                    SELECT id, file_path, original_filename, file_size, mime_type, created_at as uploaded_at
+                    FROM doctor_forum_post_attachments
+                    WHERE post_id = ?
+                    ORDER BY created_at ASC
+                ");
+                $stmtAttach->execute([$post['id']]);
+                $post['attachments'] = $stmtAttach->fetchAll(PDO::FETCH_ASSOC);
+                // Ensure likes_count and dislikes_count are integers
+                $post['likes_count'] = (int)($post['likes_count'] ?? 0);
+                $post['dislikes_count'] = (int)($post['dislikes_count'] ?? 0);
             }
             
             // Build tree structure
@@ -637,6 +747,14 @@ class ForumController
             
             $postId = $this->pdo->lastInsertId();
             
+            // Handle attachments if provided
+            if (isset($data['attachment_ids']) && is_array($data['attachment_ids'])) {
+                foreach ($data['attachment_ids'] as $attachmentId) {
+                    $stmt = $this->pdo->prepare("UPDATE doctor_forum_post_attachments SET post_id = ? WHERE id = ?");
+                    $stmt->execute([$postId, $attachmentId]);
+                }
+            }
+            
             // Update topic replies count and last reply
             $stmt = $this->pdo->prepare("
                 UPDATE doctor_forum_topics 
@@ -665,6 +783,74 @@ class ForumController
             echo json_encode([
                 'success' => false,
                 'message' => 'An error occurred while creating post'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
+        }
+    }
+
+    /**
+     * Get single post
+     */
+    public function getPost($id)
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        
+        $user = $this->auth->user();
+        if (!$user) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            return;
+        }
+
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT p.*,
+                       u.name as creator_name,
+                       u.id as creator_id,
+                       u.profile_image as creator_image
+                FROM doctor_forum_posts p
+                LEFT JOIN users u ON p.created_by = u.id
+                WHERE p.id = ?
+            ");
+            $stmt->execute([$id]);
+            $post = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$post) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Post not found'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                exit;
+            }
+            
+            // Get images
+            $post['images'] = $this->getPostImages($post['id']);
+            
+            // Get attachments
+            $stmtAttach = $this->pdo->prepare("
+                SELECT id, file_path, original_filename, file_size, mime_type, created_at as uploaded_at
+                FROM doctor_forum_post_attachments
+                WHERE post_id = ?
+                ORDER BY created_at ASC
+            ");
+            $stmtAttach->execute([$post['id']]);
+            $post['attachments'] = $stmtAttach->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Get user like status
+            $post['user_like'] = $this->getUserLike($post['id'], $user['id']);
+            
+            // Ensure counts are integers
+            $post['likes_count'] = (int)($post['likes_count'] ?? 0);
+            $post['dislikes_count'] = (int)($post['dislikes_count'] ?? 0);
+            
+            echo json_encode([
+                'success' => true,
+                'post' => $post
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
+        } catch (\Exception $e) {
+            error_log("Forum getPost error: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'An error occurred while loading post'
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         }
@@ -1225,7 +1411,13 @@ class ForumController
             
             // Enrich tags with names
             foreach ($tags as &$tag) {
-                if ($tag['tag_type'] === 'patient') {
+                if ($tag['tag_type'] === 'custom') {
+                    // Custom tags already have tag_name in the database
+                    // No need to fetch, just use what's stored
+                    if (!isset($tag['tag_name']) || empty($tag['tag_name'])) {
+                        $tag['tag_name'] = 'Custom Tag';
+                    }
+                } elseif ($tag['tag_type'] === 'patient') {
                     $stmt = $this->pdo->prepare("SELECT CONCAT(first_name, ' ', last_name) as name FROM patients WHERE id = ?");
                     $stmt->execute([$tag['tag_id']]);
                     $patient = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -1281,15 +1473,29 @@ class ForumController
 
     private function addTagsToTopic($topicId, $tags)
     {
+        // Handle regular tags (patient, appointment, drug) with id
         $stmt = $this->pdo->prepare("
-            INSERT INTO doctor_forum_tags (topic_id, tag_type, tag_id)
-            VALUES (?, ?, ?)
+            INSERT INTO doctor_forum_tags (topic_id, tag_type, tag_id, tag_name)
+            VALUES (?, ?, ?, NULL)
+            ON DUPLICATE KEY UPDATE id = id
+        ");
+        
+        // Handle custom tags with name
+        $customStmt = $this->pdo->prepare("
+            INSERT INTO doctor_forum_tags (topic_id, tag_type, tag_id, tag_name)
+            VALUES (?, 'custom', 0, ?)
             ON DUPLICATE KEY UPDATE id = id
         ");
         
         foreach ($tags as $tag) {
-            if (isset($tag['type']) && isset($tag['id'])) {
-                $stmt->execute([$topicId, $tag['type'], $tag['id']]);
+            if (isset($tag['type'])) {
+                if ($tag['type'] === 'custom' && isset($tag['name'])) {
+                    // Custom tag: use tag_name, tag_id = 0
+                    $customStmt->execute([$topicId, $tag['name']]);
+                } elseif (isset($tag['id'])) {
+                    // Regular tag: use tag_id, tag_name = NULL
+                    $stmt->execute([$topicId, $tag['type'], $tag['id']]);
+                }
             }
         }
     }
@@ -1460,21 +1666,48 @@ class ForumController
         $tree = [];
         $indexed = [];
         
-        // Index all posts
+        // Index all posts first - ensure children array is initialized
         foreach ($posts as $post) {
             $post['children'] = [];
-            $indexed[$post['id']] = $post;
+            // Ensure parent_post_id is properly handled
+            if ($post['parent_post_id'] === null || $post['parent_post_id'] === '' || $post['parent_post_id'] === 'NULL' || $post['parent_post_id'] === 0) {
+                $post['parent_post_id'] = null;
+            } else {
+                $post['parent_post_id'] = (int)$post['parent_post_id'];
+            }
+            $indexed[(int)$post['id']] = $post;
         }
         
-        // Build tree
-        foreach ($indexed as $post) {
+        // Build tree - iterate through all posts
+        foreach ($indexed as $postId => $post) {
             if ($post['parent_post_id'] === null) {
-                $tree[] = $post;
+                // Top-level post - add directly to tree
+                $tree[] = &$indexed[$postId];
             } else {
-                if (isset($indexed[$post['parent_post_id']])) {
-                    $indexed[$post['parent_post_id']]['children'][] = $post;
+                // Child post - find parent
+                $parentId = (int)$post['parent_post_id'];
+                if (isset($indexed[$parentId])) {
+                    // Add to parent's children array
+                    if (!isset($indexed[$parentId]['children']) || !is_array($indexed[$parentId]['children'])) {
+                        $indexed[$parentId]['children'] = [];
+                    }
+                    $indexed[$parentId]['children'][] = &$indexed[$postId];
+                } else {
+                    // Parent not found in indexed posts, treat as top-level
+                    error_log("Forum buildPostTree: Parent post {$parentId} not found for post {$postId}, treating as top-level");
+                    $tree[] = &$indexed[$postId];
                 }
             }
+        }
+        
+        // Unset references to avoid issues
+        unset($indexed);
+        
+        // Debug: Log tree structure
+        error_log("Forum buildPostTree: Built tree with " . count($tree) . " top-level posts");
+        foreach ($tree as $topPost) {
+            $childrenCount = isset($topPost['children']) ? count($topPost['children']) : 0;
+            error_log("Forum buildPostTree: Post {$topPost['id']} has {$childrenCount} children");
         }
         
         return $tree;
@@ -1552,13 +1785,15 @@ class ForumController
      */
     public function getCategoryStats()
     {
+        // Clear any output buffers
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
         header('Content-Type: application/json; charset=utf-8');
         
-        $user = $this->auth->user();
-        if (!$user) {
-            echo json_encode(['success' => false, 'message' => 'Unauthorized'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            return;
-        }
+        // Check authentication for API
+        $this->checkApiAuth();
 
         try {
             $stmt = $this->pdo->prepare("
@@ -1591,29 +1826,58 @@ class ForumController
      */
     public function getTopMetaTags()
     {
+        // Clear any output buffers
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
         header('Content-Type: application/json; charset=utf-8');
         
-        $user = $this->auth->user();
-        if (!$user) {
-            echo json_encode(['success' => false, 'message' => 'Unauthorized'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            return;
-        }
+        // Check authentication for API
+        $this->checkApiAuth();
 
         $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 5;
 
         try {
-            $stmt = $this->pdo->prepare("
-                SELECT tag_type, tag_id, COUNT(*) as count
-                FROM doctor_forum_tags
-                GROUP BY tag_type, tag_id
-                ORDER BY count DESC
-                LIMIT ?
-            ");
-            $stmt->bindValue(1, $limit, PDO::PARAM_INT);
-            $stmt->execute();
-            $tags = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            // Get regular tags (with tag_id)
+            $tags = [];
+            try {
+                $stmt = $this->pdo->prepare("
+                    SELECT tag_type, tag_id, COUNT(*) as count
+                    FROM doctor_forum_tags
+                    WHERE tag_type != 'custom' AND tag_id IS NOT NULL
+                    GROUP BY tag_type, tag_id
+                    ORDER BY count DESC
+                    LIMIT ?
+                ");
+                $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+                $stmt->execute();
+                $tags = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (\Exception $e) {
+                error_log("Forum getTopMetaTags - Error fetching regular tags: " . $e->getMessage());
+                $tags = [];
+            }
             
-            // Get tag names
+            // Get custom tags (with tag_name)
+            $customTags = [];
+            try {
+                $customStmt = $this->pdo->prepare("
+                    SELECT tag_type, tag_name, COUNT(*) as count
+                    FROM doctor_forum_tags
+                    WHERE tag_type = 'custom' AND tag_name IS NOT NULL
+                    GROUP BY tag_type, tag_name
+                    ORDER BY count DESC
+                    LIMIT ?
+                ");
+                $customStmt->bindValue(1, $limit, PDO::PARAM_INT);
+                $customStmt->execute();
+                $customTags = $customStmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (\Exception $e) {
+                error_log("Forum getTopMetaTags - Error fetching custom tags: " . $e->getMessage());
+                $customTags = [];
+            }
+            
+            // Get tag names for regular tags
             foreach ($tags as &$tag) {
                 if ($tag['tag_type'] === 'patient') {
                     $stmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
@@ -1635,10 +1899,28 @@ class ForumController
                 }
             }
             
-            echo json_encode([
+            // Custom tags already have tag_name
+            foreach ($customTags as &$tag) {
+                $tag['tag_id'] = null; // Custom tags don't have tag_id
+            }
+            
+            // Merge and sort by count
+            $allTags = array_merge($tags, $customTags);
+            if (count($allTags) > 0) {
+                usort($allTags, function($a, $b) {
+                    return $b['count'] - $a['count'];
+                });
+                
+                // Limit to requested number
+                $allTags = array_slice($allTags, 0, $limit);
+            }
+            
+            $response = [
                 'success' => true,
-                'tags' => $tags
-            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                'tags' => $allTags
+            ];
+            
+            echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
             error_log("Forum getTopMetaTags error: " . $e->getMessage());
@@ -1747,27 +2029,49 @@ class ForumController
     {
         header('Content-Type: application/json; charset=utf-8');
         
+        error_log("Forum uploadAttachment - START");
+        error_log("Forum uploadAttachment - POST data: " . print_r($_POST, true));
+        error_log("Forum uploadAttachment - FILES data: " . print_r($_FILES, true));
+        
         $user = $this->auth->user();
         if (!$user) {
+            error_log("Forum uploadAttachment - Unauthorized");
             http_response_code(401);
             echo json_encode(['success' => false, 'message' => 'Unauthorized'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         }
 
         if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+            error_log("Forum uploadAttachment - No file uploaded or upload error: " . ($_FILES['file']['error'] ?? 'no file'));
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'No file uploaded'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         }
 
         $file = $_FILES['file'];
+        $type = $_POST['type'] ?? null; // 'topic' or 'post'
         $topicId = $_POST['topic_id'] ?? null;
         $postId = $_POST['post_id'] ?? null;
         
-        if (!$topicId && !$postId) {
+        error_log("Forum uploadAttachment - type: $type, topicId: $topicId, postId: $postId");
+        
+        // Allow upload without topic_id/post_id when creating new topic/post (will be linked later)
+        // But require type to be specified
+        if (!$type) {
+            error_log("Forum uploadAttachment - Type not specified");
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Either topic_id or post_id is required'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            echo json_encode(['success' => false, 'message' => 'Type (topic or post) is required'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
+        }
+        
+        // For posts, post_id can be null (will be linked later)
+        if ($type === 'post' && !$postId) {
+            error_log("Forum uploadAttachment - Warning: post_id is null for post attachment (will be linked later)");
+        }
+        
+        // For topics, topic_id can be null (will be linked later)
+        if ($type === 'topic' && !$topicId) {
+            error_log("Forum uploadAttachment - Warning: topic_id is null for topic attachment (will be linked later)");
         }
 
         // Validate file size (10MB max)
@@ -1798,53 +2102,92 @@ class ForumController
 
         try {
             $uploadDir = __DIR__ . '/../../storage/uploads/forum/attachments/';
+            error_log("Forum uploadAttachment - Upload directory: $uploadDir");
+            
             if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
+                error_log("Forum uploadAttachment - Creating upload directory");
+                if (!mkdir($uploadDir, 0755, true)) {
+                    error_log("Forum uploadAttachment - Failed to create upload directory");
+                    http_response_code(500);
+                    echo json_encode(['success' => false, 'message' => 'Failed to create upload directory'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    exit;
+                }
             }
 
             // Generate unique filename
             $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-            $filename = 'forum_attach_' . ($topicId ? 'topic_' . $topicId : 'post_' . $postId) . '_' . time() . '_' . uniqid() . '.' . $extension;
+            $filename = 'forum_attach_' . ($type === 'topic' ? 'topic' : 'post') . '_' . ($topicId ? $topicId : ($postId ? $postId : 'temp')) . '_' . time() . '_' . uniqid() . '.' . $extension;
             $filePath = $uploadDir . $filename;
+            
+            error_log("Forum uploadAttachment - File path: $filePath");
 
             // Move uploaded file
             if (!move_uploaded_file($file['tmp_name'], $filePath)) {
+                error_log("Forum uploadAttachment - Failed to move uploaded file from " . $file['tmp_name'] . " to $filePath");
                 http_response_code(500);
                 echo json_encode(['success' => false, 'message' => 'Failed to save file'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 exit;
             }
+            
+            error_log("Forum uploadAttachment - File moved successfully");
 
             // Save to database
-            if ($topicId) {
+            if ($type === 'topic') {
+                // Allow topic_id to be NULL for new topics (will be linked later)
+                error_log("Forum uploadAttachment - Inserting topic attachment with topic_id: " . ($topicId ?? 'NULL'));
                 $stmt = $this->pdo->prepare("
-                    INSERT INTO doctor_forum_topic_attachments (topic_id, file_path, original_filename, file_size, mime_type, uploaded_by)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    INSERT INTO doctor_forum_topic_attachments (topic_id, file_path, original_filename, file_size, mime_type)
+                    VALUES (?, ?, ?, ?, ?)
                 ");
-                $stmt->execute([
-                    $topicId,
+                $result = $stmt->execute([
+                    $topicId ? (int)$topicId : null, // Can be NULL for new topics
                     '/storage/uploads/forum/attachments/' . $filename,
                     $file['name'],
                     $file['size'],
-                    $mimeType,
-                    $user['id']
+                    $mimeType
                 ]);
+                
+                if (!$result) {
+                    error_log("Forum uploadAttachment - Database insert failed for topic attachment");
+                    error_log("Forum uploadAttachment - PDO error: " . print_r($stmt->errorInfo(), true));
+                }
             } else {
+                // For posts, post_id can be NULL (will be linked later)
+                error_log("Forum uploadAttachment - Inserting post attachment with post_id: " . ($postId ?? 'NULL'));
                 $stmt = $this->pdo->prepare("
-                    INSERT INTO doctor_forum_post_attachments (post_id, file_path, original_filename, file_size, mime_type, uploaded_by)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    INSERT INTO doctor_forum_post_attachments (post_id, file_path, original_filename, file_size, mime_type)
+                    VALUES (?, ?, ?, ?, ?)
                 ");
-                $stmt->execute([
-                    $postId,
+                $result = $stmt->execute([
+                    $postId ? (int)$postId : null, // Can be NULL for new posts
                     '/storage/uploads/forum/attachments/' . $filename,
                     $file['name'],
                     $file['size'],
-                    $mimeType,
-                    $user['id']
+                    $mimeType
                 ]);
+                
+                if (!$result) {
+                    error_log("Forum uploadAttachment - Database insert failed for post attachment");
+                    error_log("Forum uploadAttachment - PDO error: " . print_r($stmt->errorInfo(), true));
+                }
             }
 
             $attachmentId = $this->pdo->lastInsertId();
+            error_log("Forum uploadAttachment - Attachment ID: $attachmentId");
+            
+            if (!$attachmentId) {
+                error_log("Forum uploadAttachment - Failed to get attachment ID");
+                error_log("Forum uploadAttachment - PDO error info: " . print_r($stmt->errorInfo(), true));
+                // Delete uploaded file if database insert failed
+                if (file_exists($filePath)) {
+                    unlink($filePath);
+                }
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Failed to save attachment to database'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                exit;
+            }
 
+            error_log("Forum uploadAttachment - Success! Attachment ID: $attachmentId, File: $filename");
             echo json_encode([
                 'success' => true,
                 'attachment_id' => $attachmentId,
@@ -1856,10 +2199,15 @@ class ForumController
             exit;
         } catch (\Exception $e) {
             error_log("Forum uploadAttachment error: " . $e->getMessage());
+            error_log("Forum uploadAttachment error trace: " . $e->getTraceAsString());
+            // Delete uploaded file if exception occurred
+            if (isset($filePath) && file_exists($filePath)) {
+                unlink($filePath);
+            }
             http_response_code(500);
             echo json_encode([
                 'success' => false,
-                'message' => 'An error occurred while uploading attachment'
+                'message' => 'An error occurred while uploading attachment: ' . $e->getMessage()
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         }

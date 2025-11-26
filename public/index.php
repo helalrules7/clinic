@@ -176,6 +176,7 @@ try {
     
     // Forum API routes - Posts
     $router->get('/api/forum/posts/topic/{topicId}', 'ForumController@getTopicPosts');
+    $router->get('/api/forum/posts/{id}', 'ForumController@getPost');
     $router->post('/api/forum/posts', 'ForumController@createPost');
     $router->put('/api/forum/posts/{id}', 'ForumController@updatePost');
     $router->delete('/api/forum/posts/{id}', 'ForumController@deletePost');
