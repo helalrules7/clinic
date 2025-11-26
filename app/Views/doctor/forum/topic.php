@@ -271,18 +271,183 @@ $topicId = $topicId ?? null;
     background: rgba(14, 165, 233, 0.1);
     color: var(--accent);
     border: 1px solid rgba(14, 165, 233, 0.2);
+    text-decoration: none !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.forum-tag.patient:hover {
+    background: rgba(14, 165, 233, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.2);
 }
 
 .forum-tag.appointment {
     background: rgba(16, 185, 129, 0.1);
     color: var(--success);
     border: 1px solid rgba(16, 185, 129, 0.2);
+    text-decoration: none !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.forum-tag.appointment:hover {
+    background: rgba(16, 185, 129, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
 }
 
 .forum-tag.drug {
     background: rgba(251, 191, 36, 0.1);
     color: #f59e0b;
     border: 1px solid rgba(251, 191, 36, 0.2);
+    text-decoration: none !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.forum-tag.drug:hover {
+    background: rgba(251, 191, 36, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.2);
+}
+
+/* Drug Popover - Glass Effect */
+.forum-drug-popover {
+    position: fixed;
+    z-index: 10000000;
+    background: rgba(248, 250, 252, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    min-width: 300px;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    animation: fadeInPopover 0.2s ease;
+}
+
+.dark .forum-drug-popover {
+    background: rgba(11, 18, 32, 0.85);
+    border-color: rgba(51, 65, 85, 0.5);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.forum-drug-popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.forum-drug-popover-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+}
+
+.forum-drug-popover-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+
+.forum-drug-popover-close:hover {
+    color: var(--text);
+}
+
+.forum-drug-popover-body {
+    color: var(--text);
+}
+
+.forum-drug-popover-item {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.forum-drug-popover-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.forum-drug-popover-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.forum-drug-popover-value {
+    font-size: 0.875rem;
+    color: var(--text);
+    word-break: break-word;
+}
+
+@keyframes fadeInPopover {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.forum-drug-popover-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 9999999;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.forum-tag.custom {
+    background: rgba(239, 68, 68, 0.1) !important;
+    color: var(--danger) !important;
+    border: 1px solid rgba(239, 68, 68, 0.2) !important;
+    text-decoration: none !important;
+}
+
+.forum-tag.custom span {
+    text-decoration: none !important;
+}
+
+.forum-tag.patient span {
+    text-decoration: none !important;
+}
+
+.forum-tag.appointment span {
+    text-decoration: none !important;
+}
+
+.forum-tag.drug span {
+    text-decoration: none !important;
 }
 
 /* Posts/Replies - Redesigned to match reference code */
@@ -1220,7 +1385,19 @@ function renderTopic() {
     const tagsHtml = currentTopic.tags ? currentTopic.tags.map(tag => {
         const tagName = tag.tag_name || (tag.tag_type === 'appointment' ? `#${tag.tag_id}` : '');
         const tagClass = tag.tag_type === 'custom' ? 'forum-tag custom' : `forum-tag ${tag.tag_type}`;
-        return `<span class="${tagClass}">${getTagIcon(tag.tag_type)} ${escapeHtml(tagName)}</span>`;
+        
+        // Make patient and appointment tags clickable
+        if (tag.tag_type === 'patient' && tag.tag_id) {
+            return `<a href="/doctor/patients/${tag.tag_id}" class="${tagClass}" style="text-decoration: none !important;" target="_blank">${getTagIcon(tag.tag_type)} <span style="text-decoration: none !important;">${escapeHtml(tagName)}</span></a>`;
+        } else if (tag.tag_type === 'appointment' && tag.tag_id) {
+            return `<a href="/doctor/appointments/${tag.tag_id}" class="${tagClass}" style="text-decoration: none !important;" target="_blank">${getTagIcon(tag.tag_type)} <span style="text-decoration: none !important;">${escapeHtml(tagName)}</span></a>`;
+        } else if (tag.tag_type === 'drug' && tag.tag_id) {
+            // Drug tags are clickable and open popover
+            return `<span class="${tagClass}" style="text-decoration: none !important; cursor: pointer;" onclick="showDrugPopover('${escapeHtml(tagName)}', ${tag.tag_id}, event)">${getTagIcon(tag.tag_type)} <span style="text-decoration: none !important;">${escapeHtml(tagName)}</span></span>`;
+        } else {
+            // Custom tags remain as spans
+            return `<span class="${tagClass}" style="text-decoration: none !important;">${getTagIcon(tag.tag_type)} <span style="text-decoration: none !important;">${escapeHtml(tagName)}</span></span>`;
+        }
     }).join('') : '';
     
     const timeAgo = getTimeAgo(currentTopic.created_at);
@@ -2292,6 +2469,7 @@ function getTagIcon(type) {
     if (type === 'patient') return '👤';
     if (type === 'appointment') return '📅';
     if (type === 'drug') return '💊';
+    if (type === 'custom') return '🏷️';
     return '';
 }
 
@@ -2872,12 +3050,12 @@ function addCustomMetaTagBadgeToEdit(name) {
     badge.className = 'forum-tag';
     badge.setAttribute('data-meta-type', 'custom');
     badge.setAttribute('data-meta-name', name);
-    // Use danger color (red) for custom tags background
-    badge.style.cssText = 'display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; margin: 0.25rem; background: rgba(233, 14, 186, 0.1); color: var(--accent); border: 1px solid rgba(200, 14, 233, 0.2);';
+    // Use danger color (red) for custom tags background - same style as index.php
+    badge.style.cssText = 'display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; margin: 0.25rem; background: rgba(239, 68, 68, 0.1) !important; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); text-decoration: none !important;';
     badge.innerHTML = `
         <i class="bi bi-tag"></i>
-        <span>${escapeHtml(name)}</span>
-        <button type="button" onclick="removeMetaTagBadge(this)" style="background: none; border: none; color: inherit; cursor: pointer; margin-left: 0.25rem; padding: 0;">×</button>
+        <span style="text-decoration: none !important;">${escapeHtml(name)}</span>
+        <button type="button" onclick="removeMetaTagBadge(this)" style="background: none; border: none; color: inherit; cursor: pointer; margin-left: 0.25rem; padding: 0; text-decoration: none !important;">×</button>
     `;
 
     const input = document.getElementById('editTopicMetaInput');
@@ -3660,6 +3838,144 @@ async function togglePin(topicId) {
 
 window.addEventListener('beforeunload', function() {
     stopForumPolling();
+});
+
+// Drug Popover Functions
+let currentDrugPopover = null;
+let currentDrugPopoverOverlay = null;
+
+async function showDrugPopover(drugName, drugId, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Close existing popover if any
+    closeDrugPopover();
+    
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'forum-drug-popover-overlay';
+    overlay.onclick = closeDrugPopover;
+    document.body.appendChild(overlay);
+    currentDrugPopoverOverlay = overlay;
+    
+    // Create popover
+    const popover = document.createElement('div');
+    popover.className = 'forum-drug-popover';
+    popover.innerHTML = `
+        <div class="forum-drug-popover-header">
+            <h3 class="forum-drug-popover-title">Loading...</h3>
+            <button class="forum-drug-popover-close" onclick="closeDrugPopover()">&times;</button>
+        </div>
+        <div class="forum-drug-popover-body">
+            <div style="text-align: center; padding: 2rem;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Position popover near the clicked element
+    const rect = event.target.getBoundingClientRect();
+    const popoverX = rect.left + window.scrollX;
+    const popoverY = rect.bottom + window.scrollY + 10;
+    
+    popover.style.left = `${Math.min(popoverX, window.innerWidth - 520)}px`;
+    popover.style.top = `${Math.min(popoverY, window.innerHeight - 200)}px`;
+    
+    document.body.appendChild(popover);
+    currentDrugPopover = popover;
+    
+    try {
+        // Fetch drug details
+        const response = await fetch(`/api/getDrugDetails?id=${drugId}`);
+        const data = await response.json();
+        
+        if (data.drug) {
+            const drug = data.drug;
+            popover.innerHTML = `
+                <div class="forum-drug-popover-header">
+                    <h3 class="forum-drug-popover-title">${escapeHtml(drug.drug_name || drugName)}</h3>
+                    <button class="forum-drug-popover-close" onclick="closeDrugPopover()">&times;</button>
+                </div>
+                <div class="forum-drug-popover-body">
+                    ${drug.Company ? `
+                        <div class="forum-drug-popover-item">
+                            <div class="forum-drug-popover-label">Company</div>
+                            <div class="forum-drug-popover-value">${escapeHtml(drug.Company)}</div>
+                        </div>
+                    ` : ''}
+                    ${drug.category ? `
+                        <div class="forum-drug-popover-item">
+                            <div class="forum-drug-popover-label">Category</div>
+                            <div class="forum-drug-popover-value">${escapeHtml(drug.category)}</div>
+                        </div>
+                    ` : ''}
+                    ${drug.price ? `
+                        <div class="forum-drug-popover-item">
+                            <div class="forum-drug-popover-label">Price</div>
+                            <div class="forum-drug-popover-value">EGP ${escapeHtml(drug.price)}</div>
+                        </div>
+                    ` : ''}
+                    ${drug.administration_route ? `
+                        <div class="forum-drug-popover-item">
+                            <div class="forum-drug-popover-label">Route</div>
+                            <div class="forum-drug-popover-value">${escapeHtml(drug.administration_route)}</div>
+                        </div>
+                    ` : ''}
+                    ${drug.SRDE ? `
+                        <div class="forum-drug-popover-item">
+                            <div class="forum-drug-popover-label">Additional Information</div>
+                            <div class="forum-drug-popover-value">${escapeHtml(drug.SRDE)}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        } else {
+            popover.innerHTML = `
+                <div class="forum-drug-popover-header">
+                    <h3 class="forum-drug-popover-title">${escapeHtml(drugName)}</h3>
+                    <button class="forum-drug-popover-close" onclick="closeDrugPopover()">&times;</button>
+                </div>
+                <div class="forum-drug-popover-body">
+                    <div class="forum-drug-popover-item">
+                        <div class="forum-drug-popover-value" style="color: var(--muted);">Drug information not available</div>
+                    </div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error fetching drug details:', error);
+        popover.innerHTML = `
+            <div class="forum-drug-popover-header">
+                <h3 class="forum-drug-popover-title">${escapeHtml(drugName)}</h3>
+                <button class="forum-drug-popover-close" onclick="closeDrugPopover()">&times;</button>
+            </div>
+            <div class="forum-drug-popover-body">
+                <div class="forum-drug-popover-item">
+                    <div class="forum-drug-popover-value" style="color: var(--danger);">Error loading drug information</div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function closeDrugPopover() {
+    if (currentDrugPopover) {
+        currentDrugPopover.remove();
+        currentDrugPopover = null;
+    }
+    if (currentDrugPopoverOverlay) {
+        currentDrugPopoverOverlay.remove();
+        currentDrugPopoverOverlay = null;
+    }
+}
+
+// Close popover on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && currentDrugPopover) {
+        closeDrugPopover();
+    }
 });
 </script>
 

@@ -3330,6 +3330,7 @@ class DoctorController
             'dont_ask_push_notifications_browsers',
             'push_notification_remind_later',
             'dont_create_alert_for_appointments',
+            'dont_create_notification_for_appointments',
             'back_to_top_display',
             'desktop_dock_enabled',
             'mobile_dock_enabled',

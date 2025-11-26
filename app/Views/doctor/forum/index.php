@@ -129,6 +129,11 @@
     background: linear-gradient(90deg, rgba(14, 165, 233, 0.05) 0%, var(--card) 5%);
 }
 
+.forum-topic-card.resolved {
+    border-left: 4px solid var(--success);
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.05) 0%, var(--card) 5%);
+}
+
 .dark .forum-topic-card.pinned {
     background: linear-gradient(90deg, rgba(56, 189, 248, 0.1) 0%, var(--card) 5%);
 }
@@ -219,22 +224,171 @@
     gap: 0.25rem;
 }
 
+.forum-tag.custom {
+    background: rgba(239, 68, 68, 0.1) !important;
+    color: var(--danger) !important;
+    border: 1px solid rgba(239, 68, 68, 0.2) !important;
+    text-decoration: none !important;
+}
+
+.forum-tag.custom span {
+    text-decoration: none !important;
+}
+
 .forum-tag.patient {
     background: rgba(14, 165, 233, 0.1);
     color: var(--accent);
     border: 1px solid rgba(14, 165, 233, 0.2);
+    text-decoration: none !important;
+}
+
+.forum-tag.patient span {
+    text-decoration: none !important;
 }
 
 .forum-tag.appointment {
     background: rgba(16, 185, 129, 0.1);
     color: var(--success);
     border: 1px solid rgba(16, 185, 129, 0.2);
+    text-decoration: none !important;
+}
+
+.forum-tag.appointment span {
+    text-decoration: none !important;
 }
 
 .forum-tag.drug {
     background: rgba(251, 191, 36, 0.1);
     color: #f59e0b;
     border: 1px solid rgba(251, 191, 36, 0.2);
+    text-decoration: none !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.forum-tag.drug:hover {
+    background: rgba(251, 191, 36, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.2);
+}
+
+/* Drug Popover - Glass Effect */
+.forum-drug-popover {
+    position: fixed;
+    z-index: 10000000;
+    background: rgba(248, 250, 252, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    min-width: 300px;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    animation: fadeInPopover 0.2s ease;
+}
+
+.dark .forum-drug-popover {
+    background: rgba(11, 18, 32, 0.85);
+    border-color: rgba(51, 65, 85, 0.5);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.forum-drug-popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.forum-drug-popover-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+}
+
+.forum-drug-popover-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+
+.forum-drug-popover-close:hover {
+    color: var(--text);
+}
+
+.forum-drug-popover-body {
+    color: var(--text);
+}
+
+.forum-drug-popover-item {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.forum-drug-popover-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.forum-drug-popover-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.forum-drug-popover-value {
+    font-size: 0.875rem;
+    color: var(--text);
+    word-break: break-word;
+}
+
+@keyframes fadeInPopover {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.forum-drug-popover-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 9999999;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.forum-tag.drug span {
+    text-decoration: none !important;
 }
 
 /* Patient and Appointment Badges */
@@ -612,6 +766,26 @@
     display: none;
 }
 
+/* Search Autocomplete Portal - Full width like drugs.php */
+#forumSearchAutocomplete {
+    position: absolute;
+    z-index: 99999;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+}
+
+.dark #forumSearchAutocomplete {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+}
+
 .dark .forum-meta-autocomplete-portal,
 .dark .forum-content-autocomplete-portal {
     background: var(--card);
@@ -735,11 +909,12 @@
     </div>
 
     <!-- Search Bar -->
-    <div class="forum-search-bar" style="margin-bottom: 1rem;">
+    <div class="forum-search-bar" style="margin-bottom: 1rem; position: relative;">
         <div style="position: relative;">
-            <input type="text" id="forumSearchInput" class="forum-form-input" placeholder="Search topics..." style="padding-left: 2.5rem;">
+            <input type="text" id="forumSearchInput" class="forum-form-input" placeholder="Search topics..." style="padding-left: 2.5rem;" autocomplete="off">
             <i class="bi bi-search" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
         </div>
+        <div id="forumSearchAutocomplete" class="forum-meta-autocomplete-portal" style="display: none;"></div>
     </div>
 
     <div class="forum-toolbar">
@@ -879,6 +1054,8 @@ let autocompletePortal = null;
 let currentSearchQuery = '';
 let currentCategoryFilter = null;
 let currentMetaFilter = null;
+let searchAutocompleteItems = [];
+let selectedSearchIndex = -1;
 let topicAttachments = [];
 let topicUploadedAttachmentIds = []; // Store uploaded attachment IDs for deletion on cancel
 
@@ -904,17 +1081,193 @@ document.addEventListener('DOMContentLoaded', function() {
     initMetaAutocomplete();
     startForumPolling();
     
-    // Search functionality
+    // Search functionality with autocomplete
     const searchInput = document.getElementById('forumSearchInput');
     if (searchInput) {
         let searchTimeout;
+        let searchAutocompleteTimeout;
+        
         searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            
+            // Clear previous timeout
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                currentSearchQuery = this.value.trim();
-                loadTopics(patientId, appointmentId);
-            }, 300);
+            clearTimeout(searchAutocompleteTimeout);
+            
+            if (query.length >= 2) {
+                // Show autocomplete
+                searchAutocompleteTimeout = setTimeout(() => {
+                    searchTopicsAutocomplete(query);
+                }, 200);
+            } else {
+                // Hide autocomplete if query is too short
+                hideSearchAutocomplete();
+                // Still load topics if there's a query
+                if (query.length > 0) {
+                    searchTimeout = setTimeout(() => {
+                        currentSearchQuery = query;
+                        loadTopics(patientId, appointmentId);
+                    }, 300);
+                } else {
+                    currentSearchQuery = '';
+                    loadTopics(patientId, appointmentId);
+                }
+            }
         });
+        
+        searchInput.addEventListener('keydown', function(e) {
+            const autocomplete = document.getElementById('forumSearchAutocomplete');
+            if (!autocomplete || autocomplete.style.display === 'none') return;
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedSearchIndex = Math.min(selectedSearchIndex + 1, searchAutocompleteItems.length - 1);
+                renderSearchAutocomplete();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedSearchIndex = Math.max(selectedSearchIndex - 1, -1);
+                renderSearchAutocomplete();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (selectedSearchIndex >= 0 && searchAutocompleteItems[selectedSearchIndex]) {
+                    const item = searchAutocompleteItems[selectedSearchIndex];
+                    window.location.href = `/doctor/forum/topic/${item.id}`;
+                } else {
+                    // Just search normally
+                    currentSearchQuery = this.value.trim();
+                    hideSearchAutocomplete();
+                    loadTopics(patientId, appointmentId);
+                }
+            } else if (e.key === 'Escape') {
+                hideSearchAutocomplete();
+            }
+        });
+        
+        // Hide autocomplete when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !document.getElementById('forumSearchAutocomplete').contains(e.target)) {
+                hideSearchAutocomplete();
+            }
+        });
+    }
+    
+    // Search topics autocomplete
+    async function searchTopicsAutocomplete(query) {
+        try {
+            const response = await fetch(`/api/forum/topics?search=${encodeURIComponent(query)}&limit=10`);
+            if (!response.ok) return;
+            
+            const data = await response.json();
+            if (data.success && data.topics) {
+                searchAutocompleteItems = data.topics.map(topic => ({
+                    id: topic.id,
+                    title: topic.title,
+                    content: getFirstLine(topic.content),
+                    category: topic.category,
+                    creator_name: topic.creator_name || 'Unknown',
+                    creator_image: topic.creator_image || null,
+                    created_at: topic.created_at || null
+                }));
+                selectedSearchIndex = -1;
+                renderSearchAutocomplete();
+            }
+        } catch (error) {
+            console.error('Error searching topics:', error);
+        }
+    }
+    
+    // Render search autocomplete
+    function renderSearchAutocomplete() {
+        const autocomplete = document.getElementById('forumSearchAutocomplete');
+        if (!autocomplete) return;
+        
+        const searchInput = document.getElementById('forumSearchInput');
+        if (!searchInput) return;
+        
+        if (searchAutocompleteItems.length === 0) {
+            autocomplete.style.display = 'none';
+            return;
+        }
+        
+        // Position autocomplete below search input - fixed position approach
+        // Get the search bar container (parent container)
+        const searchBarContainer = searchInput.closest('.forum-search-bar');
+        const inputRect = searchInput.getBoundingClientRect();
+        const containerRect = searchBarContainer ? searchBarContainer.getBoundingClientRect() : null;
+        
+        autocomplete.style.display = 'block';
+        autocomplete.style.position = 'absolute';
+        autocomplete.style.width = inputRect.width + 'px';
+        autocomplete.style.left = '0px'; // Always 0 relative to search bar container
+        // Calculate top position: distance from container top to input bottom + 60px
+        if (containerRect) {
+            autocomplete.style.top = (inputRect.bottom - containerRect.top + 10) + 'px';
+        } else {
+            autocomplete.style.top = (window.scrollY + inputRect.bottom + 10) + 'px';
+        }
+        autocomplete.style.zIndex = '9999999';
+        
+        // Register listeners to reposition on scroll/resize
+        if (!window._forumSearchPortalUpdater) {
+            window._forumSearchPortalUpdater = () => {
+                const inputRect = searchInput.getBoundingClientRect();
+                const containerRect = searchBarContainer ? searchBarContainer.getBoundingClientRect() : null;
+                if (autocomplete && autocomplete.style.display !== 'none') {
+                    autocomplete.style.width = '100%'; // 100% width to match input
+                    autocomplete.style.left = '0px'; // Always 0
+                    if (containerRect) {
+                        autocomplete.style.top = (inputRect.bottom - containerRect.top + 10) + 'px';
+                    } else {
+                        autocomplete.style.top = (window.scrollY + inputRect.bottom + 10) + 'px';
+                    }
+                }
+            };
+            window.addEventListener('scroll', window._forumSearchPortalUpdater, true);
+            window.addEventListener('resize', window._forumSearchPortalUpdater);
+        }
+        
+        // Build HTML for suggestions - same style as drugs.php
+        let html = '';
+        searchAutocompleteItems.forEach((item, index) => {
+            html += `
+                <div class="forum-autocomplete-item ${index === selectedSearchIndex ? 'selected' : ''}" 
+                     onclick="window.location.href='/doctor/forum/topic/${item.id}'"
+                     style="padding: 0.75rem; cursor: pointer; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.25rem; transition: background-color 0.15s ease-in-out;">
+                    <div style="font-weight: 500; color: var(--text);">${escapeHtml(item.title)}</div>
+                    <div style="font-size: 0.875rem; color: var(--muted);">${escapeHtml(item.content)}</div>
+                    ${item.category ? `<div style="font-size: 0.75rem; color: var(--accent);">${escapeHtml(item.category)}</div>` : ''}
+                </div>
+            `;
+        });
+        autocomplete.innerHTML = html;
+        
+        // Add hover effect
+        autocomplete.querySelectorAll('.forum-autocomplete-item').forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = 'var(--bg)';
+            });
+            item.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = '';
+            });
+        });
+    }
+    
+    // Hide search autocomplete
+    function hideSearchAutocomplete() {
+        const autocomplete = document.getElementById('forumSearchAutocomplete');
+        if (autocomplete) {
+            autocomplete.style.display = 'none';
+            autocomplete.innerHTML = '';
+        }
+        searchAutocompleteItems = [];
+        selectedSearchIndex = -1;
+        
+        // Cleanup listeners (same as drugs.php)
+        if (window._forumSearchPortalUpdater) {
+            window.removeEventListener('scroll', window._forumSearchPortalUpdater, true);
+            window.removeEventListener('resize', window._forumSearchPortalUpdater);
+            window._forumSearchPortalUpdater = null;
+        }
     }
     
     // File attachments preview
@@ -1076,26 +1429,72 @@ function renderTopMetaTags(tags) {
     }
     
     container.style.display = 'flex';
+    container.style.alignItems = 'center';
+    container.style.gap = '0.5rem';
+    container.style.flexWrap = 'wrap';
     
     let html = '<span style="font-weight: 600; color: var(--text); margin-right: 0.5rem;">Top Tags:</span>';
     tags.forEach(tag => {
-        const icon = tag.tag_type === 'patient' ? 'bi-person' : tag.tag_type === 'appointment' ? 'bi-calendar-event' : 'bi-capsule';
+        const icon = tag.tag_type === 'patient' ? 'bi-person' : tag.tag_type === 'appointment' ? 'bi-calendar-event' : tag.tag_type === 'custom' ? 'bi-tag' : 'bi-capsule';
+        const tagId = tag.tag_type === 'custom' ? 'null' : tag.tag_id;
+        const isActive = currentMetaFilter && currentMetaFilter.type === tag.tag_type && 
+                        (tag.tag_type === 'custom' ? currentMetaFilter.name === tag.tag_name : currentMetaFilter.id == tagId);
         html += `
-            <span class="forum-tag ${tag.tag_type}" onclick="filterByMeta('${tag.tag_type}', ${tag.tag_id})" style="cursor: pointer;">
-                <i class="bi ${icon}"></i> ${escapeHtml(tag.tag_name)} (${tag.count})
+            <span class="forum-tag ${tag.tag_type}" onclick="filterByMeta('${tag.tag_type}', ${tagId}, '${escapeHtml(tag.tag_name).replace(/'/g, "\\'")}')" 
+                  style="cursor: pointer; text-decoration: none !important; ${isActive ? 'border-width: 2px; border-color: var(--accent);' : ''}">
+                <i class="bi ${icon}"></i> <span style="text-decoration: none !important;">${escapeHtml(tag.tag_name)}</span> (${tag.count})
             </span>
         `;
     });
+    
+    // Add Clear Filter button if any filter is active
+    if (currentMetaFilter || currentCategoryFilter) {
+        html += `
+            <button onclick="clearAllFilters()" style="margin-left: auto; padding: 0.375rem 0.75rem; background: var(--danger); color: white; border: none; border-radius: 20px; font-size: 0.75rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 0.25rem;">
+                <i class="bi bi-x-circle"></i> Clear Filter
+            </button>
+        `;
+    }
     
     container.innerHTML = html;
 }
 
 // Filter by meta
-function filterByMeta(tagType, tagId) {
-    currentMetaFilter = { type: tagType, id: tagId };
+function filterByMeta(tagType, tagId, tagName = null) {
+    if (tagType === 'custom' && tagName) {
+        currentMetaFilter = { type: tagType, name: tagName };
+    } else {
+        currentMetaFilter = { type: tagType, id: tagId === 'null' ? null : parseInt(tagId) };
+    }
     currentCategoryFilter = null;
-    // This will need to be implemented in getTopics API
+    currentSearchQuery = '';
+    // Clear search input
+    const searchInput = document.getElementById('forumSearchInput');
+    if (searchInput) {
+        searchInput.value = '';
+    }
     loadTopics();
+    // Re-render stats and tags to update active state
+    loadCategoryStats().then(() => {
+        loadTopMetaTags();
+    });
+}
+
+// Clear all filters
+function clearAllFilters() {
+    currentCategoryFilter = null;
+    currentMetaFilter = null;
+    currentSearchQuery = '';
+    // Clear search input
+    const searchInput = document.getElementById('forumSearchInput');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    loadTopics();
+    // Re-render stats and tags to update active state
+    loadCategoryStats().then(() => {
+        loadTopMetaTags();
+    });
 }
 
 // Load topics
@@ -1115,6 +1514,15 @@ async function loadTopics(patientId = null, appointmentId = null) {
         }
         if (currentCategoryFilter && currentCategoryFilter !== 'All') {
             params.append('category', currentCategoryFilter);
+        }
+        if (currentMetaFilter) {
+            if (currentMetaFilter.type === 'custom' && currentMetaFilter.name) {
+                params.append('meta_type', 'custom');
+                params.append('meta_name', currentMetaFilter.name);
+            } else if (currentMetaFilter.type && currentMetaFilter.id) {
+                params.append('meta_type', currentMetaFilter.type);
+                params.append('meta_id', currentMetaFilter.id);
+            }
         }
         
         url += params.toString();
@@ -1178,7 +1586,7 @@ function renderTopics() {
         const tagsHtml = topic.tags ? topic.tags.map(tag => {
             const tagName = tag.tag_name || (tag.tag_type === 'appointment' ? `#${tag.tag_id}` : '');
             const tagClass = tag.tag_type === 'custom' ? 'forum-tag custom' : `forum-tag ${tag.tag_type}`;
-            return `<span class="${tagClass}">${getTagIcon(tag.tag_type)} ${escapeHtml(tagName)}</span>`;
+            return `<span class="${tagClass}" style="text-decoration: none !important;">${getTagIcon(tag.tag_type)} <span style="text-decoration: none !important;">${escapeHtml(tagName)}</span></span>`;
         }).join('') : '';
         
         // Add patient badge if topic is related to a patient
@@ -1232,9 +1640,15 @@ function renderTopics() {
             } else if (tag.tag_type === 'appointment') {
                 tagLink = `/doctor/appointments/${tag.tag_id}`;
             } else if (tag.tag_type === 'drug') {
-                tagLink = '#'; // Drugs don't have a direct link
+                // Drug tags open popover instead of link
+                const tagName = tag.tag_name || '';
+                const drugId = tag.tag_id || null;
+                if (drugId) {
+                    return `<span class="forum-tag ${tag.tag_type}" onclick="event.stopPropagation(); showDrugPopover('${escapeHtml(tagName)}', ${drugId}, event)" style="cursor: pointer;">${getTagIcon(tag.tag_type)} ${escapeHtml(tagName)}</span>`;
+                }
+                return `<span class="forum-tag ${tag.tag_type}">${getTagIcon(tag.tag_type)} ${escapeHtml(tagName)}</span>`;
             }
-            return `<a href="${tagLink}" class="forum-tag ${tag.tag_type}" onclick="event.stopPropagation();" ${tag.tag_type === 'drug' ? 'style="cursor: default;"' : ''}>${getTagIcon(tag.tag_type)} ${escapeHtml(tagName)}</a>`;
+            return `<a href="${tagLink}" class="forum-tag ${tag.tag_type}" onclick="event.stopPropagation();">${getTagIcon(tag.tag_type)} ${escapeHtml(tagName)}</a>`;
         }).join('') : '';
         
         html += `
@@ -1336,6 +1750,13 @@ function renderPinnedTopics() {
                 tagLink = `/doctor/patients/${tag.tag_id}`;
             } else if (tag.tag_type === 'appointment') {
                 tagLink = `/doctor/appointments/${tag.tag_id}`;
+            } else if (tag.tag_type === 'drug') {
+                // Drug tags open popover instead of link
+                const drugId = tag.tag_id || null;
+                if (drugId) {
+                    return `<span class="forum-tag ${tag.tag_type}" onclick="event.stopPropagation(); showDrugPopover('${escapeHtml(tagName)}', ${drugId}, event)" style="cursor: pointer;">${getTagIcon(tag.tag_type)} ${escapeHtml(tagName)}</span>`;
+                }
+                return `<span class="forum-tag ${tag.tag_type}">${getTagIcon(tag.tag_type)} ${escapeHtml(tagName)}</span>`;
             }
             return tagLink !== '#' ? `<a href="${tagLink}" class="forum-tag ${tag.tag_type}" onclick="event.stopPropagation();">${getTagIcon(tag.tag_type)} ${escapeHtml(tagName)}</a>` : `<span class="forum-tag ${tag.tag_type}">${getTagIcon(tag.tag_type)} ${escapeHtml(tagName)}</span>`;
         }).join('') : '';
@@ -2231,11 +2652,11 @@ function addCustomMetaTagBadge(name) {
     badge.className = 'forum-tag';
     badge.setAttribute('data-meta-type', 'custom');
     badge.setAttribute('data-meta-name', name);
-    badge.style.cssText = 'display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; margin: 0.25rem; background: rgba(233, 14, 186, 0.1); color: var(--accent); border: 1px solid rgba(200, 14, 233, 0.2);';
+    badge.style.cssText = 'display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; margin: 0.25rem; background: rgba(239, 68, 68, 0.1) !important; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); text-decoration: none !important;';
     badge.innerHTML = `
         <i class="bi bi-tag"></i>
-        <span>${escapeHtml(name)}</span>
-        <button type="button" onclick="removeMetaTagBadge(this)" style="background: none; border: none; color: inherit; cursor: pointer; margin-left: 0.25rem; padding: 0;">×</button>
+        <span style="text-decoration: none !important;">${escapeHtml(name)}</span>
+        <button type="button" onclick="removeMetaTagBadge(this)" style="background: none; border: none; color: inherit; cursor: pointer; margin-left: 0.25rem; padding: 0; text-decoration: none !important;">×</button>
     `;
     
     const input = document.getElementById('topicMetaInput');
@@ -2459,11 +2880,11 @@ function addCustomMetaTagBadgeToEdit(name) {
     badge.className = 'forum-tag';
     badge.setAttribute('data-meta-type', 'custom');
     badge.setAttribute('data-meta-name', name);
-    badge.style.cssText = 'display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; margin: 0.25rem; background: rgba(239, 68, 68, 0.1) !important; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2);';
+    badge.style.cssText = 'display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; margin: 0.25rem; background: rgba(239, 68, 68, 0.1) !important; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); text-decoration: none !important;';
     badge.innerHTML = `
         <i class="bi bi-tag"></i>
-        <span>${escapeHtml(name)}</span>
-        <button type="button" onclick="removeMetaTagBadge(this)" style="background: none; border: none; color: inherit; cursor: pointer; margin-left: 0.25rem; padding: 0;">×</button>
+        <span style="text-decoration: none !important;">${escapeHtml(name)}</span>
+        <button type="button" onclick="removeMetaTagBadge(this)" style="background: none; border: none; color: inherit; cursor: pointer; margin-left: 0.25rem; padding: 0; text-decoration: none !important;">×</button>
     `;
 
     const input = document.getElementById('editTopicMetaInput');
@@ -3374,6 +3795,152 @@ function insertLink() {
 // Cleanup on page unload
 window.addEventListener('beforeunload', function() {
     stopForumPolling();
+});
+
+// Drug Popover Functions
+let currentDrugPopover = null;
+let currentDrugPopoverOverlay = null;
+
+async function showDrugPopover(drugName, drugId, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Close existing popover if any
+    closeDrugPopover();
+    
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'forum-drug-popover-overlay';
+    overlay.onclick = closeDrugPopover;
+    document.body.appendChild(overlay);
+    currentDrugPopoverOverlay = overlay;
+    
+    // Create popover
+    const popover = document.createElement('div');
+    popover.className = 'forum-drug-popover';
+    popover.innerHTML = `
+        <div class="forum-drug-popover-header">
+            <h3 class="forum-drug-popover-title">Loading...</h3>
+            <button class="forum-drug-popover-close" onclick="closeDrugPopover()">&times;</button>
+        </div>
+        <div class="forum-drug-popover-body">
+            <div style="text-align: center; padding: 2rem;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Position popover above the clicked element (drug tag)
+    const rect = event.target.getBoundingClientRect();
+    const popoverX = rect.left + window.scrollX;
+    // Position above the tag - calculate height of popover (approximately 300px) and position it above
+    const popoverY = rect.top + window.scrollY - 10; // 10px gap above tag
+    
+    // Calculate if popover would go off screen, adjust if needed
+    const popoverHeight = 300; // Approximate height
+    const finalY = popoverY - popoverHeight < window.scrollY 
+        ? rect.bottom + window.scrollY + 10  // If too high, show below instead
+        : popoverY;
+    
+    popover.style.left = `${Math.min(popoverX, window.innerWidth - 520)}px`;
+    popover.style.top = `${finalY}px`;
+    popover.style.transform = finalY === popoverY ? 'translateY(-100%)' : 'none';
+    
+    document.body.appendChild(popover);
+    currentDrugPopover = popover;
+    
+    try {
+        // Fetch drug details
+        const response = await fetch(`/api/getDrugDetails?id=${drugId}`);
+        const data = await response.json();
+        
+        if (data.drug) {
+            const drug = data.drug;
+            popover.innerHTML = `
+                <div class="forum-drug-popover-header">
+                    <h3 class="forum-drug-popover-title">${escapeHtml(drug.drug_name || drugName)}</h3>
+                    <button class="forum-drug-popover-close" onclick="closeDrugPopover()">&times;</button>
+                </div>
+                <div class="forum-drug-popover-body">
+                    ${drug.Company ? `
+                        <div class="forum-drug-popover-item">
+                            <div class="forum-drug-popover-label">Company</div>
+                            <div class="forum-drug-popover-value">${escapeHtml(drug.Company)}</div>
+                        </div>
+                    ` : ''}
+                    ${drug.category ? `
+                        <div class="forum-drug-popover-item">
+                            <div class="forum-drug-popover-label">Category</div>
+                            <div class="forum-drug-popover-value">${escapeHtml(drug.category)}</div>
+                        </div>
+                    ` : ''}
+                    ${drug.price ? `
+                        <div class="forum-drug-popover-item">
+                            <div class="forum-drug-popover-label">Price</div>
+                            <div class="forum-drug-popover-value">EGP ${escapeHtml(drug.price)}</div>
+                        </div>
+                    ` : ''}
+                    ${drug.administration_route ? `
+                        <div class="forum-drug-popover-item">
+                            <div class="forum-drug-popover-label">Route</div>
+                            <div class="forum-drug-popover-value">${escapeHtml(drug.administration_route)}</div>
+                        </div>
+                    ` : ''}
+                    ${drug.SRDE ? `
+                        <div class="forum-drug-popover-item">
+                            <div class="forum-drug-popover-label">Additional Information</div>
+                            <div class="forum-drug-popover-value">${escapeHtml(drug.SRDE)}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        } else {
+            popover.innerHTML = `
+                <div class="forum-drug-popover-header">
+                    <h3 class="forum-drug-popover-title">${escapeHtml(drugName)}</h3>
+                    <button class="forum-drug-popover-close" onclick="closeDrugPopover()">&times;</button>
+                </div>
+                <div class="forum-drug-popover-body">
+                    <div class="forum-drug-popover-item">
+                        <div class="forum-drug-popover-value" style="color: var(--muted);">Drug information not available</div>
+                    </div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error fetching drug details:', error);
+        popover.innerHTML = `
+            <div class="forum-drug-popover-header">
+                <h3 class="forum-drug-popover-title">${escapeHtml(drugName)}</h3>
+                <button class="forum-drug-popover-close" onclick="closeDrugPopover()">&times;</button>
+            </div>
+            <div class="forum-drug-popover-body">
+                <div class="forum-drug-popover-item">
+                    <div class="forum-drug-popover-value" style="color: var(--danger);">Error loading drug information</div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function closeDrugPopover() {
+    if (currentDrugPopover) {
+        currentDrugPopover.remove();
+        currentDrugPopover = null;
+    }
+    if (currentDrugPopoverOverlay) {
+        currentDrugPopoverOverlay.remove();
+        currentDrugPopoverOverlay = null;
+    }
+}
+
+// Close popover on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && currentDrugPopover) {
+        closeDrugPopover();
+    }
 });
 </script>
 

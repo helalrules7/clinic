@@ -21,7 +21,22 @@ class NotificationController
      */
     public function getAll()
     {
-        header('Content-Type: application/json');
+        // Clear output buffers first
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        // Set CORS headers
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+        header('Content-Type: application/json; charset=utf-8');
+        
+        // Handle preflight OPTIONS request
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit;
+        }
         
         $user = $this->auth->user();
         if (!$user) {
@@ -75,6 +90,7 @@ class NotificationController
             'notifications' => $notifications,
             'unread_count' => (int)$unreadCount
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
     }
 
     /**
@@ -82,7 +98,22 @@ class NotificationController
      */
     public function getUnreadCount()
     {
-        header('Content-Type: application/json');
+        // Clear output buffers first
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        // Set CORS headers
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+        header('Content-Type: application/json; charset=utf-8');
+        
+        // Handle preflight OPTIONS request
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit;
+        }
         
         $user = $this->auth->user();
         if (!$user) {
@@ -98,6 +129,7 @@ class NotificationController
             'success' => true,
             'unread_count' => (int)$result['count']
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
     }
 
     /**

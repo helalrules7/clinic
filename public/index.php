@@ -4,6 +4,11 @@
  * Main entry point
  */
 
+// Clear output buffers FIRST to prevent HTML output before API calls
+while (ob_get_level()) {
+    ob_end_clean();
+}
+
 // Set timezone
 date_default_timezone_set('Africa/Cairo');
 

@@ -1283,6 +1283,132 @@ border: 1px solid var(--primary) !important;
 .dark .popover .popover-arrow::after {
     border-bottom-color: rgba(11, 18, 32, 0.95) !important;
 }
+/* Drug Popover - Glass Effect */
+.forum-drug-popover {
+    position: fixed;
+    z-index: 10000000;
+    background: rgba(248, 250, 252, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    min-width: 300px;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    animation: fadeInPopover 0.2s ease;
+}
+
+.dark .forum-drug-popover {
+    background: rgba(11, 18, 32, 0.85);
+    border-color: rgba(51, 65, 85, 0.5);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.forum-drug-popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.forum-drug-popover-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+}
+
+.forum-drug-popover-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+
+.forum-drug-popover-close:hover {
+    color: var(--text);
+}
+
+.forum-drug-popover-body {
+    color: var(--text);
+}
+
+.forum-drug-popover-item {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.forum-drug-popover-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.forum-drug-popover-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.forum-drug-popover-value {
+    font-size: 0.875rem;
+    color: var(--text);
+    word-break: break-word;
+}
+
+@keyframes fadeInPopover {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.forum-drug-popover-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 9999999;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Make drug name clickable in medication cards */
+.prescription-card h6.text-primary {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.prescription-card h6.text-primary:hover {
+    color: var(--accent) !important;
+    text-decoration: underline;
+}
 </style>
 
 <!-- Breadcrumb -->
@@ -1926,12 +2052,12 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
                     <?php foreach ($medications as $med): ?>
                     <div class="prescription-card p-3 mb-3" data-medication-id="<?= $med['id'] ?>">
                         <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h6 class="text-primary mb-0"><?= htmlspecialchars($med['drug_name']) ?></h6>
+                            <h6 class="text-primary mb-0" onclick="showDrugPopoverFromName('<?= addslashes($med['drug_name']) ?>', event)" style="cursor: pointer;"><?= htmlspecialchars($med['drug_name']) ?></h6>
                             <div class="btn-group btn-group-sm" role="group">
-                                <button class="btn btn-outline-primary" onclick="editMedication(<?= $med['id'] ?>, '<?= addslashes($med['drug_name']) ?>', '<?= addslashes($med['notes'] ?? '') ?>')" title="Edit Medication">
+                                <button class="btn btn-outline-primary" onclick="event.stopPropagation(); editMedication(<?= $med['id'] ?>, '<?= addslashes($med['drug_name']) ?>', '<?= addslashes($med['notes'] ?? '') ?>')" title="Edit Medication">
                                     <i class="bi bi-pencil"></i>
                                 </button>
-                                <button class="btn btn-outline-danger" onclick="deleteMedication(<?= $med['id'] ?>)" title="Delete Medication">
+                                <button class="btn btn-outline-danger" onclick="event.stopPropagation(); deleteMedication(<?= $med['id'] ?>)" title="Delete Medication">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
@@ -6014,12 +6140,12 @@ function reloadMedications() {
                         html += `
                             <div class="prescription-card p-3 mb-3" data-medication-id="${med.id}">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="text-primary mb-0">${escapeHtml(med.drug_name)}</h6>
+                                    <h6 class="text-primary mb-0" onclick="showDrugPopoverFromName('${escapeHtml(med.drug_name).replace(/'/g, "\\'")}', event)" style="cursor: pointer;">${escapeHtml(med.drug_name)}</h6>
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <button class="btn btn-outline-primary" onclick="editMedication(${med.id}, '${escapeHtml(med.drug_name).replace(/'/g, "\\'")}', '${escapeHtml(med.notes || '').replace(/'/g, "\\'")}')" title="Edit Medication">
+                                        <button class="btn btn-outline-primary" onclick="event.stopPropagation(); editMedication(${med.id}, '${escapeHtml(med.drug_name).replace(/'/g, "\\'")}', '${escapeHtml(med.notes || '').replace(/'/g, "\\'")}')" title="Edit Medication">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <button class="btn btn-outline-danger" onclick="deleteMedication(${med.id})" title="Delete Medication">
+                                        <button class="btn btn-outline-danger" onclick="event.stopPropagation(); deleteMedication(${med.id})" title="Delete Medication">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </div>
@@ -6617,6 +6743,167 @@ document.addEventListener('DOMContentLoaded', function() {
         childList: true,
         subtree: true
     });
+});
+
+// Drug Popover Functions
+let currentDrugPopover = null;
+let currentDrugPopoverOverlay = null;
+
+async function showDrugPopoverFromName(drugName, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Close existing popover if any
+    closeDrugPopover();
+    
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'forum-drug-popover-overlay';
+    overlay.onclick = closeDrugPopover;
+    document.body.appendChild(overlay);
+    currentDrugPopoverOverlay = overlay;
+    
+    // Create popover
+    const popover = document.createElement('div');
+    popover.className = 'forum-drug-popover';
+    popover.innerHTML = `
+        <div class="forum-drug-popover-header">
+            <h3 class="forum-drug-popover-title">Loading...</h3>
+            <button class="forum-drug-popover-close" onclick="closeDrugPopover()">&times;</button>
+        </div>
+        <div class="forum-drug-popover-body">
+            <div style="text-align: center; padding: 2rem;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Position popover near the clicked element
+    const rect = event.target.getBoundingClientRect();
+    const popoverX = rect.left + window.scrollX;
+    const popoverY = rect.bottom + window.scrollY + 10;
+    
+    popover.style.left = `${Math.min(popoverX, window.innerWidth - 520)}px`;
+    popover.style.top = `${Math.min(popoverY, window.innerHeight - 200)}px`;
+    
+    document.body.appendChild(popover);
+    currentDrugPopover = popover;
+    
+    try {
+        // First, search for drug by name to get drug ID
+        const searchResponse = await fetch(`/api/searchDrugsAutocomplete?q=${encodeURIComponent(drugName)}&limit=1`);
+        const searchData = await searchResponse.json();
+        
+        if (searchData.drugs && searchData.drugs.length > 0) {
+            // Find exact match or first match
+            const drug = searchData.drugs.find(d => d.drug_name === drugName) || searchData.drugs[0];
+            const drugId = drug.ID;
+            
+            // Fetch drug details using drug ID
+            const response = await fetch(`/api/getDrugDetails?id=${drugId}`);
+            const data = await response.json();
+            
+            if (data.drug) {
+                const drugDetails = data.drug;
+                popover.innerHTML = `
+                    <div class="forum-drug-popover-header">
+                        <h3 class="forum-drug-popover-title">${escapeHtml(drugDetails.drug_name || drugName)}</h3>
+                        <button class="forum-drug-popover-close" onclick="closeDrugPopover()">&times;</button>
+                    </div>
+                    <div class="forum-drug-popover-body">
+                        ${drugDetails.Company ? `
+                            <div class="forum-drug-popover-item">
+                                <div class="forum-drug-popover-label">Company</div>
+                                <div class="forum-drug-popover-value">${escapeHtml(drugDetails.Company)}</div>
+                            </div>
+                        ` : ''}
+                        ${drugDetails.category ? `
+                            <div class="forum-drug-popover-item">
+                                <div class="forum-drug-popover-label">Category</div>
+                                <div class="forum-drug-popover-value">${escapeHtml(drugDetails.category)}</div>
+                            </div>
+                        ` : ''}
+                        ${drugDetails.price ? `
+                            <div class="forum-drug-popover-item">
+                                <div class="forum-drug-popover-label">Price</div>
+                                <div class="forum-drug-popover-value">EGP ${escapeHtml(drugDetails.price)}</div>
+                            </div>
+                        ` : ''}
+                        ${drugDetails.administration_route ? `
+                            <div class="forum-drug-popover-item">
+                                <div class="forum-drug-popover-label">Route</div>
+                                <div class="forum-drug-popover-value">${escapeHtml(drugDetails.administration_route)}</div>
+                            </div>
+                        ` : ''}
+                        ${drugDetails.SRDE ? `
+                            <div class="forum-drug-popover-item">
+                                <div class="forum-drug-popover-label">Additional Information</div>
+                                <div class="forum-drug-popover-value">${escapeHtml(drugDetails.SRDE)}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                popover.innerHTML = `
+                    <div class="forum-drug-popover-header">
+                        <h3 class="forum-drug-popover-title">${escapeHtml(drugName)}</h3>
+                        <button class="forum-drug-popover-close" onclick="closeDrugPopover()">&times;</button>
+                    </div>
+                    <div class="forum-drug-popover-body">
+                        <div class="forum-drug-popover-item">
+                            <div class="forum-drug-popover-value" style="color: var(--muted);">Drug information not available</div>
+                        </div>
+                    </div>
+                `;
+            }
+        } else {
+            // Drug not found in database
+            popover.innerHTML = `
+                <div class="forum-drug-popover-header">
+                    <h3 class="forum-drug-popover-title">${escapeHtml(drugName)}</h3>
+                    <button class="forum-drug-popover-close" onclick="closeDrugPopover()">&times;</button>
+                </div>
+                <div class="forum-drug-popover-body">
+                    <div class="forum-drug-popover-item">
+                        <div class="forum-drug-popover-value" style="color: var(--muted);">Drug not found in database</div>
+                    </div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error fetching drug details:', error);
+        popover.innerHTML = `
+            <div class="forum-drug-popover-header">
+                <h3 class="forum-drug-popover-title">${escapeHtml(drugName)}</h3>
+                <button class="forum-drug-popover-close" onclick="closeDrugPopover()">&times;</button>
+            </div>
+            <div class="forum-drug-popover-body">
+                <div class="forum-drug-popover-item">
+                    <div class="forum-drug-popover-value" style="color: var(--danger);">Error loading drug information</div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function closeDrugPopover() {
+    if (currentDrugPopover) {
+        currentDrugPopover.remove();
+        currentDrugPopover = null;
+    }
+    if (currentDrugPopoverOverlay) {
+        currentDrugPopoverOverlay.remove();
+        currentDrugPopoverOverlay = null;
+    }
+}
+
+// Close popover on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && currentDrugPopover) {
+        closeDrugPopover();
+    }
 });
 
 // Override showImageModal to make the modal draggable

@@ -833,7 +833,21 @@
                                 </div>
                             </div>
 
-                            <!-- 2. Back to top Display -->
+                            <!-- 2. Don't create notification for appointments -->
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Don't create notification for appointments</label>
+                                        <div class="form-text">When enabled, appointment actions (create, update, delete) will not automatically create notifications</div>
+                                    </div>
+                                    <div class="toggle-switch-wrapper">
+                                        <input type="checkbox" class="toggle-switch" id="dontCreateNotificationForAppointments" 
+                                               onchange="updatePersonalPreference('dont_create_notification_for_appointments', this.checked)">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 3. Back to top Display -->
                             <div class="setting-item">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
@@ -1459,6 +1473,7 @@ async function loadPersonalPreferences() {
             
             // Update toggle switches
             updateToggleSwitch('dontCreateAlertForAppointments', personalPreferences.dont_create_alert_for_appointments || false, 'dontCreateAlertForAppointmentsStatus');
+            updateToggleSwitch('dontCreateNotificationForAppointments', personalPreferences.dont_create_notification_for_appointments || false, 'dontCreateNotificationForAppointmentsStatus');
             updateToggleSwitch('backToTopDisplay', personalPreferences.back_to_top_display !== false, 'backToTopDisplayStatus'); // Default true
             updateToggleSwitch('desktopDock', personalPreferences.desktop_dock_enabled !== false, 'desktopDockStatus'); // Default true
             updateToggleSwitch('mobileDock', personalPreferences.mobile_dock_enabled === true || personalPreferences.mobile_dock_enabled === '1' || personalPreferences.mobile_dock_enabled === 1, 'mobileDockStatus'); // Check explicitly

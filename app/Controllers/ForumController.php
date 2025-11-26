@@ -12,6 +12,7 @@ class ForumController
     private $auth;
     private $view;
     private $pdo;
+    private $debugLogFile;
 
     public function __construct()
     {
@@ -19,8 +20,92 @@ class ForumController
         $this->view = new View();
         $this->pdo = Database::getInstance()->getConnection();
         
+        // Debug log file path - use absolute path
+        $basePath = dirname(dirname(dirname(__DIR__)));
+        $this->debugLogFile = $basePath . '/app/logs/forum_debug.log';
+        
+        // Ensure log directory exists
+        $logDir = dirname($this->debugLogFile);
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0755, true);
+        }
+        
+        // Ensure file is writable
+        if (file_exists($this->debugLogFile)) {
+            @chmod($this->debugLogFile, 0666);
+        }
+        
         // Don't require role in constructor - let each method handle it
         // This allows API methods to handle authentication differently
+    }
+    
+    /**
+     * Log debug information
+     */
+    private function debugLog($message, $data = null)
+    {
+        $timestamp = date('Y-m-d H:i:s');
+        $logMessage = "[{$timestamp}] {$message}";
+        if ($data !== null) {
+            $logMessage .= " | Data: " . json_encode($data, JSON_UNESCAPED_UNICODE);
+        }
+        $logMessage .= "\n";
+        
+        // Try multiple log locations
+        @file_put_contents($this->debugLogFile, $logMessage, FILE_APPEND);
+        @file_put_contents('/tmp/forum_debug.log', $logMessage, FILE_APPEND);
+        error_log("Forum Debug: {$message}");
+    }
+    
+    /**
+     * Log error information
+     */
+    private function errorLog($message, $exception = null)
+    {
+        $timestamp = date('Y-m-d H:i:s');
+        $logMessage = "[{$timestamp}] ERROR: {$message}";
+        if ($exception instanceof \Exception) {
+            $logMessage .= " | Exception: " . $exception->getMessage();
+            $logMessage .= " | Trace: " . $exception->getTraceAsString();
+        }
+        $logMessage .= "\n";
+        @file_put_contents($this->debugLogFile, $logMessage, FILE_APPEND);
+        error_log("Forum Error: {$message}" . ($exception ? " - " . $exception->getMessage() : ""));
+    }
+    
+    /**
+     * Safe JSON response with error handling
+     */
+    private function sendJsonResponse($data, $statusCode = 200)
+    {
+        // Clear any output buffers FIRST - this is critical!
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        // Prevent any output before JSON
+        if (headers_sent($file, $line)) {
+            $this->errorLog("Headers already sent", new \Exception("Headers sent in {$file} at line {$line}"));
+        }
+        
+        // Set headers
+        header('Content-Type: application/json; charset=utf-8', true);
+        header('Cache-Control: no-cache, must-revalidate', true);
+        http_response_code($statusCode);
+        
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        
+        if ($json === false) {
+            $this->errorLog("JSON encoding failed", new \Exception("JSON Error: " . json_last_error_msg()));
+            $data = [
+                'success' => false,
+                'message' => 'An error occurred while processing the response'
+            ];
+            $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+        
+        echo $json;
+        exit;
     }
     
     /**
@@ -37,36 +122,32 @@ class ForumController
      */
     private function checkApiAuth()
     {
-        if (!$this->auth->check()) {
-            // Clear any output buffers
-            while (ob_get_level()) {
-                ob_end_clean();
+        try {
+            if (!$this->auth->check()) {
+                $this->debugLog("Authentication failed - no user");
+                $this->sendJsonResponse([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 401);
             }
-            http_response_code(401);
-            header('Content-Type: application/json; charset=utf-8');
-            echo json_encode([
-                'success' => false,
-                'message' => 'Unauthorized'
-            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            exit;
-        }
-        
-        $user = $this->auth->user();
-        if (!in_array($user['role'], ['doctor', 'admin'])) {
-            // Clear any output buffers
-            while (ob_get_level()) {
-                ob_end_clean();
+            
+            $user = $this->auth->user();
+            if (!in_array($user['role'], ['doctor', 'admin'])) {
+                $this->debugLog("Authentication failed - invalid role", ['role' => $user['role'] ?? 'none']);
+                $this->sendJsonResponse([
+                    'success' => false,
+                    'message' => 'Access denied'
+                ], 403);
             }
-            http_response_code(403);
-            header('Content-Type: application/json; charset=utf-8');
-            echo json_encode([
+            
+            return true;
+        } catch (\Exception $e) {
+            $this->errorLog("checkApiAuth error", $e);
+            $this->sendJsonResponse([
                 'success' => false,
-                'message' => 'Access denied'
-            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            exit;
+                'message' => 'Authentication error'
+            ], 500);
         }
-        
-        return true;
     }
 
     /**
@@ -115,26 +196,30 @@ class ForumController
      */
     public function getTopics()
     {
-        // Clear any output buffers
+        // Clear output buffers IMMEDIATELY at the start
         while (ob_get_level()) {
             ob_end_clean();
         }
         
         header('Content-Type: application/json; charset=utf-8');
         
-        // Check authentication for API
-        $this->checkApiAuth();
         $user = $this->auth->user();
-
-        $patientId = isset($_GET['patient_id']) ? (int)$_GET['patient_id'] : null;
-        $appointmentId = isset($_GET['appointment_id']) ? (int)$_GET['appointment_id'] : null;
-        $category = isset($_GET['category']) ? trim($_GET['category']) : null;
-        $search = isset($_GET['search']) ? trim($_GET['search']) : null;
-        $pinnedOnly = isset($_GET['pinned_only']) ? (bool)$_GET['pinned_only'] : false;
-        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;
-        $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
-
+        if (!$user || !in_array($user['role'], ['doctor', 'admin'])) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Unauthorized'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
+        }
+        
         try {
+
+            $patientId = isset($_GET['patient_id']) ? (int)$_GET['patient_id'] : null;
+            $appointmentId = isset($_GET['appointment_id']) ? (int)$_GET['appointment_id'] : null;
+            $category = isset($_GET['category']) ? trim($_GET['category']) : null;
+            $search = isset($_GET['search']) ? trim($_GET['search']) : null;
+            $pinnedOnly = isset($_GET['pinned_only']) ? (bool)$_GET['pinned_only'] : false;
+            $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;
+            $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
+            
             $where = [];
             $params = [];
             
@@ -162,6 +247,34 @@ class ForumController
                 $searchParam = '%' . $search . '%';
                 $params[] = $searchParam;
                 $params[] = $searchParam;
+            }
+            
+            // Meta tag filtering
+            $metaType = isset($_GET['meta_type']) ? trim($_GET['meta_type']) : null;
+            $metaId = isset($_GET['meta_id']) ? (int)$_GET['meta_id'] : null;
+            $metaName = isset($_GET['meta_name']) ? trim($_GET['meta_name']) : null;
+            
+            if ($metaType) {
+                if ($metaType === 'custom' && $metaName) {
+                    // Filter by custom tag name
+                    $where[] = "EXISTS (
+                        SELECT 1 FROM doctor_forum_tags dt 
+                        WHERE dt.topic_id = t.id 
+                        AND dt.tag_type = 'custom' 
+                        AND dt.tag_name = ?
+                    )";
+                    $params[] = $metaName;
+                } else if ($metaId) {
+                    // Filter by tag type and id (patient, appointment, drug)
+                    $where[] = "EXISTS (
+                        SELECT 1 FROM doctor_forum_tags dt 
+                        WHERE dt.topic_id = t.id 
+                        AND dt.tag_type = ? 
+                        AND dt.tag_id = ?
+                    )";
+                    $params[] = $metaType;
+                    $params[] = $metaId;
+                }
             }
             
             $whereClause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
@@ -213,6 +326,10 @@ class ForumController
                 $topic['attachments_count'] = (int)($attachCount['count'] ?? 0);
             }
             
+            if (!is_array($topics)) {
+                $topics = [];
+            }
+            
             echo json_encode([
                 'success' => true,
                 'topics' => $topics
@@ -223,7 +340,8 @@ class ForumController
             http_response_code(500);
             echo json_encode([
                 'success' => false,
-                'message' => 'An error occurred while loading topics'
+                'message' => 'An error occurred while loading topics',
+                'topics' => []
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         }
@@ -1785,15 +1903,19 @@ class ForumController
      */
     public function getCategoryStats()
     {
-        // Clear any output buffers
+        // Clear output buffers IMMEDIATELY at the start
         while (ob_get_level()) {
             ob_end_clean();
         }
         
         header('Content-Type: application/json; charset=utf-8');
         
-        // Check authentication for API
-        $this->checkApiAuth();
+        $user = $this->auth->user();
+        if (!$user || !in_array($user['role'], ['doctor', 'admin'])) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Unauthorized'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
+        }
 
         try {
             $stmt = $this->pdo->prepare("
@@ -1805,6 +1927,10 @@ class ForumController
             $stmt->execute();
             $stats = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
+            if (!is_array($stats)) {
+                $stats = [];
+            }
+            
             echo json_encode([
                 'success' => true,
                 'stats' => $stats
@@ -1815,7 +1941,8 @@ class ForumController
             http_response_code(500);
             echo json_encode([
                 'success' => false,
-                'message' => 'An error occurred while loading statistics'
+                'message' => 'An error occurred while loading statistics',
+                'stats' => []
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         }
@@ -1826,19 +1953,23 @@ class ForumController
      */
     public function getTopMetaTags()
     {
-        // Clear any output buffers
+        // Clear output buffers IMMEDIATELY at the start
         while (ob_get_level()) {
             ob_end_clean();
         }
         
         header('Content-Type: application/json; charset=utf-8');
         
-        // Check authentication for API
-        $this->checkApiAuth();
-
-        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 5;
+        $user = $this->auth->user();
+        if (!$user || !in_array($user['role'], ['doctor', 'admin'])) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Unauthorized'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
+        }
 
         try {
+            $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 5;
+
             // Get regular tags (with tag_id)
             $tags = [];
             try {
@@ -1877,31 +2008,44 @@ class ForumController
                 $customTags = [];
             }
             
+            // Ensure arrays are valid
+            if (!is_array($tags)) {
+                $tags = [];
+            }
+            if (!is_array($customTags)) {
+                $customTags = [];
+            }
+            
             // Get tag names for regular tags
             foreach ($tags as &$tag) {
-                if ($tag['tag_type'] === 'patient') {
-                    $stmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
-                    $stmt->execute([$tag['tag_id']]);
-                    $patient = $stmt->fetch(PDO::FETCH_ASSOC);
-                    $tag['tag_name'] = $patient ? ($patient['first_name'] . ' ' . $patient['last_name']) : 'Patient #' . $tag['tag_id'];
-                } elseif ($tag['tag_type'] === 'appointment') {
-                    $tag['tag_name'] = 'Appointment #' . $tag['tag_id'];
-                } elseif ($tag['tag_type'] === 'drug') {
-                    try {
-                        $drugsPdo = $this->getDrugsDatabaseConnection();
-                        $drugStmt = $drugsPdo->prepare("SELECT FirstName as drug_name FROM drugs WHERE ID = ?");
-                        $drugStmt->execute([$tag['tag_id']]);
-                        $drug = $drugStmt->fetch(PDO::FETCH_ASSOC);
-                        $tag['tag_name'] = $drug ? $drug['drug_name'] : 'Drug #' . $tag['tag_id'];
-                    } catch (\Exception $e) {
-                        $tag['tag_name'] = 'Drug #' . $tag['tag_id'];
+                try {
+                    if ($tag['tag_type'] === 'patient') {
+                        $stmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
+                        $stmt->execute([$tag['tag_id']]);
+                        $patient = $stmt->fetch(PDO::FETCH_ASSOC);
+                        $tag['tag_name'] = $patient ? ($patient['first_name'] . ' ' . $patient['last_name']) : 'Patient #' . $tag['tag_id'];
+                    } elseif ($tag['tag_type'] === 'appointment') {
+                        $tag['tag_name'] = 'Appointment #' . $tag['tag_id'];
+                    } elseif ($tag['tag_type'] === 'drug') {
+                        try {
+                            $drugsPdo = $this->getDrugsDatabaseConnection();
+                            $drugStmt = $drugsPdo->prepare("SELECT FirstName as drug_name FROM drugs WHERE ID = ?");
+                            $drugStmt->execute([$tag['tag_id']]);
+                            $drug = $drugStmt->fetch(PDO::FETCH_ASSOC);
+                            $tag['tag_name'] = $drug ? $drug['drug_name'] : 'Drug #' . $tag['tag_id'];
+                        } catch (\Exception $e) {
+                            $tag['tag_name'] = 'Drug #' . $tag['tag_id'];
+                        }
                     }
+                } catch (\Exception $e) {
+                    error_log("Forum getTopMetaTags - Error processing tag: " . $e->getMessage());
+                    $tag['tag_name'] = 'Unknown';
                 }
             }
             
             // Custom tags already have tag_name
             foreach ($customTags as &$tag) {
-                $tag['tag_id'] = null; // Custom tags don't have tag_id
+                $tag['tag_id'] = null;
             }
             
             // Merge and sort by count
@@ -1910,24 +2054,21 @@ class ForumController
                 usort($allTags, function($a, $b) {
                     return $b['count'] - $a['count'];
                 });
-                
-                // Limit to requested number
                 $allTags = array_slice($allTags, 0, $limit);
             }
             
-            $response = [
+            echo json_encode([
                 'success' => true,
                 'tags' => $allTags
-            ];
-            
-            echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
             error_log("Forum getTopMetaTags error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
-                'message' => 'An error occurred while loading top tags'
+                'message' => 'An error occurred while loading top tags',
+                'tags' => []
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         }

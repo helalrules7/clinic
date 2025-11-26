@@ -176,18 +176,23 @@ class ApiController
                 // Commit transaction
                 $this->pdo->commit();
 
-                // Create notification for appointment deletion
+                // Create notification for appointment deletion (check user preference first)
                 try {
-                    $patientName = trim($appointment['first_name'] . ' ' . $appointment['last_name']);
-                    \App\Controllers\NotificationController::create(
-                        $user['id'],
-                        'appointment',
-                        'Appointment Deleted',
-                        "Appointment for {$patientName} on {$appointment['date']} at {$appointment['start_time']} has been deleted",
-                        'appointment',
-                        $id,
-                        $appointment['patient_id']
-                    );
+                    // Check if user has disabled notifications for appointments
+                    $dontCreateNotification = $this->shouldSkipNotification($user['id']);
+                    
+                    if (!$dontCreateNotification) {
+                        $patientName = trim($appointment['first_name'] . ' ' . $appointment['last_name']);
+                        \App\Controllers\NotificationController::create(
+                            $user['id'],
+                            'appointment',
+                            'Appointment Deleted',
+                            "Appointment for {$patientName} on {$appointment['date']} at {$appointment['start_time']} has been deleted",
+                            'appointment',
+                            $id,
+                            $appointment['patient_id']
+                        );
+                    }
                 } catch (\Exception $e) {
                     // Continue even if notification creation fails
                 }
@@ -342,25 +347,30 @@ class ApiController
                 // Create timeline event
                 $this->createTimelineEvent($data['patient_id'], $appointmentId, 'Booking', 'Appointment booked');
                 
-                // Create notification
+                // Create notification (check user preference first)
                 try {
                     $user = $this->auth->user();
                     if ($user) {
-                        $patientStmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
-                        $patientStmt->execute([$data['patient_id']]);
-                        $patient = $patientStmt->fetch(\PDO::FETCH_ASSOC);
+                        // Check if user has disabled notifications for appointments
+                        $dontCreateNotification = $this->shouldSkipNotification($user['id']);
                         
-                        if ($patient) {
-                            $patientName = trim($patient['first_name'] . ' ' . $patient['last_name']);
-                            \App\Controllers\NotificationController::create(
-                                $user['id'],
-                                'appointment',
-                                'New Appointment Created',
-                                "Appointment scheduled for {$patientName} on {$data['date']} at {$data['start_time']}",
-                                'appointment',
-                                $appointmentId,
-                                $data['patient_id']
-                            );
+                        if (!$dontCreateNotification) {
+                            $patientStmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
+                            $patientStmt->execute([$data['patient_id']]);
+                            $patient = $patientStmt->fetch(\PDO::FETCH_ASSOC);
+                            
+                            if ($patient) {
+                                $patientName = trim($patient['first_name'] . ' ' . $patient['last_name']);
+                                \App\Controllers\NotificationController::create(
+                                    $user['id'],
+                                    'appointment',
+                                    'New Appointment Created',
+                                    "Appointment scheduled for {$patientName} on {$data['date']} at {$data['start_time']}",
+                                    'appointment',
+                                    $appointmentId,
+                                    $data['patient_id']
+                                );
+                            }
                         }
                     }
                 } catch (\Exception $e) {
@@ -520,30 +530,35 @@ class ApiController
                         "Status changed from {$appointment['status']} to {$newStatus}" . ($reason ? " - Reason: {$reason}" : '')
                     );
                     
-                    // Create notification for appointment status update
+                    // Create notification for appointment status update (check user preference first)
                     try {
-                        $patientName = trim($appointment['first_name'] . ' ' . $appointment['last_name']);
-                        $statusMessages = [
-                            'Booked' => 'Appointment booked',
-                            'CheckedIn' => 'Patient checked in',
-                            'InProgress' => 'Appointment in progress',
-                            'Completed' => 'Appointment completed',
-                            'Cancelled' => 'Appointment cancelled',
-                            'NoShow' => 'Patient did not show up',
-                            'Rescheduled' => 'Appointment rescheduled',
-                            'Closed' => 'Appointment closed'
-                        ];
-                        $statusMessage = $statusMessages[$newStatus] ?? "Status changed to {$newStatus}";
+                        // Check if user has disabled notifications for appointments
+                        $dontCreateNotification = $this->shouldSkipNotification($user['id']);
                         
-                        \App\Controllers\NotificationController::create(
-                            $user['id'],
-                            'appointment',
-                            'Appointment Status Updated',
-                            "{$statusMessage} for {$patientName} on {$appointment['date']} at {$appointment['start_time']}" . ($reason ? " - {$reason}" : ''),
-                            'appointment',
-                            $id,
-                            $appointment['patient_id']
-                        );
+                        if (!$dontCreateNotification) {
+                            $patientName = trim($appointment['first_name'] . ' ' . $appointment['last_name']);
+                            $statusMessages = [
+                                'Booked' => 'Appointment booked',
+                                'CheckedIn' => 'Patient checked in',
+                                'InProgress' => 'Appointment in progress',
+                                'Completed' => 'Appointment completed',
+                                'Cancelled' => 'Appointment cancelled',
+                                'NoShow' => 'Patient did not show up',
+                                'Rescheduled' => 'Appointment rescheduled',
+                                'Closed' => 'Appointment closed'
+                            ];
+                            $statusMessage = $statusMessages[$newStatus] ?? "Status changed to {$newStatus}";
+                            
+                            \App\Controllers\NotificationController::create(
+                                $user['id'],
+                                'appointment',
+                                'Appointment Status Updated',
+                                "{$statusMessage} for {$patientName} on {$appointment['date']} at {$appointment['start_time']}" . ($reason ? " - {$reason}" : ''),
+                                'appointment',
+                                $id,
+                                $appointment['patient_id']
+                            );
+                        }
                     } catch (\Exception $e) {
                         // Continue even if notification creation fails
                     }
@@ -7194,6 +7209,29 @@ class ApiController
         $stmt->execute([$userId]);
         $result = $stmt->fetch();
         return $result ? $result['id'] : null;
+    }
+    
+    /**
+     * Check if notifications should be skipped for appointments based on user settings
+     * @param int $userId
+     * @return bool
+     */
+    private function shouldSkipNotification($userId)
+    {
+        try {
+            $settingsStmt = $this->pdo->prepare("
+                SELECT setting_value 
+                FROM doctor_settings 
+                WHERE user_id = ? AND setting_key = 'dont_create_notification_for_appointments'
+            ");
+            $settingsStmt->execute([$userId]);
+            $setting = $settingsStmt->fetch(\PDO::FETCH_ASSOC);
+            
+            return $setting && $setting['setting_value'] == '1';
+        } catch (\Exception $e) {
+            // If there's an error, default to creating notifications
+            return false;
+        }
     }
 
     public function getOrganizerMonth()

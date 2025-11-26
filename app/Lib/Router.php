@@ -113,6 +113,11 @@ class Router
 
     private function executeHandler($handler)
     {
+        // Clear output buffers BEFORE executing handler to prevent HTML output
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
         list($controller, $method) = explode('@', $handler);
         $controllerClass = "\\App\\Controllers\\{$controller}";
         

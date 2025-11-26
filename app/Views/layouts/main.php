@@ -2587,7 +2587,7 @@
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 1000;
+            z-index: 1000002 !important; /* Higher than sidebar (1000001) */
             display: none; /* Hidden by default */
         }
         
@@ -2604,8 +2604,8 @@
             border-radius: 20px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
-            z-index: 1000001 !important;
-            
+            z-index: 1000002 !important; /* Higher than sidebar (1000001) */
+            position: relative;
         }
         
         .dark .dock-container {
@@ -2682,7 +2682,7 @@
         
         .dock-item .htooltip {
             visibility: hidden;
-            z-index: 1001;
+            z-index: 1000003 !important; /* Higher than dock container */
             opacity: 0;
             width: auto;
             min-width: 80px;
@@ -2861,7 +2861,7 @@
             visibility: hidden;
             transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
             pointer-events: none;
-            z-index: 10000;
+            z-index: 1000003 !important; /* Higher than dock container */
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
@@ -3100,7 +3100,7 @@
         /* htooltip for minimize button */
         .dock-minimize-btn .htooltip {
             visibility: hidden;
-            z-index: 1001;
+            z-index: 1000003 !important; /* Higher than dock container */
             opacity: 0;
             width: auto;
             min-width: 100px;
