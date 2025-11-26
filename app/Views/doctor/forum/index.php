@@ -1197,7 +1197,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         autocomplete.style.display = 'block';
         autocomplete.style.position = 'absolute';
-        autocomplete.style.width = inputRect.width + 'px';
+        autocomplete.style.width = '100%'; // 100% width to match input exactly
         autocomplete.style.left = '0px'; // Always 0 relative to search bar container
         // Calculate top position: distance from container top to input bottom + 60px
         if (containerRect) {
@@ -1226,16 +1226,68 @@ document.addEventListener('DOMContentLoaded', function() {
             window.addEventListener('resize', window._forumSearchPortalUpdater);
         }
         
-        // Build HTML for suggestions - same style as drugs.php
+        // Build HTML for suggestions with enhanced design
         let html = '';
         searchAutocompleteItems.forEach((item, index) => {
+            // Category badge colors
+            const categoryColors = {
+                'General Discussion': { bg: 'rgba(14, 165, 233, 0.1)', color: 'var(--accent)', border: 'rgba(14, 165, 233, 0.2)' },
+                'Clinical Case': { bg: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: 'rgba(239, 68, 68, 0.2)' },
+                'Procedure Feedback': { bg: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', border: 'rgba(16, 185, 129, 0.2)' },
+                'Protocol Update': { bg: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6', border: 'rgba(139, 92, 246, 0.2)' },
+                'Drug Interaction': { bg: 'rgba(251, 191, 36, 0.1)', color: '#f59e0b', border: 'rgba(251, 191, 36, 0.2)' },
+                'Prescription Inquiry': { bg: 'rgba(236, 72, 153, 0.1)', color: '#ec4899', border: 'rgba(236, 72, 153, 0.2)' },
+                'Lab/Imaging Interpretation': { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: 'rgba(59, 130, 246, 0.2)' }
+            };
+            const categoryStyle = item.category && categoryColors[item.category] 
+                ? categoryColors[item.category] 
+                : { bg: 'rgba(14, 165, 233, 0.1)', color: 'var(--accent)', border: 'rgba(14, 165, 233, 0.2)' };
+            
+            // Creator image path
+            const creatorImagePath = item.creator_image 
+                ? (item.creator_image.startsWith('/public/') ? item.creator_image : '/public' + item.creator_image)
+                : null;
+            
+            // Format date
+            const timeAgo = item.created_at ? getTimeAgo(item.created_at) : '';
+            
             html += `
                 <div class="forum-autocomplete-item ${index === selectedSearchIndex ? 'selected' : ''}" 
                      onclick="window.location.href='/doctor/forum/topic/${item.id}'"
-                     style="padding: 0.75rem; cursor: pointer; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.25rem; transition: background-color 0.15s ease-in-out;">
-                    <div style="font-weight: 500; color: var(--text);">${escapeHtml(item.title)}</div>
-                    <div style="font-size: 0.875rem; color: var(--muted);">${escapeHtml(item.content)}</div>
-                    ${item.category ? `<div style="font-size: 0.75rem; color: var(--accent);">${escapeHtml(item.category)}</div>` : ''}
+                     style="padding: 1rem; cursor: pointer; border-bottom: 1px solid var(--border); transition: background-color 0.15s ease-in-out; ${index === selectedSearchIndex ? 'background-color: rgba(14, 165, 233, 0.1);' : ''}">
+                    <!-- Creator Info (Top) -->
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        ${creatorImagePath ? `
+                            <img src="${escapeHtml(creatorImagePath)}" alt="${escapeHtml(item.creator_name)}" 
+                                 style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border);">
+                        ` : `
+                            <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--muted); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem; border: 1px solid var(--border);">
+                                <i class="bi bi-person"></i>
+                            </div>
+                        `}
+                        <div style="flex: 1; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <span style="font-size: 0.875rem; font-weight: 500; color: var(--text);">${escapeHtml(item.creator_name)}</span>
+                            ${timeAgo ? `<span style="font-size: 0.75rem; color: var(--muted);">•</span><span style="font-size: 0.75rem; color: var(--muted);">${timeAgo}</span>` : ''}
+                        </div>
+                        ${item.category ? `
+                            <span style="padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.7rem; font-weight: 500; background: ${categoryStyle.bg}; color: ${categoryStyle.color}; border: 1px solid ${categoryStyle.border}; white-space: nowrap;">
+                                ${escapeHtml(item.category)}
+                            </span>
+                        ` : ''}
+                    </div>
+                    
+                    <!-- Title -->
+                    <div style="font-weight: 600; color: var(--text); margin-bottom: 0.5rem; font-size: 0.95rem; line-height: 1.4;">
+                        ${escapeHtml(item.title)}
+                    </div>
+                    
+                    <!-- Separator -->
+                    <div style="height: 1px; background: var(--border); margin: 0.5rem 0;"></div>
+                    
+                    <!-- Content Preview -->
+                    <div style="font-size: 0.875rem; color: var(--muted); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                        ${escapeHtml(item.content)}
+                    </div>
                 </div>
             `;
         });
