@@ -1,0 +1,450 @@
+
+/* ============================================
+   Daily Closure Page Styles   (from daily_closure.php)
+   ============================================ */
+
+   :root {
+    --bg: #f8fafc;
+    --text: #0f172a;
+    --card: #ffffff;
+    --muted: #475569;
+    --accent: #0ea5e9;
+    --success: #10b981;
+    --danger: #ef4444;
+    --border: #e2e8f0;
+    --shadow: rgba(0, 0, 0, 0.1);
+}
+
+.dark {
+    --bg: #0b1220;
+    --text: #f8fafc;
+    --card: #1e293b;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --success: #4ade80;
+    --danger: #fb7185;
+    --border: #334155;
+    --shadow: rgba(0, 0, 0, 0.3);
+}
+
+/* Card Styles */
+.card {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    box-shadow: 0 0.15rem 1.75rem 0 var(--shadow) !important;
+}
+
+.card-header {
+    background-color: var(--card) !important;
+    border-bottom-color: var(--border) !important;
+}
+
+.card-body {
+}
+
+/* Text Colors */
+.text-muted {
+    color: var(--muted) !important;
+}
+
+.dark .text-muted {
+    color: #94a3b8 !important;
+}
+
+/* Table Styles */
+.table {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+.table th {
+    background-color: var(--bg) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.table td {
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.table-dark th {
+    background-color: #1e293b !important;
+    color: var(--text) !important;
+}
+
+.table-light th {
+    background-color: var(--bg) !important;
+    color: var(--text) !important;
+}
+
+/* Form Controls */
+.form-control, .form-select {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--card) !important;
+    border-color: var(--accent) !important;
+    color: var(--text) !important;
+    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25) !important;
+}
+
+.form-control::placeholder {
+    color: var(--muted) !important;
+}
+
+.form-label {
+    color: var(--text) !important;
+}
+
+/* Button Styles */
+.btn-outline-primary {
+    color: var(--accent) !important;
+    border-color: var(--accent) !important;
+}
+
+.btn-outline-success {
+    color: var(--success) !important;
+    border-color: var(--success) !important;
+}
+
+.btn-outline-info {
+    color: #36b9cc !important;
+    border-color: #36b9cc !important;
+}
+
+.btn-outline-warning {
+    color: #f6c23e !important;
+    border-color: #f6c23e !important;
+}
+
+.btn-outline-danger {
+    color: var(--danger) !important;
+    border-color: var(--danger) !important;
+}
+
+/* Dark Mode Button Hover States */
+.dark .btn-outline-primary:hover {
+    background-color: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: #0b1220 !important;
+}
+
+.dark .btn-outline-success:hover {
+    background-color: var(--success) !important;
+    border-color: var(--success) !important;
+    color: #0b1220 !important;
+}
+
+.dark .btn-outline-info:hover {
+    background-color: #36b9cc !important;
+    border-color: #36b9cc !important;
+    color: #0b1220 !important;
+}
+
+.dark .btn-outline-warning:hover {
+    background-color: #f6c23e !important;
+    border-color: #f6c23e !important;
+    color: #0b1220 !important;
+}
+
+.dark .btn-outline-danger:hover {
+    background-color: var(--danger) !important;
+    border-color: var(--danger) !important;
+    color: #0b1220 !important;
+}
+
+/* Badge Styles */
+.badge {
+    color: white !important;
+}
+
+.dark .badge {
+    color: var(--text) !important;
+}
+
+.badge-primary {
+    background-color: var(--accent) !important;
+    color: white !important;
+}
+
+.badge-success {
+    background-color: var(--success) !important;
+    color: white !important;
+}
+
+.badge-warning {
+    background-color: #f6c23e !important;
+    color: #0b1220 !important;
+}
+
+.badge-info {
+    background-color: #36b9cc !important;
+    color: white !important;
+}
+
+.badge-danger {
+    background-color: var(--danger) !important;
+    color: white !important;
+}
+
+.badge-secondary {
+    background-color: #6c757d !important;
+    color: white !important;
+}
+
+/* Text Colors */
+.text-primary {
+    color: var(--accent) !important;
+}
+
+.text-success {
+    color: var(--success) !important;
+}
+
+.text-warning {
+    color: #f6c23e !important;
+}
+
+.text-info {
+    color: #36b9cc !important;
+}
+
+.text-danger {
+    color: var(--danger) !important;
+}
+
+.text-secondary {
+    color: #6c757d !important;
+}
+
+/* Border Colors */
+.border-primary {
+    border-color: var(--accent) !important;
+}
+
+.border-success {
+    border-color: var(--success) !important;
+}
+
+.border-danger {
+    border-color: var(--danger) !important;
+}
+
+.border-info {
+    border-color: #36b9cc !important;
+}
+
+/* Alert Styles */
+.alert {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.alert-success {
+    background-color: rgba(16, 185, 129, 0.1) !important;
+    border-color: var(--success) !important;
+    color: var(--success) !important;
+}
+
+.alert-danger {
+    background-color: rgba(239, 68, 68, 0.1) !important;
+    border-color: var(--danger) !important;
+    color: var(--danger) !important;
+}
+
+.alert-warning {
+    background-color: rgba(246, 194, 62, 0.1) !important;
+    border-color: #f6c23e !important;
+    color: #f6c23e !important;
+}
+
+.alert-info {
+    background-color: rgba(54, 185, 204, 0.1) !important;
+    border-color: #36b9cc !important;
+    color: #36b9cc !important;
+}
+
+/* Modal Styles */
+.modal-content {
+    /* Glass effect - similar to sidebar */
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
+}
+
+.dark .modal-content {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    background: transparent !important;
+    border-bottom-color: rgba(226, 232, 240, 0.3) !important;
+}
+
+.dark .modal-header {
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+/* Close button white in dark mode */
+.dark .modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.9;
+}
+
+.dark .modal-header .btn-close:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5);
+}
+
+/* Enable dragging */
+.modal-content {
+    cursor: move;
+}
+
+.modal-dialog {
+    cursor: default;
+    transition: transform 0.2s ease;
+    margin: 1.75rem auto;
+}
+
+.modal-header {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.table {
+    background-color: var(--bg-dark);
+    color: var(--text);
+}
+
+.table thead th {
+    background-color: var(--bg-dark) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.table-dark th {
+    background-color: var(--bg-dark) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.table tbody tr {
+    background-color: var(--bg-dark);
+    border-color: var(--border);
+}
+
+.table tbody tr:hover {
+    background-color: var(--bg-alt);
+}
+
+.table td {
+    background-color: var(--bg-dark);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+
+.card {
+    background-color: var(--bg);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+h6, h5, h4, h3, h2, h1 {
+    color: var(--text) !important;
+
+}
+
+.card:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+}
+
+.card-header {
+    background-color: var(--bg-alt);
+    border-bottom-color: var(--border);
+    color: var(--text);
+}
+
+.modal-footer {
+    background-color: var(--card) !important;
+    border-top-color: var(--border) !important;
+}
+
+/* Search Modal Styles */
+.modal-content {
+    /* Glass effect - similar to sidebar */
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
+    color: var(--text) !important;
+}
+
+.dark .modal-content {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    background: transparent !important;
+    border-bottom-color: rgba(226, 232, 240, 0.3) !important;
+    color: var(--text) !important;
+}
+
+.dark .modal-header {
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+/* Close button white in dark mode - already added above */
+/* Enable dragging - already added above */
+
+.modal-footer {
+    background-color: var(--bg-alt);
+    border-top-color: var(--border);
+}
+
+/* Input Group */
+.input-group-text {
+    background-color: var(--bg) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+/* Keyboard Shortcuts */
+kbd {
+    background-color: var(--bg) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 1rem !important;
+    }
+    
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.875rem !important;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem !important;
+    }
+}

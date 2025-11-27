@@ -1,0 +1,1188 @@
+
+/* ============================================
+   Notes Page Styles (from notes/index.php)
+   ============================================ */
+   :root {
+    --bg: #f8fafc;
+    --text: #0f172a;
+    --card: #ffffff;
+    --muted: #475569;
+    --accent: #0ea5e9;
+    --success: #10b981;
+    --danger: #ef4444;
+    --border: #e2e8f0;
+    }
+    
+    .dark {
+    --bg: #0b1220;
+    --text: #f8fafc;
+    --card: #1e293b;
+    --muted: #cbd5e1;
+    --accent: #38bdf8;
+    --success: #4ade80;
+    --danger: #fb7185;
+    --border: #334155;
+    }
+    
+    .notes-container {
+    position: relative;
+    width: 100%;
+    min-height: calc(100vh - 200px);
+    background: 
+        linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%),
+        repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 10px,
+            rgba(0, 0, 0, 0.02) 10px,
+            rgba(0, 0, 0, 0.02) 20px
+        ),
+        var(--bg);
+    border-radius: 12px;
+    padding: 2rem;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+    
+    .dark .notes-container {
+    background: 
+        linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(74, 222, 128, 0.08) 100%),
+        repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 10px,
+            rgba(255, 255, 255, 0.02) 10px,
+            rgba(255, 255, 255, 0.02) 20px
+        ),
+        var(--bg);
+    border: 1px solid var(--border);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .notes-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    }
+    
+    .notes-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    }
+    
+    .color-picker-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    }
+    
+    .color-picker-label {
+    color: var(--text);
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-right: 0.5rem;
+    }
+    
+    .color-options {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    }
+    
+    .color-option {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .color-option:hover {
+    transform: scale(1.15);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .color-option.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.3);
+    transform: scale(1.1);
+    }
+    
+    .color-option.white {
+    background: #ffffff;
+    }
+    
+    .color-option.red {
+    background: #ef4444;
+    }
+    
+    .color-option.black {
+    background: #1e293b;
+    }
+    
+    .color-option.dodgerblue {
+    background: #1e90ff;
+    }
+    
+    .color-option.warning {
+    background: #fbbf24;
+    }
+    
+    .color-option.success {
+    background: #10b981;
+    }
+    
+    .note-widget {
+    position: absolute;
+    min-width: 300px;
+    min-height: 200px;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    cursor: move;
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    }
+    
+    /* Glass effect for each color */
+    .note-widget.color-white {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .note-widget.color-red {
+    background: rgba(239, 68, 68, 0.85);
+    border-color: rgba(239, 68, 68, 0.4);
+    }
+    
+    .note-widget.color-black {
+    background: rgba(30, 41, 59, 0.85);
+    border-color: rgba(30, 41, 59, 0.4);
+    }
+    
+    .note-widget.color-dodgerblue {
+    background: rgba(30, 144, 255, 0.85);
+    border-color: rgba(30, 144, 255, 0.4);
+    }
+    
+    .note-widget.color-warning {
+    background: rgba(251, 191, 36, 0.85);
+    border-color: rgba(251, 191, 36, 0.4);
+    }
+    
+    .note-widget.color-success {
+    background: rgba(16, 185, 129, 0.85);
+    border-color: rgba(16, 185, 129, 0.4);
+    }
+    
+    .note-widget:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    }
+    
+    .note-widget.dragging {
+    opacity: 0.8;
+    z-index: 10000 !important;
+    transform: rotate(2deg);
+    }
+    
+    .note-widget-header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    cursor: move;
+    }
+    
+    .note-widget-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+    }
+    
+    .note-widget-title:focus {
+    background: rgba(255, 255, 255, 0.5);
+    }
+    
+    .note-widget-actions {
+    display: flex;
+    gap: 0.5rem;
+    }
+    
+    .note-widget-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(5px);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    }
+    
+    .note-widget-btn:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: scale(1.1);
+    }
+    
+    .note-widget-btn.delete {
+    color: var(--danger);
+    }
+    
+    .note-widget-btn.delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+    }
+    
+    .note-widget-body {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    background-image: 
+        repeating-linear-gradient(
+            transparent,
+            transparent 31px,
+            rgba(0, 0, 0, 0.1) 31px,
+            rgba(0, 0, 0, 0.1) 32px
+        );
+    background-size: 100% 32px;
+    line-height: 32px;
+    }
+    
+    .note-widget-content {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    outline: none;
+    resize: none;
+    font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.95rem;
+    line-height: 32px;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+    word-wrap: break-word;
+    }
+    
+    /* Ensure autocomplete elements don't interfere with contenteditable */
+    .note-widget-content a[data-type] {
+    pointer-events: auto !important;
+    user-select: none;
+    cursor: pointer !important;
+    text-decoration: none;
+    display: inline-flex;
+    }
+    
+    .note-widget-content a[data-type]:hover {
+    opacity: 0.9;
+    }
+    
+    .note-widget-content span[data-type] {
+    pointer-events: auto;
+    user-select: none;
+    cursor: default;
+    display: inline-flex;
+    position: relative;
+    }
+    
+    /* Prevent contenteditable from editing inside badges and links */
+    .note-widget-content a[data-type],
+    .note-widget-content span[data-type] {
+    -webkit-user-modify: read-only;
+    -moz-user-modify: read-only;
+    user-modify: read-only;
+    }
+    
+    /* Ensure links are fully clickable */
+    .note-widget-content a[data-type="patient"],
+    .note-widget-content a[data-type="appointment"] {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    }
+    
+    /* Prevent contenteditable from capturing clicks on link content */
+    .note-widget-content a[data-type] * {
+    pointer-events: none;
+    }
+    
+    /* Support for notes created in dashboard.php (with dashboard- prefix) */
+    .note-widget-content .dashboard-note-content-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--accent);
+    color: white;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 0 0.2rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    }
+    
+    .note-widget-content .dashboard-note-content-link:hover {
+    background: var(--accent);
+    opacity: 0.9;
+    transform: translateY(-1px);
+    color: white;
+    }
+    
+    .note-widget-content .dashboard-note-content-link .patient-icon {
+    font-size: 0.9rem;
+    }
+    
+    .dark .note-widget-content .dashboard-note-content-link {
+    background: var(--accent);
+    color: white;
+    }
+    
+    .dark .note-widget-content .dashboard-note-content-link:hover {
+    background: var(--accent);
+    color: white;
+    opacity: 0.9;
+    }
+    
+    .note-widget-content .dashboard-note-content-appointment-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #6c757d;
+    color: white;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 0 0.2rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    }
+    
+    .note-widget-content .dashboard-note-content-appointment-link:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+    color: white;
+    }
+    
+    .note-widget-content .dashboard-note-content-appointment-link .appointment-icon {
+    font-size: 0.9rem;
+    }
+    
+    .dark .note-widget-content .dashboard-note-content-appointment-link {
+    background: #6c757d;
+    color: white;
+    }
+    
+    .dark .note-widget-content .dashboard-note-content-appointment-link:hover {
+    background: #5a6268;
+    color: white;
+    }
+    
+    .note-widget-content .dashboard-note-content-drug-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 0 0.2rem;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    .dark .note-widget-content .dashboard-note-content-drug-badge {
+    background: rgba(16, 185, 129, 0.2);
+    color: #4ade80;
+    border-color: rgba(16, 185, 129, 0.4);
+    }
+    
+    .note-widget-content .dashboard-note-content-drug-badge .drug-icon {
+    font-size: 0.9rem;
+    }
+    
+    .note-widget-content[contenteditable="true"]:empty:before {
+    content: attr(data-placeholder);
+    opacity: 0.5;
+    pointer-events: none;
+    }
+    
+    .note-widget-footer {
+    padding: 0.5rem 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    font-size: 0.75rem;
+    opacity: 0.7;
+    }
+    
+    .note-alert-status {
+    color: var(--accent);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    }
+    
+    .dark .note-widget.color-white {
+    background: rgba(255, 255, 255, 0.75);
+    border-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .dark .note-widget.color-red {
+    background: rgba(239, 68, 68, 0.75);
+    border-color: rgba(239, 68, 68, 0.3);
+    }
+    
+    .dark .note-widget.color-black {
+    background: rgba(30, 41, 59, 0.90);
+    border-color: rgba(30, 41, 59, 0.5);
+    }
+    
+    .dark .note-widget.color-dodgerblue {
+    background: rgba(30, 144, 255, 0.75);
+    border-color: rgba(30, 144, 255, 0.3);
+    }
+    
+    .dark .note-widget.color-warning {
+    background: rgba(251, 191, 36, 0.75);
+    border-color: rgba(251, 191, 36, 0.3);
+    }
+    
+    .dark .note-widget.color-success {
+    background: rgba(16, 185, 129, 0.75);
+    border-color: rgba(16, 185, 129, 0.3);
+    }
+    
+    .dark .note-widget-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(30, 41, 59, 0.5);
+    }
+    
+    .dark .note-widget-body {
+    background-image: 
+        repeating-linear-gradient(
+            transparent,
+            transparent 31px,
+            rgba(255, 255, 255, 0.1) 31px,
+            rgba(255, 255, 255, 0.1) 32px
+        );
+    }
+    
+    .dark .note-widget-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(30, 41, 59, 0.5);
+    }
+    
+    .dark .note-widget-btn {
+    background: rgba(30, 41, 59, 0.6);
+    color: var(--text);
+    }
+    
+    .dark .note-widget-btn:hover {
+    background: rgba(30, 41, 59, 0.9);
+    }
+    
+    /* Auto text color based on background */
+    .note-widget[data-bg-color] {
+    /* Background color is set inline */
+    }
+    
+    /* Utility function to determine text color based on background brightness */
+    .note-widget.light-text {
+    color: #ffffff;
+    }
+    
+    .note-widget.light-text .note-widget-title,
+    .note-widget.light-text .note-widget-content,
+    .note-widget.light-text .note-widget-footer {
+    color: #ffffff;
+    }
+    
+    .note-widget.light-text .note-widget-header,
+    .note-widget.light-text .note-widget-footer {
+    border-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .note-widget.dark-text {
+    color: #0f172a;
+    }
+    
+    .note-widget.dark-text .note-widget-title,
+    .note-widget.dark-text .note-widget-content,
+    .note-widget.dark-text .note-widget-footer {
+    color: #0f172a;
+    }
+    
+    .note-widget.dark-text .note-widget-header,
+    .note-widget.dark-text .note-widget-footer {
+    border-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    }
+    
+    .btn:hover {
+    transform: translateY(-1px);
+    }
+    
+    .btn-primary {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    }
+    
+    .btn-primary:hover {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    opacity: 0.9;
+    }
+    
+    .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--muted);
+    }
+    
+    .empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+    }
+    
+    .empty-state h4 {
+    color: var(--text);
+    margin-bottom: 0.5rem;
+    }
+    
+    .empty-state p {
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+    }
+    
+    /* Resize handle */
+    .note-widget-resize {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    cursor: nwse-resize;
+    background: linear-gradient(-45deg, transparent 30%, rgba(0, 0, 0, 0.2) 30%, rgba(0, 0, 0, 0.2) 35%, transparent 35%, transparent 65%, rgba(0, 0, 0, 0.2) 65%, rgba(0, 0, 0, 0.2) 70%, transparent 70%);
+    }
+    
+    .dark .note-widget-resize {
+    background: linear-gradient(-45deg, transparent 30%, rgba(255, 255, 255, 0.2) 30%, rgba(255, 255, 255, 0.2) 35%, transparent 35%, transparent 65%, rgba(255, 255, 255, 0.2) 65%, rgba(255, 255, 255, 0.2) 70%, transparent 70%);
+    }
+    
+    /* Color picker dropdown styles */
+    .note-color-picker-wrapper {
+    position: relative;
+    }
+    
+    .note-color-picker-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    min-width: 180px;
+    }
+    
+    .color-option-dropdown {
+    width: 32px;
+    height: 32px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .color-option-dropdown:hover {
+    transform: scale(1.15);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-color: var(--accent);
+    }
+    
+    .color-option-dropdown.white {
+    background: #ffffff;
+    }
+    
+    .color-option-dropdown.red {
+    background: #ef4444;
+    }
+    
+    .color-option-dropdown.black {
+    background: #1e293b;
+    }
+    
+    .color-option-dropdown.dodgerblue {
+    background: #1e90ff;
+    }
+    
+    .color-option-dropdown.warning {
+    background: #fbbf24;
+    }
+    
+    .color-option-dropdown.success {
+    background: #10b981;
+    }
+    
+    .dark .note-color-picker-dropdown {
+    background: var(--card);
+    border-color: var(--border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Note Alert Picker Styles */
+    .note-alert-wrapper {
+    position: relative;
+    }
+    
+    .note-alert-picker-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    /* Glass effect */
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    border-radius: 8px;
+    padding: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    min-width: 220px;
+    }
+    
+    .dark .note-alert-picker-dropdown {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .alert-picker-content .form-label {
+    color: var(--text);
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+    }
+    
+    .alert-picker-content .form-control {
+    background-color: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+    font-size: 0.875rem;
+    }
+    
+    .alert-picker-content .form-control:focus {
+    background-color: var(--card);
+    border-color: var(--accent);
+    color: var(--text);
+    box-shadow: 0 0 0 0.2rem rgba(14, 165, 233, 0.25);
+    }
+    
+    .alert-picker-content .btn {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+    }
+    
+    .dark .note-alert-picker-dropdown {
+    background: var(--card);
+    border-color: var(--border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .dark .alert-picker-content .form-control {
+    background-color: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+    }
+    
+    .dark .alert-picker-content .form-control:focus {
+    background-color: var(--card);
+    border-color: var(--accent);
+    color: var(--text);
+    }
+    
+    /* Ensure delete modals are always on top */
+    #deleteNoteModal,
+    #deleteAllNotesModal {
+    z-index: 99999 !important;
+    }
+    
+    #deleteNoteModal .modal-backdrop,
+    #deleteAllNotesModal .modal-backdrop {
+    z-index: 99998 !important;
+    }
+    
+    #deleteNoteModal .modal-dialog,
+    #deleteAllNotesModal .modal-dialog {
+    z-index: 100000 !important;
+    }
+    
+    /* Glass effect for delete note modals */
+    #deleteNoteModal .modal-content,
+    #deleteAllNotesModal .modal-content {
+    /* Glass effect - similar to sidebar */
+    background: rgba(248, 250, 252, 0.7) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(226, 232, 240, 0.4) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.15);
+    color: var(--text) !important;
+    }
+    
+    .dark #deleteNoteModal .modal-content,
+    .dark #deleteAllNotesModal .modal-content {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
+    }
+    
+    #deleteNoteModal .modal-header,
+    #deleteAllNotesModal .modal-header {
+    background: transparent !important;
+    border-bottom-color: rgba(226, 232, 240, 0.4) !important;
+    color: var(--text) !important;
+    }
+    
+    .dark #deleteNoteModal .modal-header,
+    .dark #deleteAllNotesModal .modal-header {
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+    }
+    
+    #deleteNoteModal .modal-body,
+    #deleteAllNotesModal .modal-body {
+    background: transparent !important;
+    color: var(--text) !important;
+    }
+    
+    #deleteNoteModal .modal-footer,
+    #deleteAllNotesModal .modal-footer {
+    background: transparent !important;
+    border-top-color: rgba(226, 232, 240, 0.4) !important;
+    }
+    
+    .dark #deleteNoteModal .modal-footer,
+    .dark #deleteAllNotesModal .modal-footer {
+    border-top-color: rgba(51, 65, 85, 0.3) !important;
+    }
+    
+    /* Close button white in dark mode */
+    .dark #deleteNoteModal .modal-header .btn-close,
+    .dark #deleteAllNotesModal .modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.9;
+    }
+    
+    .dark #deleteNoteModal .modal-header .btn-close:hover,
+    .dark #deleteAllNotesModal .modal-header .btn-close:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5);
+    }
+    
+    /* Enable dragging */
+    #deleteNoteModal .modal-content,
+    #deleteAllNotesModal .modal-content {
+    cursor: move;
+    }
+    
+    #deleteNoteModal .modal-dialog,
+    #deleteAllNotesModal .modal-dialog {
+    cursor: default;
+    transition: transform 0.2s ease;
+    margin: 1.75rem auto;
+    position: relative;
+    }
+    
+    #deleteNoteModal .modal-header,
+    #deleteAllNotesModal .modal-header {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    cursor: move;
+    }
+    
+    #deleteNoteModal .modal-header button,
+    #deleteAllNotesModal .modal-header button {
+    cursor: pointer;
+    }
+    
+    #deleteNoteModal .modal-dialog.dragging,
+    #deleteAllNotesModal .modal-dialog.dragging {
+    transition: none !important;
+    }
+    
+    /* Autocomplete Portal Styles */
+    .note-autocomplete-portal {
+    position: fixed !important;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 9999999 !important;
+    min-width: 250px;
+    max-width: 400px;
+    }
+    
+    .dark .note-autocomplete-portal {
+    background: var(--card);
+    border-color: var(--border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .note-autocomplete-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    }
+    
+    .note-autocomplete-item:last-child {
+    border-bottom: none;
+    }
+    
+    .note-autocomplete-item:hover,
+    .note-autocomplete-item.selected {
+    background: var(--accent);
+    color: white;
+    }
+    
+    .note-autocomplete-item .item-icon {
+    font-size: 1.2rem;
+    opacity: 0.8;
+    }
+    
+    .note-autocomplete-item .item-content {
+    flex: 1;
+    }
+    
+    .note-autocomplete-item .item-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+    }
+    
+    .note-autocomplete-item .item-subtitle {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    }
+    
+    /* Patient link in note content - Badge Primary style */
+    .note-widget-content .note-content-link,
+    .note-content-link {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--accent) !important;
+    color: white !important;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 0 0.2rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    }
+    
+    .note-widget-content .note-content-link:hover,
+    .note-content-link:hover {
+    background: var(--accent) !important;
+    opacity: 0.9;
+    transform: translateY(-1px);
+    color: white !important;
+    }
+    
+    .note-widget-content .note-content-link .patient-icon,
+    .note-content-link .patient-icon {
+    font-size: 0.9rem;
+    }
+    
+    .dark .note-widget-content .note-content-link,
+    .dark .note-content-link {
+    background: var(--accent) !important;
+    color: white !important;
+    }
+    
+    .dark .note-widget-content .note-content-link:hover,
+    .dark .note-content-link:hover {
+    background: var(--accent) !important;
+    color: white !important;
+    opacity: 0.9;
+    }
+    
+    /* Appointment link in note content - Badge Secondary style */
+    .note-widget-content .note-content-appointment-link,
+    .note-content-appointment-link {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.4rem;
+    background: #6c757d !important;
+    color: white !important;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 0 0.2rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    }
+    
+    .note-widget-content .note-content-appointment-link:hover,
+    .note-content-appointment-link:hover {
+    background: #5a6268 !important;
+    transform: translateY(-1px);
+    color: white !important;
+    }
+    
+    .note-widget-content .note-content-appointment-link .appointment-icon,
+    .note-content-appointment-link .appointment-icon {
+    font-size: 0.9rem;
+    }
+    
+    .dark .note-widget-content .note-content-appointment-link,
+    .dark .note-content-appointment-link {
+    background: #6c757d !important;
+    color: white !important;
+    }
+    
+    .dark .note-widget-content .note-content-appointment-link:hover,
+    .dark .note-content-appointment-link:hover {
+    background: #5a6268 !important;
+    color: white !important;
+    }
+    
+    /* Drug badge in note content */
+    .note-widget-content .note-content-drug-badge,
+    .note-content-drug-badge {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(16, 185, 129, 0.15) !important;
+    color: #10b981 !important;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 0 0.2rem;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    .dark .note-widget-content .note-content-drug-badge,
+    .dark .note-content-drug-badge {
+    background: rgba(16, 185, 129, 0.2) !important;
+    color: #4ade80 !important;
+    border-color: rgba(16, 185, 129, 0.4);
+    }
+    
+    .note-widget-content .note-content-drug-badge .drug-icon,
+    .note-content-drug-badge .drug-icon {
+    font-size: 0.9rem;
+    }
+    
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+    .notes-container {
+        padding: 1rem;
+        min-height: calc(100vh - 150px);
+    }
+    
+    .notes-toolbar {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .notes-toolbar > div:first-child {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .notes-actions {
+        flex-direction: column;
+        width: 100%;
+        gap: 1rem;
+    }
+    
+    .color-picker-container {
+        flex-direction: column;
+        width: 100%;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .color-picker-label {
+        margin-right: 0;
+        margin-bottom: 0.25rem;
+    }
+    
+    .color-options {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .color-option {
+        width: 35px;
+        height: 35px;
+    }
+    
+    #addNoteBtn {
+        width: 100%;
+        padding: 0.75rem 1rem;
+    }
+    
+    .note-widget {
+        min-width: 250px !important;
+        min-height: 180px !important;
+        max-width: calc(100vw - 2rem) !important;
+    }
+    
+    .note-widget-header {
+        padding: 0.5rem 0.75rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .note-widget-title {
+        font-size: 0.85rem;
+        width: 100%;
+        order: 1;
+    }
+    
+    .note-widget-actions {
+        order: 2;
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .note-widget-body {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .note-widget-content {
+        font-size: 0.9rem;
+        line-height: 28px;
+    }
+    
+    .note-widget-footer {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.7rem;
+        flex-direction: column;
+        gap: 0.25rem;
+        align-items: flex-start;
+    }
+    
+    .note-widget-resize {
+        width: 18px;
+        height: 18px;
+    }
+    
+    /* Improve touch targets on mobile */
+    .note-widget-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+    }
+    
+    .note-widget-header {
+        touch-action: none; /* Prevent default touch behaviors */
+    }
+    
+    .note-widget {
+        touch-action: none; /* Prevent default touch behaviors */
+    }
+    
+    .note-color-picker-dropdown {
+        right: 0;
+        left: auto;
+        min-width: 160px;
+    }
+    
+    .note-autocomplete-portal {
+        max-width: calc(100vw - 2rem);
+        left: 1rem !important;
+        right: 1rem !important;
+        width: auto !important;
+    }
+    
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+    }
+    
+    .empty-state h4 {
+        font-size: 1.25rem;
+    }
+    
+    .empty-state p {
+        font-size: 0.9rem;
+    }
+    }
+    
+    
+    

@@ -274,6 +274,7 @@ try {
     $router->get('/api/recent-activity', 'ApiController@getRecentActivity');
     $router->get('/api/dashboard-charts', 'ApiController@getDashboardCharts');
     $router->get('/api/patients/search', 'ApiController@searchPatients');
+    $router->get('/api/patients', 'ApiController@getAllPatients');
     // More specific routes first
     $router->get('/api/patients/{id}/files', 'ApiController@getPatientFiles');
     $router->get('/api/patients/{id}/timeline', 'ApiController@getPatientTimeline');

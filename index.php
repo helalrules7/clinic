@@ -275,6 +275,7 @@ try {
     $router->get('/api/missed-appointments', 'ApiController@getMissedAppointments');
     $router->get('/api/upcoming-appointments', 'ApiController@getUpcomingAppointments');
     $router->get('/api/patients/search', 'ApiController@searchPatients');
+    $router->get('/api/patients', 'ApiController@getAllPatients');
     // More specific routes first
     $router->get('/api/patients/{id}/files', 'ApiController@getPatientFiles');
     $router->get('/api/patients/{id}/timeline', 'ApiController@getPatientTimeline');

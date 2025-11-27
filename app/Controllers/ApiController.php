@@ -796,6 +796,80 @@ class ApiController
         }
     }
     
+    public function getAllPatients()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $stmt = $this->pdo->prepare("
+                SELECT p.*, 
+                       COUNT(DISTINCT a.id) as total_appointments,
+                       MAX(a.date) as last_visit,
+                       (SELECT te.actor_user_id 
+                        FROM timeline_events te 
+                        WHERE te.patient_id = p.id 
+                        AND te.event_type = 'Booking' 
+                        AND te.event_summary LIKE '%New patient registered%' 
+                        ORDER BY te.created_at ASC 
+                        LIMIT 1) as created_by_user_id,
+                       (SELECT u.name 
+                        FROM timeline_events te 
+                        LEFT JOIN users u ON te.actor_user_id = u.id
+                        WHERE te.patient_id = p.id 
+                        AND te.event_type = 'Booking' 
+                        AND te.event_summary LIKE '%New patient registered%' 
+                        ORDER BY te.created_at ASC 
+                        LIMIT 1) as created_by_name,
+                       (SELECT d.id 
+                        FROM timeline_events te 
+                        LEFT JOIN users u ON te.actor_user_id = u.id
+                        LEFT JOIN doctors d ON u.id = d.user_id
+                        WHERE te.patient_id = p.id 
+                        AND te.event_type = 'Booking' 
+                        AND te.event_summary LIKE '%New patient registered%' 
+                        ORDER BY te.created_at ASC 
+                        LIMIT 1) as created_by_doctor_id,
+                       (SELECT d.display_name 
+                        FROM timeline_events te 
+                        LEFT JOIN users u ON te.actor_user_id = u.id
+                        LEFT JOIN doctors d ON u.id = d.user_id
+                        WHERE te.patient_id = p.id 
+                        AND te.event_type = 'Booking' 
+                        AND te.event_summary LIKE '%New patient registered%' 
+                        ORDER BY te.created_at ASC 
+                        LIMIT 1) as created_by_doctor_name
+                FROM patients p
+                LEFT JOIN appointments a ON p.id = a.patient_id
+                GROUP BY p.id
+                ORDER BY p.created_at DESC
+            ");
+            $stmt->execute();
+            $patients = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Get all doctors for filter
+            $doctorsStmt = $this->pdo->prepare("
+                SELECT d.id, d.display_name, d.specialty, u.profile_image
+                FROM doctors d
+                JOIN users u ON d.user_id = u.id
+                WHERE u.role = 'doctor' AND u.is_active = 1
+                ORDER BY d.display_name
+            ");
+            $doctorsStmt->execute();
+            $doctors = $doctorsStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'patients' => $patients,
+                'doctors' => $doctors
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function getPatient($id)
     {
         try {

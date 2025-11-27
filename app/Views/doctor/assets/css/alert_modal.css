@@ -1,0 +1,202 @@
+
+/* ============================================
+   Alert Modal Styles   (from alert_modal.php)
+   ============================================ */
+
+
+/* Alert Modal Glass Effect - Same as sidebar */
+#alertModal .modal-content {
+    /* Glass effect - similar to sidebar */
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
+    color: var(--text) !important;
+}
+
+.dark #alertModal .modal-content {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
+}
+
+#alertModal .modal-header {
+    background: transparent !important;
+    border-bottom-color: rgba(226, 232, 240, 0.3) !important;
+    color: var(--text) !important;
+}
+
+.dark #alertModal .modal-header {
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+/* Close button white in dark mode */
+.dark #alertModal .modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.9;
+}
+
+.dark #alertModal .modal-header .btn-close:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5);
+}
+
+/* Enable dragging */
+#alertModal .modal-content {
+    cursor: move;
+}
+
+#alertModal .modal-dialog {
+    cursor: default;
+    transition: transform 0.2s ease;
+    margin: 1.75rem auto;
+}
+
+#alertModal .modal-header {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+#alertModal .modal-body {
+    background: transparent !important;
+    color: var(--text) !important;
+}
+
+#alertModal .modal-footer {
+    background: transparent !important;
+    border-top-color: rgba(226, 232, 240, 0.3) !important;
+}
+
+.dark #alertModal .modal-footer {
+    border-top-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+#alertModal .form-label {
+    color: var(--text) !important;
+}
+
+#alertModal .form-control,
+#alertModal .form-select {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+#alertModal .form-control:focus,
+#alertModal .form-select:focus {
+    background-color: var(--card) !important;
+    border-color: var(--accent) !important;
+    color: var(--text) !important;
+    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25);
+}
+
+#alertModal .text-muted {
+    color: var(--muted) !important;
+}
+
+/* Patient Search Results Styles */
+#alertModal .search-results {
+    position: relative;
+    z-index: 1000;
+    margin-top: 0.5rem;
+}
+
+#alertModal .search-result-item {
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-top: none;
+    background: var(--card);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#alertModal .search-result-item:first-child {
+    border-top: 1px solid var(--border);
+    border-radius: 8px 8px 0 0;
+}
+
+#alertModal .search-result-item:last-child {
+    border-radius: 0 0 8px 8px;
+}
+
+#alertModal .search-result-item:only-child {
+    border-radius: 8px;
+}
+
+#alertModal .search-result-item:hover {
+    background: var(--bg);
+}
+
+#alertModal .patient-name {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+}
+
+#alertModal .patient-details {
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+#alertModal .selected-patient-info {
+    margin-top: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid #b3d9ff;
+    background: rgba(13, 110, 253, 0.1);
+    padding: 0.75rem;
+}
+
+/* Alert Editor Styles */
+.alert-editor-wrapper {
+    position: relative;
+}
+
+#alertMessageHtmlEditor {
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    padding: 0.75rem;
+    background: var(--card);
+    color: var(--text);
+    min-height: 100px;
+    max-height: 300px;
+    overflow-y: auto;
+    font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.5;
+}
+
+#alertMessageHtmlEditor:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 0.2rem rgba(14, 165, 233, 0.25);
+}
+
+#alertMessageHtmlEditor:empty:before {
+    content: attr(placeholder);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.dark #alertMessageHtmlEditor {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark #alertMessageHtmlEditor:focus {
+    border-color: var(--accent);
+}
+
+.alert-editor-wrapper .btn-group .btn.active {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.dark .alert-editor-wrapper .btn-group .btn.active {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: #0b1220;
+}

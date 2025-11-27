@@ -1,3 +1,4 @@
+<link href="/app/Views/doctor/assets/css/alerts.css?v=<?= file_exists(__DIR__ . '/assets/css/alerts.css') ? filemtime(__DIR__ . '/assets/css/alerts.css') : time() ?>" rel="stylesheet">
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>

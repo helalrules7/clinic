@@ -1,0 +1,1415 @@
+
+/* ============================================
+   Appointment Page Styles   (from appointment.php)
+   ============================================ */
+
+/* CSS Variables for Dark Mode */
+:root {
+    --bg: #f8fafc;
+    --text: #0f172a;
+    --card: #ffffff;
+    --muted: #475569;
+    --accent: #0ea5e9;
+    --success: #10b981;
+    --danger: #ef4444;
+    --border: #e2e8f0;
+    --shadow: rgba(0, 0, 0, 0.1);
+}
+
+.dark {
+    --bg: #0b1220;
+    --text: #f8fafc;
+    --card: #1e293b;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --success: #4ade80;
+    --danger: #fb7185;
+    --border: #334155;
+    --shadow: rgba(0, 0, 0, 0.3);
+}
+
+.appointment-header {
+    background: linear-gradient(135deg, var(--accent), var(--success));
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.appointment-header.closed {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+}
+
+.appointment-header.rescheduled {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+}
+.text-muted, .form-text{
+    color: var(--text) !important;
+}
+
+/* Appointment Doctor Avatar Styles */
+.appointment-doctor-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--accent), #10b981);
+    color: white;
+    font-weight: bold;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.appointment-doctor-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.appointment-doctor-avatar-fallback {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--accent), #10b981);
+    color: white;
+    font-weight: bold;
+    font-size: 0.75rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Doctor Info Badge */
+.doctor-info-badge {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1050;
+    max-width: 90%;
+    animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.doctor-info-content {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(14, 165, 233, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.doctor-info-icon {
+    font-size: 1.5rem;
+    margin-right: 0.75rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.status-badge {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.status-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    opacity: 0.9;
+}
+
+.status-badge[style*="cursor: pointer"] {
+    user-select: none;
+}
+
+.status-badge i {
+    font-size: 1rem;
+}
+
+/* Specific status badge colors */
+.status-badge.bg-success {
+    background-color: #198754 !important;
+    color: white;
+}
+
+.status-badge.bg-primary {
+    background-color: #0d6efd !important;
+    color: white;
+}
+
+.status-badge.bg-info {
+    background-color: #0dcaf0 !important;
+    color: #000;
+}
+
+.status-badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #000;
+}
+
+.status-badge.bg-danger {
+    background-color: #dc3545 !important;
+    color: white;
+}
+
+.status-badge.bg-secondary {
+    background-color: #6c757d !important;
+    color: white;
+}
+
+.consultation-section {
+    border-left: 4px solid var(--accent);
+    padding-left: 1rem;
+    margin-bottom: 2rem;
+}
+
+.prescription-card {
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.prescription-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.vital-sign {
+    text-align: center;
+    padding: 1rem;
+    background: var(--card);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.vital-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--accent);
+}
+
+.timeline-item {
+    display: flex;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-marker {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.timeline-content {
+    flex: 1;
+    background: var(--card);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.attachment-card {
+    background: var(--card);
+    border: 2px solid var(--border) !important;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.attachment-card:hover {
+    border-color: var(--accent) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.attachment-preview {
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.file-type-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: var(--accent);
+    color: white;
+    font-size: 1.5rem;
+}
+
+.consultation-note-header {
+    background: linear-gradient(135deg,var(--bg), var(--border));
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.note-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.consultation-section.border-top {
+    border-top: 2px solid var(--border) !important;
+}
+
+.collapse {
+    transition: all 0.3s ease;
+}
+
+.collapse.show {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Dark Mode Styles */
+.dark .card {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .card-header {
+    background-color: transparent !important;
+    border-bottom-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.card-header{
+    background-color: transparent !important;
+}
+
+.dark .card-body {
+    color: var(--text) !important;
+}
+
+.dark .text-muted {
+    color: var(--muted) !important;
+    opacity: 0.85;
+}
+
+.dark small.text-muted {
+    color: var(--muted) !important;
+    opacity: 0.9;
+}
+
+.dark .text-muted i {
+    opacity: 0.8;
+}
+
+.dark .card-text.text-muted,
+.dark p.text-muted {
+    color: var(--muted) !important;
+    opacity: 0.85;
+}
+
+.dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+    color: var(--text) !important;
+}
+
+.dark p {
+    color: var(--text) !important;
+}
+
+.dark small {
+    color: var(--muted) !important;
+}
+
+/* Dark Mode Form Styles */
+.dark .form-control {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .form-control:focus {
+    background-color: var(--card) !important;
+    border-color: var(--accent) !important;
+    color: var(--text) !important;
+    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25) !important;
+}
+
+.dark .form-select {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .form-select:focus {
+    background-color: var(--card) !important;
+    border-color: var(--accent) !important;
+    color: var(--text) !important;
+}
+
+.dark .form-label {
+    color: var(--text) !important;
+}
+
+/* Dark Mode Modal Styles - Glass Effect */
+.dark .modal-content {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
+    color: var(--text) !important;
+}
+
+.dark .modal-header {
+    background: transparent !important;
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+    color: var(--text) !important;
+}
+
+/* Close button white in dark mode */
+.dark .modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.9;
+}
+
+.dark .modal-header .btn-close:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5);
+}
+
+/* Enable dragging */
+.modal-content {
+    cursor: move;
+}
+
+.modal-dialog {
+    cursor: default;
+    transition: transform 0.2s ease;
+    margin: 1.75rem auto;
+    position: relative;
+}
+
+.modal-header {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    cursor: move;
+}
+
+.modal-header button {
+    cursor: pointer;
+}
+
+.modal-dialog.dragging {
+    transition: none !important;
+}
+
+
+.modal-header {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.dark .modal-body {
+    background: transparent !important;
+    color: var(--text) !important;
+}
+
+.dark .modal-footer {
+    background: transparent !important;
+    border-top-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+/* Dark Mode Button Styles */
+.dark .btn-outline-primary {
+    color: var(--accent) !important;
+    border-color: var(--accent) !important;
+}
+
+.dark .btn-outline-primary:hover {
+    background-color: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: #0b1220 !important;
+}
+
+.dark .btn-outline-success {
+    color: var(--success) !important;
+    border-color: var(--success) !important;
+}
+
+.dark .btn-outline-success:hover {
+    background-color: var(--success) !important;
+    border-color: var(--success) !important;
+    color: #0b1220 !important;
+}
+
+.dark .btn-outline-danger {
+    color: var(--danger) !important;
+    border-color: var(--danger) !important;
+}
+
+.dark .btn-outline-danger:hover {
+    background-color: var(--danger) !important;
+    border-color: var(--danger) !important;
+    color: white !important;
+}
+
+.dark .btn-outline-info {
+    color: #0ea5e9 !important;
+    border-color: #0ea5e9 !important;
+}
+
+.dark .btn-outline-info:hover {
+    background-color: #0ea5e9 !important;
+    border-color: #0ea5e9 !important;
+    color: #0b1220 !important;
+}
+
+.dark .btn-outline-warning {
+    color: #f59e0b !important;
+    border-color: #f59e0b !important;
+}
+
+.dark .btn-outline-warning:hover {
+    background-color: #f59e0b !important;
+    border-color: #f59e0b !important;
+    color: #0b1220 !important;
+}
+
+.dark .btn-outline-secondary {
+    color: #64748b !important;
+    border-color: #64748b !important;
+}
+
+.dark .btn-outline-secondary:hover {
+    background-color: #64748b !important;
+    border-color: #64748b !important;
+    color: white !important;
+}
+
+/* Dark Mode Alert Styles */
+.dark .alert {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .alert-success {
+    background-color: rgba(74, 222, 128, 0.1) !important;
+    border-color: var(--success) !important;
+    color: var(--text) !important;
+}
+
+.dark .alert-danger {
+    background-color: rgba(251, 113, 133, 0.1) !important;
+    border-color: var(--danger) !important;
+    color: var(--text) !important;
+}
+
+.dark .alert-info {
+    background-color: rgba(56, 189, 248, 0.1) !important;
+    border-color: var(--accent) !important;
+    color: var(--text) !important;
+}
+
+/* Dark Mode Badge Styles */
+.dark .badge {
+    color: white !important;
+}
+
+.dark .badge.bg-primary {
+    background-color: var(--accent) !important;
+}
+
+.dark .badge.bg-success {
+    background-color: var(--success) !important;
+}
+
+.dark .badge.bg-danger {
+    background-color: var(--danger) !important;
+}
+
+.dark .badge.bg-warning {
+    background-color: #f59e0b !important;
+    color: #0b1220 !important;
+}
+
+.dark .badge.bg-info {
+    background-color: #0ea5e9 !important;
+}
+
+.dark .badge.bg-secondary {
+    background-color: #64748b !important;
+}
+
+/* Drug Suggestion Badges */
+.drug-suggestion-badge {
+    transition: all 0.2s ease;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 15px;
+    line-height: 1.2;
+}
+
+.drug-suggestion-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    background-color: #0d6efd !important;
+}
+
+.drug-suggestion-badge:active {
+    transform: translateY(0);
+}
+
+/* Drug Suggestions Dropdown */
+#drugSuggestions {
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 0.375rem 0.375rem;
+    background: white;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.suggestion-item {
+    transition: background-color 0.15s ease;
+}
+
+.suggestion-item:hover {
+    background-color: #f8f9fa !important;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none !important;
+}
+
+/* Dark mode for drug suggestions */
+.dark #drugSuggestions {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark .suggestion-item:hover {
+    background-color: var(--bg) !important;
+}
+
+.dark .drug-suggestion-badge {
+    background-color: var(--accent) !important;
+}
+
+.dark .drug-suggestion-badge:hover {
+    background-color: #0284c7 !important;
+}
+
+/* Usage Count Badge - Red Circle with White Text */
+.usage-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #dc3545 !important;
+    color: white !important;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 0.6rem;
+    font-weight: bold;
+    margin-left: 0.4rem;
+    min-width: 16px;
+    line-height: 1;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark mode for usage count badge */
+.dark .usage-count-badge {
+    background-color: #dc3545 !important;
+    color: white !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Dark Mode Breadcrumb Styles */
+.dark .breadcrumb {
+    background-color: transparent !important;
+    padding: 0.75rem 0 !important;
+}
+
+.dark .breadcrumb-item {
+    color: var(--muted) !important;
+}
+
+.dark .breadcrumb-item a {
+    color: var(--accent) !important;
+    text-decoration: none !important;
+    transition: color 0.3s ease !important;
+}
+
+.breadcrumb-item a {
+    color: var(--accent) !important;
+    text-decoration: none !important;
+    transition: color 0.3s ease !important;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--text) !important;
+    text-decoration: none !important;
+}
+
+.dark .breadcrumb-item a:hover {
+    color: var(--text) !important;
+    text-decoration: none !important;
+}
+
+.dark .breadcrumb-item.active {
+    color: var(--text) !important;
+    font-weight: 500 !important;
+}
+
+.dark .breadcrumb-item + .breadcrumb-item::before {
+    color: var(--muted) !important;
+    content: "›" !important;
+}
+
+/* Dark Mode Text Color Classes */
+.dark .text-primary {
+    color: var(--accent) !important;
+}
+
+.dark .text-success {
+    color: var(--success) !important;
+}
+
+.dark .text-info {
+    color: #22d3ee !important;
+}
+
+.dark .text-danger {
+    color: var(--danger) !important;
+}
+
+.dark .text-warning {
+    color: #fbbf24 !important;
+}
+
+.dark .text-secondary {
+    color: var(--muted) !important;
+}
+
+/* Dark Mode Badge Styles */
+.dark .badge.bg-primary {
+    background-color: var(--accent) !important;
+    color: #0b1220 !important;
+}
+
+.dark .badge.bg-success {
+    background-color: var(--success) !important;
+    color: #0b1220 !important;
+}
+
+.dark .badge.bg-info {
+    background-color: #22d3ee !important;
+    color: #0b1220 !important;
+}
+
+.dark .badge.bg-danger {
+    background-color: var(--danger) !important;
+    color: #0b1220 !important;
+}
+
+.dark .badge.bg-warning {
+    background-color: #fbbf24 !important;
+    color: #0b1220 !important;
+}
+
+.dark .badge.bg-secondary {
+    background-color: var(--muted) !important;
+    color: var(--text) !important;
+}
+
+.dark .badge.bg-light {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+.dark .badge.bg-dark {
+    background-color: var(--text) !important;
+    color: var(--card) !important;
+}
+
+/* Disabled dropdown item styles */
+.dropdown-item.disabled {
+    pointer-events: none;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.dark .dropdown-item.disabled {
+    opacity: 0.5;
+}
+
+/* Dark Mode Progress Bar Styles */
+.dark .progress {
+    background-color: var(--border) !important;
+}
+
+.dark .progress-bar {
+    background-color: var(--accent) !important;
+}
+
+#appointmentHistoryContent > div > div.appointment-history-header.d-flex.justify-content-between.align-items-center.mb-3.pb-2.border-bottom > div > button{
+    color: var(--text) !important;
+}
+.dark #appointmentHistoryContent > div > div.appointment-history-header.d-flex.justify-content-between.align-items-center.mb-3.pb-2.border-bottom > div > button{
+    color: #ffffff !important;
+}
+
+/* Responsive Action Buttons */
+.action-buttons-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.action-buttons-group .btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Mobile styles for action buttons */
+@media (max-width: 768px) {
+    .action-buttons-group {
+        flex-wrap: nowrap;
+        overflow: hidden;
+    }
+    
+    .action-buttons-group .btn:not(.more-actions-btn) {
+        flex: 0 0 auto;
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .action-buttons-group .more-actions-btn {
+        flex-shrink: 0;
+        margin-left: auto;
+    }
+}
+
+/* Extra small screens - hide some buttons, show dropdown */
+@media (max-width: 576px) {
+    .action-buttons-group .btn.hide-on-mobile {
+        display: none !important;
+    }
+    
+    .action-buttons-group .more-actions-btn {
+        display: block !important;
+        position: relative !important;
+    }
+    
+    .action-buttons-group .more-actions-btn .btn {
+        width: 100%;
+    justify-content: center;
+    }
+    
+    /* Ensure dropdown menu is positioned correctly and visible when shown */
+    .action-buttons-group {
+        overflow: visible !important;
+        position: relative !important;
+    }
+    
+    .action-buttons-group .more-actions-btn {
+        overflow: visible !important;
+        position: relative !important;
+        width: 100% !important;
+    }
+    
+    .action-buttons-group .more-actions-btn .dropdown-menu {
+        position: fixed !important;
+        z-index: 1050 !important;
+        /* Position will be set by JavaScript */
+        margin: 0 !important;
+        margin-top: 0.125rem !important;
+        opacity: 1 !important;
+        max-height: none !important;
+        overflow: visible !important;
+        /* Width will be set by JavaScript to match button width */
+        min-width: auto !important;
+        box-sizing: border-box !important;
+        /* Glass effect */
+        background: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .dark .action-buttons-group .more-actions-btn .dropdown-menu {
+        background: rgba(30, 41, 59, 0.7) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    /* Ensure dropdown items are visible */
+    .action-buttons-group .more-actions-btn .dropdown-menu .dropdown-item {
+        color: var(--text) !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+    
+    .dark .action-buttons-group .more-actions-btn .dropdown-menu .dropdown-item {
+        color: var(--text) !important;
+    }
+    
+    .action-buttons-group .more-actions-btn .dropdown-menu.show {
+        display: block !important;
+        visibility: visible !important;
+    }
+    
+    /* Ensure parent containers don't clip the dropdown */
+    .row.mb-4 {
+        overflow: visible !important;
+    }
+    
+    .col-12 {
+        overflow: visible !important;
+    }
+}
+
+/* Show all buttons on larger screens */
+@media (min-width: 577px) {
+    .action-buttons-group .more-actions-btn {
+        display: none !important;
+    }
+    
+    .action-buttons-group .btn.hide-on-mobile {
+        display: inline-flex !important;
+    }
+}
+
+/* Hide Edit Consultation button next to breadcrumb on mobile */
+@media (max-width: 576px) {
+    .hide-edit-on-mobile, .hide-pa-on-mobile {
+        display: none !important;
+    }
+}
+
+/* Appointment History Popover Styles */
+.appointment-history-popover {
+    min-width: 600px;
+    max-width: 800px;
+    max-height: 600px;
+}
+
+.appointment-timeline-popover {
+    padding: 0.5rem;
+}
+
+.appointment-timeline-popover .appointment-timeline {
+    position: relative;
+    padding-left: 30px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.appointment-timeline-popover .appointment-timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+}
+
+.appointment-timeline-popover .timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.appointment-history-popover-wrapper {
+    color: var(--text);
+    min-width: 600px;
+    max-width: 800px;
+}
+
+.appointment-history-header {
+    padding: 0.75rem 1rem;
+    margin-bottom: 0;
+    border-bottom: 2px solid var(--border);
+    background: transparent !important;
+}
+
+.appointment-history-header h6 {
+    color: var(--text);
+    margin: 0;
+    font-weight: 600;
+}
+
+.dark .appointment-history-header {
+    border-bottom-color: var(--border);
+    background: var(--bg);
+}
+
+/* Close button for appointment history popover - Dark/Light mode responsive */
+.appointment-history-close-btn {
+    filter: none !important;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    background-color: transparent !important;
+}
+
+.appointment-history-close-btn:hover {
+    opacity: 1;
+}
+
+/* Light mode: dark close button */
+.appointment-history-close-btn {
+    filter: brightness(0) !important;
+}
+
+/* Dark mode: white close button */
+.dark .appointment-history-close-btn {
+    filter: invert(1) brightness(2) !important;
+    opacity: 0.9;
+}
+
+.dark .appointment-history-close-btn:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5) !important;
+}
+
+.appointment-history-content {
+    padding: 1rem;
+    color: var(--text);
+    background: transparent !important;
+}
+
+.appointment-history-item {
+    transition: transform 0.2s ease;
+}
+
+.appointment-history-item:hover {
+    transform: translateY(-2px);
+}
+
+.appointment-history-item .card {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+    transition: all 0.3s ease;
+}
+
+.appointment-history-item .card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.dark .appointment-history-item .card {
+    background: var(--card);
+    border-color: var(--border);
+}
+
+.appointment-history-item .card-header {
+    background: var(--bg-alt);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.appointment-history-item .card-header:hover {
+    background: var(--bg);
+}
+
+.dark .appointment-history-item .card-header {
+    background: var(--bg-alt);
+    border-bottom-color: var(--border);
+}
+
+.dark .appointment-history-item .card-header:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.appointment-history-item .card-header .collapse-icon {
+    transition: transform 0.3s ease;
+    color: var(--muted);
+    font-size: 1.2rem;
+}
+
+.appointment-history-item .card-header.expanded .collapse-icon {
+    transform: rotate(180deg);
+}
+
+.appointment-history-item .card-body {
+    padding: 1.5rem;
+    background: transparent !important;
+    color: var(--text);
+}
+
+/* Image Modal Glass Effect */
+.image-modal-glass {
+    background: rgba(248, 250, 252, 0.7) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(226, 232, 240, 0.4) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.15);
+    color: var(--text) !important;
+    z-index: 9999 !important;
+}
+
+.dark .image-modal-glass {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
+    color: var(--text) !important;
+}
+
+.image-modal-header {
+    background: transparent !important;
+    border-bottom-color: rgba(226, 232, 240, 0.4) !important;
+    color: var(--text) !important;
+}
+
+.dark .image-modal-header {
+    background: transparent !important;
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+    color: var(--text) !important;
+}
+
+.image-modal-header .modal-title {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.image-modal-body {
+    background: transparent;
+    padding: 2rem;
+    color: var(--text) !important;
+}
+
+.image-modal-footer {
+    background: transparent !important;
+    border-top-color: rgba(226, 232, 240, 0.4) !important;
+}
+
+.dark .image-modal-footer {
+    background: transparent !important;
+    border-top-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+.dark .image-modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.9;
+}
+
+.dark .image-modal-header .btn-close:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5);
+}
+
+/* Ensure image modal is above all other elements */
+#imageModal {
+    z-index: 1000001 !important;
+}
+
+#imageModal .modal-backdrop {
+    z-index: 9998 !important;
+}
+
+.appointment-history-popover .timeline-body .bg-outline-primary {
+border: 1px solid var(--primary) !important;
+    color: var(--text);
+}
+
+.dark .appointment-history-popover .timeline-body .bg-outline-primary {
+    border: 1px solid var(--primary) !important;
+}
+
+#div.mb-3.p-3.bg-outline-primary.rounded{
+    border: 1px solid var(--primary) !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+}
+
+.bg-outline-primary{
+    border: 1px solid var(--primary) !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+}
+
+.appointment-history-popover .timeline-body .text-muted {
+    color: var(--muted) !important;
+}
+
+.appointment-history-popover .timeline-body .text-primary {
+    color: var(--accent) !important;
+}
+
+.appointment-history-popover .timeline-body .text-success {
+    color: var(--success) !important;
+}
+
+.appointment-history-popover .timeline-body .text-info {
+    color: var(--info) !important;
+}
+
+.appointment-history-popover .timeline-body .text-warning {
+    color: var(--warning) !important;
+}
+
+.appointment-history-popover .timeline-body .text-danger {
+    color: var(--danger) !important;
+}
+
+.appointment-history-popover .timeline-body .card {
+    background-color: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.appointment-history-popover .timeline-body .card-title {
+    color: var(--text);
+}
+
+.appointment-history-popover .timeline-body .card-text {
+    color: var(--muted);
+}
+
+.appointment-history-popover .timeline-body .border-success {
+    border-color: var(--success) !important;
+}
+
+.appointment-history-popover .timeline-body .border-info {
+    border-color: var(--info) !important;
+}
+
+.appointment-history-popover .timeline-body .border-warning {
+    border-color: var(--warning) !important;
+}
+
+.appointment-history-popover .timeline-body .row {
+    color: var(--text);
+}
+
+.appointment-history-item .card-header h6 a {
+    color: var(--accent);
+    transition: color 0.3s ease;
+}
+
+.appointment-history-item .card-header h6 a:hover {
+    color: var(--success);
+    text-decoration: underline;
+}
+
+/* Popover Glass Effect */
+.popover {
+    background: rgba(248, 250, 252, 0.7) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(226, 232, 240, 0.4) !important;
+    border-radius: 12px !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.15) !important;
+    color: var(--text) !important;
+    max-width: 800px !important;
+}
+
+.dark .popover {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.popover .popover-body {
+    padding: 1rem;
+    color: var(--text) !important;
+    background: transparent !important;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.dark .popover .popover-body {
+    color: var(--text) !important;
+}
+
+.dark .popover .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.9;
+}
+
+.dark .popover .btn-close:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5);
+}
+
+.popover .popover-arrow::before {
+    border-bottom-color: rgba(248, 250, 252, 0.95) !important;
+}
+
+.dark .popover .popover-arrow::before {
+    border-bottom-color: rgba(11, 18, 32, 0.95) !important;
+}
+
+.popover .popover-arrow::after {
+    border-bottom-color: rgba(248, 250, 252, 0.95) !important;
+}
+
+.dark .popover .popover-arrow::after {
+    border-bottom-color: rgba(11, 18, 32, 0.95) !important;
+}
+/* Drug Popover - Glass Effect */
+.forum-drug-popover {
+    position: fixed;
+    z-index: 10000000;
+    background: rgba(248, 250, 252, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    min-width: 300px;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    animation: fadeInPopover 0.2s ease;
+}
+
+.dark .forum-drug-popover {
+    background: rgba(11, 18, 32, 0.85);
+    border-color: rgba(51, 65, 85, 0.5);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.forum-drug-popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.forum-drug-popover-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+}
+
+.forum-drug-popover-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+
+.forum-drug-popover-close:hover {
+    color: var(--text);
+}
+
+.forum-drug-popover-body {
+    color: var(--text);
+}
+
+.forum-drug-popover-item {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.forum-drug-popover-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.forum-drug-popover-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.forum-drug-popover-value {
+    font-size: 0.875rem;
+    color: var(--text);
+    word-break: break-word;
+}
+
+@keyframes fadeInPopover {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.forum-drug-popover-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 9999999;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Make drug name clickable in medication cards */
+.prescription-card h6.text-primary {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.prescription-card h6.text-primary:hover {
+    color: var(--accent) !important;
+    text-decoration: underline;
+}

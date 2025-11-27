@@ -1,3 +1,317 @@
+<link href="/app/Views/doctor/assets/css/patients.css?v=<?= file_exists(__DIR__ . '/assets/css/patients.css') ? filemtime(__DIR__ . '/assets/css/patients.css') : time() ?>" rel="stylesheet">
+
+<!-- ============================================
+   Patients Page Styles   Overrides the default styles(from layouts/style.css)
+   ============================================ -->
+
+<style>
+    /* ============================================
+       Statistics Cards - Ensure borders are visible
+       ============================================ */
+    .row.mb-4 .card.border-primary {
+        border: 2px solid var(--accent) !important;
+        border-radius: 8px;
+    }
+    
+    .row.mb-4 .card.border-success {
+        border: 2px solid var(--success) !important;
+        border-radius: 8px;
+    }
+    
+    .row.mb-4 .card.border-info {
+        border: 2px solid #0ea5e9 !important;
+        border-radius: 8px;
+    }
+    
+    .row.mb-4 .card.border-warning {
+        border: 2px solid #fbbf24 !important;
+        border-radius: 8px;
+    }
+    
+    .dark .row.mb-4 .card.border-primary {
+        border-color: var(--accent) !important;
+    }
+    
+    .dark .row.mb-4 .card.border-success {
+        border-color: var(--success) !important;
+    }
+    
+    .dark .row.mb-4 .card.border-info {
+        border-color: #0ea5e9 !important;
+    }
+    
+    .dark .row.mb-4 .card.border-warning {
+        border-color: #fbbf24 !important;
+    }
+    
+    /* ============================================
+       Filter by Doctor Buttons - Ensure proper borders and styles
+       ============================================ */
+    #doctorFilterGroup .btn {
+        border: 1px solid var(--border) !important;
+        border-radius: 6px !important;
+        margin: 0 !important;
+        padding: 0.5rem 1rem !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    #doctorFilterGroup .btn:not(:last-child) {
+        margin-right: 0.25rem !important;
+    }
+    
+    #doctorFilterGroup .btn-outline-primary {
+        border-color: var(--accent) !important;
+        color: var(--accent) !important;
+        background-color: transparent !important;
+    }
+    
+    #doctorFilterGroup .btn-outline-primary:hover {
+        background-color: var(--accent) !important;
+        color: white !important;
+        border-color: var(--accent) !important;
+    }
+    
+    #doctorFilterGroup .btn-outline-primary.active {
+        background-color: var(--accent) !important;
+        color: white !important;
+        border-color: var(--accent) !important;
+    }
+    
+    #doctorFilterGroup .btn-outline-success {
+        border-color: var(--success) !important;
+        color: var(--success) !important;
+        background-color: transparent !important;
+    }
+    
+    #doctorFilterGroup .btn-outline-success:hover {
+        background-color: var(--success) !important;
+        color: white !important;
+        border-color: var(--success) !important;
+    }
+    
+    #doctorFilterGroup .btn-outline-success.active {
+        background-color: var(--success) !important;
+        color: white !important;
+        border-color: var(--success) !important;
+    }
+    
+    #doctorFilterGroup .btn-outline-warning {
+        border-color: #fbbf24 !important;
+        color: #fbbf24 !important;
+        background-color: transparent !important;
+    }
+    
+    #doctorFilterGroup .btn-outline-warning:hover {
+        background-color: #fbbf24 !important;
+        color: white !important;
+        border-color: #fbbf24 !important;
+    }
+    
+    #doctorFilterGroup .btn-outline-warning.active {
+        background-color: #fbbf24 !important;
+        color: white !important;
+        border-color: #fbbf24 !important;
+    }
+    
+    #doctorFilterGroup .btn-outline-info {
+        border-color: #0ea5e9 !important;
+        color: #0ea5e9 !important;
+        background-color: transparent !important;
+    }
+    
+    #doctorFilterGroup .btn-outline-info:hover {
+        background-color: #0ea5e9 !important;
+        color: white !important;
+        border-color: #0ea5e9 !important;
+    }
+    
+    #doctorFilterGroup .btn-outline-info.active {
+        background-color: #0ea5e9 !important;
+        color: white !important;
+        border-color: #0ea5e9 !important;
+    }
+    
+    #doctorFilterGroup .btn-outline-secondary {
+        border-color: var(--muted) !important;
+        color: var(--muted) !important;
+        background-color: transparent !important;
+    }
+    
+    #doctorFilterGroup .btn-outline-secondary:hover {
+        background-color: var(--muted) !important;
+        color: white !important;
+        border-color: var(--muted) !important;
+    }
+    
+    #doctorFilterGroup .btn-outline-secondary.active {
+        background-color: var(--muted) !important;
+        color: white !important;
+        border-color: var(--muted) !important;
+    }
+    
+    .dark #doctorFilterGroup .btn-outline-primary {
+        border-color: var(--accent) !important;
+        color: var(--accent) !important;
+    }
+    
+    .dark #doctorFilterGroup .btn-outline-primary:hover,
+    .dark #doctorFilterGroup .btn-outline-primary.active {
+        background-color: var(--accent) !important;
+        color: white !important;
+    }
+    
+    .dark #doctorFilterGroup .btn-outline-success {
+        border-color: var(--success) !important;
+        color: var(--success) !important;
+    }
+    
+    .dark #doctorFilterGroup .btn-outline-success:hover,
+    .dark #doctorFilterGroup .btn-outline-success.active {
+        background-color: var(--success) !important;
+        color: white !important;
+    }
+    
+    .dark #doctorFilterGroup .btn-outline-warning {
+        border-color: #fbbf24 !important;
+        color: #fbbf24 !important;
+    }
+    
+    .dark #doctorFilterGroup .btn-outline-warning:hover,
+    .dark #doctorFilterGroup .btn-outline-warning.active {
+        background-color: #fbbf24 !important;
+        color: white !important;
+    }
+    
+    .dark #doctorFilterGroup .btn-outline-info {
+        border-color: #0ea5e9 !important;
+        color: #0ea5e9 !important;
+    }
+    
+    .dark #doctorFilterGroup .btn-outline-info:hover,
+    .dark #doctorFilterGroup .btn-outline-info.active {
+        background-color: #0ea5e9 !important;
+        color: white !important;
+    }
+    
+    .dark #doctorFilterGroup .btn-outline-secondary {
+        border-color: var(--muted) !important;
+        color: var(--muted) !important;
+    }
+    
+    .dark #doctorFilterGroup .btn-outline-secondary:hover,
+    .dark #doctorFilterGroup .btn-outline-secondary.active {
+        background-color: var(--muted) !important;
+        color: white !important;
+    }
+    
+    /* ============================================
+       Action Buttons in Table - Ensure proper borders and styles
+       ============================================ */
+    #patientsTableBody .btn-group .btn {
+        border: 1px solid var(--border) !important;
+        border-radius: 6px !important;
+        margin: 0 !important;
+        padding: 0.375rem 0.75rem !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    #patientsTableBody .btn-group .btn:not(:last-child) {
+        margin-right: 0.25rem !important;
+    }
+    
+    #patientsTableBody .btn-group .btn-outline-primary {
+        border-color: var(--accent) !important;
+        color: var(--accent) !important;
+        background-color: transparent !important;
+    }
+    
+    #patientsTableBody .btn-group .btn-outline-primary:hover {
+        background-color: var(--accent) !important;
+        color: white !important;
+        border-color: var(--accent) !important;
+    }
+    
+    #patientsTableBody .btn-group .btn-outline-info {
+        border-color: #0ea5e9 !important;
+        color: #0ea5e9 !important;
+        background-color: transparent !important;
+    }
+    
+    #patientsTableBody .btn-group .btn-outline-info:hover {
+        background-color: #0ea5e9 !important;
+        color: white !important;
+        border-color: #0ea5e9 !important;
+    }
+    
+    #patientsTableBody .btn-group .btn-outline-success {
+        border-color: var(--success) !important;
+        color: var(--success) !important;
+        background-color: transparent !important;
+    }
+    
+    #patientsTableBody .btn-group .btn-outline-success:hover {
+        background-color: var(--success) !important;
+        color: white !important;
+        border-color: var(--success) !important;
+    }
+    
+    #patientsTableBody .btn-group .btn-outline-danger {
+        border-color: var(--danger) !important;
+        color: var(--danger) !important;
+        background-color: transparent !important;
+    }
+    
+    #patientsTableBody .btn-group .btn-outline-danger:hover {
+        background-color: var(--danger) !important;
+        color: white !important;
+        border-color: var(--danger) !important;
+    }
+    
+    .dark #patientsTableBody .btn-group .btn-outline-primary {
+        border-color: var(--accent) !important;
+        color: var(--accent) !important;
+    }
+    
+    .dark #patientsTableBody .btn-group .btn-outline-primary:hover {
+        background-color: var(--accent) !important;
+        color: white !important;
+    }
+    
+    .dark #patientsTableBody .btn-group .btn-outline-info {
+        border-color: #0ea5e9 !important;
+        color: #0ea5e9 !important;
+    }
+    
+    .dark #patientsTableBody .btn-group .btn-outline-info:hover {
+        background-color: #0ea5e9 !important;
+        color: white !important;
+    }
+    
+    .dark #patientsTableBody .btn-group .btn-outline-success {
+        border-color: var(--success) !important;
+        color: var(--success) !important;
+    }
+    
+    .dark #patientsTableBody .btn-group .btn-outline-success:hover {
+        background-color: var(--success) !important;
+        color: white !important;
+    }
+    
+    .dark #patientsTableBody .btn-group .btn-outline-danger {
+        border-color: var(--danger) !important;
+        color: var(--danger) !important;
+    }
+    
+    .dark #patientsTableBody .btn-group .btn-outline-danger:hover {
+        background-color: var(--danger) !important;
+        color: white !important;
+    }
+
+    .modal-footer{
+        background-color: transparent !important;
+    }
+</style>
+
 <!-- Patients Header -->
 <div class="row mb-4">
     <div class="col-md-8">
@@ -599,1487 +913,6 @@
     </div>
 </div>
 
-<style>
-.avatar-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-}
-
-/* Gender-based avatar colors */
-.avatar-male {
-    background: #3498db; /* Sky blue for males */
-    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
-}
-
-.avatar-female {
-    background:rgb(255, 85, 224); /* Pink for females */
-    box-shadow: 0 2px 8px rgba(233, 30, 99, 0.3);
-}
-
-/* Hover effects */
-.avatar-male:hover {
-    background: #2980b9;
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
-}
-
-.avatar-female:hover {
-    background:rgb(255, 85, 224); /* Pink for females */
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.4);
-}
-
-/* Default fallback for unknown gender */
-.avatar-circle:not(.avatar-male):not(.avatar-female) {
-    background: var(--accent);
-    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
-}
-
-.card {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.card:hover {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transform: translateY(-1px);
-    transition: all 0.2s ease;
-}
-
-.card-header {
-    background-color: transparent !important;
-    border-bottom-color: var(--border);
-    color: var(--text);
-}
-
-.table {
-    background-color: var(--bg-dark);
-    color: var(--text);
-}
-
-.table thead th {
-    background-color: var(--bg-dark) !important;
-    border-color: var(--border) !important;
-    color: var(--text) !important;
-}
-
-.table-dark th {
-    background-color: var(--bg-dark) !important;
-    border-color: var(--border) !important;
-    color: var(--text) !important;
-}
-
-/* Table header filter input styling */
-.table thead th input.form-control-sm {
-    font-size: 0.875rem;
-    padding: 0.25rem 0.5rem;
-    padding-right: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-}
-
-.table thead th input.form-control-sm::placeholder {
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.table thead th input.form-control-sm:focus {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.4);
-    color: white;
-    box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
-}
-
-/* Light mode - semi gray background */
-:not(.dark) .table thead th input.form-control-sm {
-    background: rgba(108, 117, 125, 0.2) !important;
-    border-color: rgba(108, 117, 125, 0.3) !important;
-    color: white;
-}
-
-:not(.dark) .table thead th input.form-control-sm:focus {
-    background: rgba(108, 117, 125, 0.3) !important;
-    border-color: rgba(108, 117, 125, 0.5) !important;
-    color: white;
-}
-
-.dark .table thead th input.form-control-sm {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
-    color: white;
-}
-
-.dark .table thead th input.form-control-sm:focus {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.4);
-}
-
-/* Clear filter button styling */
-#clearNameFilter {
-    z-index: 10;
-    padding: 0.2rem;
-    background: transparent;
-    border: none;
-}
-
-#clearNameFilter:hover {
-    opacity: 1 !important;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 0.25rem;
-}
-
-/* Light mode - black X button */
-:not(.dark) #clearNameFilter {
-    filter: brightness(0) !important;
-    opacity: 0.8 !important;
-}
-
-:not(.dark) #clearNameFilter:hover {
-    filter: brightness(0) !important;
-    opacity: 1 !important;
-    background: rgba(0, 0, 0, 0.1);
-}
-
-/* Dark mode - white X button */
-.dark #clearNameFilter {
-    filter: brightness(0) invert(1) !important;
-    opacity: 0.7 !important;
-}
-
-.dark #clearNameFilter:hover {
-    filter: brightness(0) invert(1) !important;
-    opacity: 1 !important;
-}
-
-/* Hide scrollbars but keep scrolling functionality */
-.table-responsive {
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE and Edge */
-}
-
-.table-responsive::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
-}
-
-.card-body {
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE and Edge */
-}
-
-.card-body::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
-}
-
-#paginationContainer > div > div:nth-child(2){
-    padding-right: 3rem !important;
-}
-
-/* Show horizontal scrollbar on mobile only */
-@media (max-width: 768px) {
-    .table-responsive {
-        scrollbar-width: thin; /* Firefox - show thin scrollbar */
-        -ms-overflow-style: auto; /* IE and Edge - show scrollbar */
-        overflow-x: auto; /* Enable horizontal scrolling */
-    }
-
-    #paginationContainer > div > div:nth-child(2){
-        padding-right: 0rem !important;
-    }
-    
-    .table-responsive::-webkit-scrollbar {
-        display: block; /* Chrome, Safari, Opera - show scrollbar */
-        height: 8px; /* Thin horizontal scrollbar */
-    }
-    
-    .table-responsive::-webkit-scrollbar-track {
-        background: var(--bg-alt);
-        border-radius: 4px;
-    }
-    
-    .table-responsive::-webkit-scrollbar-thumb {
-        background: var(--border);
-        border-radius: 4px;
-    }
-    
-    .table-responsive::-webkit-scrollbar-thumb:hover {
-        background: var(--accent);
-    }
-}
-
-.table tbody tr {
-    background-color: var(--bg-dark);
-    border-color: var(--border);
-}
-
-.table tbody tr:hover {
-    background-color: var(--bg-alt);
-}
-
-.table td {
-    background-color: var(--bg-dark);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.btn-group .btn {
-    margin: 0 1px;
-}
-
-/* Search Modal Styles */
-.modal-content {
-    /* Glass effect - similar to sidebar */
-    background: rgba(248, 250, 252, 0.35) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(226, 232, 240, 0.3) !important;
-    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
-    color: var(--text) !important;
-}
-
-.dark .modal-content {
-    background: rgba(11, 18, 32, 0.40) !important;
-    border: 1px solid rgba(51, 65, 85, 0.3) !important;
-    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
-}
-
-.modal-header {
-    background: transparent !important;
-    border-bottom-color: rgba(226, 232, 240, 0.3) !important;
-    color: var(--text) !important;
-}
-
-.dark .modal-header {
-    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
-}
-
-/* Close button white in dark mode */
-.dark .modal-header .btn-close {
-    filter: invert(1) brightness(2);
-    opacity: 0.9;
-}
-
-.dark .modal-header .btn-close:hover {
-    opacity: 1;
-    filter: invert(1) brightness(2.5);
-}
-
-/* Enable dragging */
-.modal-content {
-    cursor: move;
-}
-
-.modal-dialog {
-    cursor: default;
-    transition: transform 0.2s ease;
-    margin: 1.75rem auto;
-}
-
-.modal-header {
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-}
-
-.modal-footer {
-    background-color: var(--bg-alt);
-    border-top-color: var(--border);
-}
-
-.form-control {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.form-control:focus {
-    background-color: var(--bg);
-    border-color: var(--accent);
-    color: var(--text);
-    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
-}
-
-.input-group-text {
-    background-color: var(--bg-alt);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.search-results-container {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.search-result-item {
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 10px;
-    background: var(--bg);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.search-result-item:hover {
-    border-color: var(--accent);
-    background: var(--bg-alt);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.search-result-item:last-child {
-    margin-bottom: 0;
-}
-
-.search-result-avatar {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 1.1rem;
-    transition: all 0.3s ease;
-}
-
-/* Apply gender colors to search result avatars */
-.search-result-avatar.avatar-male {
-    background: #3498db;
-    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
-}
-
-.search-result-avatar.avatar-female {
-    background: #e91e63;
-    box-shadow: 0 2px 8px rgba(233, 30, 99, 0.3);
-}
-
-.search-result-avatar:not(.avatar-male):not(.avatar-female) {
-    background: var(--accent);
-    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
-}
-
-.search-result-info h6 {
-    margin-bottom: 5px;
-    color: var(--text);
-}
-
-.search-result-info .text-muted {
-    font-size: 0.9rem;
-    color: var(--muted) !important;
-}
-
-.search-result-actions .btn {
-    padding: 5px 10px;
-    font-size: 0.85rem;
-}
-
-.search-highlight {
-    background-color: rgba(255, 193, 7, 0.3);
-    padding: 1px 3px;
-    border-radius: 3px;
-    font-weight: 600;
-}
-
-#globalSearch:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
-}
-
-/* Button styling for dark mode */
-.btn-outline-primary {
-    color: var(--accent);
-    border-color: var(--accent);
-}
-
-.btn-outline-primary:hover {
-    background-color: var(--accent);
-    border-color: var(--accent);
-    color: white;
-}
-
-.btn-outline-success {
-    color: #28a745;
-    border-color: #28a745;
-}
-
-.btn-outline-success:hover {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: white;
-}
-
-.btn-outline-secondary {
-    color: var(--muted);
-    border-color: var(--border);
-}
-
-.btn-outline-secondary:hover {
-    background-color: var(--bg-alt);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.btn-secondary {
-    background-color: var(--bg-alt);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.btn-secondary:hover {
-    background-color: var(--border);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-/* Keyboard shortcut styling */
-kbd {
-    background-color: var(--bg-alt);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-size: 0.75rem;
-    font-family: 'Courier New', 'Cairo', monospace;
-    color: var(--text);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    min-width: 20px;
-    text-align: center;
-    display: inline-block;
-}
-
-.btn-primary kbd {
-    background-color: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.25);
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.btn-success kbd {
-    background-color: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.25);
-    color: rgba(255, 255, 255, 0.9);
-}
-
-/* Arabic keyboard shortcut styling */
-kbd[lang="ar"] {
-    font-family: 'Cairo', 'Courier New', monospace;
-    font-weight: 600;
-}
-
-/* Keyboard shortcut hint in modal */
-.keyboard-hint {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 0.75rem;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.keyboard-hint kbd {
-    background-color: var(--bg-alt);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-size: 0.65rem;
-    padding: 1px 4px;
-}
-
-/* Badge styling for dark mode */
-.badge.bg-primary {
-    background-color: var(--accent) !important;
-    color: white;
-}
-
-.badge.bg-success {
-    background-color: #28a745 !important;
-    color: white;
-}
-
-.badge.bg-secondary {
-    background-color: var(--muted) !important;
-    color: white;
-}
-
-/* Text muted styling */
-.text-muted {
-    color: var(--muted) !important;
-}
-
-/* Add Patient Modal Styling - Glass Effect */
-#addPatientModal .modal-content {
-    /* Glass effect - similar to sidebar */
-    background: rgba(248, 250, 252, 0.35) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(226, 232, 240, 0.3) !important;
-    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
-    color: var(--text) !important;
-}
-
-.dark #addPatientModal .modal-content {
-    background: rgba(11, 18, 32, 0.40) !important;
-    border: 1px solid rgba(51, 65, 85, 0.3) !important;
-    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
-}
-
-#addPatientModal .modal-header {
-    background-color: var(--bg-alt);
-    border-bottom-color: var(--border);
-    color: var(--text);
-}
-
-#addPatientModal .modal-footer {
-    background-color: var(--bg-alt);
-    border-top-color: var(--border);
-}
-
-#addPatientModal .form-label {
-    color: var(--text);
-    font-weight: 500;
-}
-
-#addPatientModal .form-control,
-#addPatientModal .form-select {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-#addPatientModal .form-control:focus,
-#addPatientModal .form-select:focus {
-    background-color: var(--bg);
-    border-color: var(--accent);
-    color: var(--text);
-    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
-}
-
-#addPatientModal .form-text {
-    color: var(--muted);
-    font-size: 0.875rem;
-}
-
-#addPatientModal .text-primary {
-    color: var(--accent) !important;
-}
-
-#addPatientModal .text-danger {
-    color: #dc3545 !important;
-}
-
-#addPatientModal .invalid-feedback {
-    color: #dc3545;
-    font-size: 0.875rem;
-}
-
-#addPatientModal .form-control.is-invalid,
-#addPatientModal .form-select.is-invalid {
-    border-color: #dc3545;
-}
-
-#addPatientModal .alert {
-    border-radius: 8px;
-    margin-bottom: 1rem;
-}
-
-#addPatientModal .alert-success {
-    background-color: rgba(40, 167, 69, 0.1);
-    border-color: #28a745;
-    color: #155724;
-}
-
-#addPatientModal .alert-danger {
-    background-color: rgba(220, 53, 69, 0.1);
-    border-color: #dc3545;
-    color: #721c24;
-}
-
-/* Button styling for add patient modal */
-.btn-success {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: white;
-}
-
-.btn-success:hover {
-    background-color: #218838;
-    border-color: #1e7e34;
-    color: white;
-}
-
-.btn-success:disabled {
-    background-color: #6c757d;
-    border-color: #6c757d;
-    color: white;
-    opacity: 0.65;
-}
-
-/* Form validation styling */
-.was-validated .form-control:valid {
-    border-color: #28a745;
-}
-
-.was-validated .form-control:invalid {
-    border-color: #dc3545;
-}
-
-.was-validated .form-select:valid {
-    border-color: #28a745;
-}
-
-.was-validated .form-select:invalid {
-    border-color: #dc3545;
-}
-
-/* Spinner styling */
-.spinner-border-sm {
-    width: 1rem;
-    height: 1rem;
-    border-width: 0.1em;
-}
-
-/* Search help text styling for dark mode */
-.search-help-text {
-    background: rgba(var(--accent-rgb), 0.05);
-    border: 1px solid rgba(var(--accent-rgb), 0.15);
-    border-radius: 6px;
-    padding: 10px 12px;
-    margin-top: 8px;
-    transition: all 0.2s ease;
-}
-
-.search-help-text:hover {
-    background: rgba(var(--accent-rgb), 0.08);
-    border-color: rgba(var(--accent-rgb), 0.2);
-}
-
-.search-help-text .search-instruction {
-    color: var(--text);
-    font-weight: 500;
-    font-size: 0.875rem;
-}
-
-.search-help-text .search-instruction i {
-    color: var(--accent);
-    opacity: 0.8;
-    margin-right: 4px;
-}
-
-.search-help-text .search-shortcut {
-    color: var(--muted);
-    font-size: 0.8rem;
-    font-weight: 400;
-}
-
-.search-help-text kbd {
-    background-color: var(--bg-alt);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    margin: 0 1px;
-    border-radius: 3px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    font-family: 'Courier New', 'Cairo', monospace;
-}
-
-/* Delete Patient Modal Styles */
-#deletePatientModal .modal-content,
-#deletePatientConfirmModal .modal-content {
-    background-color: var(--bg);
-    color: var(--text);
-}
-
-#deletePatientModal .modal-header,
-#deletePatientConfirmModal .modal-header {
-    background-color: #dc3545 !important;
-    border-bottom-color: #dc3545;
-}
-
-#deletePatientModal .modal-footer,
-#deletePatientConfirmModal .modal-footer {
-    background-color: var(--bg-alt);
-    border-top-color: var(--border);
-}
-
-#deletePatientModal .alert-danger {
-    background-color: rgba(220, 53, 69, 0.1);
-    border-color: #dc3545;
-    color: #721c24;
-}
-
-[data-bs-theme="dark"] #deletePatientModal .alert-danger {
-    background-color: rgba(220, 53, 69, 0.15);
-    color: #f5c6cb;
-}
-
-#deletePatientModal .alert-warning {
-    background-color: rgba(255, 193, 7, 0.1);
-    border-color: #ffc107;
-    color: #856404;
-}
-
-[data-bs-theme="dark"] #deletePatientModal .alert-warning {
-    background-color: rgba(255, 193, 7, 0.15);
-    color: #ffeaa7;
-}
-
-#deletePatientModal .list-group-item {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-#deletePatientModal .card {
-    background-color: var(--bg);
-    border-color: #ffc107;
-}
-
-#deletePatientModal .card-body {
-    background-color: var(--bg-alt);
-}
-
-.btn-outline-danger {
-    color: #dc3545;
-    border-color: #dc3545;
-}
-
-.btn-outline-danger:hover {
-    background-color: #dc3545;
-    border-color: #dc3545;
-    color: white;
-}
-
-.btn-warning {
-    background-color: #ffc107;
-    border-color: #ffc107;
-    color: #212529;
-}
-
-.btn-warning:hover {
-    background-color: #e0a800;
-    border-color: #d39e00;
-    color: #212529;
-}
-
-#deleteConfirmationText {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-    letter-spacing: 2px;
-}
-
-#deleteConfirmationText:focus {
-    background-color: var(--bg);
-    border-color: #dc3545;
-    color: var(--text);
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-}
-
-#deleteConfirmationText.is-valid {
-    border-color: #28a745;
-    background-color: var(--bg);
-}
-
-#deleteConfirmationText.is-invalid {
-    border-color: #dc3545;
-    background-color: var(--bg);
-}
-
-/* Arabic text styling for delete messages */
-#deleteConfirmationMessage {
-    font-family: 'Cairo', Arial, sans-serif;
-    text-align: right;
-    direction: rtl;
-}
-
-#deleteConfirmationMessage.alert-success {
-    background-color: rgba(40, 167, 69, 0.1);
-    border-color: #28a745;
-    color: #155724;
-}
-
-[data-bs-theme="dark"] #deleteConfirmationMessage.alert-success {
-    background-color: rgba(40, 167, 69, 0.15);
-    color: #d4edda;
-}
-
-#deleteConfirmationMessage.alert-warning {
-    background-color: rgba(255, 193, 7, 0.1);
-    border-color: #ffc107;
-    color: #856404;
-}
-
-[data-bs-theme="dark"] #deleteConfirmationMessage.alert-warning {
-    background-color: rgba(255, 193, 7, 0.15);
-    color: #fff3cd;
-}
-
-#deleteConfirmationMessage.alert-danger {
-    background-color: rgba(220, 53, 69, 0.1);
-    border-color: #dc3545;
-    color: #721c24;
-}
-
-[data-bs-theme="dark"] #deleteConfirmationMessage.alert-danger {
-    background-color: rgba(220, 53, 69, 0.15);
-    color: #f8d7da;
-}
-
-/* Keyboard shortcuts info styling */
-.text-muted kbd {
-    background-color: var(--bg-alt);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-size: 0.7rem;
-    padding: 1px 4px;
-    margin: 0 1px;
-    border-radius: 3px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    font-family: 'Courier New', 'Cairo', monospace;
-}
-
-[data-bs-theme="dark"] .text-muted kbd {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.9);
-}
-
-/* Delete help text styling for better visibility */
-.delete-help-text {
-    background-color: rgba(13, 110, 253, 0.1) !important;
-    border: 1px solid rgba(13, 110, 253, 0.2) !important;
-    border-radius: 6px !important;
-    padding: 8px 12px !important;
-    margin-top: 8px !important;
-    color: var(--text) !important;
-    font-weight: 500 !important;
-    font-size: 0.875rem !important;
-}
-
-[data-bs-theme="dark"] .delete-help-text {
-    background-color: rgba(13, 110, 253, 0.15) !important;
-    border-color: rgba(13, 110, 253, 0.3) !important;
-    color: #ffffff !important;
-}
-
-[data-bs-theme="light"] .delete-help-text {
-    background-color: rgba(13, 110, 253, 0.08) !important;
-    border-color: rgba(13, 110, 253, 0.2) !important;
-    color: #212529 !important;
-}
-
-/* Pagination Styling */
-.card-footer {
-    background-color: var(--bg-alt);
-    border-top-color: var(--border);
-    color: var(--text);
-}
-
-.pagination-info {
-    font-family: 'Cairo', Arial, sans-serif;
-}
-
-.pagination {
-    margin-bottom: 0;
-}
-
-.pagination .page-link {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-    font-family: 'Cairo', Arial, sans-serif;
-    padding: 0.375rem 0.75rem;
-    margin: 0 2px;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-    text-decoration: none;
-}
-
-.pagination .page-link:hover {
-    background-color: var(--accent);
-    border-color: var(--accent);
-    color: white;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
-}
-
-.pagination .page-item.active .page-link {
-    background-color: var(--accent);
-    border-color: var(--accent);
-    color: white;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.4);
-}
-
-.pagination .page-item.disabled .page-link {
-    background-color: var(--bg-alt);
-    border-color: var(--border);
-    color: var(--muted);
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.pagination .page-item:first-child .page-link,
-.pagination .page-item:last-child .page-link {
-    border-radius: 6px;
-}
-
-.pagination-sm .page-link {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-}
-
-/* Show/Hide pagination based on content */
-#paginationContainer.d-none {
-    display: none !important;
-}
-
-/* Pagination limit select styling */
-#paginationLimit {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-    font-family: 'Cairo', Arial, sans-serif;
-    font-size: 0.875rem;
-    min-width: 80px;
-}
-
-#paginationLimit:focus {
-    background-color: var(--bg);
-    border-color: var(--accent);
-    color: var(--text);
-    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
-}
-
-/* Quick search styling */
-#quickSearch {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-    font-family: 'Cairo', Arial, sans-serif;
-    font-size: 0.875rem;
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-}
-
-#quickSearch:focus {
-    background-color: var(--bg);
-    border-color: var(--accent);
-    color: var(--text);
-    box-shadow: none;
-    z-index: 3;
-}
-
-#quickSearch::placeholder {
-    color: var(--muted);
-    font-style: italic;
-}
-
-.input-group-sm .input-group-text {
-    background-color: var(--bg-alt);
-    border-color: var(--border);
-    color: var(--text);
-    font-size: 0.875rem;
-    border-right: 1px solid var(--border);
-}
-
-.input-group-sm .btn-outline-secondary {
-    border-color: var(--border);
-    color: var(--muted);
-    font-size: 0.875rem;
-    border-left: 1px solid var(--border);
-}
-
-.input-group-sm .btn-outline-secondary:hover {
-    background-color: var(--bg-alt);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-/* Quick search focus state */
-#quickSearch:focus + .btn-outline-secondary {
-    border-color: var(--accent);
-}
-
-.input-group:focus-within .input-group-text {
-    border-color: var(--accent);
-}
-
-/* Table header gap adjustments */
-.card-header .gap-3 {
-    gap: 1rem !important;
-}
-
-@media (max-width: 768px) {
-    /* Add spacing between statistics cards on mobile */
-    .row.mb-4 > .col-md-3 {
-        margin-bottom: 1rem;
-    }
-    
-    .row.mb-4 > .col-md-3:last-child {
-        margin-bottom: 0;
-    }
-    
-    .card-header .d-flex.gap-3 {
-        flex-direction: column;
-        gap: 0.5rem !important;
-        align-items: stretch !important;
-    }
-    
-    .card-header .input-group {
-        width: 100% !important;
-    }
-    
-    .card-header .justify-content-end {
-        justify-content: stretch !important;
-    }
-}
-
-/* Loading state for table */
-.table-loading {
-    position: relative;
-    opacity: 0.6;
-    pointer-events: none;
-}
-
-.table-loading::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 2rem;
-    height: 2rem;
-    border: 3px solid var(--border);
-    border-top: 3px solid var(--accent);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    z-index: 10;
-}
-
-@keyframes spin {
-    0% { transform: translate(-50%, -50%) rotate(0deg); }
-    100% { transform: translate(-50%, -50%) rotate(360deg); }
-}
-
-/* Patient name link styling */
-.patient-name-link {
-    text-decoration: none;
-    color: var(--accent) !important;
-    font-weight: 600;
-    transition: all 0.2s ease;
-}
-
-.patient-name-link:hover {
-    color: var(--text) !important;
-    font-weight: 800 !important;
-}
-
-/* Phone Number Tooltip - Same style as htooltip in main.php */
-.phone-number-container {
-    position: relative;
-    display: inline-block;
-}
-
-.phone-number-link {
-    text-decoration: none;
-    color: var(--accent);
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.phone-number-link:hover {
-    color: var(--text);
-    font-weight: 600;
-}
-
-.phone-number-container.active .phone-number-link {
-    color: var(--text);
-    font-weight: 600;
-}
-
-.phone-htooltip {
-    visibility: hidden;
-    z-index: 1001;
-    opacity: 0;
-    position: absolute;
-    top: -120%;
-    left: 50%;
-    transform: translateX(-50%) translateY(9px);
-    transition: all 0.3s ease-in-out;
-    border-radius: 9px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    white-space: nowrap;
-    pointer-events: none;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
-    /* Ensure text is sharp - no blur on text */
-    filter: none !important;
-    -webkit-filter: none !important;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    min-width: 140px;
-}
-
-/* Light mode phone htooltip - glass effect */
-.phone-htooltip {
-    background: rgba(248, 250, 252, 0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    color: #1a1a1a;
-    border: 1px solid rgba(226, 232, 240, 0.3);
-}
-
-/* Dark mode phone htooltip - glass effect */
-.dark .phone-htooltip {
-    background: rgba(11, 18, 32, 0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    color: #ffffff;
-    border: 1px solid rgba(51, 65, 85, 0.3);
-}
-
-/* Ensure text inside phone htooltip is always sharp */
-.phone-htooltip * {
-    filter: none !important;
-    -webkit-filter: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-/* Show phone htooltip on click */
-.phone-number-container.active .phone-htooltip {
-    visibility: visible;
-    transform: translateX(-50%) translateY(-10px);
-    opacity: 1;
-    transition: 0.3s linear;
-    pointer-events: auto;
-}
-
-/* Phone actions container */
-.phone-actions {
-    display: flex;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Phone action buttons */
-.phone-action-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 0.5rem 0.75rem;
-    border-radius: 8px;
-    text-decoration: none;
-    color: var(--text);
-    background: rgba(255, 255, 255, 0.1);
-    transition: all 0.2s ease;
-    min-width: 60px;
-    gap: 0.25rem;
-    border: 1px solid rgba(226, 232, 240, 0.2);
-}
-
-.phone-action-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    color: var(--text);
-    text-decoration: none;
-}
-
-.phone-action-btn i {
-    font-size: 1.25rem;
-    margin-bottom: 0.125rem;
-}
-
-.phone-action-btn span {
-    font-size: 0.75rem;
-    font-weight: 500;
-}
-
-/* WhatsApp button special styling */
-.phone-action-btn.whatsapp-btn {
-    background: rgba(37, 211, 102, 0.15);
-    border-color: rgba(37, 211, 102, 0.3);
-    color: #25d366;
-}
-
-.phone-action-btn.whatsapp-btn:hover {
-    background: rgba(37, 211, 102, 0.25);
-    border-color: rgba(37, 211, 102, 0.5);
-    color: #25d366;
-    box-shadow: 0 4px 8px rgba(37, 211, 102, 0.3);
-}
-
-.dark .phone-action-btn.whatsapp-btn {
-    background: rgba(37, 211, 102, 0.2);
-    color: #25d366;
-}
-
-.dark .phone-action-btn.whatsapp-btn:hover {
-    background: rgba(37, 211, 102, 0.3);
-    color: #25d366;
-}
-
-/* Call button special styling */
-.phone-action-btn:not(.whatsapp-btn) {
-    color: var(--accent);
-}
-
-.phone-action-btn:not(.whatsapp-btn):hover {
-    background: rgba(var(--accent-rgb), 0.15);
-    border-color: rgba(var(--accent-rgb), 0.3);
-    color: var(--accent);
-    box-shadow: 0 4px 8px rgba(var(--accent-rgb), 0.3);
-}
-
-/* Responsive pagination */
-@media (max-width: 768px) {
-    .pagination-info {
-        text-align: center;
-        margin-bottom: 1rem;
-    }
-    
-    .pagination {
-        justify-content: center !important;
-    }
-    
-    .pagination .page-link {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.8rem;
-        margin: 0 1px;
-    }
-}
-
-/* Doctor Filter Styling */
-#doctorFilterGroup .btn {
-    border-radius: 6px;
-    margin: 0 2px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-#doctorFilterGroup .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-#doctorFilterGroup .btn.active {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-#doctorFilterGroup .btn-outline-primary.active {
-    background-color: var(--accent);
-    border-color: var(--accent);
-    color: white;
-}
-
-#doctorFilterGroup .btn-outline-success.active {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: white;
-}
-
-#doctorFilterGroup .btn-outline-warning.active {
-    background-color: #ffc107;
-    border-color: #ffc107;
-    color: #212529;
-}
-
-#doctorFilterGroup .btn-outline-info.active {
-    background-color: #17a2b8;
-    border-color: #17a2b8;
-    color: white;
-}
-
-#doctorFilterGroup .btn-outline-secondary.active {
-    background-color: #6c757d;
-    border-color: #6c757d;
-    color: white;
-}
-
-#doctorFilterGroup .btn i {
-    font-size: 0.9rem;
-}
-
-/* Filter card styling */
-.card.border-info {
-    border-color: var(--accent) !important;
-}
-
-.card-header.bg-info.bg-opacity-10 {
-    background-color: rgba(var(--accent-rgb), 0.1) !important;
-    border-bottom-color: rgba(var(--accent-rgb), 0.2) !important;
-}
-
-.text-info {
-    color: var(--accent) !important;
-}
-
-/* Responsive filter buttons */
-@media (max-width: 768px) {
-    #doctorFilterGroup {
-        flex-direction: column;
-        width: 100%;
-    }
-    
-    #doctorFilterGroup .btn {
-        margin: 2px 0;
-        width: 100%;
-    }
-}
-
-/* Doctor Filter Avatar Styles */
-.doctor-filter-avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    object-fit: cover;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, var(--accent), #10b981);
-    color: white;
-    font-weight: bold;
-    font-size: 0.75rem;
-    flex-shrink: 0;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.doctor-filter-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-}
-
-.doctor-filter-avatar-fallback {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, var(--accent), #10b981);
-    color: white;
-    font-weight: bold;
-    font-size: 0.75rem;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-/* Custom Tooltip Styling - Glass Effect */
-.tooltip {
-    font-family: 'Cairo', sans-serif;
-    font-size: 0.85rem;
-    z-index: 9999;
-}
-
-.tooltip .tooltip-inner {
-    background: rgba(248, 250, 252, 0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    color: #1a1a1a;
-    border-radius: 9px;
-    padding: 8px 16px;
-    max-width: 280px;
-    text-align: center;
-    line-height: 1.4;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(226, 232, 240, 0.3);
-    /* Ensure text is sharp - no blur on text */
-    filter: none !important;
-    -webkit-filter: none !important;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-/* Dark mode tooltip styling - Glass Effect */
-.dark .tooltip .tooltip-inner {
-    background: rgba(11, 18, 32, 0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    color: #ffffff;
-    border: 1px solid rgba(51, 65, 85, 0.3);
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
-    /* Ensure text is sharp - no blur on text */
-    filter: none !important;
-    -webkit-filter: none !important;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-/* Ensure text inside tooltip is always sharp */
-.tooltip .tooltip-inner * {
-    filter: none !important;
-    -webkit-filter: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-/* Tooltip arrow styling */
-.tooltip .tooltip-arrow::before {
-    border-top-color: rgba(248, 250, 252, 0.85) !important;
-    border-bottom-color: rgba(248, 250, 252, 0.85) !important;
-    border-left-color: rgba(248, 250, 252, 0.85) !important;
-    border-right-color: rgba(248, 250, 252, 0.85) !important;
-}
-
-.dark .tooltip .tooltip-arrow::before {
-    border-top-color: rgba(11, 18, 32, 0.85) !important;
-    border-bottom-color: rgba(11, 18, 32, 0.85) !important;
-    border-left-color: rgba(11, 18, 32, 0.85) !important;
-    border-right-color: rgba(11, 18, 32, 0.85) !important;
-}
-
-/* Improved button hover states with tooltips */
-.btn:hover[data-bs-toggle="tooltip"] {
-    transform: translateY(-1px);
-    transition: all 0.2s ease;
-}
-
-.btn-outline-primary:hover[data-bs-toggle="tooltip"] {
-    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
-}
-
-.btn-outline-success:hover[data-bs-toggle="tooltip"] {
-    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
-}
-
-.btn-outline-danger:hover[data-bs-toggle="tooltip"] {
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-}
-</style>
-
 <script>
 let searchTimeout;
 let currentSearchRequest;
@@ -2298,6 +1131,13 @@ function renderPatientsTable() {
                                    data-bs-title="View patient details and medical history">
                                     <i class="bi bi-eye"></i>
                                 </a>
+                                <button class="btn btn-sm btn-outline-info" 
+                                        onclick="editPatient(${patient.id})" 
+                                        data-bs-toggle="tooltip" 
+                                        data-bs-placement="top" 
+                                        data-bs-title="Edit patient information and details">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
                                 <button class="btn btn-sm btn-outline-success" 
                                         onclick="bookAppointment(${patient.id})" 
                                         data-bs-toggle="tooltip" 
@@ -3633,26 +2473,478 @@ function initializePhoneTooltips() {
     });
 }
 
-// Auto-refresh every 30 seconds (pause when modals are open or user is interacting)
-setInterval(() => {
+// Auto-refresh patients data every 60 seconds using AJAX (pause when modals are open or user is interacting)
+let refreshInterval = setInterval(() => {
     const searchModal = document.getElementById('searchModal');
     const addPatientModal = document.getElementById('addPatientModal');
     const deleteModal = document.getElementById('deletePatientModal');
     const deleteConfirmModal = document.getElementById('deletePatientConfirmModal');
+    const editPatientModal = document.getElementById('editPatientModal');
     const quickSearch = document.getElementById('quickSearch');
     
     // Don't refresh if user is actively using the page
     const isUserActive = document.activeElement === quickSearch || 
                         quickSearch.value.trim().length > 0 ||
                         paginationState.currentPage > 1 ||
-                        paginationState.itemsPerPage !== 20;
+                        paginationState.itemsPerPage !== 20 ||
+                        document.querySelector('.modal.show') !== null;
     
     if (!searchModal.classList.contains('show') && 
         !addPatientModal.classList.contains('show') &&
         !deleteModal.classList.contains('show') &&
         !deleteConfirmModal.classList.contains('show') &&
+        !editPatientModal?.classList.contains('show') &&
         !isUserActive) {
-        window.location.reload();
+        refreshPatientsData();
     }
-}, 30000);
+}, 60000);
+
+// Function to refresh patients data via AJAX
+function refreshPatientsData() {
+    // Show subtle loading indicator
+    const tableBody = document.getElementById('patientsTableBody');
+    if (tableBody) {
+        tableBody.parentElement.classList.add('table-loading');
+    }
+    
+    fetch('/api/patients', {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok && data.patients && data.doctors) {
+            // Update pagination state
+            paginationState.allPatients = data.patients;
+            paginationState.doctors = data.doctors;
+            
+            // Reapply current filters
+            applyDoctorFilter();
+            
+            // Reapply name filter if exists
+            const nameFilter = document.getElementById('patientNameFilter');
+            if (nameFilter && nameFilter.value.trim()) {
+                filterByName(nameFilter.value);
+            } else {
+                // Reapply quick search if exists
+                const quickSearch = document.getElementById('quickSearch');
+                if (quickSearch && quickSearch.value.trim()) {
+                    filterPatientsLocally(quickSearch.value);
+                } else {
+                    // Just re-render with current filters
+                    renderPatientsTable();
+                    updatePaginationInfo();
+                    renderPaginationNav();
+                }
+            }
+            
+            // Update statistics
+            updateStatistics(data.patients);
+        }
+    })
+    .catch(error => {
+        console.error('Error refreshing patients data:', error);
+        // Silently fail - don't show error to user for background refresh
+    })
+    .finally(() => {
+        // Remove loading indicator
+        const tableBody = document.getElementById('patientsTableBody');
+        if (tableBody) {
+            tableBody.parentElement.classList.remove('table-loading');
+        }
+    });
+}
+
+// Function to update statistics cards
+function updateStatistics(patients) {
+    const totalPatients = patients.length;
+    const totalVisits = patients.reduce((sum, p) => sum + (parseInt(p.total_appointments) || 0), 0);
+    
+    // Calculate recent visits (last 7 days)
+    const recentVisits = patients.filter(p => {
+        if (!p.last_visit) return false;
+        const visitDate = new Date(p.last_visit);
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        return visitDate >= sevenDaysAgo;
+    }).length;
+    
+    // Calculate new this month (last 30 days)
+    const newThisMonth = patients.filter(p => {
+        if (!p.created_at) return false;
+        const createdDate = new Date(p.created_at);
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        return createdDate >= thirtyDaysAgo;
+    }).length;
+    
+    // Update statistics cards - find h3 elements in the statistics row
+    const statsRow = document.querySelector('.row.mb-4');
+    if (statsRow) {
+        const statsCards = statsRow.querySelectorAll('.card-body h3');
+        if (statsCards.length >= 4) {
+            statsCards[0].textContent = totalPatients;
+            statsCards[1].textContent = totalVisits;
+            statsCards[2].textContent = recentVisits;
+            statsCards[3].textContent = newThisMonth;
+        }
+    }
+    
+    // Update total count in header
+    const totalCountElement = document.getElementById('totalPatientsCount');
+    if (totalCountElement) {
+        totalCountElement.textContent = totalPatients;
+    }
+}
+
+// Edit Patient Function
+function editPatient(patientId) {
+    // Remove existing modal if present
+    const existingModal = document.getElementById('editPatientModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Fetch patient data
+    fetch(`/api/patients/${patientId}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.ok || !data.patient) {
+            showNotification('Error loading patient data', 'error');
+            return;
+        }
+        
+        const patient = data.patient;
+        
+        // Escape HTML for safety
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        const modalHtml = `
+            <div class="modal fade" id="editPatientModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="bi bi-person-gear me-2"></i>
+                                Edit Patient Information
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form id="editPatientForm">
+                            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                                <!-- Basic Information -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h6 class="border-bottom pb-2 mb-3" style="color: var(--text); border-bottom-color: var(--border) !important;">Basic Information</h6>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="edit_first_name" class="form-label">First Name *</label>
+                                        <input type="text" class="form-control" id="edit_first_name" name="first_name" 
+                                               value="${escapeHtml(patient.first_name)}" required>
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="edit_last_name" class="form-label">Last Name *</label>
+                                        <input type="text" class="form-control" id="edit_last_name" name="last_name" 
+                                               value="${escapeHtml(patient.last_name)}" required>
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Contact Information -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h6 class="border-bottom pb-2 mb-3" style="color: var(--text); border-bottom-color: var(--border) !important;">Contact Information</h6>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="edit_phone" class="form-label">Phone Number *</label>
+                                        <input type="tel" class="form-control" id="edit_phone" name="phone" 
+                                               value="${escapeHtml(patient.phone)}" required>
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="edit_alt_phone" class="form-label">Alternative Phone</label>
+                                        <input type="tel" class="form-control" id="edit_alt_phone" name="alt_phone" 
+                                               value="${escapeHtml(patient.alt_phone || '')}">
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Personal Information -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h6 class="border-bottom pb-2 mb-3" style="color: var(--text); border-bottom-color: var(--border) !important;">Personal Information</h6>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="edit_dob" class="form-label">Date of Birth</label>
+                                        <input type="date" class="form-control" id="edit_dob" name="dob" 
+                                               value="${patient.dob || ''}">
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="edit_national_id" class="form-label">National ID</label>
+                                        <input type="text" class="form-control" id="edit_national_id" name="national_id" 
+                                               value="${escapeHtml(patient.national_id || '')}">
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Address -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h6 class="border-bottom pb-2 mb-3" style="color: var(--text); border-bottom-color: var(--border) !important;">Address</h6>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <label for="edit_address" class="form-label">Full Address</label>
+                                        <textarea class="form-control" id="edit_address" name="address" rows="3">${escapeHtml(patient.address || '')}</textarea>
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Emergency Contact -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h6 class="border-bottom pb-2 mb-3" style="color: var(--text); border-bottom-color: var(--border) !important;">Emergency Contact</h6>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="edit_emergency_contact" class="form-label">Emergency Contact Name</label>
+                                        <input type="text" class="form-control" id="edit_emergency_contact" name="emergency_contact" 
+                                               value="${escapeHtml(patient.emergency_contact || '')}">
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="edit_emergency_phone" class="form-label">Emergency Contact Phone</label>
+                                        <input type="tel" class="form-control" id="edit_emergency_phone" name="emergency_phone" 
+                                               value="${escapeHtml(patient.emergency_phone || '')}">
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="bi bi-x-lg me-2"></i>Cancel
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary me-2" onclick="resetEditPatientForm()">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>Reset
+                                </button>
+                                <button type="submit" class="btn btn-primary" id="savePatientBtn">
+                                    <span class="spinner-border spinner-border-sm d-none" id="savePatientSpinner"></span>
+                                    <i class="bi bi-check-lg me-2"></i>Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        const modalElement = document.getElementById('editPatientModal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        
+        // Store original form data for reset
+        window.originalPatientData = {
+            first_name: patient.first_name,
+            last_name: patient.last_name,
+            phone: patient.phone,
+            alt_phone: patient.alt_phone || '',
+            dob: patient.dob || '',
+            national_id: patient.national_id || '',
+            address: patient.address || '',
+            emergency_contact: patient.emergency_contact || '',
+            emergency_phone: patient.emergency_phone || ''
+        };
+        
+        // Apply glass style and draggable
+        setTimeout(function() {
+            if (typeof applyGlassStyleToModal === 'function') {
+                applyGlassStyleToModal('editPatientModal');
+            }
+            if (typeof initializeDraggableModals === 'function') {
+                initializeDraggableModals();
+            }
+        }, 50);
+        
+        // Handle form submission
+        document.getElementById('editPatientForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Clear previous validation errors
+            clearEditPatientValidationErrors();
+            
+            // Basic validation
+            if (!validateEditPatientForm()) {
+                return;
+            }
+            
+            // Show loading state
+            const saveBtn = document.getElementById('savePatientBtn');
+            const spinner = document.getElementById('savePatientSpinner');
+            saveBtn.disabled = true;
+            spinner.classList.remove('d-none');
+            
+            // Submit form
+            const formData = new FormData(this);
+            formData.append('_method', 'PUT');
+            
+            fetch(`/doctor/patients/${patientId}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    showNotification('Patient updated successfully!', 'success');
+                    modal.hide();
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Failed to update patient');
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error updating patient: ' + error.message, 'error');
+            })
+            .finally(() => {
+                saveBtn.disabled = false;
+                spinner.classList.add('d-none');
+            });
+        });
+        
+        // Clean up modal on hide
+        modalElement.addEventListener('hidden.bs.modal', function() {
+            this.remove();
+        });
+    })
+    .catch(error => {
+        console.error('Error loading patient data:', error);
+        showNotification('Error loading patient data: ' + error.message, 'error');
+    });
+}
+
+function validateEditPatientForm() {
+    let isValid = true;
+    
+    // Required fields
+    const requiredFields = ['edit_first_name', 'edit_last_name', 'edit_phone'];
+    
+    requiredFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (!field || !field.value.trim()) {
+            showEditPatientFieldError(fieldId, 'This field is required');
+            isValid = false;
+        }
+    });
+    
+    // Phone validation
+    const phone = document.getElementById('edit_phone')?.value.trim();
+    if (phone && !isValidPhone(phone)) {
+        showEditPatientFieldError('edit_phone', 'Please enter a valid phone number');
+        isValid = false;
+    }
+    
+    const altPhone = document.getElementById('edit_alt_phone')?.value.trim();
+    if (altPhone && !isValidPhone(altPhone)) {
+        showEditPatientFieldError('edit_alt_phone', 'Please enter a valid phone number');
+        isValid = false;
+    }
+    
+    const emergencyPhone = document.getElementById('edit_emergency_phone')?.value.trim();
+    if (emergencyPhone && !isValidPhone(emergencyPhone)) {
+        showEditPatientFieldError('edit_emergency_phone', 'Please enter a valid phone number');
+        isValid = false;
+    }
+    
+    return isValid;
+}
+
+function isValidPhone(phone) {
+    // Egyptian phone number validation
+    const phoneRegex = /^(\+20|0)?1[0-9]{9}$/;
+    return phoneRegex.test(phone.replace(/\s+/g, ''));
+}
+
+function clearEditPatientValidationErrors() {
+    const modal = document.getElementById('editPatientModal');
+    if (!modal) return;
+    
+    modal.querySelectorAll('.is-invalid').forEach(el => {
+        el.classList.remove('is-invalid');
+    });
+    modal.querySelectorAll('.invalid-feedback').forEach(el => {
+        el.textContent = '';
+    });
+}
+
+function showEditPatientFieldError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    if (!field) return;
+    
+    const feedback = field.nextElementSibling;
+    
+    field.classList.add('is-invalid');
+    if (feedback && feedback.classList.contains('invalid-feedback')) {
+        feedback.textContent = message;
+    }
+}
+
+function resetEditPatientForm() {
+    if (!window.originalPatientData) return;
+    
+    const data = window.originalPatientData;
+    document.getElementById('edit_first_name').value = data.first_name;
+    document.getElementById('edit_last_name').value = data.last_name;
+    document.getElementById('edit_phone').value = data.phone;
+    document.getElementById('edit_alt_phone').value = data.alt_phone;
+    document.getElementById('edit_dob').value = data.dob;
+    document.getElementById('edit_national_id').value = data.national_id;
+    document.getElementById('edit_address').value = data.address;
+    document.getElementById('edit_emergency_contact').value = data.emergency_contact;
+    document.getElementById('edit_emergency_phone').value = data.emergency_phone;
+    
+    clearEditPatientValidationErrors();
+}
+
+// Check if showNotification exists from main layout, otherwise define it
+if (typeof window.showNotification !== 'function') {
+    window.showNotification = function(message, type = 'info') {
+        // Fallback notification
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+        notification.style.top = '20px';
+        notification.style.right = '20px';
+        notification.style.zIndex = '9999';
+        notification.style.minWidth = '300px';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    };
+}
 </script>

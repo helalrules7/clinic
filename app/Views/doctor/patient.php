@@ -1,3 +1,5 @@
+<link href="/app/Views/doctor/assets/css/patient.css?v=<?= file_exists(__DIR__ . '/assets/css/patient.css') ? filemtime(__DIR__ . '/assets/css/patient.css') : time() ?>" rel="stylesheet">
+
 <!-- Breadcrumb -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <nav aria-label="breadcrumb">
@@ -1942,1465 +1944,6 @@
 </div>
 <?php endif; ?>
 
-<style>
-/* Dark Mode Support */
-.card {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.card-header {
-    background-color: transparent !important;
-    border-bottom-color: var(--border);
-    color: var(--text);
-}
-
-.table {
-    background-color: var(--bg-dark);
-    color: var(--text);
-}
-
-.table thead th {
-    background-color: var(--bg-dark) !important;
-    border-color: var(--border) !important;
-    color: var(--text) !important;
-}
-
-.table-dark th {
-    background-color: var(--bg-dark) !important;
-    border-color: var(--border) !important;
-    color: var(--text) !important;
-}
-
-.table tbody tr {
-    background-color: var(--bg-dark);
-    border-color: var(--border);
-}
-
-.table tbody tr:hover {
-    background-color: var(--bg-alt);
-}
-
-.table td {
-    background-color: var(--bg-dark);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.text-muted {
-    color: var(--muted) !important;
-}
-
-/* Breadcrumb Styles */
-.breadcrumb-item a {
-    color: dodgerblue !important;
-    text-decoration: none;
-}
-
-.breadcrumb-item a:hover {
-    color: #1e90ff !important;
-    text-decoration: none !important;
-}
-
-.breadcrumb-item.active {
-    color: var(--text) !important;
-    font-weight: 600;
-}
-
-.breadcrumb-item + .breadcrumb-item::before {
-    color: var(--muted) !important;
-    content: ">" !important;
-}
-
-/* Dark Mode Breadcrumb Styles */
-.dark .breadcrumb {
-    background-color: transparent !important;
-    padding: 0.75rem 0 !important;
-}
-
-.dark .breadcrumb-item {
-    color: var(--muted) !important;
-}
-
-.dark .breadcrumb-item a {
-    color: var(--accent) !important;
-    text-decoration: none !important;
-    transition: color 0.3s ease !important;
-}
-
-.dark .breadcrumb-item a:hover {
-    color: var(--text) !important;
-    text-decoration: none !important;
-}
-
-.dark .breadcrumb-item.active {
-    color: var(--text) !important;
-    font-weight: 500 !important;
-}
-
-.dark .breadcrumb-item + .breadcrumb-item::before {
-    color: var(--muted) !important;
-    content: "›" !important;
-}
-
-.avatar-circle-large {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 1.5rem;
-    transition: all 0.3s ease;
-}
-
-/* Gender-based avatar colors for large avatar */
-.avatar-large-male {
-    background: #3498db; /* Sky blue for males */
-    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
-}
-
-.avatar-large-female {
-    background: rgb(255, 85, 224); /* Pink for females */
-    box-shadow: 0 2px 8px rgba(255, 85, 224, 0.3);
-}
-
-/* Hover effects for large avatar */
-.avatar-large-male:hover {
-    background: #2980b9;
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
-}
-
-.avatar-large-female:hover {
-    background: rgb(255, 85, 224); /* Pink for females */
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(255, 85, 224, 0.4);
-}
-
-/* Default fallback for unknown gender */
-.avatar-circle-large:not(.avatar-large-male):not(.avatar-large-female) {
-    background: var(--accent);
-    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
-}
-
-.timeline {
-    position: relative;
-    padding-left: 30px;
-}
-
-.timeline::before {
-    content: '';
-    position: absolute;
-    left: 15px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: var(--border);
-}
-
-/* Appointment History Timeline Styles */
-.appointment-timeline {
-    position: relative;
-    padding-left: 30px;
-}
-
-.appointment-timeline::before {
-    content: '';
-    position: absolute;
-    left: 15px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: linear-gradient(to bottom, var(--accent), var(--success));
-}
-
-.appointment-timeline-item {
-    position: relative;
-    margin-bottom: 30px;
-}
-
-.appointment-timeline-item:last-child {
-    margin-bottom: 0;
-}
-
-/* Follow-up appointment styling - lower level */
-.appointment-timeline-item.followup-appointment {
-    margin-left: 2.5rem;
-    opacity: 0.95;
-    position: relative;
-}
-
-.appointment-timeline-item.followup-appointment::before {
-    content: '';
-    position: absolute;
-    left: -2.5rem;
-    top: 15px;
-    width: 2rem;
-    height: 2px;
-    background: var(--border);
-    opacity: 0.5;
-}
-
-.appointment-timeline-item.followup-appointment .timeline-marker {
-    width: 24px;
-    height: 24px;
-    left: -19px;
-    border-width: 2px;
-}
-
-.appointment-timeline-item.followup-appointment .timeline-content {
-    border-left: 3px solid var(--info);
-    margin-left: 15px;
-}
-
-.appointment-timeline-item.followup-appointment .timeline-content:hover {
-    border-left-color: var(--accent);
-}
-
-.appointment-timeline-item .timeline-marker {
-    position: absolute;
-    left: -22px;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 3px solid var(--bg);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    z-index: 1;
-}
-
-.appointment-timeline-item .timeline-content {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0;
-    margin-left: 20px;
-    transition: all 0.3s ease;
-    overflow: hidden;
-}
-
-.appointment-timeline-item .timeline-content:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    transform: translateX(5px);
-}
-
-.appointment-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    border-bottom: 2px solid var(--border);
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.05) 50%, transparent 100%);
-    position: relative;
-}
-
-.dark .appointment-header {
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
-}
-
-.appointment-header:hover {
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.1) 50%, transparent 100%);
-}
-
-.dark .appointment-header:hover {
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 50%, transparent 100%);
-}
-
-.appointment-header.collapsed {
-    border-bottom: none;
-}
-
-.appointment-header .collapse-icon {
-    transition: transform 0.3s ease;
-    color: var(--muted);
-    font-size: 1.2rem;
-}
-
-.appointment-header.expanded .collapse-icon {
-    transform: rotate(180deg);
-}
-
-.appointment-timeline-item .timeline-body {
-    padding: 1.5rem;
-}
-
-.appointment-timeline-item .timeline-header h6 a {
-    color: var(--accent);
-    transition: color 0.3s ease;
-}
-
-.appointment-timeline-item .timeline-header h6 a:hover {
-    color: var(--success);
-    text-decoration: underline;
-}
-
-/* Prescription Timeline Styles */
-.prescription-timeline {
-    position: relative;
-    padding-left: 30px;
-}
-
-.prescription-timeline::before {
-    content: '';
-    position: absolute;
-    left: 15px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: linear-gradient(to bottom, var(--success), var(--accent));
-}
-
-.prescription-timeline-item {
-    position: relative;
-    margin-bottom: 25px;
-}
-
-.prescription-timeline-item:last-child {
-    margin-bottom: 0;
-}
-
-.prescription-timeline-item .timeline-marker {
-    position: absolute;
-    left: -22px;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 3px solid var(--bg);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    z-index: 1;
-}
-
-.prescription-timeline-item .timeline-content {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0;
-    margin-left: 20px;
-    transition: all 0.3s ease;
-    overflow: hidden;
-}
-
-.prescription-timeline-item .timeline-content:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    transform: translateX(5px);
-}
-
-.prescription-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    border-bottom: 2px solid var(--border);
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.05) 50%, transparent 100%);
-    position: relative;
-}
-
-.dark .prescription-header {
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
-}
-
-.prescription-header:hover {
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.1) 50%, transparent 100%);
-}
-
-.dark .prescription-header:hover {
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 50%, transparent 100%);
-}
-
-.prescription-header.collapsed {
-    border-bottom: none;
-}
-
-.prescription-header .collapse-icon {
-    transition: transform 0.3s ease;
-    color: var(--muted);
-    font-size: 1.2rem;
-}
-
-.prescription-header.expanded .collapse-icon {
-    transform: rotate(180deg);
-}
-
-.prescription-timeline-item .timeline-body {
-    padding: 1.5rem;
-}
-
-/* Dark Mode for Prescription Timeline */
-.dark .prescription-timeline::before {
-    background: linear-gradient(to bottom, var(--success), var(--accent));
-    opacity: 0.6;
-}
-
-.dark .prescription-timeline-item .timeline-marker {
-    border-color: var(--bg);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-}
-
-.dark .prescription-timeline-item .timeline-content {
-    background: var(--card);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.dark .prescription-timeline-item .timeline-content:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    border-color: var(--accent);
-}
-
-.dark .prescription-timeline-item .timeline-header h6 {
-    color: var(--text);
-}
-
-.dark .prescription-timeline-item .timeline-body {
-    color: var(--text);
-}
-
-.dark .prescription-timeline-item .timeline-body .text-muted {
-    color: var(--muted) !important;
-}
-
-.dark .prescription-timeline-item .timeline-body small.text-muted {
-    color: var(--muted) !important;
-}
-
-.dark .prescription-timeline-item .timeline-body .text-primary {
-    color: var(--accent) !important;
-}
-
-.dark .prescription-timeline-item .timeline-body .text-success {
-    color: var(--success) !important;
-}
-
-.dark .prescription-timeline-item .timeline-body .text-info {
-    color: var(--accent) !important;
-}
-
-/* Tabs Dark Mode */
-.dark .nav-tabs {
-    border-bottom-color: var(--border);
-}
-
-.dark .nav-tabs .nav-link {
-    color: var(--text);
-    border-color: transparent;
-}
-
-.dark .nav-tabs .nav-link:hover {
-    border-color: var(--border);
-    color: var(--accent);
-}
-
-.dark .nav-tabs .nav-link.active {
-    background-color: var(--card);
-    border-color: var(--border) var(--border) var(--card);
-    color: var(--accent);
-}
-
-.dark .tab-content {
-    color: var(--text);
-}
-
-/* Medication Item Styles */
-.medication-item {
-    transition: all 0.3s ease;
-}
-
-.medication-item:hover {
-    transform: translateX(5px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.dark .medication-item {
-    background-color: var(--bg) !important;
-    border-left-color: var(--success) !important;
-}
-
-.dark .medication-item:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.medications-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-/* Glasses Item Styles */
-.glasses-item {
-    transition: all 0.3s ease;
-}
-
-.glasses-item:hover {
-    transform: translateX(5px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.dark .glasses-item {
-    background-color: var(--bg) !important;
-    border-left-color: var(--accent) !important;
-}
-
-.dark .glasses-item:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.glasses-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-/* Attachment Thumbnail Styles */
-.attachment-thumbnail-card {
-    transition: all 0.3s ease;
-}
-
-.attachment-thumbnail-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    border-color: var(--accent) !important;
-}
-
-.dark .attachment-thumbnail-card {
-    background-color: var(--bg-alt) !important;
-    border-color: var(--border) !important;
-}
-
-.dark .attachment-thumbnail-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    border-color: var(--accent) !important;
-}
-
-.dark .attachment-thumbnail-card .text-muted {
-    color: var(--muted) !important;
-}
-
-/* Dark Mode for Appointment History Timeline */
-.dark .appointment-timeline::before {
-    background: linear-gradient(to bottom, var(--accent), var(--success));
-    opacity: 0.6;
-}
-
-.dark .appointment-timeline-item .timeline-marker {
-    border-color: var(--bg);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-}
-
-.dark .appointment-timeline-item .timeline-content {
-    background: var(--card);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.dark .appointment-timeline-item .timeline-content:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    border-color: var(--accent);
-}
-
-.dark .appointment-timeline-item .timeline-header h6 {
-    color: var(--text);
-}
-
-.dark .appointment-timeline-item .timeline-header h6 a {
-    color: var(--accent);
-}
-
-.dark .appointment-timeline-item .timeline-header h6 a:hover {
-    color: var(--success);
-}
-
-.dark .appointment-timeline-item .timeline-body {
-    color: var(--text);
-}
-
-.dark .appointment-timeline-item .timeline-body .bg-light {
-    background-color: var(--bg) !important;
-    border-color: var(--border) !important;
-    color: var(--text) !important;
-}
-
-.dark .appointment-timeline-item .timeline-body .card {
-    background-color: var(--card) !important;
-    border-color: var(--border) !important;
-    color: var(--text) !important;
-}
-
-.dark .appointment-timeline-item .timeline-body .card.border-success {
-    border-color: var(--success) !important;
-}
-
-.dark .appointment-timeline-item .timeline-body .card.border-info {
-    border-color: var(--accent) !important;
-}
-
-.dark .appointment-timeline-item .timeline-body .card-title {
-    color: var(--text) !important;
-}
-
-.dark .appointment-timeline-item .timeline-body .text-success {
-    color: var(--success) !important;
-}
-
-.dark .appointment-timeline-item .timeline-body .text-info {
-    color: var(--accent) !important;
-}
-
-.dark .appointment-timeline-item .timeline-body .text-primary {
-    color: var(--accent) !important;
-}
-
-.dark .appointment-timeline-item .timeline-body .text-muted {
-    color: var(--muted) !important;
-}
-
-.dark .appointment-timeline-item .timeline-body small.text-muted {
-    color: var(--muted) !important;
-}
-
-.dark .appointment-timeline-item .timeline-body .badge {
-    color: white !important;
-}
-
-.dark .appointment-timeline-item .timeline-body .btn-outline-primary {
-    color: var(--accent) !important;
-    border-color: var(--accent) !important;
-}
-
-.dark .appointment-timeline-item .timeline-body .btn-outline-primary:hover {
-    background-color: var(--accent) !important;
-    color: var(--bg) !important;
-}
-
-.timeline-item {
-    position: relative;
-    margin-bottom: 30px;
-}
-
-.timeline-marker {
-    position: absolute;
-    left: -22px;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 0.8rem;
-}
-
-.timeline-content {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1rem;
-}
-
-.timeline-title {
-    margin-bottom: 0.5rem;
-    color: var(--text);
-}
-
-.timeline-description {
-    margin-bottom: 0.5rem;
-    color: var(--text);
-}
-
-.card:hover {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transform: translateY(-1px);
-    transition: all 0.2s ease;
-}
-
-/* Modal and Form Styles - Glass Effect */
-.modal-content {
-    /* Glass effect - similar to sidebar */
-    background: rgba(248, 250, 252, 0.35) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(226, 232, 240, 0.3) !important;
-    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
-    color: var(--text) !important;
-}
-
-.dark .modal-content {
-    background: rgba(11, 18, 32, 0.40) !important;
-    border: 1px solid rgba(51, 65, 85, 0.3) !important;
-    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
-}
-
-.modal-header {
-    background: transparent !important;
-    border-bottom-color: rgba(226, 232, 240, 0.3) !important;
-    color: var(--text) !important;
-}
-
-.dark .modal-header {
-    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
-}
-
-/* Close button white in dark mode */
-.dark .modal-header .btn-close {
-    filter: invert(1) brightness(2);
-    opacity: 0.9;
-}
-
-.dark .modal-header .btn-close:hover {
-    opacity: 1;
-    filter: invert(1) brightness(2.5);
-}
-
-/* Enable dragging */
-.modal-content {
-    cursor: move;
-}
-
-.modal-dialog {
-    cursor: default;
-    transition: transform 0.2s ease;
-    margin: 1.75rem auto;
-}
-
-.modal-header {
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-}
-
-.modal-footer {
-    background: transparent !important;
-    border-top-color: rgba(226, 232, 240, 0.3) !important;
-}
-
-.dark .modal-footer {
-    border-top-color: rgba(51, 65, 85, 0.3) !important;
-}
-
-.form-control {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.form-control:focus {
-    background-color: var(--bg);
-    border-color: var(--accent);
-    color: var(--text);
-    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
-}
-
-.form-select {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.form-select:focus {
-    background-color: var(--bg);
-    border-color: var(--accent);
-    color: var(--text);
-}
-
-.form-label {
-    color: var(--text);
-}
-
-/* Button Styles */
-.btn-outline-primary {
-    color: var(--accent);
-    border-color: var(--accent);
-}
-
-.btn-outline-primary:hover {
-    background-color: var(--accent);
-    border-color: var(--accent);
-    color: white;
-}
-
-.btn-outline-success {
-    color: #28a745;
-    border-color: #28a745;
-}
-
-.btn-outline-success:hover {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: white;
-}
-
-.btn-outline-secondary {
-    color: var(--muted);
-    border-color: var(--border);
-}
-
-.btn-outline-secondary:hover {
-    background-color: var(--bg-alt);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.btn-secondary {
-    background-color: var(--bg-alt);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.btn-secondary:hover {
-    background-color: var(--border);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-/* Badge Styles */
-.badge.bg-primary {
-    background-color: var(--accent) !important;
-    color: white;
-}
-
-.badge.bg-success {
-    background-color: #28a745 !important;
-    color: white;
-}
-
-.badge.bg-secondary {
-    background-color: var(--muted) !important;
-    color: white;
-}
-
-.badge.bg-info {
-    background-color: #17a2b8 !important;
-    color: white;
-}
-
-.badge.bg-warning {
-    background-color: #ffc107 !important;
-    color: #212529;
-}
-
-.badge.bg-danger {
-    background-color: #dc3545 !important;
-    color: white;
-}
-
-/* File Attachment Styles */
-.attachment-card {
-    background: var(--bg);
-    border: 2px solid var(--border) !important;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-.attachment-card:hover {
-    border-color: var(--accent) !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.file-type-icon {
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    background: var(--accent);
-    color: white;
-    font-size: 1.5rem;
-}
-
-/* Notes Section Styles */
-.note-card {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-.note-card:hover {
-    border-color: var(--accent);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.note-header {
-    background-color: var(--bg-alt);
-    border-bottom: 1px solid var(--border);
-    padding: 0.75rem;
-    border-radius: 8px 8px 0 0;
-}
-
-.note-content {
-    padding: 1rem;
-}
-
-.note-meta {
-    font-size: 0.875rem;
-    color: var(--muted);
-}
-
-.note-text {
-    color: var(--text);
-    line-height: 1.6;
-}
-
-/* Form Text and Help Text Styles */
-.form-text {
-    color: var(--muted) !important;
-    font-size: 0.875rem;
-    line-height: 1.4;
-}
-
-.text-muted {
-    color: var(--muted) !important;
-}
-
-small.text-muted {
-    color: var(--muted) !important;
-}
-
-/* Progress and Upload Text */
-.progress {
-    background-color: var(--bg-alt);
-}
-
-.progress-bar {
-    background-color: var(--accent);
-}
-
-/* Camera Placeholder Text */
-.d-flex.flex-column.align-items-center.justify-content-center p.text-muted {
-    color: var(--muted) !important;
-}
-
-/* File Upload Help Text */
-div.form-text {
-    color: var(--muted) !important;
-    background-color: transparent;
-}
-
-/* Modal Body Text */
-.modal-body p {
-    color: var(--text);
-}
-
-.modal-body p.text-muted {
-    color: var(--muted) !important;
-}
-
-/* Medical History Timeline Styles */
-.timeline {
-    position: relative;
-    padding: 0;
-    margin: 0;
-}
-
-.timeline::before {
-    content: '';
-    position: absolute;
-    left: 20px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: var(--border);
-    z-index: 1;
-}
-
-.timeline-item {
-    position: relative;
-    padding-left: 60px;
-    margin-bottom: 2rem;
-}
-
-.timeline-item:last-child {
-    margin-bottom: 0;
-}
-
-.timeline-marker {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2;
-    border: 3px solid var(--bg);
-    box-shadow: 0 2px 4px var(--shadow);
-}
-
-.timeline-content {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1rem;
-    box-shadow: 0 2px 4px var(--shadow);
-    position: relative;
-}
-
-.timeline-content::before {
-    content: '';
-    position: absolute;
-    left: -8px;
-    top: 15px;
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 8px 8px 8px 0;
-    border-color: transparent var(--border) transparent transparent;
-}
-
-.timeline-content::after {
-    content: '';
-    position: absolute;
-    left: -7px;
-    top: 15px;
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 8px 8px 8px 0;
-    border-color: transparent var(--card) transparent transparent;
-}
-
-.timeline-header h6 {
-    color: var(--text);
-    margin-bottom: 0.25rem;
-}
-
-.timeline-body {
-    color: var(--text);
-}
-
-/* Medical History View Toggle */
-.medical-history-view {
-    transition: all 0.3s ease;
-}
-
-/* Badge Styles for Medical History */
-.badge.bg-light.text-dark {
-    background-color: var(--border) !important;
-    color: var(--text) !important;
-}
-
-/* Dark Mode Timeline Adjustments */
-.dark .timeline::before {
-    background: var(--border);
-}
-
-.dark .timeline-marker {
-    border-color: var(--bg);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.dark .timeline-content {
-    background: var(--card);
-    border-color: var(--border);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.dark .timeline-content::before {
-    border-color: transparent var(--border) transparent transparent;
-}
-
-.dark .timeline-content::after {
-    border-color: transparent var(--card) transparent transparent;
-}
-
-/* Accordion Dark Mode */
-.dark .accordion-item {
-    background-color: var(--card) !important;
-    border-color: var(--border) !important;
-}
-
-.dark .accordion-button {
-    background-color: var(--card) !important;
-    color: var(--text) !important;
-    border-color: var(--border) !important;
-}
-
-.dark .accordion-button:not(.collapsed) {
-    background-color: var(--bg) !important;
-    color: var(--text) !important;
-    border-color: var(--border) !important;
-    box-shadow: none !important;
-}
-
-.dark .accordion-button::after {
-    filter: invert(1);
-}
-
-.dark .accordion-body {
-    background-color: var(--card) !important;
-    color: var(--text) !important;
-}
-
-/* Status Badge Colors */
-.badge.bg-success {
-    background-color: var(--success) !important;
-}
-
-.badge.bg-info {
-    background-color: var(--accent) !important;
-}
-
-.badge.bg-secondary {
-    background-color: var(--muted) !important;
-}
-
-/* Dropdown Dark Mode */
-.dark .dropdown-menu {
-    background-color: var(--card) !important;
-    border-color: var(--border) !important;
-}
-
-.dark .dropdown-item {
-    color: var(--text) !important;
-}
-
-.dark .dropdown-item:hover,
-.dark .dropdown-item:focus {
-    background-color: var(--bg) !important;
-    color: var(--text) !important;
-}
-
-.dark .dropdown-divider {
-    border-color: var(--border) !important;
-}
-
-/* Button Group Dark Mode */
-.dark .btn-group .btn-outline-secondary {
-    color: var(--text) !important;
-    border-color: var(--border) !important;
-}
-
-.dark .btn-group .btn-outline-secondary:hover {
-    background-color: var(--bg) !important;
-    border-color: var(--border) !important;
-    color: var(--text) !important;
-}
-
-.dark .btn-group .btn-outline-secondary.active {
-    background-color: var(--accent) !important;
-    border-color: var(--accent) !important;
-    color: white !important;
-}
-
-/* Empty State Dark Mode */
-.dark .text-center i.text-muted {
-    color: var(--muted) !important;
-}
-
-.dark .text-center h6.text-muted {
-    color: var(--muted) !important;
-}
-
-.dark .text-center p.text-muted {
-    color: var(--muted) !important;
-}
-
-/* Delete Confirmation Modal Dark Mode */
-.dark #deleteConfirmationModal .modal-content {
-    background-color: var(--card) !important;
-    border-color: var(--border) !important;
-}
-
-.dark #deleteConfirmationModal .modal-header {
-    border-bottom-color: var(--border) !important;
-}
-
-.dark #deleteConfirmationModal .modal-footer {
-    border-top-color: var(--border) !important;
-}
-
-.dark #deleteConfirmationModal .modal-title {
-    color: var(--danger) !important;
-}
-
-.dark #deleteConfirmationModal .modal-body {
-    color: var(--text) !important;
-}
-
-.dark #deleteConfirmationModal .text-muted {
-    color: var(--muted) !important;
-}
-
-/* Add Medical History Modal Dark Mode */
-.dark #addMedicalHistoryModal .modal-content {
-    background-color: var(--card) !important;
-    border-color: var(--border) !important;
-}
-
-.dark #addMedicalHistoryModal .modal-header {
-    border-bottom-color: var(--border) !important;
-}
-
-.dark #addMedicalHistoryModal .modal-footer {
-    border-top-color: var(--border) !important;
-}
-
-.dark #addMedicalHistoryModal .modal-title {
-    color: var(--text) !important;
-}
-
-.dark #addMedicalHistoryModal .modal-body {
-    color: var(--text) !important;
-}
-
-.dark #addMedicalHistoryModal .form-label {
-    color: var(--text) !important;
-}
-
-.dark #addMedicalHistoryModal .form-control {
-    background-color: var(--card) !important;
-    border-color: var(--border) !important;
-    color: var(--text) !important;
-}
-
-.dark #addMedicalHistoryModal .form-control:focus {
-    background-color: var(--card) !important;
-    border-color: var(--accent) !important;
-    color: var(--text) !important;
-    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25) !important;
-}
-
-.dark #addMedicalHistoryModal .form-select {
-    background-color: var(--card) !important;
-    border-color: var(--border) !important;
-    color: var(--text) !important;
-}
-
-.dark #addMedicalHistoryModal .form-select:focus {
-    background-color: var(--card) !important;
-    border-color: var(--accent) !important;
-    color: var(--text) !important;
-}
-
-/* General Delete Confirmation Modal Dark Mode */
-.dark .modal-content {
-    background-color: var(--card) !important;
-    border-color: var(--border) !important;
-}
-
-.dark .modal-header {
-    border-bottom-color: var(--border) !important;
-}
-
-.dark .modal-footer {
-    border-top-color: var(--border) !important;
-}
-
-.dark .modal-title {
-    color: var(--text) !important;
-}
-
-.dark .modal-body {
-    color: var(--text) !important;
-}
-
-.dark .modal-body p {
-    color: var(--text) !important;
-}
-
-/* Glasses Prescriptions Table Styles */
-.prescription-values {
-    font-size: 0.85rem;
-    line-height: 1.3;
-}
-
-.prescription-values div {
-    margin-bottom: 2px;
-}
-
-.prescription-values strong {
-    color: var(--text);
-    font-weight: 600;
-}
-
-/* Glasses Prescriptions Dark Mode */
-.dark .prescription-values strong {
-    color: var(--text) !important;
-}
-
-.dark .prescription-values {
-    color: var(--text) !important;
-}
-
-/* Table responsive adjustments for glasses prescriptions */
-@media (max-width: 768px) {
-    .prescription-values {
-        font-size: 0.8rem;
-    }
-    
-    .prescription-values div {
-        margin-bottom: 1px;
-    }
-}
-
-/* Button Group Responsive Styles */
-.btn-group-responsive {
-    max-width: 100%;
-}
-
-.btn-group-responsive .btn {
-    flex-shrink: 0;
-    white-space: nowrap;
-}
-
-/* Responsive button sizing */
-@media (max-width: 1199px) {
-    .btn-group-responsive .btn {
-        font-size: 0.875rem;
-        padding: 0.5rem 0.75rem;
-    }
-    
-    .btn-group-responsive .btn i {
-        font-size: 0.875rem;
-    }
-}
-
-@media (max-width: 991px) {
-    .btn-group-responsive {
-        justify-content: center !important;
-        margin-top: 1rem;
-    }
-    
-    .btn-group-responsive .btn {
-        font-size: 0.8rem;
-        padding: 0.4rem 0.6rem;
-    }
-}
-
-@media (max-width: 575px) {
-    .btn-group-responsive {
-        flex-direction: column;
-        width: 100%;
-        gap: 0.5rem !important;
-    }
-    
-    .btn-group-responsive .btn {
-        width: 100%;
-        justify-content: center;
-    }
-}
-
-/* Responsive Timeline */
-@media (max-width: 768px) {
-    .timeline::before {
-        left: 15px;
-    }
-    
-    .timeline-item {
-        padding-left: 50px;
-    }
-    
-    .timeline-marker {
-        width: 30px;
-        height: 30px;
-        left: 0;
-    }
-    
-    .timeline-content::before,
-    .timeline-content::after {
-        left: -6px;
-        border-width: 6px 6px 6px 0;
-    }
-    
-    .timeline-content::after {
-        left: -5px;
-    }
-}
-
-/* Doctor Badge Styles */
-.doctor-badge {
-    background: linear-gradient(135deg, #007bff, #0056b3);
-    color: white;
-    border: 2px solid #0056b3;
-    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-    transition: all 0.3s ease;
-    animation: doctorBadgePulse 3s infinite;
-}
-
-.doctor-badge:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
-}
-
-@keyframes doctorBadgePulse {
-    0% { box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3); }
-    50% { box-shadow: 0 4px 20px rgba(0, 123, 255, 0.5); }
-    100% { box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3); }
-}
-
-.doctor-badge i {
-    animation: doctorIconSpin 2s linear infinite;
-}
-
-@keyframes doctorIconSpin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Dark mode support for doctor badge */
-[data-bs-theme="dark"] .doctor-badge {
-    background: linear-gradient(135deg, #0d6efd, #0a58ca);
-    border-color: #0a58ca;
-    box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
-}
-
-/* Treating Doctor Avatar Styles */
-.treating-doctor-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, var(--accent), #10b981);
-    color: white;
-    font-weight: bold;
-    font-size: 0.875rem;
-    flex-shrink: 0;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.treating-doctor-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-}
-
-.treating-doctor-avatar-fallback {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, var(--accent), #10b981);
-    color: white;
-    font-weight: bold;
-    font-size: 0.875rem;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-}
-</style>
-
 <script>
 /* Helper function to apply glass style to dynamically created modals */
 function applyGlassStyleToModal(modalId) {
@@ -3630,8 +2173,323 @@ function downloadPatientData(patientId, loadingOverlay) {
 }
 
 function editPatient(patientId) {
-    // Redirect to edit patient page
-    window.location.href = `/doctor/patients/${patientId}/edit`;
+    // Remove existing modal if present
+    const existingModal = document.getElementById('editPatientModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Fetch patient data
+    fetch(`/api/patients/${patientId}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.ok || !data.patient) {
+            showNotification('Error loading patient data', 'error');
+            return;
+        }
+        
+        const patient = data.patient;
+        
+        // Escape HTML for safety
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        const modalHtml = `
+            <div class="modal fade" id="editPatientModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="bi bi-person-gear me-2"></i>
+                                Edit Patient Information
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form id="editPatientForm">
+                            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                                <!-- Basic Information -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h6 class="border-bottom pb-2 mb-3" style="color: var(--text); border-bottom-color: var(--border) !important;">Basic Information</h6>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="edit_first_name" class="form-label">First Name *</label>
+                                        <input type="text" class="form-control" id="edit_first_name" name="first_name" 
+                                               value="${escapeHtml(patient.first_name)}" required>
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="edit_last_name" class="form-label">Last Name *</label>
+                                        <input type="text" class="form-control" id="edit_last_name" name="last_name" 
+                                               value="${escapeHtml(patient.last_name)}" required>
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Contact Information -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h6 class="border-bottom pb-2 mb-3" style="color: var(--text); border-bottom-color: var(--border) !important;">Contact Information</h6>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="edit_phone" class="form-label">Phone Number *</label>
+                                        <input type="tel" class="form-control" id="edit_phone" name="phone" 
+                                               value="${escapeHtml(patient.phone)}" required>
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="edit_alt_phone" class="form-label">Alternative Phone</label>
+                                        <input type="tel" class="form-control" id="edit_alt_phone" name="alt_phone" 
+                                               value="${escapeHtml(patient.alt_phone || '')}">
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Personal Information -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h6 class="border-bottom pb-2 mb-3" style="color: var(--text); border-bottom-color: var(--border) !important;">Personal Information</h6>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="edit_dob" class="form-label">Date of Birth</label>
+                                        <input type="date" class="form-control" id="edit_dob" name="dob" 
+                                               value="${patient.dob || ''}">
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="edit_national_id" class="form-label">National ID</label>
+                                        <input type="text" class="form-control" id="edit_national_id" name="national_id" 
+                                               value="${escapeHtml(patient.national_id || '')}">
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Address -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h6 class="border-bottom pb-2 mb-3" style="color: var(--text); border-bottom-color: var(--border) !important;">Address</h6>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <label for="edit_address" class="form-label">Full Address</label>
+                                        <textarea class="form-control" id="edit_address" name="address" rows="3">${escapeHtml(patient.address || '')}</textarea>
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Emergency Contact -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h6 class="border-bottom pb-2 mb-3" style="color: var(--text); border-bottom-color: var(--border) !important;">Emergency Contact</h6>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="edit_emergency_contact" class="form-label">Emergency Contact Name</label>
+                                        <input type="text" class="form-control" id="edit_emergency_contact" name="emergency_contact" 
+                                               value="${escapeHtml(patient.emergency_contact || '')}">
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="edit_emergency_phone" class="form-label">Emergency Contact Phone</label>
+                                        <input type="tel" class="form-control" id="edit_emergency_phone" name="emergency_phone" 
+                                               value="${escapeHtml(patient.emergency_phone || '')}">
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="bi bi-x-lg me-2"></i>Cancel
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary me-2" onclick="resetEditPatientForm()">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>Reset
+                                </button>
+                                <button type="submit" class="btn btn-primary" id="savePatientBtn">
+                                    <span class="spinner-border spinner-border-sm d-none" id="savePatientSpinner"></span>
+                                    <i class="bi bi-check-lg me-2"></i>Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        const modalElement = document.getElementById('editPatientModal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        
+        // Store original form data for reset
+        window.originalPatientData = {
+            first_name: patient.first_name,
+            last_name: patient.last_name,
+            phone: patient.phone,
+            alt_phone: patient.alt_phone || '',
+            dob: patient.dob || '',
+            national_id: patient.national_id || '',
+            address: patient.address || '',
+            emergency_contact: patient.emergency_contact || '',
+            emergency_phone: patient.emergency_phone || ''
+        };
+        
+        // Apply glass style and draggable
+        setTimeout(function() {
+            applyGlassStyleToModal('editPatientModal');
+            if (typeof initializeDraggableModals === 'function') {
+                initializeDraggableModals();
+            }
+        }, 50);
+        
+        // Handle form submission
+        document.getElementById('editPatientForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Clear previous validation errors
+            clearEditPatientValidationErrors();
+            
+            // Basic validation
+            if (!validateEditPatientForm()) {
+                return;
+            }
+            
+            // Show loading state
+            const saveBtn = document.getElementById('savePatientBtn');
+            const spinner = document.getElementById('savePatientSpinner');
+            saveBtn.disabled = true;
+            spinner.classList.remove('d-none');
+            
+            // Submit form
+            const formData = new FormData(this);
+            formData.append('_method', 'PUT');
+            
+            fetch(`/doctor/patients/${patientId}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    showNotification('Patient updated successfully!', 'success');
+                    modal.hide();
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Failed to update patient');
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error updating patient: ' + error.message, 'error');
+            })
+            .finally(() => {
+                saveBtn.disabled = false;
+                spinner.classList.add('d-none');
+            });
+        });
+        
+        // Clean up modal on hide
+        modalElement.addEventListener('hidden.bs.modal', function() {
+            this.remove();
+        });
+    })
+    .catch(error => {
+        console.error('Error loading patient data:', error);
+        showNotification('Error loading patient data: ' + error.message, 'error');
+    });
+}
+
+function validateEditPatientForm() {
+    let isValid = true;
+    
+    // Required fields
+    const requiredFields = ['edit_first_name', 'edit_last_name', 'edit_phone'];
+    
+    requiredFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (!field || !field.value.trim()) {
+            showEditPatientFieldError(fieldId, 'This field is required');
+            isValid = false;
+        }
+    });
+    
+    // Phone validation
+    const phone = document.getElementById('edit_phone')?.value.trim();
+    if (phone && !isValidPhone(phone)) {
+        showEditPatientFieldError('edit_phone', 'Please enter a valid phone number');
+        isValid = false;
+    }
+    
+    const altPhone = document.getElementById('edit_alt_phone')?.value.trim();
+    if (altPhone && !isValidPhone(altPhone)) {
+        showEditPatientFieldError('edit_alt_phone', 'Please enter a valid phone number');
+        isValid = false;
+    }
+    
+    const emergencyPhone = document.getElementById('edit_emergency_phone')?.value.trim();
+    if (emergencyPhone && !isValidPhone(emergencyPhone)) {
+        showEditPatientFieldError('edit_emergency_phone', 'Please enter a valid phone number');
+        isValid = false;
+    }
+    
+    return isValid;
+}
+
+function isValidPhone(phone) {
+    // Egyptian phone number validation
+    const phoneRegex = /^(\+20|0)?1[0-9]{9}$/;
+    return phoneRegex.test(phone.replace(/\s+/g, ''));
+}
+
+function clearEditPatientValidationErrors() {
+    const modal = document.getElementById('editPatientModal');
+    if (!modal) return;
+    
+    modal.querySelectorAll('.is-invalid').forEach(el => {
+        el.classList.remove('is-invalid');
+    });
+    modal.querySelectorAll('.invalid-feedback').forEach(el => {
+        el.textContent = '';
+    });
+}
+
+function showEditPatientFieldError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    if (!field) return;
+    
+    const feedback = field.nextElementSibling;
+    
+    field.classList.add('is-invalid');
+    if (feedback && feedback.classList.contains('invalid-feedback')) {
+        feedback.textContent = message;
+    }
+}
+
+function resetEditPatientForm() {
+    if (!window.originalPatientData) return;
+    
+    const data = window.originalPatientData;
+    document.getElementById('edit_first_name').value = data.first_name;
+    document.getElementById('edit_last_name').value = data.last_name;
+    document.getElementById('edit_phone').value = data.phone;
+    document.getElementById('edit_alt_phone').value = data.alt_phone;
+    document.getElementById('edit_dob').value = data.dob;
+    document.getElementById('edit_national_id').value = data.national_id;
+    document.getElementById('edit_address').value = data.address;
+    document.getElementById('edit_emergency_contact').value = data.emergency_contact;
+    document.getElementById('edit_emergency_phone').value = data.emergency_phone;
+    
+    clearEditPatientValidationErrors();
 }
 
 // Appointment timeline functions - moved to top to ensure availability
