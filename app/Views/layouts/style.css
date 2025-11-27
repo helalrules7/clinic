@@ -1,0 +1,285 @@
+/* ============================================
+   Doctor Pages CSS - Consolidated Stylesheet
+   ============================================ */
+
+/* ============================================
+   Alerts Page Styles (from alerts/index.php)
+   ============================================ */
+
+/* Dark Mode Support for Alerts Page */
+.card {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.card-header {
+    background-color: var(--bg-alt) !important;
+    border-bottom-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.card-body {
+    background-color: var(--card) !important;
+}
+
+/* Table Dark Mode Styles */
+.table {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+.table thead th {
+    background-color: var(--bg-dark) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.table tbody tr {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+}
+
+.table tbody tr:hover {
+    background-color: var(--bg-alt) !important;
+}
+
+.table td {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .table {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+.dark .table thead th {
+    background-color: var(--bg-dark) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .table tbody tr {
+    background-color: var(--card) !important;
+}
+
+.dark .table tbody tr:hover {
+    background-color: var(--bg-alt) !important;
+}
+
+.dark .table td {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+.dark .text-muted {
+    color: var(--muted) !important;
+}
+
+.dark .badge {
+    color: var(--text) !important;
+}
+
+/* Form Controls Dark Mode */
+.form-control, .form-select {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--card) !important;
+    border-color: var(--accent) !important;
+    color: var(--text) !important;
+}
+
+.dark .form-control, .dark .form-select {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark .form-control:focus, .dark .form-select:focus {
+    background-color: var(--card) !important;
+    border-color: var(--accent) !important;
+    color: var(--text) !important;
+}
+
+/* Alerts Modals Glass Effect */
+.alerts-modal-glass .modal-content {
+    background: rgba(248, 250, 252, 0.7) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(226, 232, 240, 0.4) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.15);
+    color: var(--text) !important;
+}
+
+.dark .alerts-modal-glass .modal-content {
+    background: rgba(11, 18, 32, 0.40) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
+    color: var(--text) !important;
+}
+
+.alerts-modal-glass .modal-header {
+    background: transparent !important;
+    border-bottom-color: rgba(226, 232, 240, 0.4) !important;
+    color: var(--text) !important;
+}
+
+.dark .alerts-modal-glass .modal-header {
+    background: transparent !important;
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+    color: var(--text) !important;
+}
+
+.alerts-modal-glass .modal-body {
+    background: transparent !important;
+    color: var(--text) !important;
+}
+
+.alerts-modal-glass .modal-footer {
+    background: transparent !important;
+    border-top-color: rgba(226, 232, 240, 0.4) !important;
+}
+
+.dark .alerts-modal-glass .modal-footer {
+    border-top-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+/* Close button white in dark mode */
+.dark .alerts-modal-glass .modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.9;
+}
+
+.dark .alerts-modal-glass .modal-header .btn-close:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5);
+}
+
+/* Enable dragging */
+.alerts-modal-glass .modal-content {
+    cursor: move;
+}
+
+.alerts-modal-glass .modal-dialog {
+    cursor: default;
+    transition: transform 0.2s ease;
+    margin: 1.75rem auto;
+    position: relative;
+}
+
+.alerts-modal-glass .modal-header {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    cursor: move;
+}
+
+.alerts-modal-glass .modal-header button {
+    cursor: pointer;
+}
+
+.alerts-modal-glass .modal-dialog.dragging {
+    transition: none !important;
+}
+
+.alerts-modal-glass .text-muted {
+    color: var(--muted) !important;
+}
+
+/* Pagination Styles */
+.pagination {
+    margin-top: 1rem;
+}
+
+.page-link {
+    color: var(--accent);
+    background-color: var(--card);
+    border-color: var(--border);
+    transition: all 0.3s ease;
+}
+
+.page-link:hover {
+    color: white;
+    background-color: var(--accent);
+    border-color: var(--accent);
+    transform: translateY(-1px);
+}
+
+.page-item.active .page-link {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.page-item.disabled .page-link {
+    color: var(--muted);
+    background-color: var(--card);
+    border-color: var(--border);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.dark .page-link {
+    color: var(--accent);
+    background-color: var(--card);
+    border-color: var(--border);
+}
+
+.dark .page-link:hover {
+    color: white;
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.dark .page-item.active .page-link {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.dark .page-item.disabled .page-link {
+    color: var(--muted);
+    background-color: var(--card);
+    border-color: var(--border);
+}
+
+/* Alert Status Styling in Table */
+.table tbody tr.alert-active {
+    border-left: 4px solid var(--success) !important;
+    background-color: rgba(16, 185, 129, 0.05) !important;
+}
+
+.dark .table tbody tr.alert-active {
+    border-left: 4px solid var(--success) !important;
+    background-color: rgba(74, 222, 128, 0.1) !important;
+}
+
+.table tbody tr.alert-dismissed,
+.table tbody tr.alert-inactive {
+    border-left: 4px solid var(--muted) !important;
+    opacity: 0.6;
+    background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+.dark .table tbody tr.alert-dismissed,
+.dark .table tbody tr.alert-inactive {
+    background-color: rgba(0, 0, 0, 0.1) !important;
+    opacity: 0.5;
+}
+
+.table tbody tr.alert-active:hover {
+    background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+.dark .table tbody tr.alert-active:hover {
+    background-color: rgba(74, 222, 128, 0.15) !important;
+}
+

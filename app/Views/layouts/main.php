@@ -47,6 +47,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Doctor Pages Consolidated CSS -->
+    <link href="/app/Views/layouts/style.css" rel="stylesheet">
+    
     <!-- Theme initialization script - Must run before CSS to prevent flash -->
     <script>
         (function() {
