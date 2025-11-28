@@ -1,0 +1,569 @@
+
+// Debounce function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Alert Modal Functions
+let currentAlertIdToEdit = null;
+let originalAlertData = null; // Store original alert data for comparison
+
+function openAlertModal(patientId, appointmentId, alertData = null) {
+    // Reset to create mode or set edit mode
+    currentAlertIdToEdit = alertData ? alertData.id : null;
+    originalAlertData = alertData ? {...alertData} : null; // Store copy of original data
+    
+    // Clear patient search
+    document.getElementById('alertPatientSearch').value = '';
+    document.getElementById('alertPatientSearchResults').innerHTML = '';
+    document.getElementById('alertPatientId').value = patientId || '';
+    document.getElementById('alertAppointmentId').value = appointmentId || '';
+    
+    if (alertData) {
+        // Edit mode - populate form with alert data
+        // Check if message contains HTML tags
+        const hasHtml = /<[a-z][\s\S]*>/i.test(alertData.message || '');
+        if (hasHtml) {
+            setAlertEditorMode('html');
+            document.getElementById('alertMessageHtmlEditor').innerHTML = alertData.message || '';
+        } else {
+            setAlertEditorMode('text');
+            document.getElementById('alertMessage').value = alertData.message || '';
+        }
+        document.getElementById('alertDate').value = alertData.alert_date || '';
+        document.getElementById('alertTime').value = alertData.alert_time || '';
+        document.getElementById('alertRepeatCount').value = alertData.repeat_count || '1';
+        document.getElementById('alertRepeatInterval').value = alertData.repeat_interval || '0';
+        
+        // Set patient info if available
+        if (alertData.patient_id) {
+            const fullName = alertData.patient_first_name && alertData.patient_last_name 
+                ? `${alertData.patient_first_name} ${alertData.patient_last_name}` 
+                : '';
+            if (fullName) {
+                document.getElementById('alertPatientSearch').value = fullName;
+                document.getElementById('alertPatientId').value = alertData.patient_id;
+                
+                document.getElementById('alertPatientSearchResults').innerHTML = `
+                    <div class="selected-patient-info alert alert-info">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>Selected Patient:</strong> ${fullName}<br>
+                                <small>Phone: ${alertData.patient_phone || 'N/A'}</small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearAlertPatientSelection()">
+                                Change Patient
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Update modal title and button
+        document.getElementById('alertModalLabel').innerHTML = '<i class="bi bi-bell me-2"></i>Edit Alert';
+        const saveBtn = document.querySelector('#alertModal .modal-footer .btn-primary');
+        if (saveBtn) {
+            saveBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Update Alert';
+            saveBtn.setAttribute('onclick', 'saveAlert()');
+        }
+    } else {
+        // Create mode - clear form
+        setAlertEditorMode('text');
+        document.getElementById('alertMessage').value = '';
+        document.getElementById('alertMessageHtmlEditor').innerHTML = '';
+        document.getElementById('alertDate').value = '';
+        document.getElementById('alertTime').value = '';
+        document.getElementById('alertRepeatCount').value = '1';
+        document.getElementById('alertRepeatInterval').value = '0';
+        
+        // Check if we have patient info from the page (for patient.php)
+        const currentPatientInfo = window.currentPatientInfo || null;
+        
+        // If patientId is provided, set patient info immediately if available, otherwise fetch
+        if (patientId) {
+            // If we have patient info from the page, use it immediately
+            if (currentPatientInfo && currentPatientInfo.id == patientId) {
+                const fullName = `${currentPatientInfo.first_name} ${currentPatientInfo.last_name}`;
+                document.getElementById('alertPatientSearch').value = fullName;
+                document.getElementById('alertPatientId').value = patientId;
+                
+                // Show selected patient info immediately
+                document.getElementById('alertPatientSearchResults').innerHTML = `
+                    <div class="selected-patient-info alert alert-info">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>Selected Patient:</strong> ${fullName}<br>
+                                <small>Phone: ${currentPatientInfo.phone || 'N/A'} • Age: ${currentPatientInfo.age || 'N/A'}</small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearAlertPatientSelection()">
+                                Change Patient
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Fetch patient info from API
+                fetch(`/api/patients/${patientId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.ok && data.data) {
+                            const patient = data.data;
+                            const fullName = `${patient.first_name} ${patient.last_name}`;
+                            document.getElementById('alertPatientSearch').value = fullName;
+                            document.getElementById('alertPatientId').value = patientId;
+                            
+                            // Show selected patient info
+                            document.getElementById('alertPatientSearchResults').innerHTML = `
+                                <div class="selected-patient-info alert alert-info">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong>Selected Patient:</strong> ${fullName}<br>
+                                            <small>Phone: ${patient.phone || 'N/A'} • Age: ${patient.age || 'N/A'}</small>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearAlertPatientSelection()">
+                                            Change Patient
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        console.debug('Error fetching patient:', error);
+                    });
+            }
+        }
+        
+        // Update modal title and button
+        document.getElementById('alertModalLabel').innerHTML = '<i class="bi bi-bell me-2"></i>Create Alert';
+        const saveBtn = document.querySelector('#alertModal .modal-footer .btn-primary');
+        if (saveBtn) {
+            saveBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Create Alert';
+            saveBtn.setAttribute('onclick', 'saveAlert()');
+        }
+        
+        // Set default date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('alertDate').value = today;
+        
+        // Set default time to current time + 1 hour
+        const now = new Date();
+        now.setHours(now.getHours() + 1);
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        document.getElementById('alertTime').value = `${hours}:${minutes}`;
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('alertModal'));
+    modal.show();
+}
+
+// Patient search for alert modal
+function searchAlertPatients() {
+    const query = document.getElementById('alertPatientSearch').value.trim();
+    if (query.length < 2) {
+        document.getElementById('alertPatientSearchResults').innerHTML = '';
+        return;
+    }
+    
+    fetch(`/api/patients/search?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                displayAlertPatientSearchResults(data.data);
+            }
+        })
+        .catch(error => {
+            console.debug('Error searching patients:', error);
+        });
+}
+
+function displayAlertPatientSearchResults(patients) {
+    const resultsContainer = document.getElementById('alertPatientSearchResults');
+    
+    if (patients.length === 0) {
+        resultsContainer.innerHTML = '<div class="search-result-item text-muted">No patients found</div>';
+        return;
+    }
+    
+    let html = '';
+    patients.forEach(patient => {
+        html += `
+            <div class="search-result-item" onclick="selectAlertPatient(${patient.id}, '${patient.first_name} ${patient.last_name}', '${patient.phone || ''}', ${patient.age || 'null'})">
+                <div class="patient-name">${patient.first_name} ${patient.last_name}</div>
+                <div class="patient-details">${patient.phone || 'N/A'} • Age: ${patient.age || 'N/A'}</div>
+            </div>
+        `;
+    });
+    
+    resultsContainer.innerHTML = html;
+}
+
+function selectAlertPatient(patientId, patientName, phone, age) {
+    document.getElementById('alertPatientId').value = patientId;
+    document.getElementById('alertPatientSearch').value = patientName;
+    document.getElementById('alertPatientSearchResults').innerHTML = `
+        <div class="selected-patient-info alert alert-info">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <strong>Selected Patient:</strong> ${patientName}<br>
+                    <small>Phone: ${phone || 'N/A'} • Age: ${age || 'N/A'}</small>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearAlertPatientSelection()">
+                    Change Patient
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function clearAlertPatientSelection() {
+    document.getElementById('alertPatientId').value = '';
+    document.getElementById('alertPatientSearch').value = '';
+    document.getElementById('alertPatientSearchResults').innerHTML = '';
+}
+
+// Make alertModal draggable (separate from main.php to avoid conflicts)
+function initializeAlertModalDraggable() {
+    const modal = document.getElementById('alertModal');
+    if (!modal) return;
+    
+    const modalDialog = modal.querySelector('.modal-dialog');
+    if (!modalDialog) return;
+    
+    const modalHeader = modal.querySelector('.modal-header');
+    if (!modalHeader) return;
+    
+    let isDragging = false;
+    let currentX = 0;
+    let currentY = 0;
+    let initialX = 0;
+    let initialY = 0;
+    let xOffset = 0;
+    let yOffset = 0;
+    
+    modalHeader.style.cursor = 'move';
+    
+    function setTranslate(xPos, yPos, el) {
+        // Get viewport dimensions
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // Get modal dimensions
+        const modalRect = el.getBoundingClientRect();
+        const modalWidth = modalRect.width;
+        const modalHeight = modalRect.height;
+        
+        // Get the original position (center of viewport)
+        // For Bootstrap centered modal, it's typically at 50% from top (not 50px)
+        const originalLeft = (viewportWidth - modalWidth) / 2;
+        const originalTop = (viewportHeight - modalHeight) / 2;
+        
+        // Calculate boundaries relative to original position
+        // Allow movement within viewport bounds for both X and Y axes
+        const minX = -(originalLeft - 20); // Allow 20px from left edge
+        const maxX = viewportWidth - modalWidth - originalLeft + 20; // Allow 20px from right edge
+        const minY = -(originalTop - 20); // Allow 20px from top
+        const maxY = viewportHeight - modalHeight - originalTop + 20; // Allow 20px from bottom
+        
+        // Constrain movement on both axes
+        const constrainedX = Math.max(minX, Math.min(maxX, xPos));
+        const constrainedY = Math.max(minY, Math.min(maxY, yPos));
+        
+        // Apply transform to both X and Y axes
+        el.style.transform = 'translate(' + constrainedX + 'px, ' + constrainedY + 'px)';
+    }
+    
+    function drag(e) {
+        if (isDragging) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Calculate new position based on mouse movement on both axes
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+            
+            // Update offsets for both axes
+            xOffset = currentX;
+            yOffset = currentY;
+            
+            // Apply translation to both X and Y
+            setTranslate(currentX, currentY, modalDialog);
+        }
+    }
+    
+    function dragEnd(e) {
+        if (isDragging) {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+            modalDialog.style.transition = '';
+        }
+    }
+    
+    function dragStart(e) {
+        // Don't drag if clicking on buttons or inputs
+        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.closest('button') || e.target.closest('input') || e.target.closest('.btn-close')) {
+            return;
+        }
+        
+        // Only start dragging if clicking on header (not on title text)
+        if (e.target === modalHeader || (modalHeader.contains(e.target) && e.target.tagName !== 'H5' && !e.target.closest('h5'))) {
+            // Get current transform values to continue from current position
+            const transform = modalDialog.style.transform;
+            if (transform) {
+                const match = transform.match(/translate\(([^,]+)px,\s*([^)]+)px\)/);
+                if (match) {
+                    xOffset = parseFloat(match[1]) || 0;
+                    yOffset = parseFloat(match[2]) || 0;
+                }
+            }
+            
+            // Calculate initial position for both axes
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+            
+            // Store start position to detect drag vs click
+            const startX = e.clientX;
+            const startY = e.clientY;
+            let hasMoved = false;
+            
+            function checkMove(moveEvent) {
+                // Check movement on both axes (X and Y)
+                const deltaX = Math.abs(moveEvent.clientX - startX);
+                const deltaY = Math.abs(moveEvent.clientY - startY);
+                // Start dragging if moved more than 5px on either axis
+                if (deltaX > 5 || deltaY > 5) {
+                    hasMoved = true;
+                    isDragging = true;
+                    modalDialog.style.transition = 'none';
+                    // Update initial positions when dragging starts
+                    initialX = moveEvent.clientX - xOffset;
+                    initialY = moveEvent.clientY - yOffset;
+                    moveEvent.preventDefault();
+                    moveEvent.stopPropagation();
+                }
+            }
+            
+            function handleMove(moveEvent) {
+                if (hasMoved) {
+                    drag(moveEvent);
+                } else {
+                    checkMove(moveEvent);
+                }
+            }
+            
+            function handleEnd(endEvent) {
+                if (!hasMoved) {
+                    // It was just a click, allow normal behavior
+                    document.removeEventListener('mousemove', handleMove);
+                    document.removeEventListener('mouseup', handleEnd);
+                    return;
+                }
+                dragEnd(endEvent);
+                document.removeEventListener('mousemove', handleMove);
+                document.removeEventListener('mouseup', handleEnd);
+            }
+            
+            document.addEventListener('mousemove', handleMove);
+            document.addEventListener('mouseup', handleEnd);
+        }
+    }
+    
+    modalHeader.addEventListener('mousedown', dragStart);
+    
+    modal.addEventListener('hidden.bs.modal', function() {
+        xOffset = 0;
+        yOffset = 0;
+        modalDialog.style.transform = '';
+    });
+}
+
+// Initialize patient search on modal show
+document.addEventListener('DOMContentLoaded', function() {
+    const alertModal = document.getElementById('alertModal');
+    if (alertModal) {
+        const patientSearchField = document.getElementById('alertPatientSearch');
+        if (patientSearchField) {
+            patientSearchField.addEventListener('input', debounce(searchAlertPatients, 300));
+        }
+        
+        alertModal.addEventListener('hidden.bs.modal', function() {
+            document.getElementById('alertPatientSearch').value = '';
+            document.getElementById('alertPatientSearchResults').innerHTML = '';
+        });
+    }
+    
+    initializeAlertModalDraggable();
+});
+
+// Set alert editor mode (text or HTML)
+function setAlertEditorMode(mode) {
+    const textEditor = document.getElementById('alertMessage');
+    const htmlEditor = document.getElementById('alertMessageHtmlEditor');
+    const textBtn = document.getElementById('alertEditorTextBtn');
+    const htmlBtn = document.getElementById('alertEditorHtmlBtn');
+    
+    if (!textEditor || !htmlEditor || !textBtn || !htmlBtn) return;
+    
+    if (mode === 'html') {
+        // Switch to HTML mode
+        textEditor.style.display = 'none';
+        textEditor.removeAttribute('required');
+        htmlEditor.style.display = 'block';
+        htmlEditor.setAttribute('required', 'required');
+        
+        // Transfer content if text editor has content
+        if (textEditor.value && !htmlEditor.innerHTML.trim()) {
+            htmlEditor.innerHTML = escapeHtml(textEditor.value).replace(/\n/g, '<br>');
+        }
+        
+        // Update button states
+        textBtn.classList.remove('active');
+        htmlBtn.classList.add('active');
+    } else {
+        // Switch to text mode
+        htmlEditor.style.display = 'none';
+        htmlEditor.removeAttribute('required');
+        textEditor.style.display = 'block';
+        textEditor.setAttribute('required', 'required');
+        
+        // Transfer content if HTML editor has content
+        if (htmlEditor.innerHTML && !textEditor.value) {
+            // Strip HTML tags and convert <br> to newlines
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlEditor.innerHTML;
+            textEditor.value = tempDiv.textContent || tempDiv.innerText || '';
+        }
+        
+        // Update button states
+        htmlBtn.classList.remove('active');
+        textBtn.classList.add('active');
+    }
+}
+
+// Escape HTML function
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function saveAlert() {
+    const form = document.getElementById('alertForm');
+    if (!form || !form.checkValidity()) {
+        if (form) {
+            form.reportValidity();
+        }
+        return;
+    }
+    
+    const alertDate = document.getElementById('alertDate').value;
+    const alertTime = document.getElementById('alertTime').value;
+    
+    if (!alertDate || !alertTime) {
+        if (typeof showToast === 'function') {
+            showToast('error', 'Error', 'Please fill in all required fields.');
+        }
+        return;
+    }
+    
+    const alertDateTime = new Date(alertDate + 'T' + alertTime);
+    const isFuture = alertDateTime > new Date();
+    const wasInactive = originalAlertData && (originalAlertData.is_active == 0 || originalAlertData.is_dismissed == 1);
+    
+    // Get message from appropriate editor (text or HTML)
+    let alertMessage = '';
+    const htmlEditor = document.getElementById('alertMessageHtmlEditor');
+    const textEditor = document.getElementById('alertMessage');
+    
+    if (htmlEditor && htmlEditor.style.display !== 'none') {
+        // HTML mode
+        alertMessage = htmlEditor.innerHTML;
+    } else {
+        // Text mode
+        alertMessage = textEditor.value;
+    }
+    
+    const formData = {
+        patient_id: document.getElementById('alertPatientId').value || null,
+        appointment_id: document.getElementById('alertAppointmentId').value || null,
+        message: alertMessage,
+        alert_date: alertDate,
+        alert_time: alertTime,
+        repeat_count: parseInt(document.getElementById('alertRepeatCount').value) || 1,
+        repeat_interval: parseInt(document.getElementById('alertRepeatInterval').value) || 0
+    };
+    
+    const isEditMode = currentAlertIdToEdit !== null;
+    
+    if (isEditMode && isFuture && wasInactive) {
+        formData.is_active = 1;
+        formData.is_dismissed = 0;
+    } else if (isEditMode) {
+        formData.is_active = originalAlertData ? (originalAlertData.is_active || 0) : 1;
+        formData.is_dismissed = originalAlertData ? (originalAlertData.is_dismissed || 0) : 0;
+    }
+    
+    const url = isEditMode ? '/api/alerts/' + currentAlertIdToEdit : '/api/alerts';
+    const method = isEditMode ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            const modalElement = document.getElementById('alertModal');
+            if (modalElement) {
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                }
+            }
+            
+            currentAlertIdToEdit = null;
+            originalAlertData = null;
+            
+            if (typeof showToast === 'function') {
+                const title = isEditMode ? 'Alert Updated' : 'Alert Created';
+                const message = isEditMode ? 'The alert has been updated successfully.' : 'The alert has been added to your notifications.';
+                showToast('success', title, message);
+            }
+            
+            if (typeof loadAlerts === 'function') {
+                loadAlerts();
+            }
+            
+            if (typeof loadPatientAlerts === 'function') {
+                loadPatientAlerts();
+            }
+        } else {
+            if (typeof showToast === 'function') {
+                const errorMsg = data.message || 'Failed to ' + (isEditMode ? 'update' : 'create') + ' alert';
+                showToast('error', 'Error', errorMsg);
+            }
+        }
+    })
+    .catch(function(error) {
+        if (typeof showToast === 'function') {
+            const errorMsg = 'Failed to ' + (isEditMode ? 'update' : 'create') + ' alert. Please try again.';
+            showToast('error', 'Error', errorMsg);
+        }
+    });
+}

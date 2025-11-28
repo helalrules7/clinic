@@ -3479,19 +3479,31 @@ class ApiController
     public function createLabTest()
     {
         try {
-            // Get JSON data from request body
-            $input = json_decode(file_get_contents('php://input'), true);
+            // Get data from request - support both JSON and form data
+            $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+            $input = [];
             
-            $appointmentId = $input['appointment_id'] ?? $_POST['appointment_id'] ?? null;
-            $testType = $input['test_type'] ?? $_POST['test_type'] ?? null;
-            $testCategory = $input['test_category'] ?? $_POST['test_category'] ?? null;
-            $testName = $input['test_name'] ?? $_POST['test_name'] ?? null;
-            $priority = $input['priority'] ?? $_POST['priority'] ?? 'normal';
-            $status = $input['status'] ?? $_POST['status'] ?? 'ordered';
-            $orderedDate = $input['ordered_date'] ?? $_POST['ordered_date'] ?? null;
-            $expectedDate = $input['expected_date'] ?? $_POST['expected_date'] ?? null;
-            $notes = $input['notes'] ?? $_POST['notes'] ?? null;
-            $results = $input['results'] ?? $_POST['results'] ?? null;
+            if (strpos($contentType, 'application/json') !== false) {
+                // JSON request
+                $input = json_decode(file_get_contents('php://input'), true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    $input = [];
+                }
+            } else {
+                // Form data or URL-encoded
+                $input = $_POST;
+            }
+            
+            $appointmentId = $input['appointment_id'] ?? null;
+            $testType = $input['test_type'] ?? null;
+            $testCategory = $input['test_category'] ?? null;
+            $testName = $input['test_name'] ?? null;
+            $priority = $input['priority'] ?? 'normal';
+            $status = $input['status'] ?? 'ordered';
+            $orderedDate = $input['ordered_date'] ?? null;
+            $expectedDate = $input['expected_date'] ?? null;
+            $notes = $input['notes'] ?? null;
+            $results = $input['results'] ?? null;
 
             // Validation
             if (!$appointmentId || !$testType || !$testCategory || !$testName) {
