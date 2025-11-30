@@ -672,17 +672,24 @@ class ForumController
         }
 
         try {
+            // Get topics where patient_id matches OR where patient is in meta tags
             $stmt = $this->pdo->prepare("
-                SELECT t.*,
+                SELECT DISTINCT t.*,
                        u.name as creator_name,
                        u2.name as last_reply_name
                 FROM doctor_forum_topics t
                 LEFT JOIN users u ON t.created_by = u.id
                 LEFT JOIN users u2 ON t.last_reply_by = u2.id
                 WHERE t.patient_id = ?
+                   OR EXISTS (
+                       SELECT 1 FROM doctor_forum_tags dt 
+                       WHERE dt.topic_id = t.id 
+                       AND dt.tag_type = 'patient' 
+                       AND dt.tag_id = ?
+                   )
                 ORDER BY t.is_pinned DESC, t.last_reply_at DESC, t.created_at DESC
             ");
-            $stmt->execute([$patientId]);
+            $stmt->execute([$patientId, $patientId]);
             $topics = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             $userId = $user['id'] ?? null;
@@ -725,17 +732,24 @@ class ForumController
         }
 
         try {
+            // Get topics where appointment_id matches OR where appointment is in meta tags
             $stmt = $this->pdo->prepare("
-                SELECT t.*,
+                SELECT DISTINCT t.*,
                        u.name as creator_name,
                        u2.name as last_reply_name
                 FROM doctor_forum_topics t
                 LEFT JOIN users u ON t.created_by = u.id
                 LEFT JOIN users u2 ON t.last_reply_by = u2.id
                 WHERE t.appointment_id = ?
+                   OR EXISTS (
+                       SELECT 1 FROM doctor_forum_tags dt 
+                       WHERE dt.topic_id = t.id 
+                       AND dt.tag_type = 'appointment' 
+                       AND dt.tag_id = ?
+                   )
                 ORDER BY t.is_pinned DESC, t.last_reply_at DESC, t.created_at DESC
             ");
-            $stmt->execute([$appointmentId]);
+            $stmt->execute([$appointmentId, $appointmentId]);
             $topics = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             $userId = $user['id'] ?? null;
