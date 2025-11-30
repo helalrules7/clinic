@@ -112,6 +112,24 @@ $consultation = !empty($consultationNotes) ? $consultationNotes[0] : [];
 $isEditing = !empty($consultation);
 ?>
 
+<!-- Sticky Save/Cancel Bar -->
+<div class="action-bar-container" id="actionBarContainer">
+    <div class="action-bar" id="actionBar">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center py-2">
+                <a href="/doctor/appointments/<?= $appointment['id'] ?? '' ?>" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i>
+                    Cancel
+                </a>
+                <button type="button" class="btn btn-primary" onclick="document.getElementById('consultationForm').requestSubmit();">
+                    <i class="bi bi-check-circle"></i>
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Edit Consultation Form -->
 <div class="row">
     <div class="col-12">
@@ -435,97 +453,4 @@ $isEditing = !empty($consultation);
     </div>
 </div>
 
-<script>
-
-    // Auto-resize textareas
-    document.querySelectorAll('textarea').forEach(textarea => {
-        textarea.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = this.scrollHeight + 'px';
-        });
-    });
-
-    // Form validation
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const requiredFields = ['chief_complaint', 'diagnosis'];
-        let isValid = true;
-
-        requiredFields.forEach(fieldName => {
-            const field = document.getElementById(fieldName);
-            if (field && !field.value.trim()) {
-                field.classList.add('is-invalid');
-                isValid = false;
-            } else if (field) {
-                field.classList.remove('is-invalid');
-            }
-        });
-
-        // Validate IOP fields - allow numeric values with + and - signs
-        const iopFields = ['IOP_right', 'IOP_left'];
-        iopFields.forEach(fieldName => {
-            const field = document.getElementById(fieldName);
-            if (field && field.value.trim()) {
-                const value = field.value.trim();
-                // Allow empty, numeric values, or values with + and - at the beginning
-                const iopPattern = /^[+-]?[0-9]*\.?[0-9]*$/;
-                if (!iopPattern.test(value)) {
-                    field.classList.add('is-invalid');
-                    isValid = false;
-                    // Show error message
-                    let errorDiv = field.parentNode.querySelector('.invalid-feedback');
-                    if (!errorDiv) {
-                        errorDiv = document.createElement('div');
-                        errorDiv.className = 'invalid-feedback';
-                        field.parentNode.appendChild(errorDiv);
-                    }
-                    errorDiv.textContent = 'Please enter a valid pressure value (e.g., 15.0, +2, -1)';
-                } else {
-                    field.classList.remove('is-invalid');
-                }
-            }
-        });
-        
-        if (!isValid) {
-            e.preventDefault();
-            alert('Please correct the errors before submitting the form.');
-            return false;
-        }
-        
-        // Add loading state to prevent double submission
-        const submitBtn = this.querySelector('button[type="submit"]');
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
-        }
-        
-        return true;
-    });
-
-
-    // Real-time validation for IOP fields
-    document.getElementById('IOP_right').addEventListener('input', function() {
-        validateIOPField(this);
-    });
-
-    document.getElementById('IOP_left').addEventListener('input', function() {
-        validateIOPField(this);
-    });
-
-    function validateIOPField(field) {
-        const value = field.value.trim();
-        const iopPattern = /^[+-]?[0-9]*\.?[0-9]*$/;
-        
-        if (value === '') {
-            field.classList.remove('is-invalid', 'is-valid');
-            return;
-        }
-        
-        if (iopPattern.test(value)) {
-            field.classList.remove('is-invalid');
-            field.classList.add('is-valid');
-        } else {
-            field.classList.remove('is-valid');
-            field.classList.add('is-invalid');
-        }
-    }
-</script>
+<script src="/app/Views/doctor/assets/js/edit_consultation.js?v=<?= file_exists(__DIR__ . '/assets/js/edit_consultation.js') ? filemtime(__DIR__ . '/assets/js/edit_consultation.js') : time() ?>"></script>

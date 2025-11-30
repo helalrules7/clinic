@@ -51,11 +51,11 @@
             <button type="button" class="btn btn-sm btn-outline-info filter-time-btn" data-filter="2pm-6pm" id="filter2pm6pm">
                 <i class="bi bi-clock me-1"></i>
                 2:00 PM - 6:00 PM
-            </button>
+                            </button>
             <button type="button" class="btn btn-sm btn-outline-success filter-time-btn" data-filter="6pm-1045pm" id="filter6pm1045pm">
                 <i class="bi bi-clock me-1"></i>
                 6:00 PM - 10:45 PM
-            </button>
+                            </button>
             <button type="button" class="btn btn-sm btn-outline-primary filter-time-btn" data-filter="available" id="filterAvailable">
                 <i class="bi bi-check-circle me-1"></i>
                 Available Only
@@ -67,8 +67,8 @@
             <button type="button" class="btn btn-sm btn-secondary filter-time-btn" data-filter="none" id="filterNone">
                 <i class="bi bi-x-lg me-1"></i>
                 Clear Filters
-            </button>
-        </div>
+                            </button>
+                        </div>
         
         <!-- Mobile Filter Button -->
         <div class="d-md-none">

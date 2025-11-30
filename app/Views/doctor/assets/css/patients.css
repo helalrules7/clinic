@@ -1653,7 +1653,6 @@ kbd[lang="ar"] {
     border: none;
     border-bottom: 1px solid var(--border);
     padding: 15px;
-    text-align: center;
     vertical-align: middle;
     color: var(--text);
 }

@@ -145,6 +145,11 @@
     background: var(--card);
     border: 1px solid var(--border);
     color: var(--text);
+    z-index: 1000001 !important;
+}
+
+#prescriptionPreviewModal {
+    z-index: 1000001 !important;
 }
 
 #prescriptionPreviewModal .modal-header {
