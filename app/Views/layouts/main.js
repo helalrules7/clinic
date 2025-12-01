@@ -2050,6 +2050,13 @@
                 
                 notificationsBody.innerHTML = html;
                 
+                // Trigger animation for newly added notifications
+                setTimeout(() => {
+                    notificationsBody.querySelectorAll('.notification-item').forEach((item, index) => {
+                        item.style.animationDelay = `${index * 0.1}s`;
+                    });
+                }, 10);
+                
                 // Add event listeners to close buttons (now delete)
                 notificationsBody.querySelectorAll('.notification-item-close').forEach(btn => {
                     btn.addEventListener('click', function(e) {
@@ -2242,12 +2249,11 @@
                     }
                     
                     if (data.success) {
-                        // Remove notification from DOM
+                        // Remove notification from DOM with animation
                         const notificationItem = notificationsBody.querySelector(`[data-notification-id="${notificationId}"]`);
                         if (notificationItem) {
-                            notificationItem.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                            notificationItem.style.opacity = '0';
-                            notificationItem.style.transform = 'translateX(100%)';
+                            // Apply delete animation
+                            notificationItem.classList.add('notification-out');
                             setTimeout(() => {
                                 notificationItem.remove();
                                 // Recalculate panel height after deletion
@@ -2256,7 +2262,7 @@
                                 setTimeout(() => {
                                     loadNotifications();
                                 }, 100);
-                            }, 300);
+                            }, 750); // Wait for animation to complete
                         } else {
                             // If item not found in DOM, reload to sync
                             loadNotifications();
@@ -2361,12 +2367,10 @@
                         }
                         
                         if (data.success) {
-                            // Apply delete animation to all notifications
+                            // Apply delete animation to all notifications using new animation classes
                             notificationItems.forEach((item, index) => {
                                 setTimeout(() => {
-                                    item.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                                    item.style.opacity = '0';
-                                    item.style.transform = 'translateX(100%)';
+                                    item.classList.add('notification-out');
                                 }, index * 50); // Stagger animations
                             });
                             
@@ -2384,8 +2388,11 @@
                                 setTimeout(() => {
                                     loadNotifications();
                                     updateUnreadCount();
+                                    
+                                    // Close notification panel after clearing all (bonus feature)
+                                    closeNotifications();
                                 }, 100);
-                            }, (notificationItems.length * 50) + 300); // Wait for all animations
+                            }, (notificationItems.length * 50) + 750); // Wait for all animations (750ms for animation duration)
                         } else {
                             console.error('Error clearing all notifications:', data);
                             console.error('Error message: ' + (data.message || 'Unknown error'));

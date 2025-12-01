@@ -18,13 +18,63 @@
                 <!-- Report Filters -->
                 <div class="row mb-4">
                     <div class="col-md-3">
-                        <label for="reportType" class="form-label">Report Type</label>
-                        <select class="form-select" id="reportType" onchange="updateReportForm()">
-                            <option value="revenue" <?= ($reportType ?? '') === 'revenue' ? 'selected' : '' ?>>Revenue Report</option>
-                            <option value="appointments" <?= ($reportType ?? '') === 'appointments' ? 'selected' : '' ?>>Appointments Report</option>
-                            <option value="patients" <?= ($reportType ?? '') === 'patients' ? 'selected' : '' ?>>Patients Report</option>
-                            <option value="doctors" <?= ($reportType ?? '') === 'doctors' ? 'selected' : '' ?>>Doctors Report</option>
-                        </select>
+                        <section class="field menu">
+                            <label for="reportType" id="reportType-label" class="form-label">Report Type</label>
+                            <div class="control">
+                                <select id="reportType" required hidden>
+                                    <option selected disabled hidden>Select an option</option>
+                                    <option value="revenue" data-option="revenue" <?= ($reportType ?? '') === 'revenue' ? 'selected' : '' ?>>Revenue Report</option>
+                                    <option value="appointments" data-option="appointments" <?= ($reportType ?? '') === 'appointments' ? 'selected' : '' ?>>Appointments Report</option>
+                                    <option value="patients" data-option="patients" <?= ($reportType ?? '') === 'patients' ? 'selected' : '' ?>>Patients Report</option>
+                                    <option value="doctors" data-option="doctors" <?= ($reportType ?? '') === 'doctors' ? 'selected' : '' ?>>Doctors Report</option>
+                                </select>
+                                
+                                <button id="reportType-toggle" aria-hidden aria-describedby="reportType-label" aria-controls="reportType-menu" aria-expanded="false">
+                                    <?php 
+                                    $selectedText = 'Select an option';
+                                    if (($reportType ?? '') === 'revenue') $selectedText = 'Revenue Report';
+                                    elseif (($reportType ?? '') === 'appointments') $selectedText = 'Appointments Report';
+                                    elseif (($reportType ?? '') === 'patients') $selectedText = 'Patients Report';
+                                    elseif (($reportType ?? '') === 'doctors') $selectedText = 'Doctors Report';
+                                    echo htmlspecialchars($selectedText);
+                                    ?>
+                                </button>
+                                
+                                <menu id="reportType-menu">
+                                    <li data-option="revenue" tabindex="0" role="button">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                        </svg>
+                                        <h3>Revenue Report</h3>
+                                        <p>View financial revenue data</p>
+                                    </li>
+                                    
+                                    <li data-option="appointments" tabindex="0" role="button">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                            <path fill="currentColor" d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/>
+                                        </svg>
+                                        <h3>Appointments Report</h3>
+                                        <p>View appointments statistics</p>
+                                    </li>
+                                    
+                                    <li data-option="patients" tabindex="0" role="button">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                            <path fill="currentColor" d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                                        </svg>
+                                        <h3>Patients Report</h3>
+                                        <p>View patients statistics</p>
+                                    </li>
+                                    
+                                    <li data-option="doctors" tabindex="0" role="button">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                            <path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                        </svg>
+                                        <h3>Doctors Report</h3>
+                                        <p>View doctors performance</p>
+                                    </li>
+                                </menu>
+                            </div>
+                        </section>
                     </div>
                     <div class="col-md-3">
                         <label for="startDate" class="form-label">From Date</label>

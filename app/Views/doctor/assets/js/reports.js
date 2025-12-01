@@ -146,6 +146,136 @@ document.getElementById('reportForm').addEventListener('submit', function(e) {
     }
 });
 
+// Custom Select Menu Logic
+document.addEventListener('DOMContentLoaded', function() {
+    const field = document.querySelector('.field.menu');
+    if (!field) return;
+
+    const select = field.querySelector('select');
+    const button = field.querySelector('#type-toggle');
+    const menu = field.querySelector('menu');
+    const options = menu.querySelectorAll('li');
+
+    // Toggle Menu
+    function toggleMenu() {
+        if (field.classList.contains('open')) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    }
+
+    function openMenu() {
+        field.classList.add('open');
+        button.setAttribute('aria-expanded', 'true');
+        
+        // Fix z-index issue by elevating parent container manually
+        // This is a fallback/reinforcement for the CSS :has() selector
+        const parentCol = field.closest('.col-md-3');
+        if (parentCol) {
+            parentCol.style.zIndex = '1005';
+            parentCol.style.position = 'relative'; 
+        }
+
+        // Focus first selected or first option
+        const selected = menu.querySelector('.selected') || options[0];
+        if (selected) selected.focus();
+    }
+
+    function closeMenu() {
+        field.classList.remove('open');
+        button.setAttribute('aria-expanded', 'false');
+        button.focus();
+        
+        // Reset parent z-index with a slight delay to allow animation to finish
+        const parentCol = field.closest('.col-md-3');
+        if (parentCol) {
+            setTimeout(() => {
+                if (!field.classList.contains('open')) {
+                    parentCol.style.zIndex = '';
+                    // We don't remove position: relative as it might be needed by bootstrap grid, 
+                    // though usually cols are relative by default. Safe to leave or reset if needed.
+                    parentCol.style.position = ''; 
+                }
+            }, 300); // Wait for animation
+        }
+    }
+
+    // Set Option
+    function setOption(optionEl) {
+        const value = optionEl.dataset.option;
+        const text = optionEl.querySelector('h3').textContent;
+        
+        // Update hidden select
+        select.value = value;
+        // Also manually trigger change event if needed by other listeners
+        select.dispatchEvent(new Event('change'));
+        
+        // Update button text
+        button.textContent = text;
+        
+        // Update UI classes
+        options.forEach(el => el.classList.remove('selected'));
+        optionEl.classList.add('selected');
+        
+        closeMenu();
+        
+        // Trigger form submission
+        console.log('Submitting form with report type:', value);
+        const form = document.getElementById('reportForm');
+        if (form) {
+            form.submit();
+        } else {
+            console.error('Report form not found!');
+        }
+    }
+
+    // Event Listeners
+    button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMenu();
+    });
+
+    button.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openMenu();
+        }
+    });
+
+    options.forEach(option => {
+        option.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setOption(option);
+        });
+
+        option.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setOption(option);
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const next = option.nextElementSibling;
+                if (next) next.focus();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prev = option.previousElementSibling;
+                if (prev) prev.focus();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                closeMenu();
+            }
+        });
+    });
+
+    // Close on click outside
+    document.addEventListener('click', (e) => {
+        if (!field.contains(e.target)) {
+            closeMenu();
+        }
+    });
+});
+
 // Chart.js Configuration
 const chartColors = {
     primary: '#007bff',
@@ -805,6 +935,7 @@ if (lensTypeCtx) {
         });
     }
 }
+}
 
 // Function to update charts when theme changes - same as dashboard.php
 function updateChartsTheme() {
@@ -1422,7 +1553,7 @@ window.exportToPDF = async function exportToPDF() {
         btn.disabled = false;
         btn.innerHTML = originalText;
     }
-}};
+};
 
 // Initialize PDF export button
 document.addEventListener('DOMContentLoaded', function() {

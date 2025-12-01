@@ -3087,3 +3087,176 @@ document.addEventListener('DOMContentLoaded', function() {
     
     initCharts();
 });
+
+// Custom Select Menu Logic for Dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCustomSelects();
+});
+
+function initializeCustomSelects() {
+    const fields = document.querySelectorAll('.field.menu');
+    
+    fields.forEach(field => {
+        const select = field.querySelector('select');
+        const button = field.querySelector('.custom-select-toggle');
+        const menu = field.querySelector('menu');
+        const options = menu.querySelectorAll('li');
+
+        // Validate all elements exist before proceeding
+        if (!select || !button || !menu || !options || options.length === 0) {
+            console.warn('Custom select menu elements not found or incomplete', field);
+            return;
+        }
+
+        // Functions scoped to each menu instance
+        function toggleMenu() {
+            if (field.classList.contains('open')) {
+                closeMenu();
+            } else {
+                // Close other open menus first
+                document.querySelectorAll('.field.menu.open').forEach(openField => {
+                    if (openField !== field) {
+                        openField.classList.remove('open');
+                        const openBtn = openField.querySelector('.custom-select-toggle');
+                        if(openBtn) openBtn.setAttribute('aria-expanded', 'false');
+                        // Reset z-index for closed menus
+                        const parent = openField.closest('.d-flex, .card-header, .col-12, .card');
+                        if (parent) {
+                            setTimeout(() => {
+                                if (!openField.classList.contains('open')) {
+                                    parent.style.zIndex = '';
+                                    parent.style.position = ''; 
+                                }
+                            }, 300);
+                        }
+                    }
+                });
+                openMenu();
+            }
+        }
+
+        function openMenu() {
+            field.classList.add('open');
+            button.setAttribute('aria-expanded', 'true');
+            
+            // Fix z-index issue by elevating parent containers manually
+            // This is a fallback/reinforcement for the CSS :has() selector
+            const parent = field.closest('.d-flex, .card-header, .col-12, .card');
+            if (parent) {
+                parent.style.zIndex = '1000002'; // Match CSS value
+                parent.style.position = 'relative'; 
+            }
+
+            // Focus first selected or first option
+            const selected = menu.querySelector('.selected') || options[0];
+            if (selected) selected.focus();
+        }
+
+        function closeMenu() {
+            field.classList.remove('open');
+            button.setAttribute('aria-expanded', 'false');
+            button.focus();
+            
+            // Reset parent z-index with a slight delay
+            const parent = field.closest('.d-flex, .card-header, .col-12, .card');
+            if (parent) {
+                setTimeout(() => {
+                    if (!field.classList.contains('open')) {
+                        parent.style.zIndex = '';
+                        parent.style.position = ''; 
+                    }
+                }, 300);
+            }
+        }
+
+        function setOption(optionEl) {
+            const value = optionEl.dataset.option;
+            const text = optionEl.querySelector('h3').textContent;
+            
+            // Update hidden select
+            select.value = value;
+            
+            // Manually trigger change event
+            const event = new Event('change', { bubbles: true });
+            select.dispatchEvent(event);
+            
+            // Update button text
+            button.textContent = text;
+            
+            // Update UI classes
+            options.forEach(el => el.classList.remove('selected'));
+            optionEl.classList.add('selected');
+            
+            closeMenu();
+        }
+
+        // Event Listeners
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleMenu();
+        });
+
+        button.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openMenu();
+            }
+        });
+
+        options.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                setOption(option);
+            });
+
+            option.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setOption(option);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const next = option.nextElementSibling;
+                    if (next) next.focus();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prev = option.previousElementSibling;
+                    if (prev) prev.focus();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeMenu();
+                }
+            });
+        });
+        
+        // Initial set of button text based on select value
+        const initialValue = select.value;
+        const initialOption = menu.querySelector(`li[data-option="${initialValue}"]`);
+        if (initialOption) {
+            button.textContent = initialOption.querySelector('h3').textContent;
+            options.forEach(el => el.classList.remove('selected'));
+            initialOption.classList.add('selected');
+        }
+    });
+
+    // Close on click outside (global listener)
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.field.menu')) {
+            document.querySelectorAll('.field.menu.open').forEach(field => {
+                field.classList.remove('open');
+                const btn = field.querySelector('.custom-select-toggle');
+                if(btn) btn.setAttribute('aria-expanded', 'false');
+                
+                // Reset z-index
+                const parent = field.closest('.d-flex, .card-header, .col-12, .card');
+                if (parent) {
+                    setTimeout(() => {
+                        if (!field.classList.contains('open')) {
+                            parent.style.zIndex = '';
+                            parent.style.position = ''; 
+                        }
+                    }, 300);
+                }
+            });
+        }
+    });
+}

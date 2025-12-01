@@ -1958,6 +1958,7 @@ class DoctorController
     private function generateDoctorAppointmentsReport($doctorId, $startDate, $endDate)
     {
         // Use the same logic as dashboard.php getDashboardCharts - exclude today
+        // Removed doctor_id filter to show clinic-wide data
         $stmt = $this->pdo->prepare("
             SELECT 
                 DATE(a.date) as date,
@@ -1965,18 +1966,18 @@ class DoctorController
                 SUM(CASE WHEN a.status = 'Completed' THEN 1 ELSE 0 END) as completed,
                 SUM(CASE WHEN a.status != 'Completed' THEN 1 ELSE 0 END) as missed
             FROM appointments a
-            WHERE a.doctor_id = ? 
-            AND DATE(a.date) BETWEEN ? AND ?
+            WHERE DATE(a.date) BETWEEN ? AND ?
             AND DATE(a.date) < CURDATE()
             GROUP BY DATE(a.date)
             ORDER BY date ASC
         ");
-        $stmt->execute([$doctorId, $startDate, $endDate]);
+        $stmt->execute([$startDate, $endDate]);
         return $stmt->fetchAll();
     }
 
     private function generateDoctorPatientsReport($doctorId, $startDate, $endDate)
     {
+        // Removed doctor_id filter to show clinic-wide data
         $stmt = $this->pdo->prepare("
             SELECT 
                 DATE(p.created_at) as date,
@@ -1985,16 +1986,17 @@ class DoctorController
                 SUM(CASE WHEN p.gender = 'Female' THEN 1 ELSE 0 END) as female
             FROM patients p
             JOIN appointments a ON p.id = a.patient_id
-            WHERE a.doctor_id = ? AND DATE(p.created_at) BETWEEN ? AND ?
+            WHERE DATE(p.created_at) BETWEEN ? AND ?
             GROUP BY DATE(p.created_at)
             ORDER BY date
         ");
-        $stmt->execute([$doctorId, $startDate, $endDate]);
+        $stmt->execute([$startDate, $endDate]);
         return $stmt->fetchAll();
     }
 
     private function generateDoctorRevenueReport($doctorId, $startDate, $endDate)
     {
+        // Removed doctor_id filter to show clinic-wide data
         $stmt = $this->pdo->prepare("
             SELECT 
                 DATE(p.created_at) as date,
@@ -2003,16 +2005,17 @@ class DoctorController
                 SUM(p.discount_amount) as discounts
             FROM payments p
             JOIN appointments a ON p.appointment_id = a.id
-            WHERE a.doctor_id = ? AND DATE(p.created_at) BETWEEN ? AND ?
+            WHERE DATE(p.created_at) BETWEEN ? AND ?
             GROUP BY DATE(p.created_at)
             ORDER BY date
         ");
-        $stmt->execute([$doctorId, $startDate, $endDate]);
+        $stmt->execute([$startDate, $endDate]);
         return $stmt->fetchAll();
     }
 
     private function generateDoctorMedicalPrescriptionsReport($doctorId, $startDate, $endDate)
     {
+        // Removed doctor_id filter to show clinic-wide data
         $stmt = $this->pdo->prepare("
             SELECT 
                 DATE(a.date) as date,
@@ -2022,17 +2025,17 @@ class DoctorController
                 GROUP_CONCAT(DISTINCT p.drug_name SEPARATOR ', ') as drugs_list
             FROM prescriptions p
             JOIN appointments a ON p.appointment_id = a.id
-            WHERE a.doctor_id = ? 
-            AND DATE(a.date) BETWEEN ? AND ?
+            WHERE DATE(a.date) BETWEEN ? AND ?
             GROUP BY DATE(a.date)
             ORDER BY date ASC
         ");
-        $stmt->execute([$doctorId, $startDate, $endDate]);
+        $stmt->execute([$startDate, $endDate]);
         return $stmt->fetchAll();
     }
 
     private function generateDoctorGlassesPrescriptionsReport($doctorId, $startDate, $endDate)
     {
+        // Removed doctor_id filter to show clinic-wide data
         $stmt = $this->pdo->prepare("
             SELECT 
                 DATE(a.date) as date,
@@ -2042,17 +2045,17 @@ class DoctorController
                 COUNT(DISTINCT CASE WHEN gp.lens_type IS NOT NULL AND gp.lens_type != '' THEN gp.id END) as with_lens_type
             FROM glasses_prescriptions gp
             JOIN appointments a ON gp.appointment_id = a.id
-            WHERE a.doctor_id = ? 
-            AND DATE(a.date) BETWEEN ? AND ?
+            WHERE DATE(a.date) BETWEEN ? AND ?
             GROUP BY DATE(a.date)
             ORDER BY date ASC
         ");
-        $stmt->execute([$doctorId, $startDate, $endDate]);
+        $stmt->execute([$startDate, $endDate]);
         return $stmt->fetchAll();
     }
 
     private function getTopMedications($doctorId, $startDate, $endDate, $limit = 10)
     {
+        // Removed doctor_id filter to show clinic-wide data
         $stmt = $this->pdo->prepare("
             SELECT 
                 p.drug_name,
@@ -2061,20 +2064,20 @@ class DoctorController
                 COUNT(DISTINCT a.patient_id) as patient_count
             FROM prescriptions p
             JOIN appointments a ON p.appointment_id = a.id
-            WHERE a.doctor_id = ? 
-            AND DATE(a.date) BETWEEN ? AND ?
+            WHERE DATE(a.date) BETWEEN ? AND ?
             AND p.drug_name IS NOT NULL 
             AND p.drug_name != ''
             GROUP BY p.drug_name
             ORDER BY usage_count DESC
             LIMIT ?
         ");
-        $stmt->execute([$doctorId, $startDate, $endDate, $limit]);
+        $stmt->execute([$startDate, $endDate, $limit]);
         return $stmt->fetchAll();
     }
 
     private function getGlassesLensTypeStats($doctorId, $startDate, $endDate)
     {
+        // Removed doctor_id filter to show clinic-wide data
         $stmt = $this->pdo->prepare("
             SELECT 
                 CASE 
@@ -2086,12 +2089,11 @@ class DoctorController
                 COUNT(DISTINCT a.patient_id) as patient_count
             FROM glasses_prescriptions gp
             JOIN appointments a ON gp.appointment_id = a.id
-            WHERE a.doctor_id = ? 
-            AND DATE(a.date) BETWEEN ? AND ?
+            WHERE DATE(a.date) BETWEEN ? AND ?
             GROUP BY lens_type
             ORDER BY count DESC
         ");
-        $stmt->execute([$doctorId, $startDate, $endDate]);
+        $stmt->execute([$startDate, $endDate]);
         return $stmt->fetchAll();
     }
 

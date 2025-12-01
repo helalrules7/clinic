@@ -955,6 +955,62 @@
             opacity: 0.7;
         }
         
+        /* Notification Animations - Based on note-in/note-out pattern */
+        .notification-item {
+            animation: notification-in 0.35s ease-out forwards;
+            transform-origin: 50% 100%;
+        }
+        
+        .notification-item.notification-out {
+            animation: notification-shrink 0.35s ease-out forwards;
+        }
+        
+        .notification-item.notification-out > * {
+            animation: notification-out 0.35s ease-out forwards;
+        }
+        
+        @keyframes notification-in {
+            from {
+                filter: blur(10px);
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                filter: blur(0);
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        @keyframes notification-out {
+            from {
+                filter: blur(0);
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            to {
+                filter: blur(10px);
+                opacity: 0;
+                transform: translateY(-100%) scale(1.1);
+            }
+        }
+        
+        @keyframes notification-shrink {
+            from {
+                height: auto;
+                margin-bottom: 0.75rem;
+                opacity: 1;
+                padding: 12px 16px;
+            }
+            to {
+                height: 0;
+                margin-bottom: 0;
+                opacity: 0;
+                padding: 0;
+                overflow: hidden;
+            }
+        }
+        
         /* Notification Icon */
         .notification-icon {
             width: 28px;
@@ -1420,15 +1476,15 @@
             border-radius: 6px;
             font-weight: 500;
         }
-        
-        .form-control, .form-select {
+        /* Form control styles (keep for other inputs) */
+        .form-control:not(select) {
             background: var(--card);
             border: 2px solid var(--border);
             color: var(--text);
             font-weight: 500;
         }
         
-        .form-control:focus, .form-select:focus {
+        .form-control:not(select):focus {
             background: var(--card);
             border-color: var(--accent);
             color: var(--text);

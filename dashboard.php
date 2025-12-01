@@ -153,12 +153,23 @@
                     Upcoming Appointments
                 </h6>
                 <div class="d-flex align-items-center gap-2">
-                    <select class="form-select form-select-sm" id="upcomingPerPageSelect" style="width: auto;">
-                        <option value="5">5 per page</option>
-                        <option value="10" selected>10 per page</option>
-                        <option value="20">20 per page</option>
-                        <option value="50">50 per page</option>
-                    </select>
+                    <section class="field menu" style="min-width: 150px;">
+                        <div class="control">
+                            <select class="form-select form-select-sm d-none" id="upcomingPerPageSelect">
+                                <option value="5">5 per page</option>
+                                <option value="10" selected>10 per page</option>
+                                <option value="20">20 per page</option>
+                                <option value="50">50 per page</option>
+                            </select>
+                            <button type="button" class="custom-select-toggle" aria-expanded="false">10 per page</button>
+                            <menu>
+                                <li data-option="5" tabindex="0" role="button"><h3>5 per page</h3></li>
+                                <li data-option="10" tabindex="0" role="button" class="selected"><h3>10 per page</h3></li>
+                                <li data-option="20" tabindex="0" role="button"><h3>20 per page</h3></li>
+                                <li data-option="50" tabindex="0" role="button"><h3>50 per page</h3></li>
+                            </menu>
+                        </div>
+                    </section>
                     <a href="/doctor/calendar" class="btn btn-sm btn-primary">
                         View All
                     </a>
@@ -191,12 +202,23 @@
                     Missed Appointments
                 </h6>
                 <div class="d-flex align-items-center gap-2">
-                    <select class="form-select form-select-sm" id="missedPerPageSelect" style="width: auto;">
-                        <option value="5">5 per page</option>
-                        <option value="10" selected>10 per page</option>
-                        <option value="20">20 per page</option>
-                        <option value="50">50 per page</option>
-                    </select>
+                    <section class="field menu" style="min-width: 150px;">
+                        <div class="control">
+                            <select class="form-select form-select-sm d-none" id="missedPerPageSelect">
+                                <option value="5">5 per page</option>
+                                <option value="10" selected>10 per page</option>
+                                <option value="20">20 per page</option>
+                                <option value="50">50 per page</option>
+                            </select>
+                            <button type="button" class="custom-select-toggle" aria-expanded="false">10 per page</button>
+                            <menu>
+                                <li data-option="5" tabindex="0" role="button"><h3>5 per page</h3></li>
+                                <li data-option="10" tabindex="0" role="button" class="selected"><h3>10 per page</h3></li>
+                                <li data-option="20" tabindex="0" role="button"><h3>20 per page</h3></li>
+                                <li data-option="50" tabindex="0" role="button"><h3>50 per page</h3></li>
+                            </menu>
+                        </div>
+                    </section>
                 </div>
             </div>
             <div class="card-body">
@@ -267,12 +289,23 @@
                     Recent Activity
                 </h6>
                 <div class="d-flex align-items-center gap-2">
-                    <select class="form-select form-select-sm" id="perPageSelect" style="width: auto;">
-                        <option value="5">5 per page</option>
-                        <option value="10" selected>10 per page</option>
-                        <option value="20">20 per page</option>
-                        <option value="50">50 per page</option>
-                    </select>
+                    <section class="field menu" style="min-width: 150px;">
+                        <div class="control">
+                            <select class="form-select form-select-sm d-none" id="perPageSelect">
+                                <option value="5">5 per page</option>
+                                <option value="10" selected>10 per page</option>
+                                <option value="20">20 per page</option>
+                                <option value="50">50 per page</option>
+                            </select>
+                            <button type="button" class="custom-select-toggle" aria-expanded="false">10 per page</button>
+                            <menu>
+                                <li data-option="5" tabindex="0" role="button"><h3>5 per page</h3></li>
+                                <li data-option="10" tabindex="0" role="button" class="selected"><h3>10 per page</h3></li>
+                                <li data-option="20" tabindex="0" role="button"><h3>20 per page</h3></li>
+                                <li data-option="50" tabindex="0" role="button"><h3>50 per page</h3></li>
+                            </menu>
+                        </div>
+                    </section>
                 </div>
             </div>
             <div class="card-body">

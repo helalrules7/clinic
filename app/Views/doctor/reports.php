@@ -53,14 +53,52 @@ $reportTypes = [
         <form method="GET" action="/doctor/reports" id="reportForm">
             <div class="row">
                 <div class="col-md-3 mb-3">
-                    <label for="type" class="form-label">Report Type:</label>
-                    <select name="type" id="type" class="form-select">
-                        <?php foreach ($reportTypes as $value => $label): ?>
-                            <option value="<?= $value ?>" <?= ($reportType === $value) ? 'selected' : '' ?>>
-                                <?= $label ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                    <section class="field menu">
+                        <label for="type" id="type-label" class="form-label">Report Type:</label>
+                        <div class="control">
+                            <select name="type" id="type" required class="d-none">
+                                <?php foreach ($reportTypes as $value => $label): ?>
+                                    <option value="<?= $value ?>" data-option="<?= $value ?>" <?= ($reportType === $value) ? 'selected' : '' ?>>
+                                        <?= $label ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            
+                            <button type="button" id="type-toggle" aria-hidden aria-describedby="type-label" aria-controls="type-menu" aria-expanded="false">
+                                <?php 
+                                    echo isset($reportTypes[$reportType]) ? $reportTypes[$reportType] : 'Select Report Type';
+                                ?>
+                            </button>
+                            
+                            <menu id="type-menu">
+                                <li data-option="appointments" tabindex="0" role="button" class="<?= $reportType === 'appointments' ? 'selected' : '' ?>">
+                                    <i class="bi bi-calendar-check fs-5"></i>
+                                    <h3>Appointments Reports</h3>
+                                    <p>View appointments statistics</p>
+                                </li>
+                                <li data-option="patients" tabindex="0" role="button" class="<?= $reportType === 'patients' ? 'selected' : '' ?>">
+                                    <i class="bi bi-people fs-5"></i>
+                                    <h3>Patients Reports</h3>
+                                    <p>View new and returning patients</p>
+                                </li>
+                                <li data-option="revenue" tabindex="0" role="button" class="<?= $reportType === 'revenue' ? 'selected' : '' ?>">
+                                    <i class="bi bi-cash-coin fs-5"></i>
+                                    <h3>Revenue Reports</h3>
+                                    <p>View financial revenue data</p>
+                                </li>
+                                <li data-option="medical_prescriptions" tabindex="0" role="button" class="<?= $reportType === 'medical_prescriptions' ? 'selected' : '' ?>">
+                                    <i class="bi bi-prescription fs-5"></i>
+                                    <h3>Medical Prescriptions</h3>
+                                    <p>View prescriptions analytics</p>
+                                </li>
+                                <li data-option="glasses_prescriptions" tabindex="0" role="button" class="<?= $reportType === 'glasses_prescriptions' ? 'selected' : '' ?>">
+                                    <i class="bi bi-eyeglasses fs-5"></i>
+                                    <h3>Glasses Prescriptions</h3>
+                                    <p>View glasses prescriptions stats</p>
+                                </li>
+                            </menu>
+                        </div>
+                    </section>
                 </div>
                 
                 <div class="col-md-3 mb-3">
@@ -637,8 +675,8 @@ $reportTypes = [
         <div class="card-body">
             <div class="empty-state">
                 <i class="bi bi-chart-line text-muted" style="font-size: 4rem;"></i>
-                <h4>No data found for the selected period</h4>
-                <p class="text-muted">Try changing the date range or report type</p>
+                <h4 style="color: var(--text) !important;">No data found for the selected period</h4>
+                <p class="text-muted" style="color: var(--text) !important;">Try changing the date range or report type</p>
             </div>
         </div>
     </div>
