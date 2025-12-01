@@ -85,7 +85,11 @@ class AlertModel
                 FROM alerts a
                 LEFT JOIN patients p ON a.patient_id = p.id
                 LEFT JOIN appointments apt ON a.appointment_id = apt.id
-                WHERE a.doctor_id = :doctor_id";
+                WHERE 1=1";
+        
+        if ($doctorId) {
+            $sql .= " AND a.doctor_id = :doctor_id";
+        }
         
         if (isset($filters['is_active'])) {
             $sql .= " AND a.is_active = :is_active";
@@ -102,7 +106,10 @@ class AlertModel
         $sql .= " ORDER BY a.alert_date ASC, a.alert_time ASC";
         
         $stmt = $this->db->prepare($sql);
-        $params = [':doctor_id' => $doctorId];
+        $params = [];
+        if ($doctorId) {
+            $params[':doctor_id'] = $doctorId;
+        }
         
         if (isset($filters['is_active'])) {
             $params[':is_active'] = $filters['is_active'];

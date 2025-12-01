@@ -304,9 +304,8 @@ class AlertController
         header('Content-Type: application/json');
         
         $user = $this->auth->user();
-        $doctorId = $this->getDoctorId($user['id']);
         
-        $alerts = $this->alertModel->getTodayAlerts($doctorId);
+        $alerts = $this->alertModel->getTodayAlerts(null);
         
         echo json_encode([
             'success' => true,

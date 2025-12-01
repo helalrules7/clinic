@@ -179,9 +179,9 @@
                     <!-- Items per page -->
                     <div class="d-flex align-items-center">
                         <label for="paginationLimit" class="form-label mb-0 me-2 text-muted">View:</label>
-                        <section class="field menu" style="min-width: auto; width: auto;">
+                        <section class="field menu" style="min-width: 70px; width: auto;">
                             <div class="control">
-                                <select class="form-select form-select-sm d-none" id="paginationLimit" style="width: auto;">
+                                <select class="form-select form-select-sm d-none center-select" id="paginationLimit" style="width: auto;">
                                     <option value="10">10</option>
                                     <option value="20" selected>20</option>
                                     <option value="30">30</option>

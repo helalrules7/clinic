@@ -6997,11 +6997,6 @@ class ApiController
             }
 
             $user = $this->auth->user();
-            $doctorId = $this->getDoctorId($user['id']);
-            
-            if (!$doctorId) {
-                return $this->jsonResponse(['ok' => false, 'error' => 'Doctor not found'], 404);
-            }
 
             // Get pagination parameters
             $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
@@ -7012,9 +7007,9 @@ class ApiController
             $search = isset($_GET['search']) ? trim($_GET['search']) : '';
             
             // Build WHERE clause with search
-            $whereClause = "WHERE a.doctor_id = ?";
-            $params = [$doctorId];
-            $countParams = [$doctorId];
+            $whereClause = "WHERE 1=1";
+            $params = [];
+            $countParams = [];
             
             if (!empty($search)) {
                 $searchTerm = '%' . $search . '%';
@@ -7086,11 +7081,6 @@ class ApiController
             }
 
             $user = $this->auth->user();
-            $doctorId = $this->getDoctorId($user['id']);
-            
-            if (!$doctorId) {
-                return $this->jsonResponse(['ok' => false, 'error' => 'Doctor not found'], 404);
-            }
 
             // Get last 30 days data for trend chart (excluding today)
             $today = date('Y-m-d');
@@ -7105,13 +7095,12 @@ class ApiController
                     SUM(CASE WHEN a.status = 'Completed' THEN 1 ELSE 0 END) as completed,
                     SUM(CASE WHEN a.status != 'Completed' THEN 1 ELSE 0 END) as missed
                 FROM appointments a
-                WHERE a.doctor_id = ? 
-                AND DATE(a.date) BETWEEN ? AND ?
+                WHERE DATE(a.date) BETWEEN ? AND ?
                 AND DATE(a.date) < CURDATE()
                 GROUP BY DATE(a.date)
                 ORDER BY date ASC
             ");
-            $trendStmt->execute([$doctorId, $startDate, $endDate]);
+            $trendStmt->execute([$startDate, $endDate]);
             $trendData = $trendStmt->fetchAll();
 
             // Get status summary (total counts) - ALL TIME excluding today
@@ -7121,10 +7110,9 @@ class ApiController
                     SUM(CASE WHEN a.status = 'Completed' THEN 1 ELSE 0 END) as completed,
                     SUM(CASE WHEN a.status != 'Completed' THEN 1 ELSE 0 END) as missed
                 FROM appointments a
-                WHERE a.doctor_id = ?
-                AND DATE(a.date) < CURDATE()
+                WHERE DATE(a.date) < CURDATE()
             ");
-            $statusStmt->execute([$doctorId]);
+            $statusStmt->execute([]);
             $statusData = $statusStmt->fetch();
             
             // Calculate completion ratio
@@ -7178,11 +7166,10 @@ class ApiController
                 SELECT COUNT(*) as total
                 FROM appointments a
                 JOIN patients p ON a.patient_id = p.id
-                WHERE a.doctor_id = ? 
-                AND a.date >= ?
+                WHERE a.date >= ?
                 AND a.status IN ('Booked', 'CheckedIn')
             ");
-            $countStmt->execute([$doctorId, $today]);
+            $countStmt->execute([$today]);
             $total = $countStmt->fetchColumn();
 
             // Get paginated appointments
@@ -7190,13 +7177,12 @@ class ApiController
                 SELECT a.*, p.first_name, p.last_name, p.phone
                 FROM appointments a
                 JOIN patients p ON a.patient_id = p.id
-                WHERE a.doctor_id = ? 
-                AND a.date >= ?
+                WHERE a.date >= ?
                 AND a.status IN ('Booked', 'CheckedIn')
                 ORDER BY a.date ASC, a.start_time ASC
                 LIMIT ? OFFSET ?
             ");
-            $stmt->execute([$doctorId, $today, $perPage, $offset]);
+            $stmt->execute([$today, $perPage, $offset]);
             $appointments = $stmt->fetchAll();
 
             $totalPages = ceil($total / $perPage);
@@ -7246,12 +7232,11 @@ class ApiController
                 SELECT COUNT(*) as total
                 FROM appointments a
                 JOIN patients p ON a.patient_id = p.id
-                WHERE a.doctor_id = ? 
-                AND a.date < ?
+                WHERE a.date < ?
                 AND a.status != 'Completed'
                 AND a.status != 'Cancelled'
             ");
-            $countStmt->execute([$doctorId, $today]);
+            $countStmt->execute([$today]);
             $total = $countStmt->fetchColumn();
 
             // Get paginated appointments
@@ -7259,14 +7244,13 @@ class ApiController
                 SELECT a.*, p.first_name, p.last_name, p.phone
                 FROM appointments a
                 JOIN patients p ON a.patient_id = p.id
-                WHERE a.doctor_id = ? 
-                AND a.date < ?
+                WHERE a.date < ?
                 AND a.status != 'Completed'
                 AND a.status != 'Cancelled'
                 ORDER BY a.date DESC, a.start_time DESC
                 LIMIT ? OFFSET ?
             ");
-            $stmt->execute([$doctorId, $today, $perPage, $offset]);
+            $stmt->execute([$today, $perPage, $offset]);
             $appointments = $stmt->fetchAll();
 
             $totalPages = ceil($total / $perPage);
@@ -7328,11 +7312,6 @@ class ApiController
             }
 
             $user = $this->auth->user();
-            $doctorId = $this->getDoctorId($user['id']);
-            
-            if (!$doctorId) {
-                return $this->jsonResponse(['error' => 'Doctor not found'], 404);
-            }
 
             $year = (int)($_GET['year'] ?? date('Y'));
             $month = (int)($_GET['month'] ?? date('m'));
@@ -7364,11 +7343,11 @@ class ApiController
                     p.id as patient_id
                 FROM appointments a
                 LEFT JOIN patients p ON a.patient_id = p.id
-                WHERE a.doctor_id = ? AND a.date >= ? AND a.date <= ?
+                WHERE a.date >= ? AND a.date <= ?
                 AND a.status NOT IN ('Cancelled', 'NoShow')
                 ORDER BY a.date, a.start_time
             ");
-            $appointmentsStmt->execute([$doctorId, $firstDay, $lastDay]);
+            $appointmentsStmt->execute([$firstDay, $lastDay]);
             $appointments = $appointmentsStmt->fetchAll(\PDO::FETCH_ASSOC);
             
             // Get notes for the month (from notes table)
@@ -7396,10 +7375,10 @@ class ApiController
                     appointment_id,
                     is_dismissed
                 FROM alerts
-                WHERE doctor_id = ? AND alert_date >= ? AND alert_date <= ?
+                WHERE alert_date >= ? AND alert_date <= ?
                 ORDER BY alert_date, alert_time
             ");
-            $alertsStmt->execute([$doctorId, $firstDay, $lastDay]);
+            $alertsStmt->execute([$firstDay, $lastDay]);
             $alerts = $alertsStmt->fetchAll(\PDO::FETCH_ASSOC);
             
             // Organize data by date

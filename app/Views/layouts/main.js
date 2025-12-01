@@ -1424,6 +1424,9 @@
         (function() {
             const dock = document.getElementById('quickAccessDock');
             const minimizeBtn = document.getElementById('dockMinimizeBtn');
+            const autohideBtn = document.getElementById('dockAutohideBtn');
+            const autohideIcon = document.getElementById('dockAutohideIcon');
+            const autohideTooltip = document.getElementById('dockAutohideTooltip');
             
             function isMobile() {
                 return window.innerWidth <= 768;
@@ -1524,26 +1527,50 @@
                     
                     if (response.ok) {
                         const data = await response.json();
-                        if (data.success && data.settings && data.settings.dock_minimized) {
-                            const isMinimized = data.settings.dock_minimized === '1' || data.settings.dock_minimized === true || data.settings.dock_minimized === 1;
-                            if (isMinimized) {
-                                dock.classList.add('minimized');
+                        if (data.success && data.settings) {
+                            // Load minimized state
+                            if (data.settings.dock_minimized) {
+                                const isMinimized = data.settings.dock_minimized === '1' || data.settings.dock_minimized === true || data.settings.dock_minimized === 1;
+                                if (isMinimized) {
+                                    dock.classList.add('minimized');
+                                } else {
+                                    dock.classList.remove('minimized');
+                                }
                             } else {
                                 dock.classList.remove('minimized');
                             }
+                            
+                            // Load auto-hide state
+                            if (data.settings.dock_autohide) {
+                                const isAutohide = data.settings.dock_autohide === '1' || data.settings.dock_autohide === true || data.settings.dock_autohide === 1;
+                                if (isAutohide) {
+                                    dock.classList.add('autohide');
+                                    if (autohideBtn) autohideBtn.classList.add('active');
+                                } else {
+                                    dock.classList.remove('autohide');
+                                    if (autohideBtn) autohideBtn.classList.remove('active');
+                                }
+                            } else {
+                                dock.classList.remove('autohide');
+                                if (autohideBtn) autohideBtn.classList.remove('active');
+                            }
                         } else {
-                            // Default: not minimized
-                            dock.classList.remove('minimized');
+                            // Default: not minimized, not auto-hide
+                            dock.classList.remove('minimized', 'autohide');
+                            if (autohideBtn) autohideBtn.classList.remove('active');
                         }
                     }
                     
-                    // Update button title after loading state
+                    // Update button titles after loading state
                     updateMinimizeButtonTitle();
+                    updateAutohideButtonState();
                 } catch (error) {
                     console.error('Error loading dock state:', error);
-                    // Default: not minimized on error
-                    dock.classList.remove('minimized');
+                    // Default: not minimized, not auto-hide on error
+                    dock.classList.remove('minimized', 'autohide');
+                    if (autohideBtn) autohideBtn.classList.remove('active');
                     updateMinimizeButtonTitle();
+                    updateAutohideButtonState();
                 }
             }
             
@@ -1574,6 +1601,76 @@
                 }
             }
             
+            // Save dock auto-hide state to doctor settings
+            async function saveAutohideState(isAutohide) {
+                try {
+                    const response = await fetch('/api/doctor/settings', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            dock_autohide: isAutohide ? '1' : '0'
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to save auto-hide state');
+                    }
+                    
+                    const data = await response.json();
+                    if (!data.success) {
+                        throw new Error('Failed to save auto-hide state');
+                    }
+                } catch (error) {
+                    console.error('Error saving auto-hide state:', error);
+                }
+            }
+            
+            // Update auto-hide button state and icon
+            function updateAutohideButtonState() {
+                if (!autohideBtn || !dock) return;
+                const isAutohide = dock.classList.contains('autohide');
+                
+                if (isAutohide) {
+                    autohideBtn.classList.add('active');
+                    if (autohideIcon) {
+                        autohideIcon.className = 'bi bi-eye';
+                    }
+                    autohideBtn.setAttribute('title', 'Disable Auto Hide');
+                    if (autohideTooltip) {
+                        autohideTooltip.textContent = 'Disable Auto Hide';
+                    }
+                } else {
+                    autohideBtn.classList.remove('active');
+                    if (autohideIcon) {
+                        autohideIcon.className = 'bi bi-eye-slash';
+                    }
+                    autohideBtn.setAttribute('title', 'Auto Hide Dock');
+                    if (autohideTooltip) {
+                        autohideTooltip.textContent = 'Auto Hide Dock';
+                    }
+                }
+            }
+            
+            // Toggle dock auto-hide state
+            function toggleDockAutohide() {
+                if (!dock) return;
+                
+                const isAutohide = dock.classList.contains('autohide');
+                if (isAutohide) {
+                    dock.classList.remove('autohide');
+                    saveAutohideState(false);
+                } else {
+                    dock.classList.add('autohide');
+                    saveAutohideState(true);
+                }
+                
+                // Update button state
+                updateAutohideButtonState();
+            }
+            
             // Update minimize button title based on state
             function updateMinimizeButtonTitle() {
                 if (!minimizeBtn || !dock) return;
@@ -1602,7 +1699,19 @@
                 updateMinimizeButtonTitle();
             }
             
-            // Initialize
+            // Initialize auto-hide button
+            if (autohideBtn) {
+                autohideBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Only work on desktop
+                    if (!isMobile()) {
+                        toggleDockAutohide();
+                    }
+                });
+            }
+            
+            // Initialize minimize button
             if (minimizeBtn) {
                 minimizeBtn.addEventListener('click', function(e) {
                     // On mobile, handle differently

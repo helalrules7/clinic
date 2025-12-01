@@ -2955,6 +2955,188 @@
             background: rgba(51, 65, 85, 0.3);
         }
         
+        /* Dock Auto-Hide Button */
+        .dock-autohide-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: none;
+            cursor: pointer;
+            filter: none !important;
+            -webkit-filter: none !important;
+            will-change: transform;
+        }
+        
+        .dock-autohide-btn i {
+            font-size: 1.5rem;
+            transition: color 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            color: var(--text);
+            filter: none !important;
+            -webkit-filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            will-change: color, transform;
+        }
+        
+        .dock-autohide-btn:hover {
+            transform: translateY(-8px) scale(1.2);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            filter: none !important;
+            -webkit-filter: none !important;
+            will-change: transform;
+        }
+        
+        .dock-autohide-btn:hover i {
+            transform: scale(1.1) translateZ(0);
+            -webkit-transform: scale(1.1) translateZ(0);
+            color: #1e90ff !important; /* Dodger Blue */
+            filter: none !important;
+            -webkit-filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            will-change: color, transform;
+        }
+        
+        .dark .dock-autohide-btn {
+            background: rgba(0, 0, 0, 0.15);
+            color: var(--text);
+            filter: none !important;
+            -webkit-filter: none !important;
+            will-change: transform;
+        }
+        
+        .dark .dock-autohide-btn i {
+            color: var(--text);
+            filter: none !important;
+            -webkit-filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            will-change: color, transform;
+        }
+        
+        .dark .dock-autohide-btn:hover {
+            background: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            filter: none !important;
+            -webkit-filter: none !important;
+            will-change: transform;
+        }
+        
+        .dark .dock-autohide-btn:hover i {
+            transform: scale(1.1) translateZ(0);
+            -webkit-transform: scale(1.1) translateZ(0);
+            color: #1e90ff !important; /* Dodger Blue */
+            filter: none !important;
+            -webkit-filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            will-change: color, transform;
+        }
+        
+        /* Auto-hide active state */
+        .dock-autohide-btn.active {
+            background: rgba(30, 144, 255, 0.2);
+        }
+        
+        .dock-autohide-btn.active i {
+            color: #1e90ff !important;
+        }
+        
+        .dark .dock-autohide-btn.active {
+            background: rgba(30, 144, 255, 0.3);
+        }
+        
+        /* htooltip for auto-hide button */
+        .dock-autohide-btn .htooltip {
+            visibility: hidden;
+            z-index: 1000003 !important;
+            opacity: 0;
+            width: auto;
+            min-width: 100px;
+            padding: 8px 16px;
+            position: absolute;
+            top: -140%;
+            left: 50%;
+            transform: translateX(-50%) translateY(9px);
+            transition: all 0.3s ease-in-out;
+            border-radius: 9px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            white-space: nowrap;
+            pointer-events: none;
+            box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+            filter: none !important;
+            -webkit-filter: none !important;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .dock-autohide-btn .htooltip {
+            background: rgba(248, 250, 252, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #1a1a1a;
+            border: 1px solid rgba(226, 232, 240, 0.3);
+        }
+        
+        .dark .dock-autohide-btn .htooltip {
+            background: rgba(11, 18, 32, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #ffffff;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+        }
+        
+        .dock-autohide-btn .htooltip::after {
+            content: " ";
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 12px 12.5px 0 12.5px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: -12px;
+        }
+        
+        .dock-autohide-btn .htooltip::after {
+            border-color: rgba(248, 250, 252, 0.85) transparent transparent transparent;
+        }
+        
+        .dark .dock-autohide-btn .htooltip::after {
+            border-color: rgba(11, 18, 32, 0.85) transparent transparent transparent;
+        }
+        
+        .dock-autohide-btn:hover .htooltip {
+            visibility: visible;
+            transform: translateX(-50%) translateY(-10px);
+            opacity: 1;
+            transition: 0.3s linear;
+            animation: tooltipBounce 1s ease-in-out infinite alternate;
+        }
+        
         /* Dock Minimize Button */
         .dock-minimize-btn {
             display: flex;
@@ -3222,3 +3404,68 @@
         .minimized-icon-rect.rect-r3-c2 { grid-column: 2; grid-row: 3; }
         .minimized-icon-rect.rect-r3-c3 { grid-column: 3; grid-row: 3; }
         .minimized-icon-rect.rect-r3-c4 { grid-column: 4; grid-row: 3; }
+        
+        /* Dock Auto-Hide State */
+        .quick-access-dock.autohide {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+            overflow: visible;
+        }
+        
+        .quick-access-dock.autohide:not(:hover) {
+            transform: translate(-50%, 90%);
+            opacity: 0.3;
+        }
+        
+        .quick-access-dock.autohide:not(:hover) .dock-container {
+            pointer-events: none;
+        }
+        
+        .quick-access-dock.autohide:hover {
+            transform: translate(-50%, 0);
+            opacity: 1;
+        }
+        
+        .quick-access-dock.autohide:hover .dock-container {
+            pointer-events: auto;
+        }
+        
+        /* Ensure dock items are visible on hover when auto-hide is active */
+        .quick-access-dock.autohide:not(:hover) .dock-item,
+        .quick-access-dock.autohide:not(:hover) .dock-divider,
+        .quick-access-dock.autohide:not(:hover) .dock-minimize-btn {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        
+        .quick-access-dock.autohide:hover .dock-item,
+        .quick-access-dock.autohide:hover .dock-divider,
+        .quick-access-dock.autohide:hover .dock-autohide-btn,
+        .quick-access-dock.autohide:hover .dock-minimize-btn {
+            opacity: 1;
+            pointer-events: auto;
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Keep auto-hide button visible even when hidden (10% visible) */
+        .quick-access-dock.autohide:not(:hover) .dock-autohide-btn {
+            opacity: 0.5;
+            pointer-events: auto;
+            position: relative;
+            z-index: 10;
+            transition: opacity 0.2s ease;
+        }
+        
+        /* When minimized and auto-hide is active */
+        .quick-access-dock.minimized.autohide:not(:hover) {
+            transform: translate(0, calc(100% - 10%));
+        }
+        
+        .quick-access-dock.minimized.autohide:hover {
+            transform: translate(0, 0);
+        }
+        
+        /* Ensure dock container doesn't clip when auto-hide is active */
+        .quick-access-dock.autohide .dock-container {
+            overflow: visible;
+        }

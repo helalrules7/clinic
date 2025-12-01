@@ -576,6 +576,10 @@
                 <span class="htooltip">Settings</span>
             </a>
             <div class="dock-divider"></div>
+            <button class="dock-autohide-btn" id="dockAutohideBtn" title="Auto Hide Dock">
+                <i class="bi bi-eye-slash" id="dockAutohideIcon"></i>
+                <span class="htooltip" id="dockAutohideTooltip">Auto Hide Dock</span>
+            </button>
             <button class="dock-minimize-btn" id="dockMinimizeBtn" title="Minimize Dock">
                 <i class="bi bi-fullscreen-exit"></i>
                 <div class="minimized-icon">
