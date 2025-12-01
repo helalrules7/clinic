@@ -971,173 +971,6 @@
                                     </div>
                                     </div>
                                 <?php endif; ?>
-                                
-<!-- Patient Alerts -->
-<div class="card mb-4">
-    <div class="card-header">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-                <i class="bi bi-bell me-2"></i>
-                Patient Alerts
-                <span class="badge bg-warning ms-2" id="patientAlertsCount">0</span>
-            </h5>
-            <button class="btn btn-primary btn-sm" onclick="openAlertModal(<?= isset($patient['id']) ? (int)$patient['id'] : 'null' ?>, null)">
-                <i class="bi bi-plus me-1"></i>Add Alert
-            </button>
-                                            </div>
-                                        </div>
-    <div class="card-body">
-        <div id="patientAlertsContainer">
-            <div class="text-center py-4">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                                    </div>
-                <p class="text-muted mt-2 mb-0">Loading alerts...</p>
-                                                        </div>
-                                                        </div>
-                                                    </div>
-                </div>
-                
-<!-- Delete Patient Alert Modal -->
-<div class="modal fade" id="deletePatientAlertModal" tabindex="-1" aria-labelledby="deletePatientAlertModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                <h5 class="modal-title" id="deletePatientAlertModalLabel">
-                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>Confirm Delete
-                                                </h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this alert?</p>
-                <p class="text-muted mb-0"><small>This action cannot be undone.</small></p>
-                                            </div>
-                                            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeletePatientAlertBtn" onclick="confirmDeletePatientAlert()">
-                    <i class="bi bi-trash me-1"></i>Delete Alert
-                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-<style>
-/* Patient Alerts Dark Mode Styles */
-#patientAlertsContainer .list-group-item {
-    background-color: var(--card) !important;
-    border-color: var(--border) !important;
-    color: var(--text) !important;
-    transition: all 0.3s ease;
-}
-
-#patientAlertsContainer .list-group-item:hover {
-    background-color: var(--bg-alt) !important;
-    border-color: var(--accent) !important;
-}
-
-/* Active Alert Styling */
-#patientAlertsContainer .list-group-item.alert-active {
-    border-left: 4px solid var(--success) !important;
-    background-color: rgba(16, 185, 129, 0.05) !important;
-}
-
-.dark #patientAlertsContainer .list-group-item.alert-active {
-    border-left: 4px solid var(--success) !important;
-    background-color: rgba(74, 222, 128, 0.1) !important;
-}
-
-/* Dismissed/Inactive Alert Styling */
-#patientAlertsContainer .list-group-item.alert-dismissed,
-#patientAlertsContainer .list-group-item.alert-inactive {
-    border-left: 4px solid var(--muted) !important;
-    opacity: 0.6;
-    background-color: rgba(0, 0, 0, 0.02) !important;
-}
-
-.dark #patientAlertsContainer .list-group-item.alert-dismissed,
-.dark #patientAlertsContainer .list-group-item.alert-inactive {
-    background-color: rgba(0, 0, 0, 0.1) !important;
-    opacity: 0.5;
-}
-
-/* Alert Text Colors */
-#patientAlertsContainer .list-group-item h6 {
-    color: var(--text) !important;
-}
-
-#patientAlertsContainer .list-group-item .text-muted {
-    color: var(--muted) !important;
-}
-
-/* Alert Icon Colors */
-#patientAlertsContainer .list-group-item.alert-active .bi-bell-fill {
-    color: var(--success) !important;
-    animation: pulse-bell 2s infinite;
-}
-
-#patientAlertsContainer .list-group-item.alert-dismissed .bi-bell-fill,
-#patientAlertsContainer .list-group-item.alert-inactive .bi-bell-fill {
-    color: var(--muted) !important;
-}
-
-@keyframes pulse-bell {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
-}
-
-/* Delete Patient Alert Modal Dark Mode */
-#deletePatientAlertModal .modal-content {
-    background-color: var(--card) !important;
-    border-color: var(--border) !important;
-    color: var(--text) !important;
-}
-
-#deletePatientAlertModal .modal-header {
-    background-color: var(--bg-alt) !important;
-    border-bottom-color: var(--border) !important;
-    color: var(--text) !important;
-}
-
-#deletePatientAlertModal .modal-body {
-    background-color: var(--card) !important;
-    color: var(--text) !important;
-}
-
-#deletePatientAlertModal .modal-footer {
-    background-color: var(--bg-alt) !important;
-    border-top-color: var(--border) !important;
-}
-
-#deletePatientAlertModal .text-muted {
-    color: var(--muted) !important;
-}
-
-.dark #deletePatientAlertModal .modal-content {
-    background-color: var(--card) !important;
-    color: var(--text) !important;
-}
-
-.dark #deletePatientAlertModal .modal-header {
-    background-color: var(--bg-alt) !important;
-    border-bottom-color: var(--border) !important;
-    color: var(--text) !important;
-}
-
-.dark #deletePatientAlertModal .modal-body {
-    background-color: var(--card) !important;
-    color: var(--text) !important;
-}
-
-.dark #deletePatientAlertModal .modal-footer {
-    background-color: var(--bg-alt) !important;
-    border-top-color: var(--border) !important;
-}
-
-.dark #deletePatientAlertModal .text-muted {
-    color: var(--muted) !important;
-}
-</style>
 
 <!-- Medical History -->
 <div class="card mb-4">
@@ -1429,6 +1262,173 @@
         <?php endif; ?>
     </div>
 </div>
+                                
+<!-- Patient Alerts -->
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-bell me-2"></i>
+                Patient Alerts
+                <span class="badge bg-warning ms-2" id="patientAlertsCount">0</span>
+            </h5>
+            <button class="btn btn-primary btn-sm" onclick="openAlertModal(<?= isset($patient['id']) ? (int)$patient['id'] : 'null' ?>, null)">
+                <i class="bi bi-plus me-1"></i>Add Alert
+            </button>
+                                            </div>
+                                        </div>
+    <div class="card-body">
+        <div id="patientAlertsContainer">
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                                    </div>
+                <p class="text-muted mt-2 mb-0">Loading alerts...</p>
+                                                        </div>
+                                                        </div>
+                                                    </div>
+                </div>
+                
+<!-- Delete Patient Alert Modal -->
+<div class="modal fade" id="deletePatientAlertModal" tabindex="-1" aria-labelledby="deletePatientAlertModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                <h5 class="modal-title" id="deletePatientAlertModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>Confirm Delete
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this alert?</p>
+                <p class="text-muted mb-0"><small>This action cannot be undone.</small></p>
+                                            </div>
+                                            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeletePatientAlertBtn" onclick="confirmDeletePatientAlert()">
+                    <i class="bi bi-trash me-1"></i>Delete Alert
+                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+<style>
+/* Patient Alerts Dark Mode Styles */
+#patientAlertsContainer .list-group-item {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+    transition: all 0.3s ease;
+}
+
+#patientAlertsContainer .list-group-item:hover {
+    background-color: var(--bg-alt) !important;
+    border-color: var(--accent) !important;
+}
+
+/* Active Alert Styling */
+#patientAlertsContainer .list-group-item.alert-active {
+    border-left: 4px solid var(--success) !important;
+    background-color: rgba(16, 185, 129, 0.05) !important;
+}
+
+.dark #patientAlertsContainer .list-group-item.alert-active {
+    border-left: 4px solid var(--success) !important;
+    background-color: rgba(74, 222, 128, 0.1) !important;
+}
+
+/* Dismissed/Inactive Alert Styling */
+#patientAlertsContainer .list-group-item.alert-dismissed,
+#patientAlertsContainer .list-group-item.alert-inactive {
+    border-left: 4px solid var(--muted) !important;
+    opacity: 0.6;
+    background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+.dark #patientAlertsContainer .list-group-item.alert-dismissed,
+.dark #patientAlertsContainer .list-group-item.alert-inactive {
+    background-color: rgba(0, 0, 0, 0.1) !important;
+    opacity: 0.5;
+}
+
+/* Alert Text Colors */
+#patientAlertsContainer .list-group-item h6 {
+    color: var(--text) !important;
+}
+
+#patientAlertsContainer .list-group-item .text-muted {
+    color: var(--muted) !important;
+}
+
+/* Alert Icon Colors */
+#patientAlertsContainer .list-group-item.alert-active .bi-bell-fill {
+    color: var(--success) !important;
+    animation: pulse-bell 2s infinite;
+}
+
+#patientAlertsContainer .list-group-item.alert-dismissed .bi-bell-fill,
+#patientAlertsContainer .list-group-item.alert-inactive .bi-bell-fill {
+    color: var(--muted) !important;
+}
+
+@keyframes pulse-bell {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Delete Patient Alert Modal Dark Mode */
+#deletePatientAlertModal .modal-content {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+#deletePatientAlertModal .modal-header {
+    background-color: var(--bg-alt) !important;
+    border-bottom-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+#deletePatientAlertModal .modal-body {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+#deletePatientAlertModal .modal-footer {
+    background-color: var(--bg-alt) !important;
+    border-top-color: var(--border) !important;
+}
+
+#deletePatientAlertModal .text-muted {
+    color: var(--muted) !important;
+}
+
+.dark #deletePatientAlertModal .modal-content {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+.dark #deletePatientAlertModal .modal-header {
+    background-color: var(--bg-alt) !important;
+    border-bottom-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dark #deletePatientAlertModal .modal-body {
+    background-color: var(--card) !important;
+    color: var(--text) !important;
+}
+
+.dark #deletePatientAlertModal .modal-footer {
+    background-color: var(--bg-alt) !important;
+    border-top-color: var(--border) !important;
+}
+
+.dark #deletePatientAlertModal .text-muted {
+    color: var(--muted) !important;
+}
+</style>
 
 <!-- Recent Appointments -->
 <div class="card mb-4">
@@ -1907,6 +1907,25 @@
         <?php endif; ?>
     </div>
 </div>
+<!-- Forum Topics Section -->
+<div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-chat-dots me-2"></i>Forum Topics
+        </h5>
+    </div>
+    <div class="card-body">
+        <div id="patientForumTopics">
+            <div class="text-center py-4">
+                <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<br>
 
 <!-- Patient Timeline -->
 <?php if (!empty($timeline)): ?>
@@ -1942,25 +1961,9 @@
         </div>
     </div>
 </div>
+
 <?php endif; ?>
 
-<!-- Forum Topics Section -->
-<div class="card mt-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">
-            <i class="bi bi-chat-dots me-2"></i>Forum Topics
-        </h5>
-    </div>
-    <div class="card-body">
-        <div id="patientForumTopics">
-            <div class="text-center py-4">
-                <div class="spinner-border spinner-border-sm" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <?php include __DIR__ . '/alert_modal.php'; ?>
 <script>

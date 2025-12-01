@@ -210,7 +210,7 @@
 }
 
 .text-info {
-    color: #36b9cc !important;
+    color: #0a67c9 !important;
 }
 
 .text-danger {
@@ -258,7 +258,7 @@
 }
 
 .alert-warning {
-    background-color: rgba(246, 194, 62, 0.1) !important;
+    background-color:rgba(0, 0, 0, 0.39) !important;
     border-color: #f6c23e !important;
     color: #f6c23e !important;
 }
@@ -380,8 +380,12 @@ h6, h5, h4, h3, h2, h1 {
 }
 
 .modal-footer {
-    background-color: var(--card) !important;
-    border-top-color: var(--border) !important;
+    background: transparent !important;
+    border-top-color: rgba(226, 232, 240, 0.3) !important;
+}
+
+.dark .modal-footer {
+    border-top-color: rgba(51, 65, 85, 0.3) !important;
 }
 
 /* Search Modal Styles */

@@ -296,8 +296,8 @@
                                 <section class="field menu" style="min-width: 100%;">
                                     <div class="control">
                                         <select class="form-select d-none" id="appointmentTime" name="start_time" required>
-                                            <option value="">Select time slot...</option>
-                                        </select>
+                                    <option value="">Select time slot...</option>
+                                </select>
                                         <button type="button" class="custom-select-toggle" aria-expanded="false"><i class="bi bi-clock fs-5"></i> <h3>Select time slot...</h3></button>
                                         <menu>
                                             <li data-option="" tabindex="0" role="button" class="selected"><i class="bi bi-clock fs-5"></i> <h3>Select time slot...</h3></li>
@@ -313,11 +313,11 @@
                                 <section class="field menu" style="min-width: 100%;">
                                     <div class="control">
                                         <select class="form-select d-none" id="visitType" name="visit_type" required>
-                                            <option value="">Select visit type...</option>
-                                            <option value="New">New Patient</option>
-                                            <option value="FollowUp">Follow Up</option>
-                                            <option value="Procedure">Procedure</option>
-                                        </select>
+                                    <option value="">Select visit type...</option>
+                                    <option value="New">New Patient</option>
+                                    <option value="FollowUp">Follow Up</option>
+                                    <option value="Procedure">Procedure</option>
+                                </select>
                                         <button type="button" class="custom-select-toggle" aria-expanded="false"><i class="bi bi-person-plus fs-5"></i> <h3>Select visit type...</h3></button>
                                         <menu>
                                             <li data-option="" tabindex="0" role="button" class="selected"><h3>Select visit type...</h3></li>
@@ -335,8 +335,8 @@
                                     <div class="control">
                                         <select class="form-select d-none" id="appointmentSource" name="source">
                                             <option value="Walk-in" selected>Walk-in</option>
-                                            <option value="Phone">Phone</option>
-                                        </select>
+                                    <option value="Phone">Phone</option>
+                                </select>
                                         <button type="button" class="custom-select-toggle" aria-expanded="false"><i class="bi bi-people fs-5"></i> <h3>Walk-in</h3></button>
                                         <menu>
                                             <li data-option="Walk-in" tabindex="0" role="button" class="selected"><i class="bi bi-people fs-5"></i> <h3>Walk-in</h3></li>

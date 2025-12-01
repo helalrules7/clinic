@@ -1058,23 +1058,47 @@ function showAddMedicalHistoryModal(patientId) {
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="addCategory" class="form-label">Category</label>
-                                    <select class="form-select" id="addCategory">
-                                        <option value="general">General</option>
-                                        <option value="allergy">Allergy</option>
-                                        <option value="medication">Medication</option>
-                                        <option value="surgery">Surgery</option>
-                                        <option value="family_history">Family History</option>
-                                        <option value="social_history">Social History</option>
-                                    </select>
+                                    <section class="field menu" style="min-width: 100%;">
+                                        <div class="control">
+                                            <select class="form-select d-none" id="addCategory">
+                                                <option value="general" selected>General</option>
+                                                <option value="allergy">Allergy</option>
+                                                <option value="medication">Medication</option>
+                                                <option value="surgery">Surgery</option>
+                                                <option value="family_history">Family History</option>
+                                                <option value="social_history">Social History</option>
+                                            </select>
+                                            <button type="button" class="custom-select-toggle" aria-expanded="false">General</button>
+                                            <menu>
+                                                <li data-option="general" tabindex="0" role="button" class="selected"><i class="bi-tags fs-5"></i><h3>General</h3></li>
+                                                <li data-option="allergy" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Allergy</h3></li>
+                                                <li data-option="medication" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Medication</h3></li>
+                                                <li data-option="surgery" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Surgery</h3></li>
+                                                <li data-option="family_history" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Family History</h3></li>
+                                                <li data-option="social_history" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Social History</h3></li>
+                                            </menu>
+                                        </div>
+                                    </section>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="addStatus" class="form-label">Status</label>
-                                    <select class="form-select" id="addStatus">
-                                        <option value="active">Active</option>
-                                        <option value="resolved">Resolved</option>
-                                        <option value="chronic">Chronic</option>
-                                        <option value="inactive">Inactive</option>
-                                    </select>
+                                    <section class="field menu" style="min-width: 100%;">
+                                        <div class="control">
+                                            <select class="form-select d-none" id="addStatus">
+                                                <option value="active" selected>Active</option>
+                                                <option value="resolved">Resolved</option>
+                                                <option value="chronic">Chronic</option>
+                                                <option value="inactive">Inactive</option>
+                                            </select>
+                                            <button type="button" class="custom-select-toggle" aria-expanded="false">Active</button>
+                                            <menu>
+                                                <li data-option="active" tabindex="0" role="button" class="selected"><i class="bi-check-circle fs-5"></i><h3>Active</h3></li>
+                                                <li data-option="resolved" tabindex="0" role="button"><i class="bi-check-circle fs-5"></i><h3>Resolved</h3></li>
+                                                <li data-option="chronic" tabindex="0" role="button"><i class="bi-check-circle fs-5"></i><h3>Chronic</h3></li>
+                                                <li data-option="inactive" tabindex="0" role="button"><i class="bi-check-circle fs-5"></i><h3>Inactive</h3></li>
+                                            </menu>
+                                        </div>
+                                    </section>
                                 </div>
                             </div>
                             
@@ -1274,19 +1298,37 @@ function showPatientUploadModal(patientId) {
                             
                             <div class="mb-3">
                                 <label class="form-label">File Type</label>
-                                <select class="form-select" name="file_type" required>
-                                    <option value="photo" selected>Photo</option>
-                                    <option value="medical_record">Medical Record</option>
-                                    <option value="xray">X-ray</option>
-                                    <option value="ct_scan">CT Scan</option>
-                                    <option value="mri">MRI</option>
-                                    <option value="ultrasound">Ultrasound</option>
-                                    <option value="lab_report">Lab Report</option>
-                                    <option value="blood_test">Blood Test</option>
-                                    <option value="prescription">Prescription</option>
-                                    <option value="insurance">Insurance Document</option>
-                                    <option value="other">Other</option>
-                                </select>
+                                <section class="field menu" style="min-width: 100%;">
+                                    <div class="control">
+                                        <select class="form-select d-none" name="file_type" required>
+                                            <option value="photo" selected>Photo</option>
+                                            <option value="medical_record">Medical Record</option>
+                                            <option value="xray">X-ray</option>
+                                            <option value="ct_scan">CT Scan</option>
+                                            <option value="mri">MRI</option>
+                                            <option value="ultrasound">Ultrasound</option>
+                                            <option value="lab_report">Lab Report</option>
+                                            <option value="blood_test">Blood Test</option>
+                                            <option value="prescription">Prescription</option>
+                                            <option value="insurance">Insurance Document</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false">Photo</button>
+                                        <menu>
+                                            <li data-option="photo" tabindex="0" role="button" class="selected"><i class="bi-paperclip fs-5"></i><h3>Photo</h3></li>
+                                            <li data-option="medical_record" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>Medical Record</h3></li>
+                                            <li data-option="xray" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>X-ray</h3></li>
+                                            <li data-option="ct_scan" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>CT Scan</h3></li>
+                                            <li data-option="mri" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>MRI</h3></li>
+                                            <li data-option="ultrasound" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>Ultrasound</h3></li>
+                                            <li data-option="lab_report" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>Lab Report</h3></li>
+                                            <li data-option="blood_test" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>Blood Test</h3></li>
+                                            <li data-option="prescription" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>Prescription</h3></li>
+                                            <li data-option="insurance" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>Insurance Document</h3></li>
+                                            <li data-option="other" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>Other</h3></li>
+                                        </menu>
+                                    </div>
+                                </section>
                             </div>
                             
                             <div class="mb-3">
@@ -1421,14 +1463,27 @@ function openPatientCameraModal(patientId) {
                         
                         <div class="mb-3" id="patientPhotoTypeContainer">
                             <label class="form-label">Photo Type</label>
-                            <select class="form-select" id="patientPhotoType" required>
-                                <option value="medical_photo" selected>Medical Photo</option>
-                                <option value="xray">X-ray</option>
-                                <option value="scan">Scan</option>
-                                <option value="lab_result">Lab Result</option>
-                                <option value="prescription">Prescription</option>
-                                <option value="other">Other</option>
-                            </select>
+                            <section class="field menu" style="min-width: 100%;">
+                                <div class="control">
+                                    <select class="form-select d-none" id="patientPhotoType" required>
+                                        <option value="medical_photo" selected>Medical Photo</option>
+                                        <option value="xray">X-ray</option>
+                                        <option value="scan">Scan</option>
+                                        <option value="lab_result">Lab Result</option>
+                                        <option value="prescription">Prescription</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                    <button type="button" class="custom-select-toggle" aria-expanded="false">Medical Photo</button>
+                                    <menu>
+                                        <li data-option="medical_photo" tabindex="0" role="button" class="selected"><i class="bi-camera fs-5"></i><h3>Medical Photo</h3></li>
+                                        <li data-option="xray" tabindex="0" role="button"><i class="bi-camera fs-5"></i><h3>X-ray</h3></li>
+                                        <li data-option="scan" tabindex="0" role="button"><i class="bi-camera fs-5"></i><h3>Scan</h3></li>
+                                        <li data-option="lab_result" tabindex="0" role="button"><i class="bi-camera fs-5"></i><h3>Lab Result</h3></li>
+                                        <li data-option="prescription" tabindex="0" role="button"><i class="bi-camera fs-5"></i><h3>Prescription</h3></li>
+                                        <li data-option="other" tabindex="0" role="button"><i class="bi-camera fs-5"></i><h3>Other</h3></li>
+                                    </menu>
+                                </div>
+                            </section>
                         </div>
                         
                         <div class="mb-3">
@@ -2377,23 +2432,47 @@ function showMedicalHistoryModal(data, mode) {
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="category" class="form-label">Category</label>
-                                    <select class="form-select" id="category" ${isView ? 'disabled' : ''}>
-                                        <option value="general" ${data.category === 'general' ? 'selected' : ''}>General</option>
-                                        <option value="allergy" ${data.category === 'allergy' ? 'selected' : ''}>Allergy</option>
-                                        <option value="medication" ${data.category === 'medication' ? 'selected' : ''}>Medication</option>
-                                        <option value="surgery" ${data.category === 'surgery' ? 'selected' : ''}>Surgery</option>
-                                        <option value="family_history" ${data.category === 'family_history' ? 'selected' : ''}>Family History</option>
-                                        <option value="social_history" ${data.category === 'social_history' ? 'selected' : ''}>Social History</option>
-                                    </select>
+                                    <section class="field menu" style="min-width: 100%;">
+                                        <div class="control">
+                                            <select class="form-select d-none" id="category" ${isView ? 'disabled' : ''}>
+                                                <option value="general" ${data.category === 'general' ? 'selected' : ''}>General</option>
+                                                <option value="allergy" ${data.category === 'allergy' ? 'selected' : ''}>Allergy</option>
+                                                <option value="medication" ${data.category === 'medication' ? 'selected' : ''}>Medication</option>
+                                                <option value="surgery" ${data.category === 'surgery' ? 'selected' : ''}>Surgery</option>
+                                                <option value="family_history" ${data.category === 'family_history' ? 'selected' : ''}>Family History</option>
+                                                <option value="social_history" ${data.category === 'social_history' ? 'selected' : ''}>Social History</option>
+                                            </select>
+                                            <button type="button" class="custom-select-toggle" aria-expanded="false" ${isView ? 'disabled' : ''}>${data.category ? data.category.charAt(0).toUpperCase() + data.category.slice(1).replace('_', ' ') : 'General'}</button>
+                                            <menu>
+                                                <li data-option="general" tabindex="0" role="button" ${data.category === 'general' ? 'class="selected"' : ''}><i class="bi-tags fs-5"></i><h3>General</h3></li>
+                                                <li data-option="allergy" tabindex="0" role="button" ${data.category === 'allergy' ? 'class="selected"' : ''}><i class="bi-tags fs-5"></i><h3>Allergy</h3></li>
+                                                <li data-option="medication" tabindex="0" role="button" ${data.category === 'medication' ? 'class="selected"' : ''}><i class="bi-tags fs-5"></i><h3>Medication</h3></li>
+                                                <li data-option="surgery" tabindex="0" role="button" ${data.category === 'surgery' ? 'class="selected"' : ''}><i class="bi-tags fs-5"></i><h3>Surgery</h3></li>
+                                                <li data-option="family_history" tabindex="0" role="button" ${data.category === 'family_history' ? 'class="selected"' : ''}><i class="bi-tags fs-5"></i><h3>Family History</h3></li>
+                                                <li data-option="social_history" tabindex="0" role="button" ${data.category === 'social_history' ? 'class="selected"' : ''}><i class="bi-tags fs-5"></i><h3>Social History</h3></li>
+                                            </menu>
+                                        </div>
+                                    </section>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="status" class="form-label">Status</label>
-                                    <select class="form-select" id="status" ${isView ? 'disabled' : ''}>
-                                        <option value="active" ${data.status === 'active' ? 'selected' : ''}>Active</option>
-                                        <option value="resolved" ${data.status === 'resolved' ? 'selected' : ''}>Resolved</option>
-                                        <option value="chronic" ${data.status === 'chronic' ? 'selected' : ''}>Chronic</option>
-                                        <option value="inactive" ${data.status === 'inactive' ? 'selected' : ''}>Inactive</option>
-                                    </select>
+                                    <section class="field menu" style="min-width: 100%;">
+                                        <div class="control">
+                                            <select class="form-select d-none" id="status" ${isView ? 'disabled' : ''}>
+                                                <option value="active" ${data.status === 'active' ? 'selected' : ''}>Active</option>
+                                                <option value="resolved" ${data.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+                                                <option value="chronic" ${data.status === 'chronic' ? 'selected' : ''}>Chronic</option>
+                                                <option value="inactive" ${data.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                                            </select>
+                                            <button type="button" class="custom-select-toggle" aria-expanded="false" ${isView ? 'disabled' : ''}>${data.status ? data.status.charAt(0).toUpperCase() + data.status.slice(1) : 'Active'}</button>
+                                            <menu>
+                                                <li data-option="active" tabindex="0" role="button" ${data.status === 'active' ? 'class="selected"' : ''}><i class="bi-check-circle fs-5"></i><h3>Active</h3></li>
+                                                <li data-option="resolved" tabindex="0" role="button" ${data.status === 'resolved' ? 'class="selected"' : ''}><i class="bi-check-circle fs-5"></i><h3>Resolved</h3></li>
+                                                <li data-option="chronic" tabindex="0" role="button" ${data.status === 'chronic' ? 'class="selected"' : ''}><i class="bi-check-circle fs-5"></i><h3>Chronic</h3></li>
+                                                <li data-option="inactive" tabindex="0" role="button" ${data.status === 'inactive' ? 'class="selected"' : ''}><i class="bi-check-circle fs-5"></i><h3>Inactive</h3></li>
+                                            </menu>
+                                        </div>
+                                    </section>
                                 </div>
                             </div>
                             
@@ -2648,12 +2727,23 @@ function showAddGlassesPrescriptionModal(patientId) {
                             </div>
                                 <div class="col-md-6">
                                     <label for="glassesLensType" class="form-label">Lens Type *</label>
-                                    <select class="form-select" id="glassesLensType" required>
-                                        <option value="Single Vision">Single Vision</option>
-                                        <option value="Bifocal">Bifocal</option>
-                                        <option value="Progressive">Progressive</option>
-                                        <option value="Reading">Reading</option>
-                                    </select>
+                                    <section class="field menu" style="min-width: 100%;">
+                                        <div class="control">
+                                            <select class="form-select d-none" id="glassesLensType" required>
+                                                <option value="Single Vision" selected>Single Vision</option>
+                                                <option value="Bifocal">Bifocal</option>
+                                                <option value="Progressive">Progressive</option>
+                                                <option value="Reading">Reading</option>
+                                            </select>
+                                            <button type="button" class="custom-select-toggle" aria-expanded="false">Single Vision</button>
+                                            <menu>
+                                                <li data-option="Single Vision" tabindex="0" role="button" class="selected"><i class="bi-eye fs-5"></i><h3>Single Vision</h3></li>
+                                                <li data-option="Bifocal" tabindex="0" role="button"><i class="bi-eye fs-5"></i><h3>Bifocal</h3></li>
+                                                <li data-option="Progressive" tabindex="0" role="button"><i class="bi-eye fs-5"></i><h3>Progressive</h3></li>
+                                                <li data-option="Reading" tabindex="0" role="button"><i class="bi-eye fs-5"></i><h3>Reading</h3></li>
+                                            </menu>
+                                        </div>
+                                    </section>
                             </div>
                                 </div>
                             
@@ -3015,12 +3105,23 @@ function showGlassesPrescriptionModal(data, mode) {
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <label class="form-label">Lens Type</label>
-                                    <select class="form-select" id="editLensType" ${disabled}>
-                                        <option value="Single Vision" ${data.lens_type === 'Single Vision' ? 'selected' : ''}>Single Vision</option>
-                                        <option value="Bifocal" ${data.lens_type === 'Bifocal' ? 'selected' : ''}>Bifocal</option>
-                                        <option value="Progressive" ${data.lens_type === 'Progressive' ? 'selected' : ''}>Progressive</option>
-                                        <option value="Reading" ${data.lens_type === 'Reading' ? 'selected' : ''}>Reading</option>
-                                    </select>
+                                    <section class="field menu" style="min-width: 100%;">
+                                        <div class="control">
+                                            <select class="form-select d-none" id="editLensType" ${disabled}>
+                                                <option value="Single Vision" ${data.lens_type === 'Single Vision' ? 'selected' : ''}>Single Vision</option>
+                                                <option value="Bifocal" ${data.lens_type === 'Bifocal' ? 'selected' : ''}>Bifocal</option>
+                                                <option value="Progressive" ${data.lens_type === 'Progressive' ? 'selected' : ''}>Progressive</option>
+                                                <option value="Reading" ${data.lens_type === 'Reading' ? 'selected' : ''}>Reading</option>
+                                            </select>
+                                            <button type="button" class="custom-select-toggle" aria-expanded="false" ${disabled}>${data.lens_type || 'Single Vision'}</button>
+                                            <menu>
+                                                <li data-option="Single Vision" tabindex="0" role="button" ${data.lens_type === 'Single Vision' ? 'class="selected"' : ''}><i class="bi-eye fs-5"></i><h3>Single Vision</h3></li>
+                                                <li data-option="Bifocal" tabindex="0" role="button" ${data.lens_type === 'Bifocal' ? 'class="selected"' : ''}><i class="bi-eye fs-5"></i><h3>Bifocal</h3></li>
+                                                <li data-option="Progressive" tabindex="0" role="button" ${data.lens_type === 'Progressive' ? 'class="selected"' : ''}><i class="bi-eye fs-5"></i><h3>Progressive</h3></li>
+                                                <li data-option="Reading" tabindex="0" role="button" ${data.lens_type === 'Reading' ? 'class="selected"' : ''}><i class="bi-eye fs-5"></i><h3>Reading</h3></li>
+                                            </menu>
+                                        </div>
+                                    </section>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Created Date</label>
@@ -4185,3 +4286,222 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// =========================================
+// Custom Select Menu Logic (from appointment.js)
+// =========================================
+
+// Custom Select Menu Logic
+function initCustomSelects() {
+    const customSelects = document.querySelectorAll('.field.menu:not([data-initialized])');
+
+    customSelects.forEach(field => {
+        const select = field.querySelector('select');
+        const button = field.querySelector('.custom-select-toggle');
+        const menu = field.querySelector('menu');
+        const options = menu ? menu.querySelectorAll('li') : [];
+
+        if (!select || !button || !menu || options.length === 0) {
+            console.warn('Missing elements for custom select initialization:', field);
+            return;
+        }
+        
+        // Mark as initialized to prevent duplicate event listeners
+        field.setAttribute('data-initialized', 'true');
+
+        // Set initial button text
+        const selectedOption = select.options[select.selectedIndex];
+        if (selectedOption) {
+            const correspondingLi = Array.from(options).find(li => li.dataset.option === selectedOption.value);
+            if (correspondingLi) {
+                button.textContent = correspondingLi.querySelector('h3')?.textContent || selectedOption.textContent;
+                correspondingLi.classList.add('selected');
+            } else {
+                button.textContent = selectedOption.textContent;
+            }
+        } else {
+            button.textContent = 'Select an option';
+        }
+
+        function openMenu() {
+            // Close any other open menus first
+            document.querySelectorAll('.field.menu.open').forEach(openField => {
+                if (openField !== field) {
+                    const openButton = openField.querySelector('.custom-select-toggle');
+                    openField.classList.remove('open');
+                    if (openButton) openButton.setAttribute('aria-expanded', 'false');
+                    const openParent = openField.closest('.mb-3, .modal-body, .d-flex, .card-header, .col-12, .card');
+                    if (openParent && !openParent.classList.contains('modal')) {
+                        openParent.style.zIndex = '';
+                        openParent.style.position = '';
+                    } else {
+                        const openModal = openField.closest('.modal');
+                        if (openModal) {
+                            openModal.style.zIndex = '';
+                        }
+                    }
+                }
+            });
+
+            field.classList.add('open');
+            button.setAttribute('aria-expanded', 'true');
+
+            // Fix z-index issue by elevating parent containers manually
+            const parent = field.closest('.mb-3, .modal-body, .d-flex, .card-header, .col-12, .card');
+            if (parent && !parent.classList.contains('modal')) {
+                parent.style.zIndex = '1000002';
+                parent.style.position = 'relative';
+            } else {
+                const modal = field.closest('.modal');
+                if (modal) {
+                    modal.style.zIndex = '1000002';
+                }
+            }
+
+            const selected = menu.querySelector('.selected') || options[0];
+            if (selected) {
+                selected.focus();
+                
+                // Scroll to selected item if menu has many options
+                setTimeout(() => {
+                    selected.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                        inline: 'nearest'
+                    });
+                }, 150);
+            }
+        }
+
+        function closeMenu() {
+            field.classList.remove('open');
+            button.setAttribute('aria-expanded', 'false');
+            if (document.activeElement === document.body || document.activeElement === null) {
+                button.focus();
+            }
+
+            const parent = field.closest('.mb-3, .modal-body, .d-flex, .card-header, .col-12, .card');
+            if (parent && !parent.classList.contains('modal')) {
+                setTimeout(() => {
+                    if (!field.classList.contains('open')) {
+                        parent.style.zIndex = '';
+                        parent.style.position = '';
+                    }
+                }, 300);
+            } else {
+                const modal = field.closest('.modal');
+                if (modal) {
+                    setTimeout(() => {
+                        if (!field.classList.contains('open')) {
+                            modal.style.zIndex = '';
+                        }
+                    }, 300);
+                }
+            }
+        }
+
+        function setOption(optionEl) {
+            const value = optionEl.dataset.option;
+            const text = optionEl.querySelector('h3')?.textContent || optionEl.textContent;
+
+            select.value = value;
+            select.dispatchEvent(new Event('change'));
+
+            button.textContent = text;
+
+            options.forEach(el => el.classList.remove('selected'));
+            optionEl.classList.add('selected');
+
+            closeMenu();
+        }
+
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (field.classList.contains('open')) {
+                closeMenu();
+            } else {
+                openMenu();
+            }
+        });
+
+        button.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openMenu();
+            }
+        });
+
+        // Prevent clicks on menu from closing modal
+        menu.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        options.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setOption(option);
+            });
+
+            option.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setOption(option);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const next = option.nextElementSibling;
+                    if (next) next.focus();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prev = option.previousElementSibling;
+                    if (prev) prev.focus();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeMenu();
+                }
+            });
+        });
+
+        // Close menu when clicking outside, but prevent modal from closing
+        const handleOutsideClick = (e) => {
+            const target = e.target;
+            const isInteractiveElement = target.tagName === 'INPUT' || 
+                                        target.tagName === 'TEXTAREA' || 
+                                        target.tagName === 'SELECT' ||
+                                        target.isContentEditable ||
+                                        target.closest('input, textarea, select, [contenteditable]');
+            
+            if (isInteractiveElement) {
+                return;
+            }
+            
+            if (field.classList.contains('open') && !field.contains(target)) {
+                const modal = field.closest('.modal');
+                if (modal && target === modal) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    return;
+                }
+                closeMenu();
+            }
+        };
+        
+        // Store handler for cleanup
+        field._outsideClickHandler = handleOutsideClick;
+        document.addEventListener('click', handleOutsideClick, false);
+    });
+}
+
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', function() {
+    initCustomSelects();
+});
+
+// Also initialize when modals are shown
+document.addEventListener('shown.bs.modal', function(e) {
+    const modal = e.target;
+    setTimeout(() => {
+        initCustomSelects();
+    }, 100);
+});

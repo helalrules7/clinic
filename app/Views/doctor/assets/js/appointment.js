@@ -514,7 +514,11 @@ function showRescheduleModal(appointmentId) {
     function loadAvailableTimeSlotsForReschedule(selectedDate) {
         if (!selectedDate || !doctorId) {
             newTimeInput.innerHTML = '<option value="">Please select a date first</option>';
-            updateTimeSelectCustomMenu(newTimeInput, 'Please select a date first');
+            const timeField = newTimeInput.closest('.field.menu');
+            const timeButton = timeField ? timeField.querySelector('.custom-select-toggle') : null;
+            if (timeButton) {
+                timeButton.textContent = 'Please select a date first';
+            }
             return;
         }
         
@@ -524,7 +528,11 @@ function showRescheduleModal(appointmentId) {
             timeSlotsError.textContent = validation.message;
             timeSlotsError.style.display = 'block';
             newTimeInput.innerHTML = '<option value="">Invalid date</option>';
-            updateTimeSelectCustomMenu(newTimeInput, 'Invalid date');
+            const timeField = newTimeInput.closest('.field.menu');
+            const timeButton = timeField ? timeField.querySelector('.custom-select-toggle') : null;
+            if (timeButton) {
+                timeButton.textContent = 'Invalid date';
+            }
             return;
         }
         
@@ -532,7 +540,11 @@ function showRescheduleModal(appointmentId) {
         timeSlotsError.style.display = 'none';
         newTimeInput.disabled = true;
         newTimeInput.innerHTML = '<option value="">Loading...</option>';
-        updateTimeSelectCustomMenu(newTimeInput, 'Loading...');
+        const timeField = newTimeInput.closest('.field.menu');
+        const timeButton = timeField ? timeField.querySelector('.custom-select-toggle') : null;
+        if (timeButton) {
+            timeButton.textContent = 'Loading...';
+        }
         
         // Fetch available slots from calendar API
         fetch(`/api/calendar?doctor_id=${doctorId}&date=${selectedDate}`)
@@ -546,7 +558,11 @@ function showRescheduleModal(appointmentId) {
                     
                     if (availableSlots.length === 0) {
                         newTimeInput.innerHTML = '<option value="">No available time slots for this date</option>';
-                        updateTimeSelectCustomMenu(newTimeInput, 'No available time slots for this date');
+                        const timeField = newTimeInput.closest('.field.menu');
+                        const timeButton = timeField ? timeField.querySelector('.custom-select-toggle') : null;
+                        if (timeButton) {
+                            timeButton.textContent = 'No available time slots for this date';
+                        }
                         timeSlotsError.textContent = 'No available time slots found for the selected date. Please choose another date.';
                         timeSlotsError.style.display = 'block';
                         return;
@@ -565,52 +581,27 @@ function showRescheduleModal(appointmentId) {
                     
                     if (filteredSlots.length === 0) {
                         newTimeInput.innerHTML = '<option value="">No later time slots available for this date</option>';
+                        const timeField = newTimeInput.closest('.field.menu');
+                        const timeButton = timeField ? timeField.querySelector('.custom-select-toggle') : null;
+                        if (timeButton) {
+                            timeButton.textContent = 'No later time slots available for this date';
+                        }
                         timeSlotsError.textContent = 'No later time slots available for the selected date. Please choose another date.';
                         timeSlotsError.style.display = 'block';
                         return;
                     }
                     
-                    // Populate time slots dropdown
-                    newTimeInput.innerHTML = '<option value="">Select available time slot...</option>';
-                    filteredSlots.forEach(slot => {
-                        const option = document.createElement('option');
-                        option.value = slot;
-                        option.textContent = formatTimeForReschedule(slot);
-                        newTimeInput.appendChild(option);
-                    });
-                    
-                    // Update custom menu
-                    const fieldMenu = newTimeInput.closest('.field.menu');
-                    const menu = fieldMenu ? fieldMenu.querySelector('menu') : null;
-                    const button = fieldMenu ? fieldMenu.querySelector('.custom-select-toggle') : null;
-                    
-                    if (menu && button) {
-                        menu.innerHTML = '<li data-option="" tabindex="0" role="button" class="selected"><i class="bi-clock fs-5"></i><h3>Select available time slot...</h3></li>';
-                        filteredSlots.forEach(slot => {
-                            const li = document.createElement('li');
-                            li.setAttribute('data-option', slot);
-                            li.setAttribute('tabindex', '0');
-                            li.setAttribute('role', 'button');
-                            const icon = document.createElement('i');
-                            icon.className = 'bi-clock fs-5';
-                            li.appendChild(icon);
-                            const h3 = document.createElement('h3');
-                            h3.textContent = formatTimeForReschedule(slot);
-                            li.appendChild(h3);
-                            menu.appendChild(li);
-                        });
-                        button.textContent = 'Select available time slot...';
-                        
-                        // Re-initialize custom select
-                        setTimeout(() => {
-                            initCustomSelects();
-                        }, 50);
-                    }
+                    // Populate time slots using populateTimeSlots function (like calendar.js)
+                    populateTimeSlots(newTimeInput, filteredSlots);
                     
                     timeSlotsError.style.display = 'none';
                 } else {
                     newTimeInput.innerHTML = '<option value="">Error loading time slots</option>';
-                    updateTimeSelectCustomMenu(newTimeInput, 'Error loading time slots');
+                    const timeField = newTimeInput.closest('.field.menu');
+                    const timeButton = timeField ? timeField.querySelector('.custom-select-toggle') : null;
+                    if (timeButton) {
+                        timeButton.textContent = 'Error loading time slots';
+                    }
                     timeSlotsError.textContent = 'Failed to load available time slots. Please try again.';
                     timeSlotsError.style.display = 'block';
                 }
@@ -619,6 +610,11 @@ function showRescheduleModal(appointmentId) {
                 timeSlotsLoading.style.display = 'none';
                 newTimeInput.disabled = false;
                 newTimeInput.innerHTML = '<option value="">Error loading time slots</option>';
+                const timeField = newTimeInput.closest('.field.menu');
+                const timeButton = timeField ? timeField.querySelector('.custom-select-toggle') : null;
+                if (timeButton) {
+                    timeButton.textContent = 'Error loading time slots';
+                }
                 timeSlotsError.textContent = 'Error loading available time slots: ' + error.message;
                 timeSlotsError.style.display = 'block';
                 console.error('Error loading time slots:', error);
@@ -986,41 +982,8 @@ function showRescheduleFollowupModal(appointmentId) {
                         return;
                     }
                     
-                    newTimeInput.innerHTML = '<option value="">Select available time slot...</option>';
-                    availableSlots.forEach(slot => {
-                        const option = document.createElement('option');
-                        option.value = slot;
-                        option.textContent = formatTimeForReschedule(slot);
-                        newTimeInput.appendChild(option);
-                    });
-                    
-                    // Update custom menu
-                    const fieldMenu = newTimeInput.closest('.field.menu');
-                    const menu = fieldMenu ? fieldMenu.querySelector('menu') : null;
-                    const button = fieldMenu ? fieldMenu.querySelector('.custom-select-toggle') : null;
-                    
-                    if (menu && button) {
-                        menu.innerHTML = '<li data-option="" tabindex="0" role="button" class="selected"><i class="bi-clock fs-5"></i><h3>Select available time slot...</h3></li>';
-                        availableSlots.forEach(slot => {
-                            const li = document.createElement('li');
-                            li.setAttribute('data-option', slot);
-                            li.setAttribute('tabindex', '0');
-                            li.setAttribute('role', 'button');
-                            const icon = document.createElement('i');
-                            icon.className = 'bi-clock fs-5';
-                            li.appendChild(icon);
-                            const h3 = document.createElement('h3');
-                            h3.textContent = formatTimeForReschedule(slot);
-                            li.appendChild(h3);
-                            menu.appendChild(li);
-                        });
-                        button.textContent = 'Select available time slot...';
-                        
-                        // Re-initialize custom select
-                        setTimeout(() => {
-                            initCustomSelects();
-                        }, 50);
-                    }
+                    // Populate time slots using populateTimeSlots function (like calendar.js)
+                    populateTimeSlots(newTimeInput, availableSlots);
                     
                     timeSlotsError.style.display = 'none';
                 } else {
@@ -5619,7 +5582,112 @@ document.addEventListener('shown.bs.modal', function(e) {
     convertSelectsInContainer(modal);
 });
 
-// Helper function to update custom menu when time slots are updated
+// Format time function (similar to calendar.js)
+function formatTime(time) {
+    if (!time) return '';
+    return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
+}
+
+// Populate time slots function (similar to calendar.js)
+function populateTimeSlots(selectElement, availableSlots, preselectedTime = null) {
+    const timeField = selectElement.closest('.field.menu');
+    const timeMenu = timeField ? timeField.querySelector('menu') : null;
+    const timeButton = timeField ? timeField.querySelector('.custom-select-toggle') : null;
+    
+    selectElement.innerHTML = '<option value="">Select available time slot...</option>';
+    
+    // Add all available slots
+    availableSlots.forEach(time => {
+        const option = document.createElement('option');
+        option.value = time;
+        option.textContent = formatTime(time);
+        selectElement.appendChild(option);
+    });
+    
+    // If there's a preselected time that's not in available slots, add it
+    if (preselectedTime && !availableSlots.includes(preselectedTime)) {
+        const option = document.createElement('option');
+        option.value = preselectedTime;
+        option.textContent = formatTime(preselectedTime) + ' (Selected)';
+        option.style.fontWeight = 'bold';
+        option.style.color = '#28a745';
+        option.style.backgroundColor = '#f8f9fa';
+        selectElement.appendChild(option);
+    }
+    
+    // Sort all options by time (except the first "Select..." option)
+    const options = Array.from(selectElement.options).slice(1); // Skip first "Select..." option
+    options.sort((a, b) => a.value.localeCompare(b.value));
+    
+    // Clear and re-add sorted options
+    selectElement.innerHTML = '<option value="">Select available time slot...</option>';
+    options.forEach(option => selectElement.appendChild(option));
+    
+    // Update custom menu if it exists
+    if (timeMenu) {
+        timeMenu.innerHTML = '<li data-option="" tabindex="0" role="button" class="selected"><i class="bi-clock fs-5"></i><h3>Select available time slot...</h3></li>';
+        
+        // Add all sorted options to custom menu
+        options.forEach(option => {
+            const li = document.createElement('li');
+            li.setAttribute('data-option', option.value);
+            li.setAttribute('tabindex', '0');
+            li.setAttribute('role', 'button');
+            
+            // Add clock icon
+            const icon = document.createElement('i');
+            icon.className = 'bi-clock fs-5';
+            li.appendChild(icon);
+            
+            // Add text content
+            const h3 = document.createElement('h3');
+            h3.textContent = option.textContent;
+            li.appendChild(h3);
+            
+            timeMenu.appendChild(li);
+        });
+        
+        // Remove initialization flag to allow re-initialization
+        if (timeField) {
+            timeField.removeAttribute('data-initialized');
+        }
+        
+        // Re-initialize custom select to attach event listeners
+        setTimeout(() => {
+            initCustomSelects();
+        }, 50);
+    }
+    
+    // If preselected time exists, select it immediately
+    if (preselectedTime) {
+        setTimeout(() => {
+            selectElement.value = preselectedTime;
+            if (selectElement.value === preselectedTime) {
+                // Update custom menu selection
+                if (timeMenu && timeButton) {
+                    const selectedLi = timeMenu.querySelector(`li[data-option="${preselectedTime}"]`);
+                    if (selectedLi) {
+                        timeMenu.querySelectorAll('li').forEach(li => li.classList.remove('selected'));
+                        selectedLi.classList.add('selected');
+                        timeButton.textContent = selectedLi.querySelector('h3')?.textContent || formatTime(preselectedTime);
+                        
+                        // Store scroll function for when menu opens
+                        const field = timeMenu.closest('.field.menu');
+                        if (field) {
+                            field.dataset.selectedValue = preselectedTime;
+                        }
+                    }
+                }
+            }
+        }, 50);
+    }
+}
+
+// Helper function to update custom menu when time slots are updated (legacy support)
 function updateTimeSelectCustomMenu(selectElement, text) {
     const fieldMenu = selectElement.closest('.field.menu');
     const menu = fieldMenu ? fieldMenu.querySelector('menu') : null;

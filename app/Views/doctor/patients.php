@@ -179,13 +179,25 @@
                     <!-- Items per page -->
                     <div class="d-flex align-items-center">
                         <label for="paginationLimit" class="form-label mb-0 me-2 text-muted">View:</label>
-                        <select class="form-select form-select-sm" id="paginationLimit" style="width: auto;">
-                            <option value="10">10</option>
-                            <option value="20" selected>20</option>
-                            <option value="30">30</option>
-                            <option value="50">50</option>
-                            <option value="all">All</option>
-                        </select>
+                        <section class="field menu" style="min-width: auto; width: auto;">
+                            <div class="control">
+                                <select class="form-select form-select-sm d-none" id="paginationLimit" style="width: auto;">
+                                    <option value="10">10</option>
+                                    <option value="20" selected>20</option>
+                                    <option value="30">30</option>
+                                    <option value="50">50</option>
+                                    <option value="all">All</option>
+                                </select>
+                                <button type="button" class="custom-select-toggle" aria-expanded="false" style="font-size: 0.875rem; padding: 0.75rem 2rem 0.75rem 0.75rem;">20</button>
+                                <menu>
+                                    <li data-option="10" tabindex="0" role="button"><h3>10</h3></li>
+                                    <li data-option="20" tabindex="0" role="button" class="selected"><h3>20</h3></li>
+                                    <li data-option="30" tabindex="0" role="button"><h3>30</h3></li>
+                                    <li data-option="50" tabindex="0" role="button"><h3>50</h3></li>
+                                    <li data-option="all" tabindex="0" role="button"><h3>All</h3></li>
+                                </menu>
+                            </div>
+                        </section>
                     </div>
                     <div class="text-muted">
                         <small>Total: <span id="totalPatientsCount"><?= count($patients) ?></span> patients</small>
@@ -423,10 +435,19 @@
                             
                             <div class="mb-3">
                                 <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
-                                <select class="form-select" id="gender" name="gender" required>
-                                    <option value="Male" selected>Male</option>
-                                    <option value="Female">Female</option>
-                                </select>
+                                <section class="field menu" style="min-width: 100%;">
+                                    <div class="control">
+                                        <select class="form-select d-none" id="gender" name="gender" required>
+                                            <option value="Male" selected>Male</option>
+                                            <option value="Female">Female</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false">Male</button>
+                                        <menu>
+                                            <li data-option="Male" tabindex="0" role="button" class="selected"><i class="bi bi-gender-male fs-5"></i><h3>Male</h3></li>
+                                            <li data-option="Female" tabindex="0" role="button"><i class="bi bi-gender-female fs-5"></i><h3>Female</h3></li>
+                                        </menu>
+                                    </div>
+                                </section>
                                 <div class="invalid-feedback"></div>
                                 <div class="form-text text-danger"><strong>Required:</strong> Change the gender if needed</div>
                             </div>

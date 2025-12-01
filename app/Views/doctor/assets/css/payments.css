@@ -161,7 +161,7 @@
 
 /* Badge Styles */
 .badge {
-    color: white !important;
+    color: var(--text) !important;
 }
 
 .dark .badge {
@@ -378,8 +378,12 @@
 }
 
 .modal-footer {
-    background-color: var(--card) !important;
-    border-top-color: var(--border) !important;
+    background: transparent !important;
+    border-top-color: rgba(226, 232, 240, 0.3) !important;
+}
+
+.dark .modal-footer {
+    border-top-color: rgba(51, 65, 85, 0.3) !important;
 }
 
 /* Input Group */
