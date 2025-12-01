@@ -167,15 +167,29 @@ function showPrescriptionModal(appointmentId) {
                                 </div>
                                 <div class="col-12 mb-3" style="display: none;">
                                     <label class="form-label">Route</label>
-                                    <select class="form-control" name="route">
-                                        <option value="Topical">Topical</option>
-                                        <option value="Oral">Oral</option>
-                                        <option value="IV">IV</option>
-                                        <option value="IM">IM</option>
-                                        <option value="Sublingual">Sublingual</option>
-                                        <option value="Inhalation">Inhalation</option>
-                                        <option value="Other">Other</option>
-                                    </select>
+                                    <section class="field menu" style="min-width: 100%;">
+                                        <div class="control">
+                                            <select class="form-control d-none" name="route">
+                                                <option value="Topical" selected>Topical</option>
+                                                <option value="Oral">Oral</option>
+                                                <option value="IV">IV</option>
+                                                <option value="IM">IM</option>
+                                                <option value="Sublingual">Sublingual</option>
+                                                <option value="Inhalation">Inhalation</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                            <button type="button" class="custom-select-toggle" aria-expanded="false">Topical</button>
+                                            <menu>
+                                                <li data-option="Topical" tabindex="0" role="button" class="selected"><i class="bi-arrow-right-circle fs-5"></i><h3>Topical</h3></li>
+                                                <li data-option="Oral" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>Oral</h3></li>
+                                                <li data-option="IV" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>IV</h3></li>
+                                                <li data-option="IM" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>IM</h3></li>
+                                                <li data-option="Sublingual" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>Sublingual</h3></li>
+                                                <li data-option="Inhalation" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>Inhalation</h3></li>
+                                                <li data-option="Other" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>Other</h3></li>
+                                            </menu>
+                                        </div>
+                                    </section>
                                 </div>
                                 <div class="col-12 mb-3">
                                     <label class="form-label">Notes</label>
@@ -196,6 +210,11 @@ function showPrescriptionModal(appointmentId) {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     const modal = new bootstrap.Modal(document.getElementById('prescriptionModal'));
     modal.show();
+    
+    // Initialize custom selects
+    setTimeout(() => {
+        initCustomSelects();
+    }, 100);
     
     // Handle form submission
     document.getElementById('prescriptionForm').addEventListener('submit', function(e) {
@@ -427,9 +446,17 @@ function showRescheduleModal(appointmentId) {
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">New Time <span class="text-danger">*</span></label>
-                                <select class="form-select" name="new_time" id="newTimeInput" required>
-                                    <option value="">Select available time slot...</option>
-                                </select>
+                                <section class="field menu" style="min-width: 100%;">
+                                    <div class="control">
+                                        <select class="form-select d-none" name="new_time" id="newTimeInput" required>
+                                            <option value="">Select available time slot...</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false">Select available time slot...</button>
+                                        <menu>
+                                            <li data-option="" tabindex="0" role="button" class="selected"><i class="bi-clock fs-5"></i><h3>Select available time slot...</h3></li>
+                                        </menu>
+                                    </div>
+                                </section>
                                 <div class="text-muted" style="color: var(--text-muted);">Only available time slots from calendar are shown</div>
                                 <div id="timeSlotsLoading" class="text-muted mt-2" style="display: none;">
                                     <i class="bi bi-hourglass-split me-1"></i>Loading available time slots...
@@ -453,6 +480,11 @@ function showRescheduleModal(appointmentId) {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     const modal = new bootstrap.Modal(document.getElementById('rescheduleModal'));
     modal.show();
+    
+    // Initialize custom selects
+    setTimeout(() => {
+        initCustomSelects();
+    }, 100);
     
     const newDateInput = document.getElementById('newDateInput');
     const newTimeInput = document.getElementById('newTimeInput');
@@ -482,6 +514,7 @@ function showRescheduleModal(appointmentId) {
     function loadAvailableTimeSlotsForReschedule(selectedDate) {
         if (!selectedDate || !doctorId) {
             newTimeInput.innerHTML = '<option value="">Please select a date first</option>';
+            updateTimeSelectCustomMenu(newTimeInput, 'Please select a date first');
             return;
         }
         
@@ -491,6 +524,7 @@ function showRescheduleModal(appointmentId) {
             timeSlotsError.textContent = validation.message;
             timeSlotsError.style.display = 'block';
             newTimeInput.innerHTML = '<option value="">Invalid date</option>';
+            updateTimeSelectCustomMenu(newTimeInput, 'Invalid date');
             return;
         }
         
@@ -498,6 +532,7 @@ function showRescheduleModal(appointmentId) {
         timeSlotsError.style.display = 'none';
         newTimeInput.disabled = true;
         newTimeInput.innerHTML = '<option value="">Loading...</option>';
+        updateTimeSelectCustomMenu(newTimeInput, 'Loading...');
         
         // Fetch available slots from calendar API
         fetch(`/api/calendar?doctor_id=${doctorId}&date=${selectedDate}`)
@@ -511,6 +546,7 @@ function showRescheduleModal(appointmentId) {
                     
                     if (availableSlots.length === 0) {
                         newTimeInput.innerHTML = '<option value="">No available time slots for this date</option>';
+                        updateTimeSelectCustomMenu(newTimeInput, 'No available time slots for this date');
                         timeSlotsError.textContent = 'No available time slots found for the selected date. Please choose another date.';
                         timeSlotsError.style.display = 'block';
                         return;
@@ -543,9 +579,38 @@ function showRescheduleModal(appointmentId) {
                         newTimeInput.appendChild(option);
                     });
                     
+                    // Update custom menu
+                    const fieldMenu = newTimeInput.closest('.field.menu');
+                    const menu = fieldMenu ? fieldMenu.querySelector('menu') : null;
+                    const button = fieldMenu ? fieldMenu.querySelector('.custom-select-toggle') : null;
+                    
+                    if (menu && button) {
+                        menu.innerHTML = '<li data-option="" tabindex="0" role="button" class="selected"><i class="bi-clock fs-5"></i><h3>Select available time slot...</h3></li>';
+                        filteredSlots.forEach(slot => {
+                            const li = document.createElement('li');
+                            li.setAttribute('data-option', slot);
+                            li.setAttribute('tabindex', '0');
+                            li.setAttribute('role', 'button');
+                            const icon = document.createElement('i');
+                            icon.className = 'bi-clock fs-5';
+                            li.appendChild(icon);
+                            const h3 = document.createElement('h3');
+                            h3.textContent = formatTimeForReschedule(slot);
+                            li.appendChild(h3);
+                            menu.appendChild(li);
+                        });
+                        button.textContent = 'Select available time slot...';
+                        
+                        // Re-initialize custom select
+                        setTimeout(() => {
+                            initCustomSelects();
+                        }, 50);
+                    }
+                    
                     timeSlotsError.style.display = 'none';
                 } else {
                     newTimeInput.innerHTML = '<option value="">Error loading time slots</option>';
+                    updateTimeSelectCustomMenu(newTimeInput, 'Error loading time slots');
                     timeSlotsError.textContent = 'Failed to load available time slots. Please try again.';
                     timeSlotsError.style.display = 'block';
                 }
@@ -827,9 +892,17 @@ function showRescheduleFollowupModal(appointmentId) {
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">New Time <span class="text-danger">*</span></label>
-                                <select class="form-select" name="new_time" id="newTimeInputFollowup" required>
-                                    <option value="">Select available time slot...</option>
-                                </select>
+                                <section class="field menu" style="min-width: 100%;">
+                                    <div class="control">
+                                        <select class="form-select d-none" name="new_time" id="newTimeInputFollowup" required>
+                                            <option value="">Select available time slot...</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false">Select available time slot...</button>
+                                        <menu>
+                                            <li data-option="" tabindex="0" role="button" class="selected"><i class="bi-clock fs-5"></i><h3>Select available time slot...</h3></li>
+                                        </menu>
+                                    </div>
+                                </section>
                                 <div class="text-muted" style="color: var(--text-muted);">Only available time slots from calendar are shown</div>
                                 <div id="timeSlotsLoadingFollowup" class="text-muted mt-2" style="display: none;">
                                     <i class="bi bi-hourglass-split me-1"></i>Loading available time slots...
@@ -854,6 +927,11 @@ function showRescheduleFollowupModal(appointmentId) {
     const modal = new bootstrap.Modal(document.getElementById('rescheduleFollowupModal'));
     modal.show();
     
+    // Initialize custom selects
+    setTimeout(() => {
+        initCustomSelects();
+    }, 100);
+    
     const newDateInput = document.getElementById('newDateInputFollowup');
     const newTimeInput = document.getElementById('newTimeInputFollowup');
     const errorDiv = document.getElementById('rescheduleFollowupError');
@@ -872,6 +950,7 @@ function showRescheduleFollowupModal(appointmentId) {
     function loadAvailableTimeSlotsForFollowup(selectedDate) {
         if (!selectedDate || !doctorId) {
             newTimeInput.innerHTML = '<option value="">Please select a date first</option>';
+            updateTimeSelectCustomMenu(newTimeInput, 'Please select a date first');
             return;
         }
         
@@ -880,6 +959,7 @@ function showRescheduleFollowupModal(appointmentId) {
             timeSlotsError.textContent = validation.message;
             timeSlotsError.style.display = 'block';
             newTimeInput.innerHTML = '<option value="">Invalid date</option>';
+            updateTimeSelectCustomMenu(newTimeInput, 'Invalid date');
             return;
         }
         
@@ -887,6 +967,7 @@ function showRescheduleFollowupModal(appointmentId) {
         timeSlotsError.style.display = 'none';
         newTimeInput.disabled = true;
         newTimeInput.innerHTML = '<option value="">Loading...</option>';
+        updateTimeSelectCustomMenu(newTimeInput, 'Loading...');
         
         fetch(`/api/calendar?doctor_id=${doctorId}&date=${selectedDate}`)
             .then(response => response.json())
@@ -899,6 +980,7 @@ function showRescheduleFollowupModal(appointmentId) {
                     
                     if (availableSlots.length === 0) {
                         newTimeInput.innerHTML = '<option value="">No available time slots for this date</option>';
+                        updateTimeSelectCustomMenu(newTimeInput, 'No available time slots for this date');
                         timeSlotsError.textContent = 'No available time slots found for the selected date. Please choose another date.';
                         timeSlotsError.style.display = 'block';
                         return;
@@ -912,9 +994,38 @@ function showRescheduleFollowupModal(appointmentId) {
                         newTimeInput.appendChild(option);
                     });
                     
+                    // Update custom menu
+                    const fieldMenu = newTimeInput.closest('.field.menu');
+                    const menu = fieldMenu ? fieldMenu.querySelector('menu') : null;
+                    const button = fieldMenu ? fieldMenu.querySelector('.custom-select-toggle') : null;
+                    
+                    if (menu && button) {
+                        menu.innerHTML = '<li data-option="" tabindex="0" role="button" class="selected"><i class="bi-clock fs-5"></i><h3>Select available time slot...</h3></li>';
+                        availableSlots.forEach(slot => {
+                            const li = document.createElement('li');
+                            li.setAttribute('data-option', slot);
+                            li.setAttribute('tabindex', '0');
+                            li.setAttribute('role', 'button');
+                            const icon = document.createElement('i');
+                            icon.className = 'bi-clock fs-5';
+                            li.appendChild(icon);
+                            const h3 = document.createElement('h3');
+                            h3.textContent = formatTimeForReschedule(slot);
+                            li.appendChild(h3);
+                            menu.appendChild(li);
+                        });
+                        button.textContent = 'Select available time slot...';
+                        
+                        // Re-initialize custom select
+                        setTimeout(() => {
+                            initCustomSelects();
+                        }, 50);
+                    }
+                    
                     timeSlotsError.style.display = 'none';
                 } else {
                     newTimeInput.innerHTML = '<option value="">Error loading time slots</option>';
+                    updateTimeSelectCustomMenu(newTimeInput, 'Error loading time slots');
                     timeSlotsError.textContent = 'Failed to load available time slots. Please try again.';
                     timeSlotsError.style.display = 'block';
                 }
@@ -1054,16 +1165,31 @@ function openCameraModal(appointmentId, patientId) {
                         
                         <div class="mb-3" id="cameraAttachmentTypeContainer">
                             <label class="form-label">Photo Type</label>
-                            <select class="form-select" id="cameraAttachmentType" required>
-                                <option value="photo" selected>Photo</option>
-                                <option value="xray">X-ray</option>
-                                <option value="ct_scan">CT Scan</option>
-                                <option value="mri">MRI</option>
-                                <option value="ultrasound">Ultrasound</option>
-                                <option value="eye_photo">Eye Photo</option>
-                                <option value="retina_photo">Retina Photo</option>
-                                <option value="other">Other</option>
-                            </select>
+                            <section class="field menu" style="min-width: 100%;">
+                                <div class="control">
+                                    <select class="form-select d-none" id="cameraAttachmentType" required>
+                                        <option value="photo" selected>Photo</option>
+                                        <option value="xray">X-ray</option>
+                                        <option value="ct_scan">CT Scan</option>
+                                        <option value="mri">MRI</option>
+                                        <option value="ultrasound">Ultrasound</option>
+                                        <option value="eye_photo">Eye Photo</option>
+                                        <option value="retina_photo">Retina Photo</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                    <button type="button" class="custom-select-toggle" aria-expanded="false">Photo</button>
+                                    <menu>
+                                        <li data-option="photo" tabindex="0" role="button" class="selected"><i class="bi-camera fs-5"></i><h3>Photo</h3></li>
+                                        <li data-option="xray" tabindex="0" role="button"><i class="bi-camera fs-5"></i><h3>X-ray</h3></li>
+                                        <li data-option="ct_scan" tabindex="0" role="button"><i class="bi-camera fs-5"></i><h3>CT Scan</h3></li>
+                                        <li data-option="mri" tabindex="0" role="button"><i class="bi-camera fs-5"></i><h3>MRI</h3></li>
+                                        <li data-option="ultrasound" tabindex="0" role="button"><i class="bi-camera fs-5"></i><h3>Ultrasound</h3></li>
+                                        <li data-option="eye_photo" tabindex="0" role="button"><i class="bi-camera fs-5"></i><h3>Eye Photo</h3></li>
+                                        <li data-option="retina_photo" tabindex="0" role="button"><i class="bi-camera fs-5"></i><h3>Retina Photo</h3></li>
+                                        <li data-option="other" tabindex="0" role="button"><i class="bi-camera fs-5"></i><h3>Other</h3></li>
+                                    </menu>
+                                </div>
+                            </section>
                         </div>
                         
                         <div class="mb-3">
@@ -1118,6 +1244,11 @@ function openCameraModal(appointmentId, patientId) {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     const modal = new bootstrap.Modal(document.getElementById('cameraModal'));
     modal.show();
+    
+    // Initialize custom selects
+    setTimeout(() => {
+        initCustomSelects();
+    }, 100);
     
     // Start camera automatically when modal is shown
     document.getElementById('cameraModal').addEventListener('shown.bs.modal', function() {
@@ -1374,18 +1505,35 @@ function showUploadModal(appointmentId, patientId) {
                             
                             <div class="mb-3">
                                 <label class="form-label">Attachment Type</label>
-                                <select class="form-select" name="attachment_type" required>
-                                    <option value="photo" selected>Photo</option>
-                                    <option value="xray">X-ray</option>
-                                    <option value="ct_scan">CT Scan</option>
-                                    <option value="mri">MRI</option>
-                                    <option value="ultrasound">Ultrasound</option>
-                                    <option value="lab_report">Lab Report</option>
-                                    <option value="blood_test">Blood Test</option>
-                                    <option value="report">Report</option>
-                                    <option value="prescription">Prescription</option>
-                                    <option value="other">Other</option>
-                                </select>
+                                <section class="field menu" style="min-width: 100%;">
+                                    <div class="control">
+                                        <select class="form-select d-none" name="attachment_type" required>
+                                            <option value="photo" selected>Photo</option>
+                                            <option value="xray">X-ray</option>
+                                            <option value="ct_scan">CT Scan</option>
+                                            <option value="mri">MRI</option>
+                                            <option value="ultrasound">Ultrasound</option>
+                                            <option value="lab_report">Lab Report</option>
+                                            <option value="blood_test">Blood Test</option>
+                                            <option value="report">Report</option>
+                                            <option value="prescription">Prescription</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false">Photo</button>
+                                        <menu>
+                                            <li data-option="photo" tabindex="0" role="button" class="selected"><i class="bi-paperclip fs-5"></i><h3>Photo</h3></li>
+                                            <li data-option="xray" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>X-ray</h3></li>
+                                            <li data-option="ct_scan" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>CT Scan</h3></li>
+                                            <li data-option="mri" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>MRI</h3></li>
+                                            <li data-option="ultrasound" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>Ultrasound</h3></li>
+                                            <li data-option="lab_report" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>Lab Report</h3></li>
+                                            <li data-option="blood_test" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>Blood Test</h3></li>
+                                            <li data-option="report" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>Report</h3></li>
+                                            <li data-option="prescription" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>Prescription</h3></li>
+                                            <li data-option="other" tabindex="0" role="button"><i class="bi-paperclip fs-5"></i><h3>Other</h3></li>
+                                        </menu>
+                                    </div>
+                                </section>
                             </div>
                             
                             <div class="mb-3">
@@ -1426,6 +1574,11 @@ function showUploadModal(appointmentId, patientId) {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
     modal.show();
+    
+    // Initialize custom selects
+    setTimeout(() => {
+        initCustomSelects();
+    }, 100);
     
     // Handle file selection
     const fileInput = document.querySelector('#uploadModal input[type="file"]');
@@ -1880,15 +2033,29 @@ function editMedication(medicationId, drugName, notes) {
                                 </div>
                                 <div class="col-12 mb-3" style="display: none;">
                                     <label class="form-label">Route</label>
-                                    <select class="form-control" name="route">
-                                        <option value="Topical">Topical</option>
-                                        <option value="Oral">Oral</option>
-                                        <option value="IV">IV</option>
-                                        <option value="IM">IM</option>
-                                        <option value="Sublingual">Sublingual</option>
-                                        <option value="Inhalation">Inhalation</option>
-                                        <option value="Other">Other</option>
-                                    </select>
+                                    <section class="field menu" style="min-width: 100%;">
+                                        <div class="control">
+                                            <select class="form-control d-none" name="route">
+                                                <option value="Topical" selected>Topical</option>
+                                                <option value="Oral">Oral</option>
+                                                <option value="IV">IV</option>
+                                                <option value="IM">IM</option>
+                                                <option value="Sublingual">Sublingual</option>
+                                                <option value="Inhalation">Inhalation</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                            <button type="button" class="custom-select-toggle" aria-expanded="false">Topical</button>
+                                            <menu>
+                                                <li data-option="Topical" tabindex="0" role="button" class="selected"><i class="bi-arrow-right-circle fs-5"></i><h3>Topical</h3></li>
+                                                <li data-option="Oral" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>Oral</h3></li>
+                                                <li data-option="IV" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>IV</h3></li>
+                                                <li data-option="IM" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>IM</h3></li>
+                                                <li data-option="Sublingual" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>Sublingual</h3></li>
+                                                <li data-option="Inhalation" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>Inhalation</h3></li>
+                                                <li data-option="Other" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>Other</h3></li>
+                                            </menu>
+                                        </div>
+                                    </section>
                                 </div>
                                 <div class="col-12 mb-3">
                                     <label class="form-label">Notes</label>
@@ -1909,6 +2076,11 @@ function editMedication(medicationId, drugName, notes) {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     const modal = new bootstrap.Modal(document.getElementById('editMedicationModal'));
     modal.show();
+    
+    // Initialize custom selects
+    setTimeout(() => {
+        initCustomSelects();
+    }, 100);
     
     // Handle form submission
     document.getElementById('editMedicationForm').addEventListener('submit', function(e) {
@@ -1981,12 +2153,23 @@ function addGlassesPrescription(appointmentId) {
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Lens Type</label>
-                                    <select class="form-control" name="lens_type">
-                                        <option value="Single Vision">Single Vision</option>
-                                        <option value="Bifocal">Bifocal</option>
-                                        <option value="Progressive">Progressive</option>
-                                        <option value="Reading">Reading</option>
-                                    </select>
+                                    <section class="field menu" style="min-width: 100%;">
+                                        <div class="control">
+                                            <select class="form-control d-none" name="lens_type">
+                                                <option value="Single Vision" selected>Single Vision</option>
+                                                <option value="Bifocal">Bifocal</option>
+                                                <option value="Progressive">Progressive</option>
+                                                <option value="Reading">Reading</option>
+                                            </select>
+                                            <button type="button" class="custom-select-toggle" aria-expanded="false">Single Vision</button>
+                                            <menu>
+                                                <li data-option="Single Vision" tabindex="0" role="button" class="selected"><i class="bi-eye fs-5"></i><h3>Single Vision</h3></li>
+                                                <li data-option="Bifocal" tabindex="0" role="button"><i class="bi-eye fs-5"></i><h3>Bifocal</h3></li>
+                                                <li data-option="Progressive" tabindex="0" role="button"><i class="bi-eye fs-5"></i><h3>Progressive</h3></li>
+                                                <li data-option="Reading" tabindex="0" role="button"><i class="bi-eye fs-5"></i><h3>Reading</h3></li>
+                                            </menu>
+                                        </div>
+                                    </section>
                                 </div>
                             </div>
                             
@@ -2105,6 +2288,11 @@ function addGlassesPrescription(appointmentId) {
     const modal = new bootstrap.Modal(document.getElementById('glassesModal'));
     modal.show();
     
+    // Initialize custom selects
+    setTimeout(() => {
+        initCustomSelects();
+    }, 100);
+    
     // Handle form submission
     document.getElementById('glassesForm').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -2172,12 +2360,23 @@ function editGlassesPrescription(glassesId, glassesData) {
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Lens Type</label>
-                                    <select class="form-control" name="lens_type">
-                                        <option value="Single Vision" ${glassesData.lens_type === 'Single Vision' ? 'selected' : ''}>Single Vision</option>
-                                        <option value="Bifocal" ${glassesData.lens_type === 'Bifocal' ? 'selected' : ''}>Bifocal</option>
-                                        <option value="Progressive" ${glassesData.lens_type === 'Progressive' ? 'selected' : ''}>Progressive</option>
-                                        <option value="Reading" ${glassesData.lens_type === 'Reading' ? 'selected' : ''}>Reading</option>
-                                    </select>
+                                    <section class="field menu" style="min-width: 100%;">
+                                        <div class="control">
+                                            <select class="form-control d-none" name="lens_type">
+                                                <option value="Single Vision" ${glassesData.lens_type === 'Single Vision' ? 'selected' : ''}>Single Vision</option>
+                                                <option value="Bifocal" ${glassesData.lens_type === 'Bifocal' ? 'selected' : ''}>Bifocal</option>
+                                                <option value="Progressive" ${glassesData.lens_type === 'Progressive' ? 'selected' : ''}>Progressive</option>
+                                                <option value="Reading" ${glassesData.lens_type === 'Reading' ? 'selected' : ''}>Reading</option>
+                                            </select>
+                                            <button type="button" class="custom-select-toggle" aria-expanded="false">${glassesData.lens_type || 'Single Vision'}</button>
+                                            <menu>
+                                                <li data-option="Single Vision" tabindex="0" role="button" ${glassesData.lens_type === 'Single Vision' ? 'class="selected"' : ''}><i class="bi-eye fs-5"></i><h3>Single Vision</h3></li>
+                                                <li data-option="Bifocal" tabindex="0" role="button" ${glassesData.lens_type === 'Bifocal' ? 'class="selected"' : ''}><i class="bi-eye fs-5"></i><h3>Bifocal</h3></li>
+                                                <li data-option="Progressive" tabindex="0" role="button" ${glassesData.lens_type === 'Progressive' ? 'class="selected"' : ''}><i class="bi-eye fs-5"></i><h3>Progressive</h3></li>
+                                                <li data-option="Reading" tabindex="0" role="button" ${glassesData.lens_type === 'Reading' ? 'class="selected"' : ''}><i class="bi-eye fs-5"></i><h3>Reading</h3></li>
+                                            </menu>
+                                        </div>
+                                    </section>
                                 </div>
                             </div>
                             
@@ -2296,6 +2495,11 @@ function editGlassesPrescription(glassesId, glassesData) {
     const modal = new bootstrap.Modal(document.getElementById('editGlassesModal'));
     modal.show();
     
+    // Initialize custom selects
+    setTimeout(() => {
+        initCustomSelects();
+    }, 100);
+    
     // Handle form submission
     document.getElementById('editGlassesForm').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -2403,17 +2607,35 @@ function addLabTest(appointmentId) {
         '<div class="row">' +
         '<div class="col-md-6 mb-3">' +
         '<label class="form-label">Test Type</label>' +
-        '<select class="form-select" name="test_type" required onchange="updateTestCategories(this.value)">' +
+        '<section class="field menu" style="min-width: 100%;">' +
+        '<div class="control">' +
+        '<select class="form-select d-none" name="test_type" required onchange="updateTestCategories(this.value)">' +
         '<option value="">Select Test Type</option>' +
         '<option value="laboratory">Laboratory Test</option>' +
         '<option value="radiology">Radiology</option>' +
         '</select>' +
+        '<button type="button" class="custom-select-toggle" aria-expanded="false">Select Test Type</button>' +
+        '<menu>' +
+        '<li data-option="" tabindex="0" role="button" class="selected"><i class="bi-clipboard-check fs-5"></i><h3>Select Test Type</h3></li>' +
+        '<li data-option="laboratory" tabindex="0" role="button"><i class="bi-clipboard-check fs-5"></i><h3>Laboratory Test</h3></li>' +
+        '<li data-option="radiology" tabindex="0" role="button"><i class="bi-clipboard-check fs-5"></i><h3>Radiology</h3></li>' +
+        '</menu>' +
+        '</div>' +
+        '</section>' +
         '</div>' +
         '<div class="col-md-6 mb-3">' +
         '<label class="form-label">Test Category</label>' +
-        '<select class="form-select" name="test_category" required id="testCategorySelect">' +
+        '<section class="field menu" style="min-width: 100%;">' +
+        '<div class="control">' +
+        '<select class="form-select d-none" name="test_category" required id="testCategorySelect">' +
         '<option value="">Select Category First</option>' +
         '</select>' +
+        '<button type="button" class="custom-select-toggle" aria-expanded="false">Select Category First</button>' +
+        '<menu>' +
+        '<li data-option="" tabindex="0" role="button" class="selected"><i class="bi-tags fs-5"></i><h3>Select Category First</h3></li>' +
+        '</menu>' +
+        '</div>' +
+        '</section>' +
         '</div>' +
         '</div>' +
         '<div class="mb-3">' +
@@ -2423,20 +2645,41 @@ function addLabTest(appointmentId) {
         '<div class="row">' +
         '<div class="col-md-6 mb-3">' +
         '<label class="form-label">Priority</label>' +
-        '<select class="form-select" name="priority">' +
-        '<option value="normal">Normal</option>' +
+        '<section class="field menu" style="min-width: 100%;">' +
+        '<div class="control">' +
+        '<select class="form-select d-none" name="priority">' +
+        '<option value="normal" selected>Normal</option>' +
         '<option value="high">High</option>' +
         '<option value="urgent">Urgent</option>' +
         '</select>' +
+        '<button type="button" class="custom-select-toggle" aria-expanded="false">Normal</button>' +
+        '<menu>' +
+        '<li data-option="normal" tabindex="0" role="button" class="selected"><i class="bi-flag fs-5"></i><h3>Normal</h3></li>' +
+        '<li data-option="high" tabindex="0" role="button"><i class="bi-flag fs-5"></i><h3>High</h3></li>' +
+        '<li data-option="urgent" tabindex="0" role="button"><i class="bi-flag fs-5"></i><h3>Urgent</h3></li>' +
+        '</menu>' +
+        '</div>' +
+        '</section>' +
         '</div>' +
         '<div class="col-md-6 mb-3">' +
         '<label class="form-label">Status</label>' +
-        '<select class="form-select" name="status">' +
-        '<option value="ordered">Ordered</option>' +
+        '<section class="field menu" style="min-width: 100%;">' +
+        '<div class="control">' +
+        '<select class="form-select d-none" name="status">' +
+        '<option value="ordered" selected>Ordered</option>' +
         '<option value="pending">Pending</option>' +
         '<option value="completed">Completed</option>' +
         '<option value="cancelled">Cancelled</option>' +
         '</select>' +
+        '<button type="button" class="custom-select-toggle" aria-expanded="false">Ordered</button>' +
+        '<menu>' +
+        '<li data-option="ordered" tabindex="0" role="button" class="selected"><i class="bi-check-circle fs-5"></i><h3>Ordered</h3></li>' +
+        '<li data-option="pending" tabindex="0" role="button"><i class="bi-check-circle fs-5"></i><h3>Pending</h3></li>' +
+        '<li data-option="completed" tabindex="0" role="button"><i class="bi-check-circle fs-5"></i><h3>Completed</h3></li>' +
+        '<li data-option="cancelled" tabindex="0" role="button"><i class="bi-check-circle fs-5"></i><h3>Cancelled</h3></li>' +
+        '</menu>' +
+        '</div>' +
+        '</section>' +
         '</div>' +
         '</div>' +
         '<div class="row">' +
@@ -2472,6 +2715,11 @@ function addLabTest(appointmentId) {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     const modal = new bootstrap.Modal(document.getElementById('labTestModal'));
     modal.show();
+    
+    // Initialize custom selects
+    setTimeout(() => {
+        initCustomSelects();
+    }, 100);
     
     // Handle status change to show/hide results section
     document.querySelector('#labTestModal select[name="status"]').addEventListener('change', function() {
@@ -2538,10 +2786,19 @@ function addLabTest(appointmentId) {
 
 function updateTestCategories(testType) {
     const categorySelect = document.getElementById('testCategorySelect');
+    const fieldMenu = categorySelect.closest('.field.menu');
+    const menu = fieldMenu ? fieldMenu.querySelector('menu') : null;
+    const button = fieldMenu ? fieldMenu.querySelector('.custom-select-toggle') : null;
+    
     categorySelect.innerHTML = '<option value="">Select Category</option>';
     
+    if (menu) {
+        menu.innerHTML = '<li data-option="" tabindex="0" role="button" class="selected"><i class="bi-tags fs-5"></i><h3>Select Category</h3></li>';
+    }
+    
+    let categories = [];
     if (testType === 'laboratory') {
-        const labCategories = [
+        categories = [
             'Hematology',
             'Biochemistry', 
             'Immunology',
@@ -2553,15 +2810,8 @@ function updateTestCategories(testType) {
             'Urine Analysis',
             'Stool Analysis'
         ];
-        
-        labCategories.forEach(category => {
-            const option = document.createElement('option');
-            option.value = category.toLowerCase().replace(/\s+/g, '_');
-            option.textContent = category;
-            categorySelect.appendChild(option);
-        });
     } else if (testType === 'radiology') {
-        const radiologyCategories = [
+        categories = [
             'X-Ray',
             'CT Scan',
             'MRI',
@@ -2572,13 +2822,107 @@ function updateTestCategories(testType) {
             'PET Scan',
             'Angiography'
         ];
+    }
+    
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category.toLowerCase().replace(/\s+/g, '_');
+        option.textContent = category;
+        categorySelect.appendChild(option);
         
-        radiologyCategories.forEach(category => {
+        if (menu) {
+            const li = document.createElement('li');
+            li.setAttribute('data-option', option.value);
+            li.setAttribute('tabindex', '0');
+            li.setAttribute('role', 'button');
+            const icon = document.createElement('i');
+            icon.className = 'bi-tags fs-5';
+            li.appendChild(icon);
+            const h3 = document.createElement('h3');
+            h3.textContent = category;
+            li.appendChild(h3);
+            menu.appendChild(li);
+        }
+    });
+    
+    if (button) {
+        button.textContent = 'Select Category';
+    }
+    
+    // Remove initialization flag to allow re-initialization
+    if (fieldMenu) {
+        fieldMenu.removeAttribute('data-initialized');
+    }
+    
+    // Re-initialize custom select if menu exists
+    if (fieldMenu) {
+        setTimeout(() => {
+            initCustomSelects();
+        }, 50);
+    }
+}
+
+function updateEditTestCategories(testType) {
+    const categorySelect = document.getElementById('editTestCategorySelect');
+    const fieldMenu = categorySelect.closest('.field.menu');
+    const menu = fieldMenu ? fieldMenu.querySelector('menu') : null;
+    const button = fieldMenu ? fieldMenu.querySelector('.custom-select-toggle') : null;
+    const currentValue = categorySelect.querySelector('option') ? categorySelect.querySelector('option').value : '';
+    
+    categorySelect.innerHTML = '<option value="' + currentValue + '">' + (currentValue || 'Select Category') + '</option>';
+    
+    if (menu) {
+        menu.innerHTML = '<li data-option="' + currentValue + '" tabindex="0" role="button" class="selected"><i class="bi-tags fs-5"></i><h3>' + (currentValue || 'Select Category') + '</h3></li>';
+    }
+    
+    let categories = [];
+    if (testType === 'laboratory') {
+        categories = [
+            'Hematology', 'Biochemistry', 'Immunology', 'Microbiology',
+            'Hormones', 'Tumor Markers', 'Cardiac Markers', 'Coagulation',
+            'Urine Analysis', 'Stool Analysis'
+        ];
+    } else if (testType === 'radiology') {
+        categories = [
+            'X-Ray', 'CT Scan', 'MRI', 'Ultrasound', 'Mammography',
+            'Fluoroscopy', 'Nuclear Medicine', 'PET Scan', 'Angiography'
+        ];
+    }
+    
+    categories.forEach(category => {
+        const categoryValue = category.toLowerCase().replace(/\s+/g, '_');
+        if (categoryValue !== currentValue) {
             const option = document.createElement('option');
-            option.value = category.toLowerCase().replace(/\s+/g, '_');
+            option.value = categoryValue;
             option.textContent = category;
             categorySelect.appendChild(option);
-        });
+            
+            if (menu) {
+                const li = document.createElement('li');
+                li.setAttribute('data-option', categoryValue);
+                li.setAttribute('tabindex', '0');
+                li.setAttribute('role', 'button');
+                const icon = document.createElement('i');
+                icon.className = 'bi-tags fs-5';
+                li.appendChild(icon);
+                const h3 = document.createElement('h3');
+                h3.textContent = category;
+                li.appendChild(h3);
+                menu.appendChild(li);
+            }
+        }
+    });
+    
+    // Remove initialization flag to allow re-initialization
+    if (fieldMenu) {
+        fieldMenu.removeAttribute('data-initialized');
+    }
+    
+    // Re-initialize custom select if menu exists
+    if (fieldMenu) {
+        setTimeout(() => {
+            initCustomSelects();
+        }, 50);
     }
 }
 
@@ -2597,16 +2941,33 @@ function editLabTest(testId, testData) {
         '<div class="row">' +
         '<div class="col-md-6 mb-3">' +
         '<label class="form-label">Test Type</label>' +
-        '<select class="form-select" name="test_type" required onchange="updateEditTestCategories(this.value)">' +
+        '<section class="field menu" style="min-width: 100%;">' +
+        '<div class="control">' +
+        '<select class="form-select d-none" name="test_type" required onchange="updateEditTestCategories(this.value)">' +
         '<option value="laboratory"' + (testData.test_type === 'laboratory' ? ' selected' : '') + '>Laboratory Test</option>' +
         '<option value="radiology"' + (testData.test_type === 'radiology' ? ' selected' : '') + '>Radiology</option>' +
         '</select>' +
+        '<button type="button" class="custom-select-toggle" aria-expanded="false">' + (testData.test_type === 'laboratory' ? 'Laboratory Test' : (testData.test_type === 'radiology' ? 'Radiology' : 'Laboratory Test')) + '</button>' +
+        '<menu>' +
+        '<li data-option="laboratory" tabindex="0" role="button" ' + (testData.test_type === 'laboratory' ? 'class="selected"' : '') + '><i class="bi-clipboard-check fs-5"></i><h3>Laboratory Test</h3></li>' +
+        '<li data-option="radiology" tabindex="0" role="button" ' + (testData.test_type === 'radiology' ? 'class="selected"' : '') + '><i class="bi-clipboard-check fs-5"></i><h3>Radiology</h3></li>' +
+        '</menu>' +
+        '</div>' +
+        '</section>' +
         '</div>' +
         '<div class="col-md-6 mb-3">' +
         '<label class="form-label">Test Category</label>' +
-        '<select class="form-select" name="test_category" required id="editTestCategorySelect">' +
+        '<section class="field menu" style="min-width: 100%;">' +
+        '<div class="control">' +
+        '<select class="form-select d-none" name="test_category" required id="editTestCategorySelect">' +
         '<option value="' + (testData.test_category || '') + '">' + (testData.test_category || 'Select Category') + '</option>' +
         '</select>' +
+        '<button type="button" class="custom-select-toggle" aria-expanded="false">' + (testData.test_category || 'Select Category') + '</button>' +
+        '<menu>' +
+        '<li data-option="' + (testData.test_category || '') + '" tabindex="0" role="button" class="selected"><i class="bi-tags fs-5"></i><h3>' + (testData.test_category || 'Select Category') + '</h3></li>' +
+        '</menu>' +
+        '</div>' +
+        '</section>' +
         '</div>' +
         '</div>' +
         '<div class="mb-3">' +
@@ -2616,20 +2977,41 @@ function editLabTest(testId, testData) {
         '<div class="row">' +
         '<div class="col-md-6 mb-3">' +
         '<label class="form-label">Priority</label>' +
-        '<select class="form-select" name="priority">' +
+        '<section class="field menu" style="min-width: 100%;">' +
+        '<div class="control">' +
+        '<select class="form-select d-none" name="priority">' +
         '<option value="normal"' + (testData.priority === 'normal' ? ' selected' : '') + '>Normal</option>' +
         '<option value="high"' + (testData.priority === 'high' ? ' selected' : '') + '>High</option>' +
         '<option value="urgent"' + (testData.priority === 'urgent' ? ' selected' : '') + '>Urgent</option>' +
         '</select>' +
+        '<button type="button" class="custom-select-toggle" aria-expanded="false">' + (testData.priority === 'normal' ? 'Normal' : (testData.priority === 'high' ? 'High' : (testData.priority === 'urgent' ? 'Urgent' : 'Normal'))) + '</button>' +
+        '<menu>' +
+        '<li data-option="normal" tabindex="0" role="button" ' + (testData.priority === 'normal' ? 'class="selected"' : '') + '><i class="bi-flag fs-5"></i><h3>Normal</h3></li>' +
+        '<li data-option="high" tabindex="0" role="button" ' + (testData.priority === 'high' ? 'class="selected"' : '') + '><i class="bi-flag fs-5"></i><h3>High</h3></li>' +
+        '<li data-option="urgent" tabindex="0" role="button" ' + (testData.priority === 'urgent' ? 'class="selected"' : '') + '><i class="bi-flag fs-5"></i><h3>Urgent</h3></li>' +
+        '</menu>' +
+        '</div>' +
+        '</section>' +
         '</div>' +
         '<div class="col-md-6 mb-3">' +
         '<label class="form-label">Status</label>' +
-        '<select class="form-select" name="status" onchange="toggleEditResultsSection(this.value)">' +
+        '<section class="field menu" style="min-width: 100%;">' +
+        '<div class="control">' +
+        '<select class="form-select d-none" name="status" onchange="toggleEditResultsSection(this.value)">' +
         '<option value="ordered"' + (testData.status === 'ordered' ? ' selected' : '') + '>Ordered</option>' +
         '<option value="pending"' + (testData.status === 'pending' ? ' selected' : '') + '>Pending</option>' +
         '<option value="completed"' + (testData.status === 'completed' ? ' selected' : '') + '>Completed</option>' +
         '<option value="cancelled"' + (testData.status === 'cancelled' ? ' selected' : '') + '>Cancelled</option>' +
         '</select>' +
+        '<button type="button" class="custom-select-toggle" aria-expanded="false">' + (testData.status === 'ordered' ? 'Ordered' : (testData.status === 'pending' ? 'Pending' : (testData.status === 'completed' ? 'Completed' : (testData.status === 'cancelled' ? 'Cancelled' : 'Ordered')))) + '</button>' +
+        '<menu>' +
+        '<li data-option="ordered" tabindex="0" role="button" ' + (testData.status === 'ordered' ? 'class="selected"' : '') + '><i class="bi-check-circle fs-5"></i><h3>Ordered</h3></li>' +
+        '<li data-option="pending" tabindex="0" role="button" ' + (testData.status === 'pending' ? 'class="selected"' : '') + '><i class="bi-check-circle fs-5"></i><h3>Pending</h3></li>' +
+        '<li data-option="completed" tabindex="0" role="button" ' + (testData.status === 'completed' ? 'class="selected"' : '') + '><i class="bi-check-circle fs-5"></i><h3>Completed</h3></li>' +
+        '<li data-option="cancelled" tabindex="0" role="button" ' + (testData.status === 'cancelled' ? 'class="selected"' : '') + '><i class="bi-check-circle fs-5"></i><h3>Cancelled</h3></li>' +
+        '</menu>' +
+        '</div>' +
+        '</section>' +
         '</div>' +
         '</div>' +
         '<div class="row">' +
@@ -2666,8 +3048,12 @@ function editLabTest(testId, testData) {
     const modal = new bootstrap.Modal(document.getElementById('editLabTestModal'));
     modal.show();
     
-    // Initialize categories for the current test type
-    updateEditTestCategories(testData.test_type);
+    // Initialize custom selects
+    setTimeout(() => {
+        initCustomSelects();
+        // Initialize categories for the current test type
+        updateEditTestCategories(testData.test_type);
+    }, 100);
     
     // Handle form submission
     document.getElementById('editLabTestForm').addEventListener('submit', function(e) {
@@ -2716,39 +3102,65 @@ function editLabTest(testId, testData) {
 
 function updateEditTestCategories(testType) {
     const categorySelect = document.getElementById('editTestCategorySelect');
-    const currentValue = categorySelect.querySelector('option').value;
+    const fieldMenu = categorySelect.closest('.field.menu');
+    const menu = fieldMenu ? fieldMenu.querySelector('menu') : null;
+    const button = fieldMenu ? fieldMenu.querySelector('.custom-select-toggle') : null;
+    const currentValue = categorySelect.querySelector('option') ? categorySelect.querySelector('option').value : '';
     
     categorySelect.innerHTML = '<option value="' + currentValue + '">' + (currentValue || 'Select Category') + '</option>';
     
+    if (menu) {
+        menu.innerHTML = '<li data-option="' + currentValue + '" tabindex="0" role="button" class="selected"><i class="bi-tags fs-5"></i><h3>' + (currentValue || 'Select Category') + '</h3></li>';
+    }
+    
+    let categories = [];
     if (testType === 'laboratory') {
-        const labCategories = [
+        categories = [
             'Hematology', 'Biochemistry', 'Immunology', 'Microbiology',
             'Hormones', 'Tumor Markers', 'Cardiac Markers', 'Coagulation',
             'Urine Analysis', 'Stool Analysis'
         ];
-        
-        labCategories.forEach(category => {
-            if (category.toLowerCase().replace(/\s+/g, '_') !== currentValue) {
-                const option = document.createElement('option');
-                option.value = category.toLowerCase().replace(/\s+/g, '_');
-                option.textContent = category;
-                categorySelect.appendChild(option);
-            }
-        });
     } else if (testType === 'radiology') {
-        const radiologyCategories = [
+        categories = [
             'X-Ray', 'CT Scan', 'MRI', 'Ultrasound', 'Mammography',
             'Fluoroscopy', 'Nuclear Medicine', 'PET Scan', 'Angiography'
         ];
-        
-        radiologyCategories.forEach(category => {
-            if (category.toLowerCase().replace(/\s+/g, '_') !== currentValue) {
-                const option = document.createElement('option');
-                option.value = category.toLowerCase().replace(/\s+/g, '_');
-                option.textContent = category;
-                categorySelect.appendChild(option);
+    }
+    
+    categories.forEach(category => {
+        const categoryValue = category.toLowerCase().replace(/\s+/g, '_');
+        if (categoryValue !== currentValue) {
+            const option = document.createElement('option');
+            option.value = categoryValue;
+            option.textContent = category;
+            categorySelect.appendChild(option);
+            
+            if (menu) {
+                const li = document.createElement('li');
+                li.setAttribute('data-option', categoryValue);
+                li.setAttribute('tabindex', '0');
+                li.setAttribute('role', 'button');
+                const icon = document.createElement('i');
+                icon.className = 'bi-tags fs-5';
+                li.appendChild(icon);
+                const h3 = document.createElement('h3');
+                h3.textContent = category;
+                li.appendChild(h3);
+                menu.appendChild(li);
             }
-        });
+        }
+    });
+    
+    // Remove initialization flag to allow re-initialization
+    if (fieldMenu) {
+        fieldMenu.removeAttribute('data-initialized');
+    }
+    
+    // Re-initialize custom select if menu exists
+    if (fieldMenu) {
+        setTimeout(() => {
+            initCustomSelects();
+        }, 50);
     }
 }
 
@@ -3383,12 +3795,23 @@ function showChangeStatusModal(appointmentId) {
                         </p>
                         <div class="mb-3">
                             <label class="form-label">Select New Status</label>
-                            <select class="form-select" id="newStatusSelect" required>
-                                <option value="Booked" ${currentStatus === 'Booked' ? 'selected' : ''}>Booked</option>
-                                <option value="NoShow" ${currentStatus === 'NoShow' ? 'selected' : ''}>No Show</option>
-                                <option value="Completed" ${currentStatus === 'Completed' ? 'selected' : ''}>Completed</option>
-                                <option value="Closed" ${currentStatus === 'Closed' ? 'selected' : ''}>Closed</option>
-                            </select>
+                            <section class="field menu" style="min-width: 100%;">
+                                <div class="control">
+                                    <select class="form-select d-none" id="newStatusSelect" required>
+                                        <option value="Booked" ${currentStatus === 'Booked' ? 'selected' : ''}>Booked</option>
+                                        <option value="NoShow" ${currentStatus === 'NoShow' ? 'selected' : ''}>No Show</option>
+                                        <option value="Completed" ${currentStatus === 'Completed' ? 'selected' : ''}>Completed</option>
+                                        <option value="Closed" ${currentStatus === 'Closed' ? 'selected' : ''}>Closed</option>
+                                    </select>
+                                    <button type="button" class="custom-select-toggle" aria-expanded="false">${currentStatus || 'Booked'}</button>
+                                    <menu>
+                                        <li data-option="Booked" tabindex="0" role="button" ${currentStatus === 'Booked' ? 'class="selected"' : ''}><i class="bi-check-circle fs-5"></i><h3>Booked</h3></li>
+                                        <li data-option="NoShow" tabindex="0" role="button" ${currentStatus === 'NoShow' ? 'class="selected"' : ''}><i class="bi-check-circle fs-5"></i><h3>No Show</h3></li>
+                                        <li data-option="Completed" tabindex="0" role="button" ${currentStatus === 'Completed' ? 'class="selected"' : ''}><i class="bi-check-circle fs-5"></i><h3>Completed</h3></li>
+                                        <li data-option="Closed" tabindex="0" role="button" ${currentStatus === 'Closed' ? 'class="selected"' : ''}><i class="bi-check-circle fs-5"></i><h3>Closed</h3></li>
+                                    </menu>
+                                </div>
+                            </section>
                         </div>
                         <div class="mb-3" id="statusReasonSection" style="display: none;">
                             <label class="form-label">Reason (Optional)</label>
@@ -3420,6 +3843,11 @@ function showChangeStatusModal(appointmentId) {
     // Show modal
     const modal = new bootstrap.Modal(document.getElementById('changeStatusModal'));
     modal.show();
+    
+    // Initialize custom selects
+    setTimeout(() => {
+        initCustomSelects();
+    }, 100);
     
     // Show/hide reason section based on status
     document.getElementById('newStatusSelect').addEventListener('change', function() {
@@ -4834,5 +5262,402 @@ async function updateActionPrintButtons() {
 function updateMoreActionsPopover() {
     if (typeof window.updateMoreActionsPopover === 'function') {
         window.updateMoreActionsPopover();
+    }
+}
+
+// =========================================
+// Custom Select Menu Functions
+// =========================================
+
+// Function to convert a select element to custom menu
+function convertSelectToCustomMenu(selectElement, iconClass = 'bi-list') {
+    if (!selectElement || selectElement.tagName !== 'SELECT') {
+        return null;
+    }
+    
+    // Check if already converted
+    if (selectElement.closest('.field.menu')) {
+        return selectElement.closest('.field.menu');
+    }
+    
+    // Get select options and selected value
+    const options = Array.from(selectElement.options);
+    const selectedValue = selectElement.value;
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const selectedText = selectedOption ? selectedOption.textContent : (options[0] ? options[0].textContent : 'Select an option');
+    
+    // Create custom menu structure
+    const fieldMenu = document.createElement('section');
+    fieldMenu.className = 'field menu';
+    fieldMenu.style.minWidth = '100%';
+    
+    const control = document.createElement('div');
+    control.className = 'control';
+    
+    // Hide original select
+    selectElement.classList.add('d-none');
+    
+    // Create button
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'custom-select-toggle';
+    button.setAttribute('aria-expanded', 'false');
+    button.textContent = selectedText;
+    
+    // Create menu
+    const menu = document.createElement('menu');
+    menu.className = 'custom-select-menu';
+    
+    // Create menu items with icons
+    options.forEach(option => {
+        const li = document.createElement('li');
+        li.setAttribute('data-option', option.value);
+        li.setAttribute('tabindex', '0');
+        li.setAttribute('role', 'button');
+        
+        if (option.value === selectedValue) {
+            li.classList.add('selected');
+        }
+        
+        // Add icon
+        const icon = document.createElement('i');
+        icon.className = `${iconClass} fs-5`;
+        li.appendChild(icon);
+        
+        // Add text
+        const h3 = document.createElement('h3');
+        h3.textContent = option.textContent;
+        li.appendChild(h3);
+        
+        menu.appendChild(li);
+    });
+    
+    // Assemble structure
+    control.appendChild(selectElement);
+    control.appendChild(button);
+    control.appendChild(menu);
+    fieldMenu.appendChild(control);
+    
+    // Replace select with custom menu
+    selectElement.parentNode.insertBefore(fieldMenu, selectElement);
+    selectElement.parentNode.removeChild(selectElement);
+    
+    // Move select inside control
+    control.insertBefore(selectElement, button);
+    
+    return fieldMenu;
+}
+
+// Icon mapping for different select types
+const selectIconMap = {
+    'route': 'bi-arrow-right-circle',
+    'new_time': 'bi-clock',
+    'newTimeInput': 'bi-clock',
+    'newTimeInputFollowup': 'bi-clock',
+    'cameraAttachmentType': 'bi-camera',
+    'attachment_type': 'bi-paperclip',
+    'lens_type': 'bi-eye',
+    'test_type': 'bi-clipboard-check',
+    'test_category': 'bi-tags',
+    'priority': 'bi-flag',
+    'status': 'bi-check-circle',
+    'newStatusSelect': 'bi-check-circle'
+};
+
+// Function to get appropriate icon for select
+function getIconForSelect(selectElement) {
+    const name = selectElement.name || '';
+    const id = selectElement.id || '';
+    
+    // Check by name first
+    if (selectIconMap[name]) {
+        return selectIconMap[name];
+    }
+    
+    // Check by id
+    if (selectIconMap[id]) {
+        return selectIconMap[id];
+    }
+    
+    // Default icon
+    return 'bi-list';
+}
+
+// Custom Select Menu Logic
+function initCustomSelects() {
+    const customSelects = document.querySelectorAll('.field.menu:not([data-initialized])');
+    console.log('initCustomSelects called, found', customSelects.length, 'custom selects');
+
+    customSelects.forEach(field => {
+        const select = field.querySelector('select');
+        const button = field.querySelector('.custom-select-toggle');
+        const menu = field.querySelector('menu');
+        const options = menu ? menu.querySelectorAll('li') : [];
+
+        if (!select || !button || !menu || options.length === 0) {
+            console.warn('Missing elements for custom select initialization:', field);
+            return;
+        }
+        
+        // Mark as initialized to prevent duplicate event listeners
+        field.setAttribute('data-initialized', 'true');
+
+        // Set initial button text
+        const selectedOption = select.options[select.selectedIndex];
+        if (selectedOption) {
+            const correspondingLi = Array.from(options).find(li => li.dataset.option === selectedOption.value);
+            if (correspondingLi) {
+                button.textContent = correspondingLi.querySelector('h3')?.textContent || selectedOption.textContent;
+                correspondingLi.classList.add('selected');
+            } else {
+                button.textContent = selectedOption.textContent;
+            }
+        } else {
+            button.textContent = 'Select an option';
+        }
+
+        function openMenu() {
+            // Close any other open menus first
+            document.querySelectorAll('.field.menu.open').forEach(openField => {
+                if (openField !== field) {
+                    const openButton = openField.querySelector('.custom-select-toggle');
+                    openField.classList.remove('open');
+                    if (openButton) openButton.setAttribute('aria-expanded', 'false');
+                    const openParent = openField.closest('.mb-3, .modal-body, .d-flex, .card-header, .col-12, .card');
+                    if (openParent && !openParent.classList.contains('modal')) {
+                        openParent.style.zIndex = '';
+                        openParent.style.position = '';
+                    } else {
+                        const openModal = openField.closest('.modal');
+                        if (openModal) {
+                            openModal.style.zIndex = '';
+                        }
+                    }
+                }
+            });
+
+            field.classList.add('open');
+            button.setAttribute('aria-expanded', 'true');
+
+            // Fix z-index issue by elevating parent containers manually
+            const parent = field.closest('.mb-3, .modal-body, .d-flex, .card-header, .col-12, .card');
+            if (parent && !parent.classList.contains('modal')) {
+                parent.style.zIndex = '1000002';
+                parent.style.position = 'relative';
+            } else {
+                const modal = field.closest('.modal');
+                if (modal) {
+                    modal.style.zIndex = '1000002';
+                }
+            }
+
+            const selected = menu.querySelector('.selected') || options[0];
+            if (selected) {
+                selected.focus();
+                
+                // Scroll to selected item if menu has many options
+                setTimeout(() => {
+                    selected.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                        inline: 'nearest'
+                    });
+                }, 150);
+            }
+        }
+
+        function closeMenu() {
+            field.classList.remove('open');
+            button.setAttribute('aria-expanded', 'false');
+            if (document.activeElement === document.body || document.activeElement === null) {
+                button.focus();
+            }
+
+            const parent = field.closest('.mb-3, .modal-body, .d-flex, .card-header, .col-12, .card');
+            if (parent && !parent.classList.contains('modal')) {
+                setTimeout(() => {
+                    if (!field.classList.contains('open')) {
+                        parent.style.zIndex = '';
+                        parent.style.position = '';
+                    }
+                }, 300);
+            } else {
+                const modal = field.closest('.modal');
+                if (modal) {
+                    setTimeout(() => {
+                        if (!field.classList.contains('open')) {
+                            modal.style.zIndex = '';
+                        }
+                    }, 300);
+                }
+            }
+        }
+
+        function setOption(optionEl) {
+            const value = optionEl.dataset.option;
+            const text = optionEl.querySelector('h3')?.textContent || optionEl.textContent;
+
+            select.value = value;
+            select.dispatchEvent(new Event('change'));
+
+            button.textContent = text;
+
+            options.forEach(el => el.classList.remove('selected'));
+            optionEl.classList.add('selected');
+
+            closeMenu();
+        }
+
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            console.log('Button clicked, field:', field, 'isOpen:', field.classList.contains('open'));
+            if (field.classList.contains('open')) {
+                closeMenu();
+            } else {
+                openMenu();
+            }
+        });
+
+        button.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openMenu();
+            }
+        });
+
+        // Prevent clicks on menu from closing modal
+        menu.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        options.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setOption(option);
+            });
+
+            option.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setOption(option);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const next = option.nextElementSibling;
+                    if (next) next.focus();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prev = option.previousElementSibling;
+                    if (prev) prev.focus();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeMenu();
+                }
+            });
+        });
+
+        // Close menu when clicking outside, but prevent modal from closing
+        const handleOutsideClick = (e) => {
+            const target = e.target;
+            const isInteractiveElement = target.tagName === 'INPUT' || 
+                                        target.tagName === 'TEXTAREA' || 
+                                        target.tagName === 'SELECT' ||
+                                        target.isContentEditable ||
+                                        target.closest('input, textarea, select, [contenteditable]');
+            
+            if (isInteractiveElement) {
+                return;
+            }
+            
+            if (field.classList.contains('open') && !field.contains(target)) {
+                const modal = field.closest('.modal');
+                if (modal && target === modal) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    return;
+                }
+                closeMenu();
+            }
+        };
+        
+        // Store handler for cleanup
+        field._outsideClickHandler = handleOutsideClick;
+        document.addEventListener('click', handleOutsideClick, false);
+    });
+}
+
+// Function to convert all selects in a container to custom menus
+function convertSelectsInContainer(container) {
+    if (!container) return;
+    
+    const selects = container.querySelectorAll('select:not(.d-none)');
+    selects.forEach(select => {
+        // Skip if already converted
+        if (select.closest('.field.menu')) return;
+        
+        const iconClass = getIconForSelect(select);
+        convertSelectToCustomMenu(select, iconClass);
+    });
+    
+    // Initialize custom selects
+    setTimeout(() => {
+        initCustomSelects();
+    }, 100);
+}
+
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Convert existing selects
+    convertSelectsInContainer(document.body);
+    initCustomSelects();
+});
+
+// Also initialize when modals are shown
+document.addEventListener('shown.bs.modal', function(e) {
+    const modal = e.target;
+    convertSelectsInContainer(modal);
+});
+
+// Helper function to update custom menu when time slots are updated
+function updateTimeSelectCustomMenu(selectElement, text) {
+    const fieldMenu = selectElement.closest('.field.menu');
+    const menu = fieldMenu ? fieldMenu.querySelector('menu') : null;
+    const button = fieldMenu ? fieldMenu.querySelector('.custom-select-toggle') : null;
+    
+    if (menu && button) {
+        // Get all options from select
+        const options = Array.from(selectElement.options);
+        menu.innerHTML = '';
+        
+        options.forEach(option => {
+            const li = document.createElement('li');
+            li.setAttribute('data-option', option.value);
+            li.setAttribute('tabindex', '0');
+            li.setAttribute('role', 'button');
+            if (option.selected) {
+                li.classList.add('selected');
+            }
+            const icon = document.createElement('i');
+            icon.className = 'bi-clock fs-5';
+            li.appendChild(icon);
+            const h3 = document.createElement('h3');
+            h3.textContent = option.textContent;
+            li.appendChild(h3);
+            menu.appendChild(li);
+        });
+        
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        button.textContent = selectedOption ? selectedOption.textContent : text || 'Select available time slot...';
+        
+        // Remove initialization flag to allow re-initialization
+        if (fieldMenu) {
+            fieldMenu.removeAttribute('data-initialized');
+        }
+        
+        // Re-initialize custom select
+        setTimeout(() => {
+            initCustomSelects();
+        }, 50);
     }
 }
