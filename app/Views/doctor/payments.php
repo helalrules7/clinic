@@ -190,12 +190,23 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                         <!-- Transaction Type Filter -->
                         <div class="d-flex align-items-center">
                             <label for="transactionTypeFilter" class="form-label mb-0 me-2 text-muted">Type:</label>
-                            <select class="form-select form-select-sm" id="transactionTypeFilter" style="width: auto;">
-                                <option value="all">All</option>
-                                <option value="payment">Payments</option>
-                                <option value="expense">Expenses</option>
-                                <option value="balance">Balance</option>
-                            </select>
+                            <section class="field menu" style="min-width: auto; width: auto;">
+                                <div class="control">
+                                    <select class="form-select form-select-sm d-none" id="transactionTypeFilter" style="width: auto;">
+                                        <option value="all" selected>All</option>
+                                        <option value="payment">Payments</option>
+                                        <option value="expense">Expenses</option>
+                                        <option value="balance">Balance</option>
+                                    </select>
+                                    <button type="button" class="custom-select-toggle" aria-expanded="false" style="font-size: 0.875rem; padding: 0.375rem 2rem 0.375rem 0.75rem;">All</button>
+                                    <menu>
+                                        <li data-option="all" tabindex="0" role="button" class="selected"><i class="bi-list fs-5"></i><h3>All</h3></li>
+                                        <li data-option="payment" tabindex="0" role="button"><i class="bi-list fs-5"></i><h3>Payments</h3></li>
+                                        <li data-option="expense" tabindex="0" role="button"><i class="bi-list fs-5"></i><h3>Expenses</h3></li>
+                                        <li data-option="balance" tabindex="0" role="button"><i class="bi-list fs-5"></i><h3>Balance</h3></li>
+                                    </menu>
+                                </div>
+                            </section>
                         </div>
                     </div>
                 </div>
@@ -369,12 +380,23 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                             
                             <div class="mb-3">
                                 <label for="balanceType" class="form-label">Balance Type <span class="text-danger">*</span></label>
-                                <select class="form-select" id="balanceType" name="balance_type" required>
-                                    <option value="">Select type...</option>
-                                    <option value="opening">Opening Balance</option>
-                                    <option value="additional">Additional Balance</option>
-                                    <option value="withdrawal">Withdrawal</option>
-                                </select>
+                                <section class="field menu" style="min-width: 100%;">
+                                    <div class="control">
+                                        <select class="form-select d-none" id="balanceType" name="balance_type" required>
+                                            <option value="">Select type...</option>
+                                            <option value="opening">Opening Balance</option>
+                                            <option value="additional">Additional Balance</option>
+                                            <option value="withdrawal">Withdrawal</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false">Select type...</button>
+                                        <menu>
+                                            <li data-option="" tabindex="0" role="button" class="selected"><i class="bi-wallet fs-5"></i><h3>Select type...</h3></li>
+                                            <li data-option="opening" tabindex="0" role="button"><i class="bi-wallet fs-5"></i><h3>Opening Balance</h3></li>
+                                            <li data-option="additional" tabindex="0" role="button"><i class="bi-wallet fs-5"></i><h3>Additional Balance</h3></li>
+                                            <li data-option="withdrawal" tabindex="0" role="button"><i class="bi-wallet fs-5"></i><h3>Withdrawal</h3></li>
+                                        </menu>
+                                    </div>
+                                </section>
                                 <div class="invalid-feedback"></div>
                             </div>
                         </div>
@@ -520,14 +542,27 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                             
                             <div class="mb-3">
                                 <label for="expenseCategory" class="form-label">Expense Category</label>
-                                <select class="form-select" id="expenseCategory" name="category">
-                                    <option value="utilities">Utilities</option>
-                                    <option value="medical">Medical</option>
-                                    <option value="maintenance">Maintenance</option>
-                                    <option value="office">Office</option>
-                                    <option value="salary">Salary</option>
-                                    <option value="other">Other</option>
-                                </select>
+                                <section class="field menu" style="min-width: 100%;">
+                                    <div class="control">
+                                        <select class="form-select d-none" id="expenseCategory" name="category">
+                                            <option value="utilities" selected>Utilities</option>
+                                            <option value="medical">Medical</option>
+                                            <option value="maintenance">Maintenance</option>
+                                            <option value="office">Office</option>
+                                            <option value="salary">Salary</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false">Utilities</button>
+                                        <menu>
+                                            <li data-option="utilities" tabindex="0" role="button" class="selected"><i class="bi-tags fs-5"></i><h3>Utilities</h3></li>
+                                            <li data-option="medical" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Medical</h3></li>
+                                            <li data-option="maintenance" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Maintenance</h3></li>
+                                            <li data-option="office" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Office</h3></li>
+                                            <li data-option="salary" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Salary</h3></li>
+                                            <li data-option="other" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Other</h3></li>
+                                        </menu>
+                                    </div>
+                                </section>
                             </div>
                             
                             <div class="mb-3">
@@ -591,12 +626,23 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="searchType" class="form-label">Transaction Type</label>
-                            <select class="form-select" id="searchType">
-                                <option value="">All Types</option>
-                                <option value="payment">Payments</option>
-                                <option value="expense">Expenses</option>
-                                <option value="balance">Balance</option>
-                            </select>
+                            <section class="field menu" style="min-width: 100%;">
+                                <div class="control">
+                                    <select class="form-select d-none" id="searchType">
+                                        <option value="" selected>All Types</option>
+                                        <option value="payment">Payments</option>
+                                        <option value="expense">Expenses</option>
+                                        <option value="balance">Balance</option>
+                                    </select>
+                                    <button type="button" class="custom-select-toggle" aria-expanded="false">All Types</button>
+                                    <menu>
+                                        <li data-option="" tabindex="0" role="button" class="selected"><i class="bi-list fs-5"></i><h3>All Types</h3></li>
+                                        <li data-option="payment" tabindex="0" role="button"><i class="bi-list fs-5"></i><h3>Payments</h3></li>
+                                        <li data-option="expense" tabindex="0" role="button"><i class="bi-list fs-5"></i><h3>Expenses</h3></li>
+                                        <li data-option="balance" tabindex="0" role="button"><i class="bi-list fs-5"></i><h3>Balance</h3></li>
+                                    </menu>
+                                </div>
+                            </section>
                         </div>
                     </div>
                 </div>
@@ -698,23 +744,46 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                             
                             <div class="mb-3">
                                 <label for="editPaymentType" class="form-label">Payment Type <span class="text-danger">*</span></label>
-                                <select class="form-select" id="editPaymentType" name="type" required>
-                                    <option value="Booking">New Booking</option>
-                                    <option value="FollowUp">Follow-up</option>
-                                    <option value="Consultation">Consultation</option>
-                                    <option value="Procedure">Procedure</option>
-                                    <option value="Other">Other</option>
-                                </select>
+                                <section class="field menu" style="min-width: 100%;">
+                                    <div class="control">
+                                        <select class="form-select d-none" id="editPaymentType" name="type" required>
+                                            <option value="Booking" selected>New Booking</option>
+                                            <option value="FollowUp">Follow-up</option>
+                                            <option value="Consultation">Consultation</option>
+                                            <option value="Procedure">Procedure</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false">New Booking</button>
+                                        <menu>
+                                            <li data-option="Booking" tabindex="0" role="button" class="selected"><i class="bi-credit-card fs-5"></i><h3>New Booking</h3></li>
+                                            <li data-option="FollowUp" tabindex="0" role="button"><i class="bi-credit-card fs-5"></i><h3>Follow-up</h3></li>
+                                            <li data-option="Consultation" tabindex="0" role="button"><i class="bi-credit-card fs-5"></i><h3>Consultation</h3></li>
+                                            <li data-option="Procedure" tabindex="0" role="button"><i class="bi-credit-card fs-5"></i><h3>Procedure</h3></li>
+                                            <li data-option="Other" tabindex="0" role="button"><i class="bi-credit-card fs-5"></i><h3>Other</h3></li>
+                                        </menu>
+                                    </div>
+                                </section>
                             </div>
                             
                             <div class="mb-3">
                                 <label for="editPaymentMethod" class="form-label">Payment Method <span class="text-danger">*</span></label>
-                                <select class="form-select" id="editPaymentMethod" name="method" required>
-                                    <option value="Cash">Cash</option>
-                                    <option value="Card">Card</option>
-                                    <option value="Transfer">Transfer</option>
-                                    <option value="Wallet">Wallet</option>
-                                </select>
+                                <section class="field menu" style="min-width: 100%;">
+                                    <div class="control">
+                                        <select class="form-select d-none" id="editPaymentMethod" name="method" required>
+                                            <option value="Cash" selected>Cash</option>
+                                            <option value="Card">Card</option>
+                                            <option value="Transfer">Transfer</option>
+                                            <option value="Wallet">Wallet</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false">Cash</button>
+                                        <menu>
+                                            <li data-option="Cash" tabindex="0" role="button" class="selected"><i class="bi-cash fs-5"></i><h3>Cash</h3></li>
+                                            <li data-option="Card" tabindex="0" role="button"><i class="bi-cash fs-5"></i><h3>Card</h3></li>
+                                            <li data-option="Transfer" tabindex="0" role="button"><i class="bi-cash fs-5"></i><h3>Transfer</h3></li>
+                                            <li data-option="Wallet" tabindex="0" role="button"><i class="bi-cash fs-5"></i><h3>Wallet</h3></li>
+                                        </menu>
+                                    </div>
+                                </section>
                             </div>
                         </div>
                         
@@ -798,14 +867,27 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="editExpenseCategory" class="form-label">Category</label>
-                                <select class="form-select" id="editExpenseCategory" name="category">
-                                    <option value="utilities">Utilities</option>
-                                    <option value="medical">Medical</option>
-                                    <option value="maintenance">Maintenance</option>
-                                    <option value="office">Office</option>
-                                    <option value="salary">Salary</option>
-                                    <option value="other">Other</option>
-                                </select>
+                                <section class="field menu" style="min-width: 100%;">
+                                    <div class="control">
+                                        <select class="form-select d-none" id="editExpenseCategory" name="category">
+                                            <option value="utilities" selected>Utilities</option>
+                                            <option value="medical">Medical</option>
+                                            <option value="maintenance">Maintenance</option>
+                                            <option value="office">Office</option>
+                                            <option value="salary">Salary</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false">Utilities</button>
+                                        <menu>
+                                            <li data-option="utilities" tabindex="0" role="button" class="selected"><i class="bi-tags fs-5"></i><h3>Utilities</h3></li>
+                                            <li data-option="medical" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Medical</h3></li>
+                                            <li data-option="maintenance" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Maintenance</h3></li>
+                                            <li data-option="office" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Office</h3></li>
+                                            <li data-option="salary" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Salary</h3></li>
+                                            <li data-option="other" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Other</h3></li>
+                                        </menu>
+                                    </div>
+                                </section>
                             </div>
                             
                             <div class="mb-3">

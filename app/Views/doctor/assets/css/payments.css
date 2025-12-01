@@ -731,3 +731,319 @@ kbd {
         flex-wrap: wrap;
     }
 }
+
+/* =========================================
+   Custom Select Menu Styles (Glass Effect)
+   ========================================= */
+
+.field.menu {
+    position: relative;
+    width: 100%;
+    
+    --pads: 1rem;
+    --radius: 12px;
+    --spring: linear(0, 0.008 1.1%, 0.034 2.3%, 0.134 4.9%, 0.264 7.3%, 0.683 14.3%, 0.797 16.5%, 0.89 18.6%, 0.967 20.7%, 1.027 22.8%, 1.073 25%, 1.104 27.3%, 1.123 30.6%, 1.119 34.3%, 1.018 49.5%, 0.988 58.6%, 0.985 65.2%, 1 84.5%, 1);
+    --cubic-out: cubic-bezier(0.33, 1, 0.68, 1);
+    
+    /* Using project variables */
+    --active-color: var(--accent);
+    --hover-color: var(--accent);
+    --selected-color: var(--accent);
+}
+
+.field.menu.open {
+    z-index: 1000001 !important;
+}
+
+/* Fix overlapping issue by elevating the parent container when menu is open */
+.d-flex:has(.field.menu.open),
+.card-header:has(.field.menu.open),
+.col-12:has(.field.menu.open),
+.card:has(.field.menu.open),
+.modal-body:has(.field.menu.open),
+.mb-3:has(.field.menu.open) {
+    z-index: 1000002;
+    position: relative;
+}
+
+/* For modal, only set z-index without position to avoid breaking modal positioning */
+.modal:has(.field.menu.open) {
+    z-index: 1000002;
+}
+
+/* Ensure menu appears above modal backdrop (backdrop z-index is usually 1040) */
+.modal .field.menu.open menu {
+    z-index: 1000001 !important;
+}
+
+.modal.show .field.menu.open {
+    z-index: 1000001 !important;
+}
+
+.field.menu .control {
+    position: relative;
+    z-index: 2; /* Ensure control is above potential overlaps */
+}
+
+.field.menu select,
+.field.menu button {
+    color: var(--text);
+}
+
+.field.menu button {
+    font-size: 1rem;
+    text-transform: unset;
+    text-align: start;
+    border-radius: var(--radius);
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    width: 100%;
+    transition: all 0.3s var(--cubic-out);
+    
+    /* Glass Effect */
+    background: rgba(248, 250, 252, 0.7);
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    border: 2px solid rgba(226, 232, 240, 0.5);
+    
+    cursor: pointer;
+    position: relative;
+    
+    box-shadow: 
+        0 1px 1px -0.5px rgba(0, 0, 0, 0.02),
+        0 2px 2px -1px rgba(0, 0, 0, 0.03),
+        0 3px 3px -1.5px rgba(0, 0, 0, 0.03),
+        0 5px 5px -2.5px rgba(0, 0, 0, 0.02);
+}
+
+.dark .field.menu button {
+    background: rgba(11, 18, 32, 0.7);
+    border: 2px solid rgba(51, 65, 85, 0.5);
+    color: var(--text);
+}
+
+.field.menu button::after {
+    content: '';
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.2em;
+    height: 1.2em;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23475569' fill-rule='evenodd' d='M7 9a1 1 0 0 0-.707 1.707l5 5a1 1 0 0 0 1.414 0l5-5A1 1 0 0 0 17 9z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    transition: transform 0.3s ease;
+}
+
+.dark .field.menu button::after {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23cbd5e1' fill-rule='evenodd' d='M7 9a1 1 0 0 0-.707 1.707l5 5a1 1 0 0 0 1.414 0l5-5A1 1 0 0 0 17 9z' clip-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+.field.menu.open button::after {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.field.menu menu {
+    background: rgba(248, 250, 252, 0.9);
+    backdrop-filter: blur(10px) saturate(180%);
+    padding: 0.5rem;
+    margin: 0;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    width: 100%;
+    min-width: 100%;
+    
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.15),
+        0 1px 2px rgba(255, 255, 255, 0.2) inset;
+    
+    border: 1px solid var(--border);
+    z-index: 1000001 !important; /* Ensure menu is on top of everything */
+    
+    /* Animation Properties */
+    transition-property: transform, opacity, display, visibility;
+    transition-timing-function: var(--spring);
+    transition-duration: 0.66s;
+    transition-behavior: allow-discrete;
+    opacity: 0;
+    transform: scale(1, 0.75) translateY(-10px);
+    transform-origin: center top;
+    visibility: hidden;
+    pointer-events: none;
+    
+    /* Show first 5 items with scroll */
+    max-height: 280px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    touch-action: pan-y; /* Enable vertical touch scrolling */
+    
+    /* Custom scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) rgba(0, 0, 0, 0.1);
+}
+
+.dark .field.menu menu {
+    background: rgba(11, 18, 32, 0.9);
+    backdrop-filter: blur(10px) saturate(180%);
+    border-color: var(--border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.field.menu.open menu {
+    opacity: 1;
+    transform: scale(1, 1) translateY(0);
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* Webkit scrollbar styling */
+.field.menu menu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.field.menu menu::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+}
+
+.field.menu menu::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 10px;
+    opacity: 0.6;
+}
+
+.field.menu menu::-webkit-scrollbar-thumb:hover {
+    opacity: 1;
+}
+
+/* Dark mode scrollbar */
+.dark .field.menu menu::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    opacity: 0.7;
+}
+
+.dark .field.menu menu::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.field.menu menu li {
+    display: grid;
+    appearance: none;
+    grid-template:
+      "icon name" auto
+      "icon description" auto / min-content 1fr;
+    column-gap: 0.75rem;
+    
+    padding: 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+    color: var(--text);
+    transition: all 0.2s ease;
+}
+
+.field.menu menu li > * {
+    margin: 0;
+    padding: 0;
+    line-height: 1.4;
+}
+
+.field.menu menu li > i,
+.field.menu menu li > svg {
+    grid-area: icon;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    opacity: 0.8;
+    width: 24px;
+    height: 100%;
+}
+
+.field.menu menu li > h3 {
+    grid-area: name;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.field.menu menu li > p {
+    grid-area: description;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+/* Hover and Selected States */
+.field.menu menu li:hover,
+.field.menu menu li:focus {
+    background: rgba(var(--accent-rgb, 14, 165, 233), 0.1);
+    outline: none;
+}
+
+.field.menu menu li:hover > i,
+.field.menu menu li:hover > h3,
+.field.menu menu li:focus > i,
+.field.menu menu li:focus > h3 {
+    color: var(--accent);
+    opacity: 1;
+}
+
+.field.menu menu li.selected {
+    background: rgba(var(--accent-rgb, 14, 165, 233), 0.15);
+}
+
+.field.menu menu li.selected > i,
+.field.menu menu li.selected > h3 {
+    color: var(--accent);
+    opacity: 1;
+}
+
+/* Staggered Animation for List Items */
+.field.menu menu li {
+    transition-property: transform, opacity;
+    transition-timing-function: var(--spring);
+    transition-duration: 0.5s;
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.field.menu.open menu li {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.field.menu.open menu li:nth-child(1) { transition-delay: 0.05s; }
+.field.menu.open menu li:nth-child(2) { transition-delay: 0.1s; }
+.field.menu.open menu li:nth-child(3) { transition-delay: 0.15s; }
+.field.menu.open menu li:nth-child(4) { transition-delay: 0.2s; }
+.field.menu.open menu li:nth-child(5) { transition-delay: 0.25s; }
+
+/* Control Before Element (Optional Indicator) */
+.field.menu .control::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0.75rem;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 0;
+    background-color: var(--accent);
+    border-radius: 2px;
+    transition: height 0.3s var(--cubic-out);
+    opacity: 0;
+    z-index: 2;
+}
+
+.field.menu:hover .control::before,
+.field.menu.open .control::before {
+    height: 60%;
+    opacity: 1;
+}

@@ -73,16 +73,31 @@
             </div>
             <div class="forum-form-group">
                 <label class="forum-form-label" for="topicCategory">Category</label>
-                <select id="topicCategory" class="forum-form-input" required>
-                    <option value="All">All</option>
-                    <option value="General Discussion">General Discussion</option>
-                    <option value="Clinical Case">Clinical Case</option>
-                    <option value="Procedure Feedback">Procedure Feedback</option>
-                    <option value="Protocol Update">Protocol Update</option>
-                    <option value="Drug Interaction">Drug Interaction</option>
-                    <option value="Prescription Inquiry">Prescription Inquiry</option>
-                    <option value="Lab/Imaging Interpretation">Lab/Imaging Interpretation</option>
-                </select>
+                <section class="field menu" style="min-width: 100%;">
+                    <div class="control">
+                        <select id="topicCategory" class="forum-form-input d-none" required>
+                            <option value="All" selected>All</option>
+                            <option value="General Discussion">General Discussion</option>
+                            <option value="Clinical Case">Clinical Case</option>
+                            <option value="Procedure Feedback">Procedure Feedback</option>
+                            <option value="Protocol Update">Protocol Update</option>
+                            <option value="Drug Interaction">Drug Interaction</option>
+                            <option value="Prescription Inquiry">Prescription Inquiry</option>
+                            <option value="Lab/Imaging Interpretation">Lab/Imaging Interpretation</option>
+                        </select>
+                        <button type="button" class="custom-select-toggle" aria-expanded="false">All</button>
+                        <menu>
+                            <li data-option="All" tabindex="0" role="button" class="selected"><i class="bi-tags fs-5"></i><h3>All</h3></li>
+                            <li data-option="General Discussion" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>General Discussion</h3></li>
+                            <li data-option="Clinical Case" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Clinical Case</h3></li>
+                            <li data-option="Procedure Feedback" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Procedure Feedback</h3></li>
+                            <li data-option="Protocol Update" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Protocol Update</h3></li>
+                            <li data-option="Drug Interaction" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Drug Interaction</h3></li>
+                            <li data-option="Prescription Inquiry" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Prescription Inquiry</h3></li>
+                            <li data-option="Lab/Imaging Interpretation" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Lab/Imaging Interpretation</h3></li>
+                        </menu>
+                    </div>
+                </section>
             </div>
             <div class="forum-form-group">
                 <label class="forum-form-label" for="topicMeta">Meta Tags <small style="color: var(--muted);">(Use @ for patients, # for appointments, $ for drugs, or type custom tags and then press ; or Enter to add)</small></label>

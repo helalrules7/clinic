@@ -388,3 +388,224 @@ function showUpdateNotification() {
 document.querySelector('.profile-image-preview-wrapper').addEventListener('click', function() {
     document.getElementById('profile_image').click();
 });
+
+// =========================================
+// Custom Select Menu Logic
+// =========================================
+
+// Custom Select Menu Logic
+function initCustomSelects() {
+    const customSelects = document.querySelectorAll('.field.menu:not([data-initialized])');
+
+    customSelects.forEach(field => {
+        const select = field.querySelector('select');
+        const button = field.querySelector('.custom-select-toggle');
+        const menu = field.querySelector('menu');
+        const options = menu ? menu.querySelectorAll('li') : [];
+
+        if (!select || !button || !menu || options.length === 0) {
+            console.warn('Missing elements for custom select initialization:', field);
+            return;
+        }
+        
+        // Mark as initialized to prevent duplicate event listeners
+        field.setAttribute('data-initialized', 'true');
+
+        // Set initial button text
+        const selectedOption = select.options[select.selectedIndex];
+        if (selectedOption) {
+            const correspondingLi = Array.from(options).find(li => li.dataset.option === selectedOption.value);
+            if (correspondingLi) {
+                button.textContent = correspondingLi.querySelector('h3')?.textContent || selectedOption.textContent;
+                correspondingLi.classList.add('selected');
+            } else {
+                button.textContent = selectedOption.textContent;
+            }
+        } else {
+            button.textContent = 'Select an option';
+        }
+
+        function openMenu() {
+            // Close any other open menus first
+            document.querySelectorAll('.field.menu.open').forEach(openField => {
+                if (openField !== field) {
+                    const openButton = openField.querySelector('.custom-select-toggle');
+                    openField.classList.remove('open');
+                    if (openButton) openButton.setAttribute('aria-expanded', 'false');
+                    const openParent = openField.closest('.mb-3, .modal-body, .d-flex, .card-header, .col-12, .card');
+                    if (openParent && !openParent.classList.contains('modal')) {
+                        openParent.style.zIndex = '';
+                        openParent.style.position = '';
+                    } else {
+                        const openModal = openField.closest('.modal');
+                        if (openModal) {
+                            openModal.style.zIndex = '';
+                        }
+                    }
+                }
+            });
+
+            field.classList.add('open');
+            button.setAttribute('aria-expanded', 'true');
+
+            // Fix z-index issue by elevating parent containers manually
+            const parent = field.closest('.mb-3, .modal-body, .d-flex, .card-header, .col-12, .card');
+            if (parent && !parent.classList.contains('modal')) {
+                parent.style.zIndex = '1000002';
+                parent.style.position = 'relative';
+            } else {
+                const modal = field.closest('.modal');
+                if (modal) {
+                    modal.style.zIndex = '1000002';
+                }
+            }
+
+            const selected = menu.querySelector('.selected') || options[0];
+            if (selected) {
+                selected.focus();
+                
+                // Scroll to selected item if menu has many options
+                setTimeout(() => {
+                    selected.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                        inline: 'nearest'
+                    });
+                }, 150);
+            }
+        }
+
+        function closeMenu() {
+            field.classList.remove('open');
+            button.setAttribute('aria-expanded', 'false');
+            if (document.activeElement === document.body || document.activeElement === null) {
+                button.focus();
+            }
+
+            const parent = field.closest('.mb-3, .modal-body, .d-flex, .card-header, .col-12, .card');
+            if (parent && !parent.classList.contains('modal')) {
+                setTimeout(() => {
+                    if (!field.classList.contains('open')) {
+                        parent.style.zIndex = '';
+                        parent.style.position = '';
+                    }
+                }, 300);
+            } else {
+                const modal = field.closest('.modal');
+                if (modal) {
+                    setTimeout(() => {
+                        if (!field.classList.contains('open')) {
+                            modal.style.zIndex = '';
+                        }
+                    }, 300);
+                }
+            }
+        }
+
+        function setOption(optionEl) {
+            const value = optionEl.dataset.option;
+            const text = optionEl.querySelector('h3')?.textContent || optionEl.textContent;
+
+            select.value = value;
+            select.dispatchEvent(new Event('change'));
+
+            button.textContent = text;
+
+            options.forEach(el => el.classList.remove('selected'));
+            optionEl.classList.add('selected');
+
+            closeMenu();
+        }
+
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (field.classList.contains('open')) {
+                closeMenu();
+            } else {
+                openMenu();
+            }
+        });
+
+        button.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openMenu();
+            }
+        });
+
+        // Prevent clicks on menu from closing modal
+        menu.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        options.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setOption(option);
+            });
+
+            option.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setOption(option);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const next = option.nextElementSibling;
+                    if (next) next.focus();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prev = option.previousElementSibling;
+                    if (prev) prev.focus();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeMenu();
+                }
+            });
+        });
+
+        // Close menu when clicking outside, but prevent modal from closing
+        const handleOutsideClick = (e) => {
+            const target = e.target;
+            const isInteractiveElement = target.tagName === 'INPUT' || 
+                                        target.tagName === 'TEXTAREA' || 
+                                        target.tagName === 'SELECT' ||
+                                        target.isContentEditable ||
+                                        target.closest('input, textarea, select, [contenteditable]');
+            
+            if (isInteractiveElement) {
+                return;
+            }
+            
+            if (field.classList.contains('open') && !field.contains(target)) {
+                const modal = field.closest('.modal');
+                if (modal && target === modal) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    return;
+                }
+                closeMenu();
+            }
+        };
+        
+        // Store handler for cleanup
+        field._outsideClickHandler = handleOutsideClick;
+        document.addEventListener('click', handleOutsideClick, false);
+    });
+}
+
+// Initialize on DOM ready (after existing DOMContentLoaded)
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        initCustomSelects();
+    }, 100);
+});
+
+// Also initialize when modals are shown
+document.addEventListener('shown.bs.modal', function(e) {
+    const modal = e.target;
+    setTimeout(() => {
+        initCustomSelects();
+    }, 100);
+});

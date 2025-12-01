@@ -306,14 +306,27 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="edit_specialty" class="form-label">Specialty</label>
-                                <select class="form-control" id="edit_specialty" name="specialty">
-                                    <option value="Ophthalmology" <?= ($user['specialty'] ?? 'Ophthalmology') === 'Ophthalmology' ? 'selected' : '' ?>>Ophthalmology</option>
-                                    <option value="Optometry" <?= ($user['specialty'] ?? '') === 'Optometry' ? 'selected' : '' ?>>Optometry</option>
-                                    <option value="Retinal Specialist" <?= ($user['specialty'] ?? '') === 'Retinal Specialist' ? 'selected' : '' ?>>Retinal Specialist</option>
-                                    <option value="Corneal Specialist" <?= ($user['specialty'] ?? '') === 'Corneal Specialist' ? 'selected' : '' ?>>Corneal Specialist</option>
-                                    <option value="Glaucoma Specialist" <?= ($user['specialty'] ?? '') === 'Glaucoma Specialist' ? 'selected' : '' ?>>Glaucoma Specialist</option>
-                                    <option value="Pediatric Ophthalmology" <?= ($user['specialty'] ?? '') === 'Pediatric Ophthalmology' ? 'selected' : '' ?>>Pediatric Ophthalmology</option>
-                                </select>
+                                <section class="field menu" style="min-width: 100%;">
+                                    <div class="control">
+                                        <select class="form-control d-none" id="edit_specialty" name="specialty">
+                                            <option value="Ophthalmology" <?= ($user['specialty'] ?? 'Ophthalmology') === 'Ophthalmology' ? 'selected' : '' ?>>Ophthalmology</option>
+                                            <option value="Optometry" <?= ($user['specialty'] ?? '') === 'Optometry' ? 'selected' : '' ?>>Optometry</option>
+                                            <option value="Retinal Specialist" <?= ($user['specialty'] ?? '') === 'Retinal Specialist' ? 'selected' : '' ?>>Retinal Specialist</option>
+                                            <option value="Corneal Specialist" <?= ($user['specialty'] ?? '') === 'Corneal Specialist' ? 'selected' : '' ?>>Corneal Specialist</option>
+                                            <option value="Glaucoma Specialist" <?= ($user['specialty'] ?? '') === 'Glaucoma Specialist' ? 'selected' : '' ?>>Glaucoma Specialist</option>
+                                            <option value="Pediatric Ophthalmology" <?= ($user['specialty'] ?? '') === 'Pediatric Ophthalmology' ? 'selected' : '' ?>>Pediatric Ophthalmology</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false"><?= htmlspecialchars($user['specialty'] ?? 'Ophthalmology') ?></button>
+                                        <menu>
+                                            <li data-option="Ophthalmology" tabindex="0" role="button" <?= ($user['specialty'] ?? 'Ophthalmology') === 'Ophthalmology' ? 'class="selected"' : '' ?>><i class="bi-person-badge fs-5"></i><h3>Ophthalmology</h3></li>
+                                            <li data-option="Optometry" tabindex="0" role="button" <?= ($user['specialty'] ?? '') === 'Optometry' ? 'class="selected"' : '' ?>><i class="bi-person-badge fs-5"></i><h3>Optometry</h3></li>
+                                            <li data-option="Retinal Specialist" tabindex="0" role="button" <?= ($user['specialty'] ?? '') === 'Retinal Specialist' ? 'class="selected"' : '' ?>><i class="bi-person-badge fs-5"></i><h3>Retinal Specialist</h3></li>
+                                            <li data-option="Corneal Specialist" tabindex="0" role="button" <?= ($user['specialty'] ?? '') === 'Corneal Specialist' ? 'class="selected"' : '' ?>><i class="bi-person-badge fs-5"></i><h3>Corneal Specialist</h3></li>
+                                            <li data-option="Glaucoma Specialist" tabindex="0" role="button" <?= ($user['specialty'] ?? '') === 'Glaucoma Specialist' ? 'class="selected"' : '' ?>><i class="bi-person-badge fs-5"></i><h3>Glaucoma Specialist</h3></li>
+                                            <li data-option="Pediatric Ophthalmology" tabindex="0" role="button" <?= ($user['specialty'] ?? '') === 'Pediatric Ophthalmology' ? 'class="selected"' : '' ?>><i class="bi-person-badge fs-5"></i><h3>Pediatric Ophthalmology</h3></li>
+                                        </menu>
+                                    </div>
+                                </section>
                             </div>
                         </div>
                     </div>
