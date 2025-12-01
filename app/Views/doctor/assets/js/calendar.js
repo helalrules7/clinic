@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     setupEventListeners();
+    initCustomSelects(); // Initialize custom select menus
 });
 
 function setupEventListeners() {
@@ -1304,6 +1305,10 @@ function loadAvailableTimeSlots(preselectedTime = null) {
 
 function populateTimeSlots(availableSlots, preselectedTime = null) {
     const timeSelect = document.getElementById('appointmentTime');
+    const timeField = timeSelect.closest('.field.menu');
+    const timeMenu = timeField ? timeField.querySelector('menu') : null;
+    const timeButton = timeField ? timeField.querySelector('.custom-select-toggle') : null;
+    
     timeSelect.innerHTML = '<option value="">Select time slot...</option>';
     
     // Add all available slots (any doctor can see all available slots)
@@ -1333,12 +1338,109 @@ function populateTimeSlots(availableSlots, preselectedTime = null) {
     timeSelect.innerHTML = '<option value="">Select time slot...</option>';
     options.forEach(option => timeSelect.appendChild(option));
     
+    // Update custom menu if it exists
+    if (timeMenu) {
+        timeMenu.innerHTML = '<li data-option="" tabindex="0" role="button" class="selected"><h3>Select time slot...</h3></li>';
+        
+        // Add all sorted options to custom menu
+        options.forEach(option => {
+            const li = document.createElement('li');
+            li.setAttribute('data-option', option.value);
+            li.setAttribute('tabindex', '0');
+            li.setAttribute('role', 'button');
+            
+            // Add clock icon
+            const icon = document.createElement('i');
+            icon.className = 'bi bi-clock fs-5';
+            li.appendChild(icon);
+            
+            // Add text content
+            const h3 = document.createElement('h3');
+            h3.textContent = option.textContent;
+            li.appendChild(h3);
+            
+            timeMenu.appendChild(li);
+        });
+        
+        // Re-initialize event listeners for new menu items
+        const newOptions = timeMenu.querySelectorAll('li');
+        newOptions.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const value = option.dataset.option;
+                const text = option.querySelector('h3')?.textContent || option.textContent;
+                
+                timeSelect.value = value;
+                timeSelect.dispatchEvent(new Event('change'));
+                
+                if (timeButton) {
+                    timeButton.textContent = text;
+                }
+                
+                newOptions.forEach(el => el.classList.remove('selected'));
+                option.classList.add('selected');
+                
+                // Store selected value for scroll on next open
+                const field = timeMenu.closest('.field.menu');
+                if (field) {
+                    field.dataset.selectedValue = value;
+                    field.classList.remove('open');
+                    if (timeButton) {
+                        timeButton.setAttribute('aria-expanded', 'false');
+                    }
+                }
+            });
+            
+            option.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    option.click();
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const next = option.nextElementSibling;
+                    if (next) next.focus();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prev = option.previousElementSibling;
+                    if (prev) prev.focus();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    const field = timeMenu.closest('.field.menu');
+                    if (field) {
+                        field.classList.remove('open');
+                        if (timeButton) {
+                            timeButton.setAttribute('aria-expanded', 'false');
+                        }
+                    }
+                }
+            });
+        });
+    }
+    
     // If preselected time exists, select it immediately
     if (preselectedTime) {
         setTimeout(() => {
             timeSelect.value = preselectedTime;
             if (timeSelect.value === preselectedTime) {
                 timeSelect.classList.add('preselected-field');
+                
+                // Update custom menu selection
+                if (timeMenu && timeButton) {
+                    const selectedLi = timeMenu.querySelector(`li[data-option="${preselectedTime}"]`);
+                    if (selectedLi) {
+                        timeMenu.querySelectorAll('li').forEach(li => li.classList.remove('selected'));
+                        selectedLi.classList.add('selected');
+                        timeButton.textContent = selectedLi.querySelector('h3')?.textContent || formatTime(preselectedTime);
+                        
+                        // Scroll to selected item when menu opens
+                        const field = timeMenu.closest('.field.menu');
+                        if (field) {
+                            // Store scroll function for when menu opens
+                            field.dataset.scrollToSelected = 'true';
+                            field.dataset.selectedValue = preselectedTime;
+                        }
+                    }
+                }
             }
         }, 50);
     }
@@ -1908,6 +2010,254 @@ function initializeDraggableModals() {
             xOffset = 0;
             yOffset = 0;
             modalDialog.style.transform = '';
+        });
+    });
+}
+
+// Custom Select Menu Logic
+function initCustomSelects() {
+    const customSelects = document.querySelectorAll('.field.menu');
+
+    customSelects.forEach(field => {
+        const select = field.querySelector('select');
+        const button = field.querySelector('.custom-select-toggle');
+        const menu = field.querySelector('menu');
+        const options = menu.querySelectorAll('li');
+
+        if (!select || !button || !menu || options.length === 0) {
+            console.warn('Missing elements for custom select initialization:', field);
+            return;
+        }
+
+        // Set initial button text
+        const selectedOption = select.options[select.selectedIndex];
+        if (selectedOption) {
+            const correspondingLi = Array.from(options).find(li => li.dataset.option === selectedOption.value);
+            if (correspondingLi) {
+                button.textContent = correspondingLi.querySelector('h3')?.textContent || selectedOption.textContent;
+                correspondingLi.classList.add('selected');
+            } else {
+                button.textContent = selectedOption.textContent;
+            }
+        } else {
+            button.textContent = 'Select an option';
+        }
+
+        function openMenu() {
+            // Close any other open menus first
+            document.querySelectorAll('.field.menu.open').forEach(openField => {
+                if (openField !== field) {
+                    const openButton = openField.querySelector('.custom-select-toggle');
+                    const openMenuEl = openField.querySelector('menu');
+                    openField.classList.remove('open');
+                    openButton.setAttribute('aria-expanded', 'false');
+                    const openParent = openField.closest('.d-flex, .card-header, .col-12, .card, .modal, .modal-body, .mb-3');
+                    if (openParent) {
+                        openParent.style.zIndex = '';
+                        openParent.style.position = '';
+                    }
+                }
+            });
+
+            field.classList.add('open');
+            button.setAttribute('aria-expanded', 'true');
+
+            // Fix z-index issue by elevating parent containers manually
+            // Avoid setting position:relative on .modal itself as it breaks positioning
+            const parent = field.closest('.mb-3, .modal-body, .d-flex, .card-header, .col-12, .card');
+            if (parent && !parent.classList.contains('modal')) {
+                parent.style.zIndex = '1000002'; // Match CSS value
+                parent.style.position = 'relative';
+            } else {
+                // For modal, only set z-index without position
+                const modal = field.closest('.modal');
+                if (modal) {
+                    modal.style.zIndex = '1000002';
+                }
+            }
+            
+            // Prevent modal from closing when clicking on menu
+            const modal = field.closest('.modal');
+            if (modal) {
+                // Store original backdrop setting if not already stored
+                const modalInstance = bootstrap.Modal.getInstance(modal);
+                if (modalInstance && !modal.dataset.originalBackdrop) {
+                    modal.dataset.originalBackdrop = modalInstance._config.backdrop || 'true';
+                }
+            }
+
+            const selected = menu.querySelector('.selected') || options[0];
+            if (selected) {
+                selected.focus();
+                
+                // Scroll to selected item if it's the appointmentTime menu
+                if (select.id === 'appointmentTime' && selected) {
+                    // Wait for menu to be fully visible, then scroll
+                    setTimeout(() => {
+                        selected.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center',
+                            inline: 'nearest'
+                        });
+                    }, 150);
+                }
+            } else if (select.id === 'appointmentTime' && field.dataset.selectedValue) {
+                // If no selected item found but we have a stored value, try to find and scroll to it
+                const storedValue = field.dataset.selectedValue;
+                const storedSelected = menu.querySelector(`li[data-option="${storedValue}"]`);
+                if (storedSelected) {
+                    setTimeout(() => {
+                        storedSelected.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center',
+                            inline: 'nearest'
+                        });
+                        storedSelected.focus();
+                    }, 150);
+                }
+            }
+        }
+
+        function closeMenu() {
+            field.classList.remove('open');
+            button.setAttribute('aria-expanded', 'false');
+            // Don't focus button if user is interacting with other form fields
+            // Only focus if no other element has focus
+            if (document.activeElement === document.body || document.activeElement === null) {
+                button.focus();
+            }
+
+            const parent = field.closest('.mb-3, .modal-body, .d-flex, .card-header, .col-12, .card');
+            if (parent && !parent.classList.contains('modal')) {
+                setTimeout(() => {
+                    if (!field.classList.contains('open')) {
+                        parent.style.zIndex = '';
+                        parent.style.position = '';
+                    }
+                }, 300);
+            } else {
+                // For modal, only reset z-index
+                const modal = field.closest('.modal');
+                if (modal) {
+                    setTimeout(() => {
+                        if (!field.classList.contains('open')) {
+                            modal.style.zIndex = '';
+                        }
+                    }, 300);
+                }
+            }
+            
+            // Re-enable modal backdrop behavior after menu closes
+            const modal = field.closest('.modal');
+            if (modal) {
+                // Remove any temporary event listeners
+                const modalInstance = bootstrap.Modal.getInstance(modal);
+                if (modalInstance && modal.dataset.originalBackdrop) {
+                    // Restore original backdrop behavior if needed
+                    setTimeout(() => {
+                        // Modal backdrop should work normally now
+                    }, 100);
+                }
+            }
+        }
+
+        function setOption(optionEl) {
+            const value = optionEl.dataset.option;
+            const text = optionEl.querySelector('h3')?.textContent || optionEl.textContent;
+
+            select.value = value;
+            select.dispatchEvent(new Event('change')); // Trigger change event
+
+            button.textContent = text;
+
+            options.forEach(el => el.classList.remove('selected'));
+            optionEl.classList.add('selected');
+
+            closeMenu();
+        }
+
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (field.classList.contains('open')) {
+                closeMenu();
+            } else {
+                openMenu();
+            }
+        });
+
+        button.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openMenu();
+            }
+        });
+
+        // Prevent clicks on menu from closing modal
+        menu.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+        
+        options.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setOption(option);
+            });
+
+            option.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setOption(option);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const next = option.nextElementSibling;
+                    if (next) next.focus();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prev = option.previousElementSibling;
+                    if (prev) prev.focus();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeMenu();
+                }
+            });
+        });
+
+        // Close menu when clicking outside, but prevent modal from closing
+        const handleOutsideClick = (e) => {
+            // Don't interfere with input, textarea, or other interactive elements
+            const target = e.target;
+            const isInteractiveElement = target.tagName === 'INPUT' || 
+                                        target.tagName === 'TEXTAREA' || 
+                                        target.tagName === 'SELECT' ||
+                                        target.isContentEditable ||
+                                        target.closest('input, textarea, select, [contenteditable]');
+            
+            // If clicking on interactive element, don't close menu
+            if (isInteractiveElement) {
+                return;
+            }
+            
+            // Only close if menu is open and click is outside the field
+            if (field.classList.contains('open') && !field.contains(target)) {
+                const modal = field.closest('.modal');
+                // If clicking on modal backdrop while menu is open, prevent modal from closing
+                if (modal && target === modal) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    return;
+                }
+                closeMenu();
+            }
+        };
+        
+        // Use bubble phase instead of capture to avoid interfering with other elements
+        document.addEventListener('click', handleOutsideClick, false);
+        
+        // Clean up listener when menu is removed (if needed)
+        field.addEventListener('remove', () => {
+            document.removeEventListener('click', handleOutsideClick, false);
         });
     });
 }

@@ -293,29 +293,57 @@
                             
                             <div class="mb-3">
                                 <label for="appointmentTime" class="form-label">Time *</label>
-                                <select class="form-select" id="appointmentTime" name="start_time" required>
-                                    <option value="">Select time slot...</option>
-                                </select>
+                                <section class="field menu" style="min-width: 100%;">
+                                    <div class="control">
+                                        <select class="form-select d-none" id="appointmentTime" name="start_time" required>
+                                            <option value="">Select time slot...</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false"><i class="bi bi-clock fs-5"></i> <h3>Select time slot...</h3></button>
+                                        <menu>
+                                            <li data-option="" tabindex="0" role="button" class="selected"><i class="bi bi-clock fs-5"></i> <h3>Select time slot...</h3></li>
+                                        </menu>
+                                    </div>
+                                </section>
                             </div>
                         </div>
                         
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="visitType" class="form-label">Visit Type *</label>
-                                <select class="form-select" id="visitType" name="visit_type" required>
-                                    <option value="">Select visit type...</option>
-                                    <option value="New">New Patient</option>
-                                    <option value="FollowUp">Follow Up</option>
-                                    <option value="Procedure">Procedure</option>
-                                </select>
+                                <section class="field menu" style="min-width: 100%;">
+                                    <div class="control">
+                                        <select class="form-select d-none" id="visitType" name="visit_type" required>
+                                            <option value="">Select visit type...</option>
+                                            <option value="New">New Patient</option>
+                                            <option value="FollowUp">Follow Up</option>
+                                            <option value="Procedure">Procedure</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false"><i class="bi bi-person-plus fs-5"></i> <h3>Select visit type...</h3></button>
+                                        <menu>
+                                            <li data-option="" tabindex="0" role="button" class="selected"><h3>Select visit type...</h3></li>
+                                            <li data-option="New" tabindex="0" role="button"><i class="bi bi-person-plus fs-5"></i> <h3>New Patient</h3></li>
+                                            <li data-option="FollowUp" tabindex="0" role="button"><i class="bi bi-person-check fs-5"></i> <h3>Follow Up</h3></li>
+                                            <li data-option="Procedure" tabindex="0" role="button"><i class="bi bi-file-earmark-medical fs-5"></i> <h3>Procedure</h3></li>
+                                        </menu>
+                                    </div>
+                                </section>
                             </div>
                             
                             <div class="mb-3">
                                 <label for="appointmentSource" class="form-label">Source</label>
-                                <select class="form-select" id="appointmentSource" name="source">
-                                    <option value="Walk-in">Walk-in</option>
-                                    <option value="Phone">Phone</option>
-                                </select>
+                                <section class="field menu" style="min-width: 100%;">
+                                    <div class="control">
+                                        <select class="form-select d-none" id="appointmentSource" name="source">
+                                            <option value="Walk-in" selected>Walk-in</option>
+                                            <option value="Phone">Phone</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false"><i class="bi bi-people fs-5"></i> <h3>Walk-in</h3></button>
+                                        <menu>
+                                            <li data-option="Walk-in" tabindex="0" role="button" class="selected"><i class="bi bi-people fs-5"></i> <h3>Walk-in</h3></li>
+                                            <li data-option="Phone" tabindex="0" role="button"><i class="bi bi-telephone fs-5"></i> <h3>Phone</h3></li>
+                                        </menu>
+                                    </div>
+                                </section>
                             </div>
                             
                             <div class="mb-3">
@@ -414,10 +442,19 @@
                             
                             <div class="mb-3">
                                 <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
-                                <select class="form-select" id="gender" name="gender" required>
-                                    <option value="Male" selected>Male</option>
-                                    <option value="Female">Female</option>
-                                </select>
+                                <section class="field menu" style="min-width: 100%;">
+                                    <div class="control">
+                                        <select class="form-select d-none" id="gender" name="gender" required>
+                                            <option value="Male" selected>Male</option>
+                                            <option value="Female">Female</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false"><i class="bi bi-gender-male fs-5"></i> <h3>Male</h3></button>
+                                        <menu>
+                                            <li data-option="Male" tabindex="0" role="button" class="selected"><i class="bi bi-gender-male fs-5"></i> <h3>Male</h3></li>
+                                            <li data-option="Female" tabindex="0" role="button"><i class="bi bi-gender-female fs-5"></i> <h3>Female</h3></li>
+                                        </menu>
+                                    </div>
+                                </section>
                                 <div class="invalid-feedback"></div>
                                 <div class="form-text text-danger"><strong>Required:</strong> Change the gender if needed</div>
                             </div>
