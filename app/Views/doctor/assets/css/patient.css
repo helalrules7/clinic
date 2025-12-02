@@ -1788,6 +1788,23 @@ div.form-text {
     z-index: 2;
 }
 
+/* Medical History Modal - Highest z-index */
+#medicalHistoryModal {
+    z-index: 1000000 !important;
+}
+
+#medicalHistoryModal .modal-backdrop {
+    z-index: 999999 !important;
+}
+
+#medicalHistoryModal .modal-dialog {
+    z-index: 1000001 !important;
+}
+
+#medicalHistoryModal .modal-content {
+    z-index: 1000001 !important;
+}
+
 .field.menu:hover .control::before,
 .field.menu.open .control::before {
     height: 60%;

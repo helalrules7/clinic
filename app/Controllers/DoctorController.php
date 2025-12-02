@@ -290,6 +290,9 @@ class DoctorController
             $originalAppointment = $this->getOriginalAppointment($id);
         }
         
+        // Get medical history for the patient
+        $medicalHistory = $this->getMedicalHistory($appointment['patient_id']);
+        
         $content = $this->view->render('doctor/appointment', [
             'appointment' => $appointment,
             'patient' => $patient,
@@ -300,7 +303,8 @@ class DoctorController
             'attachments' => $attachments,
             'doctorId' => $user['id'],
             'followupAppointment' => $followupAppointment,
-            'originalAppointment' => $originalAppointment
+            'originalAppointment' => $originalAppointment,
+            'medicalHistory' => $medicalHistory
         ]);
         
         echo $this->view->render('layouts/main', [
@@ -570,6 +574,11 @@ class DoctorController
                 if ($result) {
                     $newNoteId = $this->pdo->lastInsertId();
                 }
+            }
+            
+            // Automatically create medical history entry from consultation (for both insert and update)
+            if (!empty($_POST['diagnosis']) && !empty($appointment['patient_id'])) {
+                $this->createMedicalHistoryFromConsultation($appointment['patient_id'], $_POST, $appointment, $user['id']);
             }
             
             // Redirect back to appointment view
@@ -1526,6 +1535,109 @@ class DoctorController
     {
         // This is an alias for updateConsultation to maintain compatibility with different route configurations
         return $this->updateConsultation($id);
+    }
+
+    /**
+     * Automatically create medical history entry from consultation data
+     */
+    private function createMedicalHistoryFromConsultation($patientId, $consultationData, $appointmentData, $userId)
+    {
+        try {
+            // Only create if diagnosis is provided
+            $diagnosis = is_array($consultationData) ? ($consultationData['diagnosis'] ?? '') : ($consultationData['diagnosis'] ?? '');
+            if (empty($diagnosis)) {
+                return false;
+            }
+
+            // Build notes from consultation data
+            $notesParts = [];
+            
+            $chiefComplaint = is_array($consultationData) ? ($consultationData['chief_complaint'] ?? '') : ($consultationData['chief_complaint'] ?? '');
+            if (!empty($chiefComplaint)) {
+                $notesParts[] = "Chief Complaint: " . $chiefComplaint;
+            }
+            
+            $hxPresentIllness = is_array($consultationData) ? ($consultationData['hx_present_illness'] ?? '') : ($consultationData['hx_present_illness'] ?? '');
+            if (!empty($hxPresentIllness)) {
+                $notesParts[] = "History of Present Illness: " . $hxPresentIllness;
+            }
+            
+            $plan = is_array($consultationData) ? ($consultationData['plan'] ?? '') : ($consultationData['plan'] ?? '');
+            if (!empty($plan)) {
+                $notesParts[] = "Plan: " . $plan;
+            }
+            
+            $systemicDisease = is_array($consultationData) ? ($consultationData['systemic_disease'] ?? '') : ($consultationData['systemic_disease'] ?? '');
+            if (!empty($systemicDisease)) {
+                $notesParts[] = "Systemic Disease: " . $systemicDisease;
+            }
+            
+            $medication = is_array($consultationData) ? ($consultationData['medication'] ?? '') : ($consultationData['medication'] ?? '');
+            if (!empty($medication)) {
+                $notesParts[] = "Medication: " . $medication;
+            }
+
+            $notes = implode("\n\n", $notesParts);
+            
+            // Use appointment date as diagnosis date
+            $diagnosisDate = is_array($appointmentData) ? ($appointmentData['date'] ?? date('Y-m-d')) : date('Y-m-d');
+            
+            // Determine category based on diagnosis content
+            $category = 'general';
+            $diagnosisLower = strtolower($diagnosis);
+            if (stripos($diagnosisLower, 'allergy') !== false || stripos($diagnosisLower, 'allergic') !== false) {
+                $category = 'allergy';
+            } elseif (stripos($diagnosisLower, 'surgery') !== false || stripos($diagnosisLower, 'surgical') !== false) {
+                $category = 'surgery';
+            } elseif (stripos($diagnosisLower, 'medication') !== false || stripos($diagnosisLower, 'drug') !== false) {
+                $category = 'medication';
+            }
+
+            // Check if a similar medical history entry already exists for this appointment
+            // to avoid duplicates
+            $stmt = $this->pdo->prepare("
+                SELECT id FROM medical_history_entries 
+                WHERE patient_id = ? 
+                AND condition_name = ? 
+                AND diagnosis_date = ?
+                AND (notes LIKE ? OR notes IS NULL)
+                LIMIT 1
+            ");
+            $searchPattern = !empty($notes) ? '%' . substr($notes, 0, 50) . '%' : '%';
+            $stmt->execute([
+                $patientId,
+                $diagnosis,
+                $diagnosisDate,
+                $searchPattern
+            ]);
+            
+            if ($stmt->fetch()) {
+                // Entry already exists, skip creation
+                return false;
+            }
+
+            // Insert medical history entry
+            $stmt = $this->pdo->prepare("
+                INSERT INTO medical_history_entries 
+                (patient_id, condition_name, diagnosis_date, status, notes, category, created_by, created_at) 
+                VALUES (?, ?, ?, 'active', ?, ?, ?, NOW())
+            ");
+
+            $result = $stmt->execute([
+                $patientId,
+                $diagnosis,
+                $diagnosisDate,
+                !empty($notes) ? $notes : null,
+                $category,
+                $userId
+            ]);
+
+            return $result;
+        } catch (\Exception $e) {
+            // Log error but don't fail the consultation creation
+            error_log("Failed to create medical history from consultation: " . $e->getMessage());
+            return false;
+        }
     }
     
     private function getPatientFiles($patientId)
@@ -3326,6 +3438,7 @@ class DoctorController
             'notes_dashboard_width',
             'dashboard_cards_order',
             'dock_minimized',
+            'dock_autohide',
             'theme',
             'push_notifications_enabled',
             'push_subscription',

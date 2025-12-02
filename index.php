@@ -147,11 +147,11 @@ try {
     // Notes routes - moved to DoctorController
     $router->get('/doctor/notes', 'DoctorController@notes');
     $router->get('/api/notes', 'NotesController@getNotes');
-    $router->get('/api/notes/{id}', 'NotesController@getNote');
     $router->post('/api/notes', 'NotesController@createNote');
+    $router->delete('/api/notes/delete-all', 'NotesController@deleteAllNotes'); // Must be before {id} route
+    $router->get('/api/notes/{id}', 'NotesController@getNote');
     $router->put('/api/notes/{id}', 'NotesController@updateNote');
     $router->delete('/api/notes/{id}', 'NotesController@deleteNote');
-    $router->delete('/api/notes/delete-all', 'NotesController@deleteAllNotes');
     
     // Doctor settings routes
     $router->get('/api/doctor/settings', 'DoctorController@getDoctorSettings');

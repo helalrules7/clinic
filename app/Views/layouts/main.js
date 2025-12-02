@@ -603,6 +603,14 @@
                         autohide: false,
                         delay: 0
                     });
+                    
+                    // Add exit animation when toast is being hidden
+                    toastElement.addEventListener('hide.bs.toast', function() {
+                        if (!toastElement.classList.contains('hiding')) {
+                            toastElement.classList.add('hiding');
+                        }
+                    });
+                    
                     toast.show();
                     
                     toastElement.addEventListener('hidden.bs.toast', function() {
@@ -634,11 +642,19 @@
                     if (data.success) {
                         const toastElement = document.getElementById(toastId);
                         if (toastElement) {
+                            // Add hiding class for smooth exit animation
+                            toastElement.classList.add('hiding');
                             const toast = bootstrap.Toast.getInstance(toastElement);
                             if (toast) {
-                                toast.hide();
+                                // Wait a bit for animation to start
+                                setTimeout(() => {
+                                    toast.hide();
+                                }, 50);
                             } else {
-                                toastElement.remove();
+                                // If no toast instance, remove after animation
+                                setTimeout(() => {
+                                    toastElement.remove();
+                                }, 400);
                             }
                         }
                     }
@@ -649,11 +665,19 @@
                     // Still try to hide the toast
                     const toastElement = document.getElementById(toastId);
                     if (toastElement) {
+                        // Add hiding class for smooth exit animation
+                        toastElement.classList.add('hiding');
                         const toast = bootstrap.Toast.getInstance(toastElement);
                         if (toast) {
-                            toast.hide();
+                            // Wait a bit for animation to start
+                            setTimeout(() => {
+                                toast.hide();
+                            }, 50);
                         } else {
-                            toastElement.remove();
+                            // If no toast instance, remove after animation
+                            setTimeout(() => {
+                                toastElement.remove();
+                            }, 400);
                         }
                     }
                 });
@@ -1438,7 +1462,11 @@
                 // On mobile, dock is minimized by default
                 if (isMobile()) {
                     dock.classList.add('mobile-minimized');
-                    dock.classList.remove('mobile-expanded');
+                    dock.classList.remove('mobile-expanded', 'autohide');
+                    // Hide auto-hide button on mobile
+                    if (autohideBtn) {
+                        autohideBtn.style.display = 'none';
+                    }
                     
                     // Add click handler to dock container when minimized
                     const dockContainer = dock.querySelector('.dock-container');
@@ -1496,7 +1524,11 @@
                 // Handle mobile dock (<= 768px)
                 if (isMobile()) {
                     // Remove desktop minimized class if exists
-                    dock.classList.remove('minimized');
+                    dock.classList.remove('minimized', 'autohide');
+                    // Hide auto-hide button on mobile
+                    if (autohideBtn) {
+                        autohideBtn.style.display = 'none';
+                    }
                     initMobileDock();
                     return;
                 }
@@ -1505,6 +1537,10 @@
                 if (window.innerWidth >= 769) {
                     dock.style.display = 'block';
                     dock.classList.remove('mobile-minimized', 'mobile-expanded');
+                    // Show auto-hide button on desktop
+                    if (autohideBtn) {
+                        autohideBtn.style.display = 'flex';
+                    }
                     // Load desktop dock state
                     loadDockState();
                 } else {
@@ -1731,6 +1767,15 @@
                 document.addEventListener('DOMContentLoaded', function() {
                     if (!isMobile()) {
                         loadDockState();
+                        // Show auto-hide button on desktop
+                        if (autohideBtn) {
+                            autohideBtn.style.display = 'flex';
+                        }
+                    } else {
+                        // Hide auto-hide button on mobile
+                        if (autohideBtn) {
+                            autohideBtn.style.display = 'none';
+                        }
                     }
                     updateDockVisibility();
                 });
@@ -1738,12 +1783,32 @@
                 // DOM is already ready
                 if (!isMobile()) {
                     loadDockState();
+                    // Show auto-hide button on desktop
+                    if (autohideBtn) {
+                        autohideBtn.style.display = 'flex';
+                    }
+                } else {
+                    // Hide auto-hide button on mobile
+                    if (autohideBtn) {
+                        autohideBtn.style.display = 'none';
+                    }
                 }
                 updateDockVisibility();
             }
             
             // Update visibility on resize
             window.addEventListener('resize', function() {
+                if (isMobile()) {
+                    // Hide auto-hide button on mobile
+                    if (autohideBtn) {
+                        autohideBtn.style.display = 'none';
+                    }
+                } else {
+                    // Show auto-hide button on desktop
+                    if (autohideBtn) {
+                        autohideBtn.style.display = 'flex';
+                    }
+                }
                 updateDockVisibility();
             });
         })();
@@ -2868,6 +2933,13 @@
                         delay: 5000
                     });
                     
+                    // Add exit animation when toast is being hidden
+                    toastElement.addEventListener('hide.bs.toast', function() {
+                        if (!toastElement.classList.contains('hiding')) {
+                            toastElement.classList.add('hiding');
+                        }
+                    });
+                    
                     toast.show();
                     
                     // Mark as shown and save to localStorage
@@ -2964,6 +3036,13 @@
                     const toast = new bootstrap.Toast(toastElement, {
                         autohide: true,
                         delay: 3000
+                    });
+                    
+                    // Add exit animation when toast is being hidden
+                    toastElement.addEventListener('hide.bs.toast', function() {
+                        if (!toastElement.classList.contains('hiding')) {
+                            toastElement.classList.add('hiding');
+                        }
                     });
                     
                     toast.show();

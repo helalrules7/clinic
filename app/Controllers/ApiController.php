@@ -803,6 +803,31 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
 
+            // Get sort parameters
+            $sortBy = $_GET['sort_by'] ?? 'created_at';
+            $sortOrder = strtoupper($_GET['sort_order'] ?? 'DESC');
+            
+            // Validate sort parameters
+            $allowedSortFields = ['total_appointments', 'last_visit', 'created_at', 'first_name', 'last_name'];
+            $sortBy = in_array($sortBy, $allowedSortFields) ? $sortBy : 'created_at';
+            $sortOrder = in_array($sortOrder, ['ASC', 'DESC']) ? $sortOrder : 'DESC';
+            
+            // Build ORDER BY clause
+            $orderBy = '';
+            if ($sortBy === 'total_appointments') {
+                $orderBy = "ORDER BY total_appointments $sortOrder";
+            } elseif ($sortBy === 'last_visit') {
+                $orderBy = "ORDER BY last_visit $sortOrder";
+            } elseif ($sortBy === 'created_at') {
+                $orderBy = "ORDER BY p.created_at $sortOrder";
+            } elseif ($sortBy === 'first_name') {
+                $orderBy = "ORDER BY p.first_name $sortOrder";
+            } elseif ($sortBy === 'last_name') {
+                $orderBy = "ORDER BY p.last_name $sortOrder";
+            } else {
+                $orderBy = "ORDER BY p.created_at DESC";
+            }
+            
             $stmt = $this->pdo->prepare("
                 SELECT p.*, 
                        COUNT(DISTINCT a.id) as total_appointments,
@@ -843,7 +868,7 @@ class ApiController
                 FROM patients p
                 LEFT JOIN appointments a ON p.id = a.patient_id
                 GROUP BY p.id
-                ORDER BY p.created_at DESC
+                $orderBy
             ");
             $stmt->execute();
             $patients = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -1277,6 +1302,11 @@ class ApiController
                     'Consultation', 
                     'Consultation completed'
                 );
+                
+                // Automatically create medical history entry from consultation
+                if (!empty($data['diagnosis']) && !empty($appointment['patient_id'])) {
+                    $this->createMedicalHistoryFromConsultation($appointment['patient_id'], $data, $appointment, $user['id']);
+                }
                 
                 return $this->jsonResponse([
                 'ok' => true,
@@ -2748,6 +2778,102 @@ class ApiController
         ]);
         
         return $this->pdo->lastInsertId();
+    }
+
+    /**
+     * Automatically create medical history entry from consultation data
+     */
+    private function createMedicalHistoryFromConsultation($patientId, $consultationData, $appointmentData, $userId)
+    {
+        try {
+            // Only create if diagnosis is provided
+            if (empty($consultationData['diagnosis'])) {
+                return false;
+            }
+
+            // Build notes from consultation data
+            $notesParts = [];
+            
+            if (!empty($consultationData['chief_complaint'])) {
+                $notesParts[] = "Chief Complaint: " . $consultationData['chief_complaint'];
+            }
+            
+            if (!empty($consultationData['hx_present_illness'])) {
+                $notesParts[] = "History of Present Illness: " . $consultationData['hx_present_illness'];
+            }
+            
+            if (!empty($consultationData['plan'])) {
+                $notesParts[] = "Plan: " . $consultationData['plan'];
+            }
+            
+            if (!empty($consultationData['systemic_disease'])) {
+                $notesParts[] = "Systemic Disease: " . $consultationData['systemic_disease'];
+            }
+            
+            if (!empty($consultationData['medication'])) {
+                $notesParts[] = "Medication: " . $consultationData['medication'];
+            }
+
+            $notes = implode("\n\n", $notesParts);
+            
+            // Use appointment date as diagnosis date
+            $diagnosisDate = $appointmentData['date'] ?? date('Y-m-d');
+            
+            // Determine category based on diagnosis content
+            $category = 'general';
+            $diagnosisLower = strtolower($consultationData['diagnosis']);
+            if (stripos($diagnosisLower, 'allergy') !== false || stripos($diagnosisLower, 'allergic') !== false) {
+                $category = 'allergy';
+            } elseif (stripos($diagnosisLower, 'surgery') !== false || stripos($diagnosisLower, 'surgical') !== false) {
+                $category = 'surgery';
+            } elseif (stripos($diagnosisLower, 'medication') !== false || stripos($diagnosisLower, 'drug') !== false) {
+                $category = 'medication';
+            }
+
+            // Check if a similar medical history entry already exists for this appointment
+            // to avoid duplicates
+            $stmt = $this->pdo->prepare("
+                SELECT id FROM medical_history_entries 
+                WHERE patient_id = ? 
+                AND condition_name = ? 
+                AND diagnosis_date = ?
+                AND notes LIKE ?
+                LIMIT 1
+            ");
+            $stmt->execute([
+                $patientId,
+                $consultationData['diagnosis'],
+                $diagnosisDate,
+                '%' . substr($notes, 0, 50) . '%'
+            ]);
+            
+            if ($stmt->fetch()) {
+                // Entry already exists, skip creation
+                return false;
+            }
+
+            // Insert medical history entry
+            $stmt = $this->pdo->prepare("
+                INSERT INTO medical_history_entries 
+                (patient_id, condition_name, diagnosis_date, status, notes, category, created_by, created_at) 
+                VALUES (?, ?, ?, 'active', ?, ?, ?, NOW())
+            ");
+
+            $result = $stmt->execute([
+                $patientId,
+                $consultationData['diagnosis'],
+                $diagnosisDate,
+                !empty($notes) ? $notes : null,
+                $category,
+                $userId
+            ]);
+
+            return $result;
+        } catch (\Exception $e) {
+            // Log error but don't fail the consultation creation
+            error_log("Failed to create medical history from consultation: " . $e->getMessage());
+            return false;
+        }
     }
 
     private function createMedicationPrescriptionRecord($data)

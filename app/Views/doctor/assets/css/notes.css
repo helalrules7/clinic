@@ -45,6 +45,91 @@
     box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.03);
     }
     
+    /* Notes Container Resize Handle */
+    .notes-container-resize {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 20px;
+        height: 20px;
+        cursor: ns-resize;
+        background: transparent;
+        z-index: 1000;
+    }
+    
+    .notes-container-resize::before {
+        content: '';
+        position: absolute;
+        bottom: 4px;
+        right: 4px;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 0 0 12px 12px;
+        border-color: transparent transparent var(--muted) transparent;
+        opacity: 0.5;
+        transition: opacity 0.2s ease;
+    }
+    
+    .notes-container-resize:hover::before {
+        opacity: 1;
+        border-color: transparent transparent var(--accent) transparent;
+    }
+    
+    .dark .notes-container-resize::before {
+        border-color: transparent transparent var(--muted) transparent;
+    }
+    
+    .dark .notes-container-resize:hover::before {
+        border-color: transparent transparent var(--accent) transparent;
+    }
+    
+    /* Notes Container Reset Button */
+    .notes-container-reset {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        border: none;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        color: var(--text);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1001;
+        transition: all 0.2s ease;
+        opacity: 0.6;
+    }
+    
+    .notes-container-reset:hover {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.1);
+    }
+    
+    .notes-container-reset i {
+        font-size: 1rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .notes-container-reset:hover i {
+        transform: rotate(180deg);
+    }
+    
+    .dark .notes-container-reset {
+        background: rgba(0, 0, 0, 0.2);
+        color: var(--text);
+    }
+    
+    .dark .notes-container-reset:hover {
+        background: rgba(0, 0, 0, 0.3);
+    }
+    
     .dark .notes-container {
     background: 
         linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(74, 222, 128, 0.08) 100%),

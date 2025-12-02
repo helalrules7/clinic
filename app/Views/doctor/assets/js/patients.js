@@ -10,7 +10,9 @@ let paginationState = {
     allPatients: [],
     filteredPatients: [],
     currentDoctorFilter: 'all',
-    nameFilter: ''
+    nameFilter: '',
+    sortBy: null,
+    sortOrder: null
 };
 
 // Debounce function
@@ -55,6 +57,13 @@ function initializePagination() {
     updatePaginationInfo();
     renderPaginationNav();
     
+    // Initialize sort button states if sort is active
+    if (paginationState.sortBy && paginationState.sortOrder) {
+        const activeBtn = document.querySelector(`[data-sort="${paginationState.sortBy}"][data-order="${paginationState.sortOrder}"]`);
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+        }
+    }
 }
 
 // Render patients table with current page data
@@ -1607,7 +1616,18 @@ function refreshPatientsData() {
         tableBody.parentElement.classList.add('table-loading');
     }
     
-    fetch('/api/patients', {
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (paginationState.sortBy) {
+        params.append('sort_by', paginationState.sortBy);
+    }
+    if (paginationState.sortOrder) {
+        params.append('sort_order', paginationState.sortOrder);
+    }
+    
+    const url = '/api/patients' + (params.toString() ? '?' + params.toString() : '');
+    
+    fetch(url, {
         method: 'GET',
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
@@ -2254,9 +2274,106 @@ function initCustomSelects() {
     });
 }
 
+// Sort patients function
+function sortPatients(sortBy, sortOrder) {
+    // Update sort state
+    paginationState.sortBy = sortBy;
+    paginationState.sortOrder = sortOrder;
+    
+    // Reset to first page
+    paginationState.currentPage = 1;
+    
+    // Update sort button states
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    const activeBtn = document.querySelector(`[data-sort="${sortBy}"][data-order="${sortOrder}"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+    }
+    
+    // Show loading indicator
+    const tableBody = document.getElementById('patientsTableBody');
+    if (tableBody) {
+        tableBody.parentElement.classList.add('table-loading');
+    }
+    
+    // Build query parameters
+    const params = new URLSearchParams();
+    params.append('sort_by', sortBy);
+    params.append('sort_order', sortOrder);
+    
+    // Fetch sorted data
+    fetch('/api/patients?' + params.toString(), {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok && data.patients && data.doctors) {
+            // Update pagination state
+            paginationState.allPatients = data.patients;
+            paginationState.doctors = data.doctors;
+            
+            // Reapply current filters
+            applyDoctorFilter();
+            
+            // Reapply name filter if exists
+            const nameFilter = document.getElementById('patientNameFilter');
+            if (nameFilter && nameFilter.value.trim()) {
+                filterByName(nameFilter.value);
+            } else {
+                // Reapply quick search if exists
+                const quickSearch = document.getElementById('quickSearch');
+                if (quickSearch && quickSearch.value.trim()) {
+                    filterPatientsLocally(quickSearch.value);
+                } else {
+                    // Just re-render with current filters
+                    renderPatientsTable();
+                    updatePaginationInfo();
+                    renderPaginationNav();
+                }
+            }
+            
+            // Update statistics
+            updateStatistics(data.patients);
+        }
+    })
+    .catch(error => {
+        console.error('Error sorting patients:', error);
+        showNotification('Error sorting patients. Please try again.', 'error');
+    })
+    .finally(() => {
+        // Remove loading indicator
+        const tableBody = document.getElementById('patientsTableBody');
+        if (tableBody) {
+            tableBody.parentElement.classList.remove('table-loading');
+        }
+    });
+}
+
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', function() {
     initCustomSelects();
+    
+    // Initialize sort buttons
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const sortBy = this.dataset.sort;
+            const sortOrder = this.dataset.order;
+            
+            if (sortBy && sortOrder) {
+                sortPatients(sortBy, sortOrder);
+            }
+        });
+    });
 });
 
 // Also initialize when modals are shown

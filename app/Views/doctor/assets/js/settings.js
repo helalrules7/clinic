@@ -240,6 +240,9 @@ async function loadPersonalPreferences() {
             updateToggleSwitch('backToTopDisplay', personalPreferences.back_to_top_display !== false, 'backToTopDisplayStatus'); // Default true
             updateToggleSwitch('desktopDock', personalPreferences.desktop_dock_enabled !== false, 'desktopDockStatus'); // Default true
             updateToggleSwitch('mobileDock', personalPreferences.mobile_dock_enabled === true || personalPreferences.mobile_dock_enabled === '1' || personalPreferences.mobile_dock_enabled === 1, 'mobileDockStatus'); // Check explicitly
+            updateToggleSwitch('dockAutohide', personalPreferences.dock_autohide === true || personalPreferences.dock_autohide === '1' || personalPreferences.dock_autohide === 1, 'dockAutohideStatus'); // Check explicitly
+            // Update dock autohide demo
+            updateDockAutohideDemo(personalPreferences.dock_autohide === true || personalPreferences.dock_autohide === '1' || personalPreferences.dock_autohide === 1);
             // Update theme switch (special handling)
             const currentModeInput = document.getElementById('currentModeInput');
             if (currentModeInput) {
@@ -414,6 +417,15 @@ async function updatePersonalPreference(key, value) {
                     if (window.location.pathname.includes('/doctor/dashboard')) {
                         window.location.reload();
                     }
+                }, 500);
+            }
+            
+            // If dock autohide setting changed, update demo and reload page to apply
+            if (key === 'dock_autohide') {
+                updateDockAutohideDemo(value === true || value === '1' || value === 1);
+                // Reload page after a short delay to apply changes
+                setTimeout(() => {
+                    window.location.reload();
                 }, 500);
             }
             
@@ -734,4 +746,26 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Update dock autohide demo
+function updateDockAutohideDemo(isAutohide) {
+    const hiddenDemo = document.getElementById('dockAutohideDemoHidden');
+    const shownDemo = document.getElementById('dockAutohideDemoShown');
+    
+    if (!hiddenDemo || !shownDemo) return;
+    
+    if (isAutohide) {
+        // Show hidden state
+        hiddenDemo.style.display = 'flex';
+        hiddenDemo.style.transform = 'translateX(-50%) translateY(90%)';
+        hiddenDemo.style.opacity = '0.3';
+        shownDemo.style.display = 'none';
+    } else {
+        // Show shown state
+        hiddenDemo.style.display = 'none';
+        shownDemo.style.display = 'flex';
+        shownDemo.style.transform = 'translateX(-50%) translateY(0)';
+        shownDemo.style.opacity = '1';
+    }
 }

@@ -144,6 +144,42 @@
                                 </div>
                             </div>
 
+                            <!-- Dock Auto-Hide -->
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Dock Auto-Hide</label>
+                                        <div class="form-text">Automatically hide the dock when not in use. The dock will show on hover when hidden.</div>
+                                        <div class="mt-2">
+                                            <div class="demo-preview" style="position: relative; height: 100px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; overflow: hidden;">
+                                                <!-- Hidden State -->
+                                                <div id="dockAutohideDemoHidden" style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%) translateY(90%); opacity: 0.3; transition: all 0.4s ease; display: flex; gap: 8px; background: rgba(255,255,255,0.9); padding: 8px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                                    <div style="width: 40px; height: 40px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; opacity: 0.5;">
+                                                        <i class="bi bi-calendar3" style="font-size: 18px;"></i>
+                                                    </div>
+                                                </div>
+                                                <!-- Shown State -->
+                                                <div id="dockAutohideDemoShown" style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%) translateY(0); opacity: 1; transition: all 0.4s ease; display: flex; gap: 8px; background: rgba(255,255,255,0.9); padding: 8px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                                    <div style="width: 40px; height: 40px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+                                                        <i class="bi bi-calendar3" style="font-size: 18px;"></i>
+                                                    </div>
+                                                    <div style="width: 40px; height: 40px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+                                                        <i class="bi bi-people" style="font-size: 18px;"></i>
+                                                    </div>
+                                                    <div style="width: 40px; height: 40px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+                                                        <i class="bi bi-capsule" style="font-size: 18px;"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="toggle-switch-wrapper">
+                                        <input type="checkbox" class="toggle-switch" id="dockAutohide" 
+                                               onchange="updatePersonalPreference('dock_autohide', this.checked); updateDockAutohideDemo(this.checked)">
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- 4. Current Mode (Dark/Light) -->
                             <div class="setting-item">
                                 <div class="d-flex justify-content-between align-items-center">

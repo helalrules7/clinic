@@ -2402,9 +2402,9 @@ function showMedicalHistoryModal(data, mode) {
     const isView = mode === 'view';
     
     const modalHtml = `
-        <div class="modal fade" id="${modalId}" tabindex="-1">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content" style="background: rgba(248, 250, 252, 0.35) !important; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(226, 232, 240, 0.3) !important; box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08); color: var(--text) !important; cursor: move;">
+        <div class="modal fade" id="${modalId}" tabindex="-1" style="z-index: 1000000 !important;">
+            <div class="modal-dialog modal-lg modal-dialog-centered" style="z-index: 1000001 !important;">
+                <div class="modal-content" style="background: rgba(248, 250, 252, 0.35) !important; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(226, 232, 240, 0.3) !important; box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08); color: var(--text) !important; cursor: move; z-index: 1000001 !important;">
                     <div class="modal-header" style="background: transparent !important; border-bottom-color: rgba(226, 232, 240, 0.3) !important; color: var(--text) !important; user-select: none;">
                         <h5 class="modal-title">
                             <i class="bi bi-clipboard-heart me-2"></i>

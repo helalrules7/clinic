@@ -234,8 +234,32 @@
                         <th>Contact</th>
                         <th>Age</th>
                         <th>Doctors</th>
-                        <th>Last Visit</th>
-                        <th>Total Visits</th>
+                        <th>
+                            <div class="d-flex align-items-center gap-2">
+                                <span>Last Visit</span>
+                                <div class="sort-controls d-flex flex-column">
+                                    <button class="sort-btn sort-asc" data-sort="last_visit" data-order="asc" title="Sort ascending">
+                                        <i class="bi bi-chevron-up"></i>
+                                    </button>
+                                    <button class="sort-btn sort-desc" data-sort="last_visit" data-order="desc" title="Sort descending">
+                                        <i class="bi bi-chevron-down"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="d-flex align-items-center gap-2">
+                                <span>Total Visits</span>
+                                <div class="sort-controls d-flex flex-column">
+                                    <button class="sort-btn sort-asc" data-sort="total_appointments" data-order="asc" title="Sort ascending">
+                                        <i class="bi bi-chevron-up"></i>
+                                    </button>
+                                    <button class="sort-btn sort-desc" data-sort="total_appointments" data-order="desc" title="Sort descending">
+                                        <i class="bi bi-chevron-down"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </th>
                         <th>Actions</th>
                     </tr>
                 </thead>

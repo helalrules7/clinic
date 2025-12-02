@@ -40,11 +40,15 @@
     </div>
     
     <div class="notes-container" id="notesContainer">
+        <button class="notes-container-reset" id="notesContainerReset" onclick="resetContainerSize()" title="Reset Container Size">
+            <i class="bi bi-arrow-clockwise"></i>
+        </button>
         <div class="empty-state" id="emptyState" style="display: none;">
             <i class="bi bi-sticky"></i>
             <h4>No notes yet</h4>
             <p>Click "Add Note" to create your first note</p>
         </div>
+        <div class="notes-container-resize" id="notesContainerResize" onmousedown="startContainerResize(event)" ontouchstart="startContainerResize(event)"></div>
     </div>
 </div>
 
@@ -1706,6 +1710,138 @@ function makeNotesModalDraggable(modalElement) {
 // Initialize draggable for existing delete note modal
 if (document.getElementById('deleteNoteModal')) {
     makeNotesModalDraggable(document.getElementById('deleteNoteModal'));
+}
+
+// Notes Container Resize functionality
+let isContainerResizing = false;
+let containerResizeStart = { x: 0, y: 0, width: 0, height: 0 };
+
+function startContainerResize(event) {
+    // Support both mouse and touch events
+    const isTouch = event.type === 'touchstart';
+    const clientX = isTouch ? event.touches[0].clientX : event.clientX;
+    const clientY = isTouch ? event.touches[0].clientY : event.clientY;
+    
+    isContainerResizing = true;
+    const container = document.getElementById('notesContainer');
+    const rect = container.getBoundingClientRect();
+    
+    containerResizeStart.x = clientX;
+    containerResizeStart.y = clientY;
+    containerResizeStart.width = rect.width;
+    containerResizeStart.height = rect.height;
+    
+    // Add both mouse and touch event listeners
+    document.addEventListener('mousemove', onContainerResize);
+    document.addEventListener('mouseup', stopContainerResize);
+    document.addEventListener('touchmove', onContainerResize, { passive: false });
+    document.addEventListener('touchend', stopContainerResize);
+    
+    event.preventDefault();
+    event.stopPropagation();
+}
+
+function onContainerResize(event) {
+    if (!isContainerResizing) return;
+    
+    // Support both mouse and touch events
+    const isTouch = event.type === 'touchmove';
+    const clientY = isTouch ? event.touches[0].clientY : event.clientY;
+    
+    const container = document.getElementById('notesContainer');
+    const containerRect = container.getBoundingClientRect();
+    
+    // Calculate deltaY - positive when dragging down, negative when dragging up
+    const deltaY = clientY - containerResizeStart.y;
+    
+    if (isTouch) {
+        event.preventDefault();
+    }
+    
+    // Calculate new height only (not width)
+    // When dragging down (deltaY positive), increase height
+    // When dragging up (deltaY negative), decrease height
+    let newHeight = containerResizeStart.height + deltaY;
+    
+    // Constrain to viewport and min size
+    const isMobile = window.innerWidth <= 768;
+    const minHeight = isMobile ? 300 : 400;
+    const maxHeight = window.innerHeight - 200; // Account for toolbar and padding
+    
+    // Ensure height stays within bounds
+    newHeight = Math.max(minHeight, Math.min(newHeight, maxHeight));
+    
+    // Apply new height only (keep width unchanged)
+    container.style.height = `${newHeight}px`;
+    container.style.minHeight = `${newHeight}px`;
+    
+    // Save to localStorage (only height, width stays the same)
+    const currentWidth = containerResizeStart.width;
+    localStorage.setItem('notesContainerWidth', currentWidth);
+    localStorage.setItem('notesContainerHeight', newHeight);
+}
+
+function stopContainerResize() {
+    if (isContainerResizing) {
+        isContainerResizing = false;
+    }
+    
+    document.removeEventListener('mousemove', onContainerResize);
+    document.removeEventListener('mouseup', stopContainerResize);
+    document.removeEventListener('touchmove', onContainerResize);
+    document.removeEventListener('touchend', stopContainerResize);
+}
+
+// Load saved container size on page load
+if (window.location.pathname.includes('/doctor/notes')) {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            loadContainerSize();
+        });
+    } else {
+        loadContainerSize();
+    }
+}
+
+function loadContainerSize() {
+    const container = document.getElementById('notesContainer');
+    if (!container) return;
+    
+    const savedWidth = localStorage.getItem('notesContainerWidth');
+    const savedHeight = localStorage.getItem('notesContainerHeight');
+    
+    if (savedWidth && savedHeight) {
+        const width = parseInt(savedWidth);
+        const height = parseInt(savedHeight);
+        
+        // Validate dimensions
+        const isMobile = window.innerWidth <= 768;
+        const minWidth = isMobile ? 300 : 400;
+        const minHeight = isMobile ? 300 : 400;
+        const maxWidth = window.innerWidth - 40;
+        const maxHeight = window.innerHeight - 200;
+        
+        if (width >= minWidth && width <= maxWidth && height >= minHeight && height <= maxHeight) {
+            container.style.width = `${width}px`;
+            container.style.height = `${height}px`;
+            container.style.minHeight = `${height}px`;
+        }
+    }
+}
+
+// Reset container size to original
+function resetContainerSize() {
+    const container = document.getElementById('notesContainer');
+    if (!container) return;
+    
+    // Reset to original size (100% width, default min-height)
+    container.style.width = '100%';
+    container.style.height = '';
+    container.style.minHeight = 'calc(100vh - 200px)';
+    
+    // Remove from localStorage
+    localStorage.removeItem('notesContainerWidth');
+    localStorage.removeItem('notesContainerHeight');
 }
 </script>
 

@@ -955,57 +955,53 @@
             opacity: 0.7;
         }
         
-        /* Notification Animations - Based on note-in/note-out pattern */
+        /* Notification Animations - Smooth and Marvelous */
         .notification-item {
-            animation: notification-in 0.35s ease-out forwards;
-            transform-origin: 50% 100%;
+            animation: notification-slide-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            transform-origin: center bottom;
         }
         
         .notification-item.notification-out {
-            animation: notification-shrink 0.35s ease-out forwards;
+            animation: notification-slide-out 0.4s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
         }
         
-        .notification-item.notification-out > * {
-            animation: notification-out 0.35s ease-out forwards;
-        }
-        
-        @keyframes notification-in {
-            from {
-                filter: blur(10px);
+        @keyframes notification-slide-in {
+            0% {
                 opacity: 0;
-                transform: scale(0.8);
+                transform: translateY(30px) scale(0.95);
+                filter: blur(4px);
             }
-            to {
-                filter: blur(0);
-                opacity: 1;
-                transform: scale(1);
+            60% {
+                transform: translateY(-5px) scale(1.02);
+                filter: blur(1px);
             }
-        }
-        
-        @keyframes notification-out {
-            from {
-                filter: blur(0);
+            100% {
                 opacity: 1;
                 transform: translateY(0) scale(1);
-            }
-            to {
-                filter: blur(10px);
-                opacity: 0;
-                transform: translateY(-100%) scale(1.1);
+                filter: blur(0);
             }
         }
         
-        @keyframes notification-shrink {
-            from {
-                height: auto;
-                margin-bottom: 0.75rem;
+        @keyframes notification-slide-out {
+            0% {
                 opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0);
+                max-height: 200px;
+                margin-bottom: 0.75rem;
                 padding: 12px 16px;
             }
-            to {
-                height: 0;
-                margin-bottom: 0;
+            50% {
+                opacity: 0.5;
+                transform: translateY(10px) scale(0.98);
+                filter: blur(2px);
+            }
+            100% {
                 opacity: 0;
+                transform: translateY(30px) scale(0.95);
+                filter: blur(4px);
+                max-height: 0;
+                margin-bottom: 0;
                 padding: 0;
                 overflow: hidden;
             }
@@ -1822,6 +1818,7 @@
             
             .quick-access-dock.mobile-minimized .dock-item,
             .quick-access-dock.mobile-minimized .dock-divider,
+            .quick-access-dock.mobile-minimized .dock-autohide-btn,
             .quick-access-dock.mobile-minimized .dock-minimize-btn i {
                 display: none;
             }
@@ -1953,6 +1950,12 @@
                 margin: 0.5rem 0;
             }
             
+            /* Hide auto-hide button on mobile */
+            .quick-access-dock.mobile-expanded .dock-autohide-btn,
+            .quick-access-dock.mobile-minimized .dock-autohide-btn {
+                display: none !important;
+            }
+            
             .quick-access-dock.mobile-expanded .dock-minimize-btn {
                 display: flex;
                 width: 100%;
@@ -1987,8 +1990,47 @@
                         0 0 0 1px rgba(30, 144, 255, 0.2),
                         inset 0 1px 0 rgba(255, 255, 255, 0.1);
             color: var(--text) !important;
-            animation: toastGlow 2s ease-in-out infinite;
+            animation: alertToastSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, toastGlow 2s ease-in-out infinite;
             padding: 0.75rem 1rem !important;
+        }
+        
+        .alert-toast-glass.hiding {
+            animation: alertToastSlideOut 0.4s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards !important;
+        }
+        
+        @keyframes alertToastSlideIn {
+            0% {
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+                filter: blur(4px);
+            }
+            60% {
+                transform: translateY(-5px) scale(1.02);
+                filter: blur(1px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0);
+            }
+        }
+        
+        @keyframes alertToastSlideOut {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0);
+            }
+            50% {
+                opacity: 0.5;
+                transform: translateY(15px) scale(0.98);
+                filter: blur(2px);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+                filter: blur(4px);
+            }
         }
         
         .dark .alert-toast-glass {
@@ -2124,13 +2166,19 @@
         }
         
         @keyframes slideDownFromTop {
-            from {
+            0% {
                 opacity: 0;
-                transform: translateX(-50%) translateY(-20px);
+                transform: translateX(-50%) translateY(-40px) scale(0.95);
+                filter: blur(4px);
             }
-            to {
+            60% {
+                transform: translateX(-50%) translateY(5px) scale(1.02);
+                filter: blur(1px);
+            }
+            100% {
                 opacity: 1;
-                transform: translateX(-50%) translateY(0);
+                transform: translateX(-50%) translateY(0) scale(1);
+                filter: blur(0);
             }
         }
         
@@ -2250,13 +2298,20 @@
         }
         
         @keyframes slideUpToTop {
-            from {
+            0% {
                 opacity: 1;
-                transform: translateX(-50%) translateY(0);
+                transform: translateX(-50%) translateY(0) scale(1);
+                filter: blur(0);
             }
-            to {
+            50% {
+                opacity: 0.5;
+                transform: translateX(-50%) translateY(-15px) scale(0.98);
+                filter: blur(2px);
+            }
+            100% {
                 opacity: 0;
-                transform: translateX(-50%) translateY(-30px);
+                transform: translateX(-50%) translateY(-40px) scale(0.95);
+                filter: blur(4px);
             }
         }
         
@@ -2402,20 +2457,43 @@
             filter: invert(1) brightness(2.5) !important;
         }
         
-        /* Forum Toast Animation */
+        /* Forum Toast Animation - Smooth and Marvelous */
         @keyframes slideInFromRight {
-            from {
+            0% {
                 opacity: 0;
-                transform: translateX(100%);
+                transform: translateX(120%) scale(0.9);
+                filter: blur(4px);
             }
-            to {
+            60% {
+                transform: translateX(-5px) scale(1.02);
+                filter: blur(1px);
+            }
+            100% {
                 opacity: 1;
-                transform: translateX(0);
+                transform: translateX(0) scale(1);
+                filter: blur(0);
             }
         }
         
         .forum-toast {
-            animation: slideInFromRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            animation: slideInFromRight 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        
+        .forum-toast.hiding {
+            animation: slideOutToRight 0.4s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards !important;
+        }
+        
+        @keyframes slideOutToRight {
+            0% {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+                filter: blur(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(120%) scale(0.9);
+                filter: blur(4px);
+            }
         }
         
         /* Mobile responsive for forum toast */
@@ -2939,6 +3017,18 @@
             /* Hide mobile dock classes on desktop */
             .quick-access-dock.mobile-minimized,
             .quick-access-dock.mobile-expanded {
+                display: none !important;
+            }
+            
+            /* Show auto-hide button only on desktop */
+            .dock-autohide-btn {
+                display: flex !important;
+            }
+        }
+        
+        /* Hide auto-hide button on mobile */
+        @media (max-width: 768px) {
+            .dock-autohide-btn {
                 display: none !important;
             }
         }

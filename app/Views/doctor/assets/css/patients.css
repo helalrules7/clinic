@@ -75,12 +75,55 @@
     background-color: var(--bg-dark) !important;
     border-color: var(--border) !important;
     color: var(--text) !important;
+    text-align: left !important;
 }
 
 .table-dark th {
     background-color: var(--bg-dark) !important;
     border-color: var(--border) !important;
     color: var(--text) !important;
+    text-align: left !important;
+}
+
+/* Sort controls styling */
+.sort-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-left: auto;
+}
+
+.sort-btn {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    opacity: 0.5;
+    padding: 2px 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.sort-btn:hover {
+    opacity: 0.8;
+    color: var(--accent);
+}
+
+.sort-btn.active {
+    opacity: 1;
+    color: var(--accent);
+}
+
+.sort-btn i {
+    font-size: 0.875rem;
+}
+
+.table thead th .d-flex {
+    align-items: center;
 }
 
 /* Table header filter input styling */
@@ -1812,6 +1855,7 @@ kbd[lang="ar"] {
     background-color: var(--bg-dark) !important;
     border-color: var(--border) !important;
     color: var(--text) !important;
+    text-align: left !important;
 }
 
 /* Chart Container Dark Mode Adjustments */

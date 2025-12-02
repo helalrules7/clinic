@@ -1163,10 +1163,22 @@
                                             <?php endif; ?>
                                         </div>
                                         <div class="btn-group btn-group-sm">
-                                            <button class="btn btn-outline-primary" onclick="editMedicalHistory(<?= $history['id'] ?>)">
+                                            <button class="btn btn-outline-info" onclick="viewMedicalHistory(<?= $history['id'] ?>)" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    data-bs-title="View full details">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button class="btn btn-outline-primary" onclick="editMedicalHistory(<?= $history['id'] ?>)"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    data-bs-title="Edit entry">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            <button class="btn btn-outline-danger" onclick="deleteMedicalHistory(<?= $history['id'] ?>)">
+                                            <button class="btn btn-outline-danger" onclick="deleteMedicalHistory(<?= $history['id'] ?>)"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    data-bs-title="Delete entry">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </div>
