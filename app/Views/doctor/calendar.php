@@ -4,7 +4,7 @@
     <div class="col-md-6">
         <div class="d-flex align-items-center">
             <h4 class="mb-0 me-3">Calendar</h4>
-            <div class="d-flex align-items-center ms-3">
+            <div class="d-flex align-items-center ms-3" style="padding-bottom: 10px !important;">
                 <label class="form-label mb-0 me-2" for="calendarAutoRefresh">
                     <small class="text-muted">Auto-refresh</small>
                 </label>

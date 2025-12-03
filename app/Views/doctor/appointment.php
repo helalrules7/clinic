@@ -116,123 +116,6 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
     </div>
 </div>
 
-<!-- Patient Medical History Carousel -->
-<?php if (!empty($medicalHistory)): ?>
-<div class="card mb-4" id="patientMedicalHistoryCard">
-    <div class="card-header">
-        <h5 class="mb-0">
-            <i class="bi bi-clipboard-heart me-2"></i>
-            Patient Medical History
-            <span class="badge bg-primary ms-2"><?= count($medicalHistory) ?></span>
-        </h5>
-    </div>
-    <div class="card-body">
-        <div id="medicalHistoryCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="false">
-            <div class="carousel-inner">
-                <?php foreach ($medicalHistory as $index => $history): ?>
-                <div class="carousel-item <?= $index === 0 ? 'active' : '' ?>">
-                    <div class="medical-history-carousel-item p-4">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div>
-                                <h6 class="mb-1">
-                                    <?php if (!empty($history['condition_name'])): ?>
-                                        <?= htmlspecialchars($history['condition_name']) ?>
-                                    <?php else: ?>
-                                        Medical Record #<?= $history['id'] ?>
-                                    <?php endif; ?>
-                                    <?php if (!empty($history['status'])): ?>
-                                        <span class="badge bg-<?= $history['status'] === 'active' ? 'success' : ($history['status'] === 'resolved' ? 'info' : 'secondary') ?> ms-2">
-                                            <?= ucfirst($history['status']) ?>
-                                        </span>
-                                    <?php endif; ?>
-                                </h6>
-                                <small class="text-muted">
-                                    <i class="bi bi-calendar me-1"></i>
-                                    <?php if (!empty($history['diagnosis_date'])): ?>
-                                        <?= date('M d, Y', strtotime($history['diagnosis_date'])) ?>
-                                    <?php else: ?>
-                                        <?= date('M d, Y', strtotime($history['created_at'])) ?>
-                                    <?php endif; ?>
-                                    <?php if (!empty($history['doctor_name'])): ?>
-                                        • by <?= htmlspecialchars($history['doctor_name']) ?>
-                                    <?php endif; ?>
-                                </small>
-                            </div>
-                            <?php if (!empty($history['category'])): ?>
-                                <span class="badge bg-light text-dark">
-                                    <i class="bi bi-tag me-1"></i><?= ucfirst(str_replace('_', ' ', $history['category'])) ?>
-                                </span>
-                            <?php endif; ?>
-                        </div>
-                        
-                        <div class="medical-history-content">
-                            <?php if ($history['entry_type'] === 'new_format'): ?>
-                                <?php if (!empty($history['notes'])): ?>
-                                    <p class="mb-0"><?= nl2br(htmlspecialchars($history['notes'])) ?></p>
-                                <?php endif; ?>
-                            <?php else: ?>
-                                <!-- Old format display -->
-                                <?php if (!empty($history['allergies'])): ?>
-                                    <div class="mb-2">
-                                        <strong class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Allergies:</strong>
-                                        <span><?= htmlspecialchars($history['allergies']) ?></span>
-                                    </div>
-                                <?php endif; ?>
-                                <?php if (!empty($history['medications'])): ?>
-                                    <div class="mb-2">
-                                        <strong class="text-primary"><i class="bi bi-capsule me-1"></i>Medications:</strong>
-                                        <span><?= htmlspecialchars($history['medications']) ?></span>
-                                    </div>
-                                <?php endif; ?>
-                                <?php if (!empty($history['systemic_history'])): ?>
-                                    <div class="mb-2">
-                                        <strong class="text-info"><i class="bi bi-heart-pulse me-1"></i>Systemic:</strong>
-                                        <span><?= htmlspecialchars($history['systemic_history']) ?></span>
-                                    </div>
-                                <?php endif; ?>
-                                <?php if (!empty($history['ocular_history'])): ?>
-                                    <div class="mb-2">
-                                        <strong class="text-success"><i class="bi bi-eye me-1"></i>Ocular:</strong>
-                                        <span><?= htmlspecialchars($history['ocular_history']) ?></span>
-                                    </div>
-                                <?php endif; ?>
-                                <?php if (!empty($history['prior_surgeries'])): ?>
-                                    <div class="mb-2">
-                                        <strong class="text-warning"><i class="bi bi-scissors me-1"></i>Surgeries:</strong>
-                                        <span><?= htmlspecialchars($history['prior_surgeries']) ?></span>
-                                    </div>
-                                <?php endif; ?>
-                                <?php if (!empty($history['family_history'])): ?>
-                                    <div class="mb-2">
-                                        <strong class="text-secondary"><i class="bi bi-people me-1"></i>Family:</strong>
-                                        <span><?= htmlspecialchars($history['family_history']) ?></span>
-                                    </div>
-                                <?php endif; ?>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-                <?php endforeach; ?>
-            </div>
-            <?php if (count($medicalHistory) > 1): ?>
-            <button class="carousel-control-prev" type="button" data-bs-target="#medicalHistoryCarousel" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Previous</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#medicalHistoryCarousel" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Next</span>
-            </button>
-            <div class="carousel-indicators">
-                <?php foreach ($medicalHistory as $index => $history): ?>
-                <button type="button" data-bs-target="#medicalHistoryCarousel" data-bs-slide-to="<?= $index ?>" <?= $index === 0 ? 'class="active" aria-current="true"' : '' ?> aria-label="Slide <?= $index + 1 ?>"></button>
-                <?php endforeach; ?>
-            </div>
-            <?php endif; ?>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
 
 <!-- Action Buttons -->
 <div class="row mb-4">
@@ -1288,6 +1171,97 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
 
     </div>
 </div>
+
+
+<!-- Patient Medical History Carousel -->
+<?php if (!empty($medicalHistory)): ?>
+<div class="medical-history-wrapper mb-4">
+    <div class="medical-history-head">
+        <h2>
+            <i class="bi bi-clipboard-heart me-2"></i>
+            Patient Medical History
+            <span class="badge bg-primary ms-2"><?= count($medicalHistory) ?></span>
+        </h2>
+        <div class="controls">
+            <button id="medicalHistoryPrev" class="nav-btn" aria-label="Prev">‹</button>
+            <button id="medicalHistoryNext" class="nav-btn" aria-label="Next">›</button>
+        </div>
+    </div>
+    <div class="medical-history-slider">
+        <div class="medical-history-track" id="medicalHistoryTrack">
+            <?php foreach ($medicalHistory as $index => $history): ?>
+            <article class="medical-history-card <?= $index === 0 ? 'active' : '' ?>" data-index="<?= $index ?>">
+                <div class="medical-history-card__bg" style="background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);"></div>
+                <div class="medical-history-card__content">
+                    <div class="medical-history-card__icon">
+                        <i class="bi bi-clipboard-heart"></i>
+                    </div>
+                    <div class="medical-history-card__details">
+                        <h3 class="medical-history-card__title">
+                            <?php if (!empty($history['condition_name'])): ?>
+                                <?= htmlspecialchars($history['condition_name']) ?>
+                            <?php else: ?>
+                                Medical Record #<?= $history['id'] ?>
+                            <?php endif; ?>
+                        </h3>
+                        <div class="medical-history-card__meta">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar me-1"></i>
+                                <?php if (!empty($history['diagnosis_date'])): ?>
+                                    <?= date('M d, Y', strtotime($history['diagnosis_date'])) ?>
+                                <?php else: ?>
+                                    <?= date('M d, Y', strtotime($history['created_at'])) ?>
+                                <?php endif; ?>
+                                <?php if (!empty($history['doctor_name'])): ?>
+                                    • by <?= htmlspecialchars($history['doctor_name']) ?>
+                                <?php endif; ?>
+                            </small>
+                        </div>
+                        <?php 
+                        // Always show notes if available - prioritize notes field, then fallback to old format fields
+                        $notesText = '';
+                        if (!empty($history['notes'])) {
+                            // Use notes field directly if available (for new_format entries)
+                            $notesText = htmlspecialchars(str_replace(["\r\n", "\r", "\n"], ' ', $history['notes']));
+                        } elseif ($history['entry_type'] !== 'new_format') {
+                            // For old format, combine all fields
+                            $oldFormatNotes = [];
+                            if (!empty($history['allergies'])) $oldFormatNotes[] = 'Allergies: ' . htmlspecialchars($history['allergies']);
+                            if (!empty($history['medications'])) $oldFormatNotes[] = 'Medications: ' . htmlspecialchars($history['medications']);
+                            if (!empty($history['systemic_history'])) $oldFormatNotes[] = 'Systemic: ' . htmlspecialchars($history['systemic_history']);
+                            if (!empty($history['ocular_history'])) $oldFormatNotes[] = 'Ocular: ' . htmlspecialchars($history['ocular_history']);
+                            if (!empty($history['prior_surgeries'])) $oldFormatNotes[] = 'Surgeries: ' . htmlspecialchars($history['prior_surgeries']);
+                            if (!empty($history['family_history'])) $oldFormatNotes[] = 'Family: ' . htmlspecialchars($history['family_history']);
+                            if (!empty($oldFormatNotes)) {
+                                $notesText = htmlspecialchars(implode(' | ', $oldFormatNotes));
+                            }
+                        }
+                        if (!empty($notesText)): 
+                            // Highlight all titles before ":" with dodgerblue color and bold
+                            // Match common medical history titles followed by colon and space
+                            $titles = [
+                                'Chief Complaint', 'Plan', 'History of Present Illness', 
+                                'Allergies', 'Medications', 'Systemic', 'Ocular', 
+                                'Surgeries', 'Family', 'Diagnosis', 'Treatment'
+                            ];
+                            
+                            // Create pattern that matches titles followed by colon (with word boundary)
+                            foreach ($titles as $title) {
+                                $pattern = '/\b(' . preg_quote($title, '/') . '):\s*/i';
+                                $notesText = preg_replace($pattern, '<strong style="color: dodgerblue;">$1:</strong> ', $notesText);
+                            }
+                        ?>
+                            <p class="medical-history-card__desc"><?= $notesText ?></p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </article>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <div class="medical-history-dots" id="medicalHistoryDots"></div>
+</div>
+<?php endif; ?>
 <!-- Forum Topics Section -->
 <div class="card mt-4">
     <div class="card-header d-flex justify-content-between align-items-center">

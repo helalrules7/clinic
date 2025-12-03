@@ -1537,9 +1537,13 @@
                 if (window.innerWidth >= 769) {
                     dock.style.display = 'block';
                     dock.classList.remove('mobile-minimized', 'mobile-expanded');
-                    // Show auto-hide button on desktop
+                    // Show auto-hide button on desktop (only if not minimized)
                     if (autohideBtn) {
-                        autohideBtn.style.display = 'flex';
+                        if (!dock.classList.contains('minimized')) {
+                            autohideBtn.style.display = 'flex';
+                        } else {
+                            autohideBtn.style.display = 'none';
+                        }
                     }
                     // Load desktop dock state
                     loadDockState();
@@ -1576,19 +1580,34 @@
                                 dock.classList.remove('minimized');
                             }
                             
-                            // Load auto-hide state
-                            if (data.settings.dock_autohide) {
+                            // Load auto-hide state (only if dock is not minimized)
+                            const isMinimized = dock.classList.contains('minimized');
+                            if (!isMinimized && data.settings.dock_autohide) {
                                 const isAutohide = data.settings.dock_autohide === '1' || data.settings.dock_autohide === true || data.settings.dock_autohide === 1;
                                 if (isAutohide) {
                                     dock.classList.add('autohide');
-                                    if (autohideBtn) autohideBtn.classList.add('active');
+                                    if (autohideBtn) {
+                                        autohideBtn.classList.add('active');
+                                        autohideBtn.style.display = 'flex';
+                                    }
                                 } else {
                                     dock.classList.remove('autohide');
-                                    if (autohideBtn) autohideBtn.classList.remove('active');
+                                    if (autohideBtn) {
+                                        autohideBtn.classList.remove('active');
+                                        autohideBtn.style.display = 'flex';
+                                    }
                                 }
                             } else {
                                 dock.classList.remove('autohide');
-                                if (autohideBtn) autohideBtn.classList.remove('active');
+                                if (autohideBtn) {
+                                    autohideBtn.classList.remove('active');
+                                    // Hide autohide button if dock is minimized
+                                    if (isMinimized) {
+                                        autohideBtn.style.display = 'none';
+                                    } else {
+                                        autohideBtn.style.display = 'flex';
+                                    }
+                                }
                             }
                         } else {
                             // Default: not minimized, not auto-hide
@@ -1694,6 +1713,11 @@
             function toggleDockAutohide() {
                 if (!dock) return;
                 
+                // Only allow autohide when dock is not minimized
+                if (dock.classList.contains('minimized')) {
+                    return;
+                }
+                
                 const isAutohide = dock.classList.contains('autohide');
                 if (isAutohide) {
                     dock.classList.remove('autohide');
@@ -1726,9 +1750,25 @@
                 if (isMinimized) {
                     dock.classList.remove('minimized');
                     saveDockState(false);
+                    // Show autohide button when dock is expanded (if not mobile)
+                    if (!isMobile() && autohideBtn) {
+                        autohideBtn.style.display = 'flex';
+                    }
                 } else {
                     dock.classList.add('minimized');
                     saveDockState(true);
+                    
+                    // If autohide is enabled, disable it and hide the button when minimizing
+                    if (dock.classList.contains('autohide')) {
+                        dock.classList.remove('autohide');
+                        saveAutohideState(false);
+                        updateAutohideButtonState();
+                    }
+                    
+                    // Hide autohide button when dock is minimized
+                    if (autohideBtn) {
+                        autohideBtn.style.display = 'none';
+                    }
                 }
                 
                 // Update button title

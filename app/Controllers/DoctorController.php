@@ -1109,6 +1109,7 @@ class DoctorController
                 'ocular_history' => ($entry['category'] === 'general' && strpos(strtolower($entry['condition_name']), 'eye') !== false) ? $entry['notes'] : null,
                 'prior_surgeries' => ($entry['category'] === 'surgery') ? $entry['notes'] : null,
                 'family_history' => ($entry['category'] === 'family_history') ? $entry['notes'] : null,
+                'notes' => $entry['notes'] ?? null, // Add notes field directly
                 'created_at' => $entry['created_at'],
                 'updated_at' => $entry['updated_at'],
                 'doctor_name' => $entry['doctor_name'],

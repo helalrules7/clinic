@@ -3344,8 +3344,9 @@
         }
         
         .quick-access-dock.minimized .dock-item,
-        .quick-access-dock.minimized .dock-divider {
-            display: none;
+        .quick-access-dock.minimized .dock-divider,
+        .quick-access-dock.minimized .dock-autohide-btn {
+            display: none !important;
         }
         
         .quick-access-dock.minimized .dock-minimize-btn {
@@ -3508,6 +3509,7 @@
         
         .quick-access-dock.autohide:not(:hover) .dock-container {
             pointer-events: none;
+            opacity: 0.6;
         }
         
         .quick-access-dock.autohide:hover {
@@ -3538,7 +3540,7 @@
         }
         
         /* Keep auto-hide button visible even when hidden (10% visible) */
-        .quick-access-dock.autohide:not(:hover) .dock-autohide-btn {
+        .quick-access-dock.autohide:not(:hover):not(.minimized) .dock-autohide-btn {
             opacity: 0.5;
             pointer-events: auto;
             position: relative;

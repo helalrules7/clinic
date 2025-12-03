@@ -3344,6 +3344,9 @@ function initMoreActionsPopover() {
 
 // Initialize tooltips for file attachments
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Medical History Carousel
+    initMedicalHistoryCarousel();
+    
     // Initialize status badge
     updateStatusBadge(window.APPOINTMENT_CONFIG.appointmentStatus);
     
@@ -5687,7 +5690,206 @@ function populateTimeSlots(selectElement, availableSlots, preselectedTime = null
     }
 }
 
-// Helper function to update custom menu when time slots are updated (legacy support)
+// Initialize Medical History Carousel with modern design
+function initMedicalHistoryCarousel() {
+    const track = document.getElementById('medicalHistoryTrack');
+    if (!track) return;
+    
+    const wrap = track.parentElement;
+    const cards = Array.from(track.children);
+    const prev = document.getElementById('medicalHistoryPrev');
+    const next = document.getElementById('medicalHistoryNext');
+    const dotsBox = document.getElementById('medicalHistoryDots');
+    
+    if (!prev || !next || !dotsBox) return;
+    
+    const isMobile = () => matchMedia("(max-width:767px)").matches;
+    
+    // Create dots
+    cards.forEach((_, i) => {
+        const dot = document.createElement('span');
+        dot.className = 'medical-history-dot';
+        dot.onclick = () => activate(i, true);
+        dotsBox.appendChild(dot);
+    });
+    const dots = Array.from(dotsBox.children);
+    
+    let current = 0;
+    let autoPlayInterval = null;
+    const INTERVAL_TIME = 30000; // 30 seconds
+    
+    function center(i) {
+        const card = cards[i];
+        if (!card) return;
+        
+        // Always use vertical scrolling with smooth animation
+        const start = card.offsetTop;
+        const containerHeight = wrap.clientHeight;
+        const cardHeight = card.clientHeight;
+        const targetScroll = start - (containerHeight / 2 - cardHeight / 2);
+        
+        // Use requestAnimationFrame for smoother scrolling
+        let startScroll = wrap.scrollTop;
+        const distance = targetScroll - startScroll;
+        const duration = 700; // 700ms for smooth animation
+        let startTime = null;
+        
+        function animateScroll(currentTime) {
+            if (startTime === null) startTime = currentTime;
+            const timeElapsed = currentTime - startTime;
+            const progress = Math.min(timeElapsed / duration, 1);
+            
+            // Use easeOutCubic for smooth deceleration
+            const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+            wrap.scrollTop = startScroll + (distance * easeOutCubic);
+            
+            if (progress < 1) {
+                requestAnimationFrame(animateScroll);
+            }
+        }
+        
+        requestAnimationFrame(animateScroll);
+    }
+    
+    function toggleUI(i) {
+        // Add smooth transition class before toggling
+        cards.forEach((c, k) => {
+            if (k === i) {
+                c.classList.add('transitioning');
+                setTimeout(() => {
+                    c.classList.add('active');
+                    c.classList.remove('transitioning');
+                }, 10);
+            } else {
+                c.classList.remove('active');
+            }
+        });
+        dots.forEach((d, k) => d.classList.toggle('active', k === i));
+        prev.disabled = i === 0;
+        next.disabled = i === cards.length - 1;
+    }
+    
+    function activate(i, scroll) {
+        if (i === current || i < 0 || i >= cards.length) return;
+        const prevIndex = current;
+        current = i;
+        toggleUI(i);
+        if (scroll) {
+            // Small delay to allow CSS transitions to start
+            setTimeout(() => {
+                center(i);
+            }, 50);
+        }
+    }
+    
+    function go(step) {
+        activate(Math.min(Math.max(current + step, 0), cards.length - 1), true);
+    }
+    
+    prev.onclick = () => go(-1);
+    next.onclick = () => go(1);
+    
+    // Keyboard navigation
+    addEventListener('keydown', (e) => {
+        if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
+        // Vertical navigation: ArrowDown goes down, ArrowUp goes up
+        if (['ArrowDown'].includes(e.key)) go(1);
+        if (['ArrowUp'].includes(e.key)) go(-1);
+    }, { passive: true });
+    
+    // Card interactions
+    cards.forEach((card, i) => {
+        card.addEventListener('mouseenter', () => {
+            if (matchMedia('(hover:hover)').matches) activate(i, true);
+        });
+        card.addEventListener('click', () => activate(i, true));
+    });
+    
+    // Touch swipe
+    let sx = 0, sy = 0;
+    track.addEventListener('touchstart', (e) => {
+        sx = e.touches[0].clientX;
+        sy = e.touches[0].clientY;
+    }, { passive: true });
+    
+    track.addEventListener('touchend', (e) => {
+        const dx = e.changedTouches[0].clientX - sx;
+        const dy = e.changedTouches[0].clientY - sy;
+        // Always use vertical swipe
+        if (Math.abs(dy) > 60) {
+            go(dy > 0 ? -1 : 1);
+        }
+    }, { passive: true });
+    
+    // Auto-play function
+    function checkAndStartAutoPlay() {
+        if (cards.length <= 1) {
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+            }
+            return;
+        }
+        
+        // Check if container can fit more than one item (vertical)
+        const containerHeight = wrap.clientHeight;
+        const firstCard = cards[0];
+        if (!firstCard) return;
+        
+        const cardStyle = window.getComputedStyle(firstCard);
+        const cardHeight = firstCard.offsetHeight + 
+                          parseFloat(cardStyle.marginTop) + 
+                          parseFloat(cardStyle.marginBottom);
+        
+        // If container can only fit one item, start auto-play
+        if (containerHeight < cardHeight * 1.5 && !isMobile()) {
+            if (!autoPlayInterval) {
+                autoPlayInterval = setInterval(() => {
+                    go(1);
+                }, INTERVAL_TIME);
+            }
+        } else {
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+            }
+        }
+    }
+    
+    // Pause on hover
+    track.addEventListener('mouseenter', () => {
+        if (autoPlayInterval) {
+            clearInterval(autoPlayInterval);
+            autoPlayInterval = null;
+        }
+    });
+    
+    // Resume on mouse leave
+    track.addEventListener('mouseleave', () => {
+        checkAndStartAutoPlay();
+    });
+    
+    // Hide dots on mobile
+    if (isMobile()) dotsBox.style.display = 'none';
+    
+    // Handle resize
+    addEventListener('resize', () => {
+        center(current);
+        checkAndStartAutoPlay();
+        if (isMobile()) {
+            dotsBox.style.display = 'none';
+        } else {
+            dotsBox.style.display = 'flex';
+        }
+    });
+    
+    // Initialize
+    toggleUI(0);
+    center(0);
+    setTimeout(checkAndStartAutoPlay, 100);
+}
+
+
 function updateTimeSelectCustomMenu(selectElement, text) {
     const fieldMenu = selectElement.closest('.field.menu');
     const menu = fieldMenu ? fieldMenu.querySelector('menu') : null;
