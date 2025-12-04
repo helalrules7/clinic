@@ -69,9 +69,9 @@ class DoctorController
         $user = $this->auth->user();
         $doctorId = $this->getDoctorId($user['id']);
         
-        // Get today's statistics
+        // Get today's statistics (for all doctors)
         $today = date('Y-m-d');
-        $stats = $this->getTodayStats($doctorId, $today);
+        $stats = $this->getTodayStats($today);
         
         // Get recent timeline events
         $recentEvents = $this->getRecentTimelineEvents($doctorId);
@@ -945,11 +945,9 @@ class DoctorController
         return $result ? $result['id'] : null;
     }
 
-    private function getTodayStats($doctorId, $date)
+    private function getTodayStats($date)
     {
-        $today = date('Y-m-d');
-        
-        // Get today's stats
+        // Get today's stats (for all doctors - no doctor_id restriction)
         $stmt = $this->pdo->prepare("
             SELECT 
                 COUNT(*) as total,
@@ -959,9 +957,9 @@ class DoctorController
                 SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed,
                 SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) as cancelled
             FROM appointments 
-            WHERE doctor_id = ? AND date = ?
+            WHERE date = ?
         ");
-        $stmt->execute([$doctorId, $date]);
+        $stmt->execute([$date]);
         $stats = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if (!$stats) {
@@ -975,16 +973,30 @@ class DoctorController
             ];
         }
         
-        // Get missed appointments count (previous days, not completed)
+        // Get completed appointments count for last 30 days (excluding today, for all doctors)
+        $endDate = date('Y-m-d', strtotime('-1 day')); // Yesterday
+        $startDate = date('Y-m-d', strtotime('-30 days'));
+        $completed30DaysStmt = $this->pdo->prepare("
+            SELECT COUNT(*) as completed_30_days
+            FROM appointments 
+            WHERE date BETWEEN ? AND ?
+            AND date < CURDATE()
+            AND status = 'Completed'
+        ");
+        $completed30DaysStmt->execute([$startDate, $endDate]);
+        $completed30DaysCount = $completed30DaysStmt->fetchColumn();
+        $stats['completed'] = (int)$completed30DaysCount; // Override with last 30 days value
+        
+        // Get missed appointments count for last 30 days (excluding today, for all doctors)
         $missedStmt = $this->pdo->prepare("
             SELECT COUNT(*) as missed_appointments
             FROM appointments 
-            WHERE doctor_id = ? 
-            AND date < ?
+            WHERE date BETWEEN ? AND ?
+            AND date < CURDATE()
             AND status != 'Completed'
             AND status != 'Cancelled'
         ");
-        $missedStmt->execute([$doctorId, $today]);
+        $missedStmt->execute([$startDate, $endDate]);
         $missedCount = $missedStmt->fetchColumn();
         $stats['missed_appointments'] = (int)$missedCount;
         

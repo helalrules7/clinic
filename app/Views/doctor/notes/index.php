@@ -1369,10 +1369,38 @@ if (window.location.pathname.includes('/doctor/notes')) {
             loadNotes();
             // Initialize autocomplete after notes are loaded
             setTimeout(initAllAutocompletes, 500);
+            
+            // Check if we need to open add note modal
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('openModal') === 'addNote') {
+                setTimeout(() => {
+                    const addNoteBtn = document.getElementById('addNoteBtn');
+                    if (addNoteBtn) {
+                        addNoteBtn.click();
+                    }
+                    // Clean URL
+                    const newUrl = window.location.pathname + window.location.search.replace(/[?&]openModal=addNote/, '').replace(/^&/, '?');
+                    window.history.replaceState({}, '', newUrl);
+                }, 1000);
+            }
         });
     } else {
         loadNotes();
         setTimeout(initAllAutocompletes, 500);
+        
+        // Check if we need to open add note modal
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('openModal') === 'addNote') {
+            setTimeout(() => {
+                const addNoteBtn = document.getElementById('addNoteBtn');
+                if (addNoteBtn) {
+                    addNoteBtn.click();
+                }
+                // Clean URL
+                const newUrl = window.location.pathname + window.location.search.replace(/[?&]openModal=addNote/, '').replace(/^&/, '?');
+                window.history.replaceState({}, '', newUrl);
+            }, 1000);
+        }
     }
 }
 

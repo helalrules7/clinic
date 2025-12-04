@@ -161,6 +161,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 100);
         });
     }
+    
+    // Check if we need to open add alert modal
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('openModal') === 'addAlert') {
+        setTimeout(() => {
+            if (typeof openAlertModal === 'function') {
+                openAlertModal(null, null);
+            }
+            // Clean URL
+            const newUrl = window.location.pathname + window.location.search.replace(/[?&]openModal=addAlert/, '').replace(/^&/, '?');
+            window.history.replaceState({}, '', newUrl);
+        }, 500);
+    }
 });
 
 function loadAlerts(page = 1, limit = 10) {

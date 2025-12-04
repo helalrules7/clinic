@@ -57,6 +57,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     setupEventListeners();
     initCustomSelects(); // Initialize custom select menus
+    
+    // Check if we need to open add appointment modal
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('openModal') === 'addAppointment') {
+        setTimeout(() => {
+            openAddAppointmentModal(null, currentDate.toISOString().split('T')[0]);
+            // Clean URL
+            const newUrl = window.location.pathname + window.location.search.replace(/[?&]openModal=addAppointment/, '').replace(/^&/, '?');
+            window.history.replaceState({}, '', newUrl);
+        }, 500);
+    }
 });
 
 function setupEventListeners() {

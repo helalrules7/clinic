@@ -7229,16 +7229,17 @@ class ApiController
             $trendStmt->execute([$startDate, $endDate]);
             $trendData = $trendStmt->fetchAll();
 
-            // Get status summary (total counts) - ALL TIME excluding today
+            // Get status summary (total counts) - Last 30 days excluding today
             $statusStmt = $this->pdo->prepare("
                 SELECT 
                     COUNT(*) as total_appointments,
                     SUM(CASE WHEN a.status = 'Completed' THEN 1 ELSE 0 END) as completed,
-                    SUM(CASE WHEN a.status != 'Completed' THEN 1 ELSE 0 END) as missed
+                    SUM(CASE WHEN a.status != 'Completed' AND a.status != 'Cancelled' THEN 1 ELSE 0 END) as missed
                 FROM appointments a
-                WHERE DATE(a.date) < CURDATE()
+                WHERE DATE(a.date) BETWEEN ? AND ?
+                AND DATE(a.date) < CURDATE()
             ");
-            $statusStmt->execute([]);
+            $statusStmt->execute([$startDate, $endDate]);
             $statusData = $statusStmt->fetch();
             
             // Calculate completion ratio
@@ -7246,6 +7247,64 @@ class ApiController
             $completed = (int)($statusData['completed'] ?? 0);
             $missed = (int)($statusData['missed'] ?? 0);
             $completionRatio = $total > 0 ? round(($completed / $total) * 100, 2) : 0;
+            $missedRatio = $total > 0 ? round(($missed / $total) * 100, 2) : 0;
+
+            // Get new patients data for last 30 days with male/female distribution
+            $patientsStmt = $this->pdo->prepare("
+                SELECT 
+                    DATE(p.created_at) as date,
+                    COUNT(DISTINCT p.id) as new_patients,
+                    SUM(CASE WHEN p.gender = 'Male' THEN 1 ELSE 0 END) as male,
+                    SUM(CASE WHEN p.gender = 'Female' THEN 1 ELSE 0 END) as female
+                FROM patients p
+                WHERE DATE(p.created_at) BETWEEN ? AND ?
+                AND DATE(p.created_at) < CURDATE()
+                GROUP BY DATE(p.created_at)
+                ORDER BY date ASC
+            ");
+            $patientsStmt->execute([$startDate, $endDate]);
+            $patientsData = $patientsStmt->fetchAll();
+
+            // Get total prescriptions (medical + glasses) for last 30 days
+            // MySQL doesn't support FULL OUTER JOIN, so use UNION ALL approach
+            $prescriptionsStmt = $this->pdo->prepare("
+                SELECT 
+                    date,
+                    SUM(count) as total_prescriptions
+                FROM (
+                    SELECT 
+                        DATE(a.date) as date,
+                        COUNT(DISTINCT p.id) as count
+                    FROM appointments a
+                    INNER JOIN prescriptions p ON a.id = p.appointment_id
+                    WHERE DATE(a.date) BETWEEN ? AND ?
+                    AND DATE(a.date) < CURDATE()
+                    GROUP BY DATE(a.date)
+                    UNION ALL
+                    SELECT 
+                        DATE(a.date) as date,
+                        COUNT(DISTINCT gp.id) as count
+                    FROM appointments a
+                    INNER JOIN glasses_prescriptions gp ON a.id = gp.appointment_id
+                    WHERE DATE(a.date) BETWEEN ? AND ?
+                    AND DATE(a.date) < CURDATE()
+                    GROUP BY DATE(a.date)
+                ) combined
+                GROUP BY date
+                ORDER BY date ASC
+            ");
+            $prescriptionsStmt->execute([$startDate, $endDate, $startDate, $endDate]);
+            $prescriptionsData = $prescriptionsStmt->fetchAll();
+
+            // Get gender statistics (all time)
+            $genderStmt = $this->pdo->prepare("
+                SELECT 
+                    SUM(CASE WHEN p.gender = 'Male' THEN 1 ELSE 0 END) as total_male,
+                    SUM(CASE WHEN p.gender = 'Female' THEN 1 ELSE 0 END) as total_female
+                FROM patients p
+            ");
+            $genderStmt->execute([]);
+            $genderData = $genderStmt->fetch();
 
             return $this->jsonResponse([
                 'ok' => true,
@@ -7255,7 +7314,14 @@ class ApiController
                         'total_appointments' => $total,
                         'completed' => $completed,
                         'missed' => $missed,
-                        'completion_ratio' => $completionRatio
+                        'completion_ratio' => $completionRatio,
+                        'missed_ratio' => $missedRatio
+                    ],
+                    'patients' => $patientsData,
+                    'prescriptions' => $prescriptionsData,
+                    'gender' => [
+                        'total_male' => (int)($genderData['total_male'] ?? 0),
+                        'total_female' => (int)($genderData['total_female'] ?? 0)
                     ]
                 ]
             ]);

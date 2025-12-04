@@ -743,6 +743,20 @@ function formatDate(dateString) {
 
 // Initialize search functionality  
 document.addEventListener('DOMContentLoaded', function() {
+    // Check if we need to open add patient modal
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('openModal') === 'addPatient') {
+        setTimeout(() => {
+            const addPatientBtn = document.querySelector('[data-bs-target="#addPatientModal"]');
+            if (addPatientBtn) {
+                addPatientBtn.click();
+            }
+            // Clean URL
+            const newUrl = window.location.pathname + window.location.search.replace(/[?&]openModal=addPatient/, '').replace(/^&/, '?');
+            window.history.replaceState({}, '', newUrl);
+        }, 500);
+    }
+    
     // Initialize pagination first
     initializePagination();
     

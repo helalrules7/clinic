@@ -11,6 +11,30 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('balanceDate').value = localDateTime;
     document.getElementById('expenseDate').value = localDateTime;
     
+    // Check if we need to open modals
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('openModal') === 'dailyBalance') {
+        setTimeout(() => {
+            const balanceBtn = document.querySelector('[data-bs-target="#dailyBalanceModal"]');
+            if (balanceBtn) {
+                balanceBtn.click();
+            }
+            // Clean URL
+            const newUrl = window.location.pathname + window.location.search.replace(/[?&]openModal=dailyBalance/, '').replace(/^&/, '?');
+            window.history.replaceState({}, '', newUrl);
+        }, 500);
+    } else if (urlParams.get('openModal') === 'expense') {
+        setTimeout(() => {
+            const expenseBtn = document.querySelector('[data-bs-target="#expenseModal"]');
+            if (expenseBtn) {
+                expenseBtn.click();
+            }
+            // Clean URL
+            const newUrl = window.location.pathname + window.location.search.replace(/[?&]openModal=expense/, '').replace(/^&/, '?');
+            window.history.replaceState({}, '', newUrl);
+        }, 500);
+    }
+    
     // Expense type badges functionality
     const expenseTypeBadges = document.querySelectorAll('.expense-type-badge');
     expenseTypeBadges.forEach(badge => {

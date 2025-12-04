@@ -166,7 +166,7 @@
 /* Appointment History Timeline Styles */
 .appointment-timeline {
     position: relative;
-    padding-left: 30px;
+    padding-left: 22px !important;
 }
 
 .appointment-timeline::before {
@@ -306,7 +306,7 @@
 /* Prescription Timeline Styles */
 .prescription-timeline {
     position: relative;
-    padding-left: 30px;
+    padding-left: 22px !important;
 }
 
 .prescription-timeline::before {

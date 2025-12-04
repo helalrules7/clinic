@@ -283,13 +283,6 @@
                 </div>
             <?php endif; ?>
             
-            <div class="nav-item mt-4">
-                <a href="/about" class="nav-link <?= $this->isActiveRoute('/about') ? 'active' : '' ?>">
-                    <i class="bi bi-info-circle"></i>
-                    About
-                </a>
-            </div>
-            
             <?php 
             // Check if admin is in View As mode using session directly
             if (isset($_SESSION['view_as_mode']) && $_SESSION['view_as_mode'] === true): 

@@ -62,6 +62,101 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Quick Actions Functions
+function quickActionBookAppointment() {
+    // Navigate to calendar page and trigger add appointment modal
+    window.location.href = '/doctor/calendar?openModal=addAppointment';
+}
+
+function quickActionAddPatient() {
+    // Navigate to patients page and trigger add patient modal
+    window.location.href = '/doctor/patients?openModal=addPatient';
+}
+
+function quickActionPostDiscussion() {
+    // Navigate to forum page and trigger new topic modal
+    window.location.href = '/doctor/forum?openModal=newTopic';
+}
+
+function quickActionEditProfile() {
+    // Navigate to profile page
+    window.location.href = '/doctor/profile';
+}
+
+function quickActionAddBalance() {
+    // Navigate to payments page and trigger add balance modal
+    window.location.href = '/doctor/payments?openModal=dailyBalance';
+}
+
+function quickActionAddExpense() {
+    // Navigate to payments page and trigger add expense modal
+    window.location.href = '/doctor/payments?openModal=expense';
+}
+
+async function quickActionAddNote() {
+    try {
+        // Get container dimensions for positioning (we'll use defaults since we're not on the notes page yet)
+        const isMobile = window.innerWidth <= 768;
+        const widgetWidth = isMobile ? 250 : 300;
+        const widgetHeight = isMobile ? 180 : 200;
+        
+        // Default position (will be centered when notes page loads)
+        const x = 0;
+        const y = 0;
+        
+        // Get current note color (default is warning yellow)
+        const currentNoteColor = '#fbbf24';
+        
+        // Create the note via API
+        const response = await fetch('/api/notes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                title: '',
+                content: '',
+                background_color: currentNoteColor,
+                position_x: x,
+                position_y: y,
+                width: widgetWidth,
+                height: widgetHeight,
+                z_index: 1
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Store flag in sessionStorage to indicate we should focus the new note
+            sessionStorage.setItem('focusNewNote', 'true');
+            sessionStorage.setItem('newNoteId', data.note?.id || '');
+            
+            // Navigate to notes page
+            window.location.href = '/doctor/notes';
+        } else {
+            // If creation fails, still navigate but show error
+            console.error('Error creating note:', data.message || 'Unknown error');
+            window.location.href = '/doctor/notes';
+        }
+    } catch (error) {
+        console.error('Error creating note:', error);
+        // Navigate anyway - user can create note manually
+        window.location.href = '/doctor/notes';
+    }
+}
+
+function quickActionAddAlert() {
+    // Navigate to alerts page and trigger add alert modal
+    window.location.href = '/doctor/alerts?openModal=addAlert';
+}
+
+function quickActionEditProfile() {
+    // Navigate to profile page and trigger edit profile modal
+    window.location.href = '/doctor/profile?openModal=editProfile';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     loadTodayAlerts();
     loadDoctorSettings().then(() => {
@@ -219,17 +314,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Upcoming Appointments Pagination
     let upcomingCurrentPage = 1;
-    let upcomingPerPage = 10;
+    let upcomingPerPage = 4; // Limit to 4 appointments per page
     
     // Load upcoming appointments on page load
     loadUpcomingAppointments(upcomingCurrentPage, upcomingPerPage);
     
-    // Handle per page change for upcoming appointments
-    document.getElementById('upcomingPerPageSelect').addEventListener('change', function() {
-        upcomingPerPage = parseInt(this.value);
-        upcomingCurrentPage = 1;
-        loadUpcomingAppointments(upcomingCurrentPage, upcomingPerPage);
-    });
+    // Handle per page change for upcoming appointments (removed - pagination selector removed from UI)
+    // Note: Per page selector has been removed from the UI, default value of 10 is used
     
     function loadUpcomingAppointments(page, limit) {
         const container = document.getElementById('upcomingAppointmentsContainer');
@@ -275,7 +366,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const formattedEndTime = appointment.end_time ? appointment.end_time.substring(0, 5) : '';
             
             html += `
-                <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 pb-3 mb-2" style="border-bottom: 1px solid var(--border) !important;">
+                <div class="list-group-item d-flex justify-content-between align-items-start border-0 px-0 pb-3 mb-2" style="border-bottom: 1px solid var(--border) !important;">
                     <div class="flex-grow-1">
                         <h6 class="mb-1">
                             <a href="/doctor/patients/${appointment.patient_id}" 
@@ -295,6 +386,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             <i class="bi bi-calendar me-1"></i>
                             ${formattedDate}
                         </small>
+                        <div class="appointment-progress-container mt-2" data-appointment-id="${appointment.id}" data-date="${appointment.date}" data-start-time="${appointment.start_time}" data-end-time="${appointment.end_time}">
+                            <div class="glass-progress-bar">
+                                <div class="glass-progress-fill" style="width: 0%;"></div>
+                                <div class="glass-progress-text">00:00</div>
+                            </div>
+                        </div>
                     </div>
                     <div class="d-flex flex-column align-items-end gap-2">
                         <div class="text-end">
@@ -312,14 +409,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                data-bs-toggle="tooltip" 
                                data-bs-placement="top" 
                                data-bs-title="View Appointment Details">
-                                <i class="bi bi-calendar-event me-1"></i>Appointment
+                                <i class="bi bi-calendar-event me-1"></i><span class="btn-text">Appointment</span>
                             </a>
                             <a href="/doctor/patients/${appointment.patient_id}" 
                                class="btn btn-outline-info"
                                data-bs-toggle="tooltip" 
                                data-bs-placement="top" 
                                data-bs-title="View Patient Profile">
-                                <i class="bi bi-person-circle me-1"></i>Patient
+                                <i class="bi bi-person-circle me-1"></i><span class="btn-text">Patient</span>
                             </a>
                         </div>
                     </div>
@@ -335,6 +432,9 @@ document.addEventListener('DOMContentLoaded', function() {
         tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
+        
+        // Initialize progress bars
+        initializeAppointmentProgressBars();
     }
     
     function renderUpcomingPagination(pagination) {
@@ -2908,8 +3008,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     if (data.ok) {
                         renderAppointmentsChart(data.data.trend);
-                        renderAppointmentsPieChart(data.data.status);
-                        renderAppointmentsStats(data.data.status);
+                        
+                        // Render New Patients Trend Chart
+                        if (data.data.patients && data.data.patients.length > 0) {
+                            renderNewPatientsTrendChart(data.data.patients);
+                        }
+                        
+                        // Wait for amCharts to load before rendering gender chart with multiple retries
+                        let retryCount = 0;
+                        const maxRetries = 10;
+                        const checkAmCharts = setInterval(() => {
+                            if (typeof am4core !== 'undefined' && typeof am4charts !== 'undefined' && typeof am4themes_animated !== 'undefined') {
+                                clearInterval(checkAmCharts);
+                                renderGenderPieChart(data.data.gender);
+                            } else {
+                                retryCount++;
+                                if (retryCount >= maxRetries) {
+                                    clearInterval(checkAmCharts);
+                                    console.error('amCharts library failed to load after multiple retries');
+                                }
+                            }
+                        }, 200);
+                        
+                        renderLiquidCircles(data.data.status);
                     } else {
                         console.error('Error loading charts data:', data.error);
                     }
@@ -2919,22 +3040,410 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         };
         
-        window.renderAppointmentsStats = function(statusData) {
-            const total = statusData.total_appointments || 0;
-            const completed = statusData.completed || 0;
-            const missed = statusData.missed || 0;
-            const ratio = statusData.completion_ratio || 0;
+        // New Patients Trend Chart function
+        window.renderNewPatientsTrendChart = function(patientsData) {
+            const ctx = document.getElementById('newPatientsTrendChart');
+            if (!ctx || !patientsData || patientsData.length === 0) return;
             
-            document.getElementById('statsTotal').textContent = total;
-            document.getElementById('statsCompleted').textContent = completed;
-            document.getElementById('statsMissed').textContent = missed;
-            document.getElementById('statsRatio').textContent = ratio + '%';
+            // Destroy existing chart if it exists
+            if (window.chartInstances.newPatientsTrendChart) {
+                window.chartInstances.newPatientsTrendChart.destroy();
+            }
+            
+            const isDark = document.documentElement.classList.contains('dark');
+            const themeColors = getCurrentThemeColors();
+            
+            const dates = patientsData.map(item => item.date);
+            const totalPatients = patientsData.map(item => parseInt(item.new_patients || 0));
+            const malePatients = patientsData.map(item => parseInt(item.male || 0));
+            const femalePatients = patientsData.map(item => parseInt(item.female || 0));
+            
+            // Use same options as appointmentsChart for consistent height
+            const chartOptions = getCommonOptions();
+            // Override legend position and colors for this specific chart
+            chartOptions.plugins.legend.position = 'top';
+            chartOptions.plugins.legend.labels.color = themeColors.text;
+            
+            window.chartInstances.newPatientsTrendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates.map(date => new Date(date).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric' 
+                    })),
+                    datasets: [
+                        {
+                            label: 'Total Patients',
+                            data: totalPatients,
+                            borderColor: themeColors.text, // Use theme text color for total
+                            backgroundColor: themeColors.text + '20',
+                            tension: 0.4,
+                            fill: false,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Male',
+                            data: malePatients,
+                            borderColor: '#1E90FF', // Dodgerblue
+                            backgroundColor: '#1E90FF' + '20',
+                            tension: 0.4,
+                            fill: false,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Female',
+                            data: femalePatients,
+                            borderColor: '#FF1493', // Hot pink
+                            backgroundColor: '#FF1493' + '20',
+                            tension: 0.4,
+                            fill: false,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: chartOptions
+            });
         };
+        
+        window.renderGenderPieChart = function(genderData) {
+            const chartDiv = document.getElementById('genderPieChart');
+            if (!chartDiv || !genderData) return;
+            
+            // Destroy existing chart if it exists
+            if (window.chartInstances.genderPieChart) {
+                window.chartInstances.genderPieChart.dispose();
+                window.chartInstances.genderPieChart = null;
+            }
+            
+            const totalMale = genderData.total_male || 0;
+            const totalFemale = genderData.total_female || 0;
+            
+            if (totalMale === 0 && totalFemale === 0) {
+                chartDiv.innerHTML = '<p class="text-muted text-center py-3">No data available</p>';
+                return;
+            }
+            
+            // Check if amCharts is loaded
+            if (typeof am4core === 'undefined' || typeof am4charts === 'undefined') {
+                console.error('amCharts library not loaded');
+                return;
+            }
+            
+            // Use animated theme if available
+            if (typeof am4themes_animated !== 'undefined') {
+                am4core.useTheme(am4themes_animated);
+            }
+            
+            // Create 3D Pie Chart
+            const chart = am4core.create("genderPieChart", am4charts.PieChart3D);
+            chart.hiddenState.properties.opacity = 0; // Initial fade-in
+            
+            // Set data
+            chart.data = [
+                {
+                    gender: "Male",
+                    count: totalMale
+                },
+                {
+                    gender: "Female",
+                    count: totalFemale
+                }
+            ];
+            
+            // Configure chart - smaller size
+            chart.innerRadius = am4core.percent(50);
+            chart.depth = 60;
+            chart.radius = am4core.percent(70); // Make chart smaller
+            
+            // Hide chart title/watermark
+            chart.logo.disabled = true;
+            chart.copyright = undefined;
+            
+            // Remove legend
+            chart.legend = new am4charts.Legend();
+            chart.legend.disabled = true;
+            
+            // Create series
+            const series = chart.series.push(new am4charts.PieSeries3D());
+            series.dataFields.value = "count";
+            series.dataFields.depthValue = "count";
+            series.dataFields.category = "gender";
+            series.slices.template.cornerRadius = 5;
+            series.colors.step = 3;
+            
+            // Set colors - hot pink for females, dodgerblue for males
+            const isDark = document.documentElement.classList.contains('dark');
+            const maleColor = am4core.color("#1E90FF"); // Dodgerblue
+            const femaleColor = am4core.color("#FF1493"); // Hot pink (#FF1493)
+            
+            series.colors.list = [
+                maleColor,
+                femaleColor
+            ];
+            
+            // Configure labels - black in light mode, white in dark mode
+            const labelColor = isDark ? "#ffffff" : "#000000";
+            series.labels.template.fill = am4core.color(labelColor);
+            series.labels.template.fontSize = 14;
+            series.labels.template.fontWeight = "bold";
+            
+            // Configure tooltips
+            series.tooltip.getFillFromObject = false;
+            series.tooltip.background.fill = am4core.color("#000000");
+            series.tooltip.background.fillOpacity = 0.9;
+            series.tooltip.label.fill = am4core.color("#ffffff");
+            series.tooltip.label.fontSize = 12;
+            
+            // Store chart instance
+            window.chartInstances.genderPieChart = chart;
+            
+            // Hide amCharts watermark/title SVG element
+            setTimeout(() => {
+                const svgTitle = chartDiv.querySelector('title');
+                if (svgTitle) {
+                    svgTitle.style.display = 'none';
+                    svgTitle.setAttribute('aria-hidden', 'true');
+                }
+                // Also hide any g elements with opacity="0.4" that contain the watermark
+                const watermarkElements = chartDiv.querySelectorAll('g[opacity="0.4"]');
+                watermarkElements.forEach(el => {
+                    const title = el.querySelector('title');
+                    if (title && title.textContent.includes('amCharts')) {
+                        el.style.display = 'none';
+                        el.setAttribute('aria-hidden', 'true');
+                    }
+                });
+            }, 100);
+        };
+        
+        window.renderLiquidCircles = function(statusData) {
+            if (!statusData) {
+                initFluidMeter('completed', 0);
+                initFluidMeter('missed', 0);
+                return;
+            }
+            
+            // Use completion_ratio and missed_ratio directly from API (same as reports.js)
+            // If ratios are not available, calculate from completed/missed and total
+            let completedPercent = 0;
+            let missedPercent = 0;
+            
+            if (statusData.completion_ratio !== undefined && statusData.completion_ratio !== null) {
+                completedPercent = Math.round(parseFloat(statusData.completion_ratio) || 0);
+            } else {
+                // Fallback: calculate from completed and total
+                const total = parseInt(statusData.total_appointments) || 0;
+                const completed = parseInt(statusData.completed) || 0;
+                if (total > 0) {
+                    completedPercent = Math.round((completed / total) * 100);
+                }
+            }
+            
+            if (statusData.missed_ratio !== undefined && statusData.missed_ratio !== null) {
+                missedPercent = Math.round(parseFloat(statusData.missed_ratio) || 0);
+            } else {
+                // Fallback: calculate from missed and total
+                const total = parseInt(statusData.total_appointments) || 0;
+                const missed = parseInt(statusData.missed) || 0;
+                if (total > 0) {
+                    missedPercent = Math.round((missed / total) * 100);
+                }
+            }
+            
+            // Initialize FluidMeter for both circles
+            initFluidMeter('completed', completedPercent);
+            initFluidMeter('missed', missedPercent);
+        };
+        
+        // FluidMeter implementation
+        function initFluidMeter(type, percentage) {
+            const canvasId = type === 'completed' ? 'completedFluidMeter' : 'missedFluidMeter';
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            
+            const isDark = document.documentElement.classList.contains('dark');
+            const size = 150; // Smaller size
+            const borderWidth = 15;
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const radius = (size - borderWidth * 2) / 2;
+            
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Colors based on type and theme
+            let backgroundColor, foregroundColor, foregroundFluidColor, backgroundFluidColor;
+            
+            if (type === 'completed') {
+                backgroundColor = isDark ? '#1e293b' : '#e2e2e2';
+                foregroundColor = isDark ? '#0f172a' : '#fafafa';
+                foregroundFluidColor = '#10b981'; // Green
+                backgroundFluidColor = '#34d399'; // Lighter green
+            } else {
+                backgroundColor = isDark ? '#1e293b' : '#e2e2e2';
+                foregroundColor = isDark ? '#0f172a' : '#fafafa';
+                foregroundFluidColor = '#ef4444'; // Red
+                backgroundFluidColor = '#f87171'; // Lighter red
+            }
+            
+            let animationFrame = 0;
+            let bubbles = [];
+            
+            // Create bubbles
+            for (let i = 0; i < 5; i++) {
+                bubbles.push({
+                    x: Math.random() * size,
+                    y: Math.random() * size,
+                    radius: Math.random() * 3 + 1,
+                    speed: Math.random() * 0.5 + 0.2
+                });
+            }
+            
+            function draw() {
+                ctx.clearRect(0, 0, size, size);
+                
+                // Draw background circle
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.fillStyle = backgroundColor;
+                ctx.fill();
+                ctx.strokeStyle = foregroundColor;
+                ctx.lineWidth = borderWidth;
+                ctx.stroke();
+                
+                // Calculate fill height
+                const fillHeight = (percentage / 100) * (radius * 2);
+                const fillY = centerY + radius - fillHeight;
+                
+                if (percentage > 0) {
+                    // Create clipping region for fluid
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius - borderWidth / 2, 0, Math.PI * 2);
+                    ctx.clip();
+                    
+                    // Draw fluid layers with wave effect
+                    const time = animationFrame * 0.05;
+                    const waveAmplitude = 5;
+                    const waveFrequency = 0.02;
+                    
+                    // Background fluid layer
+                    ctx.fillStyle = backgroundFluidColor;
+                    ctx.beginPath();
+                    ctx.moveTo(0, fillY);
+                    for (let x = 0; x <= size; x += 2) {
+                        const y = fillY + Math.sin((x * waveFrequency) + (time * 150)) * waveAmplitude;
+                        ctx.lineTo(x, y);
+                    }
+                    ctx.lineTo(size, size);
+                    ctx.lineTo(0, size);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Foreground fluid layer
+                    ctx.fillStyle = foregroundFluidColor;
+                    ctx.beginPath();
+                    ctx.moveTo(0, fillY);
+                    for (let x = 0; x <= size; x += 2) {
+                        const y = fillY + Math.sin((x * waveFrequency) + (time * -100)) * (waveAmplitude * 0.8);
+                        ctx.lineTo(x, y);
+                    }
+                    ctx.lineTo(size, size);
+                    ctx.lineTo(0, size);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Draw bubbles
+                    bubbles.forEach(bubble => {
+                        bubble.y -= bubble.speed;
+                        if (bubble.y < fillY) {
+                            bubble.y = size;
+                            bubble.x = Math.random() * size;
+                        }
+                        
+                        if (bubble.y > fillY && bubble.y < size) {
+                            ctx.beginPath();
+                            ctx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
+                            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                            ctx.fill();
+                        }
+                    });
+                    
+                    ctx.restore();
+                }
+                
+                // Draw percentage text
+                ctx.fillStyle = isDark ? '#ffffff' : '#0f172a';
+                const fontSize = size * 0.25; // Responsive font size
+                ctx.font = `bold ${fontSize}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(percentage + '%', centerX, centerY);
+                
+                animationFrame++;
+                requestAnimationFrame(draw);
+            }
+            
+            draw();
+        }
+        
+        function updateLiquidCircle(type, percentage) {
+            const container = document.getElementById(type === 'completed' ? 'completedCircleContainer' : 'missedCircleContainer');
+            if (!container) {
+                console.warn(`Container not found for type: ${type}`);
+                return;
+            }
+            
+            // Ensure percentage is a valid number
+            percentage = Math.max(0, Math.min(100, parseFloat(percentage) || 0));
+            
+            // Determine wave class based on percentage
+            let waveClass = '_0';
+            if (percentage > 0 && percentage <= 25) {
+                waveClass = '_25';
+            } else if (percentage > 25 && percentage <= 50) {
+                waveClass = '_50';
+            } else if (percentage > 50 && percentage <= 75) {
+                waveClass = '_75';
+            } else if (percentage > 75) {
+                waveClass = '_100';
+            }
+            
+            // Update wave elements
+            const waves = container.querySelectorAll('.wave');
+            const waveBelow = container.querySelector('.wave-below');
+            const desc = container.querySelector('.desc');
+            
+            if (waves.length === 0) {
+                console.warn(`No wave elements found in container for type: ${type}`);
+                return;
+            }
+            
+            waves.forEach(wave => {
+                // Remove all wave classes and add the new one
+                wave.className = wave.className.replace(/\s*_\d+/g, '');
+                wave.className += ' ' + waveClass;
+            });
+            
+            if (waveBelow) {
+                // Remove all wave-below classes and add the new one
+                waveBelow.className = waveBelow.className.replace(/\s*_\d+/g, '');
+                waveBelow.className += ' ' + waveClass;
+            }
+            
+            if (desc) {
+                // Update desc class for text color
+                desc.className = desc.className.replace(/\s*_\d+/g, '');
+                desc.className += ' ' + waveClass;
+            }
+        }
 
         // Store chart instances for theme updates
         window.chartInstances = {
             appointmentsChart: null,
-            appointmentsPieChart: null
+            genderPieChart: null,
+            newPatientsTrendChart: null
         };
         
         window.renderAppointmentsChart = function(trendData) {
@@ -3038,8 +3547,30 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             // Reload charts data to redraw with new theme
-            if (window.chartInstances.appointmentsChart || window.chartInstances.appointmentsPieChart) {
+            if (window.chartInstances.appointmentsChart) {
                 loadChartsData();
+            }
+            
+            // Update New Patients Trend Chart theme
+            if (window.chartInstances.newPatientsTrendChart) {
+                loadChartsData(); // Reload to update theme
+            }
+            
+            // Update amCharts theme if needed
+            if (window.chartInstances.genderPieChart) {
+                const isDark = document.documentElement.classList.contains('dark');
+                const maleColor = am4core.color("#1E90FF"); // Dodgerblue
+                const femaleColor = am4core.color("#FF1493"); // Hot pink
+                const labelColor = isDark ? "#ffffff" : "#000000";
+                
+                if (window.chartInstances.genderPieChart.series && window.chartInstances.genderPieChart.series.length > 0) {
+                    const series = window.chartInstances.genderPieChart.series.getIndex(0);
+                    series.colors.list = [
+                        maleColor,
+                        femaleColor
+                    ];
+                    series.labels.template.fill = am4core.color(labelColor);
+                }
             }
         };
         
@@ -3260,3 +3791,725 @@ function initializeCustomSelects() {
         }
     });
 }
+
+// ============================================
+// Statistics Cards Charts
+// ============================================
+
+let statsChart2Instance = null;
+let statsChart3Instance = null;
+let statsChart4Instance = null;
+let statsChart5Instance = null;
+
+function initStatsCardsCharts() {
+    if (typeof Chart === 'undefined') {
+        setTimeout(initStatsCardsCharts, 100);
+        return;
+    }
+
+    const chartOptions = {
+        maintainAspectRatio: false,
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false,
+            },
+            tooltip: {
+                enabled: false,
+            }
+        },
+        elements: {
+            point: {
+                radius: 0
+            },
+        },
+        scales: {
+            x: {
+                grid: {
+                    display: false
+                },
+                display: false
+            },
+            y: {
+                grid: {
+                    display: false
+                },
+                display: false
+            }
+        }
+    };
+
+    // Load real data for Completed and Missed charts
+    loadStatsCardsData();
+}
+
+// Load real data for stats cards
+function loadStatsCardsData() {
+    fetch('/api/dashboard-charts')
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok && data.data && data.data.trend) {
+                const trendData = data.data.trend;
+                const statusData = data.data.status;
+                const patientsData = data.data.patients || [];
+                const prescriptionsData = data.data.prescriptions || [];
+                
+                // Chart 2 - Completed (Success) - Last 30 days
+                renderCompletedChart(trendData, statusData);
+                
+                // Chart 3 - Missed (Danger) - Last 30 days
+                renderMissedChart(trendData, statusData);
+                
+                // Chart 4 - New Patients (Warning) - Last 30 days
+                renderNewPatientsChart(patientsData);
+                
+                // Chart 5 - Total Prescriptions (Info) - Last 30 days
+                renderTotalPrescriptionsChart(prescriptionsData);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading stats cards data:', error);
+        });
+}
+
+function renderCompletedChart(trendData, statusData) {
+    const ctx2 = document.getElementById('statsChart2');
+    if (!ctx2) return;
+    
+    // Destroy existing chart
+    if (statsChart2Instance) {
+        statsChart2Instance.destroy();
+    }
+    
+    const isDark = document.documentElement.classList.contains('dark');
+    
+    // Extract completed data from trend
+    const completedData = trendData.map(item => item.completed || 0);
+    const dates = trendData.map(item => item.date);
+    
+    // Update completed value from status data
+    if (statusData && statusData.completed !== undefined) {
+        const completedValue = parseInt(statusData.completed) || 0;
+        const completedValueElement = document.querySelector('.stats-card-success .stats-card-value');
+        if (completedValueElement) {
+            completedValueElement.textContent = completedValue;
+        }
+    }
+    
+    // Calculate completion ratio from status data (same as reports.js)
+    if (statusData && statusData.completion_ratio !== undefined) {
+        const completionRatio = parseFloat(statusData.completion_ratio) || 0;
+        const changeElement = document.getElementById('completedChange');
+        if (changeElement) {
+            changeElement.textContent = `${completionRatio.toFixed(1)}%`;
+            changeElement.className = 'stats-card-change stats-card-change-positive';
+        }
+    }
+    
+    // Normalize data for chart display (0-10 range)
+    const maxValue = Math.max(...completedData, 1);
+    const normalizedData = completedData.map(val => (val / maxValue) * 10);
+    
+    statsChart2Instance = new Chart(ctx2, {
+        type: "line",
+        data: {
+            labels: dates,
+            datasets: [{
+                backgroundColor: isDark ? "rgba(74, 222, 128, 0.1)" : "rgba(16, 185, 129, 0.1)",
+                borderColor: isDark ? "rgba(74, 222, 128, 0.8)" : "rgba(16, 185, 129, 0.8)",
+                borderWidth: 2,
+                data: normalizedData,
+                tension: 0.4,
+                fill: true
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false,
+                },
+                tooltip: {
+                    enabled: false,
+                }
+            },
+            elements: {
+                point: {
+                    radius: 0
+                },
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    display: false
+                },
+                y: {
+                    grid: {
+                        display: false
+                    },
+                    display: false,
+                    min: 0,
+                    max: 10
+                }
+            }
+        }
+    });
+}
+
+function renderMissedChart(trendData, statusData) {
+    const ctx3 = document.getElementById('statsChart3');
+    if (!ctx3) return;
+    
+    // Destroy existing chart
+    if (statsChart3Instance) {
+        statsChart3Instance.destroy();
+    }
+    
+    const isDark = document.documentElement.classList.contains('dark');
+    
+    // Extract missed data from trend
+    const missedData = trendData.map(item => item.missed || 0);
+    const dates = trendData.map(item => item.date);
+    
+    // Calculate missed ratio from status data (same as reports.js)
+    if (statusData && statusData.missed_ratio !== undefined) {
+        const missedRatio = parseFloat(statusData.missed_ratio) || 0;
+        const changeElement = document.getElementById('missedChange');
+        if (changeElement) {
+            changeElement.textContent = `${missedRatio.toFixed(1)}%`;
+            changeElement.className = 'stats-card-change stats-card-change-negative';
+        }
+    }
+    
+    // Normalize data for chart display (0-10 range)
+    const maxValue = Math.max(...missedData, 1);
+    const normalizedData = missedData.map(val => (val / maxValue) * 10);
+    
+    statsChart3Instance = new Chart(ctx3, {
+        type: "line",
+        data: {
+            labels: dates,
+            datasets: [{
+                backgroundColor: isDark ? "rgba(251, 113, 133, 0.1)" : "rgba(239, 68, 68, 0.1)",
+                borderColor: isDark ? "rgba(251, 113, 133, 0.8)" : "rgba(239, 68, 68, 0.8)",
+                borderWidth: 2,
+                data: normalizedData,
+                tension: 0.4,
+                fill: true
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false,
+                },
+                tooltip: {
+                    enabled: false,
+                }
+            },
+            elements: {
+                point: {
+                    radius: 0
+                },
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    display: false
+                },
+                y: {
+                    grid: {
+                        display: false
+                    },
+                    display: false,
+                    min: 0,
+                    max: 10
+                }
+            }
+        }
+    });
+}
+
+function renderNewPatientsChart(patientsData) {
+    const ctx4 = document.getElementById('statsChart4');
+    if (!ctx4) return;
+    
+    // Destroy existing chart
+    if (statsChart4Instance) {
+        statsChart4Instance.destroy();
+    }
+    
+    const isDark = document.documentElement.classList.contains('dark');
+    
+    // Extract new patients data
+    const newPatientsData = patientsData.map(item => parseInt(item.new_patients || 0));
+    const dates = patientsData.map(item => item.date);
+    
+    // Calculate total and percentage change
+    const totalNewPatients = newPatientsData.reduce((a, b) => a + b, 0);
+    const valueElement = document.getElementById('newPatientsValue');
+    if (valueElement) {
+        valueElement.textContent = totalNewPatients;
+    }
+    
+    // Calculate percentage change (comparing last 7 days average vs previous 7 days average)
+    if (newPatientsData.length >= 14) {
+        const last7Days = newPatientsData.slice(-7);
+        const prev7Days = newPatientsData.slice(-14, -7);
+        const last7Avg = last7Days.reduce((a, b) => a + b, 0) / 7;
+        const prev7Avg = prev7Days.reduce((a, b) => a + b, 0) / 7;
+        let percentage = 0;
+        if (prev7Avg > 0) {
+            percentage = ((last7Avg - prev7Avg) / prev7Avg) * 100;
+        } else if (last7Avg > 0) {
+            percentage = 100;
+        }
+        const changeElement = document.getElementById('newPatientsChange');
+        if (changeElement) {
+            const sign = percentage >= 0 ? '▲' : '▼';
+            changeElement.textContent = `${sign} ${Math.abs(percentage).toFixed(1)}%`;
+            changeElement.className = percentage >= 0 ? 'stats-card-change stats-card-change-positive' : 'stats-card-change stats-card-change-negative';
+        }
+    } else if (newPatientsData.length >= 2) {
+        // Fallback: compare first vs last
+        const firstValue = newPatientsData[0] || 0;
+        const lastValue = newPatientsData[newPatientsData.length - 1] || 0;
+        let percentage = 0;
+        if (firstValue > 0) {
+            percentage = ((lastValue - firstValue) / firstValue) * 100;
+        } else if (lastValue > 0) {
+            percentage = 100;
+        }
+        const changeElement = document.getElementById('newPatientsChange');
+        if (changeElement) {
+            const sign = percentage >= 0 ? '▲' : '▼';
+            changeElement.textContent = `${sign} ${Math.abs(percentage).toFixed(1)}%`;
+            changeElement.className = percentage >= 0 ? 'stats-card-change stats-card-change-positive' : 'stats-card-change stats-card-change-negative';
+        }
+    }
+    
+    // Normalize data for chart display (0-10 range)
+    const maxValue = Math.max(...newPatientsData, 1);
+    const normalizedData = newPatientsData.map(val => (val / maxValue) * 10);
+    
+    statsChart4Instance = new Chart(ctx4, {
+        type: "line",
+        data: {
+            labels: dates,
+            datasets: [{
+                backgroundColor: isDark ? "rgba(251, 191, 36, 0.1)" : "rgba(245, 158, 11, 0.1)",
+                borderColor: isDark ? "rgba(251, 191, 36, 0.8)" : "rgba(245, 158, 11, 0.8)",
+                borderWidth: 2,
+                data: normalizedData,
+                tension: 0.4,
+                fill: true
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false,
+                },
+                tooltip: {
+                    enabled: false,
+                }
+            },
+            elements: {
+                point: {
+                    radius: 0
+                },
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    display: false
+                },
+                y: {
+                    grid: {
+                        display: false
+                    },
+                    display: false,
+                    min: 0,
+                    max: 10
+                }
+            }
+        }
+    });
+}
+
+function renderTotalPrescriptionsChart(prescriptionsData) {
+    const ctx5 = document.getElementById('statsChart5');
+    if (!ctx5) return;
+    
+    // Destroy existing chart
+    if (statsChart5Instance) {
+        statsChart5Instance.destroy();
+    }
+    
+    const isDark = document.documentElement.classList.contains('dark');
+    
+    // Extract total prescriptions data
+    const totalPrescriptionsData = prescriptionsData.map(item => parseInt(item.total_prescriptions || 0));
+    const dates = prescriptionsData.map(item => item.date);
+    
+    // Calculate total and percentage change
+    const totalPrescriptions = totalPrescriptionsData.reduce((a, b) => a + b, 0);
+    const valueElement = document.getElementById('totalPrescriptionsValue');
+    if (valueElement) {
+        valueElement.textContent = totalPrescriptions;
+    }
+    
+    // Calculate percentage change (comparing last 7 days average vs previous 7 days average)
+    if (totalPrescriptionsData.length >= 14) {
+        const last7Days = totalPrescriptionsData.slice(-7);
+        const prev7Days = totalPrescriptionsData.slice(-14, -7);
+        const last7Avg = last7Days.reduce((a, b) => a + b, 0) / 7;
+        const prev7Avg = prev7Days.reduce((a, b) => a + b, 0) / 7;
+        let percentage = 0;
+        if (prev7Avg > 0) {
+            percentage = ((last7Avg - prev7Avg) / prev7Avg) * 100;
+        } else if (last7Avg > 0) {
+            percentage = 100;
+        }
+        const changeElement = document.getElementById('totalPrescriptionsChange');
+        if (changeElement) {
+            const sign = percentage >= 0 ? '▲' : '▼';
+            changeElement.textContent = `${sign} ${Math.abs(percentage).toFixed(1)}%`;
+            changeElement.className = percentage >= 0 ? 'stats-card-change stats-card-change-positive' : 'stats-card-change stats-card-change-negative';
+        }
+    } else if (totalPrescriptionsData.length >= 2) {
+        // Fallback: compare first vs last
+        const firstValue = totalPrescriptionsData[0] || 0;
+        const lastValue = totalPrescriptionsData[totalPrescriptionsData.length - 1] || 0;
+        let percentage = 0;
+        if (firstValue > 0) {
+            percentage = ((lastValue - firstValue) / firstValue) * 100;
+        } else if (lastValue > 0) {
+            percentage = 100;
+        }
+        const changeElement = document.getElementById('totalPrescriptionsChange');
+        if (changeElement) {
+            const sign = percentage >= 0 ? '▲' : '▼';
+            changeElement.textContent = `${sign} ${Math.abs(percentage).toFixed(1)}%`;
+            changeElement.className = percentage >= 0 ? 'stats-card-change stats-card-change-positive' : 'stats-card-change stats-card-change-negative';
+        }
+    }
+    
+    // Normalize data for chart display (0-10 range)
+    const maxValue = Math.max(...totalPrescriptionsData, 1);
+    const normalizedData = totalPrescriptionsData.map(val => (val / maxValue) * 10);
+    
+    statsChart5Instance = new Chart(ctx5, {
+        type: "line",
+        data: {
+            labels: dates,
+            datasets: [{
+                backgroundColor: isDark ? "rgba(56, 189, 248, 0.1)" : "rgba(54, 185, 204, 0.1)",
+                borderColor: isDark ? "rgba(56, 189, 248, 0.8)" : "rgba(54, 185, 204, 0.8)",
+                borderWidth: 2,
+                data: normalizedData,
+                tension: 0.4,
+                fill: true
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false,
+                },
+                tooltip: {
+                    enabled: false,
+                }
+            },
+            elements: {
+                point: {
+                    radius: 0
+                },
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    display: false
+                },
+                y: {
+                    grid: {
+                        display: false
+                    },
+                    display: false,
+                    min: 0,
+                    max: 10
+                }
+            }
+        }
+    });
+}
+
+// Initialize stats cards charts on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initStatsCardsCharts();
+    
+    // Re-initialize charts on theme change
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.attributeName === 'class') {
+                // Destroy existing charts
+                if (statsChart2Instance) {
+                    statsChart2Instance.destroy();
+                    statsChart2Instance = null;
+                }
+                if (statsChart3Instance) {
+                    statsChart3Instance.destroy();
+                    statsChart3Instance = null;
+                }
+                if (statsChart4Instance) {
+                    statsChart4Instance.destroy();
+                    statsChart4Instance = null;
+                }
+                if (statsChart5Instance) {
+                    statsChart5Instance.destroy();
+                    statsChart5Instance = null;
+                }
+                // Re-initialize with new theme
+                setTimeout(initStatsCardsCharts, 100);
+            }
+        });
+    });
+    
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class']
+    });
+});
+
+// Hover effect with radial gradient - glowing effect following mouse
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.stats-card');
+    const wrapper = document.querySelector('.stats-cards-wrapper');
+
+    if (wrapper && cards.length > 0) {
+        wrapper.addEventListener('mousemove', function (event) {
+            cards.forEach((card) => {
+                const cardContent = card.querySelector('.stats-card-content');
+                if (!cardContent) return;
+                
+                const rect = cardContent.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+
+                // Get card type and corresponding color
+                let color = 'rgba(59, 248, 251, 0.3)';
+                if (card.classList.contains('stats-card-primary')) {
+                    color = 'rgba(14, 165, 233, 0.4)';
+                } else if (card.classList.contains('stats-card-success')) {
+                    color = 'rgba(16, 185, 129, 0.4)';
+                } else if (card.classList.contains('stats-card-danger')) {
+                    color = 'rgba(239, 68, 68, 0.4)';
+                } else if (card.classList.contains('stats-card-warning')) {
+                    color = 'rgba(245, 158, 11, 0.4)';
+                } else if (card.classList.contains('stats-card-info')) {
+                    color = 'rgba(54, 185, 204, 0.4)';
+                }
+
+                // Apply gradient to card-content, overlay on top of background-color
+                // Use multiple backgrounds: gradient on top, solid color below
+                cardContent.style.background = `radial-gradient(960px circle at ${x}px ${y}px, ${color}, transparent 15%), var(--card)`;
+            });
+        });
+        
+        // Reset background when mouse leaves wrapper
+        wrapper.addEventListener('mouseleave', function() {
+            cards.forEach((card) => {
+                const cardContent = card.querySelector('.stats-card-content');
+                if (cardContent) {
+                    cardContent.style.background = '';
+                }
+            });
+        });
+    }
+});
+
+// Initialize and update appointment progress bars - Global scope
+function initializeAppointmentProgressBars() {
+    const progressContainers = document.querySelectorAll('.appointment-progress-container');
+    
+    progressContainers.forEach(container => {
+        updateAppointmentProgressBar(container);
+    });
+    
+    // Update every second
+    if (progressContainers.length > 0) {
+        if (window.appointmentProgressInterval) {
+            clearInterval(window.appointmentProgressInterval);
+        }
+        window.appointmentProgressInterval = setInterval(() => {
+            progressContainers.forEach(container => {
+                updateAppointmentProgressBar(container);
+            });
+        }, 1000);
+    }
+}
+
+function updateAppointmentProgressBar(container) {
+        if (!container) return;
+        
+        const appointmentId = container.getAttribute('data-appointment-id');
+        const dateStr = container.getAttribute('data-date');
+        const startTimeStr = container.getAttribute('data-start-time');
+        const endTimeStr = container.getAttribute('data-end-time');
+        
+        if (!dateStr || !startTimeStr || !endTimeStr) {
+            console.warn('Missing appointment data:', { dateStr, startTimeStr, endTimeStr });
+            return;
+        }
+        
+        const now = new Date();
+        let appointmentDate;
+        
+        try {
+            appointmentDate = new Date(dateStr);
+            if (isNaN(appointmentDate.getTime())) {
+                console.warn('Invalid date:', dateStr);
+                return;
+            }
+        } catch (e) {
+            console.warn('Error parsing date:', dateStr, e);
+            return;
+        }
+        
+        // Parse time strings (handle both HH:MM:SS and HH:MM formats)
+        const startTimeParts = startTimeStr.split(':');
+        const endTimeParts = endTimeStr.split(':');
+        
+        const startHours = parseInt(startTimeParts[0]) || 0;
+        const startMinutes = parseInt(startTimeParts[1]) || 0;
+        const startSeconds = parseInt(startTimeParts[2]) || 0;
+        
+        const endHours = parseInt(endTimeParts[0]) || 0;
+        const endMinutes = parseInt(endTimeParts[1]) || 0;
+        const endSeconds = parseInt(endTimeParts[2]) || 0;
+        
+        const startDateTime = new Date(appointmentDate);
+        startDateTime.setHours(startHours, startMinutes, startSeconds, 0);
+        
+        const endDateTime = new Date(appointmentDate);
+        endDateTime.setHours(endHours, endMinutes, endSeconds, 0);
+        
+        const appointmentDuration = 15 * 60; // 15 minutes in seconds (900 seconds)
+        const progressFill = container.querySelector('.glass-progress-fill');
+        const progressText = container.querySelector('.glass-progress-text');
+        
+        if (!progressFill || !progressText) {
+            console.warn('Progress bar elements not found in container');
+            return;
+        }
+        
+        const nowTime = now.getTime();
+        const startTime = startDateTime.getTime();
+        const endTime = endDateTime.getTime();
+        
+        let progress = 0;
+        let timeText = '00:00';
+        let progressType = 'before'; // 'before', 'during', 'overdue'
+        let prefixText = '';
+        
+        if (nowTime < startTime) {
+            // Before appointment: show countdown to start
+            progressType = 'before';
+            prefixText = 'Remaining: ';
+            const secondsUntilStart = Math.floor((startTime - nowTime) / 1000);
+            const remainingSeconds = Math.max(0, secondsUntilStart);
+            
+            // Format time text (show hours if more than 60 minutes)
+            let timeValue = '';
+            if (remainingSeconds >= 3600) {
+                const hours = Math.floor(remainingSeconds / 3600);
+                const minutes = Math.floor((remainingSeconds % 3600) / 60);
+                const seconds = remainingSeconds % 60;
+                timeValue = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            } else {
+                const minutes = Math.floor(remainingSeconds / 60);
+                const seconds = remainingSeconds % 60;
+                timeValue = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }
+            timeText = prefixText + timeValue;
+            
+            // Progress bar fills as we get closer to start time
+            // Use a reasonable max time (e.g., 2 hours = 7200 seconds)
+            const maxCountdownTime = 2 * 60 * 60; // 2 hours
+            const adjustedTotal = Math.min(secondsUntilStart, maxCountdownTime);
+            progress = adjustedTotal > 0 ? ((maxCountdownTime - adjustedTotal) / maxCountdownTime) * 100 : 100;
+            progress = Math.min(100, Math.max(0, progress));
+        } else if (nowTime >= startTime && nowTime <= endTime) {
+            // During appointment: show elapsed time
+            progressType = 'during';
+            prefixText = 'Progress: ';
+            const elapsedSeconds = Math.floor((nowTime - startTime) / 1000);
+            progress = (elapsedSeconds / appointmentDuration) * 100;
+            progress = Math.min(100, Math.max(0, progress));
+            
+            // Format time text (show hours if more than 60 minutes)
+            let timeValue = '';
+            if (elapsedSeconds >= 3600) {
+                const hours = Math.floor(elapsedSeconds / 3600);
+                const minutes = Math.floor((elapsedSeconds % 3600) / 60);
+                const seconds = elapsedSeconds % 60;
+                timeValue = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            } else {
+                const minutes = Math.floor(elapsedSeconds / 60);
+                const seconds = elapsedSeconds % 60;
+                timeValue = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }
+            timeText = prefixText + timeValue;
+        } else {
+            // After appointment: show overdue time
+            progressType = 'overdue';
+            prefixText = 'Overdue since: ';
+            const overdueSeconds = Math.floor((nowTime - endTime) / 1000);
+            progress = 100;
+            
+            // Format time text (show hours if more than 60 minutes)
+            let timeValue = '';
+            if (overdueSeconds >= 3600) {
+                const hours = Math.floor(overdueSeconds / 3600);
+                const minutes = Math.floor((overdueSeconds % 3600) / 60);
+                const seconds = overdueSeconds % 60;
+                timeValue = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            } else {
+                const minutes = Math.floor(overdueSeconds / 60);
+                const seconds = overdueSeconds % 60;
+                timeValue = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }
+            timeText = prefixText + timeValue;
+        }
+        
+        // Update progress bar
+        progressFill.style.width = `${progress}%`;
+        
+        // Update colors based on type
+        progressFill.className = 'glass-progress-fill';
+        if (progressType === 'before') {
+            progressFill.classList.add('glass-progress-cyan');
+        } else if (progressType === 'during') {
+            progressFill.classList.add('glass-progress-green');
+        } else {
+            progressFill.classList.add('glass-progress-red');
+        }
+        
+        // Update text
+        progressText.textContent = timeText;
+    }

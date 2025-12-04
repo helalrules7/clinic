@@ -29,6 +29,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const appointmentId = urlParams.get('appointment_id');
     const shouldCreate = urlParams.get('create') === 'true';
     
+    // Check if we need to open new topic modal from dashboard
+    if (urlParams.get('openModal') === 'newTopic') {
+        setTimeout(() => {
+            if (typeof showNewTopicModal === 'function') {
+                showNewTopicModal();
+            }
+            // Clean URL
+            const newUrl = window.location.pathname + window.location.search.replace(/[?&]openModal=newTopic/, '').replace(/^&/, '?');
+            window.history.replaceState({}, '', newUrl);
+        }, 500);
+    }
+    
     // Store for later use
     window.autoTagPatientId = patientId;
     window.autoTagAppointmentId = appointmentId;
