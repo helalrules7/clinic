@@ -307,6 +307,8 @@
                                         if (!dock.classList.contains('mobile-minimized') && !dock.classList.contains('mobile-expanded')) {
                                             dock.classList.add('mobile-minimized');
                                         }
+                                        // Remove active state if present
+                                        dock.classList.remove('active');
                                     } else {
                                         dock.style.display = 'none';
                                     }
@@ -314,7 +316,7 @@
                                     // Desktop: check desktop_dock_enabled
                                     dock.style.display = dockEnabled !== false ? '' : 'none';
                                     // Remove mobile classes on desktop
-                                    dock.classList.remove('mobile-minimized', 'mobile-expanded');
+                                    dock.classList.remove('mobile-minimized', 'mobile-expanded', 'active');
                                 }
                             }
                             
@@ -1462,13 +1464,13 @@
                 // On mobile, dock is minimized by default
                 if (isMobile()) {
                     dock.classList.add('mobile-minimized');
-                    dock.classList.remove('mobile-expanded', 'autohide');
+                    dock.classList.remove('mobile-expanded', 'autohide', 'active', 'scrolled');
                     // Hide auto-hide button on mobile
                     if (autohideBtn) {
                         autohideBtn.style.display = 'none';
                     }
                     
-                    // Add click handler to dock container when minimized
+                    // Add click handler to dock container when minimized (C-Shape Radial Menu Toggle)
                     const dockContainer = dock.querySelector('.dock-container');
                     if (dockContainer) {
                         // Remove existing listeners by cloning
@@ -1476,29 +1478,25 @@
                         dockContainer.parentNode.replaceChild(newContainer, dockContainer);
                         
                         newContainer.addEventListener('click', function(e) {
-                            // Don't trigger if clicking on a dock item
+                            // Don't trigger if clicking on a dock item (radial menu item)
                             if (e.target.closest('.dock-item')) {
                                 return;
                             }
                             
-                            // Toggle expanded/minimized
-                            if (dock.classList.contains('mobile-minimized')) {
-                                dock.classList.remove('mobile-minimized');
-                                dock.classList.add('mobile-expanded');
-                            } else {
-                                dock.classList.remove('mobile-expanded');
-                                dock.classList.add('mobile-minimized');
-                            }
+                            // Toggle active state for C-Shape radial menu
+                            dock.classList.toggle('active');
+                            
+                            // Update scrolled state when toggling
+                            updateMobileDockScrollState();
                         });
                     }
                     
-                    // Close dock when clicking on a dock item
+                    // Close dock when clicking on a dock item (radial menu item)
                     const dockItems = dock.querySelectorAll('.dock-item');
                     dockItems.forEach(item => {
                         item.addEventListener('click', function() {
                             setTimeout(() => {
-                                dock.classList.remove('mobile-expanded');
-                                dock.classList.add('mobile-minimized');
+                                dock.classList.remove('active');
                             }, 300);
                         });
                     });
@@ -1508,13 +1506,65 @@
                         minimizeBtn.addEventListener('click', function(e) {
                             e.preventDefault();
                             e.stopPropagation();
-                            dock.classList.remove('mobile-expanded');
-                            dock.classList.add('mobile-minimized');
+                            dock.classList.remove('active');
                         });
                     }
+                    
+                    // Close radial menu when clicking outside
+                    document.addEventListener('click', function(e) {
+                        if (dock.classList.contains('active') && 
+                            !dock.contains(e.target) && 
+                            !e.target.closest('.quick-access-dock')) {
+                            dock.classList.remove('active');
+                        }
+                    });
+                    
+                    // Handle scroll to show/hide additional items (Discussions and Notes)
+                    // Show them only when backToTop button is visible
+                    function updateMobileDockScrollState() {
+                        if (!dock.classList.contains('mobile-minimized') || !dock.classList.contains('active')) {
+                            return;
+                        }
+                        
+                        const scrollToTopBtn = document.getElementById('scrollToTop');
+                        // Show additional items when backToTop button is visible
+                        if (scrollToTopBtn && scrollToTopBtn.classList.contains('show')) {
+                            dock.classList.add('backtotop-visible');
+                        } else {
+                            dock.classList.remove('backtotop-visible');
+                        }
+                    }
+                    
+                    // Update on scroll
+                    let scrollTimeout;
+                    window.addEventListener('scroll', function() {
+                        clearTimeout(scrollTimeout);
+                        scrollTimeout = setTimeout(updateMobileDockScrollState, 50);
+                    }, { passive: true });
+                    
+                    // Also update when backToTop button visibility changes
+                    const scrollToTopBtn = document.getElementById('scrollToTop');
+                    if (scrollToTopBtn) {
+                        // Use MutationObserver to watch for class changes on scrollToTop button
+                        const observer = new MutationObserver(function(mutations) {
+                            mutations.forEach(function(mutation) {
+                                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                                    updateMobileDockScrollState();
+                                }
+                            });
+                        });
+                        
+                        observer.observe(scrollToTopBtn, {
+                            attributes: true,
+                            attributeFilter: ['class']
+                        });
+                    }
+                    
+                    // Initial check
+                    updateMobileDockScrollState();
                 } else {
                     // Desktop: remove mobile classes
-                    dock.classList.remove('mobile-minimized', 'mobile-expanded');
+                    dock.classList.remove('mobile-minimized', 'mobile-expanded', 'active', 'scrolled');
                 }
             }
             

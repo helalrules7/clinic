@@ -892,29 +892,33 @@
     }
 }
 
-/* Glass Effect Quick Actions Buttons - Unified Style */
+/* iOS Control Center Style - Quick Actions Buttons */
 .glass-action-btn {
     position: relative;
     padding: 1rem 0.5rem;
-    border-radius: 16px;
+    border-radius: 14px;
     text-decoration: none;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border: 0.5px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 
+        0 8px 32px 0 rgba(0, 0, 0, 0.12),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+        0 1px 2px 0 rgba(0, 0, 0, 0.1);
     overflow: hidden;
     min-height: 80px;
     width: 100%;
-    background: rgba(255, 255, 255, 0.05);
-    border: none;
+    background: rgba(255, 255, 255, 0.08);
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    -webkit-tap-highlight-color: transparent;
 }
 
+/* iOS-style background gradient overlay */
 .glass-action-btn::before {
     content: '';
     position: absolute;
@@ -922,82 +926,121 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    z-index: 0;
-}
-
-.glass-action-btn:hover::before {
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.15) 0%, 
+        rgba(255, 255, 255, 0.08) 50%, 
+        rgba(255, 255, 255, 0.05) 100%);
     opacity: 1;
+    transition: opacity 0.2s ease;
+    z-index: 0;
+    pointer-events: none;
 }
 
+/* Press/Active state */
+.glass-action-btn:active {
+    transform: scale(0.96);
+    opacity: 0.8;
+}
+
+.glass-action-btn:active::before {
+    opacity: 0.5;
+}
+
+/* Icon styling - always white for iOS look */
 .glass-action-btn i {
     font-size: 1.5rem;
     color: #ffffff;
     z-index: 1;
     position: relative;
-    transition: transform 0.3s ease;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
 }
 
+/* Text styling - always white for iOS look */
 .glass-action-btn span {
     font-size: 0.7rem;
     font-weight: 600;
     color: #ffffff;
     z-index: 1;
     position: relative;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     text-align: center;
     margin-top: 0.25rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
+/* Hover state - subtle lift */
 .glass-action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.2), 0 6px 8px -4px rgba(0, 0, 0, 0.1);
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 
+        0 12px 40px 0 rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.25),
+        0 2px 4px 0 rgba(0, 0, 0, 0.12);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.glass-action-btn:hover::before {
+    opacity: 1.2;
 }
 
 .glass-action-btn:hover i {
-    transform: scale(1.05);
+    transform: scale(1.08);
 }
 
-/* Light Mode Styles */
+/* Light Mode - Darker background for contrast */
 .glass-action-btn {
-    background: rgba(0, 0, 0, 0.05);
-    border-color: rgba(0, 0, 0, 0.1);
+    background: rgb(255, 255, 255);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.glass-action-btn::before {
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.2) 0%, 
+        rgba(255, 255, 255, 0.1) 50%, 
+        rgba(255, 255, 255, 0.05) 100%);
 }
 
 .glass-action-btn i,
 .glass-action-btn span {
-    color: var(--text);
+    color: #000000;
 }
 
 .glass-action-btn:hover {
-    background: rgba(0, 0, 0, 0.08);
-    border-color: rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Dark Mode Styles */
+/* Dark Mode - Enhanced iOS Control Center style */
 .dark .glass-action-btn {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 
+        0 8px 32px 0 rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
+        0 1px 2px 0 rgba(0, 0, 0, 0.2);
 }
 
 .dark .glass-action-btn::before {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.18) 0%, 
+        rgba(255, 255, 255, 0.1) 50%, 
+        rgba(255, 255, 255, 0.06) 100%);
 }
 
 .dark .glass-action-btn i,
 .dark .glass-action-btn span {
     color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .dark .glass-action-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.25);
-    box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.5), 0 6px 8px -4px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 12px 40px 0 rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+        0 2px 4px 0 rgba(0, 0, 0, 0.3);
 }
 
 /* Upcoming Appointments - Hide button text on mobile */

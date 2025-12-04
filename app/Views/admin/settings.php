@@ -561,38 +561,6 @@
                             </div>
                         </div>
 
-                        <!-- Notification Settings -->
-                        <div class="settings-section">
-                            <h5><i class="fas fa-bell me-2"></i>Notification Settings</h5>
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="setting-item">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="email_notifications" name="email_notifications" 
-                                                   <?= $settings['email_notifications'] ? 'checked' : '' ?>>
-                                            <label class="form-check-label" for="email_notifications">
-                                                Email Notifications
-                                            </label>
-                                        </div>
-                                        <div class="form-text">Send notifications via email</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="setting-item">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="sms_notifications" name="sms_notifications" 
-                                                   <?= $settings['sms_notifications'] ? 'checked' : '' ?>>
-                                            <label class="form-check-label" for="sms_notifications">
-                                                SMS Notifications
-                                            </label>
-                                        </div>
-                                        <div class="form-text">Send notifications via SMS</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- Maintenance Settings -->
                         <div class="settings-section">
                             <h5><i class="fas fa-tools me-2"></i>Maintenance Settings</h5>

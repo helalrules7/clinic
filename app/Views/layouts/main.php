@@ -246,27 +246,15 @@
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="/admin/reports" class="nav-link <?= $this->isActiveRoute('/admin/reports') ? 'active' : '' ?>">
-                        <i class="bi bi-graph-up"></i>
-                        Reports
+                    <a href="/admin/backup" class="nav-link <?= $this->isActiveRoute('/admin/backup') ? 'active' : '' ?>">
+                        <i class="bi bi-database"></i>
+                        Backup
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="/doctor/media" class="nav-link <?= $this->isActiveRoute('/doctor/media') ? 'active' : '' ?>">
+                    <a href="/admin/media" class="nav-link <?= $this->isActiveRoute('/admin/media') ? 'active' : '' ?>">
                         <i class="bi bi-images"></i>
                         Media
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="/doctor/glasses" class="nav-link <?= $this->isActiveRoute('/doctor/glasses') ? 'active' : '' ?>">
-                        <i class="bi bi-eyeglasses"></i>
-                        Glasses Prescriptions
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="/doctor/medications" class="nav-link <?= $this->isActiveRoute('/doctor/medications') ? 'active' : '' ?>">
-                        <i class="bi bi-capsule"></i>
-                        Prescriptions
                     </a>
                 </div>
                 <div class="nav-item">
@@ -306,9 +294,7 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="sidebar-footer-text">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v6.1
-                        <a href="/whats-new" class="text-decoration-none ms-2 whats-new-link">What's New?</a>
-                        <a href="/whats-new/full-features" class="text-decoration-none ms-2 sidebar-footer-link">Full Features</a>
+                        HClinic / Roaya Clinic v7.0
                     </div>
                     <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none sidebar-footer-link">Ahmed Helal</a></div>
                 </small>

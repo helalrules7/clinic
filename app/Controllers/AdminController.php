@@ -327,6 +327,25 @@ class AdminController
         ]);
     }
     
+    public function media()
+    {
+        $user = $this->auth->user();
+        
+        if (!$user || $user['role'] !== 'admin') {
+            header('Location: /admin/dashboard');
+            exit;
+        }
+        
+        $content = $this->view->render('admin/media', []);
+        
+        echo $this->view->render('layouts/main', [
+            'title' => 'Media Management - Admin',
+            'pageTitle' => 'Media Management',
+            'pageSubtitle' => 'Manage and backup media files',
+            'content' => $content
+        ]);
+    }
+    
     /**
      * View As functionality - Switch to different role view
      */
@@ -955,6 +974,991 @@ class AdminController
         } catch (\Exception $e) {
             throw $e;
         }
+    }
+    
+    /**
+     * API: Get all media files
+     */
+    public function apiMediaList()
+    {
+        header('Content-Type: application/json');
+        
+        try {
+            $storagePath = __DIR__ . '/../../storage/uploads/';
+            $mediaFiles = [];
+            
+            // Scan all subdirectories in storage/uploads
+            $directories = ['attachments', 'forum/attachments', 'photos', 'documents'];
+            
+            foreach ($directories as $dir) {
+                $fullPath = $storagePath . $dir;
+                if (!is_dir($fullPath)) continue;
+                
+                $files = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($fullPath, \RecursiveDirectoryIterator::SKIP_DOTS),
+                    \RecursiveIteratorIterator::SELF_FIRST
+                );
+                
+                foreach ($files as $file) {
+                    if ($file->isFile()) {
+                        $relativePath = str_replace($storagePath, '', $file->getPathname());
+                        $mediaFiles[] = [
+                            'name' => $file->getFilename(),
+                            'path' => $relativePath,
+                            'full_path' => $file->getPathname(),
+                            'size' => $file->getSize(),
+                            'mime_type' => mime_content_type($file->getPathname()),
+                            'url' => '/storage/uploads/' . $relativePath,
+                            'modified' => date('Y-m-d H:i:s', $file->getMTime())
+                        ];
+                    }
+                }
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'data' => $mediaFiles
+            ]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * API: Delete selected media files
+     */
+    public function apiMediaDelete()
+    {
+        header('Content-Type: application/json');
+        
+        $user = $this->auth->user();
+        if (!$user || $user['role'] !== 'admin') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Forbidden']);
+            return;
+        }
+        
+        $input = json_decode(file_get_contents('php://input'), true);
+        $files = $input['files'] ?? [];
+        
+        if (empty($files)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'No files specified']);
+            return;
+        }
+        
+        $deleted = 0;
+        $errors = [];
+        $storagePath = __DIR__ . '/../../storage/uploads/';
+        
+        foreach ($files as $filePath) {
+            $fullPath = $storagePath . $filePath;
+            
+            // Security: Ensure file is within storage/uploads directory
+            $realPath = realpath($fullPath);
+            $realStoragePath = realpath($storagePath);
+            
+            if ($realPath && $realStoragePath && strpos($realPath, $realStoragePath) === 0) {
+                if (file_exists($fullPath) && unlink($fullPath)) {
+                    $deleted++;
+                } else {
+                    $errors[] = $filePath;
+                }
+            } else {
+                $errors[] = $filePath . ' (invalid path)';
+            }
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'deleted' => $deleted,
+            'errors' => $errors
+        ]);
+    }
+    
+    /**
+     * API: Delete all media files
+     */
+    public function apiMediaDeleteAll()
+    {
+        header('Content-Type: application/json');
+        
+        $user = $this->auth->user();
+        if (!$user || $user['role'] !== 'admin') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Forbidden']);
+            return;
+        }
+        
+        $storagePath = __DIR__ . '/../../storage/uploads/';
+        $deleted = 0;
+        
+        $directories = ['attachments', 'forum/attachments', 'photos', 'documents'];
+        
+        foreach ($directories as $dir) {
+            $fullPath = $storagePath . $dir;
+            if (!is_dir($fullPath)) continue;
+            
+            $files = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($fullPath, \RecursiveDirectoryIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::CHILD_FIRST
+            );
+            
+            foreach ($files as $file) {
+                if ($file->isFile()) {
+                    if (unlink($file->getPathname())) {
+                        $deleted++;
+                    }
+                }
+            }
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'deleted' => $deleted
+        ]);
+    }
+    
+    /**
+     * API: Create backup of all media files
+     */
+    public function apiMediaBackup()
+    {
+        header('Content-Type: application/json');
+        
+        $user = $this->auth->user();
+        if (!$user || $user['role'] !== 'admin') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Forbidden']);
+            return;
+        }
+        
+        try {
+            $storagePath = __DIR__ . '/../../storage/uploads/';
+            $backupDir = __DIR__ . '/../../storage/backups/';
+            
+            if (!is_dir($backupDir)) {
+                mkdir($backupDir, 0755, true);
+            }
+            
+            $backupName = 'media_backup_' . date('Y-m-d_His') . '.zip';
+            $backupPath = $backupDir . $backupName;
+            
+            $zip = new \ZipArchive();
+            if ($zip->open($backupPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== TRUE) {
+                throw new \Exception('Cannot create backup file');
+            }
+            
+            $directories = ['attachments', 'forum/attachments', 'photos', 'documents'];
+            $fileCount = 0;
+            
+            foreach ($directories as $dir) {
+                $fullPath = $storagePath . $dir;
+                if (!is_dir($fullPath)) continue;
+                
+                $files = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($fullPath, \RecursiveDirectoryIterator::SKIP_DOTS),
+                    \RecursiveIteratorIterator::SELF_FIRST
+                );
+                
+                foreach ($files as $file) {
+                    if ($file->isFile()) {
+                        $relativePath = str_replace($storagePath, '', $file->getPathname());
+                        $zip->addFile($file->getPathname(), $relativePath);
+                        $fileCount++;
+                    }
+                }
+            }
+            
+            $zip->close();
+            
+            echo json_encode([
+                'success' => true,
+                'backup' => $backupName,
+                'file_count' => $fileCount,
+                'size' => filesize($backupPath)
+            ]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * API: Get list of backups
+     */
+    public function apiMediaBackups()
+    {
+        header('Content-Type: application/json');
+        
+        try {
+            $backupDir = __DIR__ . '/../../storage/backups/';
+            
+            // Create directory if it doesn't exist
+            if (!is_dir($backupDir)) {
+                mkdir($backupDir, 0755, true);
+                echo json_encode(['success' => true, 'data' => []]);
+                return;
+            }
+            
+            $backups = [];
+            $pattern = $backupDir . 'media_backup_*.zip';
+            $files = glob($pattern);
+            
+            // Also check for files without pattern matching
+            if (empty($files)) {
+                // Try to list all files in directory
+                $allFiles = scandir($backupDir);
+                foreach ($allFiles as $file) {
+                    if ($file !== '.' && $file !== '..' && 
+                        pathinfo($file, PATHINFO_EXTENSION) === 'zip' &&
+                        strpos($file, 'media_backup_') === 0) {
+                        $fullPath = $backupDir . $file;
+                        if (is_file($fullPath)) {
+                            $files[] = $fullPath;
+                        }
+                    }
+                }
+            }
+            
+            foreach ($files as $file) {
+                if (is_file($file)) {
+                    $backups[] = [
+                        'name' => basename($file),
+                        'size' => filesize($file),
+                        'date' => date('Y-m-d H:i:s', filemtime($file)),
+                        'download_url' => '/api/admin/media/backup-download/' . urlencode(basename($file))
+                    ];
+                }
+            }
+            
+            // Sort by date descending
+            usort($backups, function($a, $b) {
+                return strtotime($b['date']) - strtotime($a['date']);
+            });
+            
+            echo json_encode([
+                'success' => true,
+                'data' => $backups
+            ]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * API: Restore from backup
+     */
+    public function apiMediaRestore()
+    {
+        header('Content-Type: application/json');
+        
+        $user = $this->auth->user();
+        if (!$user || $user['role'] !== 'admin') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Forbidden']);
+            return;
+        }
+        
+        $input = json_decode(file_get_contents('php://input'), true);
+        $backupName = $input['backup'] ?? '';
+        
+        if (empty($backupName)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Backup name required']);
+            return;
+        }
+        
+        try {
+            $backupDir = __DIR__ . '/../../storage/backups/';
+            $backupPath = $backupDir . basename($backupName);
+            
+            // Security check
+            if (!file_exists($backupPath) || !preg_match('/^media_backup_.*\.zip$/', basename($backupName))) {
+                throw new \Exception('Invalid backup file');
+            }
+            
+            $storagePath = __DIR__ . '/../../storage/uploads/';
+            $zip = new \ZipArchive();
+            
+            if ($zip->open($backupPath) !== TRUE) {
+                throw new \Exception('Cannot open backup file');
+            }
+            
+            // Extract all files
+            $zip->extractTo($storagePath);
+            $zip->close();
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Backup restored successfully'
+            ]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * API: Restore from uploaded backup file
+     */
+    public function apiMediaRestoreUpload()
+    {
+        header('Content-Type: application/json');
+        
+        $user = $this->auth->user();
+        if (!$user || $user['role'] !== 'admin') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Forbidden']);
+            return;
+        }
+        
+        if (!isset($_FILES['backup']) || $_FILES['backup']['error'] !== UPLOAD_ERR_OK) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'No file uploaded']);
+            return;
+        }
+        
+        $file = $_FILES['backup'];
+        
+        // Validate file type
+        if (pathinfo($file['name'], PATHINFO_EXTENSION) !== 'zip') {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Invalid file type. Only ZIP files allowed']);
+            return;
+        }
+        
+        try {
+            $storagePath = __DIR__ . '/../../storage/uploads/';
+            $zip = new \ZipArchive();
+            
+            if ($zip->open($file['tmp_name']) !== TRUE) {
+                throw new \Exception('Cannot open backup file');
+            }
+            
+            // Extract all files
+            $zip->extractTo($storagePath);
+            $zip->close();
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Backup restored successfully'
+            ]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * API: Download backup file
+     */
+    public function apiMediaBackupDownload($backupName)
+    {
+        $user = $this->auth->user();
+        if (!$user || $user['role'] !== 'admin') {
+            http_response_code(403);
+            echo 'Forbidden';
+            return;
+        }
+        
+        $backupDir = __DIR__ . '/../../storage/backups/';
+        $backupPath = $backupDir . basename($backupName);
+        
+        // Security check
+        if (!file_exists($backupPath) || !preg_match('/^media_backup_.*\.zip$/', basename($backupName))) {
+            http_response_code(404);
+            echo 'Backup not found';
+            return;
+        }
+        
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment; filename="' . basename($backupName) . '"');
+        header('Content-Length: ' . filesize($backupPath));
+        readfile($backupPath);
+        exit;
+    }
+    
+    /**
+     * Database Backup & Restore Page
+     */
+    public function backup()
+    {
+        $user = $this->auth->user();
+        
+        if (!$user || $user['role'] !== 'admin') {
+            header('Location: /admin/dashboard');
+            exit;
+        }
+        
+        $content = $this->view->render('admin/backup', []);
+        
+        echo $this->view->render('layouts/main', [
+            'title' => 'Database Backup & Restore - Admin',
+            'pageTitle' => 'Database Backup & Restore',
+            'pageSubtitle' => 'Backup and restore database',
+            'content' => $content
+        ]);
+    }
+    
+    /**
+     * API: Create database backup
+     */
+    public function apiBackupDatabase()
+    {
+        header('Content-Type: application/json');
+        
+        $user = $this->auth->user();
+        if (!$user || $user['role'] !== 'admin') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Forbidden']);
+            return;
+        }
+        
+        try {
+            $backupDir = __DIR__ . '/../../storage/backups/database/';
+            if (!is_dir($backupDir)) {
+                mkdir($backupDir, 0755, true);
+            }
+            
+            $dbConfig = Database::getInstance();
+            $pdo = $dbConfig->getConnection();
+            
+            // Get database name from connection
+            $dbName = $_ENV['DB_NAME'] ?? 'hclinic_roaya';
+            $dbUser = $_ENV['DB_USER'] ?? 'hclinic_roaya';
+            $dbPass = $_ENV['DB_PASS'] ?? 'Carmen@1230';
+            $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
+            
+            $backupName = 'db_backup_' . date('Y-m-d_His') . '.sql';
+            $backupPath = $backupDir . $backupName;
+            
+            // Use mysqldump to create backup
+            $command = sprintf(
+                'mysqldump -h %s -u %s -p%s %s > %s 2>&1',
+                escapeshellarg($dbHost),
+                escapeshellarg($dbUser),
+                escapeshellarg($dbPass),
+                escapeshellarg($dbName),
+                escapeshellarg($backupPath)
+            );
+            
+            exec($command, $output, $returnVar);
+            
+            if ($returnVar !== 0 || !file_exists($backupPath)) {
+                throw new \Exception('Failed to create database backup: ' . implode("\n", $output));
+            }
+            
+            // Compress the backup
+            $zipPath = $backupDir . str_replace('.sql', '.zip', $backupName);
+            $zip = new \ZipArchive();
+            if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+                $zip->addFile($backupPath, $backupName);
+                $zip->close();
+                unlink($backupPath); // Remove uncompressed file
+                $finalPath = $zipPath;
+                $finalName = basename($zipPath);
+            } else {
+                $finalPath = $backupPath;
+                $finalName = $backupName;
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'backup' => $finalName,
+                'size' => filesize($finalPath)
+            ]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * API: Create full backup (database + media)
+     */
+    public function apiBackupFull()
+    {
+        header('Content-Type: application/json');
+        
+        $user = $this->auth->user();
+        if (!$user || $user['role'] !== 'admin') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Forbidden']);
+            return;
+        }
+        
+        try {
+            $backupDir = __DIR__ . '/../../storage/backups/full/';
+            if (!is_dir($backupDir)) {
+                mkdir($backupDir, 0755, true);
+            }
+            
+            $backupName = 'full_backup_' . date('Y-m-d_His') . '.zip';
+            $backupPath = $backupDir . $backupName;
+            
+            $zip = new \ZipArchive();
+            if ($zip->open($backupPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== TRUE) {
+                throw new \Exception('Cannot create backup file');
+            }
+            
+            // Backup database
+            $dbName = $_ENV['DB_NAME'] ?? 'hclinic_roaya';
+            $dbUser = $_ENV['DB_USER'] ?? 'hclinic_roaya';
+            $dbPass = $_ENV['DB_PASS'] ?? 'Carmen@1230';
+            $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
+            
+            $tempDbFile = sys_get_temp_dir() . '/db_backup_' . uniqid() . '.sql';
+            $command = sprintf(
+                'mysqldump -h %s -u %s -p%s %s > %s 2>&1',
+                escapeshellarg($dbHost),
+                escapeshellarg($dbUser),
+                escapeshellarg($dbPass),
+                escapeshellarg($dbName),
+                escapeshellarg($tempDbFile)
+            );
+            
+            exec($command, $output, $returnVar);
+            
+            if ($returnVar === 0 && file_exists($tempDbFile)) {
+                $zip->addFile($tempDbFile, 'database.sql');
+            }
+            
+            // Backup media files
+            $storagePath = __DIR__ . '/../../storage/uploads/';
+            $directories = ['attachments', 'forum/attachments', 'photos', 'documents'];
+            
+            foreach ($directories as $dir) {
+                $fullPath = $storagePath . $dir;
+                if (!is_dir($fullPath)) continue;
+                
+                $files = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($fullPath, \RecursiveDirectoryIterator::SKIP_DOTS),
+                    \RecursiveIteratorIterator::SELF_FIRST
+                );
+                
+                foreach ($files as $file) {
+                    if ($file->isFile()) {
+                        $relativePath = 'uploads/' . str_replace($storagePath, '', $file->getPathname());
+                        $zip->addFile($file->getPathname(), $relativePath);
+                    }
+                }
+            }
+            
+            $zip->close();
+            
+            // Clean up temp file
+            if (file_exists($tempDbFile)) {
+                unlink($tempDbFile);
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'backup' => $backupName,
+                'size' => filesize($backupPath)
+            ]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * API: Create website backup (public_html + database)
+     */
+    public function apiBackupWebsite()
+    {
+        header('Content-Type: application/json');
+        
+        $user = $this->auth->user();
+        if (!$user || $user['role'] !== 'admin') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Forbidden']);
+            return;
+        }
+        
+        try {
+            $backupDir = __DIR__ . '/../../storage/backups/website/';
+            if (!is_dir($backupDir)) {
+                mkdir($backupDir, 0755, true);
+            }
+            
+            $backupName = 'website_backup_' . date('Y-m-d_His') . '.zip';
+            $backupPath = $backupDir . $backupName;
+            
+            $zip = new \ZipArchive();
+            if ($zip->open($backupPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== TRUE) {
+                throw new \Exception('Cannot create backup file');
+            }
+            
+            // Backup database
+            $dbName = $_ENV['DB_NAME'] ?? 'hclinic_roaya';
+            $dbUser = $_ENV['DB_USER'] ?? 'hclinic_roaya';
+            $dbPass = $_ENV['DB_PASS'] ?? 'Carmen@1230';
+            $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
+            
+            $tempDbFile = sys_get_temp_dir() . '/db_backup_' . uniqid() . '.sql';
+            $command = sprintf(
+                'mysqldump -h %s -u %s -p%s %s > %s 2>&1',
+                escapeshellarg($dbHost),
+                escapeshellarg($dbUser),
+                escapeshellarg($dbPass),
+                escapeshellarg($dbName),
+                escapeshellarg($tempDbFile)
+            );
+            
+            exec($command, $output, $returnVar);
+            
+            if ($returnVar === 0 && file_exists($tempDbFile)) {
+                $zip->addFile($tempDbFile, 'database.sql');
+            }
+            
+            // Backup public_html (exclude certain directories)
+            $publicHtmlPath = __DIR__ . '/../../';
+            $excludeDirs = ['vendor', 'node_modules', '.git', 'storage/backups'];
+            
+            $files = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($publicHtmlPath, \RecursiveDirectoryIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::SELF_FIRST
+            );
+            
+            foreach ($files as $file) {
+                $relativePath = str_replace($publicHtmlPath, '', $file->getPathname());
+                
+                // Skip excluded directories
+                $shouldExclude = false;
+                foreach ($excludeDirs as $excludeDir) {
+                    if (strpos($relativePath, $excludeDir) === 0) {
+                        $shouldExclude = true;
+                        break;
+                    }
+                }
+                
+                if ($shouldExclude) continue;
+                
+                if ($file->isFile()) {
+                    $zip->addFile($file->getPathname(), $relativePath);
+                }
+            }
+            
+            $zip->close();
+            
+            // Clean up temp file
+            if (file_exists($tempDbFile)) {
+                unlink($tempDbFile);
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'backup' => $backupName,
+                'size' => filesize($backupPath)
+            ]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * API: Get list of all backups
+     */
+    public function apiBackupList()
+    {
+        header('Content-Type: application/json');
+        
+        try {
+            $backups = [
+                'database' => [],
+                'full' => [],
+                'website' => []
+            ];
+            
+            $backupDirs = [
+                'database' => __DIR__ . '/../../storage/backups/database/',
+                'full' => __DIR__ . '/../../storage/backups/full/',
+                'website' => __DIR__ . '/../../storage/backups/website/'
+            ];
+            
+            foreach ($backupDirs as $type => $dir) {
+                if (!is_dir($dir)) continue;
+                
+                $files = glob($dir . '*');
+                foreach ($files as $file) {
+                    if (is_file($file)) {
+                        $backups[$type][] = [
+                            'name' => basename($file),
+                            'size' => filesize($file),
+                            'date' => date('Y-m-d H:i:s', filemtime($file)),
+                            'download_url' => '/api/admin/backup/download/' . $type . '/' . basename($file)
+                        ];
+                    }
+                }
+                
+                // Sort by date descending
+                usort($backups[$type], function($a, $b) {
+                    return strtotime($b['date']) - strtotime($a['date']);
+                });
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'data' => $backups
+            ]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * API: Restore database from backup
+     */
+    public function apiBackupRestore()
+    {
+        header('Content-Type: application/json');
+        
+        $user = $this->auth->user();
+        if (!$user || $user['role'] !== 'admin') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Forbidden']);
+            return;
+        }
+        
+        $input = json_decode(file_get_contents('php://input'), true);
+        $backupName = $input['backup'] ?? '';
+        $type = $input['type'] ?? 'database';
+        
+        if (empty($backupName)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Backup name required']);
+            return;
+        }
+        
+        try {
+            $backupDir = __DIR__ . '/../../storage/backups/' . $type . '/';
+            $backupPath = $backupDir . basename($backupName);
+            
+            // Security check
+            if (!file_exists($backupPath)) {
+                throw new \Exception('Backup file not found');
+            }
+            
+            $dbName = $_ENV['DB_NAME'] ?? 'hclinic_roaya';
+            $dbUser = $_ENV['DB_USER'] ?? 'hclinic_roaya';
+            $dbPass = $_ENV['DB_PASS'] ?? 'Carmen@1230';
+            $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
+            
+            // Extract SQL from ZIP if needed
+            $sqlFile = $backupPath;
+            if (pathinfo($backupPath, PATHINFO_EXTENSION) === 'zip') {
+                $zip = new \ZipArchive();
+                if ($zip->open($backupPath) !== TRUE) {
+                    throw new \Exception('Cannot open backup file');
+                }
+                
+                $tempDir = sys_get_temp_dir() . '/restore_' . uniqid();
+                mkdir($tempDir, 0755, true);
+                $zip->extractTo($tempDir);
+                $zip->close();
+                
+                // Find SQL file
+                $sqlFiles = glob($tempDir . '/*.sql');
+                if (empty($sqlFiles)) {
+                    throw new \Exception('No SQL file found in backup');
+                }
+                $sqlFile = $sqlFiles[0];
+            }
+            
+            // Restore database
+            $command = sprintf(
+                'mysql -h %s -u %s -p%s %s < %s 2>&1',
+                escapeshellarg($dbHost),
+                escapeshellarg($dbUser),
+                escapeshellarg($dbPass),
+                escapeshellarg($dbName),
+                escapeshellarg($sqlFile)
+            );
+            
+            exec($command, $output, $returnVar);
+            
+            // Clean up temp directory
+            if (isset($tempDir) && is_dir($tempDir)) {
+                array_map('unlink', glob($tempDir . '/*'));
+                rmdir($tempDir);
+            }
+            
+            if ($returnVar !== 0) {
+                throw new \Exception('Failed to restore database: ' . implode("\n", $output));
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Database restored successfully'
+            ]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * API: Restore database from uploaded file
+     */
+    public function apiBackupRestoreUpload()
+    {
+        header('Content-Type: application/json');
+        
+        $user = $this->auth->user();
+        if (!$user || $user['role'] !== 'admin') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Forbidden']);
+            return;
+        }
+        
+        if (!isset($_FILES['backup']) || $_FILES['backup']['error'] !== UPLOAD_ERR_OK) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'No file uploaded']);
+            return;
+        }
+        
+        $file = $_FILES['backup'];
+        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        
+        if (!in_array($extension, ['sql', 'zip'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Invalid file type. Only .sql and .zip files allowed']);
+            return;
+        }
+        
+        try {
+            $dbName = $_ENV['DB_NAME'] ?? 'hclinic_roaya';
+            $dbUser = $_ENV['DB_USER'] ?? 'hclinic_roaya';
+            $dbPass = $_ENV['DB_PASS'] ?? 'Carmen@1230';
+            $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
+            
+            $sqlFile = $file['tmp_name'];
+            
+            // Extract SQL from ZIP if needed
+            if ($extension === 'zip') {
+                $zip = new \ZipArchive();
+                if ($zip->open($file['tmp_name']) !== TRUE) {
+                    throw new \Exception('Cannot open backup file');
+                }
+                
+                $tempDir = sys_get_temp_dir() . '/restore_' . uniqid();
+                mkdir($tempDir, 0755, true);
+                $zip->extractTo($tempDir);
+                $zip->close();
+                
+                // Find SQL file
+                $sqlFiles = glob($tempDir . '/*.sql');
+                if (empty($sqlFiles)) {
+                    throw new \Exception('No SQL file found in backup');
+                }
+                $sqlFile = $sqlFiles[0];
+            }
+            
+            // Restore database
+            $command = sprintf(
+                'mysql -h %s -u %s -p%s %s < %s 2>&1',
+                escapeshellarg($dbHost),
+                escapeshellarg($dbUser),
+                escapeshellarg($dbPass),
+                escapeshellarg($dbName),
+                escapeshellarg($sqlFile)
+            );
+            
+            exec($command, $output, $returnVar);
+            
+            // Clean up temp directory
+            if (isset($tempDir) && is_dir($tempDir)) {
+                array_map('unlink', glob($tempDir . '/*'));
+                rmdir($tempDir);
+            }
+            
+            if ($returnVar !== 0) {
+                throw new \Exception('Failed to restore database: ' . implode("\n", $output));
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Database restored successfully'
+            ]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * API: Download backup file
+     */
+    public function apiBackupDownload($type, $backupName)
+    {
+        $user = $this->auth->user();
+        if (!$user || $user['role'] !== 'admin') {
+            http_response_code(403);
+            echo 'Forbidden';
+            return;
+        }
+        
+        $validTypes = ['database', 'full', 'website'];
+        if (!in_array($type, $validTypes)) {
+            http_response_code(400);
+            echo 'Invalid backup type';
+            return;
+        }
+        
+        $backupDir = __DIR__ . '/../../storage/backups/' . $type . '/';
+        $backupPath = $backupDir . basename($backupName);
+        
+        if (!file_exists($backupPath)) {
+            http_response_code(404);
+            echo 'Backup not found';
+            return;
+        }
+        
+        $mimeType = pathinfo($backupPath, PATHINFO_EXTENSION) === 'zip' ? 'application/zip' : 'application/sql';
+        header('Content-Type: ' . $mimeType);
+        header('Content-Disposition: attachment; filename="' . basename($backupName) . '"');
+        header('Content-Length: ' . filesize($backupPath));
+        readfile($backupPath);
+        exit;
     }
 }
 

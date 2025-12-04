@@ -1746,7 +1746,7 @@
                 height: 45px;
             }
             
-            /* Mobile Dock Ring - Minimized by default */
+            /* Mobile Dock C-Shape Radial Menu */
             .quick-access-dock {
                 display: block !important;
                 bottom: 1.5rem;
@@ -1756,6 +1756,7 @@
                 transform: none;
                 z-index: 998;
                 transition: all 0.3s ease;
+                position: fixed;
             }
             
             /* When back to top button is hidden, use its exact position */
@@ -1772,24 +1773,6 @@
                 right: 0.1rem;
                 left: auto;
                 top: auto;
-            }
-            
-            .quick-access-dock.mobile-expanded {
-                top: auto;
-                bottom: calc(1.5rem + 45px + 10px);
-                left: auto;
-                right: 0.1rem;
-                transform: none;
-                width: auto;
-                max-width: 280px;
-                max-height: calc(100vh - 1.5rem - 45px - 10px - 1.5rem);
-                overflow-y: auto;
-            }
-            
-            /* When back to top is hidden and dock is expanded */
-            .quick-access-dock.mobile-expanded:not(.dock-above-button) {
-                bottom: 1.5rem;
-                right: 0.1rem;
             }
             
             /* Ensure dock container aligns perfectly with scroll-to-top button */
@@ -1809,6 +1792,7 @@
                 -webkit-backdrop-filter: blur(15px);
                 border: 1px solid rgba(226, 232, 240, 0.3);
                 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                position: relative;
             }
             
             .dark .quick-access-dock.mobile-minimized .dock-container {
@@ -1816,6 +1800,7 @@
                 border: 1px solid rgba(51, 65, 85, 0.3);
             }
             
+            /* Hide all dock items, dividers, and buttons when minimized */
             .quick-access-dock.mobile-minimized .dock-item,
             .quick-access-dock.mobile-minimized .dock-divider,
             .quick-access-dock.mobile-minimized .dock-autohide-btn,
@@ -1854,128 +1839,232 @@
                 background: #ffffff;
             }
             
-            /* Hide all dock items on mobile except specific ones */
-            .quick-access-dock.mobile-expanded .dock-item {
+            /* C-Shape Radial Menu Variables */
+            .quick-access-dock.mobile-minimized {
+                --menu-radius: 85px; /* Base radius for 4 items */
+                --menu-radius-expanded: 100px; /* Increased radius when 6 items are visible */
+                --item-size: 42px; /* Reduced from 45px to make room for spacing */
+                --trigger-size: 45px;
+                --anim-speed: 0.4s;
+                --anim-ease: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            }
+            
+            /* Use expanded radius when additional items are visible */
+            .quick-access-dock.mobile-minimized.active.backtotop-visible {
+                --menu-radius: var(--menu-radius-expanded);
+            }
+            
+            /* Active state - when menu is open */
+            .quick-access-dock.mobile-minimized.active .dock-container {
+                transform: scale(0.9);
+            }
+            
+            /* Quick Actions Radial Menu Items - Match dock container styling */
+            .quick-access-dock.mobile-minimized .dock-item {
+                position: absolute;
+                width: var(--item-size);
+                height: var(--item-size);
+                /* Match dock container styling - Light Mode */
+                background: rgba(248, 250, 252, 0.90);
+                backdrop-filter: blur(15px);
+                -webkit-backdrop-filter: blur(15px);
+                border: 1px solid rgba(226, 232, 240, 0.95);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--text);
+                text-decoration: none;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                opacity: 0;
+                z-index: 0;
+                transform: translate(0, 0) scale(0);
+                transition: transform var(--anim-speed) var(--anim-ease), 
+                            opacity var(--anim-speed) ease,
+                            background var(--anim-speed) ease,
+                            border-color var(--anim-speed) ease,
+                            box-shadow var(--anim-speed) ease;
+            }
+            
+            .dark .quick-access-dock.mobile-minimized .dock-item {
+                /* Match dock container styling - Dark Mode */
+                background: rgba(11, 18, 32, 0.90);
+                border: 1px solid rgba(51, 65, 85, 0.3);
+                color: #ffffff;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            }
+            
+            .quick-access-dock.mobile-minimized .dock-item:hover {
+                background: rgba(248, 250, 252, 0.90);
+                border-color: rgba(226, 232, 240, 0.4);
+                box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+                transform: scale(1.1) !important;
+            }
+            
+            .dark .quick-access-dock.mobile-minimized .dock-item:hover {
+                background: rgba(11, 18, 32, 0.90);
+                border-color: rgba(51, 65, 85, 0.4);
+                box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+            }
+            
+            .quick-access-dock.mobile-minimized .dock-item i {
+                font-size: 1.1rem; /* Slightly reduced for better fit */
+                transition: transform 0.2s ease;
+            }
+            
+            .quick-access-dock.mobile-minimized .dock-item:hover i {
+                transform: scale(1.15);
+            }
+            
+            /* Hide all items except Quick Actions */
+            .quick-access-dock.mobile-minimized .dock-item {
                 display: none;
             }
             
-            /* Show only specific items on mobile */
-            .quick-access-dock.mobile-expanded .dock-item[href="/doctor/calendar"],
-            .quick-access-dock.mobile-expanded .dock-item[href="/doctor/patients"],
-            .quick-access-dock.mobile-expanded .dock-item[href="/doctor/drugs"],
-            .quick-access-dock.mobile-expanded .dock-item[href="/doctor/profile"] {
-                display: flex !important;
+            /* Show Quick Actions items */
+            .quick-access-dock.mobile-minimized .dock-item[href="/doctor/calendar"],
+            .quick-access-dock.mobile-minimized .dock-item[href="/doctor/patients"],
+            .quick-access-dock.mobile-minimized .dock-item[href="/doctor/drugs"],
+            .quick-access-dock.mobile-minimized .dock-item[href="/doctor/profile"],
+            .quick-access-dock.mobile-minimized .dock-item[href="/doctor/forum"],
+            .quick-access-dock.mobile-minimized .dock-item[href="/doctor/notes"] {
+                display: flex;
             }
             
-            .quick-access-dock.mobile-expanded .dock-container {
-                flex-direction: column;
-                align-items: stretch;
-                padding: 0.75rem;
-                border-radius: 16px;
-                max-height: 70vh;
-                overflow-y: auto;
-                background: rgba(248, 250, 252, 0.4);
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
-                border: 1px solid rgba(226, 232, 240, 0.3);
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-                width: 100%;
-                min-width: 200px;
-                max-width: 100%;
-                flex-shrink: 0;
+            /* C-Shape Animation - Opens from top to left (270deg to 180deg) */
+            /* Calendar: Top (270deg), Patients, Drugs, Profile: Left (180deg) */
+            /* Base items (always visible) */
+            .quick-access-dock.mobile-minimized.active .dock-item[href="/doctor/calendar"] {
+                --i: 0;
+                --total: 4;
+                opacity: 1;
+                /* Start from top (270deg) */
+                transform: 
+                    rotate(calc(270deg - (90deg / (var(--total) - 1)) * var(--i)))
+                    translateX(var(--menu-radius))
+                    rotate(calc((270deg - (90deg / (var(--total) - 1)) * var(--i)) * -1))
+                    scale(1);
             }
             
-            .dark .quick-access-dock.mobile-expanded .dock-container {
-                background: rgba(11, 18, 32, 0.95);
-                border: 1px solid rgba(51, 65, 85, 0.3);
+            .quick-access-dock.mobile-minimized.active .dock-item[href="/doctor/patients"] {
+                --i: 1;
+                --total: 4;
+                opacity: 1;
+                transform: 
+                    rotate(calc(270deg - (90deg / (var(--total) - 1)) * var(--i)))
+                    translateX(var(--menu-radius))
+                    rotate(calc((270deg - (90deg / (var(--total) - 1)) * var(--i)) * -1))
+                    scale(1);
             }
             
-            .quick-access-dock.mobile-expanded .dock-item {
-                width: 100%;
-                height: auto;
-                min-height: 48px;
-                border-radius: 12px;
-                margin-bottom: 0.5rem;
-                justify-content: flex-start;
-                padding: 0.75rem;
-                flex-direction: row;
-                align-items: center;
+            .quick-access-dock.mobile-minimized.active .dock-item[href="/doctor/drugs"] {
+                --i: 2;
+                --total: 4;
+                opacity: 1;
+                transform: 
+                    rotate(calc(270deg - (90deg / (var(--total) - 1)) * var(--i)))
+                    translateX(var(--menu-radius))
+                    rotate(calc((270deg - (90deg / (var(--total) - 1)) * var(--i)) * -1))
+                    scale(1);
             }
             
-            .quick-access-dock.mobile-expanded .dock-item i,
-            .quick-access-dock.mobile-expanded .dock-profile-image {
-                margin-right: 0.75rem;
-                flex-shrink: 0;
+            .quick-access-dock.mobile-minimized.active .dock-item[href="/doctor/profile"] {
+                --i: 3;
+                --total: 4;
+                opacity: 1;
+                /* End at left (180deg) */
+                transform: 
+                    rotate(calc(270deg - (90deg / (var(--total) - 1)) * var(--i)))
+                    translateX(var(--menu-radius))
+                    rotate(calc((270deg - (90deg / (var(--total) - 1)) * var(--i)) * -1))
+                    scale(1);
             }
             
-            /* Hide all tooltips on mobile dock */
-            .quick-access-dock.mobile-expanded .dock-item .htooltip,
-            .quick-access-dock.mobile-minimized .htooltip,
-            .quick-access-dock.mobile-expanded .dock-minimize-btn .htooltip {
+            /* Additional items (Discussions and Notes) - shown when backToTop button is visible */
+            /* Use wider angle spread (120deg instead of 90deg) to add more space between items */
+            .quick-access-dock.mobile-minimized.active.backtotop-visible .dock-item[href="/doctor/forum"] {
+                --i: 4;
+                --total: 6;
+                opacity: 1;
+                transform: 
+                    rotate(calc(270deg - (120deg / (var(--total) - 1)) * var(--i)))
+                    translateX(var(--menu-radius))
+                    rotate(calc((270deg - (120deg / (var(--total) - 1)) * var(--i)) * -1))
+                    scale(1);
+            }
+            
+            .quick-access-dock.mobile-minimized.active.backtotop-visible .dock-item[href="/doctor/notes"] {
+                --i: 5;
+                --total: 6;
+                opacity: 1;
+                transform: 
+                    rotate(calc(270deg - (120deg / (var(--total) - 1)) * var(--i)))
+                    translateX(var(--menu-radius))
+                    rotate(calc((270deg - (120deg / (var(--total) - 1)) * var(--i)) * -1))
+                    scale(1);
+            }
+            
+            /* When additional items are visible, adjust base items to maintain spacing */
+            .quick-access-dock.mobile-minimized.active.backtotop-visible .dock-item[href="/doctor/calendar"] {
+                --i: 0;
+                --total: 6; /* Updated to 6 to maintain spacing */
+                opacity: 1;
+                transform: 
+                    rotate(calc(270deg - (120deg / (var(--total) - 1)) * var(--i)))
+                    translateX(var(--menu-radius))
+                    rotate(calc((270deg - (120deg / (var(--total) - 1)) * var(--i)) * -1))
+                    scale(1);
+            }
+            
+            .quick-access-dock.mobile-minimized.active.backtotop-visible .dock-item[href="/doctor/patients"] {
+                --i: 1;
+                --total: 6; /* Updated to 6 to maintain spacing */
+                opacity: 1;
+                transform: 
+                    rotate(calc(270deg - (120deg / (var(--total) - 1)) * var(--i)))
+                    translateX(var(--menu-radius))
+                    rotate(calc((270deg - (120deg / (var(--total) - 1)) * var(--i)) * -1))
+                    scale(1);
+            }
+            
+            .quick-access-dock.mobile-minimized.active.backtotop-visible .dock-item[href="/doctor/drugs"] {
+                --i: 2;
+                --total: 6; /* Updated to 6 to maintain spacing */
+                opacity: 1;
+                transform: 
+                    rotate(calc(270deg - (120deg / (var(--total) - 1)) * var(--i)))
+                    translateX(var(--menu-radius))
+                    rotate(calc((270deg - (120deg / (var(--total) - 1)) * var(--i)) * -1))
+                    scale(1);
+            }
+            
+            .quick-access-dock.mobile-minimized.active.backtotop-visible .dock-item[href="/doctor/profile"] {
+                --i: 3;
+                --total: 6; /* Updated to 6 to maintain spacing */
+                opacity: 1;
+                transform: 
+                    rotate(calc(270deg - (120deg / (var(--total) - 1)) * var(--i)))
+                    translateX(var(--menu-radius))
+                    rotate(calc((270deg - (120deg / (var(--total) - 1)) * var(--i)) * -1))
+                    scale(1);
+            }
+            
+            /* Hide additional items when backToTop button is not visible */
+            .quick-access-dock.mobile-minimized.active:not(.backtotop-visible) .dock-item[href="/doctor/forum"],
+            .quick-access-dock.mobile-minimized.active:not(.backtotop-visible) .dock-item[href="/doctor/notes"] {
+                opacity: 0;
+                transform: translate(0, 0) scale(0);
+            }
+            
+            /* Hide tooltips on mobile */
+            .quick-access-dock.mobile-minimized .htooltip {
                 display: none !important;
             }
             
-            /* Show text labels on mobile expanded dock */
-            .quick-access-dock.mobile-expanded .dock-item::after {
-                content: attr(title);
-                display: block;
-                color: var(--text);
-                font-size: 0.875rem;
-                font-weight: 500;
-                white-space: nowrap;
-                flex: 1;
-            }
-            
-            .quick-access-dock.mobile-expanded .dock-item[href="/doctor/calendar"]::after {
-                content: "Calendar";
-            }
-            
-            .quick-access-dock.mobile-expanded .dock-item[href="/doctor/patients"]::after {
-                content: "Patients";
-            }
-            
-            .quick-access-dock.mobile-expanded .dock-item[href="/doctor/drugs"]::after {
-                content: "Drugs";
-            }
-            
-            .quick-access-dock.mobile-expanded .dock-item[href="/doctor/profile"]::after {
-                content: "Profile";
-            }
-            
-            .quick-access-dock.mobile-expanded .dock-divider {
-                display: block;
-                width: 100%;
-                height: 1px;
-                background: var(--border);
-                margin: 0.5rem 0;
-            }
-            
-            /* Hide auto-hide button on mobile */
-            .quick-access-dock.mobile-expanded .dock-autohide-btn,
+            /* Hide divider and other buttons on mobile */
+            .quick-access-dock.mobile-minimized .dock-divider,
             .quick-access-dock.mobile-minimized .dock-autohide-btn {
                 display: none !important;
-            }
-            
-            .quick-access-dock.mobile-expanded .dock-minimize-btn {
-                display: flex;
-                width: 100%;
-                height: 48px;
-                border-radius: 12px;
-                justify-content: flex-start;
-                align-items: center;
-                padding: 0 0.75rem;
-                margin-top: 0.25rem;
-            }
-            
-            .quick-access-dock.mobile-expanded .dock-minimize-btn i {
-                margin-right: 0.75rem;
-            }
-            
-            .quick-access-dock.mobile-expanded .dock-minimize-btn::after {
-                content: "Minimize";
-                color: var(--text);
-                font-size: 0.875rem;
-                font-weight: 500;
             }
         }
         

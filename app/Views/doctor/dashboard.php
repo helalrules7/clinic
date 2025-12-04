@@ -6,7 +6,7 @@
             <div class="stats-card stats-card-primary">
                 <div class="stats-card-content">
                     <div class="stats-card-header">
-                        <h4 class="stats-card-title">Total Today</h4>
+                        <h4 class="stats-card-title">Total Appointments Today</h4>
                         <h3 class="stats-card-value"><?= $stats['total'] ?? 0 ?></h3>
                         <p class="stats-card-change stats-card-change-positive">Today</p>
                     </div>

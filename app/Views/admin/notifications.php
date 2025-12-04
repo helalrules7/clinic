@@ -6,14 +6,6 @@
 ?>
 
 <style>
-    .notification-form-card {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-    }
-    
     .users-list {
         max-height: 300px;
         overflow-y: auto;
