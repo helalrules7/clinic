@@ -300,8 +300,8 @@ document.getElementById('addNoteBtn').addEventListener('click', async function()
     // Calculate position (center of visible area)
     const containerRect = container.getBoundingClientRect();
     const isMobile = window.innerWidth <= 768;
-    const widgetWidth = isMobile ? 250 : 300;
-    const widgetHeight = isMobile ? 180 : 200;
+    const widgetWidth = isMobile ? 250 : 400;
+    const widgetHeight = isMobile ? 180 : 300;
     const x = Math.max(0, (containerRect.width / 2) - (widgetWidth / 2));
     const y = Math.max(0, (containerRect.height / 2) - (widgetHeight / 2));
     
@@ -1370,7 +1370,32 @@ if (window.location.pathname.includes('/doctor/notes')) {
             // Initialize autocomplete after notes are loaded
             setTimeout(initAllAutocompletes, 500);
             
-            // Check if we need to open add note modal
+            // Check if we need to focus a newly created note (from dashboard)
+            const shouldFocusNewNote = sessionStorage.getItem('focusNewNote') === 'true';
+            const newNoteId = sessionStorage.getItem('newNoteId');
+            
+            if (shouldFocusNewNote && newNoteId) {
+                // Wait for notes to load, then focus the new note
+                setTimeout(() => {
+                    const newNoteWidget = document.getElementById(`note-${newNoteId}`);
+                    if (newNoteWidget) {
+                        // Bring note to front
+                        bringToFront(parseInt(newNoteId));
+                        
+                        // Focus the title input
+                        const titleInput = newNoteWidget.querySelector('.note-widget-title');
+                        if (titleInput) {
+                            titleInput.focus();
+                        }
+                    }
+                    
+                    // Clear sessionStorage
+                    sessionStorage.removeItem('focusNewNote');
+                    sessionStorage.removeItem('newNoteId');
+                }, 1500);
+            }
+            
+            // Check if we need to open add note modal (legacy support)
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('openModal') === 'addNote') {
                 setTimeout(() => {
@@ -1388,7 +1413,32 @@ if (window.location.pathname.includes('/doctor/notes')) {
         loadNotes();
         setTimeout(initAllAutocompletes, 500);
         
-        // Check if we need to open add note modal
+        // Check if we need to focus a newly created note (from dashboard)
+        const shouldFocusNewNote = sessionStorage.getItem('focusNewNote') === 'true';
+        const newNoteId = sessionStorage.getItem('newNoteId');
+        
+        if (shouldFocusNewNote && newNoteId) {
+            // Wait for notes to load, then focus the new note
+            setTimeout(() => {
+                const newNoteWidget = document.getElementById(`note-${newNoteId}`);
+                if (newNoteWidget) {
+                    // Bring note to front
+                    bringToFront(parseInt(newNoteId));
+                    
+                    // Focus the title input
+                    const titleInput = newNoteWidget.querySelector('.note-widget-title');
+                    if (titleInput) {
+                        titleInput.focus();
+                    }
+                }
+                
+                // Clear sessionStorage
+                sessionStorage.removeItem('focusNewNote');
+                sessionStorage.removeItem('newNoteId');
+            }, 1500);
+        }
+        
+        // Check if we need to open add note modal (legacy support)
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('openModal') === 'addNote') {
             setTimeout(() => {
