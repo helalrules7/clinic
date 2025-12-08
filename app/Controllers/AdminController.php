@@ -1451,19 +1451,46 @@ class AdminController
             $backupPath = $backupDir . $backupName;
             
             // Use mysqldump to create backup
+            // Use mysqldump to create backup
+            // Create a temporary config file for password (more secure)
+            $configFile = sys_get_temp_dir() . '/mysql_backup_' . uniqid() . '.cnf';
+            $configContent = "[client]\nhost={$dbHost}\nuser={$dbUser}\npassword={$dbPass}\n";
+            file_put_contents($configFile, $configContent);
+            chmod($configFile, 0600); // Secure permissions
+            
+            // Use --defaults-file to avoid password in command line
             $command = sprintf(
-                'mysqldump -h %s -u %s -p%s %s > %s 2>&1',
-                escapeshellarg($dbHost),
-                escapeshellarg($dbUser),
-                escapeshellarg($dbPass),
+                'mysqldump --defaults-file=%s %s > %s 2>&1',
+                escapeshellarg($configFile),
                 escapeshellarg($dbName),
                 escapeshellarg($backupPath)
             );
             
+            // Execute command and capture output
             exec($command, $output, $returnVar);
             
-            if ($returnVar !== 0 || !file_exists($backupPath)) {
-                throw new \Exception('Failed to create database backup: ' . implode("\n", $output));
+            // Clean up config file
+            if (file_exists($configFile)) {
+                unlink($configFile);
+            }
+            
+            // Check if backup was created successfully
+            if ($returnVar !== 0) {
+                $errorMsg = !empty($output) ? implode("\n", array_slice($output, 0, 5)) : 'Unknown error';
+                // Check if file was created despite error code (sometimes mysqldump returns non-zero but creates file)
+                if (!file_exists($backupPath)) {
+                    throw new \Exception('Failed to create database backup. Error: ' . $errorMsg);
+                }
+            }
+            
+            if (!file_exists($backupPath)) {
+                throw new \Exception('Backup file was not created. Check permissions and mysqldump availability.');
+            }
+            
+            // Check if file is empty (might indicate an error)
+            if (filesize($backupPath) === 0) {
+                unlink($backupPath);
+                throw new \Exception('Backup file is empty. Database might be empty or there was an error.');
             }
             
             // Compress the backup

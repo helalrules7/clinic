@@ -335,138 +335,307 @@
     
     // Create database backup
     async function createDatabaseBackup() {
-        if (!confirm('Create a database backup? This may take a while.')) {
-            return;
+        showCreateDatabaseBackupModal();
+    }
+    
+    function showCreateDatabaseBackupModal() {
+        const modal = document.getElementById('createDatabaseBackupModal');
+        if (!modal) {
+            const modalHtml = `
+                <div class="modal fade" id="createDatabaseBackupModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title">
+                                    <i class="bi bi-database me-2"></i>Create Database Backup
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Create a database backup? This may take a while.</p>
+                                <p class="text-muted mb-0"><small><i class="bi bi-info-circle me-1"></i>The backup will be compressed and saved automatically.</small></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" id="confirmCreateDatabaseBackupBtn">
+                                    <i class="bi bi-download me-2"></i>Create Backup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
         }
         
-        try {
-            showLoading('Creating database backup...');
+        const modalInstance = new bootstrap.Modal(document.getElementById('createDatabaseBackupModal'));
+        modalInstance.show();
+        
+        // Setup confirm button
+        const confirmBtn = document.getElementById('confirmCreateDatabaseBackupBtn');
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        
+        newConfirmBtn.addEventListener('click', async function() {
+            modalInstance.hide();
             
-            const response = await fetch('/api/admin/backup/database', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
+            try {
+                showLoading('Creating database backup...');
+                
+                const response = await fetch('/api/admin/backup/database', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Database backup created successfully!');
+                    setTimeout(() => {
+                        loadBackups();
+                    }, 500);
+                } else {
+                    showError('Failed to create backup: ' + (result.message || 'Unknown error'));
                 }
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                showSuccess('Database backup created successfully!');
-                loadBackups();
-            } else {
-                showError('Failed to create backup: ' + (result.message || 'Unknown error'));
+            } catch (error) {
+                console.error('Error creating backup:', error);
+                showError('Failed to create backup. Please try again.');
+            } finally {
+                hideLoading();
             }
-        } catch (error) {
-            console.error('Error creating backup:', error);
-            showError('Failed to create backup. Please try again.');
-        } finally {
-            hideLoading();
-        }
+        });
     }
     
     // Create full backup
     async function createFullBackup() {
-        if (!confirm('Create a full backup (database + media)? This may take a while.')) {
-            return;
+        showCreateFullBackupModal();
+    }
+    
+    function showCreateFullBackupModal() {
+        const modal = document.getElementById('createFullBackupModal');
+        if (!modal) {
+            const modalHtml = `
+                <div class="modal fade" id="createFullBackupModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header bg-success text-white">
+                                <h5 class="modal-title">
+                                    <i class="bi bi-archive me-2"></i>Create Full Backup
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Create a full backup (database + media)? This may take a while.</p>
+                                <p class="text-muted mb-0"><small><i class="bi bi-info-circle me-1"></i>This will backup both the database and all media files.</small></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-success" id="confirmCreateFullBackupBtn">
+                                    <i class="bi bi-download me-2"></i>Create Backup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
         }
         
-        try {
-            showLoading('Creating full backup...');
+        const modalInstance = new bootstrap.Modal(document.getElementById('createFullBackupModal'));
+        modalInstance.show();
+        
+        const confirmBtn = document.getElementById('confirmCreateFullBackupBtn');
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        
+        newConfirmBtn.addEventListener('click', async function() {
+            modalInstance.hide();
             
-            const response = await fetch('/api/admin/backup/full', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
+            try {
+                showLoading('Creating full backup...');
+                
+                const response = await fetch('/api/admin/backup/full', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Full backup created successfully!');
+                    setTimeout(() => {
+                        loadBackups();
+                    }, 500);
+                } else {
+                    showError('Failed to create backup: ' + (result.message || 'Unknown error'));
                 }
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                showSuccess('Full backup created successfully!');
-                loadBackups();
-            } else {
-                showError('Failed to create backup: ' + (result.message || 'Unknown error'));
+            } catch (error) {
+                console.error('Error creating backup:', error);
+                showError('Failed to create backup. Please try again.');
+            } finally {
+                hideLoading();
             }
-        } catch (error) {
-            console.error('Error creating backup:', error);
-            showError('Failed to create backup. Please try again.');
-        } finally {
-            hideLoading();
-        }
+        });
     }
     
     // Create website backup
     async function createWebsiteBackup() {
-        if (!confirm('Create a website backup (entire public_html + database)? This may take a very long time.')) {
-            return;
+        showCreateWebsiteBackupModal();
+    }
+    
+    function showCreateWebsiteBackupModal() {
+        const modal = document.getElementById('createWebsiteBackupModal');
+        if (!modal) {
+            const modalHtml = `
+                <div class="modal fade" id="createWebsiteBackupModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header bg-warning text-dark">
+                                <h5 class="modal-title">
+                                    <i class="bi bi-globe me-2"></i>Create Website Backup
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Create a website backup (entire public_html + database)?</p>
+                                <p class="text-warning mb-0"><small><i class="bi bi-info-circle me-1"></i>This may take a very long time depending on the website size.</small></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-warning" id="confirmCreateWebsiteBackupBtn">
+                                    <i class="bi bi-download me-2"></i>Create Backup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
         }
         
-        try {
-            showLoading('Creating website backup... This may take several minutes.');
+        const modalInstance = new bootstrap.Modal(document.getElementById('createWebsiteBackupModal'));
+        modalInstance.show();
+        
+        const confirmBtn = document.getElementById('confirmCreateWebsiteBackupBtn');
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        
+        newConfirmBtn.addEventListener('click', async function() {
+            modalInstance.hide();
             
-            const response = await fetch('/api/admin/backup/website', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
+            try {
+                showLoading('Creating website backup... This may take several minutes.');
+                
+                const response = await fetch('/api/admin/backup/website', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Website backup created successfully!');
+                    setTimeout(() => {
+                        loadBackups();
+                    }, 500);
+                } else {
+                    showError('Failed to create backup: ' + (result.message || 'Unknown error'));
                 }
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                showSuccess('Website backup created successfully!');
-                loadBackups();
-            } else {
-                showError('Failed to create backup: ' + (result.message || 'Unknown error'));
+            } catch (error) {
+                console.error('Error creating backup:', error);
+                showError('Failed to create backup. Please try again.');
+            } finally {
+                hideLoading();
             }
-        } catch (error) {
-            console.error('Error creating backup:', error);
-            showError('Failed to create backup. Please try again.');
-        } finally {
-            hideLoading();
-        }
+        });
     }
     
     // Restore backup
     async function restoreBackup(backupName, type) {
-        if (!confirm(`Restore from backup "${backupName}"? This will replace the current database.`)) {
-            return;
-        }
+        showRestoreBackupModal(backupName, type);
+    }
+    
+    function showRestoreBackupModal(backupName, type) {
+        const modalId = 'restoreBackupModal_' + Date.now();
+        const modalHtml = `
+            <div class="modal fade" id="${modalId}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-warning text-dark">
+                            <h5 class="modal-title">
+                                <i class="bi bi-arrow-clockwise me-2"></i>Restore Database
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Restore from backup <strong>${escapeHtml(backupName)}</strong>?</p>
+                            <p class="text-danger mb-0"><small><i class="bi bi-exclamation-triangle me-1"></i>WARNING: This will overwrite your current database. This action cannot be undone.</small></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-warning" id="confirmRestoreBtn_${modalId}">
+                                <i class="bi bi-arrow-clockwise me-2"></i>Restore
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
         
-        if (!confirm('WARNING: This will overwrite your current database. Are you absolutely sure?')) {
-            return;
-        }
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        const modalInstance = new bootstrap.Modal(document.getElementById(modalId));
+        modalInstance.show();
         
-        try {
-            showLoading('Restoring database...');
+        document.getElementById(`confirmRestoreBtn_${modalId}`).addEventListener('click', async function() {
+            modalInstance.hide();
             
-            const response = await fetch('/api/admin/backup/restore', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({ backup: backupName, type: type })
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                showSuccess('Database restored successfully!');
-            } else {
-                showError('Failed to restore backup: ' + (result.message || 'Unknown error'));
+            try {
+                showLoading('Restoring database...');
+                
+                const response = await fetch('/api/admin/backup/restore', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ backup: backupName, type: type })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Database restored successfully!');
+                } else {
+                    showError('Failed to restore backup: ' + (result.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error restoring backup:', error);
+                showError('Failed to restore backup. Please try again.');
+            } finally {
+                hideLoading();
+                // Remove modal from DOM
+                setTimeout(() => {
+                    const modalElement = document.getElementById(modalId);
+                    if (modalElement) {
+                        modalElement.remove();
+                    }
+                }, 300);
             }
-        } catch (error) {
-            console.error('Error restoring backup:', error);
-            showError('Failed to restore backup. Please try again.');
-        } finally {
-            hideLoading();
-        }
+        });
+        
+        // Remove modal on hide
+        document.getElementById(modalId).addEventListener('hidden.bs.modal', function() {
+            this.remove();
+        });
     }
     
     // Handle restore file upload
@@ -482,13 +651,7 @@
             return;
         }
         
-        if (!confirm(`Restore from uploaded backup "${file.name}"? This will replace the current database.`)) {
-            return;
-        }
-        
-        if (!confirm('WARNING: This will overwrite your current database. Are you absolutely sure?')) {
-            return;
-        }
+        showRestoreUploadModal(file.name, file);
         
         const formData = new FormData();
         formData.append('backup', file);

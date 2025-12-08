@@ -72,6 +72,13 @@ try {
     $router->get('/admin/notifications', 'AdminController@notifications');
     $router->get('/admin/media', 'AdminController@media');
     $router->get('/admin/backup', 'AdminController@backup');
+    $router->post('/api/admin/backup/database', 'AdminController@apiBackupDatabase');
+    $router->post('/api/admin/backup/full', 'AdminController@apiBackupFull');
+    $router->post('/api/admin/backup/website', 'AdminController@apiBackupWebsite');
+    $router->get('/api/admin/backup/list', 'AdminController@apiBackupList');
+    $router->post('/api/admin/backup/restore', 'AdminController@apiBackupRestore');
+    $router->post('/api/admin/backup/restore-upload', 'AdminController@apiBackupRestoreUpload');
+    $router->get('/api/admin/backup/download/{type}/{name}', 'AdminController@apiBackupDownload');
     $router->get('/api/admin/media/list', 'AdminController@apiMediaList');
     $router->post('/api/admin/media/delete', 'AdminController@apiMediaDelete');
     $router->post('/api/admin/media/delete-all', 'AdminController@apiMediaDeleteAll');
