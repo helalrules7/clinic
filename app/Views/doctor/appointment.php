@@ -26,7 +26,24 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
 ?>
 
 <!-- Appointment Header -->
-<div class="appointment-header <?= ($appointment['status'] === 'Closed' || $appointment['status'] === 'Rescheduled') ? ($appointment['status'] === 'Closed' ? 'closed' : 'rescheduled') : '' ?>">
+<?php
+$headerClass = '';
+$status = strtolower($appointment['status'] ?? '');
+$appointmentDate = $appointment['date'] ?? '';
+$today = date('Y-m-d');
+
+// Check if appointment is missed (Booked status and date is in the past)
+$isMissed = ($status === 'booked' && $appointmentDate < $today);
+
+if ($status === 'completed') {
+    $headerClass = 'completed';
+} elseif ($isMissed || $status === 'cancelled' || $status === 'noshow') {
+    $headerClass = 'missed';
+} elseif ($appointment['status'] === 'Closed' || $appointment['status'] === 'Rescheduled') {
+    $headerClass = ($appointment['status'] === 'Closed' ? 'closed' : 'rescheduled');
+}
+?>
+<div class="appointment-header <?= $headerClass ?>">
     <div class="row align-items-center">
         <div class="col-md-8">
             <h2 class="mb-2">
@@ -80,12 +97,12 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
             </h2>
             <p class="mb-2">
                 <i class="bi bi-person me-2"></i>
-                <strong><a href="/doctor/patients/<?= $patient['id'] ?? '' ?>"  style="color: var(--text); font-weight: 600; text-decoration: none; hover: color: var(--accent);"><?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></a></strong>
+                <strong><a href="/doctor/patients/<?= $patient['id'] ?? '' ?>"  style="color: white; font-weight: 600; text-decoration: none;"><?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></a></strong>
                 (ID: #<?= $patient['id'] ?>)
             </p>
             <p class="mb-0">
                 <a href="/doctor/calendar?date=<?= $appointment['date'] ?>&appointment_id=<?= $appointment['id'] ?>"
-                   style="color: var(--text); text-decoration: none; cursor: pointer; hover: color: var(--accent); font-weight: 600;"
+                   style="color: white; text-decoration: none; cursor: pointer; font-weight: 600;"
                    data-bs-toggle="tooltip" 
                    data-bs-placement="top" 
                    data-bs-title="Click to view calendar for this date">
@@ -96,15 +113,52 @@ $appointmentDoctorName = $appointment['doctor_name'] ?? 'Unknown Doctor';
         </div>
         <div class="col-md-4 text-end">
             <div class="d-flex flex-column align-items-end gap-2">
-                <span class="status-badge d-flex align-items-center gap-2" 
+                <?php
+                // Determine display status and badge class
+                $displayStatus = $appointment['status'];
+                $badgeClass = 'bg-primary';
+                
+                if ($isMissed) {
+                    $displayStatus = 'Missed';
+                    $badgeClass = 'bg-danger text-white';
+                } else {
+                    // Map status to badge class
+                    $statusBadgeMap = [
+                        'Booked' => 'bg-primary',
+                        'CheckedIn' => 'bg-success',
+                        'InProgress' => 'bg-warning',
+                        'Completed' => 'bg-info',
+                        'Cancelled' => 'bg-danger',
+                        'NoShow' => 'bg-secondary',
+                        'Rescheduled' => 'bg-info',
+                        'Closed' => 'bg-danger'
+                    ];
+                    $badgeClass = $statusBadgeMap[$appointment['status']] ?? 'bg-secondary';
+                }
+                
+                // Get icon
+                $statusIconMap = [
+                    'Booked' => 'bi-calendar-check',
+                    'CheckedIn' => 'bi-check-circle-fill',
+                    'InProgress' => 'bi-hourglass-split',
+                    'Completed' => 'bi-check2-all',
+                    'Cancelled' => 'bi-x-circle-fill',
+                    'NoShow' => 'bi-clock-fill',
+                    'Rescheduled' => 'bi-arrow-clockwise',
+                    'Closed' => 'bi-lock-fill',
+                    'Missed' => 'bi-exclamation-triangle-fill'
+                ];
+                $statusIcon = $statusIconMap[$displayStatus] ?? 'bi-question-circle';
+                ?>
+                <span class="status-badge d-flex align-items-center gap-2 <?= $badgeClass ?>" 
                       id="appointmentStatusBadge" 
                       onclick="showChangeStatusModal(<?= $appointment['id'] ?>)"
                       style="cursor: pointer;" 
                       data-bs-toggle="tooltip" 
                       data-bs-placement="top" 
                       data-bs-title="Click to change status">
-                    <i class="bi bi-question-circle" id="statusIcon"></i>
-                    <span id="statusText"><?= ucfirst($appointment['status']) ?></span>
+                    <i class="bi <?= $statusIcon ?>" id="statusIcon"></i>
+                    <span id="statusText"><?= $displayStatus ?></span>
                 </span>
                 <?php if ($appointment['status'] !== 'Completed'): ?>
                 <button class="btn btn-light btn-sm" id="markCompletedBtn" onclick="markAsCompleted(<?= $appointment['id'] ?>)">

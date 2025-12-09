@@ -4416,6 +4416,504 @@ class ApiController
         }
     }
 
+    public function getPatientMedicalHistory($patientId)
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            // Validate patient exists
+            $stmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
+            $stmt->execute([$patientId]);
+            if (!$stmt->fetch()) {
+                return $this->jsonResponse(['error' => 'Patient not found'], 404);
+            }
+
+            // Get medical history from the main table (old format)
+            $stmt = $this->pdo->prepare("
+                SELECT *, 'old_format' as entry_type FROM medical_history 
+                WHERE patient_id = ? 
+                ORDER BY created_at DESC
+            ");
+            $stmt->execute([$patientId]);
+            $oldHistory = $stmt->fetchAll();
+            
+            // Get medical history entries from the new table
+            $stmt = $this->pdo->prepare("
+                SELECT mhe.*, u.name as doctor_name, 'new_format' as entry_type
+                FROM medical_history_entries mhe 
+                LEFT JOIN users u ON mhe.created_by = u.id 
+                WHERE mhe.patient_id = ? 
+                ORDER BY mhe.created_at DESC
+            ");
+            $stmt->execute([$patientId]);
+            $newEntries = $stmt->fetchAll();
+            
+            // Convert new format entries to match old format structure
+            $convertedEntries = [];
+            foreach ($newEntries as $entry) {
+                $converted = [
+                    'id' => $entry['id'],
+                    'patient_id' => $entry['patient_id'],
+                    'allergies' => ($entry['category'] === 'allergy') ? $entry['notes'] : null,
+                    'medications' => ($entry['category'] === 'medication') ? $entry['notes'] : null,
+                    'systemic_history' => ($entry['category'] === 'general') ? $entry['notes'] : null,
+                    'ocular_history' => ($entry['category'] === 'general' && strpos(strtolower($entry['condition_name'] ?? ''), 'eye') !== false) ? $entry['notes'] : null,
+                    'prior_surgeries' => ($entry['category'] === 'surgery') ? $entry['notes'] : null,
+                    'family_history' => ($entry['category'] === 'family_history') ? $entry['notes'] : null,
+                    'notes' => $entry['notes'] ?? null,
+                    'created_at' => $entry['created_at'],
+                    'updated_at' => $entry['updated_at'],
+                    'doctor_name' => $entry['doctor_name'],
+                    'condition_name' => $entry['condition_name'],
+                    'diagnosis_date' => $entry['diagnosis_date'],
+                    'status' => $entry['status'],
+                    'category' => $entry['category'],
+                    'entry_type' => 'new_format'
+                ];
+                $convertedEntries[] = $converted;
+            }
+            
+            // Merge all entries
+            $allEntries = array_merge($oldHistory, $convertedEntries);
+            
+            // Sort by created_at descending
+            usort($allEntries, function($a, $b) {
+                return strtotime($b['created_at']) - strtotime($a['created_at']);
+            });
+
+            return $this->jsonResponse([
+                'success' => true,
+                'data' => $allEntries
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => 'Internal server error'], 500);
+        }
+    }
+
+    public function getOphthalmologyNews()
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $cacheFile = __DIR__ . '/../../storage/ophthalmology_news_cache.json';
+            $cacheDuration = 20 * 60; // 20 minutes cache
+            
+            // Check cache
+            if (file_exists($cacheFile)) {
+                $cacheData = json_decode(file_get_contents($cacheFile), true);
+                if ($cacheData && isset($cacheData['timestamp']) && 
+                    (time() - $cacheData['timestamp']) < $cacheDuration) {
+                    return $this->jsonResponse([
+                        'success' => true,
+                        'articles' => $cacheData['articles'],
+                        'cached' => true
+                    ]);
+                }
+            }
+
+            // RSS Feeds - Ophthalmology News Sources
+            $feeds = [
+                [
+                    'url' => 'https://bjo.bmj.com/rss/current.xml',
+                    'icon' => '📄',
+                    'source' => 'BJO',
+                    'category' => 'research'
+                ],
+                [
+                    'url' => 'https://www.nature.com/eye.rss',
+                    'icon' => '👁️',
+                    'source' => 'Nature Eye',
+                    'category' => 'research'
+                ],
+                [
+                    'url' => 'https://www.medpagetoday.com/rss/ophthalmology.xml',
+                    'icon' => '📖',
+                    'source' => 'MedPage Today',
+                    'category' => 'clinical'
+                ],
+                [
+                    'url' => 'https://www.retina-specialist.com/rss',
+                    'icon' => '🔍',
+                    'source' => 'Retina Specialist',
+                    'category' => 'clinical'
+                ],
+                [
+                    'url' => 'https://retinatoday.com/rss',
+                    'icon' => '👁️',
+                    'source' => 'Retina Today',
+                    'category' => 'clinical'
+                ],
+                [
+                    'url' => 'https://feeds.feedburner.com/MedicalNewsToday-Ophthalmology',
+                    'icon' => '📰',
+                    'source' => 'Medical News Today',
+                    'category' => 'news'
+                ],
+                [
+                    'url' => 'https://www.healio.com/rss/ophthalmology',
+                    'icon' => '📋',
+                    'source' => 'Healio',
+                    'category' => 'news'
+                ]
+            ];
+
+            $articles = [];
+            $filter = $_GET['filter'] ?? 'all'; // all, research, clinical, news
+
+            foreach ($feeds as $feed) {
+                // Skip if filter doesn't match
+                if ($filter !== 'all' && $feed['category'] !== $filter) {
+                    continue;
+                }
+
+                try {
+                    $xmlContent = $this->fetchRSSFeed($feed['url']);
+                    if (!$xmlContent) {
+                        error_log('Failed to fetch RSS feed: ' . $feed['url']);
+                        continue;
+                    }
+
+                    // Suppress XML errors but log them
+                    libxml_use_internal_errors(true);
+                    $xml = simplexml_load_string($xmlContent);
+                    $xmlErrors = libxml_get_errors();
+                    libxml_clear_errors();
+                    
+                    if (!$xml) {
+                        $errorMsg = !empty($xmlErrors) ? $xmlErrors[0]->message : 'Unknown XML error';
+                        error_log('Failed to parse XML for ' . $feed['url'] . ': ' . $errorMsg);
+                        continue;
+                    }
+
+                    // Handle different RSS formats (RSS 1.0, RSS 2.0, Atom)
+                    $items = [];
+                    
+                    // Register common namespaces for xpath queries
+                    $namespaces = $xml->getNamespaces(true);
+                    // Register RSS 1.0 namespace explicitly
+                    $xml->registerXPathNamespace('rss', 'http://purl.org/rss/1.0/');
+                    $xml->registerXPathNamespace('rdf', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+                    $xml->registerXPathNamespace('dc', 'http://purl.org/dc/elements/1.1/');
+                    // Register other namespaces
+                    foreach ($namespaces as $prefix => $ns) {
+                        if (!in_array($prefix, ['rss', 'rdf', 'dc'])) {
+                            $xml->registerXPathNamespace($prefix, $ns);
+                        }
+                    }
+                    
+                    // Try RSS 2.0 format first (direct access)
+                    if (isset($xml->channel->item)) {
+                        $items = $xml->channel->item;
+                    }
+                    // Try Atom format (direct access)
+                    elseif (isset($xml->entry)) {
+                        $items = $xml->entry;
+                    }
+                    // Try RSS 1.0 (RDF) format using xpath (most reliable)
+                    else {
+                        // Try RSS 1.0 with namespace first
+                        $items = $xml->xpath('//rss:item | //item | //entry');
+                        if (empty($items)) {
+                            // Try direct access for RSS 1.0 (may work in some cases)
+                            if (isset($xml->item)) {
+                                $items = $xml->item;
+                            } else {
+                                // Try with other namespaces
+                                foreach ($namespaces as $prefix => $ns) {
+                                    $items = $xml->xpath("//{$prefix}:item | //item");
+                                    if (!empty($items)) break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (empty($items)) {
+                        error_log('No items found in RSS feed: ' . $feed['url'] . ' (XML root: ' . $xml->getName() . ')');
+                        continue;
+                    }
+
+                    // Convert SimpleXMLElement to array if needed (for RSS 2.0 direct access)
+                    if ($items instanceof \SimpleXMLElement && !is_array($items)) {
+                        $itemsArray = [];
+                        foreach ($items as $item) {
+                            $itemsArray[] = $item;
+                        }
+                        $items = $itemsArray;
+                    }
+
+                    // Get more items (up to 10 per feed) to ensure we have enough
+                    foreach (array_slice($items, 0, 10) as $item) {
+                        // Handle RSS 2.0 and RSS 1.0
+                        $title = '';
+                        $link = '';
+                        $description = '';
+                        $pubDate = '';
+                        
+                        // Get title - handle RSS 1.0 RDF
+                        if (isset($item->title)) {
+                            $title = trim((string)$item->title);
+                        } else {
+                            // Try xpath for RSS 1.0
+                            $titleNodes = $item->xpath('.//title | .//dc:title');
+                            if (!empty($titleNodes)) {
+                                $title = trim((string)$titleNodes[0]);
+                            }
+                        }
+                        
+                        // Get link - handle RSS 1.0 RDF (rdf:about attribute)
+                        if (isset($item->link)) {
+                            // RSS 2.0: link is text, Atom: link can be href attribute
+                            $link = trim((string)$item->link);
+                            if (isset($item->link['href'])) {
+                                $link = trim((string)$item->link['href']);
+                            }
+                        } else {
+                            // Try rdf:about attribute (RSS 1.0)
+                            // Get attributes from RDF namespace
+                            $rdfAttrs = $item->attributes('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+                            if (!empty($rdfAttrs) && isset($rdfAttrs['about'])) {
+                                $link = trim((string)$rdfAttrs['about']);
+                            } else {
+                                // Try regular attributes
+                                $attributes = $item->attributes();
+                                if (isset($attributes['rdf:about'])) {
+                                    $link = trim((string)$attributes['rdf:about']);
+                                } elseif (isset($attributes['about'])) {
+                                    $link = trim((string)$attributes['about']);
+                                } else {
+                                    // Try xpath
+                                    $linkNodes = $item->xpath('.//link | .//dc:identifier');
+                                    if (!empty($linkNodes)) {
+                                        $link = trim((string)$linkNodes[0]);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Get description
+                        if (isset($item->description)) {
+                            $description = (string)$item->description;
+                        } elseif (isset($item->summary)) {
+                            $description = (string)$item->summary;
+                        } elseif (isset($item->content)) {
+                            $description = (string)$item->content;
+                        } else {
+                            // Try xpath for RSS 1.0
+                            $descNodes = $item->xpath('.//description | .//dc:description | .//content:encoded');
+                            if (!empty($descNodes)) {
+                                $description = (string)$descNodes[0];
+                            }
+                        }
+                        
+                        if (isset($item->pubDate)) {
+                            $pubDate = (string)$item->pubDate;
+                        } elseif (isset($item->date)) {
+                            $pubDate = (string)$item->date;
+                        } elseif (isset($item->published)) {
+                            $pubDate = (string)$item->published;
+                        } elseif (isset($item->{'dc:date'})) {
+                            $pubDate = (string)$item->{'dc:date'};
+                        } else {
+                            // Try to get date from namespaces (RSS 1.0 RDF)
+                            $namespaces = $item->getNamespaces(true);
+                            foreach ($namespaces as $prefix => $ns) {
+                                $dcDate = $item->xpath(".//{$prefix}:date");
+                                if (!empty($dcDate)) {
+                                    $pubDate = (string)$dcDate[0];
+                                    break;
+                                }
+                            }
+                            // If still empty, use current time
+                            if (empty($pubDate)) {
+                                $pubDate = date('r');
+                            }
+                        }
+                        
+                        // Skip if no title or link
+                        if (empty($title) || empty($link)) {
+                            error_log('Skipping item: missing title or link. Title: ' . substr($title, 0, 50) . ', Link: ' . substr($link, 0, 50));
+                            continue;
+                        }
+                        
+                        // Check for breaking news keywords
+                        $isBreaking = $this->isBreakingNews($title, $description);
+                        
+                        $articles[] = [
+                            'title' => mb_convert_encoding($title, 'UTF-8', 'UTF-8'),
+                            'link' => $link,
+                            'description' => mb_convert_encoding(strip_tags($description), 'UTF-8', 'UTF-8'),
+                            'pubDate' => $pubDate,
+                            'source' => $feed['source'],
+                            'source_icon' => $feed['icon'],
+                            'category' => $feed['category'],
+                            'is_breaking' => $isBreaking
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    // Silently skip failed feeds
+                    error_log('RSS Feed Error for ' . $feed['url'] . ': ' . $e->getMessage());
+                    continue;
+                }
+            }
+
+            // Filter articles from last 3 months (90 days)
+            $threeMonthsAgo = time() - (90 * 24 * 60 * 60);
+            $filteredArticles = [];
+            $allArticles = [];
+            
+            foreach ($articles as $article) {
+                $allArticles[] = $article;
+                
+                // Try to parse date
+                $articleTime = 0;
+                if (!empty($article['pubDate'])) {
+                    $articleTime = strtotime($article['pubDate']);
+                }
+                
+                // Include if date is within last 3 months OR if date parsing failed (include anyway)
+                if ($articleTime === false || $articleTime === 0 || $articleTime >= $threeMonthsAgo) {
+                    $filteredArticles[] = $article;
+                }
+            }
+            
+            // If no recent articles, use all articles (no time filter)
+            if (empty($filteredArticles) && !empty($allArticles)) {
+                $filteredArticles = $allArticles;
+            }
+            
+            // Sort by breaking news first, then by date (newest first)
+            usort($filteredArticles, function($a, $b) {
+                if ($a['is_breaking'] && !$b['is_breaking']) return -1;
+                if (!$a['is_breaking'] && $b['is_breaking']) return 1;
+                
+                $timeA = 0;
+                $timeB = 0;
+                
+                if (!empty($a['pubDate'])) {
+                    $timeA = strtotime($a['pubDate']);
+                    if ($timeA === false) $timeA = 0;
+                }
+                
+                if (!empty($b['pubDate'])) {
+                    $timeB = strtotime($b['pubDate']);
+                    if ($timeB === false) $timeB = 0;
+                }
+                
+                return $timeB - $timeA;
+            });
+
+            // Limit to 15 articles
+            $articles = array_slice($filteredArticles, 0, 15);
+
+            // If still no articles, try to return cached data even if expired
+            if (empty($articles)) {
+                if (file_exists($cacheFile)) {
+                    $oldCache = json_decode(file_get_contents($cacheFile), true);
+                    if ($oldCache && isset($oldCache['articles']) && !empty($oldCache['articles'])) {
+                        error_log('Using expired cache as fallback');
+                        $articles = array_slice($oldCache['articles'], 0, 15);
+                    }
+                }
+                
+                if (empty($articles)) {
+                    error_log('No articles found from any RSS feed');
+                    return $this->jsonResponse([
+                        'success' => false,
+                        'error' => 'No articles available',
+                        'articles' => [],
+                        'debug' => [
+                            'feeds_attempted' => count($feeds),
+                            'cache_exists' => file_exists($cacheFile)
+                        ]
+                    ]);
+                }
+            }
+
+            // Save to cache
+            $cacheData = [
+                'timestamp' => time(),
+                'articles' => $articles
+            ];
+            @file_put_contents($cacheFile, json_encode($cacheData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+            return $this->jsonResponse([
+                'success' => true,
+                'articles' => $articles,
+                'cached' => false,
+                'count' => count($articles)
+            ]);
+
+        } catch (\Exception $e) {
+            error_log('Ophthalmology News API Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            return $this->jsonResponse([
+                'success' => false,
+                'error' => 'Internal server error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function fetchRSSFeed($url)
+    {
+        // Use cURL with timeout
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_ENCODING, ''); // Accept all encodings
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Accept: application/rss+xml, application/xml, text/xml, */*',
+            'Accept-Language: en-US,en;q=0.9'
+        ]);
+        
+        $content = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+        
+        if ($curlError) {
+            error_log('cURL error for ' . $url . ': ' . $curlError);
+        }
+        
+        if ($httpCode === 200 && $content && strlen($content) > 100) {
+            return $content;
+        }
+        
+        error_log('Failed to fetch RSS feed: ' . $url . ' (HTTP: ' . $httpCode . ', Size: ' . strlen($content ?? '') . ')');
+        return false;
+    }
+
+    private function isBreakingNews($title, $description)
+    {
+        $breakingKeywords = [
+            'breaking', 'urgent', 'alert', 'critical', 'emergency',
+            'important', 'warning', 'recall', 'withdrawal', 'adverse'
+        ];
+        
+        $text = strtolower($title . ' ' . $description);
+        
+        foreach ($breakingKeywords as $keyword) {
+            if (strpos($text, $keyword) !== false) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
     public function getPatientAppointments($patientId)
     {
         try {

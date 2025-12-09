@@ -87,6 +87,18 @@
     </div>
 </div>
 
+<!-- Ophthalmology News Bar -->
+<div class="news-bar-wrapper mb-3">
+    <div class="news-bar">
+        <span class="label">Ophthalmology News</span>
+        <div class="ticker-wrap">
+            <div class="ticker" id="newsTicker">
+                <span>Loading ophthalmology news...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Quick Actions - New iOS-style Cards -->
 <div class="row mb-4">
     <div class="col-12">

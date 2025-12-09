@@ -230,10 +230,14 @@ try {
     $router->post('/api/forum/topics/{id}/toggle-pin', 'ForumController@togglePin');
     
     // Medical History routes
+    $router->get('/api/patients/{id}/medical-history', 'ApiController@getPatientMedicalHistory');
     $router->post('/api/patients/{id}/medical-history', 'ApiController@createMedicalHistory');
     $router->get('/api/patients/{id}/medical-history/{historyId}', 'ApiController@getMedicalHistoryEntry');
     $router->put('/api/patients/{id}/medical-history/{historyId}', 'ApiController@updateMedicalHistory');
     $router->delete('/api/patients/{id}/medical-history/{historyId}', 'ApiController@deleteMedicalHistory');
+    
+    // Ophthalmology News routes
+    $router->get('/api/ophthalmology-news', 'ApiController@getOphthalmologyNews');
     
     // General routes
     $router->get('/about', 'GeneralController@about');

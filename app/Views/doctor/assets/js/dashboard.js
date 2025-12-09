@@ -448,12 +448,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             <i class="bi bi-calendar me-1"></i>
                             ${formattedDate}
                         </small>
+                        ${appointment.status && appointment.status.toLowerCase() !== 'completed' && appointment.status.toLowerCase() !== 'rescheduled' ? `
                         <div class="appointment-progress-container mt-2" data-appointment-id="${appointment.id}" data-date="${appointment.date}" data-start-time="${appointment.start_time}" data-end-time="${appointment.end_time}">
                             <div class="glass-progress-bar">
                                 <div class="glass-progress-fill" style="width: 0%;"></div>
                                 <div class="glass-progress-text">00:00</div>
                             </div>
                         </div>
+                        ` : ''}
                     </div>
                     <div class="d-flex flex-column align-items-end gap-2">
                         <div class="text-end">
@@ -4544,9 +4546,17 @@ function updateAppointmentProgressBar(container) {
             const overdueSeconds = Math.floor((nowTime - endTime) / 1000);
             progress = 100;
             
-            // Format time text (show hours if more than 60 minutes)
+            // Format time text (show days if more than 24 hours)
             let timeValue = '';
-            if (overdueSeconds >= 3600) {
+            const secondsPerDay = 24 * 60 * 60; // 86400 seconds
+            if (overdueSeconds >= secondsPerDay) {
+                const days = Math.floor(overdueSeconds / secondsPerDay);
+                const remainingSeconds = overdueSeconds % secondsPerDay;
+                const hours = Math.floor(remainingSeconds / 3600);
+                const minutes = Math.floor((remainingSeconds % 3600) / 60);
+                const seconds = remainingSeconds % 60;
+                timeValue = `${days} day${days !== 1 ? 's' : ''}, ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            } else if (overdueSeconds >= 3600) {
                 const hours = Math.floor(overdueSeconds / 3600);
                 const minutes = Math.floor((overdueSeconds % 3600) / 60);
                 const seconds = overdueSeconds % 60;
@@ -4575,3 +4585,79 @@ function updateAppointmentProgressBar(container) {
         // Update text
         progressText.textContent = timeText;
     }
+
+// Load Ophthalmology News
+function loadOphthalmologyNews() {
+    const ticker = document.getElementById('newsTicker');
+    if (!ticker) return;
+    
+    ticker.innerHTML = '<span>Loading ophthalmology news...</span>';
+    
+    fetch('/api/ophthalmology-news')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(text => {
+            try {
+                const data = JSON.parse(text);
+                if (data.success && data.articles && data.articles.length > 0) {
+                    renderNewsTicker(data.articles);
+                } else {
+                    ticker.innerHTML = '<span>No ophthalmology news available</span>';
+                }
+            } catch (parseError) {
+                console.error('JSON parse error:', parseError);
+                console.error('Response text:', text);
+                ticker.innerHTML = '<span>Unable to load news</span>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading news:', error);
+            ticker.innerHTML = '<span>Unable to load news</span>';
+        });
+}
+
+function renderNewsTicker(articles) {
+    const ticker = document.getElementById('newsTicker');
+    if (!ticker) return;
+    
+    ticker.innerHTML = '';
+    
+    articles.forEach(article => {
+        const span = document.createElement('span');
+        let content = '';
+        
+        // Add breaking news badge if applicable
+        if (article.is_breaking) {
+            content += '<span class="breaking-news"><i class="bi bi-exclamation-triangle-fill"></i> BREAKING</span>';
+        }
+        
+        // Add source icon
+        if (article.source_icon) {
+            content += `<span class="source-icon">${article.source_icon}</span>`;
+        }
+        
+        // Add article link
+        content += `<a href="${article.link}" target="_blank" rel="noopener noreferrer">${article.title}</a>`;
+        
+        span.innerHTML = content;
+        ticker.appendChild(span);
+    });
+    
+    // Restart animation
+    ticker.style.animation = 'none';
+    setTimeout(() => {
+        ticker.style.animation = 'tickerMove 100s linear infinite';
+    }, 10);
+}
+
+// Initialize news on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadOphthalmologyNews();
+    
+    // Refresh news every 30 minutes
+    setInterval(loadOphthalmologyNews, 30 * 60 * 1000);
+});

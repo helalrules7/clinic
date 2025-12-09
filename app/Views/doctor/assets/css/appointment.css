@@ -34,6 +34,7 @@
     padding: 2rem;
     border-radius: 12px;
     margin-bottom: 2rem;
+    transition: background 0.5s ease;
 }
 
 .appointment-header.closed {
@@ -44,6 +45,44 @@
 .appointment-header.rescheduled {
     background: linear-gradient(135deg, #dc3545, #c82333);
     color: white;
+}
+
+/* Missed/Cancelled appointments - Red gradient background */
+.appointment-header.missed {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.9) 0%, rgba(239, 68, 68, 0.4) 100%) !important;
+    transition: background 0.5s ease !important;
+}
+
+.appointment-header.missed:hover {
+    background: linear-gradient(135deg, rgba(185, 28, 28, 0.95) 0%, rgba(239, 68, 68, 0.4) 100%) !important;
+}
+
+/* Dark mode missed appointments */
+.dark .appointment-header.missed {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.85) 0%, rgba(239, 68, 68, 0.4) 100%) !important;
+}
+
+.dark .appointment-header.missed:hover {
+    background: linear-gradient(135deg, rgba(185, 28, 28, 0.9) 0%, rgba(239, 68, 68, 0.4) 100%) !important;
+}
+
+/* Completed appointments - Green gradient background */
+.appointment-header.completed {
+    background: linear-gradient(135deg, rgba(5, 150, 105, 0.9) 0%, rgba(16, 185, 129, 0.4) 100%) !important;
+    transition: background 0.5s ease !important;
+}
+
+.appointment-header.completed:hover {
+    background: linear-gradient(135deg, rgba(4, 120, 87, 0.95) 0%, rgba(16, 185, 129, 0.4) 100%) !important;
+}
+
+/* Dark mode completed appointments */
+.dark .appointment-header.completed {
+    background: linear-gradient(135deg, rgba(5, 150, 105, 0.85) 0%, rgba(16, 185, 129, 0.4) 100%) !important;
+}
+
+.dark .appointment-header.completed:hover {
+    background: linear-gradient(135deg, rgba(4, 120, 87, 0.9) 0%, rgba(16, 185, 129, 0.4) 100%) !important;
 }
 .text-muted, .form-text{
     color: var(--text) !important;

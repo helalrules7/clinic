@@ -246,6 +246,8 @@ function loadCalendar() {
                 updateLastUpdate();
                 // Initialize tooltips after calendar is loaded
                 initializeTooltips();
+                // Initialize progress bars after calendar is loaded
+                initializeAppointmentProgressBars();
                 // Scroll to highlighted appointment if exists
                 if (highlightedAppointmentId) {
                     setTimeout(() => {
@@ -351,7 +353,31 @@ function renderCalendar(data) {
 }
 
 function renderAppointmentSlot(appointment) {
-    const statusClass = getStatusBadgeClass(appointment.status);
+    // Get appointment date, fallback to currentDate if not available
+    const appointmentDate = appointment.date || currentDate.toISOString().split('T')[0];
+    
+    // Check if appointment is missed (Booked status and current date > appointment date)
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const aptDate = new Date(appointmentDate + 'T00:00:00');
+    const isMissed = appointment.status && appointment.status.toLowerCase() === 'booked' && 
+                     today > aptDate;
+    
+    // Check if appointment is completed
+    const isCompleted = appointment.status && appointment.status.toLowerCase() === 'completed';
+    
+    // Determine status class and display text
+    let statusClass, statusText, statusIcon;
+    if (isMissed) {
+        statusClass = 'bg-danger text-white';
+        statusText = 'Missed';
+        statusIcon = 'bi-exclamation-triangle';
+    } else {
+        statusClass = getStatusBadgeClass(appointment.status);
+        statusText = getStatusDisplayText(appointment.status);
+        statusIcon = getStatusIcon(appointment.status);
+    }
+    
     const visitTypeClass = getVisitTypeBadgeClass(appointment.visit_type);
     
     // Check if this is the highlighted appointment
@@ -417,12 +443,20 @@ function renderAppointmentSlot(appointment) {
              data-bs-placement="right"
              data-bs-html="true"
              data-bs-title="${tooltipContent.replace(/"/g, '&quot;')}">
-            <div class="appointment-header">
+            <div class="appointment-header ${isMissed ? 'missed' : ''} ${isCompleted ? 'completed' : ''}">
                 <div class="appointment-info" onclick="navigateToAppointment(${appointment.id})">
                     <div class="info-line"><span class="label">Patient:</span> ${appointment.patient_name}</div>
                     <div class="info-line"><span class="label">Doctor:</span> ${appointment.doctor_display_name || 'N/A'}</div>
                     <div class="info-line"><span class="label">Type:</span> ${appointment.visit_type}</div>
                     <div class="info-line"><span class="label">Time:</span> ${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}</div>
+                    ${appointment.status && appointment.status.toLowerCase() !== 'completed' && appointment.status.toLowerCase() !== 'rescheduled' ? `
+                    <div class="appointment-progress-container mt-2" data-appointment-id="${appointment.id}" data-date="${appointmentDate}" data-start-time="${appointment.start_time}" data-end-time="${appointment.end_time}">
+                        <div class="glass-progress-bar">
+                            <div class="glass-progress-fill" style="width: 0%;"></div>
+                            <div class="glass-progress-text">00:00</div>
+                        </div>
+                    </div>
+                    ` : ''}
                 </div>
                 <div class="appointment-status">
                     ${appointment.status === 'Rescheduled' ? `
@@ -459,11 +493,18 @@ function renderAppointmentSlot(appointment) {
                     </a>
                     ` : ''}
                     <span class="badge ${statusClass} d-flex align-items-center gap-1">
-                        <i class="bi ${getStatusIcon(appointment.status)}"></i>
-                        ${getStatusDisplayText(appointment.status)}
+                        <i class="bi ${statusIcon}"></i>
+                        ${statusText}
                     </span>
                 </div>
                 <div class="appointment-actions">
+                    <button class="btn btn-sm btn-outline-warning view-medical-history-btn"
+                            onclick="event.stopPropagation(); showMedicalHistoryPopover(${appointment.patient_id}, this)"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            data-bs-title="View Medical History">
+                        <i class="bi bi-clipboard-heart"></i>
+                    </button>
                     <a href="/doctor/patients/${appointment.patient_id}"
                        class="btn btn-sm btn-outline-info view-patient-btn"
                        onclick="event.stopPropagation();"
@@ -972,6 +1013,8 @@ function refreshCalendarData() {
             // Initialize tooltips after calendar is refreshed
             setTimeout(() => {
                 initializeTooltips();
+                // Initialize progress bars after calendar is refreshed
+                initializeAppointmentProgressBars();
             }, 100);
         } else {
         }
@@ -1038,7 +1081,7 @@ function getStatusBadgeClass(status) {
         'Booked': 'bg-primary',
         'CheckedIn': 'bg-success',
         'InProgress': 'bg-warning',
-        'Completed': 'bg-info',
+        'Completed': 'bg-success',
         'Cancelled': 'bg-danger',
         'NoShow': 'bg-secondary',
         'Rescheduled': 'bg-info'
@@ -2275,9 +2318,351 @@ function initCustomSelects() {
     });
 }
 
+// Initialize and update appointment progress bars - Global scope
+function initializeAppointmentProgressBars() {
+    const progressContainers = document.querySelectorAll('.appointment-progress-container');
+    
+    progressContainers.forEach(container => {
+        updateAppointmentProgressBar(container);
+    });
+    
+    // Update every second
+    if (progressContainers.length > 0) {
+        if (window.appointmentProgressInterval) {
+            clearInterval(window.appointmentProgressInterval);
+        }
+        window.appointmentProgressInterval = setInterval(() => {
+            progressContainers.forEach(container => {
+                updateAppointmentProgressBar(container);
+            });
+        }, 1000);
+    }
+}
+
+function updateAppointmentProgressBar(container) {
+    if (!container) return;
+    
+    const appointmentId = container.getAttribute('data-appointment-id');
+    const dateStr = container.getAttribute('data-date');
+    const startTimeStr = container.getAttribute('data-start-time');
+    const endTimeStr = container.getAttribute('data-end-time');
+    
+    if (!dateStr || !startTimeStr || !endTimeStr) {
+        console.warn('Missing appointment data:', { dateStr, startTimeStr, endTimeStr });
+        return;
+    }
+    
+    const now = new Date();
+    let appointmentDate;
+    
+    try {
+        appointmentDate = new Date(dateStr);
+        if (isNaN(appointmentDate.getTime())) {
+            console.warn('Invalid date:', dateStr);
+            return;
+        }
+    } catch (e) {
+        console.warn('Error parsing date:', dateStr, e);
+        return;
+    }
+    
+    // Parse time strings (handle both HH:MM:SS and HH:MM formats)
+    const startTimeParts = startTimeStr.split(':');
+    const endTimeParts = endTimeStr.split(':');
+    
+    const startHours = parseInt(startTimeParts[0]) || 0;
+    const startMinutes = parseInt(startTimeParts[1]) || 0;
+    const startSeconds = parseInt(startTimeParts[2]) || 0;
+    
+    const endHours = parseInt(endTimeParts[0]) || 0;
+    const endMinutes = parseInt(endTimeParts[1]) || 0;
+    const endSeconds = parseInt(endTimeParts[2]) || 0;
+    
+    const startDateTime = new Date(appointmentDate);
+    startDateTime.setHours(startHours, startMinutes, startSeconds, 0);
+    
+    const endDateTime = new Date(appointmentDate);
+    endDateTime.setHours(endHours, endMinutes, endSeconds, 0);
+    
+    const appointmentDuration = 15 * 60; // 15 minutes in seconds (900 seconds)
+    const progressFill = container.querySelector('.glass-progress-fill');
+    const progressText = container.querySelector('.glass-progress-text');
+    
+    if (!progressFill || !progressText) {
+        console.warn('Progress bar elements not found in container');
+        return;
+    }
+    
+    const nowTime = now.getTime();
+    const startTime = startDateTime.getTime();
+    const endTime = endDateTime.getTime();
+    
+    let progress = 0;
+    let timeText = '00:00';
+    let progressType = 'before'; // 'before', 'during', 'overdue'
+    let prefixText = '';
+    
+    if (nowTime < startTime) {
+        // Before appointment: show countdown to start
+        progressType = 'before';
+        prefixText = 'Remaining: ';
+        const secondsUntilStart = Math.floor((startTime - nowTime) / 1000);
+        const remainingSeconds = Math.max(0, secondsUntilStart);
+        
+        // Format time text (show hours if more than 60 minutes)
+        let timeValue = '';
+        if (remainingSeconds >= 3600) {
+            const hours = Math.floor(remainingSeconds / 3600);
+            const minutes = Math.floor((remainingSeconds % 3600) / 60);
+            const seconds = remainingSeconds % 60;
+            timeValue = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        } else {
+            const minutes = Math.floor(remainingSeconds / 60);
+            const seconds = remainingSeconds % 60;
+            timeValue = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+        timeText = prefixText + timeValue;
+        
+        // Progress bar fills as we get closer to start time
+        // Use a reasonable max time (e.g., 2 hours = 7200 seconds)
+        const maxCountdownTime = 2 * 60 * 60; // 2 hours
+        const adjustedTotal = Math.min(secondsUntilStart, maxCountdownTime);
+        progress = adjustedTotal > 0 ? ((maxCountdownTime - adjustedTotal) / maxCountdownTime) * 100 : 100;
+        progress = Math.min(100, Math.max(0, progress));
+    } else if (nowTime >= startTime && nowTime <= endTime) {
+        // During appointment: show elapsed time
+        progressType = 'during';
+        prefixText = 'Progress: ';
+        const elapsedSeconds = Math.floor((nowTime - startTime) / 1000);
+        progress = (elapsedSeconds / appointmentDuration) * 100;
+        progress = Math.min(100, Math.max(0, progress));
+        
+        // Format time text (show hours if more than 60 minutes)
+        let timeValue = '';
+        if (elapsedSeconds >= 3600) {
+            const hours = Math.floor(elapsedSeconds / 3600);
+            const minutes = Math.floor((elapsedSeconds % 3600) / 60);
+            const seconds = elapsedSeconds % 60;
+            timeValue = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        } else {
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+            timeValue = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+        timeText = prefixText + timeValue;
+    } else {
+        // After appointment: show overdue time
+        progressType = 'overdue';
+        prefixText = 'Overdue since: ';
+        const overdueSeconds = Math.floor((nowTime - endTime) / 1000);
+        progress = 100;
+        
+        // Format time text (show days if more than 24 hours)
+        let timeValue = '';
+        const secondsPerDay = 24 * 60 * 60; // 86400 seconds
+        if (overdueSeconds >= secondsPerDay) {
+            const days = Math.floor(overdueSeconds / secondsPerDay);
+            const remainingSeconds = overdueSeconds % secondsPerDay;
+            const hours = Math.floor(remainingSeconds / 3600);
+            const minutes = Math.floor((remainingSeconds % 3600) / 60);
+            const seconds = remainingSeconds % 60;
+            timeValue = `${days} day${days !== 1 ? 's' : ''}, ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        } else if (overdueSeconds >= 3600) {
+            const hours = Math.floor(overdueSeconds / 3600);
+            const minutes = Math.floor((overdueSeconds % 3600) / 60);
+            const seconds = overdueSeconds % 60;
+            timeValue = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        } else {
+            const minutes = Math.floor(overdueSeconds / 60);
+            const seconds = overdueSeconds % 60;
+            timeValue = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+        timeText = prefixText + timeValue;
+    }
+    
+    // Update progress bar
+    progressFill.style.width = `${progress}%`;
+    
+    // Update colors based on type
+    progressFill.className = 'glass-progress-fill';
+    if (progressType === 'before') {
+        progressFill.classList.add('glass-progress-cyan');
+    } else if (progressType === 'during') {
+        progressFill.classList.add('glass-progress-green');
+    } else {
+        progressFill.classList.add('glass-progress-red');
+    }
+    
+    // Update text
+    progressText.textContent = timeText;
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Show Medical History Popover
+function showMedicalHistoryPopover(patientId, buttonElement) {
+    // Close any existing popover
+    const existingPopover = document.getElementById('medicalHistoryPopover');
+    if (existingPopover) {
+        existingPopover.remove();
+    }
+    
+    // Create popover container
+    const popover = document.createElement('div');
+    popover.id = 'medicalHistoryPopover';
+    popover.className = 'medical-history-popover';
+    
+    // Create backdrop
+    const backdrop = document.createElement('div');
+    backdrop.className = 'medical-history-popover-backdrop';
+    backdrop.onclick = () => closeMedicalHistoryPopover();
+    
+    // Create popover content
+    const content = document.createElement('div');
+    content.className = 'medical-history-popover-content';
+    
+    // Create header
+    const header = document.createElement('div');
+    header.className = 'medical-history-popover-header';
+    header.innerHTML = `
+        <h3><i class="bi bi-clipboard-heart me-2"></i>Medical History</h3>
+        <button class="btn-close-popover" onclick="closeMedicalHistoryPopover()" aria-label="Close">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    `;
+    
+    // Create body
+    const body = document.createElement('div');
+    body.className = 'medical-history-popover-body';
+    body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+    
+    content.appendChild(header);
+    content.appendChild(body);
+    popover.appendChild(backdrop);
+    popover.appendChild(content);
+    
+    document.body.appendChild(popover);
+    
+    // Calculate position
+    updatePopoverPosition(buttonElement, content);
+    
+    // Fetch medical history
+    fetch(`/api/patients/${patientId}/medical-history`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data && data.data.length > 0) {
+                renderMedicalHistory(data.data, body);
+            } else {
+                body.innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-inbox me-2"></i>No medical history available</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading medical history:', error);
+            body.innerHTML = '<div class="text-center py-4 text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Error loading medical history</div>';
+        });
+    
+    // Update position on scroll and resize
+    const updatePosition = () => updatePopoverPosition(buttonElement, content);
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+    
+    // Store cleanup function
+    popover._cleanup = () => {
+        window.removeEventListener('scroll', updatePosition, true);
+        window.removeEventListener('resize', updatePosition);
+    };
+}
+
+function updatePopoverPosition(buttonElement, popoverContent) {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const popoverWidth = Math.min(400, viewportWidth - 40);
+    const popoverHeight = Math.min(600, viewportHeight - 40);
+    
+    // Center the popover in the viewport using CSS transform
+    // CSS will handle the centering with left: 50%, top: 50%, transform: translate(-50%, -50%)
+    popoverContent.style.width = `${popoverWidth}px`;
+    popoverContent.style.maxHeight = `${popoverHeight}px`;
+}
+
+function renderMedicalHistory(history, container) {
+    if (!history || history.length === 0) {
+        container.innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-inbox me-2"></i>No medical history available</div>';
+        return;
+    }
+    
+    let html = '<div class="medical-history-list">';
+    
+    history.forEach((entry, index) => {
+        const date = entry.diagnosis_date || entry.created_at;
+        const formattedDate = date ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
+        const doctorName = entry.doctor_name || 'Unknown';
+        
+        // Get notes text
+        let notesText = '';
+        if (entry.notes && entry.notes.trim() !== '') {
+            notesText = escapeHtml(entry.notes.replace(/\r\n|\r|\n/g, ' '));
+        } else if (entry.entry_type !== 'new_format') {
+            const oldFormatNotes = [];
+            if (entry.allergies) oldFormatNotes.push('Allergies: ' + escapeHtml(entry.allergies));
+            if (entry.medications) oldFormatNotes.push('Medications: ' + escapeHtml(entry.medications));
+            if (entry.systemic_history) oldFormatNotes.push('Systemic: ' + escapeHtml(entry.systemic_history));
+            if (entry.ocular_history) oldFormatNotes.push('Ocular: ' + escapeHtml(entry.ocular_history));
+            if (entry.prior_surgeries) oldFormatNotes.push('Surgeries: ' + escapeHtml(entry.prior_surgeries));
+            if (entry.family_history) oldFormatNotes.push('Family: ' + escapeHtml(entry.family_history));
+            if (oldFormatNotes.length > 0) {
+                notesText = oldFormatNotes.join(' | ');
+            }
+        }
+        
+        // Highlight titles
+        const titles = ['Chief Complaint', 'Plan', 'History of Present Illness', 'Allergies', 'Medications', 'Systemic', 'Ocular', 'Surgeries', 'Family', 'Diagnosis', 'Treatment'];
+        titles.forEach(title => {
+            const pattern = new RegExp('\\b(' + title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '):\\s*', 'gi');
+            notesText = notesText.replace(pattern, '<strong style="color: dodgerblue;">$1:</strong> ');
+        });
+        
+        html += `
+            <div class="medical-history-item ${index === 0 ? 'active' : ''}">
+                <div class="medical-history-item-header">
+                    <h4>${escapeHtml(entry.condition_name || `Medical Record #${entry.id}`)}</h4>
+                    <small class="text-muted">
+                        <i class="bi bi-calendar me-1"></i>${escapeHtml(formattedDate)}
+                        ${doctorName !== 'Unknown' ? ` • by ${escapeHtml(doctorName)}` : ''}
+                    </small>
+                </div>
+                ${notesText ? `<div class="medical-history-item-content">${notesText}</div>` : ''}
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function closeMedicalHistoryPopover() {
+    const popover = document.getElementById('medicalHistoryPopover');
+    if (popover) {
+        if (popover._cleanup) {
+            popover._cleanup();
+        }
+        popover.remove();
+    }
+}
+
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {
     if (refreshInterval) {
         clearInterval(refreshInterval);
     }
+    if (window.appointmentProgressInterval) {
+        clearInterval(window.appointmentProgressInterval);
+    }
+    closeMedicalHistoryPopover();
 });

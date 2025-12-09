@@ -3178,6 +3178,15 @@ function printLabTests(appointmentId) {
 
 // Status badge functions
 function getStatusBadgeClass(status) {
+    // Check if appointment is missed (Booked status and date is in the past)
+    const appointmentDate = window.APPOINTMENT_CONFIG?.appointmentDate || '';
+    const today = new Date().toISOString().split('T')[0];
+    const isMissed = (status === 'Booked' && appointmentDate < today);
+    
+    if (isMissed) {
+        return 'bg-danger text-white';
+    }
+    
     const classes = {
         'Booked': 'bg-primary',
         'CheckedIn': 'bg-success',
@@ -3186,12 +3195,22 @@ function getStatusBadgeClass(status) {
         'Cancelled': 'bg-danger',
         'NoShow': 'bg-secondary',
         'Rescheduled': 'bg-info',
-        'Closed': 'bg-danger'
+        'Closed': 'bg-danger',
+        'Missed': 'bg-danger text-white'
     };
     return classes[status] || 'bg-secondary';
 }
 
 function getStatusDisplayText(status) {
+    // Check if appointment is missed (Booked status and date is in the past)
+    const appointmentDate = window.APPOINTMENT_CONFIG?.appointmentDate || '';
+    const today = new Date().toISOString().split('T')[0];
+    const isMissed = (status === 'Booked' && appointmentDate < today);
+    
+    if (isMissed) {
+        return 'Missed';
+    }
+    
     const statusTexts = {
         'Booked': 'Booked',
         'CheckedIn': 'Checked In',
@@ -3200,12 +3219,22 @@ function getStatusDisplayText(status) {
         'Cancelled': 'Cancelled',
         'NoShow': 'No Show',
         'Rescheduled': 'Rescheduled',
-        'Closed': 'Closed'
+        'Closed': 'Closed',
+        'Missed': 'Missed'
     };
     return statusTexts[status] || status;
 }
 
 function getStatusIcon(status) {
+    // Check if appointment is missed (Booked status and date is in the past)
+    const appointmentDate = window.APPOINTMENT_CONFIG?.appointmentDate || '';
+    const today = new Date().toISOString().split('T')[0];
+    const isMissed = (status === 'Booked' && appointmentDate < today);
+    
+    if (isMissed) {
+        return 'bi-exclamation-triangle-fill';
+    }
+    
     const icons = {
         'Booked': 'bi-calendar-check',
         'CheckedIn': 'bi-check-circle-fill',
@@ -3214,7 +3243,8 @@ function getStatusIcon(status) {
         'Cancelled': 'bi-x-circle-fill',
         'NoShow': 'bi-clock-fill',
         'Rescheduled': 'bi-arrow-clockwise',
-        'Closed': 'bi-lock-fill'
+        'Closed': 'bi-lock-fill',
+        'Missed': 'bi-exclamation-triangle-fill'
     };
     return icons[status] || 'bi-question-circle';
 }
@@ -3226,6 +3256,14 @@ function updateStatusBadge(status) {
     const markCompletedBtn = document.getElementById('markCompletedBtn');
     
     if (badge && icon && text) {
+        // Check if appointment is missed (Booked status and date is in the past)
+        const appointmentDate = window.APPOINTMENT_CONFIG?.appointmentDate || '';
+        const today = new Date().toISOString().split('T')[0];
+        const isMissed = (status === 'Booked' && appointmentDate < today);
+        
+        // Use "Missed" status if appointment is missed
+        const displayStatus = isMissed ? 'Missed' : status;
+        
         // Update classes
         badge.className = `status-badge d-flex align-items-center gap-2 ${getStatusBadgeClass(status)}`;
         
@@ -3243,6 +3281,35 @@ function updateStatusBadge(status) {
                 markCompletedBtn.style.display = 'inline-block';
             }
         }
+    }
+    
+    // Update appointment header background colors
+    updateAppointmentHeaderClasses(status);
+}
+
+// Function to update appointment header classes based on status
+function updateAppointmentHeaderClasses(status) {
+    const header = document.querySelector('.appointment-header');
+    if (!header) return;
+    
+    // Remove existing status classes
+    header.classList.remove('completed', 'missed', 'closed', 'rescheduled');
+    
+    const statusLower = (status || '').toLowerCase();
+    const appointmentDate = window.APPOINTMENT_CONFIG?.appointmentDate || '';
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Check if appointment is missed (Booked status and date is in the past)
+    const isMissed = (statusLower === 'booked' && appointmentDate < today);
+    
+    if (statusLower === 'completed') {
+        header.classList.add('completed');
+    } else if (isMissed || statusLower === 'cancelled' || statusLower === 'noshow') {
+        header.classList.add('missed');
+    } else if (status === 'Closed') {
+        header.classList.add('closed');
+    } else if (status === 'Rescheduled') {
+        header.classList.add('rescheduled');
     }
 }
 
@@ -3858,9 +3925,23 @@ function confirmChangeStatus(appointmentId) {
             reason: reason
         })
     })
-    .then(() => {
-        // Always reload page regardless of response
-        window.location.reload();
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            // Update status badge and header classes before reload
+            updateStatusBadge(newStatus);
+            updateAppointmentHeaderClasses(newStatus);
+            
+            // Show success message
+            showNotification('Appointment status updated successfully!', 'success');
+            
+            // Reload after a short delay to show the update
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        } else {
+            window.location.reload();
+        }
     })
     .catch(() => {
         // Even on error, reload page
