@@ -244,8 +244,10 @@ try {
     $router->delete('/api/patients/{id}/medical-history/{historyId}', 'ApiController@deleteMedicalHistory');
     
     // Ophthalmology News routes
-    $router->get('/api/ophthalmology-news', 'ApiController@getOphthalmologyNews');
-        
+    $router->get('/api/ophthalmology-news', 'ApiController@getOphthalmologyNews');  
+    
+    // Weather API route
+    $router->get('/api/weather', 'ApiController@getWeather');
     
     // General routes
     $router->get('/about', 'GeneralController@about');

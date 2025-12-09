@@ -238,6 +238,9 @@ try {
     
     // Ophthalmology News routes
     $router->get('/api/ophthalmology-news', 'ApiController@getOphthalmologyNews');
+
+    // Weather API route
+    $router->get('/api/weather', 'ApiController@getWeather');
     
     // General routes
     $router->get('/about', 'GeneralController@about');

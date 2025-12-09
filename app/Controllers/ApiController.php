@@ -8617,6 +8617,394 @@ class ApiController
             exit;
         }
     }
+
+    /**
+     * Get weather data for the dashboard
+     * Uses OpenWeatherMap API with caching
+     */
+    public function getWeather()
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['success' => false, 'error' => 'Unauthorized'], 401);
+            }
+
+            $lat = $_GET['lat'] ?? null;
+            $lon = $_GET['lon'] ?? null;
+
+            // Cache file path
+            $cacheDir = __DIR__ . '/../../storage/cache';
+            if (!is_dir($cacheDir)) {
+                mkdir($cacheDir, 0755, true);
+            }
+
+            $cacheKey = $lat && $lon ? md5("weather_{$lat}_{$lon}") : 'weather_default';
+            $cacheFile = "{$cacheDir}/{$cacheKey}.json";
+            $cacheExpiry = 15 * 60; // 15 minutes
+
+            // Check cache
+            if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $cacheExpiry) {
+                $cachedData = json_decode(file_get_contents($cacheFile), true);
+                if ($cachedData) {
+                    return $this->jsonResponse([
+                        'success' => true,
+                        'weather' => $cachedData,
+                        'cached' => true
+                    ]);
+                }
+            }
+
+            // Default to Kafr El Sheikh, Egypt if no coordinates provided
+            if (!$lat || !$lon) {
+                $lat = 31.1117; // Kafr El Sheikh latitude
+                $lon = 30.9397; // Kafr El Sheikh longitude
+            }
+
+            // OpenWeatherMap API key - use environment variable or default
+            $apiKey = $_ENV['OPENWEATHER_API_KEY'] ?? '4d8fb5b93d4af21d66a2948710284366';
+
+            // Use OpenWeatherMap ONLY (for testing, no fallbacks)
+            $weatherData = $this->fetchWeatherFromOpenWeatherMap($lat, $lon, $apiKey);
+            
+            // If OpenWeatherMap fails, return error (no fallback)
+            if (!$weatherData) {
+                error_log("OpenWeatherMap API failed for coordinates: {$lat}, {$lon}");
+                return $this->jsonResponse([
+                    'success' => false,
+                    'error' => 'Failed to fetch weather data from OpenWeatherMap API'
+                ], 500);
+            }
+
+            // Save to cache
+            file_put_contents($cacheFile, json_encode($weatherData));
+
+            return $this->jsonResponse([
+                'success' => true,
+                'weather' => $weatherData
+            ]);
+
+        } catch (\Exception $e) {
+            error_log("Weather API error: " . $e->getMessage());
+            return $this->jsonResponse([
+                'success' => false,
+                'error' => 'Weather API exception: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Fetch weather from Open-Meteo API (free, no API key)
+     */
+    private function fetchWeatherFromOpenMeteo($lat, $lon)
+    {
+        try {
+            // Open-Meteo API endpoint - no API key required
+            $weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude={$lat}&longitude={$lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,uv_index,is_day&timezone=auto";
+            
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $weatherUrl,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 10,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; WeatherApp)'
+            ]);
+            
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+            
+            if ($httpCode !== 200 || !$response || $curlError) {
+                error_log("Open-Meteo API error: HTTP {$httpCode}, cURL: {$curlError}");
+                return null;
+            }
+            
+            $data = json_decode($response, true);
+            
+            if (!$data || !isset($data['current'])) {
+                error_log("Open-Meteo API: Invalid response structure");
+                return null;
+            }
+            
+            $current = $data['current'];
+            
+            // Map weather code to condition description
+            $weatherCode = $current['weather_code'] ?? 0;
+            $condition = $this->mapWeatherCodeToCondition($weatherCode);
+            
+            // Get location name using reverse geocoding
+            $locationName = $this->getLocationNameFromCoordinates($lat, $lon);
+            
+            // Open-Meteo returns wind_speed_10m in km/h already (check units in response)
+            // But based on API docs, it's in km/h, so no conversion needed
+            $windSpeed = round($current['wind_speed_10m'] ?? 0);
+            
+            $weatherData = [
+                'temperature' => round($current['temperature_2m'] ?? 20),
+                'humidity' => round($current['relative_humidity_2m'] ?? 50),
+                'condition' => $condition,
+                'icon' => $this->getWeatherIconFromCode($weatherCode, $current['is_day'] ?? 1),
+                'windSpeed' => $windSpeed, // Already in km/h from Open-Meteo
+                'location' => $locationName,
+                'country' => '',
+                'uvIndex' => round($current['uv_index'] ?? 5),
+                'feelsLike' => round($current['temperature_2m'] ?? 20),
+                'pressure' => 1013, // Open-Meteo doesn't provide pressure in free tier
+                'visibility' => 10,
+                'clouds' => $this->estimateCloudsFromWeatherCode($weatherCode),
+                'timestamp' => time()
+            ];
+            
+            error_log("Open-Meteo API: Successfully fetched weather data for {$lat}, {$lon}");
+            return $weatherData;
+            
+        } catch (\Exception $e) {
+            error_log("Open-Meteo API exception: " . $e->getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Fetch weather from OpenWeatherMap API (fallback)
+     */
+    private function fetchWeatherFromOpenWeatherMap($lat, $lon, $apiKey)
+    {
+        try {
+            $weatherUrl = "https://api.openweathermap.org/data/2.5/weather?lat={$lat}&lon={$lon}&units=metric&appid={$apiKey}";
+            
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $weatherUrl,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 10,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_SSL_VERIFYPEER => false
+            ]);
+            
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            if ($httpCode !== 200 || !$response) {
+                error_log("OpenWeatherMap API error: HTTP {$httpCode}");
+                return null;
+            }
+            
+            $data = json_decode($response, true);
+            
+            if (!$data || !isset($data['main'])) {
+                error_log("OpenWeatherMap API: Invalid response structure");
+                return null;
+            }
+            
+            $weatherData = [
+                'temperature' => round($data['main']['temp'] ?? 20),
+                'humidity' => $data['main']['humidity'] ?? 50,
+                'condition' => ucfirst($data['weather'][0]['description'] ?? 'Clear'),
+                'icon' => $data['weather'][0]['icon'] ?? '01d',
+                'windSpeed' => round(($data['wind']['speed'] ?? 0) * 3.6), // Convert m/s to km/h
+                'location' => $data['name'] ?? 'Unknown',
+                'country' => $data['sys']['country'] ?? '',
+                'uvIndex' => $this->estimateUVIndex($data),
+                'feelsLike' => round($data['main']['feels_like'] ?? $data['main']['temp']),
+                'pressure' => $data['main']['pressure'] ?? 1013,
+                'visibility' => round(($data['visibility'] ?? 10000) / 1000), // Convert to km
+                'clouds' => $data['clouds']['all'] ?? 0,
+                'timestamp' => time()
+            ];
+            
+            error_log("OpenWeatherMap API: Successfully fetched weather data");
+            return $weatherData;
+            
+        } catch (\Exception $e) {
+            error_log("OpenWeatherMap API exception: " . $e->getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Map WMO weather code to condition description
+     */
+    private function mapWeatherCodeToCondition($code)
+    {
+        // WMO Weather interpretation codes (WW)
+        $codes = [
+            0 => 'Clear',
+            1 => 'Mainly Clear',
+            2 => 'Partly Cloudy',
+            3 => 'Overcast',
+            45 => 'Foggy',
+            48 => 'Depositing Rime Fog',
+            51 => 'Light Drizzle',
+            53 => 'Moderate Drizzle',
+            55 => 'Dense Drizzle',
+            56 => 'Light Freezing Drizzle',
+            57 => 'Dense Freezing Drizzle',
+            61 => 'Slight Rain',
+            63 => 'Moderate Rain',
+            65 => 'Heavy Rain',
+            66 => 'Light Freezing Rain',
+            67 => 'Heavy Freezing Rain',
+            71 => 'Slight Snow',
+            73 => 'Moderate Snow',
+            75 => 'Heavy Snow',
+            77 => 'Snow Grains',
+            80 => 'Slight Rain Showers',
+            81 => 'Moderate Rain Showers',
+            82 => 'Violent Rain Showers',
+            85 => 'Slight Snow Showers',
+            86 => 'Heavy Snow Showers',
+            95 => 'Thunderstorm',
+            96 => 'Thunderstorm with Hail',
+            99 => 'Thunderstorm with Heavy Hail'
+        ];
+        
+        return $codes[$code] ?? 'Clear';
+    }
+    
+    /**
+     * Get weather icon from WMO code
+     */
+    private function getWeatherIconFromCode($code, $isDay = 1)
+    {
+        // Map to OpenWeatherMap icon format for compatibility
+        if ($code == 0) return $isDay ? '01d' : '01n';
+        if ($code <= 2) return $isDay ? '02d' : '02n';
+        if ($code == 3) return '04d';
+        if ($code >= 45 && $code <= 48) return '50d';
+        if ($code >= 51 && $code <= 67) return '09d';
+        if ($code >= 71 && $code <= 77) return '13d';
+        if ($code >= 80 && $code <= 82) return '09d';
+        if ($code >= 85 && $code <= 86) return '13d';
+        if ($code >= 95) return '11d';
+        return '01d';
+    }
+    
+    /**
+     * Estimate cloud cover from weather code
+     */
+    private function estimateCloudsFromWeatherCode($code)
+    {
+        if ($code == 0) return 0;
+        if ($code <= 2) return 25;
+        if ($code == 3) return 100;
+        if ($code >= 45 && $code <= 48) return 50;
+        if ($code >= 51 && $code <= 67) return 80;
+        if ($code >= 71 && $code <= 77) return 90;
+        if ($code >= 80 && $code <= 82) return 85;
+        if ($code >= 85 && $code <= 86) return 95;
+        if ($code >= 95) return 100;
+        return 50;
+    }
+    
+    /**
+     * Get location name from coordinates using reverse geocoding
+     */
+    private function getLocationNameFromCoordinates($lat, $lon)
+    {
+        try {
+            // Use Nominatim (OpenStreetMap) for reverse geocoding - more reliable and supports English
+            $nominatimUrl = "https://nominatim.openstreetmap.org/reverse?format=json&lat={$lat}&lon={$lon}&zoom=10&addressdetails=1&accept-language=en";
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $nominatimUrl,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 5,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; WeatherApp)'
+            ]);
+            
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            if ($httpCode === 200 && $response) {
+                $data = json_decode($response, true);
+                if (isset($data['address'])) {
+                    $address = $data['address'];
+                    $locationParts = [];
+                    
+                    // Try to get city/town/village name
+                    if (isset($address['city'])) {
+                        $locationParts[] = $address['city'];
+                    } elseif (isset($address['town'])) {
+                        $locationParts[] = $address['town'];
+                    } elseif (isset($address['village'])) {
+                        $locationParts[] = $address['village'];
+                    } elseif (isset($address['municipality'])) {
+                        $locationParts[] = $address['municipality'];
+                    }
+                    
+                    // Add country if available
+                    if (isset($address['country'])) {
+                        $locationParts[] = $address['country'];
+                    }
+                    
+                    if (!empty($locationParts)) {
+                        return implode(', ', $locationParts);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            error_log("Reverse geocoding error: " . $e->getMessage());
+        }
+        
+        // No fallback - return coordinates only if geocoding fails
+        error_log("Reverse geocoding failed for coordinates: {$lat}, {$lon}");
+        return sprintf('Location (%.2f, %.2f)', $lat, $lon);
+    }
+    
+    /**
+     * Estimate UV index based on weather conditions
+     */
+    private function estimateUVIndex($weatherData)
+    {
+        $clouds = $weatherData['clouds']['all'] ?? 0;
+        $hour = (int)date('H');
+
+        // Base UV index (midday, clear sky)
+        $baseUV = 8;
+
+        // Adjust for time of day
+        if ($hour < 7 || $hour > 18) {
+            return 0; // Night
+        } elseif ($hour < 10 || $hour > 16) {
+            $baseUV *= 0.5;
+        } elseif ($hour < 11 || $hour > 15) {
+            $baseUV *= 0.8;
+        }
+
+        // Adjust for cloud cover
+        $cloudFactor = 1 - ($clouds / 100) * 0.7;
+
+        return round($baseUV * $cloudFactor);
+    }
+
+    /**
+     * Get fallback weather data when API fails
+     */
+    private function getFallbackWeatherData()
+    {
+        return [
+            'temperature' => 25,
+            'humidity' => 50,
+            'condition' => 'Partly Cloudy',
+            'icon' => '02d',
+            'windSpeed' => 12,
+            'location' => 'Kafr El Sheikh, Egypt',
+            'country' => 'EG',
+            'uvIndex' => 5,
+            'feelsLike' => 26,
+            'pressure' => 1013,
+            'visibility' => 10,
+            'clouds' => 30,
+            'timestamp' => time()
+        ];
+    }
 }
 
 

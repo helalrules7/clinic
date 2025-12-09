@@ -495,7 +495,6 @@
                 })
                 .catch(error => {
                     // Silently fail - don't show errors for alert checking
-                    console.debug('Alert check failed:', error);
                 })
                 .finally(() => {
                     isChecking = false;

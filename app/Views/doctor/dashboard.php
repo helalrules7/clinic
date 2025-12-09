@@ -85,6 +85,67 @@
             </div>
         </div>
     </div>
+
+    <!-- Weather & Allergy Index Card -->
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-weather">
+                <div class="stats-card-content">
+                    <div class="weather-card-inner">
+                        <!-- Weather Section -->
+                        <div class="weather-main">
+                            <div class="weather-icon-container" id="weatherIconContainer">
+                                <div class="weather-icon-loading">
+                                    <div class="spinner-border spinner-border-sm text-light" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="weather-info">
+                                <div class="weather-temp" id="weatherTemp">--°C</div>
+                                <div class="weather-desc" id="weatherDesc">Loading...</div>
+                                <div class="weather-location" id="weatherLocation">
+                                    <i class="bi bi-geo-alt-fill"></i>
+                                    <span>Detecting location...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Health Indices -->
+                        <div class="health-indices">
+                            <!-- Pollen Index -->
+                            <div class="health-index pollen-index">
+                                <div class="index-icon">
+                                    <i class="bi bi-flower1"></i>
+                                </div>
+                                <div class="index-info">
+                                    <span class="index-label">Pollen Index</span>
+                                    <div class="index-bar">
+                                        <div class="index-fill" id="pollenIndexFill" style="width: 0%"></div>
+                                    </div>
+                                    <span class="index-value" id="pollenIndexValue">--</span>
+                                </div>
+                            </div>
+
+                            <!-- Dry Eye Risk -->
+                            <div class="health-index dry-eye-index">
+                                <div class="index-icon">
+                                    <i class="bi bi-eye"></i>
+                                </div>
+                                <div class="index-info">
+                                    <span class="index-label">Dry Eye Risk</span>
+                                    <div class="index-bar">
+                                        <div class="index-fill" id="dryEyeIndexFill" style="width: 0%"></div>
+                                    </div>
+                                    <span class="index-value" id="dryEyeIndexValue">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Ophthalmology News Bar -->
