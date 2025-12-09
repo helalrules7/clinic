@@ -87,86 +87,283 @@
     </div>
 </div>
 
-<!-- Quick Actions, Upcoming Appointments, and Recent Activity - Responsive Layout -->
+<!-- Quick Actions - New iOS-style Cards -->
 <div class="row mb-4">
-    <!-- Quick Actions - Responsive width -->
-    <div class="col-xl-2 col-lg-3 col-md-12 col-sm-12 mb-4">
-        <div class="card shadow dashboard-card h-100">
+    <div class="col-12">
+        <div class="card shadow dashboard-card">
             <div class="card-header py-3">
                 <h6 class="m-0 font-weight-bold text-primary">
-                    <i class="bi bi-lightning me-2"></i>
+                    <i class="bi bi-lightning-charge me-2"></i>
                     Quick Actions
                 </h6>
             </div>
             <div class="card-body">
-                <div class="row g-2">
-                    <div class="col-6">
-                        <button type="button" class="glass-action-btn d-flex flex-column align-items-center justify-content-center" onclick="quickActionBookAppointment()">
-                            <i class="bi bi-calendar-plus mb-2"></i>
-                            <span>Book Appointment</span>
-                        </button>
+                <div class="quick-actions-wrapper" id="quickActionsWrapper">
+                    <!-- Navigation Arrows -->
+                    <button class="quick-actions-nav nav-left hidden" id="qaNavLeft" aria-label="Scroll left">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <button class="quick-actions-nav nav-right" id="qaNavRight" aria-label="Scroll right">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+
+                    <div class="quick-actions-grid" id="quickActionsGrid">
+                    <!-- Patients Card -->
+                    <div class="quick-action-card patients-card">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
+                            <i class="bi bi-people-fill"></i>
+                            <span class="qa-logo-name">Patients</span>
+                        </div>
+                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/patients'">
+                            <span class="qa-icon">
+                                <i class="bi bi-person-lines-fill"></i>
+                            </span>
+                            <span class="qa-label">View</span>
+                        </div>
+                        <div class="qa-box qa-box2" onclick="quickActionAddPatient()">
+                            <span class="qa-icon">
+                                <i class="bi bi-person-plus-fill"></i>
+                            </span>
+                            <span class="qa-label">Add</span>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <a href="/doctor/calendar" class="glass-action-btn d-flex flex-column align-items-center justify-content-center">
-                            <i class="bi bi-calendar3 mb-2"></i>
-                            <span>Show Calendar</span>
-                        </a>
+
+                    <!-- Calendar Card -->
+                    <div class="quick-action-card calendar-card">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
+                            <i class="bi bi-calendar3"></i>
+                            <span class="qa-logo-name">Calendar</span>
+                        </div>
+                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/calendar'">
+                            <span class="qa-icon">
+                                <i class="bi bi-calendar3"></i>
+                            </span>
+                            <span class="qa-label">View</span>
+                        </div>
+                        <div class="qa-box qa-box2" onclick="quickActionAddAppointment()">
+                            <span class="qa-icon">
+                                <i class="bi bi-calendar-plus-fill"></i>
+                            </span>
+                            <span class="qa-label">Add</span>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <button type="button" class="glass-action-btn d-flex flex-column align-items-center justify-content-center" onclick="quickActionAddPatient()">
-                            <i class="bi bi-person-plus mb-2"></i>
-                            <span>Add Patient</span>
-                        </button>
+
+                    <!-- Discussion Card -->
+                    <div class="quick-action-card discussion-card">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
+                            <i class="bi bi-chat-dots-fill"></i>
+                            <span class="qa-logo-name">Discussion</span>
+                        </div>
+                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/discussions'">
+                            <span class="qa-icon">
+                                <i class="bi bi-chat-left-text-fill"></i>
+                            </span>
+                            <span class="qa-label">View</span>
+                        </div>
+                        <div class="qa-box qa-box2" onclick="quickActionAddDiscussion()">
+                            <span class="qa-icon">
+                                <i class="bi bi-chat-quote-fill"></i>
+                            </span>
+                            <span class="qa-label">Add</span>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <a href="/doctor/patients" class="glass-action-btn d-flex flex-column align-items-center justify-content-center">
-                            <i class="bi bi-people mb-2"></i>
-                            <span>Show Patients</span>
-                        </a>
+
+                    <!-- Financial Card -->
+                    <div class="quick-action-card financial-card">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
+                            <i class="bi bi-wallet2"></i>
+                            <span class="qa-logo-name">Financial</span>
+                        </div>
+                        <div class="qa-box qa-box1" onclick="quickActionAddBalance()">
+                            <span class="qa-icon">
+                                <i class="bi bi-plus-circle-fill"></i>
+                            </span>
+                            <span class="qa-label">Balance</span>
+                        </div>
+                        <div class="qa-box qa-box2" style="width:55% !important" onclick="quickActionAddExpense()">
+                            <span class="qa-icon">
+                                <i class="bi bi-dash-circle-fill"></i>
+                            </span>
+                            <span class="qa-label">Expense</span>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <button type="button" class="glass-action-btn d-flex flex-column align-items-center justify-content-center" onclick="quickActionPostDiscussion()">
-                            <i class="bi bi-chat-dots mb-2"></i>
-                            <span>Post Discussion</span>
-                        </button>
+
+                    <!-- Notes Card -->
+                    <div class="quick-action-card notes-card">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
+                            <i class="bi bi-journal-text"></i>
+                            <span class="qa-logo-name">Notes</span>
+                        </div>
+                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/notes'">
+                            <span class="qa-icon">
+                                <i class="bi bi-card-checklist"></i>
+                            </span>
+                            <span class="qa-label">View</span>
+                        </div>
+                        <div class="qa-box qa-box2" onclick="quickActionAddNote()">
+                            <span class="qa-icon">
+                                <i class="bi bi-journal-plus"></i>
+                            </span>
+                            <span class="qa-label">Add</span>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <button type="button" class="glass-action-btn d-flex flex-column align-items-center justify-content-center" onclick="quickActionEditProfile()">
-                            <i class="bi bi-person-circle mb-2"></i>
-                            <span>Edit Profile</span>
-                        </button>
+
+                    <!-- Alerts Card -->
+                    <div class="quick-action-card alerts-card">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
+                            <i class="bi bi-bell-fill"></i>
+                            <span class="qa-logo-name">Alerts</span>
+                        </div>
+                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/alerts'">
+                            <span class="qa-icon">
+                                <i class="bi bi-alarm-fill"></i>
+                            </span>
+                            <span class="qa-label">View</span>
+                        </div>
+                        <div class="qa-box qa-box2" onclick="quickActionAddAlert()">
+                            <span class="qa-icon">
+                                <i class="bi bi-plus-circle-fill"></i>
+                            </span>
+                            <span class="qa-label">Add</span>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <button type="button" class="glass-action-btn d-flex flex-column align-items-center justify-content-center" onclick="quickActionAddBalance()">
-                            <i class="bi bi-wallet2 mb-2"></i>
-                            <span>Add Balance</span>
-                        </button>
+
+                    <!-- Profile Card (View only) -->
+                    <div class="quick-action-card profile-card single-action-card">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
+                            <i class="bi bi-person-circle"></i>
+                            <span class="qa-logo-name">Profile</span>
+                        </div>
+                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/profile'">
+                            <span class="qa-icon">
+                                <i class="bi bi bi-person-vcard"></i>
+                            </span>
+                            <span class="qa-label">View</span>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <button type="button" class="glass-action-btn d-flex flex-column align-items-center justify-content-center" onclick="quickActionAddExpense()">
-                            <i class="bi bi-dash-circle mb-2"></i>
-                            <span>Add Expense</span>
-                        </button>
+
+                    <!-- Drugs Card (View only) -->
+                    <div class="quick-action-card drugs-card single-action-card">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
+                            <i class="bi bi-capsule"></i>
+                            <span class="qa-logo-name">Drugs</span>
+                        </div>
+                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/drugs'">
+                            <span class="qa-icon">
+                                <i class="bi bi-eye-fill"></i>
+                            </span>
+                            <span class="qa-label">View</span>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <button type="button" class="glass-action-btn d-flex flex-column align-items-center justify-content-center" onclick="quickActionAddNote()">
-                            <i class="bi bi-sticky mb-2"></i>
-                            <span>Add Note</span>
-                        </button>
+
+                    <!-- Settings Card (View only) -->
+                    <div class="quick-action-card settings-card single-action-card">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
+                            <i class="bi bi-gear-fill"></i>
+                            <span class="qa-logo-name">Settings</span>
+                        </div>
+                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/settings'">
+                            <span class="qa-icon">
+                                <i class="bi bi-eye-fill"></i>
+                            </span>
+                            <span class="qa-label">View</span>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <button type="button" class="glass-action-btn d-flex flex-column align-items-center justify-content-center" onclick="quickActionAddAlert()">
-                            <i class="bi bi-bell mb-2"></i>
-                            <span>Add Alert</span>
-                        </button>
+
+                    <!-- Organizer Card (View only) -->
+                    <div class="quick-action-card organizer-card single-action-card">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
+                            <i class="bi bi-kanban-fill"></i>
+                            <span class="qa-logo-name">Organizer</span>
+                        </div>
+                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/organizer'">
+                            <span class="qa-icon">
+                                <i class="bi bi-eye-fill"></i>
+                            </span>
+                            <span class="qa-label">View</span>
+                        </div>
+                    </div>
+
+                    <!-- Media Card (View only) -->
+                    <div class="quick-action-card media-card single-action-card">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
+                            <i class="bi bi-images"></i>
+                            <span class="qa-logo-name">Media</span>
+                        </div>
+                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/media'">
+                            <span class="qa-icon">
+                                <i class="bi bi-eye-fill"></i>
+                            </span>
+                            <span class="qa-label">View</span>
+                        </div>
+                    </div>
+
+                    <!-- Medical Prescriptions Card (View only) -->
+                    <div class="quick-action-card medical-rx-card single-action-card">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
+                            <i class="bi bi-file-earmark-medical-fill"></i>
+                            <span class="qa-logo-name">Medical Rx</span>
+                        </div>
+                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/medications'">
+                            <span class="qa-icon">
+                                <i class="bi bi-prescription"></i>
+                            </span>
+                            <span class="qa-label">View</span>
+                        </div>
+                    </div>
+
+                    <!-- Glasses Prescriptions Card (View only) -->
+                    <div class="quick-action-card glasses-rx-card single-action-card">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
+                            <i class="bi bi-eyeglasses"></i>
+                            <span class="qa-logo-name">Glasses Rx</span>
+                        </div>
+                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/glasses'">
+                            <span class="qa-icon">
+                                <i class="bi bi-eye-fill"></i>
+                            </span>
+                            <span class="qa-label">View</span>
+                        </div>
+                    </div>
+
+                    <!-- Reports Card (View only) -->
+                    <div class="quick-action-card reports-card single-action-card">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
+                            <i class="bi bi-bar-chart-fill"></i>
+                            <span class="qa-logo-name">Reports</span>
+                        </div>
+                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/reports'">
+                            <span class="qa-icon">
+                                <i class="bi bi-clipboard2-data"></i>
+                            </span>
+                            <span class="qa-label">View</span>
+                        </div>
+                    </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Upcoming Appointments - Responsive width -->
-    <div class="col-xl-5 col-lg-4 col-md-12 col-sm-12 mb-4">
+<!-- Upcoming Appointments and Recent Activity - Equal Width Layout -->
+<div class="row mb-4">
+    <!-- Upcoming Appointments - 50% width -->
+    <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-4">
         <div class="card shadow dashboard-card h-100">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">
@@ -195,8 +392,8 @@
         </div>
     </div>
 
-    <!-- Recent Activity - Responsive width -->
-    <div class="col-xl-5 col-lg-5 col-md-12 col-sm-12 mb-4">
+    <!-- Recent Activity - 50% width -->
+    <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-4">
         <div class="card shadow dashboard-card h-100">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">

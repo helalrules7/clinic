@@ -203,30 +203,52 @@
     }
     
     .appointment-header {
+        position: relative;
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: center;
         margin-bottom: 0.5rem;
-        padding: 0.5rem;
         border-radius: 6px;
-        background: linear-gradient(135deg, var(--accent) 0%, var(--success) 100%);
+        background: linear-gradient(135deg, var(--accent) 0%, rgba(16, 185, 129, 0.40) 100%) !important;
         margin: -0.5rem -0.5rem 0.5rem -0.5rem;
-        padding: 0.75rem 0.5rem;
+        padding: 0.5rem;
     }
-    
+
     .appointment-header:hover {
-        background: linear-gradient(135deg, var(--success) 0%, var(--accent) 100%);
+        background: linear-gradient(135deg, var(--success) 0%, rgba(14, 165, 233, 0.40) 100%) !important;
+        transition: background-color 0.5s ease !important;
     }
-    
+
+    /* Status badges - absolute positioned at middle center */
+    .appointment-header .appointment-status {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        z-index: 5;
+    }
+
+    .appointment-header .appointment-status .badge {
+        font-size: 0.8rem;
+        padding: 0.9rem 0.9rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
     .appointment-header .appointment-info {
         flex: 1;
         cursor: pointer;
     }
-    
+
     .appointment-header .appointment-actions {
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        flex-shrink: 0;
     }
     
     .appointment-header .appointment-info .info-line {
@@ -259,7 +281,7 @@
     }
     
     .dark .appointment-header .appointment-info .info-line .label {
-        color: var(--muted);
+        color: white !important;
     }
     
     /* Light Mode Appointment Header - Enhanced text colors for gradient background */
@@ -560,11 +582,31 @@
         }
         
         .appointment-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.25rem;
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
         }
-        
+
+        /* On mobile: info takes full width, actions and status share second row */
+        .appointment-header .appointment-info {
+            order: 1;
+            width: 100%;
+            flex: 0 0 100%;
+        }
+
+        .appointment-header .appointment-actions {
+            order: 2;
+            flex-shrink: 0;
+        }
+
+        .appointment-header .appointment-status {
+            position: static;
+            transform: none;
+            order: 3;
+            margin-left: auto;
+        }
+
         /* Calendar Page Header - Mobile Responsive */
         .row.mb-4:first-child {
             margin-bottom: 1rem !important;
@@ -1320,11 +1362,11 @@
         padding: 0.375rem 0.75rem !important;
         font-size: 0.875rem !important;
         border-radius: 6px !important;
-        border: 1px solid white !important;
+        border: 1px solid #0ea5e9 !important;
         transition: all 0.2s ease !important;
         opacity: 0.9;
         color:white !important;
-        background-color: transparent !important;
+        background-color: #0ea5e9 !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -1335,13 +1377,13 @@
         opacity: 1 !important;
         transform: translateY(-1px) !important;
         box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3) !important;
-        background-color:rgb(255, 255, 255) !important;
-        border-color:rgb(255, 255, 255) !important;
+        background-color: #0081bc !important;
+        border: 1px solid #0081bc !important;
         color: black !important;
     }
     
     .view-patient-btn:hover i {
-        color: black !important;
+        color: white !important;
     }
     
     .appointment-card:hover .view-patient-btn {
@@ -1350,14 +1392,14 @@
     
     /* Dark mode view patient button */
     .dark .view-patient-btn {
-        color: #0ea5e9 !important;
+        color: white !important;
         border-color: #0ea5e9 !important;
-        background-color: transparent !important;
+        background-color: #0ea5e9 !important;
     }
     
     .dark .view-patient-btn:hover {
-        background-color: #0ea5e9 !important;
-        border-color: #0ea5e9 !important;
+        background-color: #0081bc !important;
+        border: 1px solid #0081bc !important;
         color: white !important;
     }
     
@@ -1373,8 +1415,8 @@
         border: 1px solid var(--danger) !important;
         transition: all 0.2s ease !important;
         opacity: 0.9;
-        background-color: transparent !important;
-        color: var(--danger) !important;
+        background-color: var(--danger) !important;
+        color: white !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -1384,7 +1426,7 @@
         opacity: 1 !important;
         transform: translateY(-1px) !important;
         box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3) !important;
-        background-color: var(--danger) !important;
+        background-color: rgba(239, 68, 68, 0.3) !important;
         border-color: var(--danger) !important;
         color: white !important;
     }
@@ -1399,9 +1441,8 @@
     
     /* Dark mode delete button */
     .dark .delete-appointment-btn {
-        background-color: transparent !important;
         border-color: var(--danger) !important;
-        color: var(--danger) !important;
+        color: white !important;
     }
     
     .dark .delete-appointment-btn:hover {

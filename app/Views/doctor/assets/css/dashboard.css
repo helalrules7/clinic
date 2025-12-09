@@ -497,192 +497,719 @@
     color: white !important;
 }
 
-/* Quick Actions Professional Styling */
-.quick-action-btn {
-    border-radius: 8px !important;
-    border-width: 2px !important;
-    transition: all 0.3s ease !important;
-    font-weight: 500 !important;
-    text-decoration: none !important;
+/* ============================================
+   Quick Actions Cards - New Design
+   ============================================ */
+
+/* Scroll container wrapper */
+.quick-actions-wrapper {
     position: relative;
-    overflow: hidden;
-    min-height: 60px;
-    white-space: nowrap;
     width: 100%;
+    padding: 0.5rem 0;
 }
 
-.quick-action-btn:before {
+/* Grid container for quick action cards - Horizontal Scroll */
+.quick-actions-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 1rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.5rem 0.25rem 1rem 0.25rem;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    /* Snap scrolling */
+    scroll-snap-type: x mandatory;
+    /* Hide scrollbar but keep functionality */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.quick-actions-grid::-webkit-scrollbar {
+    display: none;
+}
+
+/* Fade indicators on edges */
+.quick-actions-wrapper::before,
+.quick-actions-wrapper::after {
     content: '';
     position: absolute;
     top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    transition: left 0.5s;
+    bottom: 0;
+    width: 40px;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
-.quick-action-btn:hover:before {
-    left: 100%;
+.quick-actions-wrapper::before {
+    left: 0;
+    background: linear-gradient(to right, var(--card) 0%, transparent 100%);
 }
 
-.quick-action-btn i {
-    transition: transform 0.3s ease;
+.quick-actions-wrapper::after {
+    right: 0;
+    background: linear-gradient(to left, var(--card) 0%, transparent 100%);
 }
 
-.quick-action-btn:hover i {
-    transform: translateY(-2px) scale(1.1);
+.quick-actions-wrapper.show-left-fade::before {
+    opacity: 1;
 }
 
-.quick-action-btn span {
-    font-size: 0.9rem;
+.quick-actions-wrapper.show-right-fade::after {
+    opacity: 1;
+}
+
+/* Navigation arrows */
+.quick-actions-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 15;
+    opacity: 0;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.quick-actions-nav:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.quick-actions-nav.nav-left {
+    left: -10px;
+}
+
+.quick-actions-nav.nav-right {
+    right: -10px;
+}
+
+.quick-actions-wrapper:hover .quick-actions-nav {
+    opacity: 1;
+}
+
+.quick-actions-nav.hidden {
+    opacity: 0 !important;
+    pointer-events: none;
+}
+
+.dark .quick-actions-nav {
+    background: var(--card);
+    border-color: var(--border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.dark .quick-actions-nav:hover {
+    background: var(--accent);
+    color: white;
+}
+
+/* Hide arrows on touch devices */
+@media (hover: none) and (pointer: coarse) {
+    .quick-actions-nav {
+        display: none;
+    }
+}
+
+/* Base card styles */
+.quick-action-card {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    min-width: 140px;
+    background: var(--card);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    transition: all 0.5s ease-in-out;
+    cursor: pointer;
+    /* Snap alignment */
+    scroll-snap-align: start;
+}
+
+.dark .quick-action-card {
+    box-shadow: rgba(0, 0, 0, 0.4) 0px 7px 29px 0px;
+}
+
+/* Background gradient */
+.qa-background {
+    position: absolute;
+    inset: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Patients card gradient - Teal/Cyan theme */
+.patients-card .qa-background {
+    background: radial-gradient(circle at 100% 107%, #10b981 0%, #14b8a6 30%, #06b6d4 60%, #0ea5e9 100%);
+}
+
+/* Calendar card gradient - Blue/Indigo theme */
+.calendar-card .qa-background {
+    background: radial-gradient(circle at 100% 107%, #3b82f6 0%, #6366f1 30%, #8b5cf6 60%, #a855f7 100%);
+}
+
+/* Discussion card gradient - Pink/Rose theme */
+.discussion-card .qa-background {
+    background: radial-gradient(circle at 100% 107%, #ec4899 0%, #f43f5e 30%, #fb7185 60%, #fda4af 100%);
+}
+
+/* Financial card gradient - Green/Emerald theme */
+.financial-card .qa-background {
+    background: radial-gradient(circle at 100% 107%, #059669 0%, #10b981 30%, #34d399 60%, #6ee7b7 100%);
+}
+
+/* Notes card gradient - Yellow/Amber theme */
+.notes-card .qa-background {
+    background: radial-gradient(circle at 100% 107%, #d97706 0%, #f59e0b 30%, #fbbf24 60%, #fcd34d 100%);
+}
+
+/* Alerts card gradient - Red/Orange theme */
+.alerts-card .qa-background {
+    background: radial-gradient(circle at 100% 107%, #dc2626 0%, #ef4444 30%, #f97316 60%, #fb923c 100%);
+}
+
+/* Profile card gradient - Slate/Gray theme */
+.profile-card .qa-background {
+    background: radial-gradient(circle at 100% 107%, #475569 0%, #64748b 30%, #94a3b8 60%, #cbd5e1 100%);
+}
+
+/* Drugs card gradient - Purple/Violet theme */
+.drugs-card .qa-background {
+    background: radial-gradient(circle at 100% 107%, #7c3aed 0%, #8b5cf6 30%, #a78bfa 60%, #c4b5fd 100%);
+}
+
+/* Settings card gradient - Cool Gray/Blue theme */
+.settings-card .qa-background {
+    background: radial-gradient(circle at 100% 107%, #334155 0%, #475569 30%, #64748b 60%, #94a3b8 100%);
+}
+
+/* Organizer card gradient - Indigo/Sky theme */
+.organizer-card .qa-background {
+    background: radial-gradient(circle at 100% 107%, #4338ca 0%, #4f46e5 30%, #6366f1 60%, #818cf8 100%);
+}
+
+/* Media card gradient - Fuchsia/Pink theme */
+.media-card .qa-background {
+    background: radial-gradient(circle at 100% 107%, #a21caf 0%, #c026d3 30%, #d946ef 60%, #e879f9 100%);
+}
+
+/* Medical Prescriptions card gradient - Blue/Cyan theme */
+.medical-rx-card .qa-background {
+    background: radial-gradient(circle at 100% 107%, #0369a1 0%, #0284c7 30%, #0ea5e9 60%, #38bdf8 100%);
+}
+
+/* Glasses Prescriptions card gradient - Amber/Orange theme */
+.glasses-rx-card .qa-background {
+    background: radial-gradient(circle at 100% 107%, #b45309 0%, #d97706 30%, #f59e0b 60%, #fbbf24 100%);
+}
+
+/* Reports card gradient - Deep Blue/Navy theme */
+.reports-card .qa-background {
+    background: radial-gradient(circle at 100% 107%, #1e3a8a 0%, #1d4ed8 30%, #3b82f6 60%, #60a5fa 100%);
+}
+
+/* Box gradients for each card type */
+.calendar-card .qa-box1::before {
+    background: radial-gradient(circle at 30% 107%, #c7d2fe 0%, #6366f1 60%, #4f46e5 100%);
+}
+.calendar-card .qa-box2::before {
+    background: radial-gradient(circle at 30% 107%, #ddd6fe 0%, #8b5cf6 60%, #7c3aed 100%);
+}
+
+.discussion-card .qa-box1::before {
+    background: radial-gradient(circle at 30% 107%, #fce7f3 0%, #ec4899 60%, #db2777 100%);
+}
+.discussion-card .qa-box2::before {
+    background: radial-gradient(circle at 30% 107%, #ffe4e6 0%, #f43f5e 60%, #e11d48 100%);
+}
+
+.financial-card .qa-box1::before {
+    background: radial-gradient(circle at 30% 107%, #d1fae5 0%, #10b981 60%, #059669 100%);
+}
+.financial-card .qa-box2::before {
+    background: radial-gradient(circle at 30% 107%, #a7f3d0 0%, #34d399 60%, #10b981 100%);
+}
+
+.notes-card .qa-box1::before {
+    background: radial-gradient(circle at 30% 107%, #fef3c7 0%, #f59e0b 60%, #d97706 100%);
+}
+.notes-card .qa-box2::before {
+    background: radial-gradient(circle at 30% 107%, #fde68a 0%, #fbbf24 60%, #f59e0b 100%);
+}
+
+.alerts-card .qa-box1::before {
+    background: radial-gradient(circle at 30% 107%, #fee2e2 0%, #ef4444 60%, #dc2626 100%);
+}
+.alerts-card .qa-box2::before {
+    background: radial-gradient(circle at 30% 107%, #ffedd5 0%, #f97316 60%, #ea580c 100%);
+}
+
+/* Single action cards - centered box */
+.profile-card .qa-box1::before {
+    background: radial-gradient(circle at 30% 107%, #e2e8f0 0%, #64748b 60%, #475569 100%);
+}
+
+.drugs-card .qa-box1::before {
+    background: radial-gradient(circle at 30% 107%, #ede9fe 0%, #8b5cf6 60%, #7c3aed 100%);
+}
+
+/* Settings card box gradients */
+.settings-card .qa-box1::before {
+    background: radial-gradient(circle at 30% 107%, #cbd5e1 0%, #64748b 60%, #475569 100%);
+}
+
+/* Organizer card box gradients */
+.organizer-card .qa-box1::before {
+    background: radial-gradient(circle at 30% 107%, #c7d2fe 0%, #6366f1 60%, #4f46e5 100%);
+}
+.organizer-card .qa-box2::before {
+    background: radial-gradient(circle at 30% 107%, #a5b4fc 0%, #818cf8 60%, #6366f1 100%);
+}
+
+/* Media card box gradients */
+.media-card .qa-box1::before {
+    background: radial-gradient(circle at 30% 107%, #f5d0fe 0%, #d946ef 60%, #c026d3 100%);
+}
+.media-card .qa-box2::before {
+    background: radial-gradient(circle at 30% 107%, #fae8ff 0%, #e879f9 60%, #d946ef 100%);
+}
+
+/* Medical Prescriptions card box gradients */
+.medical-rx-card .qa-box1::before {
+    background: radial-gradient(circle at 30% 107%, #bae6fd 0%, #0ea5e9 60%, #0284c7 100%);
+}
+.medical-rx-card .qa-box2::before {
+    background: radial-gradient(circle at 30% 107%, #e0f2fe 0%, #38bdf8 60%, #0ea5e9 100%);
+}
+
+/* Glasses Prescriptions card box gradients */
+.glasses-rx-card .qa-box1::before {
+    background: radial-gradient(circle at 30% 107%, #fef3c7 0%, #f59e0b 60%, #d97706 100%);
+}
+.glasses-rx-card .qa-box2::before {
+    background: radial-gradient(circle at 30% 107%, #fde68a 0%, #fbbf24 60%, #f59e0b 100%);
+}
+
+/* Reports card box gradients */
+.reports-card .qa-box1::before {
+    background: radial-gradient(circle at 30% 107%, #bfdbfe 0%, #3b82f6 60%, #1d4ed8 100%);
+}
+
+/* Logo/Icon in center */
+.qa-logo {
+    position: absolute;
+    right: 50%;
+    bottom: 50%;
+    transform: translate(50%, 50%);
+    transition: all 0.5s ease-in-out;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.qa-logo i {
+    font-size: 2rem;
+    color: white;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.qa-logo-name {
+    font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    white-space: nowrap;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Card title */
+.qa-title {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.4s ease-in-out;
+    z-index: 10;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Icon container */
+.qa-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+}
+
+.qa-icon i {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease-in-out;
+}
+
+/* Label text */
+.qa-label {
+    font-size: 0.65rem;
     font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
 }
 
-/* All Reports Button - Same as quick-action-btn */
-.quick-action-btn.btn-primary {
-    background: linear-gradient(135deg, var(--accent), #0284c7) !important;
-    border-color: var(--accent) !important;
-    color: white !important;
+/* Box base styles */
+.qa-box {
+    position: absolute;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 2px solid rgba(255, 255, 255, 0.5);
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10% 13% 42% 0%/10% 12% 75% 0%;
+    box-shadow: rgba(0, 0, 0, 0.15) -7px 7px 29px 0px;
+    transform-origin: bottom left;
+    transition: all 0.5s ease-in-out;
+    cursor: pointer;
+    z-index: 6;
 }
 
-.quick-action-btn.btn-primary:hover {
-    background: linear-gradient(135deg, var(--accent), #0284c7) !important;
-    border-color: var(--accent) !important;
-    color: white !important;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(14, 165, 233, 0.3);
+/* Ensure text and icons are always visible above ::before pseudo-element */
+.qa-box > * {
+    position: relative;
+    z-index: 2;
 }
 
-.dark .quick-action-btn.btn-primary {
-    background: linear-gradient(135deg, var(--accent), #0284c7) !important;
-    border-color: var(--accent) !important;
-    color: white !important;
+.qa-box::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: 0;
+    transition: all 0.3s ease-in-out;
+    z-index: 1;
 }
 
-.dark .quick-action-btn.btn-primary:hover {
-    background: linear-gradient(135deg, var(--accent), #0284c7) !important;
-    color: white !important;
+/* Box 1 - View Patients (appears from top-right) */
+.qa-box1 {
+    width: 65%;
+    height: 65%;
+    top: -65%;
+    right: -65%;
+    bottom: auto;
+    left: auto;
+    transition-delay: 0s;
+    transform-origin: top right;
+    border-radius: 0% 10% 10% 42%/0% 10% 12% 75%;
+    border-top: none;
+    border-right: none;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: rgba(0, 0, 0, 0.15) 7px -7px 29px 0px;
 }
 
-/* Enhanced Hover Effects */
-.quick-action-btn.btn-outline-primary:hover {
-    background: linear-gradient(135deg, var(--accent), #0284c7) !important;
-    border-color: var(--accent) !important;
-    color: white !important;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(14, 165, 233, 0.3);
+.patients-card .qa-box1::before {
+    background: radial-gradient(circle at 30% 107%, #a7f3d0 0%, #10b981 60%, #059669 100%);
 }
 
-.quick-action-btn.btn-outline-success:hover {
-    background: linear-gradient(135deg, var(--success), #059669) !important;
-    border-color: var(--success) !important;
-    color: white !important;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+/* Box 2 - Add Patient */
+.qa-box2 {
+    width: 45%;
+    height: 45%;
+    bottom: -45%;
+    left: -45%;
+    transition-delay: 0.1s;
 }
 
-.quick-action-btn.btn-outline-info:hover {
-    background: linear-gradient(135deg, #36b9cc, #0891b2) !important;
-    border-color: #36b9cc !important;
-    color: white !important;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(54, 185, 204, 0.3);
+.patients-card .qa-box2::before {
+    background: radial-gradient(circle at 30% 107%, #99f6e4 0%, #14b8a6 60%, #0d9488 100%);
 }
 
-.quick-action-btn.btn-outline-warning:hover {
-    background: linear-gradient(135deg, #f6c23e, #d97706) !important;
-    border-color: #f6c23e !important;
-    color: #0b1220 !important;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(246, 194, 62, 0.3);
+/* Box 3 - Decorative */
+.qa-box3 {
+    width: 20%;
+    height: 20%;
+    bottom: -20%;
+    left: -20%;
+    transition-delay: 0.2s;
+    padding: 0;
 }
 
-.quick-action-btn.btn-outline-danger:hover {
-    background: linear-gradient(135deg, var(--danger), #dc2626) !important;
-    border-color: var(--danger) !important;
-    color: white !important;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+/* Hover states */
+.qa-box:hover::before {
+    opacity: 1;
 }
 
-/* Dark Mode Quick Actions */
-.dark .quick-action-btn.btn-outline-primary {
-    color: var(--accent) !important;
-    border-color: var(--accent) !important;
+/* Ensure text remains visible on hover */
+.qa-box:hover .qa-icon,
+.qa-box:hover .qa-label {
+    position: relative;
+    z-index: 3;
+    opacity: 1;
+    visibility: visible;
 }
 
-.dark .quick-action-btn.btn-outline-success {
-    color: var(--success) !important;
-    border-color: var(--success) !important;
+.qa-box:hover .qa-icon {
+    transform: translateY(2px);
 }
 
-.dark .quick-action-btn.btn-outline-info {
-    color: #36b9cc !important;
-    border-color: #36b9cc !important;
+.qa-box:hover .qa-icon i {
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8));
 }
 
-.dark .quick-action-btn.btn-outline-warning {
-    color: #f6c23e !important;
-    border-color: #f6c23e !important;
+/* Card hover state */
+.quick-action-card:hover {
+    transform: scale(1.05);
 }
 
-.dark .quick-action-btn.btn-outline-primary:hover {
-    background: linear-gradient(135deg, var(--accent), #0284c7) !important;
-    color: #0b1220 !important;
+/* Box 1 moves to top-right corner on hover */
+.quick-action-card:hover .qa-box1 {
+    top: -1px;
+    right: -1px;
+    height: 50%;
 }
 
-.dark .quick-action-btn.btn-outline-success:hover {
-    background: linear-gradient(135deg, var(--success), #059669) !important;
-    color: #0b1220 !important;
+/* Box 2 and Box 3 move to bottom-left corner on hover */
+.quick-action-card:hover .qa-box2,
+.quick-action-card:hover .qa-box3 {
+    bottom: -1px;
+    left: -1px;
 }
 
-.dark .quick-action-btn.btn-outline-info:hover {
-    background: linear-gradient(135deg, #36b9cc, #0891b2) !important;
-    color: #0b1220 !important;
+.quick-action-card:hover .qa-logo {
+    transform: translate(0, 0);
+    bottom: 4px;
+    right: 8px;
+    left: auto;
 }
 
-.dark .quick-action-btn.btn-outline-warning:hover {
-    background: linear-gradient(135deg, #f6c23e, #d97706) !important;
-    color: #0b1220 !important;
+.quick-action-card:hover .qa-logo i {
+    font-size: 1.25rem;
 }
 
-.dark .quick-action-btn.btn-outline-danger {
-    color: var(--danger) !important;
-    border-color: var(--danger) !important;
+/* Hide logo name on hover */
+.quick-action-card:hover .qa-logo-name {
+    opacity: 0;
+    transform: translateY(5px);
 }
 
-.dark .quick-action-btn.btn-outline-danger:hover {
-    background: linear-gradient(135deg, var(--danger), #dc2626) !important;
-    color: white !important;
+.quick-action-card:hover .qa-title {
+    opacity: 1;
+    transform: translateY(0);
 }
 
-.dark .quick-action-btn.btn-outline-danger:hover i {
-    color: white !important;
+/* Active/pressed state */
+.qa-box:active {
+    transform: scale(0.95);
 }
 
-/* More Actions Button - Mobile Only */
-.quick-action-btn.btn-outline-secondary {
-    color: var(--muted) !important;
-    border-color: var(--border) !important;
+/* Single action cards (Profile, Drugs) - centered single box */
+.single-action-card .qa-box1 {
+    width: 50%;
+    height: 50%;
+    top: auto;
+    right: auto;
+    bottom: -50%;
+    left: 50%;
+    transform: translateX(-50%);
+    transform-origin: bottom center;
+    border-radius: 42% 42% 10% 10%/75% 75% 12% 12%;
+    border-top: 2px solid rgba(255, 255, 255, 0.5);
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+    border-bottom: none;
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: rgba(0, 0, 0, 0.15) 0px 7px 29px 0px;
 }
 
-.quick-action-btn.btn-outline-secondary:hover {
-    background: linear-gradient(135deg, var(--muted), #64748b) !important;
-    border-color: var(--muted) !important;
-    color: white !important;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(100, 116, 139, 0.3);
+.single-action-card:hover .qa-box1 {
+    top: auto;
+    right: auto;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
-.dark .quick-action-btn.btn-outline-secondary {
-    color: #cbd5e1 !important;
-    border-color: #475569 !important;
+.single-action-card:hover .qa-logo {
+    bottom: auto;
+    top: 12px;
+    right: 50%;
+    transform: translateX(50%);
 }
 
-.dark .quick-action-btn.btn-outline-secondary:hover {
-    background: linear-gradient(135deg, #cbd5e1, #94a3b8) !important;
-    color: #0b1220 !important;
+/* Dark mode adjustments */
+.dark .qa-box {
+    background: rgba(255, 255, 255, 0.15);
+    border-top-color: rgba(255, 255, 255, 0.3);
+    border-right-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark .qa-icon i,
+.dark .qa-label {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+/* ========== Responsive Breakpoints ========== */
+
+@media (max-width: 1199px) {
+    .quick-action-card {
+        width: 130px;
+        height: 130px;
+        min-width: 130px;
+        flex-shrink: 0;
+    }
+
+    .qa-logo i {
+        font-size: 1.75rem;
+    }
+
+    .qa-logo-name {
+        font-size: 0.7rem;
+    }
+
+    .qa-icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    .qa-icon i {
+        font-size: 0.9rem;
+    }
+
+    .qa-label {
+        font-size: 0.6rem;
+    }
+}
+
+@media (max-width: 991px) {
+    .quick-action-card {
+        width: 120px;
+        height: 120px;
+        min-width: 120px;
+        flex-shrink: 0;
+        border-radius: 16px;
+    }
+
+    .qa-logo i {
+        font-size: 1.5rem;
+    }
+
+    .qa-logo-name {
+        font-size: 0.65rem;
+    }
+
+    .quick-action-card:hover .qa-logo i {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 767px) {
+    .quick-action-card {
+        width: 110px;
+        height: 110px;
+        min-width: 110px;
+        border-radius: 14px;
+        flex-shrink: 0;
+    }
+
+    .qa-logo i {
+        font-size: 1.4rem;
+    }
+
+    .qa-logo-name {
+        font-size: 0.6rem;
+    }
+
+    .qa-title {
+        font-size: 0.65rem;
+        top: 8px;
+        left: 8px;
+    }
+
+    .qa-icon {
+        width: 22px;
+        height: 22px;
+    }
+
+    .qa-icon i {
+        font-size: 0.85rem;
+    }
+
+    .qa-label {
+        font-size: 0.55rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .quick-action-card {
+        width: 100px;
+        min-width: 100px;
+        flex-shrink: 0;
+        height: 100px;
+        border-radius: 12px;
+    }
+
+    .qa-logo i {
+        font-size: 1.25rem;
+    }
+
+    .qa-logo-name {
+        font-size: 0.55rem;
+    }
+
+    .quick-action-card:hover .qa-logo i {
+        font-size: 1rem;
+    }
+
+    .qa-box1 {
+        width: 60%;
+        height: 60%;
+        top: -60%;
+        right: -60%;
+    }
+
+    .qa-box2 {
+        width: 40%;
+        height: 40%;
+        bottom: -40%;
+        left: -40%;
+    }
+
+    .qa-box3 {
+        width: 15%;
+        height: 15%;
+        bottom: -15%;
+        left: -15%;
+    }
 }
 
 #allActivitiesModal {
@@ -832,217 +1359,6 @@
     padding: 1.5rem;
 }
 
-#moreActionsModal .modal-body .quick-action-btn {
-    min-height: 80px;
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-#moreActionsModal .modal-body .quick-action-btn i {
-    font-size: 1.5rem !important;
-    margin-bottom: 0.5rem;
-}
-
-#moreActionsModal .modal-body .quick-action-btn span {
-    font-size: 0.7rem !important;
-    font-weight: 600;
-    white-space: normal;
-    text-align: center;
-    line-height: 1.2;
-}
-
-/* Mobile specific styles for modal */
-@media (max-width: 767.98px) {
-    #moreActionsModal .modal-dialog {
-        margin: 0.5rem;
-        max-width: calc(100% - 1rem);
-    }
-    
-    #moreActionsModal .modal-body {
-        padding: 1rem;
-    }
-    
-    #moreActionsModal .modal-body .row {
-        margin: 0;
-    }
-    
-    #moreActionsModal .modal-body .col-4 {
-        padding: 0.25rem;
-    }
-    
-    #moreActionsModal .modal-body .quick-action-btn {
-        min-height: 75px;
-        padding: 0.5rem !important;
-    }
-}
-
-/* Mobile Quick Actions - Equal Sizes */
-@media (max-width: 767.98px) {
-    .quick-action-btn {
-        min-height: 70px;
-    }
-    
-    .quick-action-btn span {
-        font-size: 0.7rem !important;
-    }
-    
-    .quick-action-btn i {
-        font-size: 1.25rem;
-    }
-}
-
-/* iOS Control Center Style - Quick Actions Buttons */
-.glass-action-btn {
-    position: relative;
-    padding: 1rem 0.5rem;
-    border-radius: 14px;
-    text-decoration: none;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(40px) saturate(180%);
-    -webkit-backdrop-filter: blur(40px) saturate(180%);
-    border: 0.5px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 
-        0 8px 32px 0 rgba(0, 0, 0, 0.12),
-        inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
-        0 1px 2px 0 rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    min-height: 80px;
-    width: 100%;
-    background: rgba(255, 255, 255, 0.08);
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    -webkit-tap-highlight-color: transparent;
-}
-
-/* iOS-style background gradient overlay */
-.glass-action-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, 
-        rgba(255, 255, 255, 0.15) 0%, 
-        rgba(255, 255, 255, 0.08) 50%, 
-        rgba(255, 255, 255, 0.05) 100%);
-    opacity: 1;
-    transition: opacity 0.2s ease;
-    z-index: 0;
-    pointer-events: none;
-}
-
-/* Press/Active state */
-.glass-action-btn:active {
-    transform: scale(0.96);
-    opacity: 0.8;
-}
-
-.glass-action-btn:active::before {
-    opacity: 0.5;
-}
-
-/* Icon styling - always white for iOS look */
-.glass-action-btn i {
-    font-size: 1.5rem;
-    color: #ffffff;
-    z-index: 1;
-    position: relative;
-    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
-}
-
-/* Text styling - always white for iOS look */
-.glass-action-btn span {
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: #ffffff;
-    z-index: 1;
-    position: relative;
-    letter-spacing: 0.3px;
-    text-align: center;
-    margin-top: 0.25rem;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-/* Hover state - subtle lift */
-.glass-action-btn:hover {
-    transform: translateY(-1px) scale(1.02);
-    box-shadow: 
-        0 12px 40px 0 rgba(0, 0, 0, 0.15),
-        inset 0 1px 0 0 rgba(255, 255, 255, 0.25),
-        0 2px 4px 0 rgba(0, 0, 0, 0.12);
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.25);
-}
-
-.glass-action-btn:hover::before {
-    opacity: 1.2;
-}
-
-.glass-action-btn:hover i {
-    transform: scale(1.08);
-}
-
-/* Light Mode - Darker background for contrast */
-.glass-action-btn {
-    background: rgb(255, 255, 255);
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.glass-action-btn::before {
-    background: linear-gradient(135deg, 
-        rgba(255, 255, 255, 0.2) 0%, 
-        rgba(255, 255, 255, 0.1) 50%, 
-        rgba(255, 255, 255, 0.05) 100%);
-}
-
-.glass-action-btn i,
-.glass-action-btn span {
-    color: #000000;
-}
-
-.glass-action-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    border-color: rgba(255, 255, 255, 0.3);
-}
-
-/* Dark Mode - Enhanced iOS Control Center style */
-.dark .glass-action-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
-    box-shadow: 
-        0 8px 32px 0 rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
-        0 1px 2px 0 rgba(0, 0, 0, 0.2);
-}
-
-.dark .glass-action-btn::before {
-    background: linear-gradient(135deg, 
-        rgba(255, 255, 255, 0.18) 0%, 
-        rgba(255, 255, 255, 0.1) 50%, 
-        rgba(255, 255, 255, 0.06) 100%);
-}
-
-.dark .glass-action-btn i,
-.dark .glass-action-btn span {
-    color: #ffffff;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-.dark .glass-action-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
-    box-shadow: 
-        0 12px 40px 0 rgba(0, 0, 0, 0.5),
-        inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
-        0 2px 4px 0 rgba(0, 0, 0, 0.3);
-}
-
 /* Upcoming Appointments - Hide button text on mobile */
 @media (max-width: 767.98px) {
     #upcomingAppointmentsContainer .btn-group .btn {
@@ -1188,23 +1504,10 @@
 }
 
 @media (max-width: 767.98px) {
-    .glass-action-btn {
-        min-height: 75px;
-        padding: 0.875rem 0.375rem;
-    }
-    
-    .glass-action-btn i {
-        font-size: 1.25rem;
-    }
-    
-    .glass-action-btn span {
-        font-size: 0.55rem;
-    }
-    
     .glass-progress-bar {
         height: 12px;
     }
-    
+
     .glass-progress-text {
         font-size: 0.65rem;
     }
@@ -1311,19 +1614,6 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .quick-action-btn {
-        min-height: 100px;
-        margin-bottom: 1rem;
-    }
-    
-    .quick-action-btn i {
-        font-size: 1.5rem !important;
-    }
-    
-    .quick-action-btn span {
-        font-size: 0.8rem;
-    }
-    
     .btn-group-sm {
         flex-direction: column;
         width: 100%;
@@ -1342,23 +1632,6 @@
     /* Hide drag handle on mobile */
     .dashboard-card-drag-handle {
         display: none !important;
-    }
-    
-    /* Hide all Quick Access Cards except Calendar, Patients, Drugs on mobile */
-    .quick-action-btn[href="/doctor/profile"],
-    .quick-action-btn[href="/doctor/reports"],
-    .quick-action-btn[href="/doctor/alerts"],
-    .quick-action-btn[href="/doctor/notes"],
-    .quick-action-btn[href="/doctor/medications"],
-    .quick-action-btn[href="/doctor/glasses"] {
-        display: none !important;
-    }
-    
-    /* Show only Calendar, Patients, Drugs */
-    .quick-action-btn[href="/doctor/calendar"],
-    .quick-action-btn[href="/doctor/patients"],
-    .quick-action-btn[href="/doctor/drugs"] {
-        display: flex !important;
     }
 }
 

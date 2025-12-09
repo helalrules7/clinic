@@ -1,4 +1,66 @@
 
+// ============================================
+// Quick Actions Horizontal Scroll
+// ============================================
+function initQuickActionsScroll() {
+    const wrapper = document.getElementById('quickActionsWrapper');
+    const grid = document.getElementById('quickActionsGrid');
+    const navLeft = document.getElementById('qaNavLeft');
+    const navRight = document.getElementById('qaNavRight');
+
+    if (!wrapper || !grid || !navLeft || !navRight) return;
+
+    const scrollAmount = 160; // Card width + gap
+
+    // Update navigation arrows and fade indicators based on scroll position
+    function updateScrollState() {
+        const scrollLeft = grid.scrollLeft;
+        const maxScroll = grid.scrollWidth - grid.clientWidth;
+
+        // Update left arrow/fade
+        if (scrollLeft <= 5) {
+            navLeft.classList.add('hidden');
+            wrapper.classList.remove('show-left-fade');
+        } else {
+            navLeft.classList.remove('hidden');
+            wrapper.classList.add('show-left-fade');
+        }
+
+        // Update right arrow/fade
+        if (scrollLeft >= maxScroll - 5) {
+            navRight.classList.add('hidden');
+            wrapper.classList.remove('show-right-fade');
+        } else {
+            navRight.classList.remove('hidden');
+            wrapper.classList.add('show-right-fade');
+        }
+    }
+
+    // Scroll left
+    navLeft.addEventListener('click', function() {
+        grid.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    });
+
+    // Scroll right
+    navRight.addEventListener('click', function() {
+        grid.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    });
+
+    // Listen for scroll events
+    grid.addEventListener('scroll', updateScrollState);
+
+    // Initial state check
+    updateScrollState();
+
+    // Re-check on window resize
+    window.addEventListener('resize', updateScrollState);
+}
+
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', function() {
+    initQuickActionsScroll();
+});
+
 // Load today's alerts
 function loadTodayAlerts() {
     fetch('/api/alerts/today')

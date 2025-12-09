@@ -96,8 +96,8 @@
                             <div class="setting-item">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <label class="form-label mb-0">Desktop Dock</label>
-                                        <div class="form-text">Show or hide the quick access dock on desktop</div>
+                                        <label class="form-label mb-0">Quick Access Dock</label>
+                                        <div class="form-text">Show or hide the quick access dock</div>
                                         <div class="mt-2">
                                             <div class="demo-preview" style="position: relative; height: 80px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px;">
                                                 <center>
@@ -124,7 +124,7 @@
                             </div>
 
                             <!-- Mobile Dock -->
-                            <div class="setting-item">
+                            <!-- <div class="setting-item">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <label class="form-label mb-0">Mobile Dock</label>
@@ -142,7 +142,7 @@
                                                onchange="updatePersonalPreference('mobile_dock_enabled', this.checked)">
                                     </div>
                                 </div>
-                            </div>
+                            </div> -->
 
                             <!-- Dock Auto-Hide -->
                             <div class="setting-item">

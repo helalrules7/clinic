@@ -411,10 +411,10 @@ function renderAppointmentSlot(appointment) {
     `.replace(/\n\s+/g, ' ').trim();
     
     return `
-        <div class="appointment-card ${appointment.status.toLowerCase()} ${highlightClass}" 
+        <div class="appointment-card ${appointment.status.toLowerCase()} ${highlightClass}"
              data-appointment-id="${appointment.id}"
-             data-bs-toggle="tooltip" 
-             data-bs-placement="right" 
+             data-bs-toggle="tooltip"
+             data-bs-placement="right"
              data-bs-html="true"
              data-bs-title="${tooltipContent.replace(/"/g, '&quot;')}">
             <div class="appointment-header">
@@ -424,43 +424,35 @@ function renderAppointmentSlot(appointment) {
                     <div class="info-line"><span class="label">Type:</span> ${appointment.visit_type}</div>
                     <div class="info-line"><span class="label">Time:</span> ${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}</div>
                 </div>
-                <div class="appointment-actions">
-                    <a href="/doctor/patients/${appointment.patient_id}" 
-                       class="btn btn-sm btn-outline-info view-patient-btn"
-                       onclick="event.stopPropagation();"
-                       data-bs-toggle="tooltip" 
-                       data-bs-placement="top" 
-                       data-bs-title="View Patient Profile">
-                        <i class="bi bi-person-circle"></i>
-                    </a>
+                <div class="appointment-status">
                     ${appointment.status === 'Rescheduled' ? `
-                    <a href="/doctor/appointments/${appointment.id}" 
-                       class="badge bg-warning text-dark d-flex align-items-center gap-1 ms-1" style="text-decoration: none; font-weight: bold;"
+                    <a href="/doctor/appointments/${appointment.id}"
+                       class="badge bg-warning text-dark d-flex align-items-center gap-1" style="text-decoration: none; font-weight: bold;"
                        onclick="event.stopPropagation();"
-                       data-bs-toggle="tooltip" 
-                       data-bs-placement="top" 
+                       data-bs-toggle="tooltip"
+                       data-bs-placement="top"
                        data-bs-title="This appointment was rescheduled">
                         <i class="bi bi-arrow-clockwise"></i>
                         Rescheduled
                     </a>
                     ` : ''}
                     ${appointment.has_followup ? `
-                    <a href="/doctor/appointments/${appointment.followup_id}" 
-                       class="badge bg-success d-flex align-items-center gap-1 ms-1" style="text-decoration: none; font-weight: bold;"
+                    <a href="/doctor/appointments/${appointment.followup_id}"
+                       class="badge bg-success d-flex align-items-center gap-1" style="text-decoration: none; font-weight: bold;"
                        onclick="event.stopPropagation();"
-                       data-bs-toggle="tooltip" 
-                       data-bs-placement="top" 
+                       data-bs-toggle="tooltip"
+                       data-bs-placement="top"
                        data-bs-title="Follow-up appointment scheduled - Click to view">
                         <i class="bi bi-calendar-check"></i>
                         Follow-up
                     </a>
                     ` : ''}
                     ${appointment.is_followup && appointment.original_appointment_id ? `
-                    <a href="/doctor/appointments/${appointment.original_appointment_id}" 
-                       class="badge bg-info d-flex align-items-center gap-1 ms-1" style="text-decoration: none; font-weight: bold;"
+                    <a href="/doctor/appointments/${appointment.original_appointment_id}"
+                       class="badge bg-info d-flex align-items-center gap-1" style="text-decoration: none; font-weight: bold;"
                        onclick="event.stopPropagation();"
-                       data-bs-toggle="tooltip" 
-                       data-bs-placement="top" 
+                       data-bs-toggle="tooltip"
+                       data-bs-placement="top"
                        data-bs-title="Original appointment - Click to view">
                         <i class="bi bi-calendar-event"></i>
                         Original
@@ -470,10 +462,20 @@ function renderAppointmentSlot(appointment) {
                         <i class="bi ${getStatusIcon(appointment.status)}"></i>
                         ${getStatusDisplayText(appointment.status)}
                     </span>
-                    <button class="btn btn-sm btn-outline-danger delete-appointment-btn" 
+                </div>
+                <div class="appointment-actions">
+                    <a href="/doctor/patients/${appointment.patient_id}"
+                       class="btn btn-sm btn-outline-info view-patient-btn"
+                       onclick="event.stopPropagation();"
+                       data-bs-toggle="tooltip"
+                       data-bs-placement="top"
+                       data-bs-title="View Patient Profile">
+                        <i class="bi bi-person-circle"></i>
+                    </a>
+                    <button class="btn btn-sm btn-outline-danger delete-appointment-btn"
                             onclick="event.stopPropagation(); deleteAppointment(${appointment.id}, '${appointment.patient_name}', '${formatTime(appointment.start_time)}')"
-                            data-bs-toggle="tooltip" 
-                            data-bs-placement="top" 
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
                             data-bs-title="Delete this appointment">
                         <i class="bi bi-trash"></i>
                     </button>
