@@ -21,7 +21,7 @@
 
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-danger">
+            <div class="stats-card stats-card-warning">
                 <div class="stats-card-content">
                     <div class="stats-card-header">
                         <h4 class="stats-card-title arabic-text arabic-font">في الإنتظار</h4>
@@ -53,7 +53,7 @@
 
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-danger">
+            <div class="stats-card stats-card-info">
                 <div class="stats-card-content">
                     <div class="stats-card-header">
                         <h4 class="stats-card-title arabic-text arabic-font">مواعيد مكتملة</h4>
@@ -152,7 +152,7 @@
                                     </span>
                                     <span class="qa-label">عرض</span>
                                 </div>
-                                <div class="qa-box qa-box2" onclick="window.location.href='/secretary/bookings'">
+                                <div class="qa-box qa-box2" onclick="quickActionAddBooking()">
                                     <span class="qa-icon">
                                         <i class="bi bi-calendar-plus-fill"></i>
                                     </span>
@@ -173,7 +173,7 @@
                                     </span>
                                     <span class="qa-label">عرض</span>
                                 </div>
-                                <div class="qa-box qa-box2" onclick="window.location.href='/secretary/patients/new'">
+                                <div class="qa-box qa-box2" onclick="quickActionAddPatient()">
                                     <span class="qa-icon">
                                         <i class="bi bi-person-plus-fill"></i>
                                     </span>
@@ -194,9 +194,30 @@
                                     </span>
                                     <span class="qa-label">عرض</span>
                                 </div>
-                                <div class="qa-box qa-box2" onclick="window.location.href='/secretary/payments'">
+                                <div class="qa-box qa-box2" onclick="quickActionAddBalance()">
                                     <span class="qa-icon">
                                         <i class="bi bi-plus-circle-fill"></i>
+                                    </span>
+                                    <span class="qa-label">رصيد</span>
+                                </div>
+                            </div>
+
+                            <!-- Expenses Card -->
+                            <div class="quick-action-card expenses-card">
+                                <div class="qa-background"></div>
+                                <div class="qa-logo">
+                                    <i class="bi bi-dash-circle"></i>
+                                    <span class="qa-logo-name">المصروفات</span>
+                                </div>
+                                <div class="qa-box qa-box1" onclick="window.location.href='/secretary/payments'">
+                                    <span class="qa-icon">
+                                        <i class="bi bi-eye-fill"></i>
+                                    </span>
+                                    <span class="qa-label">عرض</span>
+                                </div>
+                                <div class="qa-box qa-box2" onclick="quickActionAddExpense()">
+                                    <span class="qa-icon">
+                                        <i class="bi bi-dash-circle-fill"></i>
                                     </span>
                                     <span class="qa-label">إضافة</span>
                                 </div>
@@ -374,15 +395,12 @@
         }
 
         // Update booked
-        const bookedEl = document.querySelector('.stats-card-danger .stats-card-value');
-        if (bookedEl && bookedEl.textContent.includes('في الإنتظار') || bookedEl?.closest('.stats-card-danger')) {
-            const bookedCard = Array.from(document.querySelectorAll('.stats-card-danger')).find(card => 
-                card.querySelector('.stats-card-title')?.textContent.includes('في الإنتظار')
-            );
-            if (bookedCard) {
-                const valueEl = bookedCard.querySelector('.stats-card-value');
-                if (valueEl) valueEl.textContent = stats.booked || 0;
-            }
+        const bookedCard = Array.from(document.querySelectorAll('.stats-card-warning')).find(card => 
+            card.querySelector('.stats-card-title')?.textContent.includes('في الإنتظار')
+        );
+        if (bookedCard) {
+            const valueEl = bookedCard.querySelector('.stats-card-value');
+            if (valueEl) valueEl.textContent = stats.booked || 0;
         }
 
         // Update checked in
@@ -392,8 +410,7 @@
         }
 
         // Update completed
-        const completedCards = Array.from(document.querySelectorAll('.stats-card-danger'));
-        const completedCard = completedCards.find(card => 
+        const completedCard = Array.from(document.querySelectorAll('.stats-card-info')).find(card => 
             card.querySelector('.stats-card-title')?.textContent.includes('مواعيد مكتملة')
         );
         if (completedCard) {
@@ -402,7 +419,7 @@
         }
 
         // Update missed
-        const missedCard = completedCards.find(card => 
+        const missedCard = Array.from(document.querySelectorAll('.stats-card-danger')).find(card => 
             card.querySelector('.stats-card-title')?.textContent.includes('لم يحضر')
         );
         if (missedCard) {
@@ -676,6 +693,171 @@
     window.addEventListener('beforeunload', stopAutoRefresh);
 })();
 
+// Quick Actions Functions
+function quickActionAddBooking() {
+    window.location.href = '/secretary/bookings?openModal=addBooking';
+}
+
+function quickActionAddPatient() {
+    window.location.href = '/secretary/patients?openModal=addPatient';
+}
+
+function quickActionAddBalance() {
+    window.location.href = '/secretary/payments?openModal=dailyBalance';
+}
+
+function quickActionAddExpense() {
+    window.location.href = '/secretary/payments?openModal=expense';
+}
+
+// Quick Actions Horizontal Scroll with RTL support
+function initQuickActionsScroll() {
+    const wrapper = document.getElementById('quickActionsWrapper');
+    const grid = document.getElementById('quickActionsGrid');
+    const navLeft = document.getElementById('qaNavLeft');
+    const navRight = document.getElementById('qaNavRight');
+
+    if (!wrapper || !grid || !navLeft || !navRight) return;
+
+    const scrollAmount = 160; // Card width + gap
+    const isRTL = document.documentElement.dir === 'rtl' || document.body.dir === 'rtl' || 
+                  getComputedStyle(document.documentElement).direction === 'rtl';
+
+    // Update navigation arrows and fade indicators based on scroll position
+    function updateScrollState() {
+        const scrollLeft = grid.scrollLeft;
+        const maxScroll = grid.scrollWidth - grid.clientWidth;
+
+        // Since grid has direction: ltr, scrollLeft works normally
+        // In RTL layout, left arrow should scroll right (show more content on the right)
+        // and right arrow should scroll left (show more content on the left)
+        
+        if (isRTL) {
+            // In RTL: left arrow shows when there's content to scroll right (positive scrollLeft)
+            if (scrollLeft <= 5) {
+                navLeft.classList.add('hidden');
+                wrapper.classList.remove('show-left-fade');
+            } else {
+                navLeft.classList.remove('hidden');
+                wrapper.classList.add('show-left-fade');
+            }
+
+            // Right arrow shows when there's content to scroll left (negative scrollLeft or not at max)
+            if (scrollLeft >= maxScroll - 5) {
+                navRight.classList.add('hidden');
+                wrapper.classList.remove('show-right-fade');
+            } else {
+                navRight.classList.remove('hidden');
+                wrapper.classList.add('show-right-fade');
+            }
+        } else {
+            // LTR mode - standard behavior
+            if (scrollLeft <= 5) {
+                navLeft.classList.add('hidden');
+                wrapper.classList.remove('show-left-fade');
+            } else {
+                navLeft.classList.remove('hidden');
+                wrapper.classList.add('show-left-fade');
+            }
+
+            if (scrollLeft >= maxScroll - 5) {
+                navRight.classList.add('hidden');
+                wrapper.classList.remove('show-right-fade');
+            } else {
+                navRight.classList.remove('hidden');
+                wrapper.classList.add('show-right-fade');
+            }
+        }
+    }
+
+    // Scroll handlers - arrows work the same way since grid is LTR
+    // But visually, in RTL, left arrow is on the right side and scrolls right
+    navLeft.addEventListener('click', function() {
+        grid.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    });
+
+    navRight.addEventListener('click', function() {
+        grid.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    });
+
+    // Touch support for mobile devices
+    let touchStartX = 0;
+    let touchEndX = 0;
+    let touchStartY = 0;
+    let touchEndY = 0;
+    let isScrolling = false;
+
+    grid.addEventListener('touchstart', function(e) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        isScrolling = false;
+    }, { passive: true });
+
+    grid.addEventListener('touchmove', function(e) {
+        if (!isScrolling) {
+            const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
+            const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
+            // Only consider it scrolling if horizontal movement is greater than vertical
+            if (deltaX > deltaY) {
+                isScrolling = true;
+            }
+        }
+    }, { passive: true });
+
+    grid.addEventListener('touchend', function(e) {
+        if (!isScrolling) return;
+        
+        touchEndX = e.changedTouches[0].clientX;
+        touchEndY = e.changedTouches[0].clientY;
+        const diffX = touchStartX - touchEndX;
+        const diffY = Math.abs(touchStartY - touchEndY);
+        const threshold = 50; // Minimum swipe distance
+
+        // Only process if horizontal swipe is significant and greater than vertical
+        if (Math.abs(diffX) > threshold && Math.abs(diffX) > diffY) {
+            if (isRTL) {
+                // In RTL: swipe right (positive diffX) scrolls left, swipe left (negative diffX) scrolls right
+                if (diffX > 0) {
+                    grid.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+                } else {
+                    grid.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+                }
+            } else {
+                // In LTR: swipe left (negative diffX) scrolls right, swipe right (positive diffX) scrolls left
+                if (diffX < 0) {
+                    grid.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+                } else {
+                    grid.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+                }
+            }
+        }
+        isScrolling = false;
+    }, { passive: true });
+
+    // Mouse wheel support
+    grid.addEventListener('wheel', function(e) {
+        // Only prevent default if scrolling horizontally
+        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+            e.preventDefault();
+            grid.scrollBy({ left: e.deltaX, behavior: 'smooth' });
+        }
+    }, { passive: false });
+
+    // Listen for scroll events
+    grid.addEventListener('scroll', updateScrollState);
+
+    // Initial state check
+    updateScrollState();
+
+    // Re-check on window resize
+    window.addEventListener('resize', updateScrollState);
+}
+
+// Initialize quick actions scroll when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initQuickActionsScroll();
+});
+
 // Hover effect with radial gradient - glowing effect following mouse
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize all modals with proper backdrop configuration
@@ -737,6 +919,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     color = 'rgba(245, 158, 11, 0.4)';
                 } else if (card.classList.contains('stats-card-info')) {
                     color = 'rgba(187, 54, 204, 0.4)';
+                } else if (card.classList.contains('stats-card-weather')) {
+                    // Skip weather card - don't apply hover effect
+                    return;
                 }
 
                 // Apply gradient to card-content, overlay on top of background-color
@@ -1024,7 +1209,14 @@ document.addEventListener('DOMContentLoaded', function() {
         color: white !important;
     }
 
-/* Quick Actions Grid - Center alignment */
+/* Quick Actions Wrapper - RTL Support */
+.quick-actions-wrapper {
+    position: relative;
+    width: 100%;
+    padding: 0.5rem 0;
+}
+
+/* Quick Actions Grid - Center alignment with RTL support */
 .quick-actions-grid {
     display: flex !important;
     flex-wrap: nowrap !important;
@@ -1039,10 +1231,132 @@ document.addEventListener('DOMContentLoaded', function() {
     scroll-snap-type: x mandatory !important;
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
+    direction: ltr; /* Force LTR for scroll behavior */
 }
 
 .quick-actions-grid::-webkit-scrollbar {
     display: none !important;
+}
+
+/* Fade indicators on edges - RTL support */
+.quick-actions-wrapper::before,
+.quick-actions-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+[dir="rtl"] .quick-actions-wrapper::before {
+    right: 0;
+    left: auto;
+    background: linear-gradient(to left, var(--card) 0%, transparent 100%);
+}
+
+[dir="rtl"] .quick-actions-wrapper::after {
+    left: 0;
+    right: auto;
+    background: linear-gradient(to right, var(--card) 0%, transparent 100%);
+}
+
+[dir="ltr"] .quick-actions-wrapper::before {
+    left: 0;
+    right: auto;
+    background: linear-gradient(to right, var(--card) 0%, transparent 100%);
+}
+
+[dir="ltr"] .quick-actions-wrapper::after {
+    right: 0;
+    left: auto;
+    background: linear-gradient(to left, var(--card) 0%, transparent 100%);
+}
+
+.quick-actions-wrapper.show-left-fade::before {
+    opacity: 1;
+}
+
+.quick-actions-wrapper.show-right-fade::after {
+    opacity: 1;
+}
+
+/* Navigation arrows - RTL support */
+.quick-actions-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 15;
+    opacity: 0;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.quick-actions-nav:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    transform: translateY(-50%) scale(1.1);
+}
+
+[dir="rtl"] .quick-actions-nav.nav-left {
+    right: -10px;
+    left: auto;
+}
+
+[dir="rtl"] .quick-actions-nav.nav-right {
+    left: -10px;
+    right: auto;
+}
+
+[dir="ltr"] .quick-actions-nav.nav-left {
+    left: -10px;
+    right: auto;
+}
+
+[dir="ltr"] .quick-actions-nav.nav-right {
+    right: -10px;
+    left: auto;
+}
+
+.quick-actions-wrapper:hover .quick-actions-nav {
+    opacity: 1;
+}
+
+.quick-actions-nav.hidden {
+    opacity: 0 !important;
+    pointer-events: none;
+}
+
+.dark .quick-actions-nav {
+    background: var(--card);
+    border-color: var(--border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.dark .quick-actions-nav:hover {
+    background: var(--accent);
+    color: white;
+}
+
+/* Hide arrows on touch devices */
+@media (hover: none) and (pointer: coarse) {
+    .quick-actions-nav {
+        display: none;
+    }
 }
 
 /* Stats Card Weather - Proper coloring */
@@ -1092,5 +1406,64 @@ body > div.modal-backdrop.fade.show{
 
 .weather-temp{
     margin-top: 2rem !important;
+}
+
+/* Expenses Card Styles */
+.expenses-card .qa-background {
+    background: radial-gradient(circle at 100% 107%, #dc2626 0%, #ef4444 30%, #f97316 60%, #fb923c 100%);
+}
+
+.expenses-card .qa-box1::before {
+    background: radial-gradient(circle at 30% 107%, #fee2e2 0%, #ef4444 60%, #dc2626 100%);
+}
+
+.expenses-card .qa-box2::before {
+    background: radial-gradient(circle at 30% 107%, #ffedd5 0%, #f97316 60%, #ea580c 100%);
+}
+
+/* Search Results Styles */
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    margin-top: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.search-result-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background-color 0.2s;
+}
+
+.search-result-item:hover {
+    background-color: var(--accent);
+    color: white;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-item strong {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.search-result-item small {
+    color: var(--muted);
+    font-size: 0.875rem;
+}
+
+.search-result-item:hover small {
+    color: rgba(255, 255, 255, 0.8);
 }
 </style>

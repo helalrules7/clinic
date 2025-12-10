@@ -1,0 +1,1 @@
+sshpass -p 'Carmen1230@@' scp -o StrictHostKeyChecking=no -o ConnectTimeout=10 app/Views/admin/dashboard.php root@217.76.57.212:/home/hclinic/web/roaya.hclinic.clinic/public_html/app/Views/admin/dashboard.php

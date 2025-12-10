@@ -91,7 +91,7 @@
     </div>
     <div class="col-md-3 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-info">
+            <div class="stats-card stats-card-warning">
                 <div class="stats-card-content">
                     <div class="stats-card-header">
                         <h4 class="stats-card-title arabic-text">جدد هذا الشهر</h4>
@@ -106,14 +106,14 @@
     </div>
     <div class="col-md-3 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-warning">
+            <div class="stats-card stats-card-info">
                 <div class="stats-card-content">
                     <div class="stats-card-header">
-                        <h4 class="stats-card-title arabic-text">إناث</h4>
-                        <h3 class="stats-card-value arabic-text"><?= ($stats['gender']['Female'] ?? 0) ?></h3>
+                        <h4 class="stats-card-title arabic-text">مدفوعات إجمالية</h4>
+                        <h3 class="stats-card-value arabic-text"><?= ($stats['total_paid'] ?? 0) ?></h3>
                     </div>
                     <div class="stats-card-icon">
-                        <i class="bi bi-gender-female"></i>
+                        <i class="bi bi-credit-card"></i>
                     </div>
                 </div>
             </div>
@@ -1311,6 +1311,21 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeAddPatientModal();
     initializePhoneTooltips();
     addSortFunctionality();
+    
+    // Check for openModal query parameter and open the corresponding modal
+    const urlParams = new URLSearchParams(window.location.search);
+    const openModal = urlParams.get('openModal');
+    
+    if (openModal === 'addPatient') {
+        // Open add patient modal
+        setTimeout(() => {
+            const addPatientModal = document.getElementById('addPatientModal');
+            if (addPatientModal) {
+                const modal = new bootstrap.Modal(addPatientModal);
+                modal.show();
+            }
+        }, 100);
+    }
     
     // Quick search filter
     const quickSearch = document.getElementById('quickSearch');

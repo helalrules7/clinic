@@ -99,6 +99,8 @@
     </div>
 </div>
 
+<br><br>
+
 <div class="row">
     <!-- Recent Activities -->
     <div class="col-md-8">
@@ -280,47 +282,6 @@
 </div>
 <?php endif; ?>
 
-<!-- Quick Actions -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-bolt me-2"></i>
-                    Quick Actions
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <a href="/admin/users" class="btn btn-outline-primary w-100">
-                            <i class="fas fa-users me-2"></i>
-                            Users Management
-                        </a>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <a href="/admin/reports" class="btn btn-outline-success w-100">
-                            <i class="fas fa-chart-line me-2"></i>
-                            Reports
-                        </a>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <a href="/admin/backup" class="btn btn-outline-warning w-100">
-                            <i class="fas fa-download me-2"></i>
-                            Backup
-                        </a>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <a href="/admin/settings" class="btn btn-outline-info w-100">
-                            <i class="fas fa-cog me-2"></i>
-                            Settings
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <style>
 /* CSS Variables for Dark/Light Mode - Matching Doctor View */

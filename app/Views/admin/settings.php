@@ -309,6 +309,10 @@
 .dark #updateDatabaseModal .btn-success:hover {
     opacity: 0.9;
 }
+
+.card-header{
+    background-color:transparent !important;
+}
 </style>
 
 <div class="container-fluid">

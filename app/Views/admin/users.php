@@ -730,6 +730,10 @@
 .dark .card:hover {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }
+
+.card-header{
+    background-color:transparent !important;
+}
 </style>
 
 <script>

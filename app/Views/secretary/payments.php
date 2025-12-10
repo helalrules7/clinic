@@ -3009,6 +3009,32 @@ body > div.modal-backdrop.fade.show{
 </style>
 
 <script>
+// Check for openModal query parameter and open the corresponding modal
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const openModal = urlParams.get('openModal');
+    
+    if (openModal === 'dailyBalance') {
+        // Open daily balance modal
+        setTimeout(() => {
+            const dailyBalanceModal = document.getElementById('dailyBalanceModal');
+            if (dailyBalanceModal) {
+                const modal = new bootstrap.Modal(dailyBalanceModal);
+                modal.show();
+            }
+        }, 100);
+    } else if (openModal === 'expense') {
+        // Open expense modal
+        setTimeout(() => {
+            const expenseModal = document.getElementById('expenseModal');
+            if (expenseModal) {
+                const modal = new bootstrap.Modal(expenseModal);
+                modal.show();
+            }
+        }, 100);
+    }
+});
+
 // Hover effect with radial gradient - glowing effect following mouse
 document.addEventListener('DOMContentLoaded', function() {
     const cards = document.querySelectorAll('.stats-card');

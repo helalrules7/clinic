@@ -4034,8 +4034,22 @@ function formatMoney(amount) {
 document.addEventListener('DOMContentLoaded', function() {
     initializeAddPatientModal();
     
-    // Check if patient_id is in URL and pre-select patient
+    // Check for openModal query parameter and open the corresponding modal
     const urlParams = new URLSearchParams(window.location.search);
+    const openModal = urlParams.get('openModal');
+    
+    if (openModal === 'addBooking') {
+        // Open add booking modal
+        setTimeout(() => {
+            const addBookingModal = document.getElementById('addBookingModal');
+            if (addBookingModal) {
+                const modal = new bootstrap.Modal(addBookingModal);
+                modal.show();
+            }
+        }, 100);
+    }
+    
+    // Check if patient_id is in URL and pre-select patient
     const patientId = urlParams.get('patient_id');
     if (patientId) {
         // Set patient ID immediately

@@ -290,6 +290,10 @@
 .dark .alert-info {
     background-color: rgba(34, 211, 238, 0.1);
 }
+
+.card-header{
+    background-color:transparent !important;
+}
 </style>
 
 <div class="container-fluid">
