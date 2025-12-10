@@ -2948,6 +2948,64 @@ kbd[lang="ar"] {
 h1, h2, h3, h4, h5, h6 {
 color: var(--text) !important;
 }
+
+body > div.modal-backdrop.fade.show{
+    display: none !important;
+}
+
+/* Modal z-index and centering */
+.modal {
+    z-index: 1000002 !important;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem !important;
+}
+
+.modal-backdrop {
+    z-index: 1000000 !important;
+}
+
+.modal-dialog {
+    z-index: 1000002 !important;
+    margin: 0 auto;
+    max-width: 500px;
+}
+
+.modal-dialog.modal-lg {
+    max-width: 800px;
+}
+
+.modal-dialog.modal-xl {
+    max-width: 1140px;
+}
+
+.modal-dialog.modal-sm {
+    max-width: 300px;
+}
+
+.btn-outline-warning{
+    color: white !important;
+    background: #ffc107 !important;
+    border: 1px solid #ffc107 !important;
+    border-radius: 10px !important;
+}
+
+.btn-outline-warning:hover {
+    background:rgb(200, 150, 0) !important;
+    color: white !important;
+}
+
+.dark .btn-outline-warning{
+    color: white !important;
+    background: #ffc107 !important;
+    border: 1px solid #ffc107 !important;
+    border-radius: 10px !important;
+}
+
+.dark .btn-outline-warning:hover {
+    background:rgb(200, 150, 0) !important;
+    color: white !important;
+}
 </style>
 
 <script>

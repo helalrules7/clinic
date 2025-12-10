@@ -382,5 +382,39 @@ label {
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
+
+body > div.modal-backdrop.fade.show{
+    display: none !important;
+}
+
+/* Modal z-index and centering */
+.modal {
+    z-index: 1000002 !important;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem !important;
+}
+
+.modal-backdrop {
+    z-index: 1000000 !important;
+}
+
+.modal-dialog {
+    z-index: 1000002 !important;
+    margin: 0 auto;
+    max-width: 500px;
+}
+
+.modal-dialog.modal-lg {
+    max-width: 800px;
+}
+
+.modal-dialog.modal-xl {
+    max-width: 1140px;
+}
+
+.modal-dialog.modal-sm {
+    max-width: 300px;
+}
 </style>
 
