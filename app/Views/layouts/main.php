@@ -372,11 +372,13 @@
                     </a>
                 <?php endif; ?>
                 
-                <!-- Notifications Icon -->
+                <!-- Notifications Icon (Hidden for Admin) -->
+                <?php if ($this->getCurrentUser()['role'] !== 'admin'): ?>
                 <button class="btn btn-outline-secondary notifications-toggle" id="notificationsToggle" title="Notifications">
                     <i class="bi bi-bell"></i>
                     <span class="notifications-badge" id="notificationsBadge" style="display: none;">0</span>
                 </button>
+                <?php endif; ?>
                 
                 <label class="switch" for="themeToggleInput">
                     <input id="themeToggleInput" type="checkbox" />
@@ -450,7 +452,8 @@
         <i class="bi bi-arrow-up"></i>
     </button>
     
-    <!-- Notifications Panel -->
+    <!-- Notifications Panel (Hidden for Admin) -->
+    <?php if ($this->getCurrentUser()['role'] !== 'admin'): ?>
     <div class="notifications-panel-overlay" id="notificationsOverlay"></div>
     <div class="notifications-panel" id="notificationsPanel">
         <div class="notifications-panel-content">
@@ -476,8 +479,10 @@
             </div>
         </div>
     </div>
+    <?php endif; ?>
     
-    <!-- Quick Access Dock (Desktop Only) -->
+    <!-- Quick Access Dock (Desktop Only - Hidden for Admin) -->
+    <?php if ($this->getCurrentUser()['role'] !== 'admin'): ?>
     <div class="quick-access-dock" id="quickAccessDock">
         <div class="dock-container">
             <a href="/doctor/calendar" class="dock-item" title="View Calendar">
@@ -580,11 +585,10 @@
             </button>
         </div>
     </div>
+    <?php endif; ?>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/app/Views/layouts/main.js?v=<?= filemtime(__DIR__ . '/main.js') ?>"></script>
 </body>
-</html>
-
 </html>
