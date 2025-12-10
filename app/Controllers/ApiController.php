@@ -8694,6 +8694,135 @@ class ApiController
     }
 
     /**
+     * Get 5-day weather forecast
+     */
+    public function getWeatherForecast()
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['success' => false, 'error' => 'Unauthorized'], 401);
+            }
+
+            $lat = $_GET['lat'] ?? null;
+            $lon = $_GET['lon'] ?? null;
+
+            // Default to Kafr El Sheikh, Egypt if no coordinates provided
+            if (!$lat || !$lon) {
+                $lat = 31.1117;
+                $lon = 30.9397;
+            }
+
+            // OpenWeatherMap API key
+            $apiKey = $_ENV['OPENWEATHER_API_KEY'] ?? '4d8fb5b93d4af21d66a2948710284366';
+
+            // Fetch 5-day forecast from OpenWeatherMap
+            $forecastUrl = "https://api.openweathermap.org/data/2.5/forecast?lat={$lat}&lon={$lon}&units=metric&cnt=40&appid={$apiKey}";
+            
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $forecastUrl,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 10,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_SSL_VERIFYPEER => false
+            ]);
+            
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            if ($httpCode !== 200 || !$response) {
+                error_log("OpenWeatherMap Forecast API error: HTTP {$httpCode}");
+                return $this->jsonResponse([
+                    'success' => false,
+                    'error' => 'Failed to fetch weather forecast'
+                ], 500);
+            }
+            
+            $data = json_decode($response, true);
+            
+            if (!$data || !isset($data['list'])) {
+                error_log("OpenWeatherMap Forecast API: Invalid response structure");
+                return $this->jsonResponse([
+                    'success' => false,
+                    'error' => 'Invalid forecast data'
+                ], 500);
+            }
+            
+            // Group forecasts by day and get daily averages/max/min
+            $dailyForecasts = [];
+            $currentDate = null;
+            $dayData = [];
+            
+            foreach ($data['list'] as $item) {
+                $date = date('Y-m-d', $item['dt']);
+                
+                if ($currentDate !== $date) {
+                    if ($currentDate !== null && !empty($dayData)) {
+                        // Calculate daily averages
+                        $dailyForecasts[] = [
+                            'date' => $currentDate,
+                            'temperature' => round(array_sum(array_column($dayData, 'temp')) / count($dayData)),
+                            'tempMax' => round(max(array_column($dayData, 'temp'))),
+                            'tempMin' => round(min(array_column($dayData, 'temp'))),
+                            'humidity' => round(array_sum(array_column($dayData, 'humidity')) / count($dayData)),
+                            'windSpeed' => round(array_sum(array_column($dayData, 'windSpeed')) / count($dayData)),
+                            'condition' => ucfirst($dayData[0]['condition']),
+                            'icon' => $dayData[0]['icon'],
+                            'uvIndex' => round(array_sum(array_column($dayData, 'uvIndex')) / count($dayData)),
+                            'clouds' => round(array_sum(array_column($dayData, 'clouds')) / count($dayData))
+                        ];
+                    }
+                    $currentDate = $date;
+                    $dayData = [];
+                }
+                
+                $dayData[] = [
+                    'temp' => $item['main']['temp'],
+                    'humidity' => $item['main']['humidity'],
+                    'windSpeed' => ($item['wind']['speed'] ?? 0) * 3.6, // Convert m/s to km/h
+                    'condition' => $item['weather'][0]['description'] ?? 'clear',
+                    'icon' => $item['weather'][0]['icon'] ?? '01d',
+                    'uvIndex' => $this->estimateUVIndex($item),
+                    'clouds' => $item['clouds']['all'] ?? 0
+                ];
+            }
+            
+            // Add last day
+            if ($currentDate !== null && !empty($dayData)) {
+                $dailyForecasts[] = [
+                    'date' => $currentDate,
+                    'temperature' => round(array_sum(array_column($dayData, 'temp')) / count($dayData)),
+                    'tempMax' => round(max(array_column($dayData, 'temp'))),
+                    'tempMin' => round(min(array_column($dayData, 'temp'))),
+                    'humidity' => round(array_sum(array_column($dayData, 'humidity')) / count($dayData)),
+                    'windSpeed' => round(array_sum(array_column($dayData, 'windSpeed')) / count($dayData)),
+                    'condition' => ucfirst($dayData[0]['condition']),
+                    'icon' => $dayData[0]['icon'],
+                    'uvIndex' => round(array_sum(array_column($dayData, 'uvIndex')) / count($dayData)),
+                    'clouds' => round(array_sum(array_column($dayData, 'clouds')) / count($dayData))
+                ];
+            }
+            
+            // Limit to 4 days
+            $dailyForecasts = array_slice($dailyForecasts, 0, 4);
+            
+            return $this->jsonResponse([
+                'success' => true,
+                'forecast' => $dailyForecasts
+            ]);
+
+        } catch (\Exception $e) {
+            error_log("Weather Forecast API error: " . $e->getMessage());
+            return $this->jsonResponse([
+                'success' => false,
+                'error' => 'Weather forecast exception: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Fetch weather from Open-Meteo API (free, no API key)
      */
     private function fetchWeatherFromOpenMeteo($lat, $lon)

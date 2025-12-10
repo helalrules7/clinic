@@ -4623,30 +4623,30 @@ function loadOphthalmologyNews() {
 function renderNewsTicker(articles) {
     const ticker = document.getElementById('newsTicker');
     if (!ticker) return;
-    
+
     ticker.innerHTML = '';
-    
+
     articles.forEach(article => {
         const span = document.createElement('span');
         let content = '';
-        
+
         // Add breaking news badge if applicable
         if (article.is_breaking) {
             content += '<span class="breaking-news"><i class="bi bi-exclamation-triangle-fill"></i> BREAKING</span>';
         }
-        
+
         // Add source icon
         if (article.source_icon) {
             content += `<span class="source-icon">${article.source_icon}</span>`;
         }
-        
+
         // Add article link
         content += `<a href="${article.link}" target="_blank" rel="noopener noreferrer">${article.title}</a>`;
-        
+
         span.innerHTML = content;
         ticker.appendChild(span);
     });
-    
+
     // Restart animation
     ticker.style.animation = 'none';
     setTimeout(() => {
@@ -4694,15 +4694,31 @@ const weatherIconMap = {
     'breezy': 'wind'
 };
 
+// Check if it's currently nighttime
+function isNightTime() {
+    const hour = new Date().getHours();
+    return hour < 6 || hour >= 19; // Night is 7 PM to 6 AM
+}
+
 // Get weather icon type from condition
 function getWeatherIconType(condition) {
     const lowerCondition = condition.toLowerCase();
+    const isNight = isNightTime();
+
     for (const [key, value] of Object.entries(weatherIconMap)) {
         if (lowerCondition.includes(key)) {
+            // Return night variants for various conditions
+            if (isNight) {
+                if (value === 'sun') return 'moon';
+                if (value === 'partly-cloudy') return 'partly-cloudy-night';
+                if (value === 'rain') return 'rain-night';
+                if (value === 'snow') return 'snow-night';
+            }
             return value;
         }
     }
-    return 'sun'; // Default
+    // Default to moon at night, sun during day
+    return isNight ? 'moon' : 'sun';
 }
 
 // Render weather icon HTML using SVG animations
@@ -4845,6 +4861,147 @@ function renderWeatherIcon(iconType) {
                     <path fill="none" stroke="#CCC" stroke-width="7" stroke-linecap="round" stroke-miterlimit="10" d="M85.263,105.176c3.002-1.646,6.403-2.549,9.903-2.549c11.375,0,20.633,9.256,20.633,20.633s-9.258,20.633-20.633,20.633H3.473"/>
                     <path fill="none" stroke="#CCC" stroke-width="7" stroke-linecap="round" stroke-miterlimit="10" d="M69.756,113.884c1.62-0.888,3.457-1.376,5.345-1.376c6.14,0,11.136,4.996,11.136,11.137c0,6.14-4.996,11.136-11.136,11.136H25.313"/>
                     <path fill="none" stroke="#CCC" stroke-width="7" stroke-linecap="round" stroke-miterlimit="10" d="M75.536,180.462c2.131,1.166,4.545,1.809,7.027,1.809c8.072,0,14.642-6.569,14.642-14.643s-6.569-14.643-14.642-14.643H18.043"/>
+                </g>
+            </svg>`,
+        'moon': `
+            <svg class="weather-svg-icon icon-moon" viewBox="0 0 100 100">
+                <defs>
+                    <linearGradient id="moonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#F5F3CE"/>
+                        <stop offset="100%" style="stop-color:#E8E4B8"/>
+                    </linearGradient>
+                </defs>
+                <g class="moon-stars">
+                    <polygon fill="#F5F3CE" points="67,35 68.5,39.5 73,41 68.5,42.5 67,47 65.5,42.5 61,41 65.5,39.5" class="star star-1"/>
+                    <polygon fill="#F5F3CE" points="86,42 87,45 90,46 87,47 86,50 85,47 82,46 85,45" class="star star-2"/>
+                    <polygon fill="#F5F3CE" points="80,60 81,63 84,64 81,65 80,68 79,65 76,64 79,63" class="star star-3"/>
+                </g>
+                <g class="moon-body">
+                    <path fill="url(#moonGrad)" d="M35,15 C15,15 0,35 0,55 C0,75 15,95 35,95 C55,95 70,80 70,60 C55,70 35,65 25,50 C20,40 25,25 40,18 C38,16 36,15 35,15 Z"/>
+                    <circle fill="#D4D0A0" cx="25" cy="45" r="5" opacity="0.4"/>
+                    <circle fill="#D4D0A0" cx="35" cy="65" r="3" opacity="0.3"/>
+                    <circle fill="#D4D0A0" cx="20" cy="60" r="2" opacity="0.25"/>
+                </g>
+            </svg>`,
+        'partly-cloudy-night': `
+            <svg class="weather-svg-icon icon-partly-cloudy-night" viewBox="0 0 100 100">
+                <defs>
+                    <linearGradient id="moonGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#F5F3CE"/>
+                        <stop offset="100%" style="stop-color:#E8E4B8"/>
+                    </linearGradient>
+                    <linearGradient id="cloudGradNight" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#00b4c6"/>
+                        <stop offset="100%" style="stop-color:#00A0B0"/>
+                    </linearGradient>
+                    <linearGradient id="grayCloudGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#a0a0a0"/>
+                        <stop offset="100%" style="stop-color:#808080"/>
+                    </linearGradient>
+                </defs>
+                <g class="moon-stars">
+                    <polygon fill="#F5F3CE" points="75,15 76.5,19.5 81,21 76.5,22.5 75,27 73.5,22.5 69,21 73.5,19.5" class="star star-1"/>
+                    <polygon fill="#F5F3CE" points="90,25 91,28 94,29 91,30 90,33 89,30 86,29 89,28" class="star star-2"/>
+                </g>
+                <g class="moon-body">
+                    <path fill="url(#moonGrad2)" d="M55,5 C40,5 28,18 28,33 C28,48 40,60 55,60 C60,60 65,58 68,55 C63,58 56,58 50,55 C40,50 35,38 40,28 C43,22 50,18 58,18 C64,18 70,22 72,28 C70,15 63,5 55,5 Z" transform="translate(5,-5)"/>
+                </g>
+                <g class="small-cloud-night">
+                    <ellipse fill="url(#grayCloudGrad)" cx="25" cy="55" rx="18" ry="12"/>
+                    <ellipse fill="url(#grayCloudGrad)" cx="40" cy="52" rx="15" ry="10"/>
+                    <ellipse fill="url(#grayCloudGrad)" cx="32" cy="48" rx="12" ry="8"/>
+                </g>
+                <g class="main-cloud-night">
+                    <ellipse fill="url(#cloudGradNight)" cx="45" cy="72" rx="25" ry="16"/>
+                    <ellipse fill="url(#cloudGradNight)" cx="65" cy="68" rx="20" ry="14"/>
+                    <ellipse fill="url(#cloudGradNight)" cx="55" cy="62" rx="18" ry="12"/>
+                    <ellipse fill="url(#cloudGradNight)" cx="75" cy="75" rx="15" ry="10"/>
+                </g>
+            </svg>`,
+        'rain-night': `
+            <svg class="weather-svg-icon icon-rain-night" viewBox="0 0 100 100">
+                <defs>
+                    <linearGradient id="moonGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#F5F3CE"/>
+                        <stop offset="100%" style="stop-color:#E8E4B8"/>
+                    </linearGradient>
+                    <linearGradient id="cloudGradRainNight" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#00b4c6"/>
+                        <stop offset="100%" style="stop-color:#00A0B0"/>
+                    </linearGradient>
+                    <linearGradient id="grayCloudGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#888"/>
+                        <stop offset="100%" style="stop-color:#666"/>
+                    </linearGradient>
+                </defs>
+                <g class="moon-body">
+                    <path fill="url(#moonGrad3)" d="M55,5 C40,5 28,18 28,33 C28,48 40,60 55,60 C60,60 65,58 68,55 C63,58 56,58 50,55 C40,50 35,38 40,28 C43,22 50,18 58,18 C64,18 70,22 72,28 C70,15 63,5 55,5 Z" transform="translate(5,-5)"/>
+                </g>
+                <g class="small-cloud-night">
+                    <ellipse fill="url(#grayCloudGrad2)" cx="25" cy="45" rx="18" ry="12"/>
+                    <ellipse fill="url(#grayCloudGrad2)" cx="40" cy="42" rx="15" ry="10"/>
+                    <ellipse fill="url(#grayCloudGrad2)" cx="32" cy="38" rx="12" ry="8"/>
+                </g>
+                <g class="rain-drops-night">
+                    <path fill="#00A0B0" d="M30,65 Q33,72 30,78 Q27,72 30,65 Z" class="drop drop-1"/>
+                    <path fill="#00A0B0" d="M50,65 Q53,72 50,78 Q47,72 50,65 Z" class="drop drop-2"/>
+                </g>
+                <g class="main-cloud-night">
+                    <ellipse fill="url(#cloudGradRainNight)" cx="45" cy="58" rx="25" ry="16"/>
+                    <ellipse fill="url(#cloudGradRainNight)" cx="65" cy="54" rx="20" ry="14"/>
+                    <ellipse fill="url(#cloudGradRainNight)" cx="55" cy="48" rx="18" ry="12"/>
+                    <ellipse fill="url(#cloudGradRainNight)" cx="75" cy="60" rx="15" ry="10"/>
+                </g>
+            </svg>`,
+        'snow-night': `
+            <svg class="weather-svg-icon icon-snow-night" viewBox="0 0 100 100">
+                <defs>
+                    <linearGradient id="moonGrad4" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#F5F3CE"/>
+                        <stop offset="100%" style="stop-color:#E8E4B8"/>
+                    </linearGradient>
+                    <linearGradient id="cloudGradSnowNight" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#00b4c6"/>
+                        <stop offset="100%" style="stop-color:#00A0B0"/>
+                    </linearGradient>
+                    <linearGradient id="grayCloudGrad3" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#ccc"/>
+                        <stop offset="100%" style="stop-color:#aaa"/>
+                    </linearGradient>
+                </defs>
+                <g class="moon-body">
+                    <path fill="url(#moonGrad4)" d="M55,5 C40,5 28,18 28,33 C28,48 40,60 55,60 C60,60 65,58 68,55 C63,58 56,58 50,55 C40,50 35,38 40,28 C43,22 50,18 58,18 C64,18 70,22 72,28 C70,15 63,5 55,5 Z" transform="translate(5,-5)"/>
+                </g>
+                <g class="small-cloud-night">
+                    <ellipse fill="url(#grayCloudGrad3)" cx="25" cy="45" rx="18" ry="12"/>
+                    <ellipse fill="url(#grayCloudGrad3)" cx="40" cy="42" rx="15" ry="10"/>
+                    <ellipse fill="url(#grayCloudGrad3)" cx="32" cy="38" rx="12" ry="8"/>
+                </g>
+                <g class="snowflakes-night">
+                    <g class="snowflake snowflake-1" transform="translate(35, 70)">
+                        <line x1="0" y1="-5" x2="0" y2="5" stroke="white" stroke-width="1"/>
+                        <line x1="-5" y1="0" x2="5" y2="0" stroke="white" stroke-width="1"/>
+                        <line x1="-3.5" y1="-3.5" x2="3.5" y2="3.5" stroke="white" stroke-width="1"/>
+                        <line x1="-3.5" y1="3.5" x2="3.5" y2="-3.5" stroke="white" stroke-width="1"/>
+                    </g>
+                    <g class="snowflake snowflake-2" transform="translate(50, 75)">
+                        <line x1="0" y1="-4" x2="0" y2="4" stroke="white" stroke-width="1"/>
+                        <line x1="-4" y1="0" x2="4" y2="0" stroke="white" stroke-width="1"/>
+                        <line x1="-2.8" y1="-2.8" x2="2.8" y2="2.8" stroke="white" stroke-width="1"/>
+                        <line x1="-2.8" y1="2.8" x2="2.8" y2="-2.8" stroke="white" stroke-width="1"/>
+                    </g>
+                    <g class="snowflake snowflake-3" transform="translate(63, 68)">
+                        <line x1="0" y1="-4" x2="0" y2="4" stroke="white" stroke-width="1"/>
+                        <line x1="-4" y1="0" x2="4" y2="0" stroke="white" stroke-width="1"/>
+                        <line x1="-2.8" y1="-2.8" x2="2.8" y2="2.8" stroke="white" stroke-width="1"/>
+                        <line x1="-2.8" y1="2.8" x2="2.8" y2="-2.8" stroke="white" stroke-width="1"/>
+                    </g>
+                </g>
+                <g class="main-cloud-night">
+                    <ellipse fill="url(#cloudGradSnowNight)" cx="45" cy="58" rx="25" ry="16"/>
+                    <ellipse fill="url(#cloudGradSnowNight)" cx="65" cy="54" rx="20" ry="14"/>
+                    <ellipse fill="url(#cloudGradSnowNight)" cx="55" cy="48" rx="18" ry="12"/>
+                    <ellipse fill="url(#cloudGradSnowNight)" cx="75" cy="60" rx="15" ry="10"/>
                 </g>
             </svg>`
     };
@@ -5014,21 +5171,30 @@ function updateWeatherCard(weatherData) {
 async function fetchWeatherData(latitude, longitude) {
     try {
         const response = await fetch(`/api/weather?lat=${latitude}&lon=${longitude}`);
-        if (!response.ok) throw new Error('Weather API error');
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Weather API error: ${response.status}`);
+        }
         const data = await response.json();
 
         if (data.success && data.weather) {
             updateWeatherCard(data.weather);
         } else {
-            throw new Error(data.message || 'Failed to get weather data');
+            throw new Error(data.error || data.message || 'Failed to get weather data');
         }
     } catch (error) {
-        // Show user-friendly error message
+        // Show user-friendly error message (API error, not geolocation error)
         const locationElement = document.getElementById('weatherLocation');
         if (locationElement) {
-            locationElement.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i><span>Unable to fetch weather data</span>';
+            locationElement.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i><span>Unable to fetch weather data: ${error.message}</span>`;
         }
-        // No fallback - let error be visible for testing
+        
+        // Show error in weather card
+        const tempElement = document.getElementById('weatherTemp');
+        const descElement = document.getElementById('weatherDesc');
+        if (tempElement) tempElement.textContent = '--°C';
+        if (descElement) descElement.textContent = 'Weather API error';
     }
 }
 
@@ -5038,58 +5204,44 @@ function initWeatherCard() {
     if (!iconContainer) return; // Weather card not present
 
     // Default location: Kafr El Sheikh, Egypt
-    const DEFAULT_LAT = 31.1117;  // Kafr El Sheikh latitude
-    const DEFAULT_LON = 30.9397;  // Kafr El Sheikh longitude
+    const DEFAULT_LAT = 31.1117;
+    const DEFAULT_LON = 30.9397;
     const DEFAULT_LOCATION_NAME = 'Kafr El Sheikh';
-
-    // Try browser geolocation first
+    
+    const locationElement = document.getElementById('weatherLocation');
+    
+    // Show default location immediately
+    if (locationElement) {
+        locationElement.innerHTML = `<i class="bi bi-geo-alt-fill"></i><span>${DEFAULT_LOCATION_NAME}</span>`;
+    }
+    
+    // Try browser geolocation - only 1 attempt, then fallback to default
     if ('geolocation' in navigator) {
         const geoOptions = {
-            enableHighAccuracy: false,  // Set to false to avoid GPS timeout issues
-            timeout: 10000,            // 10 second timeout (reduced)
-            maximumAge: 600000         // Accept cached position up to 10 minutes old
+            enableHighAccuracy: false,
+            timeout: 3000,  // 3 second timeout - quick fallback
+            maximumAge: 600000
         };
-
+        
         navigator.geolocation.getCurrentPosition(
             (position) => {
+                // Success - update location and fetch weather
+                if (locationElement) {
+                    locationElement.innerHTML = `<i class="bi bi-geo-alt-fill"></i><span>Getting weather data...</span>`;
+                }
                 fetchWeatherData(position.coords.latitude, position.coords.longitude);
             },
             (error) => {
-                // Better error handling
-                let errorMessage = 'Unknown error';
-                switch(error.code) {
-                    case error.PERMISSION_DENIED:
-                        errorMessage = 'Permission denied by user';
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        errorMessage = 'Position information unavailable';
-                        break;
-                    case error.TIMEOUT:
-                        errorMessage = 'Request timeout';
-                        break;
-                    default:
-                        errorMessage = error.message || 'Unknown geolocation error';
-                        break;
-                }
-                console.warn('⚠️ Geolocation error:', errorMessage, 'Code:', error.code);
-                
-                // Show user-friendly message
-                const locationElement = document.getElementById('weatherLocation');
+                // Error - use default location immediately (no retry)
                 if (locationElement) {
-                    locationElement.innerHTML = `<i class="bi bi-geo-alt-fill"></i><span>Using default location (${DEFAULT_LOCATION_NAME})...</span>`;
+                    locationElement.innerHTML = `<i class="bi bi-geo-alt-fill"></i><span>${DEFAULT_LOCATION_NAME}</span>`;
                 }
-                
-                // Use default location (Kafr El Sheikh, Egypt) with weather API
                 fetchWeatherData(DEFAULT_LAT, DEFAULT_LON);
             },
             geoOptions
         );
     } else {
-        const locationElement = document.getElementById('weatherLocation');
-        if (locationElement) {
-            locationElement.innerHTML = `<i class="bi bi-geo-alt-fill"></i><span>Using default location (${DEFAULT_LOCATION_NAME})...</span>`;
-        }
-        // Use default location (Kafr El Sheikh, Egypt) with weather API
+        // Geolocation not supported - use default location
         fetchWeatherData(DEFAULT_LAT, DEFAULT_LON);
     }
 }
@@ -5099,9 +5251,188 @@ async function fetchWeatherFromIP() {
     // IP geolocation is disabled - function kept for reference but not used
 }
 
+// Weather forecast popover
+let weatherForecastPopover = null;
+
+function showWeatherForecastPopover() {
+    // Close if already open
+    if (weatherForecastPopover) {
+        closeWeatherForecastPopover();
+        return;
+    }
+    
+    // Get current location from weather card
+    const locationElement = document.getElementById('weatherLocation');
+    if (!locationElement) return;
+    
+    // Try to get coordinates from current weather data or use default
+    const DEFAULT_LAT = 31.1117;
+    const DEFAULT_LON = 30.9397;
+    
+    // Create popover
+    const popover = document.createElement('div');
+    popover.className = 'weather-forecast-popover';
+    popover.id = 'weatherForecastPopover';
+    popover.innerHTML = `
+        <div class="weather-forecast-popover-content">
+            <div class="weather-forecast-popover-header">
+                <h5>4-Day Weather Forecast</h5>
+                <button class="weather-forecast-close" id="weatherForecastClose">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="weather-forecast-popover-body" id="weatherForecastBody">
+                <div class="weather-forecast-loading">
+                    <div class="spinner-border spinner-border-sm" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span>Loading forecast...</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(popover);
+    weatherForecastPopover = popover;
+    
+    // Close button handler
+    document.getElementById('weatherForecastClose').addEventListener('click', closeWeatherForecastPopover);
+    
+    // Close on backdrop click
+    popover.addEventListener('click', (e) => {
+        if (e.target === popover) {
+            closeWeatherForecastPopover();
+        }
+    });
+    
+    // Close on ESC key
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            closeWeatherForecastPopover();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+    
+    // Fetch forecast data
+    fetchWeatherForecast(DEFAULT_LAT, DEFAULT_LON);
+}
+
+function closeWeatherForecastPopover() {
+    if (weatherForecastPopover) {
+        weatherForecastPopover.remove();
+        weatherForecastPopover = null;
+    }
+}
+
+async function fetchWeatherForecast(latitude, longitude) {
+    try {
+        const response = await fetch(`/api/weather-forecast?lat=${latitude}&lon=${longitude}`);
+        if (!response.ok) {
+            throw new Error('Weather forecast API error');
+        }
+        const data = await response.json();
+        
+        if (data.success && data.forecast) {
+            renderWeatherForecast(data.forecast);
+        } else {
+            throw new Error(data.error || 'Failed to get forecast data');
+        }
+    } catch (error) {
+        const body = document.getElementById('weatherForecastBody');
+        if (body) {
+            body.innerHTML = `
+                <div class="weather-forecast-error">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span>Unable to load forecast: ${error.message}</span>
+                </div>
+            `;
+        }
+    }
+}
+
+function renderWeatherForecast(forecast) {
+    const body = document.getElementById('weatherForecastBody');
+    if (!body) return;
+    
+    if (!forecast || forecast.length === 0) {
+        body.innerHTML = `
+            <div class="weather-forecast-error">
+                <i class="bi bi-info-circle-fill"></i>
+                <span>No forecast data available</span>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="weather-forecast-days">';
+    
+    forecast.forEach((day, index) => {
+        const date = new Date(day.date);
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+        const dayNumber = date.getDate();
+        const month = date.toLocaleDateString('en-US', { month: 'short' });
+        
+        const pollenIndex = calculatePollenIndex(day);
+        const dryEyeRisk = calculateDryEyeRisk(day);
+        const pollenLevel = getLevelClass(pollenIndex);
+        const dryEyeLevel = getLevelClass(dryEyeRisk);
+        
+        html += `
+            <div class="weather-forecast-day">
+                <div class="forecast-day-header">
+                    <div class="forecast-day-name">${dayName}</div>
+                    <div class="forecast-day-date">${dayNumber} ${month}</div>
+                </div>
+                <div class="forecast-day-weather">
+                    <div class="forecast-day-icon">
+                        ${renderWeatherIcon(getWeatherIconType(day.condition || 'clear'))}
+                    </div>
+                    <div class="forecast-day-temp">
+                        <span class="forecast-temp-high">${Math.round(day.tempMax || day.temperature)}°</span>
+                        <span class="forecast-temp-low">${Math.round(day.tempMin || day.temperature - 5)}°</span>
+                    </div>
+                    <div class="forecast-day-condition">${day.condition || 'Clear'}</div>
+                </div>
+                <div class="forecast-day-indices">
+                    <div class="forecast-index-item">
+                        <div class="forecast-index-label">
+                            <i class="bi bi-flower1"></i>
+                            <span>Pollen</span>
+                        </div>
+                        <div class="forecast-index-bar">
+                            <div class="forecast-index-fill index-${pollenLevel}" style="width: ${Math.max(2, pollenIndex)}%"></div>
+                        </div>
+                        <div class="forecast-index-value">${Math.round(pollenIndex)}%</div>
+                    </div>
+                    <div class="forecast-index-item">
+                        <div class="forecast-index-label">
+                            <i class="bi bi-eye"></i>
+                            <span>Dry Eye</span>
+                        </div>
+                        <div class="forecast-index-bar">
+                            <div class="forecast-index-fill index-${dryEyeLevel}" style="width: ${Math.max(2, dryEyeRisk)}%"></div>
+                        </div>
+                        <div class="forecast-index-value">${Math.round(dryEyeRisk)}%</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    body.innerHTML = html;
+}
+
 // Initialize weather on page load
 document.addEventListener('DOMContentLoaded', function() {
     initWeatherCard();
+    
+    // Forecast button handler
+    const forecastBtn = document.getElementById('weatherForecastBtn');
+    if (forecastBtn) {
+        forecastBtn.addEventListener('click', showWeatherForecastPopover);
+    }
 
     // Refresh weather every 15 minutes
     setInterval(initWeatherCard, 15 * 60 * 1000);

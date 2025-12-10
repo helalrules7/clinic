@@ -94,6 +94,9 @@
                     <div class="weather-card-inner">
                         <!-- Weather Section -->
                         <div class="weather-main">
+                            <button class="weather-forecast-btn" id="weatherForecastBtn" title="5-Day Forecast">
+                                <i class="bi bi-calendar3"></i>
+                            </button>
                             <div class="weather-icon-container" id="weatherIconContainer">
                                 <div class="weather-icon-loading">
                                     <div class="spinner-border spinner-border-sm text-light" role="status">
