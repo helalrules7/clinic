@@ -892,8 +892,174 @@ document.addEventListener('DOMContentLoaded', function() {
     // Re-initialize modals if new ones are added dynamically
     const observer = new MutationObserver(() => {
         initializeModals();
+        // Re-initialize draggable after modals are initialized
+        setTimeout(initializeDraggableModals, 100);
     });
     observer.observe(document.body, { childList: true, subtree: true });
+    
+    // Make modals draggable
+    function initializeDraggableModals() {
+        const modals = document.querySelectorAll('.modal');
+        
+        modals.forEach(modal => {
+            // Skip alertModal - it has its own draggable implementation
+            if (modal.id === 'alertModal') {
+                return;
+            }
+            const modalDialog = modal.querySelector('.modal-dialog');
+            if (!modalDialog) return;
+            
+            // Skip if already initialized
+            if (modalDialog.dataset.draggableInitialized === 'true') return;
+            modalDialog.dataset.draggableInitialized = 'true';
+            
+            let isDragging = false;
+            let currentX;
+            let currentY;
+            let initialX;
+            let initialY;
+            let xOffset = 0;
+            let yOffset = 0;
+            
+            // Make modal header the drag handle
+            const modalHeader = modal.querySelector('.modal-header');
+            if (!modalHeader) return;
+            
+            modalHeader.style.cursor = 'move';
+            
+            // Remove existing listeners to avoid duplicates
+            const newHeader = modalHeader.cloneNode(true);
+            modalHeader.parentNode.replaceChild(newHeader, modalHeader);
+            const freshHeader = modal.querySelector('.modal-header');
+            
+            freshHeader.addEventListener('mousedown', dragStart);
+            
+            function dragStart(e) {
+                // Don't drag if clicking on buttons or inputs
+                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.closest('button') || e.target.closest('input') || e.target.closest('.btn-close')) {
+                    return;
+                }
+                
+                // Only start dragging if clicking on header (not on title text)
+                if (e.target === freshHeader || (freshHeader.contains(e.target) && e.target.tagName !== 'H5' && !e.target.closest('h5'))) {
+                    // Get current transform values
+                    const transform = modalDialog.style.transform;
+                    if (transform) {
+                        const match = transform.match(/translate\(([^,]+)px,\s*([^)]+)px\)/);
+                        if (match) {
+                            xOffset = parseFloat(match[1]) || 0;
+                            yOffset = parseFloat(match[2]) || 0;
+                        }
+                    }
+                    
+                    initialX = e.clientX - xOffset;
+                    initialY = e.clientY - yOffset;
+                    
+                    // Store initial mouse position to detect if it's a drag or click
+                    const startX = e.clientX;
+                    const startY = e.clientY;
+                    
+                    // Set a flag to track if mouse moved
+                    let hasMoved = false;
+                    
+                    function checkMove(moveEvent) {
+                        const deltaX = Math.abs(moveEvent.clientX - startX);
+                        const deltaY = Math.abs(moveEvent.clientY - startY);
+                        if (deltaX > 5 || deltaY > 5) {
+                            hasMoved = true;
+                            isDragging = true;
+                            modalDialog.style.transition = 'none';
+                            moveEvent.preventDefault();
+                            moveEvent.stopPropagation();
+                        }
+                    }
+                    
+                    function handleMove(moveEvent) {
+                        if (hasMoved) {
+                            drag(moveEvent);
+                        } else {
+                            checkMove(moveEvent);
+                        }
+                    }
+                    
+                    function handleEnd(endEvent) {
+                        if (!hasMoved) {
+                            // It was just a click, allow normal behavior
+                            document.removeEventListener('mousemove', handleMove);
+                            document.removeEventListener('mouseup', handleEnd);
+                            return;
+                        }
+                        dragEnd(endEvent);
+                        document.removeEventListener('mousemove', handleMove);
+                        document.removeEventListener('mouseup', handleEnd);
+                    }
+                    
+                    document.addEventListener('mousemove', handleMove);
+                    document.addEventListener('mouseup', handleEnd);
+                }
+            }
+            
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    e.stopPropagation(); // Prevent modal from closing
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+                    
+                    xOffset = currentX;
+                    yOffset = currentY;
+                    
+                    setTranslate(currentX, currentY, modalDialog);
+                }
+            }
+            
+            function dragEnd(e) {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+                modalDialog.style.transition = '';
+            }
+            
+            function setTranslate(xPos, yPos, el) {
+                // Get viewport dimensions
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                
+                // Get modal dimensions
+                const modalRect = el.getBoundingClientRect();
+                const modalWidth = modalRect.width;
+                const modalHeight = modalRect.height;
+                
+                // Get the original position (center of viewport)
+                const originalLeft = (viewportWidth - modalWidth) / 2;
+                const originalTop = 50; // Keep at least 50px from top
+                
+                // Calculate boundaries relative to original position
+                // Allow movement within viewport bounds
+                const minX = -(originalLeft - 20); // Allow 20px from left edge
+                const maxX = viewportWidth - modalWidth - originalLeft + 20; // Allow 20px from right edge
+                const minY = -(originalTop - 20); // Allow 20px from top
+                const maxY = viewportHeight - modalHeight - originalTop - 20; // Allow 20px from bottom
+                
+                // Constrain movement
+                const constrainedX = Math.max(minX, Math.min(maxX, xPos));
+                const constrainedY = Math.max(minY, Math.min(maxY, yPos));
+                
+                el.style.transform = `translate(${constrainedX}px, ${constrainedY}px)`;
+            }
+            
+            // Reset position when modal is hidden
+            modal.addEventListener('hidden.bs.modal', function() {
+                xOffset = 0;
+                yOffset = 0;
+                modalDialog.style.transform = '';
+                modalDialog.dataset.draggableInitialized = 'false';
+            });
+        });
+    }
+    
+    // Initialize draggable modals after a short delay to ensure modals are ready
+    setTimeout(initializeDraggableModals, 200);
     const cards = document.querySelectorAll('.stats-card');
     const wrapper = document.querySelector('.stats-cards-wrapper');
 
