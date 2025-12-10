@@ -241,7 +241,9 @@ try {
 
     // Weather API route
     $router->get('/api/weather', 'ApiController@getWeather');
-    
+    $router->get('/api/weather-ar', 'ApiController@getWeatherArabic');
+    $router->get('/api/weather-forecast-ar', 'ApiController@getWeatherForecastArabic');
+
     // General routes
     $router->get('/about', 'GeneralController@about');
     $router->get('/whats-new', 'GeneralController@whatsNew');

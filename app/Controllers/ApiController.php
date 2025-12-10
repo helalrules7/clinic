@@ -8823,6 +8823,299 @@ class ApiController
     }
 
     /**
+     * Get weather data in Arabic for the secretary dashboard
+     * Uses OpenWeatherMap API with Arabic language support and caching
+     */
+    public function getWeatherArabic()
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['success' => false, 'error' => 'غير مصرح'], 401);
+            }
+
+            $lat = $_GET['lat'] ?? null;
+            $lon = $_GET['lon'] ?? null;
+
+            // Cache file path
+            $cacheDir = __DIR__ . '/../../storage/cache';
+            if (!is_dir($cacheDir)) {
+                mkdir($cacheDir, 0755, true);
+            }
+
+            $cacheKey = $lat && $lon ? md5("weather_ar_{$lat}_{$lon}") : 'weather_ar_default';
+            $cacheFile = "{$cacheDir}/{$cacheKey}.json";
+            $cacheExpiry = 15 * 60; // 15 minutes
+
+            // Check cache
+            if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $cacheExpiry) {
+                $cachedData = json_decode(file_get_contents($cacheFile), true);
+                if ($cachedData) {
+                    return $this->jsonResponse([
+                        'success' => true,
+                        'weather' => $cachedData,
+                        'cached' => true
+                    ]);
+                }
+            }
+
+            // Default to Kafr El Sheikh, Egypt if no coordinates provided
+            if (!$lat || !$lon) {
+                $lat = 31.1117; // Kafr El Sheikh latitude
+                $lon = 30.9397; // Kafr El Sheikh longitude
+            }
+
+            // OpenWeatherMap API key
+            $apiKey = $_ENV['OPENWEATHER_API_KEY'] ?? '4d8fb5b93d4af21d66a2948710284366';
+
+            // Fetch weather with Arabic language
+            $weatherData = $this->fetchWeatherFromOpenWeatherMapArabic($lat, $lon, $apiKey);
+
+            if (!$weatherData) {
+                error_log("OpenWeatherMap Arabic API failed for coordinates: {$lat}, {$lon}");
+                return $this->jsonResponse([
+                    'success' => false,
+                    'error' => 'فشل في جلب بيانات الطقس'
+                ], 500);
+            }
+
+            // Save to cache
+            file_put_contents($cacheFile, json_encode($weatherData));
+
+            return $this->jsonResponse([
+                'success' => true,
+                'weather' => $weatherData
+            ]);
+
+        } catch (\Exception $e) {
+            error_log("Weather Arabic API error: " . $e->getMessage());
+            return $this->jsonResponse([
+                'success' => false,
+                'error' => 'خطأ في واجهة الطقس: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get 5-day weather forecast in Arabic
+     */
+    public function getWeatherForecastArabic()
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['success' => false, 'error' => 'غير مصرح'], 401);
+            }
+
+            $lat = $_GET['lat'] ?? null;
+            $lon = $_GET['lon'] ?? null;
+
+            // Default to Kafr El Sheikh, Egypt if no coordinates provided
+            if (!$lat || !$lon) {
+                $lat = 31.1117;
+                $lon = 30.9397;
+            }
+
+            // OpenWeatherMap API key
+            $apiKey = $_ENV['OPENWEATHER_API_KEY'] ?? '4d8fb5b93d4af21d66a2948710284366';
+
+            // Fetch 5-day forecast from OpenWeatherMap with Arabic language
+            $forecastUrl = "https://api.openweathermap.org/data/2.5/forecast?lat={$lat}&lon={$lon}&units=metric&cnt=40&lang=ar&appid={$apiKey}";
+
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $forecastUrl,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 10,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_SSL_VERIFYPEER => false
+            ]);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode !== 200 || !$response) {
+                error_log("OpenWeatherMap Arabic Forecast API error: HTTP {$httpCode}");
+                return $this->jsonResponse([
+                    'success' => false,
+                    'error' => 'فشل في جلب توقعات الطقس'
+                ], 500);
+            }
+
+            $data = json_decode($response, true);
+
+            if (!$data || !isset($data['list'])) {
+                error_log("OpenWeatherMap Arabic Forecast API: Invalid response structure");
+                return $this->jsonResponse([
+                    'success' => false,
+                    'error' => 'بيانات التوقعات غير صالحة'
+                ], 500);
+            }
+
+            // Group forecasts by day and get daily averages/max/min
+            $dailyForecasts = [];
+            $currentDate = null;
+            $dayData = [];
+
+            foreach ($data['list'] as $item) {
+                $date = date('Y-m-d', $item['dt']);
+
+                if ($currentDate !== $date) {
+                    if ($currentDate !== null && !empty($dayData)) {
+                        // Calculate daily averages
+                        $dailyForecasts[] = [
+                            'date' => $currentDate,
+                            'temperature' => round(array_sum(array_column($dayData, 'temp')) / count($dayData)),
+                            'tempMax' => round(max(array_column($dayData, 'temp'))),
+                            'tempMin' => round(min(array_column($dayData, 'temp'))),
+                            'humidity' => round(array_sum(array_column($dayData, 'humidity')) / count($dayData)),
+                            'windSpeed' => round(array_sum(array_column($dayData, 'windSpeed')) / count($dayData)),
+                            'condition' => $dayData[0]['condition'], // Already in Arabic
+                            'icon' => $dayData[0]['icon'],
+                            'uvIndex' => round(array_sum(array_column($dayData, 'uvIndex')) / count($dayData)),
+                            'clouds' => round(array_sum(array_column($dayData, 'clouds')) / count($dayData))
+                        ];
+                    }
+                    $currentDate = $date;
+                    $dayData = [];
+                }
+
+                $dayData[] = [
+                    'temp' => $item['main']['temp'],
+                    'humidity' => $item['main']['humidity'],
+                    'windSpeed' => ($item['wind']['speed'] ?? 0) * 3.6, // Convert m/s to km/h
+                    'condition' => $item['weather'][0]['description'] ?? 'صافي',
+                    'icon' => $item['weather'][0]['icon'] ?? '01d',
+                    'uvIndex' => $this->estimateUVIndex($item),
+                    'clouds' => $item['clouds']['all'] ?? 0
+                ];
+            }
+
+            // Add last day
+            if ($currentDate !== null && !empty($dayData)) {
+                $dailyForecasts[] = [
+                    'date' => $currentDate,
+                    'temperature' => round(array_sum(array_column($dayData, 'temp')) / count($dayData)),
+                    'tempMax' => round(max(array_column($dayData, 'temp'))),
+                    'tempMin' => round(min(array_column($dayData, 'temp'))),
+                    'humidity' => round(array_sum(array_column($dayData, 'humidity')) / count($dayData)),
+                    'windSpeed' => round(array_sum(array_column($dayData, 'windSpeed')) / count($dayData)),
+                    'condition' => $dayData[0]['condition'],
+                    'icon' => $dayData[0]['icon'],
+                    'uvIndex' => round(array_sum(array_column($dayData, 'uvIndex')) / count($dayData)),
+                    'clouds' => round(array_sum(array_column($dayData, 'clouds')) / count($dayData))
+                ];
+            }
+
+            // Limit to 4 days
+            $dailyForecasts = array_slice($dailyForecasts, 0, 4);
+
+            return $this->jsonResponse([
+                'success' => true,
+                'forecast' => $dailyForecasts
+            ]);
+
+        } catch (\Exception $e) {
+            error_log("Weather Arabic Forecast API error: " . $e->getMessage());
+            return $this->jsonResponse([
+                'success' => false,
+                'error' => 'خطأ في توقعات الطقس: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Fetch weather from OpenWeatherMap API with Arabic language
+     */
+    private function fetchWeatherFromOpenWeatherMapArabic($lat, $lon, $apiKey)
+    {
+        try {
+            // Add lang=ar for Arabic language support
+            $weatherUrl = "https://api.openweathermap.org/data/2.5/weather?lat={$lat}&lon={$lon}&units=metric&lang=ar&appid={$apiKey}";
+
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $weatherUrl,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 10,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_SSL_VERIFYPEER => false
+            ]);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode !== 200 || !$response) {
+                error_log("OpenWeatherMap Arabic API error: HTTP {$httpCode}");
+                return null;
+            }
+
+            $data = json_decode($response, true);
+
+            if (!$data || !isset($data['main'])) {
+                error_log("OpenWeatherMap Arabic API: Invalid response structure");
+                return null;
+            }
+
+            // Map location name to Arabic if available
+            $locationName = $data['name'] ?? 'غير معروف';
+
+            // Arabic location names for common Egyptian cities
+            $arabicLocations = [
+                'Kafr el-Sheikh' => 'كفر الشيخ',
+                'Kafr El Sheikh' => 'كفر الشيخ',
+                'Cairo' => 'القاهرة',
+                'Alexandria' => 'الإسكندرية',
+                'Giza' => 'الجيزة',
+                'Tanta' => 'طنطا',
+                'Mansoura' => 'المنصورة',
+                'Damietta' => 'دمياط',
+                'Port Said' => 'بورسعيد',
+                'Suez' => 'السويس',
+                'Ismailia' => 'الإسماعيلية',
+                'Aswan' => 'أسوان',
+                'Luxor' => 'الأقصر',
+                'Assiut' => 'أسيوط',
+                'Fayoum' => 'الفيوم',
+                'Zagazig' => 'الزقازيق',
+                'Shibin El Kom' => 'شبين الكوم',
+                'Banha' => 'بنها',
+                'Damanhur' => 'دمنهور',
+                'Mahalla' => 'المحلة الكبرى'
+            ];
+
+            if (isset($arabicLocations[$locationName])) {
+                $locationName = $arabicLocations[$locationName];
+            }
+
+            $weatherData = [
+                'temperature' => round($data['main']['temp'] ?? 20),
+                'humidity' => $data['main']['humidity'] ?? 50,
+                'condition' => $data['weather'][0]['description'] ?? 'صافي', // Already in Arabic from API
+                'icon' => $data['weather'][0]['icon'] ?? '01d',
+                'windSpeed' => round(($data['wind']['speed'] ?? 0) * 3.6), // Convert m/s to km/h
+                'location' => $locationName,
+                'country' => $data['sys']['country'] ?? '',
+                'uvIndex' => $this->estimateUVIndex($data),
+                'feelsLike' => round($data['main']['feels_like'] ?? $data['main']['temp']),
+                'pressure' => $data['main']['pressure'] ?? 1013,
+                'visibility' => round(($data['visibility'] ?? 10000) / 1000), // Convert to km
+                'clouds' => $data['clouds']['all'] ?? 0,
+                'timestamp' => time()
+            ];
+
+            error_log("OpenWeatherMap Arabic API: Successfully fetched weather data");
+            return $weatherData;
+
+        } catch (\Exception $e) {
+            error_log("OpenWeatherMap Arabic API exception: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Fetch weather from Open-Meteo API (free, no API key)
      */
     private function fetchWeatherFromOpenMeteo($lat, $lon)
