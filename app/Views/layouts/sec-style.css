@@ -34,21 +34,46 @@
 }
 
 body {
-    background: var(--bg);
+    /* Professional gradient background - Light Mode */
+    background: linear-gradient(135deg, 
+        #f0f9ff 0%, 
+        #e0f2fe 20%, 
+        #f8fafc 40%, 
+        #f1f5f9 60%, 
+        #fafafa 80%,
+        #ffffff 100%);
+    background-attachment: fixed;
+    background-size: 100% 100%;
     color: var(--text);
     font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background 0.5s ease, color 0.3s ease;
     direction: rtl;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* Dark mode gradient background */
+.dark body {
+    background: linear-gradient(135deg, 
+        #0f172a 0%, 
+        #1e293b 20%, 
+        #0b1220 40%, 
+        #1a1f2e 60%, 
+        #0f1419 80%,
+        #0a0e17 100%);
+    background-attachment: fixed;
+    background-size: 100% 100%;
 }
         
         /* Prevent flash of wrong theme - default to dark */
         html:not(.theme-loaded) {
-            background: #0b1220;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #0b1220 50%, #1a1f2e 75%, #0f1419 100%);
             color: #f8fafc;
         }
         
         html:not(.theme-loaded) body {
-            background: #0b1220;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #0b1220 50%, #1a1f2e 75%, #0f1419 100%);
+            background-attachment: fixed;
             color: #f8fafc;
         }
         
@@ -59,7 +84,7 @@ body {
     right: 0; /* Changed from left: 0 for RTL */
     height: 100vh;
     width: var(--sidebar-width);
-    /* Glass effect - similar to top-bar */
+    /* Glass effect - same as main.php */
     background: rgba(248, 250, 252, 0.35);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -379,6 +404,31 @@ body {
     padding: 2rem;
     min-height: 100vh;
     transition: margin-right 0.3s ease; /* Changed from margin-left for RTL */
+    position: relative;
+    z-index: 1;
+}
+
+/* Subtle overlay pattern for depth - applied to body */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(14, 165, 233, 0.04) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.04) 0%, transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(187, 54, 204, 0.03) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.dark body::before {
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(74, 222, 128, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(192, 132, 252, 0.04) 0%, transparent 50%);
 }
         
 /* RTL Top Bar */
@@ -3661,3 +3711,75 @@ body {
         .quick-access-dock.autohide .dock-container {
             overflow: visible;
         }
+
+/* Modal Backdrop Styles - Ensure backdrop appears behind modals */
+/* Backdrop should be below sidebar (1000001) but above regular content */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000000 !important; /* Below sidebar (1000001) but above content */
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+.modal-backdrop.show {
+    opacity: 1;
+}
+
+.modal-backdrop.fade {
+    opacity: 0;
+    transition: opacity 0.15s linear;
+}
+
+/* Modals should be above sidebar (1000001) */
+.modal {
+    z-index: 1000002 !important; /* Above sidebar (1000001) */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    outline: 0;
+}
+
+.modal.show {
+    display: block;
+    z-index: 1000002 !important; /* Ensure it stays above sidebar */
+}
+
+.modal.fade {
+    transition: opacity 0.15s linear;
+}
+
+.modal.fade:not(.show) {
+    opacity: 0;
+}
+
+.modal-dialog {
+    position: relative;
+    width: auto;
+    margin: 0.5rem;
+    pointer-events: none;
+    z-index: 1000002 !important; /* Ensure dialog is above backdrop */
+}
+
+.modal.show .modal-dialog {
+    pointer-events: auto;
+}
+
+/* Dark mode modal backdrop */
+.dark .modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Prevent body scroll when modal is open */
+body.modal-open {
+    overflow: hidden;
+    padding-right: 0 !important;
+}

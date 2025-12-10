@@ -821,6 +821,40 @@ function printReceipt(paymentId) {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all modals with proper backdrop configuration
+    const initializeModals = () => {
+        const modalElements = document.querySelectorAll('.modal');
+        modalElements.forEach(modalEl => {
+            // Skip if already initialized
+            if (bootstrap.Modal.getInstance(modalEl)) return;
+            
+            // Get backdrop setting from data attribute or default to true
+            const backdropSetting = modalEl.dataset.bsBackdrop !== undefined 
+                ? (modalEl.dataset.bsBackdrop === 'static' ? 'static' : modalEl.dataset.bsBackdrop === 'false' ? false : true)
+                : true;
+            
+            // Get keyboard setting
+            const keyboardSetting = modalEl.dataset.bsKeyboard !== undefined 
+                ? modalEl.dataset.bsKeyboard !== 'false'
+                : true;
+            
+            // Initialize modal with proper config
+            new bootstrap.Modal(modalEl, {
+                backdrop: backdropSetting,
+                keyboard: keyboardSetting,
+                focus: true
+            });
+        });
+    };
+    
+    // Initialize modals immediately
+    initializeModals();
+    
+    // Re-initialize modals if new ones are added dynamically
+    const observer = new MutationObserver(() => {
+        initializeModals();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
     // Set current date and time as default
     const now = new Date();
     const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);

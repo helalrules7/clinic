@@ -138,7 +138,7 @@
                     <button class="quick-actions-nav nav-right" id="qaNavRight" aria-label="Scroll right">
                         <i class="bi bi-chevron-right"></i>
                     </button>
-                            <div class="quick-actions-grid" id="quickActionsGrid">
+                    <div class="quick-actions-grid" id="quickActionsGrid">
                             <!-- Bookings Card -->
                             <div class="quick-action-card calendar-card">
                                 <div class="qa-background"></div>
@@ -678,6 +678,40 @@
 
 // Hover effect with radial gradient - glowing effect following mouse
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all modals with proper backdrop configuration
+    const initializeModals = () => {
+        const modalElements = document.querySelectorAll('.modal');
+        modalElements.forEach(modalEl => {
+            // Skip if already initialized
+            if (bootstrap.Modal.getInstance(modalEl)) return;
+            
+            // Get backdrop setting from data attribute or default to true
+            const backdropSetting = modalEl.dataset.bsBackdrop !== undefined 
+                ? (modalEl.dataset.bsBackdrop === 'static' ? 'static' : modalEl.dataset.bsBackdrop === 'false' ? false : true)
+                : true;
+            
+            // Get keyboard setting
+            const keyboardSetting = modalEl.dataset.bsKeyboard !== undefined 
+                ? modalEl.dataset.bsKeyboard !== 'false'
+                : true;
+            
+            // Initialize modal with proper config
+            new bootstrap.Modal(modalEl, {
+                backdrop: backdropSetting,
+                keyboard: keyboardSetting,
+                focus: true
+            });
+        });
+    };
+    
+    // Initialize modals immediately
+    initializeModals();
+    
+    // Re-initialize modals if new ones are added dynamically
+    const observer = new MutationObserver(() => {
+        initializeModals();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
     const cards = document.querySelectorAll('.stats-card');
     const wrapper = document.querySelector('.stats-cards-wrapper');
 
@@ -916,5 +950,109 @@ document.addEventListener('DOMContentLoaded', function() {
     .stats-card-header {
         padding: 1.25rem 0.75rem 0.5rem 0.75rem;
     }
+}
+
+
+/* ============================================
+       Action Buttons in Table - Ensure proper borders and styles
+       ============================================ */
+    .btn-group .btn {
+        border: 1px solid var(--border) !important;
+        border-radius: 10px !important;
+        margin: 5px !important;
+        padding: 0.375rem 0.75rem !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    .btn-group .btn-outline-primary {
+        color: white !important;
+        background: var(--accent) !important;
+        border-radius: 10px !important;
+        border: 1px solid var(--accent) !important;
+    }
+    
+    .btn-group .btn-outline-primary:hover {
+        background: var(--accent) !important;
+        color: white !important;
+    }
+
+    .btn-group .btn-outline-warning {
+        color: white !important;
+        background: #ffc107 !important;
+        border: 1px solid #ffc107 !important;
+        border-radius: 10px !important;
+    }
+    
+    .btn-group .btn-outline-warning:hover {
+        background: #ffc107 !important;
+        color: white !important;
+    }
+
+    .btn-group .btn-outline-info {
+        color: white !important;
+        background: #0ea5e9 !important;
+        border: 1px solid #0ea5e9 !important;
+        border-radius: 10px !important;
+    }
+    
+    .btn-group .btn-outline-info:hover {
+        background: #0ea5e9 !important;
+        color: white !important;
+    }
+    
+    .btn-group .btn-outline-success {
+        color: white !important;
+        background: var(--success) !important;
+        border: 1px solid var(--success) !important;
+        border-radius: 10px !important;
+    }
+    
+    .btn-group .btn-outline-success:hover {
+        background: var(--success) !important;
+        color: white !important;
+    }
+    
+    .btn-group .btn-outline-danger {
+        color: white !important;
+        background: var(--danger) !important;
+        border: 1px solid var(--danger) !important;
+        border-radius: 10px !important;
+    }
+    
+    .btn-group .btn-outline-danger:hover {
+        background: var(--danger) !important;
+        color: white !important;
+    }
+
+/* Quick Actions Grid - Center alignment */
+.quick-actions-grid {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 1rem !important;
+    justify-content: center !important;
+    align-items: center !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 0.5rem 0.25rem 1rem 0.25rem !important;
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-snap-type: x mandatory !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+.quick-actions-grid::-webkit-scrollbar {
+    display: none !important;
+}
+
+/* Stats Card Weather - Proper coloring */
+.stats-card-weather .stats-card-content {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%), var(--card) !important;
+    border-color: rgba(14, 165, 233, 0.3) !important;
+}
+
+.dark .stats-card-weather .stats-card-content {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(56, 189, 248, 0.08) 100%), var(--card) !important;
+    border-color: rgba(56, 189, 248, 0.4) !important;
 }
 </style>

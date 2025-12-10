@@ -317,6 +317,42 @@
 </div>
 
 <script>
+// Initialize all modals with proper backdrop configuration
+document.addEventListener('DOMContentLoaded', function() {
+    const initializeModals = () => {
+        const modalElements = document.querySelectorAll('.modal');
+        modalElements.forEach(modalEl => {
+            // Skip if already initialized
+            if (bootstrap.Modal.getInstance(modalEl)) return;
+            
+            // Get backdrop setting from data attribute or default to true
+            const backdropSetting = modalEl.dataset.bsBackdrop !== undefined 
+                ? (modalEl.dataset.bsBackdrop === 'static' ? 'static' : modalEl.dataset.bsBackdrop === 'false' ? false : true)
+                : true;
+            
+            // Get keyboard setting
+            const keyboardSetting = modalEl.dataset.bsKeyboard !== undefined 
+                ? modalEl.dataset.bsKeyboard !== 'false'
+                : true;
+            
+            // Initialize modal with proper config
+            new bootstrap.Modal(modalEl, {
+                backdrop: backdropSetting,
+                keyboard: keyboardSetting,
+                focus: true
+            });
+        });
+    };
+    
+    // Initialize modals immediately
+    initializeModals();
+    
+    // Re-initialize modals if new ones are added dynamically
+    const observer = new MutationObserver(() => {
+        initializeModals();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+});
 document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
     const newPassword = document.getElementById('new_password').value;
     const confirmPassword = document.getElementById('confirm_password').value;

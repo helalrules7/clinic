@@ -140,26 +140,6 @@
                 </div>
             </div>
         </div>
-        
-        <div class="card shadow dashboard-card h-100 mt-3">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary arabic-text">
-                    <i class="bi bi-person-badge me-2"></i>
-                    معلومات الطبيب
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="avatar-sm me-3">
-                        <i class="bi bi-person-badge"></i>
-                    </div>
-                    <div>
-                        <h6 class="mb-0 arabic-text"><?= htmlspecialchars($doctor['name'] ?? 'غير محدد') ?></h6>
-                        <small class="text-muted arabic-text">طبيب</small>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -313,6 +293,43 @@
 <?php endif; ?>
 
 <script>
+// Initialize all modals with proper backdrop configuration
+document.addEventListener('DOMContentLoaded', function() {
+    const initializeModals = () => {
+        const modalElements = document.querySelectorAll('.modal');
+        modalElements.forEach(modalEl => {
+            // Skip if already initialized
+            if (bootstrap.Modal.getInstance(modalEl)) return;
+            
+            // Get backdrop setting from data attribute or default to true
+            const backdropSetting = modalEl.dataset.bsBackdrop !== undefined 
+                ? (modalEl.dataset.bsBackdrop === 'static' ? 'static' : modalEl.dataset.bsBackdrop === 'false' ? false : true)
+                : true;
+            
+            // Get keyboard setting
+            const keyboardSetting = modalEl.dataset.bsKeyboard !== undefined 
+                ? modalEl.dataset.bsKeyboard !== 'false'
+                : true;
+            
+            // Initialize modal with proper config
+            new bootstrap.Modal(modalEl, {
+                backdrop: backdropSetting,
+                keyboard: keyboardSetting,
+                focus: true
+            });
+        });
+    };
+    
+    // Initialize modals immediately
+    initializeModals();
+    
+    // Re-initialize modals if new ones are added dynamically
+    const observer = new MutationObserver(() => {
+        initializeModals();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+});
+
 function viewBooking(bookingId) {
     window.location.href = `/secretary/bookings/${bookingId}`;
 }
