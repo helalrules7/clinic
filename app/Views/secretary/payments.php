@@ -1,3 +1,7 @@
+<link href="/app/Views/secretary/assets/css/details.css?v=<?= file_exists(__DIR__ . '/assets/css/details.css') ? filemtime(__DIR__ . '/assets/css/details.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/../../doctor/assets/css/dashboard.css') ? filemtime(__DIR__ . '/../../doctor/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+
 <!-- Payments Header -->
 <div class="row mb-4">
     <div class="col-md-6">
@@ -70,62 +74,62 @@
 </div>
 
 <!-- Daily Balance Summary -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-success">
+<div class="row mb-4 stats-cards-wrapper">
+    <div class="col-md-3 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-success">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title arabic-text">الرصيد الافتتاحي</h4>
+                        <h3 class="stats-card-value arabic-text" id="openingBalance"><?= number_format($dailyBalance['opening_balance'] ?? 0, 2) ?></h3>
+                    </div>
+                    <div class="stats-card-icon">
                         <i class="bi bi-wallet2"></i>
                     </div>
-                    <div class="stat-content ms-3">
-                        <h3 class="stat-number" id="openingBalance"><?= $dailyBalance['opening_balance'] ?? 0 ?></h3>
-                        <p class="stat-label arabic-text">الرصيد الافتتاحي</p>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-primary">
+    <div class="col-md-3 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-primary">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title arabic-text">إجمالي المستلم</h4>
+                        <h3 class="stats-card-value arabic-text" id="totalReceived"><?= number_format($dailyBalance['total_received'] ?? 0, 2) ?></h3>
+                    </div>
+                    <div class="stats-card-icon">
                         <i class="bi bi-arrow-up-circle"></i>
                     </div>
-                    <div class="stat-content ms-3">
-                        <h3 class="stat-number" id="totalReceived"><?= $dailyBalance['total_received'] ?? 0 ?></h3>
-                        <p class="stat-label arabic-text">إجمالي المستلم</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-danger">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title arabic-text">إجمالي المصروفات</h4>
+                        <h3 class="stats-card-value arabic-text" id="totalExpenses"><?= number_format($dailyBalance['total_expenses'] ?? 0, 2) ?></h3>
+                    </div>
+                    <div class="stats-card-icon">
+                        <i class="bi bi-arrow-down-circle"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-danger">
-                        <i class="bi bi-arrow-up-circle"></i>
+    <div class="col-md-3 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-info">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title arabic-text">الرصيد الحالي</h4>
+                        <h3 class="stats-card-value arabic-text" id="currentBalance"><?= number_format($dailyBalance['current_balance'] ?? 0, 2) ?></h3>
                     </div>
-                    <div class="stat-content ms-3">
-                        <h3 class="stat-number" id="totalExpenses"><?= $dailyBalance['total_expenses'] ?? 0 ?></h3>
-                        <p class="stat-label arabic-text">إجمالي المصروفات</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-info">
+                    <div class="stats-card-icon">
                         <i class="bi bi-calculator"></i>
-                    </div>
-                    <div class="stat-content ms-3">
-                        <h3 class="stat-number" id="currentBalance"><?= $dailyBalance['current_balance'] ?? 0 ?></h3>
-                        <p class="stat-label arabic-text">الرصيد الحالي</p>
                     </div>
                 </div>
             </div>
@@ -136,12 +140,12 @@
 <!-- Payment Types Summary -->
 <div class="row mb-4">
     <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0 arabic-text">
+        <div class="card shadow dashboard-card">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
                     <i class="bi bi-pie-chart me-2"></i>
                     ملخص المدفوعات حسب النوع
-                </h5>
+                </h6>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -196,38 +200,32 @@
 </div>
 
 <!-- Financial Transactions Log -->
-<div class="card mb-4">
-    <div class="card-header">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                <h5 class="mb-0 arabic-text">
-                    <i class="bi bi-journal-text me-2"></i>
-                    سجل المعاملات المالية
-                </h5>
+<div class="card shadow dashboard-card mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary arabic-text">
+            <i class="bi bi-journal-text me-2"></i>
+            سجل المعاملات المالية
+        </h6>
+        <div class="d-flex align-items-center gap-2">
+            <!-- Export to Excel -->
+            <button class="btn btn-success btn-sm" onclick="exportToExcel()" title="تصدير إلى Excel">
+                <i class="bi bi-file-earmark-excel me-1"></i>
+                تصدير Excel
+            </button>
+            <!-- Date Filter -->
+            <div class="d-flex align-items-center">
+                <label for="dateFilter" class="form-label mb-0 me-2 text-muted arabic-text">التاريخ:</label>
+                <input type="date" class="form-control form-control-sm" id="dateFilter" style="width: auto;">
             </div>
-            <div class="col-md-6 text-end">
-                <div class="d-flex align-items-center justify-content-end gap-3">
-                    <!-- Export to Excel -->
-                    <button class="btn btn-success btn-sm" onclick="exportToExcel()" title="تصدير إلى Excel">
-                        <i class="bi bi-file-earmark-excel me-1"></i>
-                        تصدير Excel
-                    </button>
-                    <!-- Date Filter -->
-                    <div class="d-flex align-items-center">
-                        <label for="dateFilter" class="form-label mb-0 me-2 text-muted arabic-text">التاريخ:</label>
-                        <input type="date" class="form-control form-control-sm" id="dateFilter" style="width: auto;">
-                    </div>
-                    <!-- Transaction Type Filter -->
-                    <div class="d-flex align-items-center">
-                        <label for="transactionTypeFilter" class="form-label mb-0 me-2 text-muted arabic-text">النوع:</label>
-                        <select class="form-select form-select-sm" id="transactionTypeFilter" style="width: auto;">
-                            <option value="all" class="arabic-text">الكل</option>
-                            <option value="payment" class="arabic-text">مدفوعات</option>
-                            <option value="expense" class="arabic-text">مصروفات</option>
-                            <option value="balance" class="arabic-text">رصيد</option>
-                        </select>
-                    </div>
-                </div>
+            <!-- Transaction Type Filter -->
+            <div class="d-flex align-items-center">
+                <label for="transactionTypeFilter" class="form-label mb-0 me-2 text-muted arabic-text">النوع:</label>
+                <select class="form-select form-select-sm" id="transactionTypeFilter" style="width: auto;">
+                    <option value="all" class="arabic-text">الكل</option>
+                    <option value="payment" class="arabic-text">مدفوعات</option>
+                    <option value="expense" class="arabic-text">مصروفات</option>
+                    <option value="balance" class="arabic-text">رصيد</option>
+                </select>
             </div>
         </div>
     </div>
@@ -236,12 +234,12 @@
             <table class="table table-hover mb-0">
                 <thead class="table-dark">
                     <tr>
-                        <th class="arabic-text">التاريخ</th>
-                        <th class="arabic-text">النوع</th>
-                        <th class="arabic-text">الوصف</th>
-                        <th class="arabic-text">المبلغ</th>
-                        <th class="arabic-text">الرصيد</th>
-                        <th class="arabic-text">الإجراءات</th>
+                        <th class="arabic-text text-end" dir="rtl">التاريخ</th>
+                        <th class="arabic-text text-end" dir="rtl">النوع</th>
+                        <th class="arabic-text text-end" dir="rtl">الوصف</th>
+                        <th class="arabic-text text-end" dir="rtl">المبلغ</th>
+                        <th class="arabic-text text-end" dir="rtl">الرصيد</th>
+                        <th class="arabic-text text-end" dir="rtl">الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody id="transactionsTableBody">
@@ -265,17 +263,13 @@
 </div>
 
 <!-- Payments Table -->
-<div class="card">
-    <div class="card-header">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                <h5 class="mb-0 arabic-text">
-                    <i class="bi bi-list-ul me-2"></i>
-                    سجلات المدفوعات
-                </h5>
-            </div>
-            <div class="col-md-6 text-end">
-                <div class="d-flex align-items-center justify-content-end gap-3">
+<div class="card shadow dashboard-card">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary arabic-text">
+            <i class="bi bi-list-ul me-2"></i>
+            سجلات المدفوعات
+        </h6>
+        <div class="d-flex align-items-center gap-2">
                     <!-- Quick Search -->
                     <div class="d-flex align-items-center">
                         <div class="input-group input-group-sm" style="width: 200px;">
@@ -313,8 +307,6 @@
                             <option value="Transfer" class="arabic-text">تحويل بنكي</option>
                         </select>
                     </div>
-                </div>
-            </div>
         </div>
     </div>
     <div class="card-body p-0">
@@ -322,13 +314,13 @@
             <table class="table table-hover mb-0">
                 <thead class="table-dark">
                     <tr>
-                        <th class="arabic-text">التاريخ</th>
-                        <th class="arabic-text">المريض</th>
-                        <th class="arabic-text">المبلغ</th>
-                        <th class="arabic-text">النوع</th>
-                        <th class="arabic-text">طريقة الدفع</th>
-                        <th class="arabic-text">الوصف</th>
-                        <th class="arabic-text">الإجراءات</th>
+                        <th class="arabic-text text-end" dir="rtl">التاريخ</th>
+                        <th class="arabic-text text-end" dir="rtl">المريض</th>
+                        <th class="arabic-text text-end" dir="rtl">المبلغ</th>
+                        <th class="arabic-text text-end" dir="rtl">النوع</th>
+                        <th class="arabic-text text-end" dir="rtl">طريقة الدفع</th>
+                        <th class="arabic-text text-end" dir="rtl">الوصف</th>
+                        <th class="arabic-text text-end" dir="rtl">الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody id="paymentsTableBody">
@@ -402,11 +394,92 @@
     </div>
 </div>
 
+<!-- Search Modal -->
+<div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header position-relative">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title arabic-text" id="searchModalLabel">
+                    <i class="bi bi-search me-2"></i>
+                    البحث في المدفوعات
+                </h5>
+                <div class="keyboard-hint">
+                    <span class="arabic-text">اضغط</span>
+                    <kbd>Esc</kbd>
+                    <span class="arabic-text">للإغلاق</span>
+                </div>
+            </div>
+            <div class="modal-body">
+                <!-- Search Input -->
+                <div class="mb-4">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" 
+                               class="form-control form-control-lg" 
+                               id="globalSearchPayments" 
+                               placeholder="ابحث بالاسم أو رقم الهاتف أو رقم الدفعة..."
+                               autocomplete="off">
+                        <button class="btn btn-outline-secondary" type="button" id="clearSearchPayments">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div class="form-text d-flex justify-content-between align-items-center search-help-text">
+                        <span class="search-instruction arabic-text">
+                            <i class="bi bi-info-circle me-1"></i>
+                            ابدأ بالكتابة للبحث تلقائياً
+                        </span>
+                        <small class="search-shortcut">
+                            <kbd>Ctrl</kbd>+<kbd>F</kbd> للتركيز على البحث
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Search Results -->
+                <div id="searchResultsPayments">
+                    <!-- Loading State -->
+                    <div id="searchLoadingPayments" class="text-center py-4" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden arabic-text">جاري البحث...</span>
+                        </div>
+                        <p class="text-muted mt-2 mb-0 arabic-text">جاري البحث في المدفوعات...</p>
+                    </div>
+
+                    <!-- No Results -->
+                    <div id="noResultsPayments" class="text-center py-4" style="display: none;">
+                        <i class="bi bi-credit-card text-muted" style="font-size: 3rem;"></i>
+                        <h6 class="text-muted mt-2 arabic-text">لا توجد نتائج</h6>
+                        <p class="text-muted mb-0 arabic-text">جرب مصطلحات بحث مختلفة</p>
+                    </div>
+
+                    <!-- Results Container -->
+                    <div id="searchResultsListPayments" class="search-results-container">
+                        <!-- Results will be populated here -->
+                    </div>
+
+                    <!-- Initial State -->
+                    <div id="searchInitialPayments" class="text-center py-4">
+                        <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+                        <h6 class="text-muted mt-2 arabic-text">البحث في المدفوعات</h6>
+                        <p class="text-muted mb-0 arabic-text">أدخل الاسم أو رقم الهاتف أو رقم الدفعة للبحث</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary arabic-text" data-bs-dismiss="modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Daily Balance Modal -->
 <div class="modal fade" id="dailyBalanceModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header position-relative">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 <h5 class="modal-title arabic-text">
                     <i class="bi bi-wallet2 me-2"></i>
                     تسجيل الرصيد اليومي
@@ -416,7 +489,6 @@
                     <kbd>Esc</kbd>
                     <span class="arabic-text">للإغلاق</span>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="dailyBalanceForm">
                 <div class="modal-body">
@@ -500,6 +572,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header position-relative">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 <h5 class="modal-title arabic-text">
                     <i class="bi bi-dash-circle me-2"></i>
                     تسجيل مصروف جديد
@@ -509,7 +582,6 @@
                     <kbd>Esc</kbd>
                     <span class="arabic-text">للإغلاق</span>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="expenseForm">
                 <div class="modal-body">
@@ -642,6 +714,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header position-relative">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 <h5 class="modal-title arabic-text">
                     <i class="bi bi-lock me-2"></i>
                     إغلاق اليوم
@@ -651,7 +724,6 @@
                     <kbd>Esc</kbd>
                     <span class="arabic-text">للإغلاق</span>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="dailyClosureForm">
                 <div class="modal-body">
@@ -1064,15 +1136,64 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelector('[data-bs-target="#expenseModal"]').click();
         }
         
+        // Open search modal with 'F' key or Arabic 'ب' key
+        const searchKeys = ['f', 'ب'];
+        const isSearchKey = searchKeys.includes(e.key.toLowerCase()) || searchKeys.includes(e.key);
+        
+        if (isSearchKey && !isInputFocused && !isModalOpen) {
+            e.preventDefault();
+            const searchModalBtn = document.querySelector('[data-bs-target="#searchModal"]');
+            if (searchModalBtn) {
+                searchModalBtn.click();
+            }
+        }
+        
         // Close modals with 'Escape' key
         if (e.key === 'Escape') {
             const openModal = document.querySelector('.modal.show');
             if (openModal) {
                 e.preventDefault();
-                bootstrap.Modal.getInstance(openModal).hide();
+                const modalInstance = bootstrap.Modal.getInstance(openModal);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
             }
         }
     });
+    
+    // Initialize search modal properly
+    const searchModal = document.getElementById('searchModal');
+    if (searchModal) {
+        // Initialize Bootstrap modal with proper config
+        const modalInstance = new bootstrap.Modal(searchModal, {
+            backdrop: true,
+            keyboard: true,
+            focus: true
+        });
+        
+        // Focus on search input when modal is shown
+        searchModal.addEventListener('shown.bs.modal', function() {
+            const searchInput = document.getElementById('globalSearchPayments');
+            if (searchInput) {
+                searchInput.focus();
+            }
+        });
+        
+        // Clear search when modal is hidden
+        searchModal.addEventListener('hidden.bs.modal', function() {
+            const searchInput = document.getElementById('globalSearchPayments');
+            const searchResults = document.getElementById('searchResultsPayments');
+            if (searchInput) {
+                searchInput.value = '';
+            }
+            if (searchResults) {
+                document.getElementById('searchInitialPayments').style.display = 'block';
+                document.getElementById('searchLoadingPayments').style.display = 'none';
+                document.getElementById('noResultsPayments').style.display = 'none';
+                document.getElementById('searchResultsListPayments').innerHTML = '';
+            }
+        });
+    }
     
     // Load financial transactions
     loadFinancialTransactions();
@@ -1996,11 +2117,64 @@ kbd[lang="ar"] {
     font-weight: 600;
 }
 
+/* RTL Modal Header Adjustments */
+.modal-header {
+    direction: rtl;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    padding: 1rem 1.5rem;
+}
+
+.modal-header .btn-close {
+    order: -1;
+    margin-left: 0;
+    margin-right: 0;
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+.modal-header .keyboard-hint {
+    order: -1;
+    position: absolute;
+    left: 10% !important;
+    right: auto !important;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    z-index: 9;
+    white-space: nowrap;
+}
+
+.modal-header .modal-title {
+    order: 0;
+    margin-right: auto;
+    margin-left: 0;
+    flex: 1;
+    text-align: right;
+    padding-right: 0;
+    padding-left: 60px; /* Space for close button */
+}
+
+.modal-header:has(.keyboard-hint) .modal-title {
+    padding-left: 120px; /* Extra space when keyboard-hint exists */
+}
+
 /* Keyboard shortcut hint in modal */
 .keyboard-hint {
     position: absolute;
     top: 10px;
-    right: 15px;
+    left: 15px;
     font-size: 0.75rem;
     color: var(--muted);
     display: flex;
@@ -2741,3 +2915,51 @@ h1, h2, h3, h4, h5, h6 {
 color: var(--text) !important;
 }
 </style>
+
+<script>
+// Hover effect with radial gradient - glowing effect following mouse
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.stats-card');
+    const wrapper = document.querySelector('.stats-cards-wrapper');
+
+    if (wrapper && cards.length > 0) {
+        wrapper.addEventListener('mousemove', function (event) {
+            cards.forEach((card) => {
+                const cardContent = card.querySelector('.stats-card-content');
+                if (!cardContent) return;
+                
+                const rect = cardContent.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+
+                // Get card type and corresponding color
+                let color = 'rgba(59, 248, 251, 0.3)';
+                if (card.classList.contains('stats-card-primary')) {
+                    color = 'rgba(14, 165, 233, 0.4)';
+                } else if (card.classList.contains('stats-card-success')) {
+                    color = 'rgba(16, 185, 129, 0.4)';
+                } else if (card.classList.contains('stats-card-danger')) {
+                    color = 'rgba(239, 68, 68, 0.4)';
+                } else if (card.classList.contains('stats-card-warning')) {
+                    color = 'rgba(245, 158, 11, 0.4)';
+                } else if (card.classList.contains('stats-card-info')) {
+                    color = 'rgba(187, 54, 204, 0.4)';
+                }
+
+                // Apply gradient to card-content, overlay on top of background-color
+                cardContent.style.background = `radial-gradient(960px circle at ${x}px ${y}px, ${color}, transparent 15%), var(--card)`;
+            });
+        });
+        
+        // Reset background when mouse leaves wrapper
+        wrapper.addEventListener('mouseleave', function() {
+            cards.forEach((card) => {
+                const cardContent = card.querySelector('.stats-card-content');
+                if (cardContent) {
+                    cardContent.style.background = '';
+                }
+            });
+        });
+    }
+});
+</script>

@@ -2292,90 +2292,98 @@ kbd[lang="ar"] {
     }
     
     #patientsTableBody .btn-group .btn-outline-primary {
-        border-color: var(--accent) !important;
         color: var(--accent) !important;
-        background-color: transparent !important;
+        background: var(--accent) !important;
+        border-radius: 10px !important;
+        border: 1px solid var(--accent) !important;
     }
     
     #patientsTableBody .btn-group .btn-outline-primary:hover {
-        background-color: var(--accent) !important;
+        background: var(--accent) !important;
         color: white !important;
-        border-color: var(--accent) !important;
     }
     
     #patientsTableBody .btn-group .btn-outline-info {
-        border-color: #0ea5e9 !important;
-        color: #0ea5e9 !important;
-        background-color: transparent !important;
+        color: white !important;
+        background: #0ea5e9 !important;
+        border: 1px solid #0ea5e9 !important;
+        border-radius: 10px !important;
     }
     
     #patientsTableBody .btn-group .btn-outline-info:hover {
-        background-color: #0ea5e9 !important;
+        background: #0ea5e9 !important;
         color: white !important;
-        border-color: #0ea5e9 !important;
     }
     
     #patientsTableBody .btn-group .btn-outline-success {
-        border-color: var(--success) !important;
         color: var(--success) !important;
-        background-color: transparent !important;
+        background: var(--success) !important;
+        border: 1px solid var(--success) !important;
+        border-radius: 10px !important;
     }
     
     #patientsTableBody .btn-group .btn-outline-success:hover {
-        background-color: var(--success) !important;
+        background: var(--success) !important;
         color: white !important;
-        border-color: var(--success) !important;
     }
     
     #patientsTableBody .btn-group .btn-outline-danger {
-        border-color: var(--danger) !important;
         color: var(--danger) !important;
-        background-color: transparent !important;
+        background: var(--danger) !important;
+        border: 1px solid var(--danger) !important;
+        border-radius: 10px !important;
     }
     
     #patientsTableBody .btn-group .btn-outline-danger:hover {
-        background-color: var(--danger) !important;
+        background: var(--danger) !important;
         color: white !important;
-        border-color: var(--danger) !important;
     }
     
     .dark #patientsTableBody .btn-group .btn-outline-primary {
-        border-color: var(--accent) !important;
+        background: var(--accent) !important;
+        border: 1px solid var(--accent) !important;
+        border-radius: 10px !important;
         color: var(--accent) !important;
     }
     
     .dark #patientsTableBody .btn-group .btn-outline-primary:hover {
-        background-color: var(--accent) !important;
+        background: var(--accent) !important;
         color: white !important;
     }
     
     .dark #patientsTableBody .btn-group .btn-outline-info {
-        border-color: #0ea5e9 !important;
+        background: #0ea5e9 !important;
+        border: 1px solid #0ea5e9 !important;
+        border-radius: 10px !important;
         color: #0ea5e9 !important;
     }
     
     .dark #patientsTableBody .btn-group .btn-outline-info:hover {
-        background-color: #0ea5e9 !important;
+        background: #0ea5e9 !important;
         color: white !important;
     }
     
     .dark #patientsTableBody .btn-group .btn-outline-success {
-        border-color: var(--success) !important;
+        background: var(--success) !important;
+        border: 1px solid var(--success) !important;
+        border-radius: 10px !important;
         color: var(--success) !important;
     }
     
     .dark #patientsTableBody .btn-group .btn-outline-success:hover {
-        background-color: var(--success) !important;
+        background: var(--success) !important;
         color: white !important;
     }
     
     .dark #patientsTableBody .btn-group .btn-outline-danger {
-        border-color: var(--danger) !important;
+        background: var(--danger) !important;
+        border: 1px solid var(--danger) !important;
+        border-radius: 10px !important;
         color: var(--danger) !important;
     }
     
     .dark #patientsTableBody .btn-group .btn-outline-danger:hover {
-        background-color: var(--danger) !important;
+        background: var(--danger) !important;
         color: white !important;
     }
 

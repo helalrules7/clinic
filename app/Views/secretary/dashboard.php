@@ -1,81 +1,115 @@
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center">
-            <h4 class="mb-0 arabic-text">نظرة عامة على اليوم</h4>
-            <div class="d-flex gap-2">
-                <a href="/secretary/bookings" class="btn btn-primary">
-                    <i class="bi bi-calendar-plus me-2"></i>
-                    حجز جديد
-                </a>
-                <a href="/secretary/patients/new" class="btn btn-success">
-                    <i class="bi bi-person-plus me-2"></i>
-                    مريض جديد
-                </a>
+<link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+
+<div class="row stats-cards-wrapper">
+    <!-- Statistics Cards -->
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-primary">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title arabic-text">إجمالي المواعيد</h4>
+                        <h3 class="stats-card-value arabic-text"><?= $stats['total_appointments'] ?? 0 ?></h3>
+                    </div>
+                    <div class="stats-card-icon">
+                        <i class="bi bi-calendar3"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Statistics Cards -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-primary">
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-danger">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title arabic-text arabic-font">في الإنتظار</h4>
+                        <h3 class="stats-card-value arabic-text arabic-font"><?= $stats['booked'] ?? 0 ?></h3>
+                    </div>
+                    <div class="stats-card-icon">
+                        <i class="bi bi-calendar2-range"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-success">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title arabic-text">تم الحضور</h4>
+                        <h3 class="stats-card-value arabic-text arabic-font font"><?= $stats['checked_in'] ?? 0 ?></h3>
+                    </div>
+                    <div class="stats-card-icon">
                         <i class="bi bi-calendar-check"></i>
                     </div>
-                    <div class="stat-content ms-3">
-                        <h3 class="stat-number"><?= $stats['total_appointments'] ?? 0 ?></h3>
-                        <p class="stat-label arabic-text">إجمالي المواعيد</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-danger">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title arabic-text arabic-font">مواعيد مكتملة</h4>
+                        <h3 class="stats-card-value arabic-text arabic-font"><?= $stats['completed'] ?? 0 ?></h3>
+                    </div>
+                    <div class="stats-card-icon">
+                        <i class="bi bi-calendar-heart"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-info">
-                        <i class="bi bi-person-check"></i>
+
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-danger">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title arabic-text arabic-font">لم يحضر</h4>
+                        <h3 class="stats-card-value arabic-text arabic-font"><?= $stats['missed'] ?? 0 ?></h3>
                     </div>
-                    <div class="stat-content ms-3">
-                        <h3 class="stat-number"><?= $stats['checked_in'] ?? 0 ?></h3>
-                        <p class="stat-label arabic-text">تم الحضور</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-success">
-                        <i class="bi bi-check-circle"></i>
-                    </div>
-                    <div class="stat-content ms-3">
-                        <h3 class="stat-number"><?= $stats['completed'] ?? 0 ?></h3>
-                        <p class="stat-label arabic-text">مكتملة</p>
+                    <div class="stats-card-icon">
+                        <i class="bi bi-calendar-x"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-warning">
-                        <i class="bi bi-clock"></i>
-                    </div>
-                    <div class="stat-content ms-3">
-                        <h3 class="stat-number"><?= $stats['booked'] ?? 0 ?></h3>
-                        <p class="stat-label arabic-text">في الانتظار</p>
+
+    <!-- Weather & Allergy Index Card -->
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-weather">
+                <div class="stats-card-content">
+                    <div class="weather-card-inner">
+                        <!-- Weather Section -->
+                        <div class="weather-main">
+                            <button class="weather-forecast-btn" id="weatherForecastBtn" title="5-Day Forecast">
+                                <i class="bi bi-calendar3"></i>
+                            </button>
+                            <div class="weather-icon-container" id="weatherIconContainer">
+                                <div class="weather-icon-loading">
+                                    <div class="spinner-border spinner-border-sm text-light" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="weather-info">
+                                <div class="weather-temp" id="weatherTemp">--°C</div>
+                                <div class="weather-desc" id="weatherDesc">Loading...</div>
+                                <div class="weather-location" id="weatherLocation">
+                                    <i class="bi bi-geo-alt-fill"></i>
+                                    <span>جاري تحديد الموقع...</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -83,16 +117,124 @@
     </div>
 </div>
 
-<div class="row">
+
+
+<!-- Quick Actions - New iOS-style Cards -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow dashboard-card">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
+                    <i class="bi bi-lightning-charge me-2"></i>
+                    الإجراءات السريعة
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="quick-actions-wrapper" id="quickActionsWrapper">
+                    <!-- Navigation Arrows -->
+                    <button class="quick-actions-nav nav-left hidden" id="qaNavLeft" aria-label="Scroll left">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <button class="quick-actions-nav nav-right" id="qaNavRight" aria-label="Scroll right">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                            <div class="quick-actions-grid" id="quickActionsGrid">
+                            <!-- Bookings Card -->
+                            <div class="quick-action-card calendar-card">
+                                <div class="qa-background"></div>
+                                <div class="qa-logo">
+                                    <i class="bi bi-calendar-check"></i>
+                                    <span class="qa-logo-name">الحجوزات</span>
+                                </div>
+                                <div class="qa-box qa-box1" onclick="window.location.href='/secretary/bookings'">
+                                    <span class="qa-icon">
+                                        <i class="bi bi-calendar3"></i>
+                                    </span>
+                                    <span class="qa-label">عرض</span>
+                                </div>
+                                <div class="qa-box qa-box2" onclick="window.location.href='/secretary/bookings'">
+                                    <span class="qa-icon">
+                                        <i class="bi bi-calendar-plus-fill"></i>
+                                    </span>
+                                    <span class="qa-label">حجز</span>
+                                </div>
+                            </div>
+
+                            <!-- Patients Card -->
+                            <div class="quick-action-card patients-card">
+                                <div class="qa-background"></div>
+                                <div class="qa-logo">
+                                    <i class="bi bi-people-fill"></i>
+                                    <span class="qa-logo-name">المرضى</span>
+                                </div>
+                                <div class="qa-box qa-box1" onclick="window.location.href='/secretary/patients'">
+                                    <span class="qa-icon">
+                                        <i class="bi bi-person-lines-fill"></i>
+                                    </span>
+                                    <span class="qa-label">عرض</span>
+                                </div>
+                                <div class="qa-box qa-box2" onclick="window.location.href='/secretary/patients/new'">
+                                    <span class="qa-icon">
+                                        <i class="bi bi-person-plus-fill"></i>
+                                    </span>
+                                    <span class="qa-label">إضافة</span>
+                                </div>
+                            </div>
+
+                            <!-- Payments Card -->
+                            <div class="quick-action-card financial-card">
+                                <div class="qa-background"></div>
+                                <div class="qa-logo">
+                                    <i class="bi bi-credit-card"></i>
+                                    <span class="qa-logo-name">المدفوعات</span>
+                                </div>
+                                <div class="qa-box qa-box1" onclick="window.location.href='/secretary/payments'">
+                                    <span class="qa-icon">
+                                        <i class="bi bi-wallet2"></i>
+                                    </span>
+                                    <span class="qa-label">عرض</span>
+                                </div>
+                                <div class="qa-box qa-box2" onclick="window.location.href='/secretary/payments'">
+                                    <span class="qa-icon">
+                                        <i class="bi bi-plus-circle-fill"></i>
+                                    </span>
+                                    <span class="qa-label">إضافة</span>
+                                </div>
+                            </div>
+
+                            <!-- Profile Card (View only) -->
+                            <div class="quick-action-card profile-card single-action-card">
+                                <div class="qa-background"></div>
+                                <div class="qa-logo">
+                                    <i class="bi bi-person-circle"></i>
+                                    <span class="qa-logo-name">الملف الشخصي</span>
+                                </div>
+                                <div class="qa-box qa-box1" onclick="window.location.href='/secretary/profile'">
+                                    <span class="qa-icon">
+                                        <i class="bi bi-person-vcard"></i>
+                                    </span>
+                                    <span class="qa-label">عرض</span>
+                                </div>    
+                            </div>
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </div>  
+</div>
+
+<div class="row mb-4">
     <!-- Today's Appointments -->
     <div class="col-md-8">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 arabic-text">
-                    <i class="bi bi-calendar-day me-2"></i>
+        <div class="card shadow dashboard-card">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
+                    <i class="bi bi-calendar-event me-2">&nbsp;</i>
                     مواعيد اليوم
-                </h5>
-                <a href="/secretary/bookings" class="btn btn-sm btn-outline-primary arabic-text">عرض الكل</a>
+                </h6>
+                <a href="/secretary/bookings" class="btn btn-sm btn-primary arabic-text">
+                    <i class="bi bi-calendar-event me-1">&nbsp;</i>عرض الكل
+                </a>
             </div>
             <div class="card-body p-0">
                 <?php if (empty($todayAppointments)): ?>
@@ -173,13 +315,15 @@
     
     <!-- Recent Payments -->
     <div class="col-md-4">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 arabic-text">
-                    <i class="bi bi-credit-card me-2"></i>
+        <div class="card shadow dashboard-card h-100">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
+                    <i class="bi bi-credit-card me-2">&nbsp;</i>
                     المدفوعات الأخيرة
-                </h5>
-                <a href="/secretary/payments" class="btn btn-sm btn-outline-primary arabic-text">عرض الكل</a>
+                </h6>
+                <a href="/secretary/payments" class="btn btn-sm btn-primary arabic-text">
+                    <i class="bi bi-credit-card me-1">&nbsp;</i>عرض الكل
+                </a>
             </div>
             <div class="card-body p-0">
                 <?php if (empty($recentPayments)): ?>
@@ -208,1298 +352,569 @@
     </div>
 </div>
 
-<!-- Quick Actions -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0 arabic-text">
-                    <i class="bi bi-lightning me-2"></i>
-                    الإجراءات السريعة
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3 mb-3">
-                        <a href="/secretary/bookings" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
-                            <i class="bi bi-calendar-plus display-6 mb-3"></i>
-                            <span class="fw-semibold arabic-text">حجز جديد</span>
-                            <small class="text-muted arabic-text">جدولة موعد</small>
-                        </a>
-                    </div>
-                    
-                    <div class="col-md-3 mb-3">
-                        <a href="/secretary/patients/new" class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
-                            <i class="bi bi-person-plus display-6 mb-3"></i>
-                            <span class="fw-semibold arabic-text">مريض جديد</span>
-                            <small class="text-muted arabic-text">تسجيل مريض</small>
-                        </a>
-                    </div>
-                    
-                    <div class="col-md-3 mb-3">
-                        <a href="/secretary/payments" class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
-                            <i class="bi bi-credit-card display-6 mb-3"></i>
-                            <span class="fw-semibold arabic-text">تسجيل دفعة</span>
-                            <small class="text-muted arabic-text">معالجة دفعة</small>
-                        </a>
-                    </div>
-                    
-                    <div class="col-md-3 mb-3">
-                        <a href="/secretary/patients" class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
-                            <i class="bi bi-search display-6 mb-3"></i>
-                            <span class="fw-semibold arabic-text">البحث عن مريض</span>
-                            <small class="text-muted arabic-text">البحث في السجلات</small>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+
+
+<script src="/app/Views/secretary/assets/js/dashboard.js?v=<?= file_exists(__DIR__ . '/assets/js/dashboard.js') ? filemtime(__DIR__ . '/assets/js/dashboard.js') : time() ?>"></script>
 
 <script>
-function viewAppointment(appointmentId) {
-    // Redirect to appointment details or open modal
-    window.location.href = `/secretary/appointments/${appointmentId}`;
-}
+// Dashboard auto-refresh using API polling
+(function() {
+    let refreshInterval = null;
+    const REFRESH_INTERVAL = 30000; // 30 seconds
+    let isRefreshing = false;
 
-function checkInPatient(appointmentId) {
-    if (confirm('تأكيد حضور المريض؟')) {
-        // Update appointment status via API
-        fetch(`/api/appointments/${appointmentId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                status: 'CheckedIn'
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.ok) {
-                location.reload();
-            } else {
-                alert('خطأ: ' + data.error);
+    /**
+     * Update statistics cards
+     */
+    function updateStatsCards(stats) {
+        // Update total appointments
+        const totalEl = document.querySelector('.stats-card-primary .stats-card-value');
+        if (totalEl) {
+            totalEl.textContent = stats.total_appointments || 0;
+        }
+
+        // Update booked
+        const bookedEl = document.querySelector('.stats-card-danger .stats-card-value');
+        if (bookedEl && bookedEl.textContent.includes('في الإنتظار') || bookedEl?.closest('.stats-card-danger')) {
+            const bookedCard = Array.from(document.querySelectorAll('.stats-card-danger')).find(card => 
+                card.querySelector('.stats-card-title')?.textContent.includes('في الإنتظار')
+            );
+            if (bookedCard) {
+                const valueEl = bookedCard.querySelector('.stats-card-value');
+                if (valueEl) valueEl.textContent = stats.booked || 0;
             }
-        })
-        .catch(error => {
+        }
+
+        // Update checked in
+        const checkedInEl = document.querySelector('.stats-card-success .stats-card-value');
+        if (checkedInEl) {
+            checkedInEl.textContent = stats.checked_in || 0;
+        }
+
+        // Update completed
+        const completedCards = Array.from(document.querySelectorAll('.stats-card-danger'));
+        const completedCard = completedCards.find(card => 
+            card.querySelector('.stats-card-title')?.textContent.includes('مواعيد مكتملة')
+        );
+        if (completedCard) {
+            const valueEl = completedCard.querySelector('.stats-card-value');
+            if (valueEl) valueEl.textContent = stats.completed || 0;
+        }
+
+        // Update missed
+        const missedCard = completedCards.find(card => 
+            card.querySelector('.stats-card-title')?.textContent.includes('لم يحضر')
+        );
+        if (missedCard) {
+            const valueEl = missedCard.querySelector('.stats-card-value');
+            if (valueEl) valueEl.textContent = stats.missed || 0;
+        }
+    }
+
+    /**
+     * Update today's appointments table
+     */
+    function updateAppointmentsTable(appointments) {
+        const container = document.querySelector('#todayAppointmentsContainer') || 
+                         document.querySelector('.table-responsive tbody');
+        
+        if (!container) return;
+
+        if (appointments.length === 0) {
+            const table = container.closest('.table-responsive');
+            if (table) {
+                table.outerHTML = `
+                    <div class="text-center py-4">
+                        <i class="bi bi-calendar-x display-4 text-muted"></i>
+                        <p class="text-muted mt-2 arabic-text">لا توجد مواعيد مجدولة لهذا اليوم</p>
+                        <a href="/secretary/bookings" class="btn btn-primary arabic-text">حجز أول موعد</a>
+                    </div>
+                `;
+            }
+            return;
+        }
+
+        // If container is tbody, update it
+        if (container.tagName === 'TBODY') {
+            container.innerHTML = appointments.map(apt => `
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-clock me-2 text-primary"></i>
+                            ${new Date('2000-01-01 ' + apt.start_time).toLocaleTimeString('ar-EG', {hour: '2-digit', minute: '2-digit'})}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm me-2">
+                                <i class="bi bi-person-circle"></i>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">${apt.first_name} ${apt.last_name}</div>
+                                <small class="text-muted">${apt.phone || ''}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-info">${apt.doctor_name || ''}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-secondary">${apt.visit_type || ''}</span>
+                    </td>
+                    <td>
+                        <span class="badge ${getStatusBadgeClass(apt.status)}">${apt.status || ''}</span>
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-outline-primary btn-sm" 
+                                    onclick="viewAppointment(${apt.id})">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            ${apt.status === 'Booked' ? `
+                                <button type="button" class="btn btn-outline-success btn-sm"
+                                        onclick="checkInPatient(${apt.id})">
+                                    <i class="bi bi-check-circle"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+    }
+
+    /**
+     * Update recent payments list
+     */
+    function updateRecentPayments(payments) {
+        const container = document.querySelector('.list-group-flush');
+        if (!container) return;
+
+        if (payments.length === 0) {
+            container.outerHTML = `
+                <div class="text-center py-4">
+                    <i class="bi bi-credit-card text-muted"></i>
+                    <p class="text-muted mt-2 arabic-text">لا توجد مدفوعات حديثة</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = payments.map(payment => `
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fw-semibold">${payment.first_name} ${payment.last_name}</div>
+                    <small class="text-muted">${payment.type || ''}</small>
+                </div>
+                <div class="text-end">
+                    <div class="fw-bold text-success">${formatMoney(payment.amount)}</div>
+                    <small class="text-muted">${formatTime(payment.created_at)}</small>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    /**
+     * Helper function to get status badge class
+     */
+    function getStatusBadgeClass(status) {
+        const classes = {
+            'Booked': 'bg-warning',
+            'CheckedIn': 'bg-info',
+            'Completed': 'bg-success',
+            'Cancelled': 'bg-secondary',
+            'Missed': 'bg-danger'
+        };
+        return classes[status] || 'bg-secondary';
+    }
+
+    /**
+     * Format money
+     */
+    function formatMoney(amount) {
+        return new Intl.NumberFormat('ar-EG', {
+            style: 'currency',
+            currency: 'EGP',
+            minimumFractionDigits: 0
+        }).format(amount);
+    }
+
+    /**
+     * Format time
+     */
+    function formatTime(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleTimeString('ar-EG', {hour: '2-digit', minute: '2-digit'});
+    }
+
+    /**
+     * Refresh dashboard data from API
+     */
+    async function refreshDashboard() {
+        if (isRefreshing) return;
+        
+        isRefreshing = true;
+        
+        try {
+            const response = await fetch('/api/secretary/dashboard', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const result = await response.json();
+            
+            if (result.ok && result.data) {
+                // Update stats cards
+                if (result.data.stats) {
+                    updateStatsCards(result.data.stats);
+                }
+                
+                // Update appointments table
+                if (result.data.todayAppointments) {
+                    updateAppointmentsTable(result.data.todayAppointments);
+                }
+                
+                // Update recent payments
+                if (result.data.recentPayments) {
+                    updateRecentPayments(result.data.recentPayments);
+                }
+            }
+        } catch (error) {
+            console.error('Error refreshing dashboard:', error);
+            // Silently fail - don't show error to user
+        } finally {
+            isRefreshing = false;
+        }
+    }
+
+    /**
+     * Start auto-refresh
+     */
+    function startAutoRefresh() {
+        // Refresh immediately on page load
+        refreshDashboard();
+        
+        // Then refresh every 30 seconds
+        refreshInterval = setInterval(refreshDashboard, REFRESH_INTERVAL);
+    }
+
+    /**
+     * Stop auto-refresh
+     */
+    function stopAutoRefresh() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+            refreshInterval = null;
+        }
+    }
+
+    /**
+     * View appointment function
+     */
+    window.viewAppointment = function(appointmentId) {
+        window.location.href = `/secretary/bookings/${appointmentId}`;
+    };
+
+    /**
+     * Check in patient function
+     */
+    window.checkInPatient = async function(appointmentId) {
+        if (!confirm('تأكيد حضور المريض؟')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/appointments/${appointmentId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    status: 'CheckedIn'
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.ok) {
+                // Refresh dashboard instead of reloading page
+                await refreshDashboard();
+            } else {
+                alert('خطأ: ' + (data.error || 'فشل في تحديث حالة الموعد'));
+            }
+        } catch (error) {
             console.error('Error:', error);
             alert('خطأ في تحديث حالة الموعد');
+        }
+    };
+
+    // Start auto-refresh when page loads
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startAutoRefresh);
+    } else {
+        startAutoRefresh();
+    }
+
+    // Stop auto-refresh when page is hidden (tab switch)
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            stopAutoRefresh();
+        } else {
+            startAutoRefresh();
+        }
+    });
+
+    // Clean up on page unload
+    window.addEventListener('beforeunload', stopAutoRefresh);
+})();
+
+// Hover effect with radial gradient - glowing effect following mouse
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.stats-card');
+    const wrapper = document.querySelector('.stats-cards-wrapper');
+
+    if (wrapper && cards.length > 0) {
+        wrapper.addEventListener('mousemove', function (event) {
+            cards.forEach((card) => {
+                const cardContent = card.querySelector('.stats-card-content');
+                if (!cardContent) return;
+                
+                const rect = cardContent.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+
+                // Get card type and corresponding color
+                let color = 'rgba(59, 248, 251, 0.3)';
+                if (card.classList.contains('stats-card-primary')) {
+                    color = 'rgba(14, 165, 233, 0.4)';
+                } else if (card.classList.contains('stats-card-success')) {
+                    color = 'rgba(16, 185, 129, 0.4)';
+                } else if (card.classList.contains('stats-card-danger')) {
+                    color = 'rgba(239, 68, 68, 0.4)';
+                } else if (card.classList.contains('stats-card-warning')) {
+                    color = 'rgba(245, 158, 11, 0.4)';
+                } else if (card.classList.contains('stats-card-info')) {
+                    color = 'rgba(187, 54, 204, 0.4)';
+                }
+
+                // Apply gradient to card-content, overlay on top of background-color
+                // Use multiple backgrounds: gradient on top, solid color below
+                cardContent.style.background = `radial-gradient(960px circle at ${x}px ${y}px, ${color}, transparent 15%), var(--card)`;
+            });
+        });
+        
+        // Reset background when mouse leaves wrapper
+        wrapper.addEventListener('mouseleave', function() {
+            cards.forEach((card) => {
+                const cardContent = card.querySelector('.stats-card-content');
+                if (cardContent) {
+                    cardContent.style.background = '';
+                }
+            });
         });
     }
-}
-
-// Auto-refresh dashboard every 30 seconds
-setInterval(() => {
-    location.reload();
-}, 30000);
+});
 </script>
 
 <style>
     
-.stat-card {
-    border: none;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+/* Stats Cards - Center Content and Background Colors */
+.stats-cards-wrapper {
+    margin: 0 -0.5rem;
 }
 
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.5rem;
-}
-
-.stat-number {
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0;
-    color: var(--text);
-}
-
-.stat-label {
-    margin: 0;
-    color: var(--muted);
-    font-size: 0.875rem;
-}
-
-.avatar-sm {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: var(--bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--muted);
-}
-
-.table th {
-    border-top: none;
-    font-weight: 600;
-    color: var(--text);
-    background: var(--bg);
-}
-
-.table td {
-    vertical-align: middle;
-    border-top: 1px solid var(--border);
-}
-
-.list-group-item {
-    border: none;
-    border-bottom: 1px solid var(--border);
-    background: transparent;
-}
-
-.list-group-item:last-child {
-    border-bottom: none;
-}
-
-.btn-group .btn {
-    border-radius: 6px;
-}
-
-.btn-group .btn:not(:last-child) {
-    border-right: 1px solid var(--border);
-}
-
-.quick-action-btn {
-    transition: all 0.2s ease;
-}
-
-.quick-action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-@media (max-width: 768px) {
-    .stat-card {
-        margin-bottom: 1rem;
-    }
-    
-    .table-responsive {
-        font-size: 0.875rem;
-    }
-    
-    .btn-group .btn {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.75rem;
-    }
-}
-:root {
-    --bg: #f8fafc;
-    --text: #0f172a;
-    --card: #ffffff;
-    --muted: #475569;
-    --accent: #0ea5e9;
-    --success: #10b981;
-    --danger: #ef4444;
-    --border: #e2e8f0;
-    --sidebar-width: 280px;
-}
-
-.dark {
-    --bg: #0b1220;
-    --text: #f8fafc;
-    --card: #1e293b;
-    --muted: #cbd5e1;
-    --accent: #38bdf8;
-    --success: #4ade80;
-    --danger: #fb7185;
-    --border: #334155;
-}
-/* Statistics Cards Styling */
-.stat-card {
-    border: none;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.5rem;
-}
-
-.stat-number {
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0;
-    color: var(--text);
-}
-
-.stat-label {
-    margin: 0;
-    color: var(--muted);
-    font-size: 0.875rem;
-}
-
-.stat-content {
-    flex: 1;
-}
-
-.avatar-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-}
-
-/* Gender-based avatar colors */
-.avatar-male {
-    background: #3498db; /* Sky blue for males */
-    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
-}
-
-.avatar-female {
-    background:rgb(255, 85, 224); /* Pink for females */
-    box-shadow: 0 2px 8px rgba(233, 30, 99, 0.3);
-}
-
-/* Hover effects */
-.avatar-male:hover {
-    background: #2980b9;
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
-}
-
-.avatar-female:hover {
-    background:rgb(255, 85, 224); /* Pink for females */
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.4);
-}
-
-/* Default fallback for unknown gender */
-.avatar-circle:not(.avatar-male):not(.avatar-female) {
-    background: var(--accent);
-    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
-}
-
-.card {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.card:hover {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transform: translateY(-1px);
-    transition: all 0.2s ease;
-}
-
-.card-header {
-    background-color: var(--bg-alt);
-    border-bottom-color: var(--border);
-    color: var(--text);
-}
-
-.table {
-    background-color: var(--bg-dark);
-    color: var(--text);
-}
-
-.table thead th {
-    background-color: var(--bg-dark) !important;
-    border-color: var(--border) !important;
-    color: var(--text) !important;
-}
-
-.table-dark th {
-    background-color: var(--bg-dark) !important;
-    border-color: var(--border) !important;
-    color: var(--text) !important;
-}
-
-.table tbody tr {
-    background-color: var(--bg-dark);
-    border-color: var(--border);
-}
-
-.table tbody tr:hover {
-    background-color: var(--bg-alt);
-}
-
-.table td {
-    background-color: var(--bg-dark);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.btn-group .btn {
-    margin: 0 1px;
-}
-
-/* Search Modal Styles */
-.modal-content {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.modal-header {
-    background-color: var(--bg-alt);
-    border-bottom-color: var(--border);
-    color: var(--text);
-}
-
-.modal-footer {
-    background-color: var(--bg-alt);
-    border-top-color: var(--border);
-}
-
-.form-control {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.form-control:focus {
-    background-color: var(--bg);
-    border-color: var(--accent);
-    color: var(--text);
-    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
-}
-
-.input-group-text {
-    background-color: var(--bg-alt);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.search-results-container {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.search-result-item {
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 10px;
-    background: var(--bg);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.search-result-item:hover {
-    border-color: var(--accent);
-    background: var(--bg-alt);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.search-result-item:last-child {
-    margin-bottom: 0;
-}
-
-.search-result-avatar {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 1.1rem;
-    transition: all 0.3s ease;
-}
-
-/* Apply gender colors to search result avatars */
-.search-result-avatar.avatar-male {
-    background: #3498db;
-    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
-}
-
-.search-result-avatar.avatar-female {
-    background: #e91e63;
-    box-shadow: 0 2px 8px rgba(233, 30, 99, 0.3);
-}
-
-.search-result-avatar:not(.avatar-male):not(.avatar-female) {
-    background: var(--accent);
-    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
-}
-
-.search-result-info h6 {
-    margin-bottom: 5px;
-    color: var(--text);
-}
-
-.search-result-info .text-muted {
-    font-size: 0.9rem;
-    color: var(--muted) !important;
-}
-
-.search-result-actions .btn {
-    padding: 5px 10px;
-    font-size: 0.85rem;
-}
-
-.search-highlight {
-    background-color: rgba(255, 193, 7, 0.3);
-    padding: 1px 3px;
-    border-radius: 3px;
-    font-weight: 600;
-}
-
-#globalSearch:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
-}
-
-/* Button styling for dark mode */
-.btn-outline-primary {
-    color: var(--accent);
-    border-color: var(--accent);
-}
-
-.btn-outline-primary:hover {
-    background-color: var(--accent);
-    border-color: var(--accent);
-    color: white;
-}
-
-.btn-outline-success {
-    color: #28a745;
-    border-color: #28a745;
-}
-
-.btn-outline-success:hover {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: white;
-}
-
-.btn-outline-secondary {
-    color: var(--muted);
-    border-color: var(--border);
-}
-
-.btn-outline-secondary:hover {
-    background-color: var(--bg-alt);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.btn-secondary {
-    background-color: var(--bg-alt);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-.btn-secondary:hover {
-    background-color: var(--border);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-/* Keyboard shortcut styling */
-kbd {
-    background-color: var(--bg-alt);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-size: 0.75rem;
-    font-family: 'Courier New', 'Cairo', monospace;
-    color: var(--text);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    min-width: 20px;
-    text-align: center;
-    display: inline-block;
-}
-
-.btn-primary kbd {
-    background-color: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.25);
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.btn-success kbd {
-    background-color: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.25);
-    color: rgba(255, 255, 255, 0.9);
-}
-
-/* Arabic keyboard shortcut styling */
-kbd[lang="ar"] {
-    font-family: 'Cairo', 'Courier New', monospace;
-    font-weight: 600;
-}
-
-/* Keyboard shortcut hint in modal */
-.keyboard-hint {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 0.75rem;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.keyboard-hint kbd {
-    background-color: var(--bg-alt);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-size: 0.65rem;
-    padding: 1px 4px;
-}
-
-/* Badge styling for dark mode */
-.badge.bg-primary {
-    background-color: var(--accent) !important;
-    color: white;
-}
-
-.badge.bg-success {
-    background-color: #28a745 !important;
-    color: white;
-}
-
-.badge.bg-secondary {
-    background-color: var(--muted) !important;
-    color: white;
-}
-
-/* Text muted styling */
-.text-muted {
-    color: var(--muted) !important;
-}
-
-/* Add Patient Modal Styling */
-#addPatientModal .modal-content {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-#addPatientModal .modal-header {
-    background-color: var(--bg-alt);
-    border-bottom-color: var(--border);
-    color: var(--text);
-}
-
-#addPatientModal .modal-footer {
-    background-color: var(--bg-alt);
-    border-top-color: var(--border);
-}
-
-#addPatientModal .form-label {
-    color: var(--text);
-    font-weight: 500;
-}
-
-#addPatientModal .form-control,
-#addPatientModal .form-select {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-#addPatientModal .form-control:focus,
-#addPatientModal .form-select:focus {
-    background-color: var(--bg);
-    border-color: var(--accent);
-    color: var(--text);
-    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
-}
-
-#addPatientModal .form-text {
-    color: var(--muted);
-    font-size: 0.875rem;
-}
-
-#addPatientModal .text-primary {
-    color: var(--accent) !important;
-}
-
-#addPatientModal .text-danger {
-    color: #dc3545 !important;
-}
-
-#addPatientModal .invalid-feedback {
-    color: #dc3545;
-    font-size: 0.875rem;
-}
-
-#addPatientModal .form-control.is-invalid,
-#addPatientModal .form-select.is-invalid {
-    border-color: #dc3545;
-}
-
-#addPatientModal .alert {
-    border-radius: 8px;
-    margin-bottom: 1rem;
-}
-
-#addPatientModal .alert-success {
-    background-color: rgba(40, 167, 69, 0.1);
-    border-color: #28a745;
-    color: #155724;
-}
-
-#addPatientModal .alert-danger {
-    background-color: rgba(220, 53, 69, 0.1);
-    border-color: #dc3545;
-    color: #721c24;
-}
-
-/* Button styling for add patient modal */
-.btn-success {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: white;
-}
-
-.btn-success:hover {
-    background-color: #218838;
-    border-color: #1e7e34;
-    color: white;
-}
-
-.btn-success:disabled {
-    background-color: #6c757d;
-    border-color: #6c757d;
-    color: white;
-    opacity: 0.65;
-}
-
-/* Form validation styling */
-.was-validated .form-control:valid {
-    border-color: #28a745;
-}
-
-.was-validated .form-control:invalid {
-    border-color: #dc3545;
-}
-
-.was-validated .form-select:valid {
-    border-color: #28a745;
-}
-
-.was-validated .form-select:invalid {
-    border-color: #dc3545;
-}
-
-/* Spinner styling */
-.spinner-border-sm {
-    width: 1rem;
-    height: 1rem;
-    border-width: 0.1em;
-}
-
-/* Search help text styling for dark mode */
-.search-help-text {
-    background: rgba(var(--accent-rgb), 0.05);
-    border: 1px solid rgba(var(--accent-rgb), 0.15);
-    border-radius: 6px;
-    padding: 10px 12px;
-    margin-top: 8px;
-    transition: all 0.2s ease;
-}
-
-.search-help-text:hover {
-    background: rgba(var(--accent-rgb), 0.08);
-    border-color: rgba(var(--accent-rgb), 0.2);
-}
-
-.search-help-text .search-instruction {
-    color: var(--text);
-    font-weight: 500;
-    font-size: 0.875rem;
-}
-
-.search-help-text .search-instruction i {
-    color: var(--accent);
-    opacity: 0.8;
-    margin-right: 4px;
-}
-
-.search-help-text .search-shortcut {
-    color: var(--muted);
-    font-size: 0.8rem;
-    font-weight: 400;
-}
-
-.search-help-text kbd {
-    background-color: var(--bg-alt);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    margin: 0 1px;
-    border-radius: 3px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    font-family: 'Courier New', 'Cairo', monospace;
-}
-
-/* Delete Patient Modal Styles */
-#deletePatientModal .modal-content,
-#deletePatientConfirmModal .modal-content {
-    background-color: var(--bg);
-    color: var(--text);
-}
-
-#deletePatientModal .modal-header,
-#deletePatientConfirmModal .modal-header {
-    background-color: #dc3545 !important;
-    border-bottom-color: #dc3545;
-}
-
-#deletePatientModal .modal-footer,
-#deletePatientConfirmModal .modal-footer {
-    background-color: var(--bg-alt);
-    border-top-color: var(--border);
-}
-
-#deletePatientModal .alert-danger {
-    background-color: rgba(220, 53, 69, 0.1);
-    border-color: #dc3545;
-    color: #721c24;
-}
-
-[data-bs-theme="dark"] #deletePatientModal .alert-danger {
-    background-color: rgba(220, 53, 69, 0.15);
-    color: #f5c6cb;
-}
-
-#deletePatientModal .alert-warning {
-    background-color: rgba(255, 193, 7, 0.1);
-    border-color: #ffc107;
-    color: #856404;
-}
-
-[data-bs-theme="dark"] #deletePatientModal .alert-warning {
-    background-color: rgba(255, 193, 7, 0.15);
-    color: #ffeaa7;
-}
-
-#deletePatientModal .list-group-item {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-#deletePatientModal .card {
-    background-color: var(--bg);
-    border-color: #ffc107;
-}
-
-#deletePatientModal .card-body {
-    background-color: var(--bg-alt);
-}
-
-.btn-outline-danger {
-    color: #dc3545;
-    border-color: #dc3545;
-}
-
-.btn-outline-danger:hover {
-    background-color: #dc3545;
-    border-color: #dc3545;
-    color: white;
-}
-
-.btn-warning {
-    background-color: #ffc107;
-    border-color: #ffc107;
-    color: #212529;
-}
-
-.btn-warning:hover {
-    background-color: #e0a800;
-    border-color: #d39e00;
-    color: #212529;
-}
-
-#deleteConfirmationText {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-    letter-spacing: 2px;
-}
-
-#deleteConfirmationText:focus {
-    background-color: var(--bg);
-    border-color: #dc3545;
-    color: var(--text);
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-}
-
-#deleteConfirmationText.is-valid {
-    border-color: #28a745;
-    background-color: var(--bg);
-}
-
-#deleteConfirmationText.is-invalid {
-    border-color: #dc3545;
-    background-color: var(--bg);
-}
-
-/* Arabic text styling for delete messages */
-#deleteConfirmationMessage {
-    font-family: 'Cairo', Arial, sans-serif;
-    text-align: right;
-    direction: rtl;
-}
-
-#deleteConfirmationMessage.alert-success {
-    background-color: rgba(40, 167, 69, 0.1);
-    border-color: #28a745;
-    color: #155724;
-}
-
-[data-bs-theme="dark"] #deleteConfirmationMessage.alert-success {
-    background-color: rgba(40, 167, 69, 0.15);
-    color: #d4edda;
-}
-
-#deleteConfirmationMessage.alert-warning {
-    background-color: rgba(255, 193, 7, 0.1);
-    border-color: #ffc107;
-    color: #856404;
-}
-
-[data-bs-theme="dark"] #deleteConfirmationMessage.alert-warning {
-    background-color: rgba(255, 193, 7, 0.15);
-    color: #fff3cd;
-}
-
-#deleteConfirmationMessage.alert-danger {
-    background-color: rgba(220, 53, 69, 0.1);
-    border-color: #dc3545;
-    color: #721c24;
-}
-
-[data-bs-theme="dark"] #deleteConfirmationMessage.alert-danger {
-    background-color: rgba(220, 53, 69, 0.15);
-    color: #f8d7da;
-}
-
-/* Keyboard shortcuts info styling */
-.text-muted kbd {
-    background-color: var(--bg-alt);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-size: 0.7rem;
-    padding: 1px 4px;
-    margin: 0 1px;
-    border-radius: 3px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    font-family: 'Courier New', 'Cairo', monospace;
-}
-
-[data-bs-theme="dark"] .text-muted kbd {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.9);
-}
-
-/* Delete help text styling for better visibility */
-.delete-help-text {
-    background-color: rgba(13, 110, 253, 0.1) !important;
-    border: 1px solid rgba(13, 110, 253, 0.2) !important;
-    border-radius: 6px !important;
-    padding: 8px 12px !important;
-    margin-top: 8px !important;
-    color: var(--text) !important;
-    font-weight: 500 !important;
-    font-size: 0.875rem !important;
-}
-
-[data-bs-theme="dark"] .delete-help-text {
-    background-color: rgba(13, 110, 253, 0.15) !important;
-    border-color: rgba(13, 110, 253, 0.3) !important;
-    color: #ffffff !important;
-}
-
-[data-bs-theme="light"] .delete-help-text {
-    background-color: rgba(13, 110, 253, 0.08) !important;
-    border-color: rgba(13, 110, 253, 0.2) !important;
-    color: #212529 !important;
-}
-
-/* Pagination Styling */
-.card-footer {
-    background-color: var(--bg-alt);
-    border-top-color: var(--border);
-    color: var(--text);
-}
-
-.pagination-info {
-    font-family: 'Cairo', Arial, sans-serif;
-}
-
-.pagination {
-    margin-bottom: 0;
-}
-
-.pagination .page-link {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-    font-family: 'Cairo', Arial, sans-serif;
-    padding: 0.375rem 0.75rem;
-    margin: 0 2px;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-    text-decoration: none;
-}
-
-.pagination .page-link:hover {
-    background-color: var(--accent);
-    border-color: var(--accent);
-    color: white;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
-}
-
-.pagination .page-item.active .page-link {
-    background-color: var(--accent);
-    border-color: var(--accent);
-    color: white;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.4);
-}
-
-.pagination .page-item.disabled .page-link {
-    background-color: var(--bg-alt);
-    border-color: var(--border);
-    color: var(--muted);
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.pagination .page-item:first-child .page-link,
-.pagination .page-item:last-child .page-link {
-    border-radius: 6px;
-}
-
-.pagination-sm .page-link {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-}
-
-/* Show/Hide pagination based on content */
-#paginationContainer.d-none {
-    display: none !important;
-}
-
-/* Pagination limit select styling */
-#paginationLimit {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-    font-family: 'Cairo', Arial, sans-serif;
-    font-size: 0.875rem;
-    min-width: 80px;
-}
-
-#paginationLimit:focus {
-    background-color: var(--bg);
-    border-color: var(--accent);
-    color: var(--text);
-    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
-}
-
-/* Quick search styling */
-#quickSearch {
-    background-color: var(--bg);
-    border-color: var(--border);
-    color: var(--text);
-    font-family: 'Cairo', Arial, sans-serif;
-    font-size: 0.875rem;
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-}
-
-#quickSearch:focus {
-    background-color: var(--bg);
-    border-color: var(--accent);
-    color: var(--text);
-    box-shadow: none;
-    z-index: 3;
-}
-
-#quickSearch::placeholder {
-    color: var(--muted);
-    font-style: italic;
-}
-
-.input-group-sm .input-group-text {
-    background-color: var(--bg-alt);
-    border-color: var(--border);
-    color: var(--text);
-    font-size: 0.875rem;
-    border-right: 1px solid var(--border);
-}
-
-.input-group-sm .btn-outline-secondary {
-    border-color: var(--border);
-    color: var(--muted);
-    font-size: 0.875rem;
-    border-left: 1px solid var(--border);
-}
-
-.input-group-sm .btn-outline-secondary:hover {
-    background-color: var(--bg-alt);
-    border-color: var(--border);
-    color: var(--text);
-}
-
-/* Quick search focus state */
-#quickSearch:focus + .btn-outline-secondary {
-    border-color: var(--accent);
-}
-
-.input-group:focus-within .input-group-text {
-    border-color: var(--accent);
-}
-
-/* Table header gap adjustments */
-.card-header .gap-3 {
-    gap: 1rem !important;
-}
-
-@media (max-width: 768px) {
-    .card-header .d-flex.gap-3 {
-        flex-direction: column;
-        gap: 0.5rem !important;
-        align-items: stretch !important;
-    }
-    
-    .card-header .input-group {
-        width: 100% !important;
-    }
-    
-    .card-header .justify-content-end {
-        justify-content: stretch !important;
-    }
-}
-
-/* Loading state for table */
-.table-loading {
+.stats-card-wrapper {
     position: relative;
-    opacity: 0.6;
+    width: 100%;
+    height: 100%;
+    min-height: 180px;
+}
+
+.stats-card {
+    width: 100%;
+    height: 100%;
+    background: none;
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.stats-card-content {
+    background-color: var(--card);
+    border-radius: inherit;
+    transition: all 0.25s ease;
+    height: calc(100% - 2px);
+    width: calc(100% - 2px);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px var(--shadow);
+    border: 1px solid var(--border);
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.stats-card:hover {
+    transform: scale(0.98);
+}
+
+.stats-card-header {
+    padding: 1.5rem 1rem 0.5rem 1rem;
+    text-align: center;
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.stats-card-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+}
+
+.stats-card-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0.5rem 0;
+    line-height: 1.2;
+}
+
+.stats-card-icon {
+    position: absolute;
+    right: 1rem; /* RTL: right instead of left */
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    opacity: 0.15;
     pointer-events: none;
 }
 
-.table-loading::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 2rem;
-    height: 2rem;
-    border: 3px solid var(--border);
-    border-top: 3px solid var(--accent);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    z-index: 10;
+.stats-card-icon i {
+    font-size: 4rem;
+    color: var(--text);
 }
 
-@keyframes spin {
-    0% { transform: translate(-50%, -50%) rotate(0deg); }
-    100% { transform: translate(-50%, -50%) rotate(360deg); }
+/* Background colors for stats cards - Light Mode */
+.stats-card-primary .stats-card-content {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%), var(--card);
+    border-color: rgba(14, 165, 233, 0.3);
 }
 
-/* Responsive pagination */
+.stats-card-success .stats-card-content {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%), var(--card);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.stats-card-info .stats-card-content {
+    background: linear-gradient(135deg, rgba(187, 54, 204, 0.1) 0%, rgba(187, 54, 204, 0.05) 100%), var(--card);
+    border-color: rgba(187, 54, 204, 0.3);
+}
+
+.stats-card-warning .stats-card-content {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%), var(--card);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.stats-card-danger .stats-card-content {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%), var(--card);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Dark Mode Stats Cards */
+.dark .stats-card-content {
+    background-color: var(--card);
+    border-color: var(--border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.dark .stats-card-primary .stats-card-content {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(56, 189, 248, 0.08) 100%), var(--card);
+    border-color: rgba(56, 189, 248, 0.4);
+}
+
+.dark .stats-card-success .stats-card-content {
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(74, 222, 128, 0.08) 100%), var(--card);
+    border-color: rgba(74, 222, 128, 0.4);
+}
+
+.dark .stats-card-info .stats-card-content {
+    background: linear-gradient(135deg, rgba(192, 132, 252, 0.15) 0%, rgba(192, 132, 252, 0.08) 100%), var(--card);
+    border-color: rgba(192, 132, 252, 0.4);
+}
+
+.dark .stats-card-warning .stats-card-content {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.08) 100%), var(--card);
+    border-color: rgba(251, 191, 36, 0.4);
+}
+
+.dark .stats-card-danger .stats-card-content {
+    background: linear-gradient(135deg, rgba(248, 113, 113, 0.15) 0%, rgba(248, 113, 113, 0.08) 100%), var(--card);
+    border-color: rgba(248, 113, 113, 0.4);
+}
+
+.dark .stats-card-title {
+    color: var(--muted);
+}
+
+.dark .stats-card-value {
+    color: var(--text);
+}
+
+.dark .stats-card-icon i {
+    opacity: 0.2;
+}
+
+/* Table header RTL alignment */
+.table thead th {
+    text-align: right !important;
+    direction: rtl;
+}
+
+.table thead th.arabic-text {
+    text-align: right !important;
+    direction: rtl;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
-    .pagination-info {
-        text-align: center;
-        margin-bottom: 1rem;
+    .stats-card-wrapper {
+        min-height: 160px;
     }
     
-    .pagination {
-        justify-content: center !important;
+    .stats-card-value {
+        font-size: 1.75rem;
     }
     
-    .pagination .page-link {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.8rem;
-        margin: 0 1px;
-    }
-}
-
-/* Doctor Filter Styling */
-#doctorFilterGroup .btn {
-    border-radius: 6px;
-    margin: 0 2px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-#doctorFilterGroup .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-#doctorFilterGroup .btn.active {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-#doctorFilterGroup .btn-outline-primary.active {
-    background-color: var(--accent);
-    border-color: var(--accent);
-    color: white;
-}
-
-#doctorFilterGroup .btn-outline-success.active {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: white;
-}
-
-#doctorFilterGroup .btn-outline-warning.active {
-    background-color: #ffc107;
-    border-color: #ffc107;
-    color: #212529;
-}
-
-#doctorFilterGroup .btn-outline-info.active {
-    background-color: #17a2b8;
-    border-color: #17a2b8;
-    color: white;
-}
-
-#doctorFilterGroup .btn-outline-secondary.active {
-    background-color: #6c757d;
-    border-color: #6c757d;
-    color: white;
-}
-
-#doctorFilterGroup .btn i {
-    font-size: 0.9rem;
-}
-
-/* Filter card styling */
-.card.border-info {
-    border-color: var(--accent) !important;
-}
-
-.card-header.bg-info.bg-opacity-10 {
-    background-color: rgba(var(--accent-rgb), 0.1) !important;
-    border-bottom-color: rgba(var(--accent-rgb), 0.2) !important;
-}
-
-.text-info {
-    color: var(--accent) !important;
-}
-
-/* Responsive filter buttons */
-@media (max-width: 768px) {
-    #doctorFilterGroup {
-        flex-direction: column;
-        width: 100%;
+    .stats-card-title {
+        font-size: 0.7rem;
     }
     
-    #doctorFilterGroup .btn {
-        margin: 2px 0;
-        width: 100%;
+    .stats-card-header {
+        padding: 1.25rem 0.75rem 0.5rem 0.75rem;
     }
-}
-
-/* Custom Tooltip Styling */
-.tooltip {
-    font-family: 'Cairo', sans-serif;
-    font-size: 0.85rem;
-    z-index: 9999;
-}
-
-.tooltip .tooltip-inner {
-    background-color: rgba(33, 37, 41, 0.95);
-    color: #ffffff;
-    border-radius: 8px;
-    padding: 8px 12px;
-    max-width: 280px;
-    text-align: center;
-    line-height: 1.4;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Dark mode tooltip styling */
-.dark .tooltip .tooltip-inner {
-    background-color: rgba(248, 250, 252, 0.95);
-    color: #1e293b;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
-}
-
-/* Tooltip arrow styling */
-.tooltip .tooltip-arrow::before {
-    border-top-color: rgba(33, 37, 41, 0.95) !important;
-    border-bottom-color: rgba(33, 37, 41, 0.95) !important;
-    border-left-color: rgba(33, 37, 41, 0.95) !important;
-    border-right-color: rgba(33, 37, 41, 0.95) !important;
-}
-
-.dark .tooltip .tooltip-arrow::before {
-    border-top-color: rgba(248, 250, 252, 0.95) !important;
-    border-bottom-color: rgba(248, 250, 252, 0.95) !important;
-    border-left-color: rgba(248, 250, 252, 0.95) !important;
-    border-right-color: rgba(248, 250, 252, 0.95) !important;
-}
-
-/* Improved button hover states with tooltips */
-.btn:hover[data-bs-toggle="tooltip"] {
-    transform: translateY(-1px);
-    transition: all 0.2s ease;
-}
-
-.btn-outline-primary:hover[data-bs-toggle="tooltip"] {
-    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
-}
-
-.btn-outline-success:hover[data-bs-toggle="tooltip"] {
-    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
-}
-
-.btn-outline-danger:hover[data-bs-toggle="tooltip"] {
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-}
-
-h1, h2, h3, h4, h5, h6 {
-color: var(--text) !important;
 }
 </style>
-

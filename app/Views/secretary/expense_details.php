@@ -1,3 +1,7 @@
+<link href="/app/Views/secretary/assets/css/details.css?v=<?= file_exists(__DIR__ . '/assets/css/details.css') ? filemtime(__DIR__ . '/assets/css/details.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/../../doctor/assets/css/dashboard.css') ? filemtime(__DIR__ . '/../../doctor/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+
 <!-- Expense Details Header -->
 <div class="row mb-4">
     <div class="col-md-8">
@@ -26,12 +30,12 @@
 <!-- Expense Information -->
 <div class="row mb-4">
     <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0 arabic-text">
+        <div class="card shadow dashboard-card h-100">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
                     <i class="bi bi-info-circle me-2"></i>
                     معلومات المصروف
-                </h5>
+                </h6>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -99,12 +103,12 @@
     </div>
     
     <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0 arabic-text">
+        <div class="card shadow dashboard-card h-100">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
                     <i class="bi bi-person-circle me-2"></i>
                     معلومات المنشئ
-                </h5>
+                </h6>
             </div>
             <div class="card-body">
                 <div class="d-flex align-items-center mb-3">
@@ -129,24 +133,24 @@
 
 <!-- Related Expenses -->
 <?php if (!empty($relatedExpenses)): ?>
-<div class="card">
-    <div class="card-header">
-        <h5 class="mb-0 arabic-text">
+<div class="card shadow dashboard-card">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary arabic-text">
             <i class="bi bi-list-ul me-2"></i>
             مصروفات أخرى في نفس اليوم
-        </h5>
+        </h6>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="table-dark">
                     <tr>
-                        <th class="arabic-text">الوقت</th>
-                        <th class="arabic-text">اسم المصروف</th>
-                        <th class="arabic-text">المبلغ</th>
-                        <th class="arabic-text">الفئة</th>
-                        <th class="arabic-text">المنشئ</th>
-                        <th class="arabic-text">الإجراءات</th>
+                        <th class="arabic-text text-end" dir="rtl">الوقت</th>
+                        <th class="arabic-text text-end" dir="rtl">اسم المصروف</th>
+                        <th class="arabic-text text-end" dir="rtl">المبلغ</th>
+                        <th class="arabic-text text-end" dir="rtl">الفئة</th>
+                        <th class="arabic-text text-end" dir="rtl">المنشئ</th>
+                        <th class="arabic-text text-end" dir="rtl">الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -439,6 +443,59 @@ kbd {
 kbd[lang="ar"] {
     font-family: 'Cairo', 'Courier New', monospace;
     font-weight: 600;
+}
+
+/* RTL Modal Header Adjustments */
+.modal-header {
+    direction: rtl;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    padding: 1rem 1.5rem;
+}
+
+.modal-header .btn-close {
+    order: -1;
+    margin-left: 0;
+    margin-right: 0;
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+.modal-header .keyboard-hint {
+    order: -1;
+    position: absolute;
+    left: 10% !important;
+    right: auto !important;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    z-index: 9;
+    white-space: nowrap;
+}
+
+.modal-header .modal-title {
+    order: 0;
+    margin-right: auto;
+    margin-left: 0;
+    flex: 1;
+    text-align: right;
+    padding-right: 0;
+    padding-left: 60px; /* Space for close button */
+}
+
+.modal-header:has(.keyboard-hint) .modal-title {
+    padding-left: 120px; /* Extra space when keyboard-hint exists */
 }
 
 /* Keyboard shortcut hint in modal */

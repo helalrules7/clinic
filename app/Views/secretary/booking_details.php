@@ -1,3 +1,7 @@
+<link href="/app/Views/secretary/assets/css/details.css?v=<?= file_exists(__DIR__ . '/assets/css/details.css') ? filemtime(__DIR__ . '/assets/css/details.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/../../doctor/assets/css/dashboard.css') ? filemtime(__DIR__ . '/../../doctor/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+
 <!-- Booking Details Header -->
 <div class="row mb-4">
     <div class="col-md-8">
@@ -26,12 +30,12 @@
 <!-- Booking Information -->
 <div class="row mb-4">
     <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0 arabic-text">
+        <div class="card shadow dashboard-card h-100">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
                     <i class="bi bi-info-circle me-2"></i>
                     معلومات الحجز
-                </h5>
+                </h6>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -103,12 +107,12 @@
     </div>
     
     <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0 arabic-text">
+        <div class="card shadow dashboard-card h-100">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
                     <i class="bi bi-person-circle me-2"></i>
                     معلومات المريض
-                </h5>
+                </h6>
             </div>
             <div class="card-body">
                 <div class="d-flex align-items-center mb-3">
@@ -137,12 +141,12 @@
             </div>
         </div>
         
-        <div class="card mt-3">
-            <div class="card-header">
-                <h5 class="mb-0 arabic-text">
+        <div class="card shadow dashboard-card h-100 mt-3">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
                     <i class="bi bi-person-badge me-2"></i>
                     معلومات الطبيب
-                </h5>
+                </h6>
             </div>
             <div class="card-body">
                 <div class="d-flex align-items-center">
@@ -161,24 +165,24 @@
 
 <!-- Payments Section -->
 <?php if (!empty($payments)): ?>
-<div class="card mb-4">
-    <div class="card-header">
-        <h5 class="mb-0 arabic-text">
+<div class="card shadow dashboard-card mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary arabic-text">
             <i class="bi bi-credit-card me-2"></i>
             المدفوعات المرتبطة
-        </h5>
+        </h6>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="table-dark">
                     <tr>
-                        <th class="arabic-text">التاريخ</th>
-                        <th class="arabic-text">المبلغ</th>
-                        <th class="arabic-text">النوع</th>
-                        <th class="arabic-text">طريقة الدفع</th>
-                        <th class="arabic-text">الوصف</th>
-                        <th class="arabic-text">الإجراءات</th>
+                        <th class="arabic-text text-end" dir="rtl">التاريخ</th>
+                        <th class="arabic-text text-end" dir="rtl">المبلغ</th>
+                        <th class="arabic-text text-end" dir="rtl">النوع</th>
+                        <th class="arabic-text text-end" dir="rtl">طريقة الدفع</th>
+                        <th class="arabic-text text-end" dir="rtl">الوصف</th>
+                        <th class="arabic-text text-end" dir="rtl">الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -247,12 +251,12 @@
             <table class="table table-hover mb-0">
                 <thead class="table-dark">
                     <tr>
-                        <th class="arabic-text">التاريخ</th>
-                        <th class="arabic-text">الوقت</th>
-                        <th class="arabic-text">نوع الزيارة</th>
-                        <th class="arabic-text">الحالة</th>
-                        <th class="arabic-text">الطبيب</th>
-                        <th class="arabic-text">الإجراءات</th>
+                        <th class="arabic-text text-end" dir="rtl">التاريخ</th>
+                        <th class="arabic-text text-end" dir="rtl">الوقت</th>
+                        <th class="arabic-text text-end" dir="rtl">نوع الزيارة</th>
+                        <th class="arabic-text text-end" dir="rtl">الحالة</th>
+                        <th class="arabic-text text-end" dir="rtl">الطبيب</th>
+                        <th class="arabic-text text-end" dir="rtl">الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -328,123 +332,38 @@ function printBooking(bookingId) {
 </script>
 
 <style>
-/* RTL specific adjustments */
-.me-2 { margin-left: 0.5rem !important; margin-right: 0 !important; }
-.me-3 { margin-left: 1rem !important; margin-right: 0 !important; }
-.ms-2 { margin-right: 0.5rem !important; margin-left: 0 !important; }
-.text-start { text-align: right !important; }
-.text-end { text-align: left !important; }
-.justify-content-start { justify-content: flex-end !important; }
-.justify-content-end { justify-content: flex-start !important; }
-
-/* Arabic text styling */
-.arabic-text {
-    font-family: 'Cairo', Arial, sans-serif;
-    direction: rtl;
-    text-align: right;
-}
-
-/* Card styling */
-.card {
-    border: none;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-/* Avatar styling */
-.avatar-lg {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: var(--bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--muted);
-    font-size: 2rem;
-}
-
-.avatar-sm {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--muted);
-    font-size: 1.2rem;
-}
-
-/* Table styling */
-.table th {
-    border-top: none;
-    font-weight: 600;
-    color: var(--text);
-    background: var(--bg);
-}
-
-.table td {
-    vertical-align: middle;
-    border-top: 1px solid var(--border);
-}
-
-/* Badge styling */
-.badge.bg-primary {
-    background-color: var(--accent) !important;
-    color: white;
-}
-
-.badge.bg-success {
-    background-color: #28a745 !important;
-    color: white;
-}
-
-.badge.bg-info {
-    background-color: #17a2b8 !important;
-    color: white;
-}
-
-.badge.bg-warning {
-    background-color: #ffc107 !important;
-    color: #212529;
-}
-
-.badge.bg-danger {
-    background-color: #dc3545 !important;
-    color: white;
-}
-
-.badge.bg-secondary {
-    background-color: var(--muted) !important;
-    color: white;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .card {
-        margin-bottom: 1rem;
-    }
-    
-    .table-responsive {
-        font-size: 0.875rem;
-    }
-    
-    .btn-group .btn {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.75rem;
-    }
-}
-
-p{
+/* Additional custom styles for booking details */
+p {
     color: var(--text) !important;
 }
-label{
-    color: dodgerblue !important;
+
+label {
+    color: var(--accent) !important;
+    font-weight: 600;
+}
+
+.form-control-plaintext {
+    color: var(--text) !important;
+}
+
+.bg-light {
+    background-color: var(--bg) !important;
+    color: var(--text) !important;
+}
+
+.dark .bg-light {
+    background-color: var(--card) !important;
+}
+
+/* Button group styling */
+.btn-group .btn {
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-group .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 </style>
+

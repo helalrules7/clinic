@@ -21,530 +21,23 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="/sec-style.css">
+    <!-- Doctor Pages Consolidated CSS -->
+    <link href="/app/Views/layouts/sec-style.css?v=<?= filemtime(__DIR__ . '/sec-style.css') ?>" rel="stylesheet">
+
+    <!-- Prevent flash of wrong theme -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('appTheme') || localStorage.getItem('theme') ||
+                (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            }
+            document.documentElement.classList.add('theme-loaded');
+        })();
+    </script>
 
     <style>
-        :root {
-            --bg: #f8fafc;
-            --text: #0f172a;
-            --card: #ffffff;
-            --muted: #475569;
-            --accent: #0ea5e9;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --info: #06b6d4;
-            --border: #e2e8f0;
-            --sidebar-width: 280px;
-            --bg-alt: #f1f5f9;
-            --bg-dark: #ffffff;
-            --accent-rgb: 14, 165, 233;
-            --user-info-bg: rgb(248, 250, 252);
-        }
-        
-        .dark {
-            --bg: #0b1220;
-            --text: #f8fafc;
-            --card: #1e293b;
-            --muted: #cbd5e1;
-            --accent: #38bdf8;
-            --success: #4ade80;
-            --danger: #fb7185;
-            --warning: #fbbf24;
-            --info: #22d3ee;
-            --border: #334155;
-            --bg-alt: #0f172a;
-            --bg-dark: #1e293b;
-            --accent-rgb: 56, 189, 248;
-            --user-info-bg: rgb(30, 41, 59);
-        }
-        
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            transition: background-color 0.3s ease, color 0.3s ease;
-            direction: rtl;
-        }
-        
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: var(--sidebar-width);
-            /* Glass effect - similar to top-bar */
-            background: rgba(248, 250, 252, 0.35);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-right: 1px solid rgba(226, 232, 240, 0.3);
-            box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
-            z-index: 1000;
-            transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
-            overflow-y: auto;
-        }
-        
-        .dark .sidebar {
-            background: rgba(11, 18, 32, 0.70);
-            border-right: 1px solid rgba(51, 65, 85, 0.3);
-            box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
-        }
-        
-        .sidebar-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border);
-            text-align: center;
-        }
-        
-        .clinic-logo {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1rem;
-        }
-        
-        .clinic-logo i {
-            font-size: 2rem;
-            color: var(--accent);
-            margin-left: 0.75rem;
-        }
-        
-        .clinic-name {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text);
-        }
-        
-        .user-info {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            background: var(--user-info-bg);
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--accent);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            margin-left: 0.75rem;
-        }
-        
-        .user-details h6 {
-            margin: 0;
-            color: var(--text);
-            font-weight: 600;
-        }
-        
-        .user-details small {
-            color: var(--muted);
-        }
-        
-        .nav-menu {
-            padding: 1rem 0;
-        }
-        
-        .nav-item {
-            margin: 0.25rem 1rem;
-        }
-        
-        .nav-link {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            color: var(--text);
-            text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
-        
-        .nav-link:hover {
-            background: var(--bg);
-            color: var(--accent);
-            transform: translateX(-4px);
-        }
-        
-        .nav-link.active {
-            background: var(--accent);
-            color: white;
-        }
-        
-        .nav-link i {
-            margin-left: 0.75rem;
-            width: 20px;
-            text-align: center;
-        }
-        
-        .main-content {
-            margin-right: var(--sidebar-width);
-            padding: 2rem;
-            min-height: 100vh;
-            transition: margin-right 0.3s ease;
-        }
-        
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            /* Glass effect */
-            background: rgba(248, 250, 252, 0.50);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(226, 232, 240, 0.3);
-            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-        }
-        
-        .top-bar.scrolled {
-            padding-top: 1rem;
-        }
-        
-        .dark .top-bar {
-            background: rgba(11, 18, 32, 0.85);
-            border-bottom: 1px solid rgba(51, 65, 85, 0.3);
-        }
-        
-        .page-title h1 {
-            margin: 0;
-            color: var(--text);
-            font-weight: 600;
-        }
-        
-        .page-title small {
-            color: var(--muted);
-        }
-        
-        .top-actions {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-        
-        .theme-toggle {
-            background: var(--card);
-            border: 1px solid var(--border);
-            color: var(--text);
-        }
-        
-        .theme-toggle:hover {
-            background: var(--bg);
-            border-color: var(--accent);
-        }
-        
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            transition: all 0.2s ease;
-            animation: fadeUp 0.35s ease both;
-        }
-        
-        .card:hover {
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
-        }
-        
-        .card-header {
-            background: var(--bg);
-            border-bottom: 1px solid var(--border);
-            border-radius: 12px 12px 0 0;
-            padding: 1rem 1.5rem;
-        }
-        
-        .btn {
-            border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-        
-        .btn:hover {
-            transform: translateY(-1px);
-        }
-        
-        .table {
-            background: var(--card);
-            color: var(--text);
-        }
-        
-        .table th {
-            background: var(--bg);
-            border-color: var(--border);
-            color: var(--text);
-            font-weight: 600;
-        }
-        
-        .table td {
-            border-color: var(--border);
-        }
-        
-        .badge {
-            border-radius: 6px;
-            font-weight: 500;
-        }
-        
-        .form-control, .form-select {
-            background: var(--card);
-            border: 2px solid var(--border);
-            color: var(--text);
-            font-weight: 500;
-        }
-        
-        .form-control:focus, .form-select:focus {
-            background: var(--card);
-            border-color: var(--accent);
-            color: var(--text);
-            box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25);
-            font-weight: 600;
-        }
-        
-        .form-control::placeholder {
-            color: var(--muted);
-            font-weight: 400;
-        }
-        
-        .form-label {
-            color: var(--text);
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-        
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .sidebar-toggle {
-            display: none;
-            background: var(--accent);
-            border: none;
-            color: white;
-            padding: 0.75rem;
-            border-radius: 8px;
-            margin-left: 1rem;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            z-index: 1001;
-            position: relative;
-            min-width: 44px;
-            min-height: 44px;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        /* Mobile responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(100%);
-            }
-            
-            .sidebar.show {
-                transform: translateX(0);
-            }
-            
-            .sidebar.show ~ .main-content .sidebar-toggle {
-                opacity: 0;
-                pointer-events: none;
-                transform: scale(0.8);
-                transition: opacity 0.2s ease, transform 0.2s ease;
-            }
-            
-            .main-content {
-                margin-right: 0;
-                padding: 1rem;
-            }
-            
-            .sidebar-toggle {
-                display: flex !important;
-                opacity: 1;
-                pointer-events: auto;
-                transform: scale(1);
-            }
-        }
-        
-        .sidebar-toggle:hover {
-            background: var(--success);
-            transform: scale(1.05);
-        }
-        
-        .sidebar-toggle:active {
-            transform: scale(0.95);
-        }
-        
-        /* Ensure toggle button is visible on mobile devices */
-        @media (max-width: 992px) {
-            .sidebar-toggle {
-                display: flex !important;
-                opacity: 1;
-                pointer-events: auto;
-                transform: scale(1);
-            }
-            
-            .sidebar {
-                transform: translateX(100%);
-                transition: transform 0.3s ease;
-            }
-            
-            .sidebar.show {
-                transform: translateX(0);
-            }
-            
-            .sidebar.show ~ .main-content .sidebar-toggle {
-                opacity: 0;
-                pointer-events: none;
-                transform: scale(0.8);
-                transition: opacity 0.2s ease, transform 0.2s ease;
-            }
-            
-            .main-content {
-                margin-right: 0;
-            }
-        }
-        
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            display: none;
-        }
-        
-        .overlay.show {
-            display: block;
-        }
-        
-        .sidebar-footer {
-            border-top: 1px solid var(--border) !important;
-        }
-        
-        .sidebar-footer a {
-            color: var(--accent);
-            transition: color 0.2s ease;
-        }
-        
-        .sidebar-footer a:hover {
-            color: var(--success);
-        }
-        
-        /* View As Banner Styles */
-        .view-as-banner {
-            animation: pulse 2s infinite;
-            border: 3px solid #ffc107;
-        }
-        
-        @keyframes pulse {
-            0% { box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3); }
-            50% { box-shadow: 0 4px 25px rgba(255, 193, 7, 0.6); }
-            100% { box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3); }
-        }
-        
-        .view-as-indicator {
-            position: relative;
-        }
-        
-        .view-as-indicator::before {
-            content: "⚠️";
-            position: absolute;
-            top: -5px;
-            left: -5px;
-            font-size: 16px;
-            animation: blink 1s infinite;
-        }
-        
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0; }
-        }
-        
-        /* Scroll to Top Button - RTL (left side) */
-        .scroll-to-top {
-            position: fixed;
-            bottom: 2rem;
-            left: 2rem;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 999;
-            transition: all 0.3s ease;
-            /* Glass effect - more transparent */
-            background: rgba(248, 250, 252, 0.65);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(226, 232, 240, 0.25);
-            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.15);
-            color: var(--text);
-        }
-        
-        .dark .scroll-to-top {
-            background: rgba(11, 18, 32, 0.65);
-            border: 1px solid rgba(51, 65, 85, 0.25);
-        }
-        
-        .scroll-to-top:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.2);
-        }
-        
-        .scroll-to-top.show {
-            display: flex;
-        }
-        
-        .scroll-to-top i {
-            font-size: 1.25rem;
-        }
-        
-        /* Mobile responsive */
-        @media (max-width: 768px) {
-            .scroll-to-top {
-                bottom: 1.5rem;
-                left: 1.5rem;
-                width: 45px;
-                height: 45px;
-            }
-        }
-        
-        /* RTL specific adjustments */
-        .me-2 { margin-left: 0.5rem !important; margin-right: 0 !important; }
-        .me-3 { margin-left: 1rem !important; margin-right: 0 !important; }
-        .ms-2 { margin-right: 0.5rem !important; margin-left: 0 !important; }
-        .ms-3 { margin-right: 1rem !important; margin-left: 0 !important; }
-        .text-start { text-align: right !important; }
-        .text-end { text-align: left !important; }
-        .justify-content-start { justify-content: flex-end !important; }
-        .justify-content-end { justify-content: flex-start !important; }
-        
-        /* Arabic text styling */
-        .arabic-text {
-            font-family: 'Cairo', Arial, sans-serif;
-            direction: rtl;
-            text-align: right;
-        }
-        
-        /* Secretary specific styles */
+        /* Secretary specific styles - keep only what's not in sec-style.css */
         .secretary-badge {
             background: linear-gradient(135deg, var(--accent), var(--info));
             color: white;
@@ -553,105 +46,35 @@
             font-size: 0.75rem;
             font-weight: 600;
         }
-        
-        .stat-card {
-            border: none;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+        /* View As Banner Styles */
+        .view-as-banner {
+            animation: pulse 2s infinite;
+            border: 3px solid #ffc107;
         }
-        
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+
+        @keyframes pulse {
+            0% { box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3); }
+            50% { box-shadow: 0 4px 25px rgba(255, 193, 7, 0.6); }
+            100% { box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3); }
         }
-        
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
+
+        .view-as-indicator {
+            position: relative;
         }
-        
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 700;
-            margin: 0;
-            color: var(--text);
+
+        .view-as-indicator::before {
+            content: "⚠️";
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            font-size: 16px;
+            animation: blink 1s infinite;
         }
-        
-        .stat-label {
-            margin: 0;
-            color: var(--muted);
-            font-size: 0.875rem;
-        }
-        
-        .avatar-sm {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--bg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--muted);
-        }
-        
-        .table th {
-            border-top: none;
-            font-weight: 600;
-            color: var(--text);
-            background: var(--bg);
-        }
-        
-        .table td {
-            vertical-align: middle;
-            border-top: 1px solid var(--border);
-        }
-        
-        .list-group-item {
-            border: none;
-            border-bottom: 1px solid var(--border);
-            background: transparent;
-        }
-        
-        .list-group-item:last-child {
-            border-bottom: none;
-        }
-        
-        .btn-group .btn {
-            border-radius: 6px;
-        }
-        
-        .btn-group .btn:not(:last-child) {
-            border-left: 1px solid var(--border);
-        }
-        
-        .quick-action-btn {
-            transition: all 0.2s ease;
-        }
-        
-        .quick-action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        @media (max-width: 768px) {
-            .stat-card {
-                margin-bottom: 1rem;
-            }
-            
-            .table-responsive {
-                font-size: 0.875rem;
-            }
-            
-            .btn-group .btn {
-                padding: 0.25rem 0.5rem;
-                font-size: 0.75rem;
-            }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
         }
     </style>
 </head>
@@ -709,13 +132,6 @@
                 </a>
             </div>
             
-            <div class="nav-item mt-4">
-                <a href="/about" class="nav-link <?= $this->isActiveRoute('/about') ? 'active' : '' ?>">
-                    <i class="bi bi-info-circle"></i>
-                    حول النظام
-                </a>
-            </div>
-            
             <?php 
             // Check if admin is in View As mode using session directly
             if (isset($_SESSION['view_as_mode']) && $_SESSION['view_as_mode'] === true): 
@@ -739,9 +155,7 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="text-muted">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v6.1
-                        <a href="/whats-new" class="text-decoration-none ms-2" style="color: var(--accent);">What's New?</a>
-                        <a href="/whats-new/full-features" class="text-decoration-none ms-2" style="color: var(--accent);">Full Features</a>
+                        HClinic / Roaya Clinic v7.0.0
                     </div>
                     <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none" style="color: var(--accent);">Ahmed Helal</a></div>
                 </small>
@@ -819,16 +233,47 @@
                     </a>
                 <?php endif; ?>
                 
-                <button id="themeToggle" class="btn btn-outline-secondary theme-toggle">
-                    <i class="bi bi-moon"></i>
-                </button>
+                <!-- Sun/Moon Theme Toggle Switch -->
+                <label class="switch" title="تبديل المظهر">
+                    <input type="checkbox" id="themeToggleInput">
+                    <span class="slider round">
+                        <span class="sun-moon">
+                            <svg id="moon-dot-1" class="moon-dot" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="50"></circle>
+                            </svg>
+                            <svg id="moon-dot-2" class="moon-dot" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="50"></circle>
+                            </svg>
+                            <svg id="moon-dot-3" class="moon-dot" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="50"></circle>
+                            </svg>
+                            <svg id="light-ray-1" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="50"></circle>
+                            </svg>
+                            <svg id="light-ray-2" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="50"></circle>
+                            </svg>
+                            <svg id="light-ray-3" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="50"></circle>
+                            </svg>
+                        </span>
+                        <svg class="cloud-light" id="cloud-1" viewBox="0 0 100 100">
+                            <path d="M50,92C78,92,100,71,100,47C100,23,78,2,50,2C22,2,0,23,0,47C0,71,22,92,50,92Z"></path>
+                        </svg>
+                        <svg class="cloud-dark" id="cloud-2" viewBox="0 0 100 100">
+                            <path d="M50,92C78,92,100,71,100,47C100,23,78,2,50,2C22,2,0,23,0,47C0,71,22,92,50,92Z"></path>
+                        </svg>
+                        <svg class="cloud-light" id="cloud-3" viewBox="0 0 100 100">
+                            <path d="M50,92C78,92,100,71,100,47C100,23,78,2,50,2C22,2,0,23,0,47C0,71,22,92,50,92Z"></path>
+                        </svg>
+                    </span>
+                </label>
             </div>
         </div>
-        
+
         <!-- Page Content -->
         <?= $content ?>
-    </div>
-    
+    </div>    
     <!-- Scroll to Top Button -->
     <button class="scroll-to-top" id="scrollToTop" aria-label="العودة للأعلى">
         <i class="bi bi-arrow-up"></i>
@@ -838,49 +283,49 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Theme toggle functionality
-        const apply = mode => document.documentElement.classList.toggle('dark', mode === 'dark');
-        const saved = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        
-        apply(saved);
-        
-        document.getElementById('themeToggle').onclick = () => {
-            const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
-            apply(next);
-            localStorage.setItem('theme', next);
-            
-            // Update icon
-            const icon = document.querySelector('#themeToggle i');
-            icon.className = next === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
-            
+        // Theme toggle functionality - synced with main layout using appTheme
+        function updateThemeUI(theme) {
+            const isDark = theme === 'dark';
+            document.documentElement.classList.toggle('dark', isDark);
+
             // Update logo
             const logo = document.getElementById('clinicLogo');
             if (logo) {
-                logo.src = next === 'dark' ? '/assets/images/Dark.png' : '/assets/images/Light.png';
+                logo.src = isDark ? '/assets/images/Dark.png' : '/assets/images/Light.png';
             }
-            
+
             // Update favicon
             const favicon = document.getElementById('favicon');
             if (favicon) {
-                favicon.href = next === 'dark' ? '/assets/fav/Dark.ico' : '/assets/fav/Light.ico';
+                favicon.href = isDark ? '/assets/fav/Dark.ico' : '/assets/fav/Light.ico';
             }
-        };
-        
-        // Update initial icon and logo
-        const icon = document.querySelector('#themeToggle i');
-        icon.className = saved === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
-        
-        const logo = document.getElementById('clinicLogo');
-        if (logo) {
-            logo.src = saved === 'dark' ? '/assets/images/Dark.png' : '/assets/images/Light.png';
+
+            // Update checkbox state
+            const themeCheckbox = document.getElementById('themeToggleInput');
+            if (themeCheckbox) {
+                themeCheckbox.checked = isDark;
+            }
         }
-        
-        // Update initial favicon
-        const favicon = document.getElementById('favicon');
-        if (favicon) {
-            favicon.href = saved === 'dark' ? '/assets/fav/Dark.ico' : '/assets/fav/Light.ico';
+
+        // Get saved theme - check both keys for compatibility
+        const saved = localStorage.getItem('appTheme') || localStorage.getItem('theme') ||
+            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+        // Apply initial theme
+        updateThemeUI(saved);
+
+        // Theme toggle switch handler
+        const themeCheckbox = document.getElementById('themeToggleInput');
+        if (themeCheckbox) {
+            themeCheckbox.addEventListener('change', function() {
+                const next = this.checked ? 'dark' : 'light';
+                updateThemeUI(next);
+                // Save to both keys for compatibility with main layout
+                localStorage.setItem('appTheme', next);
+                localStorage.setItem('theme', next);
+            });
         }
-        
+
         // Mobile sidebar toggle
         const sidebarToggle = document.getElementById('sidebarToggle');
         const sidebar = document.getElementById('sidebar');

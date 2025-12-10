@@ -1,9 +1,14 @@
+<link href="/app/Views/secretary/assets/css/details.css?v=<?= file_exists(__DIR__ . '/assets/css/details.css') ? filemtime(__DIR__ . '/assets/css/details.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/../../doctor/assets/css/dashboard.css') ? filemtime(__DIR__ . '/../../doctor/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/doctor/assets/css/profile.css?v=<?= file_exists(__DIR__ . '/../../doctor/assets/css/profile.css') ? filemtime(__DIR__ . '/../../doctor/assets/css/profile.css') : time() ?>" rel="stylesheet">
+
 <div class="row">
     <div class="col-lg-8 mx-auto">
         <!-- Profile Information -->
-        <div class="card shadow mb-4">
+        <div class="card shadow dashboard-card mb-4">
             <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
                     <i class="bi bi-person-circle me-2"></i>
                     معلومات الملف الشخصي
                 </h6>
@@ -90,9 +95,9 @@
         </div>
 
         <!-- Change Password -->
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">
+        <div class="card shadow dashboard-card">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
                     <i class="bi bi-shield-lock me-2"></i>
                     تغيير كلمة المرور
                 </h6>
@@ -224,12 +229,12 @@
 <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header position-relative">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 <h5 class="modal-title" id="editProfileModalLabel">
                     <i class="bi bi-person-gear me-2"></i>
                     تعديل معلومات الملف الشخصي
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="/secretary/profile/update" id="editProfileForm">
                 <div class="modal-body">
@@ -796,13 +801,63 @@ function showUpdateNotification() {
     border-bottom: none;
 }
 
+/* RTL Modal Header Adjustments */
+.modal-header {
+    direction: rtl;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    padding: 1rem 1.5rem;
+}
+
 .modal-header .btn-close {
+    order: -1;
+    margin-left: 0;
+    margin-right: 0;
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
     filter: invert(1);
     opacity: 0.8;
 }
 
 .modal-header .btn-close:hover {
     opacity: 1;
+}
+
+.modal-header .keyboard-hint {
+    order: -1;
+    position: absolute;
+    left: 10% !important;
+    right: auto !important;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    z-index: 9;
+    white-space: nowrap;
+}
+
+.modal-header .modal-title {
+    order: 0;
+    margin-right: auto;
+    margin-left: 0;
+    flex: 1;
+    text-align: right;
+    padding-right: 0;
+    padding-left: 60px; /* Space for close button */
+}
+
+.modal-header:has(.keyboard-hint) .modal-title {
+    padding-left: 120px; /* Extra space when keyboard-hint exists */
 }
 
 .modal-body {

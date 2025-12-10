@@ -104,6 +104,7 @@ try {
     
     // Secretary routes
     $router->get('/secretary/dashboard', 'SecretaryController@dashboard');
+    $router->get('/api/secretary/dashboard', 'SecretaryController@getDashboardData');
     $router->get('/secretary/bookings', 'SecretaryController@bookings');
     $router->get('/secretary/bookings/calendar', 'SecretaryController@getBookingsCalendar');
     $router->post('/secretary/bookings', 'SecretaryController@createBooking');
@@ -114,6 +115,7 @@ try {
     $router->get('/secretary/bookings/{id}', 'SecretaryController@viewBooking');
     $router->get('/secretary/payments', 'SecretaryController@payments');
     $router->get('/secretary/patients', 'SecretaryController@patients');
+    $router->get('/api/secretary/patients', 'SecretaryController@getPatientsData');
     $router->get('/secretary/patients/{id}', 'SecretaryController@viewPatient');
     $router->get('/secretary/patients/new', 'SecretaryController@newPatient');
     $router->post('/secretary/patients', 'SecretaryController@createPatient');

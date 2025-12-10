@@ -1,4 +1,7 @@
 <!-- Patients Header -->
+<link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+
 <div class="row mb-4">
     <div class="col-md-6">
         <div class="d-flex align-items-center">
@@ -6,6 +9,15 @@
                 <i class="bi bi-people me-2"></i>
                 إدارة المرضى
             </h4>
+            <div class="d-flex align-items-center ms-3" style="padding-bottom: 10px !important;">
+                <label class="form-label mb-0 me-2" for="patientsAutoRefresh">
+                    <small class="text-muted arabic-text">تحديث تلقائي</small>
+                </label>
+                <div class="toggle-switch-wrapper">
+                    <input type="checkbox" class="toggle-switch" id="patientsAutoRefresh" 
+                           onchange="togglePatientsAutoRefresh(this.checked)">
+                </div>
+            </div>
         </div>
         <p class="text-muted mb-0 arabic-text">عرض وإدارة سجلات المرضى</p>
         <div class="mt-2">
@@ -46,62 +58,62 @@
 </div>
 
 <!-- Patient Statistics -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-primary">
+<div class="row mb-4 stats-cards-wrapper">
+    <div class="col-md-3 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-primary">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title arabic-text">إجمالي المرضى</h4>
+                        <h3 class="stats-card-value arabic-text"><?= $stats['total'] ?? 0 ?></h3>
+                    </div>
+                    <div class="stats-card-icon">
                         <i class="bi bi-people"></i>
                     </div>
-                    <div class="stat-content ms-3">
-                        <h3 class="stat-number"><?= $stats['total'] ?? 0 ?></h3>
-                        <p class="stat-label arabic-text">إجمالي المرضى</p>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-success">
+    <div class="col-md-3 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-success">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title arabic-text">مرضى نشطين</h4>
+                        <h3 class="stats-card-value arabic-text"><?= $stats['active'] ?? 0 ?></h3>
+                    </div>
+                    <div class="stats-card-icon">
                         <i class="bi bi-person-check"></i>
                     </div>
-                    <div class="stat-content ms-3">
-                        <h3 class="stat-number"><?= $stats['active'] ?? 0 ?></h3>
-                        <p class="stat-label arabic-text">مرضى نشطين</p>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-info">
+    <div class="col-md-3 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-info">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title arabic-text">جدد هذا الشهر</h4>
+                        <h3 class="stats-card-value arabic-text"><?= $stats['recent'] ?? 0 ?></h3>
+                    </div>
+                    <div class="stats-card-icon">
                         <i class="bi bi-person-plus"></i>
                     </div>
-                    <div class="stat-content ms-3">
-                        <h3 class="stat-number"><?= $stats['recent'] ?? 0 ?></h3>
-                        <p class="stat-label arabic-text">جدد هذا الشهر</p>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-warning">
-                        <i class="bi bi-gender-ambiguous"></i>
+    <div class="col-md-3 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-warning">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title arabic-text">إناث</h4>
+                        <h3 class="stats-card-value arabic-text"><?= ($stats['gender']['Female'] ?? 0) ?></h3>
                     </div>
-                    <div class="stat-content ms-3">
-                        <h3 class="stat-number"><?= ($stats['gender']['Female'] ?? 0) ?></h3>
-                        <p class="stat-label arabic-text">إناث</p>
+                    <div class="stats-card-icon">
+                        <i class="bi bi-gender-female"></i>
                     </div>
                 </div>
             </div>
@@ -231,12 +243,12 @@
             <table class="table table-hover mb-0">
                 <thead class="table-dark">
                     <tr>
-                        <th class="arabic-text">بيانات المريض</th>
-                        <th class="arabic-text">التواصل</th>
-                        <th class="arabic-text">العمر</th>
-                        <th class="arabic-text">آخر زيارة</th>
-                        <th class="arabic-text">إجمالي المدفوعات</th>
-                        <th class="arabic-text">الإجراءات</th>
+                        <th class="arabic-text sortable-header text-end" dir="rtl">بيانات المريض <i class="bi bi-arrow-down-up ms-1" style="opacity: 0.5;"></i></th>
+                        <th class="arabic-text sortable-header text-end" dir="rtl">التواصل <i class="bi bi-arrow-down-up ms-1" style="opacity: 0.5;"></i></th>
+                        <th class="arabic-text sortable-header text-end" dir="rtl">العمر <i class="bi bi-arrow-down-up ms-1" style="opacity: 0.5;"></i></th>
+                        <th class="arabic-text sortable-header text-end" dir="rtl">آخر زيارة <i class="bi bi-arrow-down-up ms-1" style="opacity: 0.5;"></i></th>
+                        <th class="arabic-text sortable-header text-end" dir="rtl">إجمالي المدفوعات <i class="bi bi-arrow-down-up ms-1" style="opacity: 0.5;"></i></th>
+                        <th class="arabic-text text-end" dir="rtl">الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody id="patientsTableBody">
@@ -255,9 +267,15 @@
                             $firstName = $patient['first_name'] ?? '';
                             $lastName = $patient['last_name'] ?? '';
                             $fullName = trim($firstName . ' ' . $lastName);
-                            $firstChar = !empty($firstName) ? strtoupper($firstName[0]) : '؟';
-                            $lastChar = !empty($lastName) ? strtoupper($lastName[0]) : '؟';
-                            $avatarInitials = $firstChar . '.' . $lastChar;
+                            // Get Arabic characters properly
+                            $firstChar = !empty($firstName) ? mb_substr($firstName, 0, 1, 'UTF-8') : '؟';
+                            $lastChar = !empty($lastName) ? mb_substr($lastName, 0, 1, 'UTF-8') : '؟';
+                            // For Arabic text, use Arabic characters directly
+                            if (preg_match('/[\x{0600}-\x{06FF}]/u', $firstName . $lastName)) {
+                                $avatarInitials = $firstChar . $lastChar;
+                            } else {
+                                $avatarInitials = strtoupper($firstChar) . '.' . strtoupper($lastChar);
+                            }
                             $avatarClass = ($patient['gender'] ?? '') === 'Female' ? 'avatar-circle avatar-female me-3' : 'avatar-circle avatar-male me-3';
                             ?>
                             <tr>
@@ -279,14 +297,50 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <div>
-                                        <i class="bi bi-telephone me-1"></i>
-                                        <?= htmlspecialchars($patient['phone'] ?? 'غير متوفر') ?>
-                                    </div>
+                                    <?php if (!empty($patient['phone'])): ?>
+                                        <div class="phone-number-container mt-1" style="position: relative; display: inline-block;">
+                                            <a href="tel:<?= htmlspecialchars($patient['phone']) ?>" 
+                                               class="phone-number-link" 
+                                               style="text-decoration: none; color: var(--accent); font-weight: 500; cursor: pointer; transition: all 0.2s ease;">
+                                                <i class="bi bi-telephone me-1"></i>
+                                                <?= htmlspecialchars($patient['phone']) ?>
+                                            </a>
+                                            <span class="phone-htooltip">
+                                                <div class="phone-actions">
+                                                    <a href="tel:<?= htmlspecialchars($patient['phone']) ?>" class="phone-action-btn" title="اتصال">
+                                                        <i class="bi bi-telephone-fill"></i>
+                                                        <span>اتصال</span>
+                                                    </a>
+                                                    <a href="https://wa.me/+2<?= preg_replace('/[^0-9]/', '', $patient['phone']) ?>" target="_blank" class="phone-action-btn whatsapp-btn" title="واتساب">
+                                                        <i class="bi bi-whatsapp"></i>
+                                                        <span>واتساب</span>
+                                                    </a>
+                                                </div>
+                                            </span>
+                                        </div>
+                                    <?php else: ?>
+                                        <span class="text-muted">غير متوفر</span>
+                                    <?php endif; ?>
                                     <?php if (!empty($patient['alt_phone'])): ?>
-                                        <div class="mt-1">
-                                            <i class="bi bi-telephone-plus me-1"></i>
-                                            <small class="text-muted"><?= htmlspecialchars($patient['alt_phone']) ?></small>
+                                        <div class="phone-number-container mt-1" style="position: relative; display: inline-block;">
+                                            <a href="tel:<?= htmlspecialchars($patient['alt_phone']) ?>" 
+                                               class="phone-number-link" 
+                                               style="text-decoration: none; color: var(--accent); font-weight: 500; cursor: pointer; transition: all 0.2s ease;">
+                                                <i class="bi bi-telephone-plus me-1"></i>
+                                                <small><?= htmlspecialchars($patient['alt_phone']) ?></small>
+                                            </a>
+                                            <span class="phone-htooltip">
+                                                <div class="phone-actions">
+                                                    <a href="tel:<?= htmlspecialchars($patient['alt_phone']) ?>" class="phone-action-btn" title="اتصال">
+                                                        <i class="bi bi-telephone-fill"></i>
+                                                        <span>اتصال</span>
+                                                    </a>
+                                                    <a href="https://wa.me/+2<?= preg_replace('/[^0-9]/', '', $patient['alt_phone']) ?>" target="_blank" class="phone-action-btn whatsapp-btn" title="واتساب">
+                                                        <i class="bi bi-whatsapp"></i>
+                                                        <span>واتساب</span>
+                                                    </a>
+                                                </div>
+                                            </span>
                                         </div>
                                     <?php endif; ?>
                                     <?php if (!empty($patient['national_id'])): ?>
@@ -321,15 +375,15 @@
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <div class="btn-group" role="group">
+                                    <div class="btn-group btn-group-sm" role="group">
                                         <a href="/secretary/patients/<?= $patient['id'] ?>" 
-                                           class="btn btn-outline-primary btn-sm" 
+                                           class="btn btn-outline-primary" 
                                            data-bs-toggle="tooltip" 
                                            data-bs-placement="top" 
                                            data-bs-title="عرض تفاصيل المريض">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <button class="btn btn-outline-success btn-sm" 
+                                        <button class="btn btn-outline-success" 
                                                 data-bs-toggle="tooltip" 
                                                 data-bs-placement="top" 
                                                 data-bs-title="حجز موعد جديد"
@@ -337,7 +391,7 @@
                                             <i class="bi bi-calendar-plus"></i>
                                         </button>
                                         <a href="/secretary/payments?patient_id=<?= $patient['id'] ?>" 
-                                           class="btn btn-outline-info btn-sm" 
+                                           class="btn btn-outline-warning" 
                                            data-bs-toggle="tooltip" 
                                            data-bs-placement="top" 
                                            data-bs-title="عرض المدفوعات">
@@ -359,6 +413,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header position-relative">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 <h5 class="modal-title arabic-text">
                     <i class="bi bi-search me-2"></i>
                     البحث في المرضى
@@ -368,7 +423,6 @@
                     <kbd>Esc</kbd>
                     <span class="arabic-text">للإغلاق</span>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <!-- Search Input -->
@@ -439,6 +493,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header position-relative">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 <h5 class="modal-title arabic-text">
                     <i class="bi bi-person-plus me-2"></i>
                     إضافة مريض جديد
@@ -448,7 +503,6 @@
                     <kbd>Esc</kbd>
                     <span>للإغلاق</span>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="addPatientForm">
                 <div class="modal-body">
@@ -574,6 +628,19 @@ function formatDate(dateString) {
         month: 'short',
         day: 'numeric'
     });
+}
+
+// Debounce function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }
 
 // Search functionality
@@ -717,13 +784,23 @@ function highlightSearchTerm(text, searchTerm) {
 
 function getAvatarInitials(firstName, lastName) {
     if (!firstName || !lastName) {
-        return '؟.؟';
+        return '؟؟';
     }
     
-    const firstChar = firstName.charAt(0).toUpperCase();
-    const lastChar = lastName.charAt(0).toUpperCase();
+    // Check if text contains Arabic characters
+    const hasArabic = /[\u0600-\u06FF]/.test(firstName + lastName);
     
-    return firstChar + '.' + lastChar;
+    if (hasArabic) {
+        // For Arabic text, use Arabic characters directly
+        const firstChar = firstName.charAt(0);
+        const lastChar = lastName.charAt(0);
+        return firstChar + lastChar;
+    } else {
+        // For non-Arabic text, use uppercase with dot
+        const firstChar = firstName.charAt(0).toUpperCase();
+        const lastChar = lastName.charAt(0).toUpperCase();
+        return firstChar + '.' + lastChar;
+    }
 }
 
 // Initialize when DOM is ready
@@ -733,14 +810,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearQuickSearch = document.getElementById('clearQuickSearch');
     
     if (quickSearch) {
-        quickSearch.addEventListener('input', function() {
-            filterPatientsBySearch(this.value);
-        });
+        quickSearch.addEventListener('input', debounce(function() {
+            filterPatientsTable();
+        }, 300));
         
         if (clearQuickSearch) {
             clearQuickSearch.addEventListener('click', function() {
                 quickSearch.value = '';
-                filterPatientsBySearch('');
+                filterPatientsTable();
                 quickSearch.focus();
             });
         }
@@ -1056,10 +1133,366 @@ function initializeAddPatientModal() {
 }
 
 // Initialize add patient modal when DOM is ready
+// Initialize phone tooltip click handlers
+function initializePhoneTooltips() {
+    // Use event delegation for dynamically added phone numbers
+    document.addEventListener('click', function(e) {
+        // Check if click is on a phone number link
+        const phoneLink = e.target.closest('.phone-number-link');
+        if (phoneLink) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const container = phoneLink.closest('.phone-number-container');
+            if (container) {
+                // Toggle tooltip visibility
+                const isActive = container.classList.contains('active');
+                
+                // Close all other tooltips
+                document.querySelectorAll('.phone-number-container.active').forEach(activeContainer => {
+                    if (activeContainer !== container) {
+                        activeContainer.classList.remove('active');
+                    }
+                });
+                
+                // Toggle current tooltip
+                if (isActive) {
+                    container.classList.remove('active');
+                } else {
+                    container.classList.add('active');
+                }
+            }
+        } else {
+            // Close all tooltips when clicking outside
+            document.querySelectorAll('.phone-number-container.active').forEach(container => {
+                container.classList.remove('active');
+            });
+        }
+    });
+    
+    // Prevent tooltip from closing when clicking inside it
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.phone-htooltip')) {
+            e.stopPropagation();
+        }
+    });
+}
+
+// Sort and filter functions
+let currentSortColumn = null;
+let currentSortDirection = 'asc';
+let filteredPatients = [];
+
+function sortTable(column) {
+    const tbody = document.getElementById('patientsTableBody');
+    if (!tbody) return;
+    
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    // Toggle sort direction if clicking same column
+    if (currentSortColumn === column) {
+        currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        currentSortColumn = column;
+        currentSortDirection = 'asc';
+    }
+    
+    // Remove existing sort indicators
+    document.querySelectorAll('.sort-indicator').forEach(ind => ind.remove());
+    
+    // Add sort indicator to current column header
+    const headers = document.querySelectorAll('thead th');
+    headers.forEach((header, index) => {
+        if (index === column) {
+            const indicator = document.createElement('i');
+            indicator.className = `bi bi-arrow-${currentSortDirection === 'asc' ? 'up' : 'down'} sort-indicator ms-1`;
+            header.appendChild(indicator);
+        }
+    });
+    
+    rows.sort((a, b) => {
+        const aText = a.cells[column]?.textContent.trim() || '';
+        const bText = b.cells[column]?.textContent.trim() || '';
+        
+        // Try to parse as number
+        const aNum = parseFloat(aText.replace(/[^0-9.]/g, ''));
+        const bNum = parseFloat(bText.replace(/[^0-9.]/g, ''));
+        
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+            return currentSortDirection === 'asc' ? aNum - bNum : bNum - aNum;
+        }
+        
+        // String comparison
+        return currentSortDirection === 'asc' 
+            ? aText.localeCompare(bText, 'ar')
+            : bText.localeCompare(aText, 'ar');
+    });
+    
+    // Re-append sorted rows
+    rows.forEach(row => tbody.appendChild(row));
+    
+    // Re-initialize phone tooltips after sorting
+    setTimeout(() => {
+        initializePhoneTooltips();
+    }, 100);
+}
+
+// Add sort functionality to table headers
+function addSortFunctionality() {
+    const headers = document.querySelectorAll('thead th');
+    headers.forEach((header, index) => {
+        // Skip action column (last column)
+        if (index < headers.length - 1) {
+            header.style.cursor = 'pointer';
+            header.addEventListener('click', () => sortTable(index));
+            header.title = 'انقر للفرز';
+        }
+    });
+}
+
+// Filter patients table
+function filterPatientsTable() {
+    const searchTerm = document.getElementById('quickSearch')?.value.toLowerCase() || '';
+    const tbody = document.getElementById('patientsTableBody');
+    if (!tbody) return;
+    
+    const rows = tbody.querySelectorAll('tr');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const isVisible = text.includes(searchTerm);
+        row.style.display = isVisible ? '' : 'none';
+        if (isVisible) visibleCount++;
+    });
+    
+    // Update total count
+    const totalCountEl = document.getElementById('totalPatientsCount');
+    if (totalCountEl) {
+        totalCountEl.textContent = visibleCount;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     initializeAddPatientModal();
+    initializePhoneTooltips();
+    addSortFunctionality();
+    
+    // Quick search filter
+    const quickSearch = document.getElementById('quickSearch');
+    if (quickSearch) {
+        quickSearch.addEventListener('input', debounce(filterPatientsTable, 300));
+    }
+    
+    // Clear quick search
+    const clearQuickSearch = document.getElementById('clearQuickSearch');
+    if (clearQuickSearch) {
+        clearQuickSearch.addEventListener('click', () => {
+            if (quickSearch) {
+                quickSearch.value = '';
+                filterPatientsTable();
+            }
+        });
+    }
+    
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Initialize auto-refresh toggle from localStorage
+    const autoRefreshEnabled = getPatientsAutoRefreshState();
+    const toggleSwitch = document.getElementById('patientsAutoRefresh');
+    if (toggleSwitch) {
+        toggleSwitch.checked = autoRefreshEnabled;
+    }
+    
+    // Start auto-refresh if enabled
+    if (autoRefreshEnabled) {
+        startPatientsAutoRefresh();
+    }
+});
+
+// Auto-refresh state management for patients
+let patientsRefreshInterval = null;
+
+function getPatientsAutoRefreshState() {
+    const saved = localStorage.getItem('patientsAutoRefresh');
+    return saved === null ? true : saved === 'true'; // Default is ON
+}
+
+function savePatientsAutoRefreshState(enabled) {
+    localStorage.setItem('patientsAutoRefresh', enabled ? 'true' : 'false');
+}
+
+function togglePatientsAutoRefresh(enabled) {
+    savePatientsAutoRefreshState(enabled);
+    
+    if (enabled) {
+        if (!patientsRefreshInterval) {
+            startPatientsAutoRefresh();
+        }
+    } else {
+        if (patientsRefreshInterval) {
+            clearInterval(patientsRefreshInterval);
+            patientsRefreshInterval = null;
+        }
+    }
+}
+
+function startPatientsAutoRefresh() {
+    // Clear any existing interval
+    if (patientsRefreshInterval) {
+        clearInterval(patientsRefreshInterval);
+    }
+    
+    patientsRefreshInterval = setInterval(() => {
+        const addPatientModal = document.getElementById('addPatientModal');
+        const searchModal = document.getElementById('searchModal');
+        
+        // Don't refresh if any modal is open
+        const isModalOpen = addPatientModal?.classList.contains('show') ||
+                           searchModal?.classList.contains('show') ||
+                           document.querySelector('.modal.show') !== null;
+        
+        if (!isModalOpen) {
+            refreshPatientsData();
+        }
+    }, 60000); // 60 seconds
+}
+
+// Function to refresh patients data via AJAX
+function refreshPatientsData() {
+    // Get current filter values
+    const search = document.getElementById('search')?.value || '';
+    const gender = document.getElementById('gender')?.value || '';
+    const ageRange = document.getElementById('age_range')?.value || '';
+    const lastVisit = document.getElementById('last_visit')?.value || '';
+    
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (gender) params.append('gender', gender);
+    if (ageRange) params.append('age_range', ageRange);
+    if (lastVisit) params.append('last_visit', lastVisit);
+    params.append('page', '1'); // Always get first page for stats
+    
+    // Show subtle loading indicator
+    const tableBody = document.getElementById('patientsTableBody');
+    if (tableBody) {
+        tableBody.parentElement.classList.add('table-loading');
+    }
+    
+    fetch(`/api/secretary/patients?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok && data.data) {
+            // Update statistics cards
+            if (data.data.stats) {
+                updatePatientsStats(data.data.stats);
+            }
+            
+            // Note: We don't update the table automatically to avoid disrupting user's current view
+            // The stats are updated silently in the background
+        }
+    })
+    .catch(error => {
+        // Silently fail - don't show error to user for background refresh
+        console.error('Error refreshing patients data:', error);
+    })
+    .finally(() => {
+        // Remove loading indicator
+        const tableBody = document.getElementById('patientsTableBody');
+        if (tableBody) {
+            tableBody.parentElement.classList.remove('table-loading');
+        }
+    });
+}
+
+// Update patients statistics cards
+function updatePatientsStats(stats) {
+    // Update total patients
+    const totalEl = document.querySelector('.stats-card-primary .stats-card-value');
+    if (totalEl) {
+        totalEl.textContent = stats.total || 0;
+    }
+
+    // Update active patients
+    const activeEl = document.querySelector('.stats-card-success .stats-card-value');
+    if (activeEl) {
+        activeEl.textContent = stats.active || 0;
+    }
+
+    // Update recent patients
+    const recentEl = document.querySelector('.stats-card-info .stats-card-value');
+    if (recentEl) {
+        recentEl.textContent = stats.recent || 0;
+    }
+
+    // Update female count
+    const femaleEl = document.querySelector('.stats-card-warning .stats-card-value');
+    if (femaleEl) {
+        femaleEl.textContent = stats.gender?.Female || 0;
+    }
+}
+
+
+// Hover effect with radial gradient - glowing effect following mouse
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.stats-card');
+    const wrapper = document.querySelector('.stats-cards-wrapper');
+
+    if (wrapper && cards.length > 0) {
+        wrapper.addEventListener('mousemove', function (event) {
+            cards.forEach((card) => {
+                const cardContent = card.querySelector('.stats-card-content');
+                if (!cardContent) return;
+                
+                const rect = cardContent.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+
+                // Get card type and corresponding color
+                let color = 'rgba(59, 248, 251, 0.3)';
+                if (card.classList.contains('stats-card-primary')) {
+                    color = 'rgba(14, 165, 233, 0.4)';
+                } else if (card.classList.contains('stats-card-success')) {
+                    color = 'rgba(16, 185, 129, 0.4)';
+                } else if (card.classList.contains('stats-card-danger')) {
+                    color = 'rgba(239, 68, 68, 0.4)';
+                } else if (card.classList.contains('stats-card-warning')) {
+                    color = 'rgba(245, 158, 11, 0.4)';
+                } else if (card.classList.contains('stats-card-info')) {
+                    color = 'rgba(187, 54, 204, 0.4)';
+                }
+
+                // Apply gradient to card-content, overlay on top of background-color
+                // Use multiple backgrounds: gradient on top, solid color below
+                cardContent.style.background = `radial-gradient(960px circle at ${x}px ${y}px, ${color}, transparent 15%), var(--card)`;
+            });
+        });
+        
+        // Reset background when mouse leaves wrapper
+        wrapper.addEventListener('mouseleave', function() {
+            cards.forEach((card) => {
+                const cardContent = card.querySelector('.stats-card-content');
+                if (cardContent) {
+                    cardContent.style.background = '';
+                }
+            });
+        });
+    }
 });
 </script>
+
+<link href="/app/Views/doctor/assets/css/patients.css?v=<?= file_exists(__DIR__ . '/../../doctor/assets/css/patients.css') ? filemtime(__DIR__ . '/../../doctor/assets/css/patients.css') : time() ?>" rel="stylesheet">
 
 <style>
 /* RTL specific adjustments */
@@ -1126,6 +1559,11 @@ document.addEventListener('DOMContentLoaded', function() {
     font-weight: 600;
     font-size: 0.9rem;
     transition: all 0.3s ease;
+    direction: rtl;
+    text-align: center;
+    font-family: 'Cairo', 'Arial', sans-serif;
+    line-height: 1;
+    unicode-bidi: bidi-override;
 }
 
 /* Gender-based avatar colors */
@@ -1164,11 +1602,11 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .btn-group .btn {
-    border-radius: 6px;
+    border-radius: 10px !important;
 }
 
 .btn-group .btn:not(:last-child) {
-    border-left: 1px solid var(--border);
+    border-left: 1px solid var(--border) !important;
 }
 
 /* Search Modal Styles */
@@ -1178,10 +1616,60 @@ document.addEventListener('DOMContentLoaded', function() {
     color: var(--text);
 }
 
+/* RTL Modal Header Adjustments */
 .modal-header {
+    direction: rtl;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    padding: 1rem 1.5rem;
     background-color: var(--bg-alt);
     border-bottom-color: var(--border);
     color: var(--text);
+}
+
+.modal-header .btn-close {
+    order: -1;
+    margin-left: 0;
+    margin-right: 0;
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+.modal-header .keyboard-hint {
+    order: -1;
+    position: absolute;
+    left: 10% !important;
+    right: auto !important;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    z-index: 9;
+    white-space: nowrap;
+}
+
+.modal-header .modal-title {
+    order: 0;
+    margin-right: auto;
+    margin-left: 0;
+    flex: 1;
+    text-align: right;
+    padding-right: 0;
+    padding-left: 60px; /* Space for close button */
+}
+
+.modal-header:has(.keyboard-hint) .modal-title {
+    padding-left: 120px; /* Extra space when keyboard-hint exists */
 }
 
 .modal-footer {
@@ -1495,6 +1983,11 @@ kbd[lang="ar"] {
     font-weight: 600;
     font-size: 0.9rem;
     transition: all 0.3s ease;
+    direction: rtl;
+    text-align: center;
+    font-family: 'Cairo', 'Arial', sans-serif;
+    line-height: 1;
+    unicode-bidi: bidi-override;
 }
 
 /* Gender-based avatar colors */
@@ -1588,10 +2081,60 @@ kbd[lang="ar"] {
     color: var(--text);
 }
 
+/* RTL Modal Header Adjustments */
 .modal-header {
+    direction: rtl;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    padding: 1rem 1.5rem;
     background-color: var(--bg-alt);
     border-bottom-color: var(--border);
     color: var(--text);
+}
+
+.modal-header .btn-close {
+    order: -1;
+    margin-left: 0;
+    margin-right: 0;
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+.modal-header .keyboard-hint {
+    order: -1;
+    position: absolute;
+    left: 10% !important;
+    right: auto !important;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    z-index: 9;
+    white-space: nowrap;
+}
+
+.modal-header .modal-title {
+    order: 0;
+    margin-right: auto;
+    margin-left: 0;
+    flex: 1;
+    text-align: right;
+    padding-right: 0;
+    padding-left: 60px; /* Space for close button */
+}
+
+.modal-header:has(.keyboard-hint) .modal-title {
+    padding-left: 120px; /* Extra space when keyboard-hint exists */
 }
 
 .modal-footer {
@@ -1702,37 +2245,84 @@ kbd[lang="ar"] {
 
 /* Button styling for dark mode */
 .btn-outline-primary {
-    color: var(--accent);
+    background: var(--accent) !important;
     border-color: var(--accent);
+    color: white !important;
+    border-radius: 10px !important;
 }
 
 .btn-outline-primary:hover {
-    background-color: var(--accent);
-    border-color: var(--accent);
-    color: white;
+    background:rgb(0, 166, 255) !important;
+    border-color:rgb(0, 166, 255) !important;
 }
 
 .btn-outline-success {
-    color: #28a745;
-    border-color: #28a745;
+    background: #28a745 !important;
+    color: white !important;
+    border-radius: 10px !important;
+    border-color: #28a745 !important;
 }
 
 .btn-outline-success:hover {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: white;
+    background:rgb(0, 153, 36) !important;
+    border-color:rgb(0, 153, 36) !important;
+    color: white !important;
 }
 
 .btn-outline-secondary {
-    color: var(--muted);
+    background: var(--muted) !important;
+    color: white !important;
+    border-radius: 10px !important;
     border-color: var(--border);
 }
 
 .btn-outline-secondary:hover {
-    background-color: var(--bg-alt);
-    border-color: var(--border);
-    color: var(--text);
+    background: var(--muted) !important;
+    border-color: var(--muted) !important;
+    color: white !important;
 }
+
+
+
+/* Button styling for dark mode */
+.dark .btn-outline-primary {
+    background: var(--accent) !important;
+    border-color: var(--accent);
+    color: white !important;
+    border-radius: 10px !important;
+}
+
+.dark .btn-outline-primary:hover {
+    background:rgb(0, 166, 255) !important;
+    border-color:rgb(0, 166, 255) !important;
+}
+
+.dark .btn-outline-success {
+    background: #28a745 !important;
+    color: white !important;
+    border-radius: 10px !important;
+    border-color: #28a745 !important;
+}
+
+.dark .btn-outline-success:hover {
+    background:rgb(0, 153, 36) !important;
+    border-color:rgb(0, 153, 36) !important;
+    color: white !important;
+}
+
+.dark .btn-outline-secondary {
+    background: var(--muted) !important;
+    color: white !important;
+    border-radius: 10px !important;
+    border-color: var(--border);
+}
+
+.dark .btn-outline-secondary:hover {
+    background: var(--muted) !important;
+    border-color: var(--muted) !important;
+    color: white !important;
+}
+
 
 .btn-secondary {
     background-color: var(--bg-alt);
@@ -1827,10 +2417,60 @@ kbd[lang="ar"] {
     color: var(--text);
 }
 
-#addPatientModal .modal-header {
+#addPatientModal /* RTL Modal Header Adjustments */
+.modal-header {
+    direction: rtl;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    padding: 1rem 1.5rem;
     background-color: var(--bg-alt);
     border-bottom-color: var(--border);
     color: var(--text);
+}
+
+.modal-header .btn-close {
+    order: -1;
+    margin-left: 0;
+    margin-right: 0;
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+.modal-header .keyboard-hint {
+    order: -1;
+    position: absolute;
+    left: 10% !important;
+    right: auto !important;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    z-index: 9;
+    white-space: nowrap;
+}
+
+.modal-header .modal-title {
+    order: 0;
+    margin-right: auto;
+    margin-left: 0;
+    flex: 1;
+    text-align: right;
+    padding-right: 0;
+    padding-left: 60px; /* Space for close button */
+}
+
+.modal-header:has(.keyboard-hint) .modal-title {
+    padding-left: 120px; /* Extra space when keyboard-hint exists */
 }
 
 #addPatientModal .modal-footer {
@@ -2044,26 +2684,29 @@ kbd[lang="ar"] {
 }
 
 .btn-outline-danger {
-    color: #dc3545;
-    border-color: #dc3545;
+    background: #dc3545 !important;
+    color: white !important;
+    border-color: #dc3545 !important;
+    border-radius: 10px !important;
 }
 
 .btn-outline-danger:hover {
-    background-color: #dc3545;
-    border-color: #dc3545;
+    background:rgb(220, 83, 97) !important;
+    border-color:rgb(220, 83, 97) !important;
     color: white;
 }
 
 .btn-warning {
-    background-color: #ffc107;
-    border-color: #ffc107;
-    color: #212529;
+    background: #ffc107 !important;
+    border-color: #ffc107 !important;
+    color: white !important;
+    border-radius: 10px !important;
 }
 
 .btn-warning:hover {
-    background-color: #e0a800;
-    border-color: #d39e00;
-    color: #212529;
+    background:rgb(255, 201, 47) !important;
+    border-color:rgb(255, 201, 47) !important;
+    color: white !important;
 }
 
 #deleteConfirmationText {
@@ -2523,4 +3166,476 @@ kbd[lang="ar"] {
 h1, h2, h3, h4, h5, h6 {
 color: var(--text) !important;
 }
+
+/* Sortable header styling */
+.sortable-header {
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.sortable-header:hover {
+    background-color: rgba(var(--accent-rgb), 0.1);
+    cursor: pointer;
+}
+
+.sortable-header .sort-indicator {
+    opacity: 1 !important;
+    color: var(--accent);
+    font-weight: bold;
+}
+
+/* Action buttons styling */
+.btn-group-sm .btn {
+    transition: all 0.2s ease;
+    border-radius: 10px !important;
+}
+
+.btn-group-sm .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-outline-primary:hover {
+    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3);
+}
+
+.btn-outline-success:hover {
+    box-shadow: 0 2px 8px rgba(25, 135, 84, 0.3);
+}
+
+.btn-outline-info:hover {
+    box-shadow: 0 2px 8px rgba(13, 202, 240, 0.3);
+}
+
+/* Toggle Switch */
+.toggle-switch-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.toggle-switch {
+    height: 32px;
+    width: 64px;
+    background: var(--card);
+    appearance: none;
+    border-radius: 32px;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.1),
+                inset 0 2px 2px rgba(0,0,0,0.1),
+                inset 0 -1px 1px rgba(0,0,0,0.1);
+    position: relative;
+    outline: none;
+    cursor: pointer;
+    transition: 0.5s;
+    border: 2px solid var(--border);
+}
+
+.toggle-switch::before {
+    height: 26px;
+    width: 26px;
+    position: absolute;
+    top: 1px;
+    right: 1px; /* RTL: right instead of left */
+    content: "";
+    background: linear-gradient(to bottom, var(--card), var(--bg));
+    border-radius: 50%;
+    transform: scale(0.9);
+    transition: 0.5s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3),
+                inset 1px 1px rgba(255,255,255,0.2),
+                inset -1px 1px rgba(255,255,255,0.2);
+}
+
+.toggle-switch:checked {
+    background: var(--accent);
+    box-shadow: inset 0 1px 10px rgba(0,0,0,0.1),
+                inset 0 1px 2px rgba(0,0,0,0.1),
+                inset 0 -1px 1px rgba(0,0,0,0.05);
+    border-color: var(--accent);
+}
+
+.toggle-switch:checked::before {
+    right: 33px; /* RTL: right instead of left */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2),
+                inset 1px 1px rgba(255,255,255,1),
+                inset -1px 1px rgba(255,255,255,1);
+    background: linear-gradient(to bottom, #ffffff, #f0f0f0);
+}
+
+.toggle-switch::after {
+    content: "OFF";
+    position: absolute;
+    right: 8px; /* RTL: right instead of left */
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--text) !important;
+    opacity: 0.7;
+    transition: 0.5s;
+    pointer-events: none;
+}
+
+.toggle-switch:checked::after {
+    content: "ON";
+    right: 40px; /* RTL: right instead of left */
+    color: black !important;
+    opacity: 1;
+}
+
+.dark .toggle-switch {
+    background: var(--card);
+    box-shadow: inset 0 4px 20px rgba(0,0,0,0.3),
+                inset 0 4px 4px rgba(0,0,0,0.2),
+                inset 0 -2px 2px rgba(0,0,0,0.2);
+}
+
+.dark .toggle-switch::before {
+    background: linear-gradient(to bottom, #334155, #1e293b);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5),
+                inset 2px 2px rgba(255,255,255,0.1),
+                inset -2px 2px rgba(255,255,255,0.1);
+}
+
+.dark .toggle-switch:checked {
+    background: var(--accent);
+    box-shadow: inset 0 2px 20px rgba(0,0,0,0.2),
+                inset 0 2px 4px rgba(0,0,0,0.1),
+                inset 0 -2px 2px rgba(0,0,0,0.05);
+}
+
+.dark .toggle-switch:checked::before {
+    background: linear-gradient(to bottom, #e2e8f0, #cbd5e1);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3),
+                inset 2px 2px rgba(255,255,255,1),
+                inset -2px 2px rgba(255,255,255,1);
+}
+
+.dark .toggle-switch::after {
+    color: var(--text);
+}
+
+.dark .toggle-switch:checked::after {
+    color: white !important;
+}
+
+/* Stats Cards - Center Content and Background Colors */
+.stats-cards-wrapper {
+    margin: 0 -0.5rem;
+}
+
+.stats-card-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 180px;
+}
+
+.stats-card {
+    width: 100%;
+    height: 100%;
+    background: none;
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.stats-card-content {
+    background-color: var(--card);
+    border-radius: inherit;
+    transition: all 0.25s ease;
+    height: calc(100% - 2px);
+    width: calc(100% - 2px);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px var(--shadow);
+    border: 1px solid var(--border);
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.stats-card:hover {
+    transform: scale(0.98);
+}
+
+.stats-card-header {
+    padding: 1.5rem 1rem 0.5rem 1rem;
+    text-align: center;
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.stats-card-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+}
+
+.stats-card-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0.5rem 0;
+    line-height: 1.2;
+}
+
+.stats-card-icon {
+    position: absolute;
+    right: 1rem; /* RTL: right instead of left */
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    opacity: 0.15;
+    pointer-events: none;
+}
+
+.stats-card-icon i {
+    font-size: 4rem;
+    color: var(--text);
+}
+
+/* Background colors for stats cards - Light Mode */
+.stats-card-primary .stats-card-content {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%), var(--card);
+    border-color: rgba(14, 165, 233, 0.3);
+}
+
+.stats-card-success .stats-card-content {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%), var(--card);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.stats-card-info .stats-card-content {
+    background: linear-gradient(135deg, rgba(187, 54, 204, 0.1) 0%, rgba(187, 54, 204, 0.05) 100%), var(--card);
+    border-color: rgba(187, 54, 204, 0.3);
+}
+
+.stats-card-warning .stats-card-content {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%), var(--card);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.stats-card-danger .stats-card-content {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%), var(--card);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Dark Mode Stats Cards */
+.dark .stats-card-content {
+    background-color: var(--card);
+    border-color: var(--border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.dark .stats-card-primary .stats-card-content {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(56, 189, 248, 0.08) 100%), var(--card);
+    border-color: rgba(56, 189, 248, 0.4);
+}
+
+.dark .stats-card-success .stats-card-content {
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(74, 222, 128, 0.08) 100%), var(--card);
+    border-color: rgba(74, 222, 128, 0.4);
+}
+
+.dark .stats-card-info .stats-card-content {
+    background: linear-gradient(135deg, rgba(192, 132, 252, 0.15) 0%, rgba(192, 132, 252, 0.08) 100%), var(--card);
+    border-color: rgba(192, 132, 252, 0.4);
+}
+
+.dark .stats-card-warning .stats-card-content {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.08) 100%), var(--card);
+    border-color: rgba(251, 191, 36, 0.4);
+}
+
+.dark .stats-card-danger .stats-card-content {
+    background: linear-gradient(135deg, rgba(248, 113, 113, 0.15) 0%, rgba(248, 113, 113, 0.08) 100%), var(--card);
+    border-color: rgba(248, 113, 113, 0.4);
+}
+
+.dark .stats-card-title {
+    color: var(--muted);
+}
+
+.dark .stats-card-value {
+    color: var(--text);
+}
+
+.dark .stats-card-icon i {
+    opacity: 0.2;
+}
+
+/* Table header RTL alignment */
+.table thead th {
+    text-align: right !important;
+    direction: rtl;
+}
+
+.table thead th.arabic-text {
+    text-align: right !important;
+    direction: rtl;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .stats-card-wrapper {
+        min-height: 160px;
+    }
+    
+    .stats-card-value {
+        font-size: 1.75rem;
+    }
+    
+    .stats-card-title {
+        font-size: 0.7rem;
+    }
+    
+    .stats-card-header {
+        padding: 1.25rem 0.75rem 0.5rem 0.75rem;
+    }
+}
+
+/* ============================================
+       Action Buttons in Table - Ensure proper borders and styles
+       ============================================ */
+       #patientsTableBody .btn-group .btn {
+        border: 1px solid var(--border) !important;
+        border-radius: 10px !important;
+        margin: 0 !important;
+        padding: 0.375rem 0.75rem !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    #patientsTableBody .btn-group .btn-outline-primary {
+        color: white !important;
+        background: var(--accent) !important;
+        border-radius: 10px !important;
+        border: 1px solid var(--accent) !important;
+    }
+    
+    #patientsTableBody .btn-group .btn-outline-primary:hover {
+        background: var(--accent) !important;
+        color: white !important;
+    }
+
+    #patientsTableBody .btn-group .btn-outline-warning {
+        color: white !important;
+        background: #ffc107 !important;
+        border: 1px solid #ffc107 !important;
+        border-radius: 10px !important;
+    }
+    
+    #patientsTableBody .btn-group .btn-outline-warning:hover {
+        background: #ffc107 !important;
+        color: white !important;
+    }
+
+    #patientsTableBody .btn-group .btn-outline-info {
+        color: white !important;
+        background: #0ea5e9 !important;
+        border: 1px solid #0ea5e9 !important;
+        border-radius: 10px !important;
+    }
+    
+    #patientsTableBody .btn-group .btn-outline-info:hover {
+        background: #0ea5e9 !important;
+        color: white !important;
+    }
+    
+    #patientsTableBody .btn-group .btn-outline-success {
+        color: white !important;
+        background: var(--success) !important;
+        border: 1px solid var(--success) !important;
+        border-radius: 10px !important;
+    }
+    
+    #patientsTableBody .btn-group .btn-outline-success:hover {
+        background: var(--success) !important;
+        color: white !important;
+    }
+    
+    #patientsTableBody .btn-group .btn-outline-danger {
+        color: white !important;
+        background: var(--danger) !important;
+        border: 1px solid var(--danger) !important;
+        border-radius: 10px !important;
+    }
+    
+    #patientsTableBody .btn-group .btn-outline-danger:hover {
+        background: var(--danger) !important;
+        color: white !important;
+    }
+    
+    .dark #patientsTableBody .btn-group .btn-outline-primary {
+        background: var(--accent) !important;
+        border: 1px solid var(--accent) !important;
+        border-radius: 10px !important;
+        color: white !important;
+    }
+    
+    .dark #patientsTableBody .btn-group .btn-outline-primary:hover {
+        background: var(--accent) !important;
+        color: white !important;
+    }
+    
+    .dark #patientsTableBody .btn-group .btn-outline-info {
+        background: #0ea5e9 !important;
+        border: 1px solid #0ea5e9 !important;
+        border-radius: 10px !important;
+        color: white !important;
+    }
+    
+    .dark #patientsTableBody .btn-group .btn-outline-info:hover {
+        background: #0ea5e9 !important;
+        color: white !important;
+    }
+    
+    .dark #patientsTableBody .btn-group .btn-outline-success {
+        background: var(--success) !important;
+        border: 1px solid var(--success) !important;
+        border-radius: 10px !important;
+        color: white !important;
+    }
+    
+    .dark #patientsTableBody .btn-group .btn-outline-success:hover {
+        background: var(--success) !important;
+        color: white !important;
+    }
+    
+    .dark #patientsTableBody .btn-group .btn-outline-danger {
+        background: var(--danger) !important;
+        border: 1px solid var(--danger) !important;
+        border-radius: 10px !important;
+        color: white !important;
+    }
+    
+    .dark #patientsTableBody .btn-group .btn-outline-danger:hover {
+        background: var(--danger) !important;
+        color: white !important;
+    }
+
+    .dark #patientsTableBody .btn-group .btn-outline-info,.dark #patientsTableBody .btn-group .btn-outline-warning{
+        margin-right: 0.25rem !important;
+    }
+
+    #patientsTableBody .btn-group .btn-outline-info, #patientsTableBody .btn-group .btn-outline-warning{
+        margin-right: 0.25rem !important;
+    }
 </style>

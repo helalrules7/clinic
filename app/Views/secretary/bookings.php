@@ -1,3 +1,7 @@
+<link href="/app/Views/secretary/assets/css/bookings.css?v=<?= file_exists(__DIR__ . '/assets/css/bookings.css') ? filemtime(__DIR__ . '/assets/css/bookings.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+
 <!-- Bookings Header -->
 <div class="row mb-4">
     <div class="col-md-6">
@@ -6,9 +10,14 @@
                 <i class="bi bi-calendar-check me-2"></i>
                 إدارة الحجوزات
             </h4>
-            <div class="refresh-indicator d-flex align-items-center">
-                <i class="bi bi-arrow-clockwise me-2"></i>
-                <small class="text-muted arabic-text">تحديث تلقائي كل 60 ثانية</small>
+            <div class="d-flex align-items-center ms-3" style="padding-bottom: 10px !important;">
+                <label class="form-label mb-0 me-2" for="bookingsAutoRefresh">
+                    <small class="text-muted arabic-text">تحديث تلقائي</small>
+                </label>
+                <div class="toggle-switch-wrapper">
+                    <input type="checkbox" class="toggle-switch" id="bookingsAutoRefresh" 
+                           onchange="toggleBookingsAutoRefresh(this.checked)">
+                </div>
             </div>
         </div>
         <p class="text-muted mb-0 arabic-text">إنشاء وإدارة مواعيد المرضى</p>
@@ -47,68 +56,71 @@
 </div>
 
 <!-- Bookings Statistics -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-primary">
+<div class="row mb-4 stats-cards-wrapper">
+    <div class="col-md-3 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-primary">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title arabic-text">إجمالي الحجوزات</h4>
+                        <h3 class="stats-card-value arabic-text" id="totalBookings">0</h3>
+                    </div>
+                    <div class="stats-card-icon">
                         <i class="bi bi-calendar-check"></i>
                     </div>
-                    <div class="stat-content ms-3">
-                        <h3 class="stat-number" id="totalBookings">0</h3>
-                        <p class="stat-label arabic-text">إجمالي الحجوزات</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-success">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title arabic-text">في الإنتظار</h4>
+                        <h3 class="stats-card-value arabic-text" id="pendingBookings">0</h3>
+                    </div>
+                    <div class="stats-card-icon">
+                        <i class="bi bi-calendar2-range"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-success">
-                        <i class="bi bi-check-circle"></i>
+    <div class="col-md-3 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-info">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title arabic-text">تم الحضور</h4>
+                        <h3 class="stats-card-value arabic-text" id="checkedInBookings">0</h3>
                     </div>
-                    <div class="stat-content ms-3">
-                        <h3 class="stat-number" id="completedBookings">0</h3>
-                        <p class="stat-label arabic-text">مكتملة</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-warning">
-                        <i class="bi bi-clock"></i>
-                    </div>
-                    <div class="stat-content ms-3">
-                        <h3 class="stat-number" id="pendingBookings">0</h3>
-                        <p class="stat-label arabic-text">في الانتظار</p>
+                    <div class="stats-card-icon">
+                        <i class="bi bi-calendar-check"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-info">
-                        <i class="bi bi-person-check"></i>
+    <div class="col-md-3 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-warning">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title arabic-text">مكتملة</h4>
+                        <h3 class="stats-card-value arabic-text" id="completedBookings">0</h3>
                     </div>
-                    <div class="stat-content ms-3">
-                        <h3 class="stat-number" id="checkedInBookings">0</h3>
-                        <p class="stat-label arabic-text">تم الحضور</p>
+                    <div class="stats-card-icon">
+                        <i class="bi bi-calendar-heart"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+
+
 
 <!-- Calendar Info -->
 <div class="row mb-4">
@@ -133,7 +145,7 @@
                     <?= date('l, F j, Y') ?>
                 </h5>
                 <div class="d-flex align-items-center">
-                    <span class="badge bg-success me-2" id="statusIndicator">
+                    <span class="badge bg-success me-2 status-indicator" id="statusIndicator">
                         <i class="bi bi-circle-fill me-1"></i>
                         مباشر
                     </span>
@@ -155,12 +167,12 @@
 <div class="modal fade" id="addBookingModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header position-relative">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 <h5 class="modal-title arabic-text">
                     <i class="bi bi-calendar-plus me-2"></i>
                     حجز موعد جديد
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="addBookingForm">
                 <div class="modal-body">
@@ -308,6 +320,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header position-relative">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 <h5 class="modal-title arabic-text">
                     <i class="bi bi-person-plus me-2"></i>
                     إضافة مريض جديد
@@ -317,7 +330,6 @@
                     <kbd>Esc</kbd>
                     <span>للإغلاق</span>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="addPatientForm">
                 <div class="modal-body">
@@ -409,9 +421,9 @@
 <div class="modal fade" id="confirmAttendanceModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-success">
-            <div class="modal-header bg-success text-white d-flex justify-content-between align-items-center">
-                <button type="button" class="btn-close btn-close-white me-2" data-bs-dismiss="modal"></button>
-                <h5 class="modal-title arabic-text mb-0 ms-auto">
+            <div class="modal-header bg-success text-white position-relative">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title arabic-text mb-0">
                     <i class="bi bi-check-circle me-2"></i>
                     تأكيد حضور المريض
                 </h5>
@@ -549,9 +561,9 @@
 <div class="modal fade" id="editBookingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="false">
     <div class="modal-dialog modal-xl">
         <div class="modal-content border-primary">
-            <div class="modal-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <button type="button" class="btn-close btn-close-white me-2" data-bs-dismiss="modal"></button>
-                <h5 class="modal-title arabic-text mb-0 ms-auto">
+            <div class="modal-header bg-primary text-white position-relative">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title arabic-text mb-0">
                     <i class="bi bi-pencil-square me-2"></i>
                     تعديل الحجز
                 </h5>
@@ -672,9 +684,9 @@
 <div class="modal fade" id="deleteBookingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-danger">
-            <div class="modal-header bg-danger text-white d-flex justify-content-between align-items-center">
-                <button type="button" class="btn-close btn-close-white me-2" data-bs-dismiss="modal"></button>
-                <h5 class="modal-title arabic-text mb-0 ms-auto">
+            <div class="modal-header bg-danger text-white position-relative">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title arabic-text mb-0">
                     <i class="bi bi-exclamation-triangle me-2"></i>
                     تأكيد حذف الحجز
                 </h5>
@@ -2260,7 +2272,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const today = new Date();
     currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0);
     
+    // Initialize auto-refresh toggle from localStorage
+    const autoRefreshEnabled = getAutoRefreshState();
+    const toggleSwitch = document.getElementById('bookingsAutoRefresh');
+    if (toggleSwitch) {
+        toggleSwitch.checked = autoRefreshEnabled;
+    }
+    
     loadCalendar(); // Load calendar automatically
+    
+    // Start auto-refresh if enabled
+    if (autoRefreshEnabled) {
+        startAutoRefresh();
+    }
 });
 
 function setupEventListeners() {
@@ -2347,6 +2371,12 @@ function setupEventListeners() {
 function loadCalendar() {
     const dateStr = currentDate.toISOString().split('T')[0];
     
+    // Show loading indicator
+    const calendarContainer = document.getElementById('bookingsCalendarContainer');
+    if (calendarContainer) {
+        calendarContainer.parentElement.classList.add('table-loading', 'loading');
+    }
+    
     fetch(`/secretary/bookings/calendar?date=${dateStr}`)
         .then(response => response.json())
         .then(data => {
@@ -2355,17 +2385,20 @@ function loadCalendar() {
                 updateDateDisplay();
                 updateLastUpdate();
                 updateStatistics(data.data.appointments || []);
-                
-                // Only start auto refresh if not already started
-                if (!refreshInterval) {
-                    startAutoRefresh();
-                }
+                updateStatusIndicator();
             } else {
                 showNotification('خطأ في تحميل التقويم: ' + data.error, 'danger');
             }
         })
         .catch(error => {
             showNotification('خطأ في تحميل التقويم', 'danger');
+        })
+        .finally(() => {
+            // Remove loading indicator
+            const calendarContainer = document.getElementById('bookingsCalendarContainer');
+            if (calendarContainer) {
+                calendarContainer.parentElement.classList.remove('table-loading', 'loading');
+            }
         });
 }
 
@@ -3410,14 +3443,110 @@ function updateLastUpdate() {
     lastUpdate.textContent = `آخر تحديث: ${timeString}`;
 }
 
+// Auto-refresh state management
+function getAutoRefreshState() {
+    const saved = localStorage.getItem('bookingsAutoRefresh');
+    return saved === null ? true : saved === 'true'; // Default is ON
+}
+
+function saveAutoRefreshState(enabled) {
+    localStorage.setItem('bookingsAutoRefresh', enabled ? 'true' : 'false');
+}
+
+function toggleBookingsAutoRefresh(enabled) {
+    saveAutoRefreshState(enabled);
+    
+    if (enabled) {
+        if (!refreshInterval) {
+            startAutoRefresh();
+        }
+    } else {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+            refreshInterval = null;
+        }
+    }
+}
+
 function startAutoRefresh() {
+    // Clear any existing interval
     if (refreshInterval) {
         clearInterval(refreshInterval);
     }
     
     refreshInterval = setInterval(() => {
-        loadCalendar();
+        const addBookingModal = document.getElementById('addBookingModal');
+        const editBookingModal = document.getElementById('editBookingModal');
+        const deleteAppointmentModal = document.getElementById('deleteAppointmentModal');
+        const confirmAttendanceModal = document.getElementById('confirmAttendanceModal');
+        const addPatientModal = document.getElementById('addPatientModal');
+        
+        // Don't refresh if any modal is open
+        const isModalOpen = addBookingModal?.classList.contains('show') ||
+                           editBookingModal?.classList.contains('show') ||
+                           deleteAppointmentModal?.classList.contains('show') ||
+                           confirmAttendanceModal?.classList.contains('show') ||
+                           addPatientModal?.classList.contains('show') ||
+                           document.querySelector('.modal.show') !== null;
+        
+        if (!isModalOpen) {
+            refreshCalendarData();
+        }
     }, 60000); // 60 seconds
+}
+
+// Function to refresh calendar data via AJAX
+function refreshCalendarData() {
+    const dateStr = currentDate.toISOString().split('T')[0];
+    
+    // Show subtle loading indicator
+    const calendarContainer = document.getElementById('bookingsCalendarContainer');
+    if (calendarContainer) {
+        calendarContainer.parentElement.classList.add('table-loading', 'loading');
+    }
+    
+    fetch(`/secretary/bookings/calendar?date=${dateStr}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            renderCalendar(data.data);
+            updateDateDisplay();
+            updateLastUpdate();
+            updateStatistics(data.data.appointments || []);
+            updateStatusIndicator();
+        }
+    })
+    .catch(error => {
+        // Silently fail - don't show error to user for background refresh
+        console.error('Error refreshing calendar:', error);
+    })
+    .finally(() => {
+        // Remove loading indicator
+        const calendarContainer = document.getElementById('bookingsCalendarContainer');
+        if (calendarContainer) {
+            calendarContainer.parentElement.classList.remove('table-loading', 'loading');
+        }
+    });
+}
+
+function updateStatusIndicator() {
+    const indicator = document.getElementById('statusIndicator');
+    if (indicator) {
+        indicator.innerHTML = '<i class="bi bi-circle-fill me-1"></i> مباشر';
+        indicator.className = 'badge bg-success me-2 status-indicator';
+        
+        // Add pulse animation
+        indicator.style.animation = 'pulseOnce 0.6s ease';
+        setTimeout(() => {
+            indicator.style.animation = '';
+        }, 600);
+    }
 }
 
 function getStatusBadgeClass(status) {
@@ -3968,4 +4097,302 @@ window.addEventListener('beforeunload', () => {
         clearInterval(refreshInterval);
     }
 });
+
+
+// Hover effect with radial gradient - glowing effect following mouse
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.stats-card');
+    const wrapper = document.querySelector('.stats-cards-wrapper');
+
+    if (wrapper && cards.length > 0) {
+        wrapper.addEventListener('mousemove', function (event) {
+            cards.forEach((card) => {
+                const cardContent = card.querySelector('.stats-card-content');
+                if (!cardContent) return;
+                
+                const rect = cardContent.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                // Get card type and corresponding color
+                let color = 'rgba(59, 248, 251, 0.3)';
+                if (card.classList.contains('stats-card-primary')) {
+                    color = 'rgba(14, 165, 233, 0.4)';
+                } else if (card.classList.contains('stats-card-success')) {
+                    color = 'rgba(16, 185, 129, 0.4)';
+                } else if (card.classList.contains('stats-card-danger')) {
+                    color = 'rgba(239, 68, 68, 0.4)';
+                } else if (card.classList.contains('stats-card-warning')) {
+                    color = 'rgba(245, 158, 11, 0.4)';
+                } else if (card.classList.contains('stats-card-info')) {
+                    color = 'rgba(187, 54, 204, 0.4)';
+                }
+
+                // Apply gradient to card-content, overlay on top of background-color
+                // Use multiple backgrounds: gradient on top, solid color below
+                cardContent.style.background = `radial-gradient(960px circle at ${x}px ${y}px, ${color}, transparent 15%), var(--card)`;
+            });
+        });
+        
+        // Reset background when mouse leaves wrapper
+        wrapper.addEventListener('mouseleave', function() {
+            cards.forEach((card) => {
+                const cardContent = card.querySelector('.stats-card-content');
+                if (cardContent) {
+                    cardContent.style.background = '';
+                }
+            });
+        });
+    }
+});
 </script>
+
+<style>
+/* RTL Modal Header Adjustments */
+.modal-header {
+    direction: rtl;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    padding: 1rem 1.5rem;
+}
+
+.modal-header .btn-close {
+    order: -1;
+    margin-left: 0;
+    margin-right: 0;
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+.modal-header .keyboard-hint {
+    order: -1;
+    position: absolute;
+    left: 10% !important;
+    right: auto !important;
+    top: 50% !important;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    z-index: 9;
+    white-space: nowrap;
+}
+
+.modal-header .modal-title {
+    order: 0;
+    margin-right: auto;
+    margin-left: 0;
+    flex: 1;
+    text-align: right;
+    padding-right: 0;
+    padding-left: 60px; /* Space for close button */
+}
+
+.modal-header:has(.keyboard-hint) .modal-title {
+    padding-left: 120px; /* Extra space when keyboard-hint exists */
+}
+    
+/* Stats Cards - Center Content and Background Colors */
+.stats-cards-wrapper {
+    margin: 0 -0.5rem;
+}
+
+.stats-card-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 180px;
+}
+
+.stats-card {
+    width: 100%;
+    height: 100%;
+    background: none;
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.stats-card-content {
+    background-color: var(--card);
+    border-radius: inherit;
+    transition: all 0.25s ease;
+    height: calc(100% - 2px);
+    width: calc(100% - 2px);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px var(--shadow);
+    border: 1px solid var(--border);
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.stats-card:hover {
+    transform: scale(0.98);
+}
+
+.stats-card-header {
+    padding: 1.5rem 1rem 0.5rem 1rem;
+    text-align: center;
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.stats-card-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+}
+
+.stats-card-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0.5rem 0;
+    line-height: 1.2;
+}
+
+.stats-card-icon {
+    position: absolute;
+    right: 1rem; /* RTL: right instead of left */
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    opacity: 0.15;
+    pointer-events: none;
+}
+
+.stats-card-icon i {
+    font-size: 4rem;
+    color: var(--text);
+}
+
+/* Background colors for stats cards - Light Mode */
+.stats-card-primary .stats-card-content {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%), var(--card);
+    border-color: rgba(14, 165, 233, 0.3);
+}
+
+.stats-card-success .stats-card-content {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%), var(--card);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.stats-card-info .stats-card-content {
+    background: linear-gradient(135deg, rgba(187, 54, 204, 0.1) 0%, rgba(187, 54, 204, 0.05) 100%), var(--card);
+    border-color: rgba(187, 54, 204, 0.3);
+}
+
+.stats-card-warning .stats-card-content {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%), var(--card);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.stats-card-danger .stats-card-content {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%), var(--card);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Dark Mode Stats Cards */
+.dark .stats-card-content {
+    background-color: var(--card);
+    border-color: var(--border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.dark .stats-card-primary .stats-card-content {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(56, 189, 248, 0.08) 100%), var(--card);
+    border-color: rgba(56, 189, 248, 0.4);
+}
+
+.dark .stats-card-success .stats-card-content {
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(74, 222, 128, 0.08) 100%), var(--card);
+    border-color: rgba(74, 222, 128, 0.4);
+}
+
+.dark .stats-card-info .stats-card-content {
+    background: linear-gradient(135deg, rgba(192, 132, 252, 0.15) 0%, rgba(192, 132, 252, 0.08) 100%), var(--card);
+    border-color: rgba(192, 132, 252, 0.4);
+}
+
+.dark .stats-card-warning .stats-card-content {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.08) 100%), var(--card);
+    border-color: rgba(251, 191, 36, 0.4);
+}
+
+.dark .stats-card-danger .stats-card-content {
+    background: linear-gradient(135deg, rgba(248, 113, 113, 0.15) 0%, rgba(248, 113, 113, 0.08) 100%), var(--card);
+    border-color: rgba(248, 113, 113, 0.4);
+}
+
+.dark .stats-card-title {
+    color: var(--muted);
+}
+
+.dark .stats-card-value {
+    color: var(--text);
+}
+
+.dark .stats-card-icon i {
+    opacity: 0.2;
+}
+
+/* Table header RTL alignment */
+.table thead th {
+    text-align: right !important;
+    direction: rtl;
+}
+
+.table thead th.arabic-text {
+    text-align: right !important;
+    direction: rtl;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .stats-card-wrapper {
+        min-height: 160px;
+    }
+    
+    .stats-card-value {
+        font-size: 1.75rem;
+    }
+    
+    .stats-card-title {
+        font-size: 0.7rem;
+    }
+    
+    .stats-card-header {
+        padding: 1.25rem 0.75rem 0.5rem 0.75rem;
+    }
+}
+
+.btn-group>.btn-group:not(:first-child), .btn-group>:not(.btn-check:first-child)+.btn{
+    margin-right: 10px !important;
+}
+</style>

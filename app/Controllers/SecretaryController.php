@@ -58,6 +58,60 @@ class SecretaryController
         ]);
     }
 
+    /**
+     * API endpoint to get dashboard data for polling
+     */
+    public function getDashboardData()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $today = date('Y-m-d');
+            
+            // Get today's statistics
+            $stats = $this->getTodayStats($today);
+            
+            // Get today's appointments
+            $todayAppointments = $this->getTodayAppointments($today);
+            
+            // Get recent payments
+            $recentPayments = $this->getRecentPayments(5);
+            
+            // Add missed appointments count
+            $missedCount = 0;
+            if ($stats) {
+                $stmt = $this->pdo->prepare("
+                    SELECT COUNT(*) as missed
+                    FROM appointments 
+                    WHERE date = ? AND status NOT IN ('Completed', 'Cancelled', 'CheckedIn', 'Booked')
+                ");
+                $stmt->execute([$today]);
+                $missedResult = $stmt->fetch();
+                $missedCount = $missedResult['missed'] ?? 0;
+            }
+            
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => [
+                    'stats' => [
+                        'total_appointments' => (int)($stats['total_appointments'] ?? 0),
+                        'booked' => (int)($stats['booked'] ?? 0),
+                        'checked_in' => (int)($stats['checked_in'] ?? 0),
+                        'completed' => (int)($stats['completed'] ?? 0),
+                        'missed' => (int)$missedCount
+                    ],
+                    'todayAppointments' => $todayAppointments,
+                    'recentPayments' => $recentPayments
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => 'فشل في تحميل البيانات: ' . $e->getMessage()], 500);
+        }
+    }
+
     public function bookings()
     {
         $user = $this->auth->user();
@@ -470,6 +524,50 @@ class SecretaryController
             'content' => $content,
             'viewHelper' => $this->view
         ]);
+    }
+
+    /**
+     * API endpoint to get patients data for polling
+     */
+    public function getPatientsData()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            // Get filter parameters from query string
+            $page = $_GET['page'] ?? 1;
+            $search = $_GET['search'] ?? '';
+            $gender = $_GET['gender'] ?? '';
+            $ageRange = $_GET['age_range'] ?? '';
+            $lastVisit = $_GET['last_visit'] ?? '';
+            
+            // Get patients with filters
+            $patients = $this->getPatientsWithFilters($page, $search, $gender, $ageRange, $lastVisit);
+            
+            // Get patient statistics
+            $stats = $this->getPatientStats();
+            
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => [
+                    'patients' => $patients,
+                    'stats' => [
+                        'total' => (int)($stats['total'] ?? 0),
+                        'active' => (int)($stats['active'] ?? 0),
+                        'recent' => (int)($stats['recent'] ?? 0),
+                        'gender' => [
+                            'Female' => (int)($stats['gender']['Female'] ?? 0),
+                            'Male' => (int)($stats['gender']['Male'] ?? 0)
+                        ]
+                    ]
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => 'فشل في تحميل البيانات: ' . $e->getMessage()], 500);
+        }
     }
 
     public function newPatient()

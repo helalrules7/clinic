@@ -3937,7 +3937,7 @@ function confirmChangeStatus(appointmentId) {
             
             // Reload after a short delay to show the update
             setTimeout(() => {
-                window.location.reload();
+        window.location.reload();
             }, 500);
         } else {
             window.location.reload();

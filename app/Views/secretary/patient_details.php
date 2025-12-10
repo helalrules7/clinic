@@ -1,3 +1,7 @@
+<link href="/app/Views/secretary/assets/css/details.css?v=<?= file_exists(__DIR__ . '/assets/css/details.css') ? filemtime(__DIR__ . '/assets/css/details.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/../../doctor/assets/css/dashboard.css') ? filemtime(__DIR__ . '/../../doctor/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+
 <!-- Patient Details Header -->
 <div class="row mb-4">
     <div class="col-md-8">
@@ -36,9 +40,9 @@
 <!-- Patient Information Cards -->
 <div class="row mb-4">
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="mb-0 arabic-text">
+        <div class="card shadow dashboard-card h-100">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
                     <i class="bi bi-person me-2"></i>
                     المعلومات الشخصية
                 </h6>
@@ -89,9 +93,9 @@
     </div>
     
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="mb-0 arabic-text">
+        <div class="card shadow dashboard-card h-100">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
                     <i class="bi bi-telephone me-2"></i>
                     معلومات الاتصال
                 </h6>
@@ -153,9 +157,9 @@
 <!-- Recent Appointments -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0 arabic-text">
+        <div class="card shadow dashboard-card">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
                     <i class="bi bi-calendar-check me-2"></i>
                     المواعيد الأخيرة
                 </h6>
@@ -170,14 +174,14 @@
                 <?php else: ?>
                     <div class="table-responsive">
                         <table class="table table-hover">
-                            <thead>
+                            <thead class="table-dark">
                                 <tr>
-                                    <th class="arabic-text">التاريخ</th>
-                                    <th class="arabic-text">الوقت</th>
-                                    <th class="arabic-text">الطبيب</th>
-                                    <th class="arabic-text">نوع الزيارة</th>
-                                    <th class="arabic-text">الحالة</th>
-                                    <th class="arabic-text">الإجراءات</th>
+                                    <th class="arabic-text text-end" dir="rtl">التاريخ</th>
+                                    <th class="arabic-text text-end" dir="rtl">الوقت</th>
+                                    <th class="arabic-text text-end" dir="rtl">الطبيب</th>
+                                    <th class="arabic-text text-end" dir="rtl">نوع الزيارة</th>
+                                    <th class="arabic-text text-end" dir="rtl">الحالة</th>
+                                    <th class="arabic-text text-end" dir="rtl">الإجراءات</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -224,9 +228,9 @@
 <!-- Recent Payments -->
 <div class="row">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0 arabic-text">
+        <div class="card shadow dashboard-card">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
                     <i class="bi bi-credit-card me-2"></i>
                     المدفوعات الأخيرة
                 </h6>
@@ -241,14 +245,14 @@
                 <?php else: ?>
                     <div class="table-responsive">
                         <table class="table table-hover">
-                            <thead>
+                            <thead class="table-dark">
                                 <tr>
-                                    <th class="arabic-text">التاريخ</th>
-                                    <th class="arabic-text">المبلغ</th>
-                                    <th class="arabic-text">النوع</th>
-                                    <th class="arabic-text">الطريقة</th>
-                                    <th class="arabic-text">الوصف</th>
-                                    <th class="arabic-text">الإجراءات</th>
+                                    <th class="arabic-text text-end" dir="rtl">التاريخ</th>
+                                    <th class="arabic-text text-end" dir="rtl">المبلغ</th>
+                                    <th class="arabic-text text-end" dir="rtl">النوع</th>
+                                    <th class="arabic-text text-end" dir="rtl">الطريقة</th>
+                                    <th class="arabic-text text-end" dir="rtl">الوصف</th>
+                                    <th class="arabic-text text-end" dir="rtl">الإجراءات</th>
                                 </tr>
                             </thead>
                             <tbody>

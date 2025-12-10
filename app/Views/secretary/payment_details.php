@@ -1,3 +1,7 @@
+<link href="/app/Views/secretary/assets/css/details.css?v=<?= file_exists(__DIR__ . '/assets/css/details.css') ? filemtime(__DIR__ . '/assets/css/details.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/../../doctor/assets/css/dashboard.css') ? filemtime(__DIR__ . '/../../doctor/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+
 <!-- Payment Details Header -->
 <div class="row mb-4">
     <div class="col-md-8">
@@ -30,12 +34,12 @@
 <!-- Payment Information -->
 <div class="row mb-4">
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0 arabic-text">
+        <div class="card shadow dashboard-card h-100">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
                     <i class="bi bi-info-circle me-2"></i>
                     معلومات الدفعة
-                </h5>
+                </h6>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -102,12 +106,12 @@
     </div>
     
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0 arabic-text">
+        <div class="card shadow dashboard-card h-100">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
                     <i class="bi bi-person me-2"></i>
                     بيانات المريض
-                </h5>
+                </h6>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -148,12 +152,12 @@
 <?php if ($appointment): ?>
 <div class="row mb-4">
     <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0 arabic-text">
+        <div class="card shadow dashboard-card">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
                     <i class="bi bi-calendar me-2"></i>
                     تفاصيل الموعد المرتبط
-                </h5>
+                </h6>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -229,23 +233,23 @@
 <?php if (!empty($relatedPayments)): ?>
 <div class="row mb-4">
     <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0 arabic-text">
+        <div class="card shadow dashboard-card">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
                     <i class="bi bi-list-ul me-2"></i>
                     مدفوعات أخرى لنفس المريض
-                </h5>
+                </h6>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead class="table-dark">
                             <tr>
-                                <th class="arabic-text">التاريخ</th>
-                                <th class="arabic-text">المبلغ</th>
-                                <th class="arabic-text">النوع</th>
-                                <th class="arabic-text">طريقة الدفع</th>
-                                <th class="arabic-text">الإجراءات</th>
+                                <th class="arabic-text text-end" dir="rtl">التاريخ</th>
+                                <th class="arabic-text text-end" dir="rtl">المبلغ</th>
+                                <th class="arabic-text text-end" dir="rtl">النوع</th>
+                                <th class="arabic-text text-end" dir="rtl">طريقة الدفع</th>
+                                <th class="arabic-text text-end" dir="rtl">الإجراءات</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -350,7 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
     border-bottom: 2px solid var(--accent);
 }
 
-.card-header h5 {
+.card-header h6 {
     color: var(--accent);
     font-weight: 600;
 }
