@@ -60,6 +60,7 @@ try {
     $router->get('/login', 'AuthController@showLogin');
     $router->post('/login', 'AuthController@login');
     $router->get('/logout', 'AuthController@logout');
+    $router->get('/api/auth/session-time', 'AuthController@getSessionTime');
     
     // Admin routes
     $router->get('/admin/dashboard', 'AdminController@dashboard');

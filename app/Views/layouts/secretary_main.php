@@ -563,5 +563,151 @@
             subtree: true
         });
     </script>
+    
+    <!-- Session Expiry Warning Modal -->
+    <div class="modal fade" id="sessionExpiryModal" tabindex="-1" aria-labelledby="sessionExpiryModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="sessionExpiryModalLabel">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Session Expiring Soon
+                    </h5>
+                </div>
+                <div class="modal-body text-center">
+                    <p class="mb-3">Your session will expire due to inactivity in:</p>
+                    <div class="session-countdown mb-3">
+                        <span id="sessionCountdown" class="display-4 fw-bold text-danger">30</span>
+                        <span class="fs-5 text-muted ms-2">seconds</span>
+                    </div>
+                    <p class="text-muted">Click "Stay Logged In" to extend your session.</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-primary" id="stayLoggedInBtn">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Stay Logged In
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="logoutNowBtn">
+                        <i class="bi bi-box-arrow-right me-2"></i>
+                        Logout Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Session Expiry Warning Script -->
+    <script>
+        (function() {
+            let sessionCheckInterval;
+            let countdownInterval;
+            let warningShown = false;
+            const warningThreshold = 30; // Show warning 30 seconds before expiry
+            const checkInterval = 5000; // Check every 5 seconds
+            
+            function checkSessionTime() {
+                fetch('/api/auth/session-time')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            // Session expired or not authenticated
+                            clearIntervals();
+                            window.location.href = '/login';
+                            return;
+                        }
+                        
+                        const remaining = Math.floor(data.remaining); // Ensure integer
+                        
+                        // Show warning modal if remaining time is less than threshold and not already shown
+                        if (remaining <= warningThreshold && remaining > 0 && !warningShown) {
+                            showWarningModal(remaining);
+                        }
+                        
+                        // If session expired, redirect to login
+                        if (remaining <= 0) {
+                            clearIntervals();
+                            window.location.href = '/login?expired=1';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking session time:', error);
+                    });
+            }
+            
+            function showWarningModal(remainingSeconds) {
+                warningShown = true;
+                const modal = new bootstrap.Modal(document.getElementById('sessionExpiryModal'));
+                const countdownElement = document.getElementById('sessionCountdown');
+                let countdown = Math.min(remainingSeconds, warningThreshold);
+                
+                // Update countdown display
+                countdownElement.textContent = countdown;
+                
+                // Start countdown
+                countdownInterval = setInterval(() => {
+                    countdown--;
+                    if (countdown <= 0) {
+                        clearInterval(countdownInterval);
+                        modal.hide();
+                        window.location.href = '/login?expired=1';
+                    } else {
+                        countdownElement.textContent = countdown;
+                    }
+                }, 1000);
+                
+                // Show modal
+                modal.show();
+                
+                // Handle "Stay Logged In" button
+                document.getElementById('stayLoggedInBtn').addEventListener('click', function() {
+                    clearInterval(countdownInterval);
+                    modal.hide();
+                    warningShown = false;
+                    
+                    // Make a request to refresh session
+                    fetch('/api/auth/session-time')
+                        .then(() => {
+                            // Session refreshed, continue checking
+                        })
+                        .catch(error => {
+                            console.error('Error refreshing session:', error);
+                        });
+                }, { once: true });
+                
+                // Handle "Logout Now" button
+                document.getElementById('logoutNowBtn').addEventListener('click', function() {
+                    clearInterval(countdownInterval);
+                    modal.hide();
+                    window.location.href = '/logout';
+                }, { once: true });
+            }
+            
+            function clearIntervals() {
+                if (sessionCheckInterval) {
+                    clearInterval(sessionCheckInterval);
+                }
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                }
+            }
+            
+            // Start checking session time
+            sessionCheckInterval = setInterval(checkSessionTime, checkInterval);
+            
+            // Initial check
+            checkSessionTime();
+            
+            // Reset warning flag when user interacts with page
+            let activityTimeout;
+            ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(event => {
+                document.addEventListener(event, function() {
+                    clearTimeout(activityTimeout);
+                    activityTimeout = setTimeout(() => {
+                        warningShown = false;
+                    }, 1000);
+                });
+            });
+        })();
+    </script>
 </body>
 </html>

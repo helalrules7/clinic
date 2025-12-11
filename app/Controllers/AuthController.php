@@ -141,4 +141,33 @@ class AuthController
 
         return hash_equals($_SESSION['csrf_token'], $_POST['csrf_token']);
     }
+    
+    /**
+     * API endpoint to get remaining session time
+     */
+    public function getSessionTime()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        
+        // Use checkWithoutUpdate to avoid resetting the timer
+        if (!$this->auth->checkWithoutUpdate()) {
+            http_response_code(401);
+            echo json_encode([
+                'success' => false,
+                'remaining' => 0,
+                'message' => 'Not authenticated'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            return;
+        }
+        
+        $remaining = $this->auth->getRemainingSessionTime();
+        $timeout = $this->auth->getSessionTimeout();
+        
+        echo json_encode([
+            'success' => true,
+            'remaining' => $remaining,
+            'timeout' => $timeout,
+            'last_activity' => $_SESSION['last_activity'] ?? null
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
 }

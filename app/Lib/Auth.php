@@ -62,26 +62,65 @@ class Auth
 
     public function logout()
     {
-        // Clear session
-        session_destroy();
-        
         // Clear remember me cookie
         if (isset($_COOKIE['remember_token'])) {
             setcookie('remember_token', '', time() - 3600, '/');
         }
+        
+        // Clear session
+        session_destroy();
     }
 
     public function check()
     {
-        
+        // Check if user is already loaded
         if ($this->user) {
+            // Verify session is still valid (not expired due to inactivity)
+            if (!$this->isSessionValid()) {
+                // Store expiration message before logout
+                $expiredMessage = 'Your session has expired due to inactivity. Please log in again.';
+                $this->logout();
+                
+                // Start new session to store expiration message
+                if (session_status() === PHP_SESSION_NONE) {
+                    session_start();
+                }
+                $_SESSION['session_expired'] = true;
+                $_SESSION['expired_message'] = $expiredMessage;
+                
+                return false;
+            }
+            // Only update last activity for non-API requests (actual user interaction)
+            if (!$this->isApiRequest()) {
+                $this->updateLastActivity();
+            }
             return true;
         }
 
         // Check session
         if (isset($_SESSION['user_id'])) {
+            // Check if session has expired due to inactivity
+            if (!$this->isSessionValid()) {
+                // Store expiration message before logout
+                $expiredMessage = 'Your session has expired due to inactivity. Please log in again.';
+                $this->logout();
+                
+                // Start new session to store expiration message
+                if (session_status() === PHP_SESSION_NONE) {
+                    session_start();
+                }
+                $_SESSION['session_expired'] = true;
+                $_SESSION['expired_message'] = $expiredMessage;
+                
+                return false;
+            }
+            
             $this->user = $this->getUserById($_SESSION['user_id']);
             if ($this->user) {
+                // Only update last activity for non-API requests (actual user interaction)
+                if (!$this->isApiRequest()) {
+                    $this->updateLastActivity();
+                }
                 return true;
             }
         }
@@ -91,11 +130,92 @@ class Auth
             $this->user = $this->getUserByRememberToken($_COOKIE['remember_token']);
             if ($this->user) {
                 $this->createSession($this->user);
+                // Only update last activity for non-API requests (actual user interaction)
+                if (!$this->isApiRequest()) {
+                    $this->updateLastActivity();
+                }
                 return true;
             }
         }
 
         return false;
+    }
+    
+    /**
+     * Check if session is still valid (not expired due to inactivity)
+     * Session expires after 4 hours (14400 seconds) of inactivity
+     */
+    private function isSessionValid()
+    {
+        if (!isset($_SESSION['last_activity'])) {
+            return false;
+        }
+        
+        $inactivityTimeout = 4 * 60 * 60; // 4 hours in seconds
+        $timeSinceLastActivity = time() - $_SESSION['last_activity'];
+        
+        return $timeSinceLastActivity < $inactivityTimeout;
+    }
+    
+    /**
+     * Get session timeout in seconds
+     */
+    public function getSessionTimeout()
+    {
+        return 4 * 60 * 60; // 4 hours in seconds
+    }
+    
+    /**
+     * Get remaining session time in seconds
+     * This method does NOT update last_activity to allow accurate time tracking
+     */
+    public function getRemainingSessionTime()
+    {
+        if (!isset($_SESSION['last_activity'])) {
+            return 0;
+        }
+        
+        $timeout = $this->getSessionTimeout();
+        $timeSinceLastActivity = time() - $_SESSION['last_activity'];
+        $remaining = $timeout - $timeSinceLastActivity;
+        
+        return max(0, $remaining);
+    }
+    
+    /**
+     * Check authentication without updating last_activity
+     * Used for API endpoints that need to check session time
+     */
+    public function checkWithoutUpdate()
+    {
+        if ($this->user) {
+            return $this->isSessionValid();
+        }
+
+        if (isset($_SESSION['user_id'])) {
+            if (!$this->isSessionValid()) {
+                return false;
+            }
+            $this->user = $this->getUserById($_SESSION['user_id']);
+            return $this->user !== false;
+        }
+
+        if (isset($_COOKIE['remember_token'])) {
+            $this->user = $this->getUserByRememberToken($_COOKIE['remember_token']);
+            if ($this->user) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    
+    /**
+     * Update last activity timestamp
+     */
+    private function updateLastActivity()
+    {
+        $_SESSION['last_activity'] = time();
     }
 
     public function user()
@@ -323,6 +443,7 @@ class Auth
         $_SESSION['user'] = $user;
         $_SESSION['role'] = $user['role'];
         $_SESSION['last_activity'] = time();
+        $_SESSION['login_time'] = time(); // Track when user logged in
     }
 
     private function getUserById($id)

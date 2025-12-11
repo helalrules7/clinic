@@ -230,6 +230,17 @@
                 <div class="clinic-subtitle">Professional Eye Care Management</div>
             </div>
 
+            <?php if (isset($_SESSION['session_expired']) && $_SESSION['session_expired']): ?>
+                <div class="alert alert-warning mb-3">
+                    <i class="bi bi-clock-history me-2"></i>
+                    <?= htmlspecialchars($_SESSION['expired_message'] ?? 'Your session has expired due to inactivity. Please log in again.') ?>
+                </div>
+                <?php 
+                unset($_SESSION['session_expired']);
+                unset($_SESSION['expired_message']);
+                ?>
+            <?php endif; ?>
+            
             <?php if (isset($error)): ?>
                 <div class="alert alert-danger mb-3">
                     <i class="bi bi-exclamation-triangle me-2"></i>
