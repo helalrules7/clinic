@@ -306,23 +306,115 @@
                 themeCheckbox.checked = isDark;
             }
         }
-
-        // Get saved theme - check both keys for compatibility
-        const saved = localStorage.getItem('appTheme') || localStorage.getItem('theme') ||
-            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-
-        // Apply initial theme
-        updateThemeUI(saved);
+        
+        // Function to save theme to database and localStorage
+        async function saveThemeToDatabase(theme) {
+            // Save to localStorage immediately (synchronous, no delay)
+            localStorage.setItem('appTheme', theme);
+            localStorage.setItem('theme', theme);
+            
+            try {
+                const response = await fetch('/api/doctor/settings', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        theme: theme
+                    })
+                });
+                
+                if (!response.ok) {
+                    console.error('Failed to save theme to database');
+                }
+            } catch (error) {
+                console.error('Error saving theme to database:', error);
+            }
+        }
+        
+        // Function to load theme from database
+        async function loadThemeFromDatabase() {
+            try {
+                const response = await fetch('/api/doctor/settings', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.settings && data.settings.theme) {
+                        return data.settings.theme;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading theme from database:', error);
+            }
+            return null;
+        }
+        
+        // Initialize theme - Priority to localStorage, sync with database
+        (async function() {
+            // Read theme from localStorage first (fast, synchronous)
+            let savedTheme = localStorage.getItem('appTheme') || localStorage.getItem('theme');
+            
+            // Validate theme value
+            if (savedTheme !== 'light' && savedTheme !== 'dark') {
+                savedTheme = null;
+            }
+            
+            // Load from database if no valid theme in localStorage
+            let dbTheme = null;
+            if (!savedTheme) {
+                dbTheme = await loadThemeFromDatabase();
+                if (dbTheme === 'light' || dbTheme === 'dark') {
+                    savedTheme = dbTheme;
+                    // Save to localStorage for next time
+                    localStorage.setItem('appTheme', savedTheme);
+                    localStorage.setItem('theme', savedTheme);
+                }
+            } else {
+                // We have a theme in localStorage, check database in background
+                dbTheme = await loadThemeFromDatabase();
+            }
+            
+            // If still no theme, default to 'dark'
+            if (!savedTheme || (savedTheme !== 'light' && savedTheme !== 'dark')) {
+                savedTheme = 'dark';
+                localStorage.setItem('appTheme', savedTheme);
+                localStorage.setItem('theme', savedTheme);
+            }
+            
+            // If localStorage theme differs from database, update database to match localStorage
+            if (savedTheme && dbTheme && dbTheme !== savedTheme) {
+                // localStorage has priority - save it to database
+                await saveThemeToDatabase(savedTheme);
+            } else if (savedTheme && !dbTheme) {
+                // No theme in database but we have one in localStorage - save it
+                await saveThemeToDatabase(savedTheme);
+            }
+            
+            // Apply initial theme
+            updateThemeUI(savedTheme);
+            
+            // Mark theme as loaded to remove flash prevention
+            document.documentElement.classList.add('theme-loaded');
+        })();
 
         // Theme toggle switch handler
         const themeCheckbox = document.getElementById('themeToggleInput');
         if (themeCheckbox) {
-            themeCheckbox.addEventListener('change', function() {
+            themeCheckbox.addEventListener('change', async function() {
                 const next = this.checked ? 'dark' : 'light';
                 updateThemeUI(next);
                 // Save to both keys for compatibility with main layout
                 localStorage.setItem('appTheme', next);
                 localStorage.setItem('theme', next);
+                // Save to database
+                await saveThemeToDatabase(next);
             });
         }
 

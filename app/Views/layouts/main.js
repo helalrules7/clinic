@@ -67,24 +67,45 @@
             return null;
         }
         
-        // Initialize theme - Load from localStorage first, then sync with database
+        // Initialize theme - Priority to localStorage, sync with database
         (async function() {
             // Read theme from localStorage first (fast, synchronous)
-            let savedTheme = localStorage.getItem('appTheme');
+            let savedTheme = localStorage.getItem('appTheme') || localStorage.getItem('theme');
             
-            // If no theme in localStorage, load from database
-            if (!savedTheme || (savedTheme !== 'light' && savedTheme !== 'dark')) {
-                savedTheme = await loadThemeFromDatabase();
-                
-                // If no theme in database, default to 'dark'
-                if (!savedTheme) {
-                    savedTheme = 'dark';
-                    // Save default theme to database and localStorage
-                    await saveThemeToDatabase(savedTheme);
-                } else {
+            // Validate theme value
+            if (savedTheme !== 'light' && savedTheme !== 'dark') {
+                savedTheme = null;
+            }
+            
+            // Load from database if no valid theme in localStorage
+            let dbTheme = null;
+            if (!savedTheme) {
+                dbTheme = await loadThemeFromDatabase();
+                if (dbTheme === 'light' || dbTheme === 'dark') {
+                    savedTheme = dbTheme;
                     // Save to localStorage for next time
                     localStorage.setItem('appTheme', savedTheme);
+                    localStorage.setItem('theme', savedTheme);
                 }
+            } else {
+                // We have a theme in localStorage, check database in background
+                dbTheme = await loadThemeFromDatabase();
+            }
+            
+            // If still no theme, default to 'dark'
+            if (!savedTheme || (savedTheme !== 'light' && savedTheme !== 'dark')) {
+                savedTheme = 'dark';
+                localStorage.setItem('appTheme', savedTheme);
+                localStorage.setItem('theme', savedTheme);
+            }
+            
+            // If localStorage theme differs from database, update database to match localStorage
+            if (savedTheme && dbTheme && dbTheme !== savedTheme) {
+                // localStorage has priority - save it to database
+                await saveThemeToDatabase(savedTheme);
+            } else if (savedTheme && !dbTheme) {
+                // No theme in database but we have one in localStorage - save it
+                await saveThemeToDatabase(savedTheme);
             }
             
             // Apply theme (should already be applied by inline script, but ensure it's correct)
@@ -95,16 +116,6 @@
             
             // Mark theme as loaded to remove flash prevention
             document.documentElement.classList.add('theme-loaded');
-            
-            // Sync with database in background (in case localStorage and database are out of sync)
-            loadThemeFromDatabase().then(dbTheme => {
-                if (dbTheme && dbTheme !== savedTheme) {
-                    // Database has different theme, update localStorage and apply
-                    localStorage.setItem('appTheme', dbTheme);
-                    apply(dbTheme);
-                    updateThemeUI(dbTheme);
-                }
-            });
             
             // Theme toggle checkbox change handler
             const themeToggleInput = document.getElementById('themeToggleInput');
