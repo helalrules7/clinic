@@ -698,8 +698,20 @@
             const checkInterval = 5000; // Check every 5 seconds
             
             function checkSessionTime() {
-                fetch('/api/auth/session-time')
-                    .then(response => response.json())
+                fetch('/api/auth/session-time', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (!data.success) {
                             // Session expired or not authenticated
@@ -722,7 +734,11 @@
                         }
                     })
                     .catch(error => {
-                        console.error('Error checking session time:', error);
+                        // Silently handle network errors - don't spam console
+                        // Only log if it's not a network error
+                        if (error.name !== 'TypeError' || !error.message.includes('Load failed')) {
+                            console.error('Error checking session time:', error);
+                        }
                     });
             }
             
@@ -757,12 +773,22 @@
                     warningShown = false;
                     
                     // Make a request to refresh session
-                    fetch('/api/auth/session-time')
+                    fetch('/api/auth/session-time', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        credentials: 'same-origin'
+                    })
                         .then(() => {
                             // Session refreshed, continue checking
                         })
                         .catch(error => {
-                            console.error('Error refreshing session:', error);
+                            // Silently handle network errors
+                            if (error.name !== 'TypeError' || !error.message.includes('Load failed')) {
+                                console.error('Error refreshing session:', error);
+                            }
                         });
                 }, { once: true });
                 

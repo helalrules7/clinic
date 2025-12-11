@@ -13,9 +13,9 @@
 
 <!-- Patient Profile Header -->
 <div class="row mb-4">
-    <div class="col-md-8">
-        <div class="d-flex align-items-center">
-            <div class="avatar-circle-large <?= $patient['gender'] === 'Female' ? 'avatar-large-female' : 'avatar-large-male' ?> me-3">
+    <div class="col-12 col-md-8">
+        <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center">
+            <div class="avatar-circle-large <?= $patient['gender'] === 'Female' ? 'avatar-large-female' : 'avatar-large-male' ?> me-3 mb-3 mb-sm-0">
                 <?php
                 $firstName = $patient['first_name'];
                 $lastName = $patient['last_name'];
@@ -28,11 +28,11 @@
                 echo mb_strtoupper($firstChar . '.' . $lastChar, 'UTF-8');
                 ?>
             </div>
-            <div>
-                <h2 class="text-primary mb-1"><?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></h2>
-                <p class="text-muted mb-0">Patient ID: #<?= $patient['id'] ?></p>
+            <div class="flex-grow-1">
+                <h2 class="text-primary mb-1 h4 h-md-2"><?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></h2>
+                <p class="text-muted mb-0 small">Patient ID: #<?= $patient['id'] ?></p>
                 <?php if ($patient['dob']): ?>
-                    <small class="text-muted">
+                    <small class="text-muted d-block mt-1">
                         <i class="bi bi-calendar3 me-1"></i>
                         <?= date('M j, Y', strtotime($patient['dob'])) ?> 
                         (<?= date_diff(date_create($patient['dob']), date_create('now'))->y ?> years old)
@@ -41,8 +41,8 @@
                 
                 <!-- Current Doctor Badge -->
                 <?php if (isset($currentDoctor) && $currentDoctor): ?>
-                <div class="mt-3">
-                    <span class="badge doctor-badge fs-6 px-4 py-2 d-flex align-items-center">
+                <div class="mt-2 mt-md-3">
+                    <span class="badge doctor-badge fs-6 px-4 py-2 d-inline-flex align-items-center">
                         <?php if (!empty($currentDoctor['profile_image'])): 
                             $doctorImagePath = strpos($currentDoctor['profile_image'], '/public/') === 0 ? $currentDoctor['profile_image'] : '/public' . $currentDoctor['profile_image'];
                         ?>
@@ -58,9 +58,8 @@
                                 <?= strtoupper(substr($currentDoctor['display_name'] ?? $currentDoctor['name'] ?? 'D', 0, 1)) ?>
                             </div>
                         <?php endif; ?>
-                        <i class="bi bi-person-badge me-2"></i>
                         <strong>Treating Doctor:</strong> 
-                        <?= htmlspecialchars($currentDoctor['display_name'] ?? $currentDoctor['name']) ?>
+                        <span class="ms-1"><?= htmlspecialchars($currentDoctor['display_name'] ?? $currentDoctor['name']) ?></span>
                     </span>
                 </div>
                 <?php endif; ?>

@@ -116,12 +116,43 @@
     font-weight: 600;
     font-size: 1.5rem;
     transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+/* Responsive avatar sizes */
+@media (max-width: 768px) {
+    .avatar-circle-large {
+        width: 60px;
+        height: 60px;
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .avatar-circle-large {
+        width: 50px;
+        height: 50px;
+        font-size: 1rem;
+    }
 }
 
 /* Gender-based avatar colors for large avatar */
 .avatar-large-male {
     background: #3498db; /* Sky blue for males */
     box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+/* Responsive margin for avatar */
+@media (max-width: 768px) {
+    .avatar-circle-large.me-3 {
+        margin-right: 1rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .avatar-circle-large.me-3 {
+        margin-right: 0.75rem !important;
+    }
 }
 
 .avatar-large-female {
@@ -1394,11 +1425,48 @@ div.form-text {
     box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
     transition: all 0.3s ease;
     animation: doctorBadgePulse 3s infinite;
+    white-space: nowrap;
+    flex-wrap: nowrap;
 }
 
 .doctor-badge:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+}
+
+/* Responsive doctor badge */
+@media (max-width: 768px) {
+    .doctor-badge {
+        font-size: 0.9rem !important;
+        padding: 0.5rem 1rem !important;
+        flex-wrap: wrap;
+        white-space: normal;
+    }
+    
+    .doctor-badge i,
+    .doctor-badge strong {
+        margin-right: 0.5rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .doctor-badge {
+        font-size: 0.8rem !important;
+        padding: 0.4rem 0.75rem !important;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .doctor-badge .treating-doctor-avatar,
+    .doctor-badge .treating-doctor-avatar-fallback {
+        width: 24px;
+        height: 24px;
+        font-size: 0.75rem;
+    }
+    
+    .doctor-badge i {
+        font-size: 0.9rem;
+    }
 }
 
 @keyframes doctorBadgePulse {
@@ -1817,4 +1885,27 @@ div.form-text {
 
 .btn-outline-primary:hover i{
     color: white !important;
+}
+
+/* Responsive Patient Profile Header */
+@media (max-width: 576px) {
+    .patient-profile-header h2 {
+        font-size: 1.25rem !important;
+    }
+    
+    .patient-profile-header .text-muted {
+        font-size: 0.75rem !important;
+    }
+}
+
+/* Responsive flex container for patient header */
+@media (max-width: 575px) {
+    .d-flex.flex-column.flex-sm-row {
+        align-items: center !important;
+    }
+    
+    .avatar-circle-large.me-3.mb-3.mb-sm-0 {
+        margin-bottom: 1rem !important;
+        margin-right: 0 !important;
+    }
 }

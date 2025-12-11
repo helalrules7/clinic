@@ -114,7 +114,22 @@ class AuthController
      */
     public function getSessionTime()
     {
+        // Clear output buffers first
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        // Set CORS headers
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
         header('Content-Type: application/json; charset=utf-8');
+        
+        // Handle preflight OPTIONS request
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit;
+        }
         
         // Use checkWithoutUpdate to avoid resetting the timer
         if (!$this->auth->checkWithoutUpdate()) {
@@ -124,17 +139,18 @@ class AuthController
                 'remaining' => 0,
                 'message' => 'Not authenticated'
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            return;
+            exit;
         }
-        
+
         $remaining = $this->auth->getRemainingSessionTime();
         $timeout = $this->auth->getSessionTimeout();
-        
+
         echo json_encode([
             'success' => true,
             'remaining' => $remaining,
             'timeout' => $timeout,
             'last_activity' => $_SESSION['last_activity'] ?? null
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
     }
 }

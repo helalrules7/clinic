@@ -808,7 +808,7 @@ class ApiController
             $sortOrder = strtoupper($_GET['sort_order'] ?? 'DESC');
             
             // Validate sort parameters
-            $allowedSortFields = ['total_appointments', 'last_visit', 'created_at', 'first_name', 'last_name'];
+            $allowedSortFields = ['total_appointments', 'last_visit', 'created_at', 'first_name', 'last_name', 'age', 'gender', 'created_by_doctor_name'];
             $sortBy = in_array($sortBy, $allowedSortFields) ? $sortBy : 'created_at';
             $sortOrder = in_array($sortOrder, ['ASC', 'DESC']) ? $sortOrder : 'DESC';
             
@@ -821,9 +821,20 @@ class ApiController
             } elseif ($sortBy === 'created_at') {
                 $orderBy = "ORDER BY p.created_at $sortOrder";
             } elseif ($sortBy === 'first_name') {
-                $orderBy = "ORDER BY p.first_name $sortOrder";
+                $orderBy = "ORDER BY p.first_name $sortOrder, p.last_name $sortOrder";
             } elseif ($sortBy === 'last_name') {
-                $orderBy = "ORDER BY p.last_name $sortOrder";
+                $orderBy = "ORDER BY p.last_name $sortOrder, p.first_name $sortOrder";
+            } elseif ($sortBy === 'age') {
+                // Sort by age (calculated from dob) - older patients first for DESC, younger first for ASC
+                if ($sortOrder === 'DESC') {
+                    $orderBy = "ORDER BY p.dob ASC"; // Older = earlier dob
+                } else {
+                    $orderBy = "ORDER BY p.dob DESC"; // Younger = later dob
+                }
+            } elseif ($sortBy === 'gender') {
+                $orderBy = "ORDER BY p.gender $sortOrder";
+            } elseif ($sortBy === 'created_by_doctor_name') {
+                $orderBy = "ORDER BY created_by_doctor_name $sortOrder";
             } else {
                 $orderBy = "ORDER BY p.created_at DESC";
             }

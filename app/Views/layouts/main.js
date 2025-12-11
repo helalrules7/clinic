@@ -3175,7 +3175,14 @@
             // Check for new forum notifications
             async function checkForumNotifications() {
                 try {
-                    const response = await fetch('/api/notifications?limit=10');
+                    const response = await fetch('/api/notifications?limit=10', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        credentials: 'same-origin'
+                    });
                     
                     if (!response.ok) {
                         return;

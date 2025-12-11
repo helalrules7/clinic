@@ -10,7 +10,9 @@ let paginationState = {
     allPatients: [],
     filteredPatients: [],
     currentDoctorFilter: 'all',
-    nameFilter: '',
+    currentGenderFilter: null, // 'Male', 'Female', or null
+    currentAgeFilter: { min: null, max: null }, // Age range filter
+    currentLastVisitFilter: { from: null, to: null }, // Last visit date range filter
     sortBy: null,
     sortOrder: null
 };
@@ -95,7 +97,7 @@ function renderPatientsTable() {
         if (patientsToShow.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="text-center py-4">
+                    <td colspan="7" class="text-center py-4">
                         <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
                         <p class="text-muted mt-2 mb-0">No patients to display</p>
                     </td>
@@ -197,6 +199,14 @@ function renderPatientsTable() {
                             ` : ''}
                         </td>
                         <td>
+                            ${patient.gender ? `
+                                <span class="badge ${patient.gender === 'Female' ? 'bg-pink' : 'bg-primary'}" style="font-size: 0.875rem; padding: 0.4rem 0.6rem;">
+                                    <i class="bi ${patient.gender === 'Female' ? 'bi-gender-female' : 'bi-gender-male'} me-1"></i>
+                                    ${escapeHtml(patient.gender)}
+                                </span>
+                            ` : '<span class="text-muted">Not specified</span>'}
+                        </td>
+                        <td>
                             ${age !== 'Not specified' ? `${age} years` : '<span class="text-muted">Not specified</span>'}
                         </td>
                         <td>
@@ -219,7 +229,7 @@ function renderPatientsTable() {
                         <td>
                             <div class="btn-group" role="group">
                                 <a href="/doctor/patients/${patient.id}" 
-                                   class="btn btn-sm btn-outline-primary" 
+                                   class="btn btn-sm btn-outline-warning" 
                                    data-bs-toggle="tooltip" 
                                    data-bs-placement="top" 
                                    data-bs-title="View patient details and medical history">
@@ -467,11 +477,14 @@ function filterByDoctor(doctorId) {
         updatePaginationInfo();
         renderPaginationNav();
     }
+    
+    // Update clear filters button visibility
+    updateClearFiltersVisibility();
 }
 
 // Apply doctor filter to patients
 function applyDoctorFilter() {
-    const { currentDoctorFilter, allPatients, nameFilter } = paginationState;
+    const { currentDoctorFilter, currentGenderFilter, currentAgeFilter, currentLastVisitFilter, allPatients } = paginationState;
     
     let filtered = [...allPatients];
     
@@ -482,17 +495,61 @@ function applyDoctorFilter() {
         });
     }
     
-    // Apply name filter
-    if (nameFilter) {
+    // Apply gender filter
+    if (currentGenderFilter) {
         filtered = filtered.filter(patient => {
-            const firstName = (patient.first_name || '').toLowerCase();
-            const lastName = (patient.last_name || '').toLowerCase();
-            const fullName = `${firstName} ${lastName}`.trim();
-            return fullName.includes(nameFilter) || 
-                   firstName.includes(nameFilter) || 
-                   lastName.includes(nameFilter);
+            return patient.gender === currentGenderFilter;
         });
     }
+    
+    // Apply age filter
+    if (currentAgeFilter.min !== null || currentAgeFilter.max !== null) {
+        filtered = filtered.filter(patient => {
+            if (!patient.dob) return false;
+            const age = calculateAge(patient.dob);
+            
+            if (currentAgeFilter.min !== null && age < currentAgeFilter.min) {
+                return false;
+            }
+            if (currentAgeFilter.max !== null && age > currentAgeFilter.max) {
+                return false;
+            }
+            return true;
+        });
+    }
+    
+    // Apply last visit filter
+    if (currentLastVisitFilter.from !== null || currentLastVisitFilter.to !== null) {
+        filtered = filtered.filter(patient => {
+            if (!patient.last_visit) {
+                // If filtering by date range and patient has no visit, exclude them
+                return false;
+            }
+            
+            const visitDate = new Date(patient.last_visit);
+            visitDate.setHours(0, 0, 0, 0);
+            
+            if (currentLastVisitFilter.from !== null) {
+                const fromDate = new Date(currentLastVisitFilter.from);
+                fromDate.setHours(0, 0, 0, 0);
+                if (visitDate < fromDate) {
+                    return false;
+                }
+            }
+            
+            if (currentLastVisitFilter.to !== null) {
+                const toDate = new Date(currentLastVisitFilter.to);
+                toDate.setHours(23, 59, 59, 999);
+                if (visitDate > toDate) {
+                    return false;
+                }
+            }
+            
+            return true;
+        });
+    }
+    
+    // Removed: nameFilter logic - filter by name feature removed
     
     paginationState.filteredPatients = filtered;
     paginationState.totalItems = filtered.length;
@@ -501,30 +558,182 @@ function applyDoctorFilter() {
     paginationState.currentPage = 1;
 }
 
-// Filter patients by name
-function filterByName(nameQuery) {
-    paginationState.nameFilter = nameQuery.toLowerCase().trim();
-    applyDoctorFilter();
-    renderPatientsTable();
-    updatePaginationInfo();
-    renderPaginationNav();
+// Apply gender filter
+function applyGenderFilter(gender) {
+    paginationState.currentGenderFilter = gender;
     
-    // Show/hide clear button
-    const clearBtn = document.getElementById('clearNameFilter');
-    if (clearBtn) {
-        clearBtn.style.display = nameQuery.trim() ? 'block' : 'none';
+    // Update filter button appearance
+    const filterBtn = document.querySelector('.gender-filter-btn');
+    if (filterBtn) {
+        if (gender) {
+            filterBtn.classList.add('active');
+            filterBtn.style.color = 'var(--accent)';
+        } else {
+            filterBtn.classList.remove('active');
+            filterBtn.style.color = 'var(--accent)';
+        }
+    }
+    
+    // Apply gender filter
+    applyDoctorFilter();
+    
+    // Apply current search filter if exists
+    const quickSearch = document.getElementById('quickSearch');
+    if (quickSearch && quickSearch.value.trim()) {
+        filterPatientsLocally(quickSearch.value);
+    } else {
+        // Update display
+        renderPatientsTable();
+        updatePaginationInfo();
+        renderPaginationNav();
+    }
+    
+    // Update clear filters button visibility
+    updateClearFiltersVisibility();
+}
+
+// Update clear filters and sorting buttons visibility
+function updateClearFiltersVisibility() {
+    const clearFiltersGroup = document.getElementById('clearFiltersGroup');
+    const clearSortingBtn = document.getElementById('clearSortingBtn');
+    
+    if (!clearFiltersGroup) return;
+    
+    // Check if any filter is active
+    const hasActiveFilter = 
+        paginationState.currentDoctorFilter !== 'all' ||
+        paginationState.currentGenderFilter !== null ||
+        (paginationState.currentAgeFilter.min !== null || paginationState.currentAgeFilter.max !== null) ||
+        (paginationState.currentLastVisitFilter.from !== null || paginationState.currentLastVisitFilter.to !== null);
+    
+    // Check if sorting is active
+    const hasActiveSort = paginationState.sortBy !== null && paginationState.sortOrder !== null;
+    
+    // Show/hide clear filters button
+    if (hasActiveFilter || hasActiveSort) {
+        clearFiltersGroup.classList.remove('d-none');
+        clearFiltersGroup.style.display = '';
+    } else {
+        clearFiltersGroup.classList.add('d-none');
+    }
+    
+    // Show/hide clear sorting button
+    if (hasActiveSort) {
+        if (clearSortingBtn) {
+            clearSortingBtn.classList.remove('d-none');
+        }
+    } else {
+        if (clearSortingBtn) {
+            clearSortingBtn.classList.add('d-none');
+        }
     }
 }
 
-// Clear patient name filter
-function clearPatientNameFilter() {
-    const filterInput = document.getElementById('patientNameFilter');
-    if (filterInput) {
-        filterInput.value = '';
-        filterByName('');
-        filterInput.focus();
+// Clear all filters
+function clearAllFilters() {
+    // Reset all filters
+    paginationState.currentDoctorFilter = 'all';
+    paginationState.currentGenderFilter = null;
+    paginationState.currentAgeFilter = { min: null, max: null };
+    paginationState.currentLastVisitFilter = { from: null, to: null };
+    
+    // Update filter buttons appearance
+    const genderFilterBtn = document.querySelector('.gender-filter-btn');
+    if (genderFilterBtn) {
+        genderFilterBtn.classList.remove('active');
     }
+    
+    const ageFilterBtn = document.querySelector('.age-filter-btn');
+    if (ageFilterBtn) {
+        ageFilterBtn.classList.remove('active');
+    }
+    
+    const lastVisitFilterBtn = document.querySelector('.last-visit-filter-btn');
+    if (lastVisitFilterBtn) {
+        lastVisitFilterBtn.classList.remove('active');
+    }
+    
+    // Update doctor filter buttons
+    document.querySelectorAll('#doctorFilterGroup button').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.doctor === 'all') {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Apply filters (will reset to all)
+    applyDoctorFilter();
+    
+    // Apply current search filter if exists
+    const quickSearch = document.getElementById('quickSearch');
+    if (quickSearch && quickSearch.value.trim()) {
+        filterPatientsLocally(quickSearch.value);
+    } else {
+        // Update display
+        renderPatientsTable();
+        updatePaginationInfo();
+        renderPaginationNav();
+    }
+    
+    // Update visibility
+    updateClearFiltersVisibility();
 }
+
+// Clear sorting
+function clearSorting() {
+    // Reset sorting
+    paginationState.sortBy = null;
+    paginationState.sortOrder = null;
+    
+    // Remove active class from all sort buttons
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Reload data without sorting
+    fetch('/api/patients', {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok && data.patients) {
+            paginationState.allPatients = data.patients;
+            
+            // Reapply current filters
+            applyDoctorFilter();
+            
+            // Reapply quick search if exists
+            const quickSearch = document.getElementById('quickSearch');
+            if (quickSearch && quickSearch.value.trim()) {
+                filterPatientsLocally(quickSearch.value);
+            } else {
+                // Just re-render with current filters
+                renderPatientsTable();
+                updatePaginationInfo();
+                renderPaginationNav();
+            }
+            
+            // Update statistics
+            updateStatistics(data.patients);
+        }
+    })
+    .catch(error => {
+        console.error('Error loading patients:', error);
+    });
+    
+    // Update visibility
+    updateClearFiltersVisibility();
+}
+
+// Filter patients by name
+// Removed: filterByName function - filter by name feature removed
+
+// Clear patient name filter
+// Removed: clearPatientNameFilter function - filter by name feature removed
 
 // Filter patients locally (for main table pagination)
 function filterPatientsLocally(query) {
@@ -783,30 +992,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Setup patient name filter
-    const patientNameFilter = document.getElementById('patientNameFilter');
-    if (patientNameFilter) {
-        const debouncedNameFilter = debounce(function(value) {
-            filterByName(value);
-        }, 300);
-        
-        patientNameFilter.addEventListener('input', function() {
-            debouncedNameFilter(this.value);
-            // Show/hide clear button based on input value
-            const clearBtn = document.getElementById('clearNameFilter');
-            if (clearBtn) {
-                clearBtn.style.display = this.value.trim() ? 'block' : 'none';
-            }
-        });
-        
-        // Clear filter on Escape key
-        patientNameFilter.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                clearPatientNameFilter();
-            }
-        });
-    }
-    
     // Setup quick search
     const quickSearch = document.getElementById('quickSearch');
     const clearQuickSearch = document.getElementById('clearQuickSearch');
@@ -816,6 +1001,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const debouncedQuickSearch = debounce(filterPatientsLocally, 300);
         
         quickSearch.addEventListener('input', function() {
+            const hasValue = this.value.trim().length > 0;
+            // Show/hide clear button based on input value
+            if (clearQuickSearch) {
+                clearQuickSearch.style.display = hasValue ? 'block' : 'none';
+            }
             debouncedQuickSearch(this.value);
         });
         
@@ -823,6 +1013,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (clearQuickSearch) {
             clearQuickSearch.addEventListener('click', function() {
                 quickSearch.value = '';
+                this.style.display = 'none';
                 filterPatientsLocally('');
                 quickSearch.focus();
             });
@@ -1354,7 +1545,7 @@ function confirmPatientDeletion() {
                 const confirmModal = bootstrap.Modal.getInstance(document.getElementById('deletePatientConfirmModal'));
                 confirmModal.hide();
                 
-                // Refresh page to update patient list
+                // Refresh page to update patient list and fix table dimensions
                 window.location.reload();
             }, 1500);
             
@@ -1658,21 +1849,15 @@ function refreshPatientsData() {
             // Reapply current filters
             applyDoctorFilter();
             
-            // Reapply name filter if exists
-            const nameFilter = document.getElementById('patientNameFilter');
-            if (nameFilter && nameFilter.value.trim()) {
-                filterByName(nameFilter.value);
+            // Reapply quick search if exists
+            const quickSearch = document.getElementById('quickSearch');
+            if (quickSearch && quickSearch.value.trim()) {
+                filterPatientsLocally(quickSearch.value);
             } else {
-                // Reapply quick search if exists
-                const quickSearch = document.getElementById('quickSearch');
-                if (quickSearch && quickSearch.value.trim()) {
-                    filterPatientsLocally(quickSearch.value);
-                } else {
-                    // Just re-render with current filters
-                    renderPatientsTable();
-                    updatePaginationInfo();
-                    renderPaginationNav();
-                }
+                // Just re-render with current filters
+                renderPatientsTable();
+                updatePaginationInfo();
+                renderPaginationNav();
             }
             
             // Update statistics
@@ -1715,9 +1900,20 @@ function updateStatistics(patients) {
         return createdDate >= thirtyDaysAgo;
     }).length;
     
-    // Update statistics cards - find h3 elements in the statistics row
+    // Update statistics cards - use IDs for new stats cards
+    const totalPatientsEl = document.getElementById('statsTotalPatients');
+    const totalVisitsEl = document.getElementById('statsTotalVisits');
+    const recentVisitsEl = document.getElementById('statsRecentVisits');
+    const newThisMonthEl = document.getElementById('statsNewThisMonth');
+    
+    if (totalPatientsEl) totalPatientsEl.textContent = totalPatients;
+    if (totalVisitsEl) totalVisitsEl.textContent = totalVisits;
+    if (recentVisitsEl) recentVisitsEl.textContent = recentVisits;
+    if (newThisMonthEl) newThisMonthEl.textContent = newThisMonth;
+    
+    // Fallback: Update old style cards if they exist
     const statsRow = document.querySelector('.row.mb-4');
-    if (statsRow) {
+    if (statsRow && !totalPatientsEl) {
         const statsCards = statsRow.querySelectorAll('.card-body h3');
         if (statsCards.length >= 4) {
             statsCards[0].textContent = totalPatients;
@@ -2336,25 +2532,22 @@ function sortPatients(sortBy, sortOrder) {
             // Reapply current filters
             applyDoctorFilter();
             
-            // Reapply name filter if exists
-            const nameFilter = document.getElementById('patientNameFilter');
-            if (nameFilter && nameFilter.value.trim()) {
-                filterByName(nameFilter.value);
+            // Reapply quick search if exists
+            const quickSearch = document.getElementById('quickSearch');
+            if (quickSearch && quickSearch.value.trim()) {
+                filterPatientsLocally(quickSearch.value);
             } else {
-                // Reapply quick search if exists
-                const quickSearch = document.getElementById('quickSearch');
-                if (quickSearch && quickSearch.value.trim()) {
-                    filterPatientsLocally(quickSearch.value);
-                } else {
-                    // Just re-render with current filters
-                    renderPatientsTable();
-                    updatePaginationInfo();
-                    renderPaginationNav();
-                }
+                // Just re-render with current filters
+                renderPatientsTable();
+                updatePaginationInfo();
+                renderPaginationNav();
             }
             
             // Update statistics
             updateStatistics(data.patients);
+            
+            // Update clear filters button visibility
+            updateClearFiltersVisibility();
         }
     })
     .catch(error => {
@@ -2367,6 +2560,703 @@ function sortPatients(sortBy, sortOrder) {
         if (tableBody) {
             tableBody.parentElement.classList.remove('table-loading');
         }
+    });
+}
+
+// Initialize gender filter popover
+function initGenderFilterPopover() {
+    const filterBtn = document.querySelector('.gender-filter-btn');
+    if (!filterBtn) return;
+    
+    // Remove existing popover instance if any
+    const existingPopover = bootstrap.Popover.getInstance(filterBtn);
+    if (existingPopover) {
+        existingPopover.dispose();
+    }
+    
+    // Remove existing tooltip if any (to avoid conflicts)
+    const existingTooltip = bootstrap.Tooltip.getInstance(filterBtn);
+    if (existingTooltip) {
+        existingTooltip.dispose();
+    }
+    
+    // Create popover content function that returns HTML string
+    const getPopoverContent = function() {
+        const currentFilter = paginationState.currentGenderFilter;
+        return `
+            <div class="gender-filter-popover">
+                <div class="mb-3">
+                    <div class="d-flex flex-column gap-2" style="margin-left: 10px !important;">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="genderFilter" id="genderFilterMale" value="Male" ${currentFilter === 'Male' ? 'checked' : ''}>
+                            <label class="form-check-label" for="genderFilterMale" style="color: var(--text); cursor: pointer;">
+                                <i class="bi bi-gender-male me-2" style="color: var(--accent);"></i>Male
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="genderFilter" id="genderFilterFemale" value="Female" ${currentFilter === 'Female' ? 'checked' : ''}>
+                            <label class="form-check-label" for="genderFilterFemale" style="color: var(--text); cursor: pointer;">
+                                <i class="bi bi-gender-female me-2" style="color: rgb(255, 85, 224);"></i>Female
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-secondary w-100 clear-gender-filter-btn" style="font-size: 0.875rem;">
+                        <i class="bi bi-x-circle me-1"></i>Clear Filter
+                    </button>
+                </div>
+            </div>
+        `;
+    };
+    
+    // Create popover title with close button
+    const getPopoverTitle = function() {
+        return `
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <span style=font-weight: 300 !important;">Filter by Gender</span>
+            </div>
+        `;
+    };
+    
+    // Initialize Bootstrap popover using getOrCreateInstance
+    const popover = bootstrap.Popover.getOrCreateInstance(filterBtn, {
+        title: getPopoverTitle,
+        content: getPopoverContent,
+        html: true,
+        sanitize: false,
+        placement: 'bottom',
+        trigger: 'click',
+        container: 'body',
+        customClass: 'gender-filter-popover-glass'
+    });
+    
+    // Handle popover shown event
+    const handlePopoverShown = function() {
+        // Use setTimeout to ensure popover is fully rendered
+        setTimeout(() => {
+            // Find popover element by class - try multiple selectors
+            let popoverElement = document.querySelector('.popover.gender-filter-popover-glass');
+            if (!popoverElement) {
+                popoverElement = document.querySelector('.gender-filter-popover-glass');
+            }
+            if (!popoverElement) {
+                // Try to get from popover instance
+                const popoverInstance = bootstrap.Popover.getInstance(filterBtn);
+                if (popoverInstance && popoverInstance.tip) {
+                    popoverElement = popoverInstance.tip;
+                }
+            }
+            
+            if (!popoverElement) {
+                console.error('Popover element not found');
+                return;
+            }
+            
+            // Find the popover body and header
+            const popoverBody = popoverElement.querySelector('.popover-body');
+            const popoverHeader = popoverElement.querySelector('.popover-header');
+            
+            if (!popoverBody) {
+                console.error('Popover body not found');
+                return;
+            }
+            
+            // Set current selection
+            const currentFilter = paginationState.currentGenderFilter;
+            const maleRadio = popoverBody.querySelector('#genderFilterMale');
+            const femaleRadio = popoverBody.querySelector('#genderFilterFemale');
+            
+            if (maleRadio && femaleRadio) {
+                maleRadio.checked = (currentFilter === 'Male');
+                femaleRadio.checked = (currentFilter === 'Female');
+            }
+            
+            // Handle radio button changes (use event delegation on popover body)
+            const handleRadioChange = function(e) {
+                if (e.target.name === 'genderFilter' && e.target.checked) {
+                    applyGenderFilter(e.target.value);
+                    popover.hide();
+                }
+            };
+            
+            // Remove old listener and add new one
+            popoverBody.removeEventListener('change', handleRadioChange);
+            popoverBody.addEventListener('change', handleRadioChange);
+            
+            // Handle clear filter button
+            const clearBtn = popoverBody.querySelector('.clear-gender-filter-btn');
+            if (clearBtn) {
+                const handleClearClick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    applyGenderFilter(null);
+                    // Uncheck all radios
+                    if (maleRadio) maleRadio.checked = false;
+                    if (femaleRadio) femaleRadio.checked = false;
+                    popover.hide();
+                };
+                
+                // Remove old listener and add new one
+                clearBtn.removeEventListener('click', handleClearClick);
+                clearBtn.addEventListener('click', handleClearClick);
+            }
+            
+            // Handle close button in header
+            const closeBtn = popoverHeader ? popoverHeader.querySelector('.gender-filter-close-btn') : null;
+            if (closeBtn) {
+                const handleCloseClick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    popover.hide();
+                };
+                
+                // Remove old listener and add new one
+                closeBtn.removeEventListener('click', handleCloseClick);
+                closeBtn.addEventListener('click', handleCloseClick);
+            }
+        }, 100);
+    };
+    
+    // Remove existing listener if any
+    filterBtn.removeEventListener('shown.bs.popover', handlePopoverShown);
+    // Add new listener
+    filterBtn.addEventListener('shown.bs.popover', handlePopoverShown);
+    
+    // Handle click outside popover to close it
+    const handleClickOutside = function(event) {
+        const popoverInstance = bootstrap.Popover.getInstance(filterBtn);
+        if (!popoverInstance || !popoverInstance.tip) {
+            return;
+        }
+        
+        const popoverElement = popoverInstance.tip;
+        const isClickInsidePopover = popoverElement.contains(event.target);
+        const isClickOnFilterBtn = filterBtn.contains(event.target);
+        
+        // If click is outside both popover and filter button, close popover
+        if (!isClickInsidePopover && !isClickOnFilterBtn) {
+            popoverInstance.hide();
+        }
+    };
+    
+    // Add click outside listener when popover is shown
+    filterBtn.addEventListener('shown.bs.popover', function() {
+        // Use setTimeout to ensure popover is rendered
+        setTimeout(() => {
+            document.addEventListener('click', handleClickOutside);
+        }, 10);
+    });
+    
+    // Remove click outside listener when popover is hidden
+    filterBtn.addEventListener('hidden.bs.popover', function() {
+        document.removeEventListener('click', handleClickOutside);
+    });
+}
+
+// Initialize age filter popover
+function initAgeFilterPopover() {
+    const filterBtn = document.querySelector('.age-filter-btn');
+    if (!filterBtn) return;
+    
+    // Remove existing popover instance if any
+    const existingPopover = bootstrap.Popover.getInstance(filterBtn);
+    if (existingPopover) {
+        existingPopover.dispose();
+    }
+    
+    // Remove existing tooltip if any (to avoid conflicts)
+    const existingTooltip = bootstrap.Tooltip.getInstance(filterBtn);
+    if (existingTooltip) {
+        existingTooltip.dispose();
+    }
+    
+    // Create popover content function that returns HTML string
+    const getPopoverContent = function() {
+        const currentFilter = paginationState.currentAgeFilter;
+        return `
+            <div class="age-filter-popover">
+                <div class="mb-3">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label for="ageFilterMin" class="form-label small" style="color: var(--text);">Min Age</label>
+                            <input type="number" class="form-control form-control-sm" id="ageFilterMin" 
+                                   placeholder="Min" min="0" max="150" 
+                                   value="${currentFilter.min !== null ? currentFilter.min : ''}"
+                                   style="color: var(--text); background-color: var(--bg-alt); border-color: var(--border);">
+                        </div>
+                        <div class="col-6">
+                            <label for="ageFilterMax" class="form-label small" style="color: var(--text);">Max Age</label>
+                            <input type="number" class="form-control form-control-sm" id="ageFilterMax" 
+                                   placeholder="Max" min="0" max="150"
+                                   value="${currentFilter.max !== null ? currentFilter.max : ''}"
+                                   style="color: var(--text); background-color: var(--bg-alt); border-color: var(--border);">
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-primary w-100 apply-age-filter-btn" style="font-size: 0.875rem;">
+                        <i class="bi bi-check-circle me-1"></i>Apply Filter
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary w-100 clear-age-filter-btn" style="font-size: 0.875rem;">
+                        <i class="bi bi-x-circle me-1"></i>Clear
+                    </button>
+                </div>
+            </div>
+        `;
+    };
+    
+    // Create popover title
+    const getPopoverTitle = function() {
+        return `
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <span style="font-weight: 300 !important;">Filter by Age Range</span>
+            </div>
+        `;
+    };
+    
+    // Initialize Bootstrap popover using getOrCreateInstance
+    const popover = bootstrap.Popover.getOrCreateInstance(filterBtn, {
+        title: getPopoverTitle,
+        content: getPopoverContent,
+        html: true,
+        sanitize: false,
+        placement: 'bottom',
+        trigger: 'click',
+        container: 'body',
+        customClass: 'age-filter-popover-glass'
+    });
+    
+    // Handle popover shown event
+    const handlePopoverShown = function() {
+        // Use setTimeout to ensure popover is fully rendered
+        setTimeout(() => {
+            // Find popover element by class - try multiple selectors
+            let popoverElement = document.querySelector('.popover.age-filter-popover-glass');
+            if (!popoverElement) {
+                popoverElement = document.querySelector('.age-filter-popover-glass');
+            }
+            if (!popoverElement) {
+                // Try to get from popover instance
+                const popoverInstance = bootstrap.Popover.getInstance(filterBtn);
+                if (popoverInstance && popoverInstance.tip) {
+                    popoverElement = popoverInstance.tip;
+                }
+            }
+            
+            if (!popoverElement) {
+                console.error('Popover element not found');
+                return;
+            }
+            
+            // Find the popover body
+            const popoverBody = popoverElement.querySelector('.popover-body');
+            if (!popoverBody) {
+                console.error('Popover body not found');
+                return;
+            }
+            
+            // Get input fields
+            const minInput = popoverBody.querySelector('#ageFilterMin');
+            const maxInput = popoverBody.querySelector('#ageFilterMax');
+            
+            // Handle apply filter button
+            const applyBtn = popoverBody.querySelector('.apply-age-filter-btn');
+            if (applyBtn) {
+                const handleApplyClick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const minValue = minInput.value ? parseInt(minInput.value) : null;
+                    const maxValue = maxInput.value ? parseInt(maxInput.value) : null;
+                    
+                    // Validate range
+                    if (minValue !== null && maxValue !== null && minValue > maxValue) {
+                        alert('Minimum age cannot be greater than maximum age');
+                        return;
+                    }
+                    
+                    // Apply filter
+                    paginationState.currentAgeFilter = {
+                        min: minValue,
+                        max: maxValue
+                    };
+                    
+                    // Update filter button appearance
+                    if (minValue !== null || maxValue !== null) {
+                        filterBtn.classList.add('active');
+                    } else {
+                        filterBtn.classList.remove('active');
+                    }
+                    
+                    // Apply filters
+                    applyDoctorFilter();
+                    
+                    // Apply current search filter if exists
+                    const quickSearch = document.getElementById('quickSearch');
+                    if (quickSearch && quickSearch.value.trim()) {
+                        filterPatientsLocally(quickSearch.value);
+                    } else {
+                    // Update display
+                    renderPatientsTable();
+                    updatePaginationInfo();
+                    renderPaginationNav();
+                }
+                
+                // Update clear filters button visibility
+                updateClearFiltersVisibility();
+                
+                popover.hide();
+            };
+            
+            // Remove old listener and add new one
+            applyBtn.removeEventListener('click', handleApplyClick);
+            applyBtn.addEventListener('click', handleApplyClick);
+        }
+        
+        // Handle clear filter button
+        const clearBtn = popoverBody.querySelector('.clear-age-filter-btn');
+            if (clearBtn) {
+                const handleClearClick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Clear filter
+                    paginationState.currentAgeFilter = { min: null, max: null };
+                    
+                    // Clear inputs
+                    if (minInput) minInput.value = '';
+                    if (maxInput) maxInput.value = '';
+                    
+                    // Update filter button appearance
+                    filterBtn.classList.remove('active');
+                    
+                    // Apply filters
+                    applyDoctorFilter();
+                    
+                    // Apply current search filter if exists
+                    const quickSearch = document.getElementById('quickSearch');
+                    if (quickSearch && quickSearch.value.trim()) {
+                        filterPatientsLocally(quickSearch.value);
+                    } else {
+                        // Update display
+                        renderPatientsTable();
+                        updatePaginationInfo();
+                        renderPaginationNav();
+                    }
+                    
+                    // Update clear filters button visibility
+                    updateClearFiltersVisibility();
+                    
+                    popover.hide();
+                };
+                
+                // Remove old listener and add new one
+                clearBtn.removeEventListener('click', handleClearClick);
+                clearBtn.addEventListener('click', handleClearClick);
+            }
+            
+            // Handle Enter key on inputs
+            if (minInput && maxInput) {
+                const handleInputKeyPress = function(e) {
+                    if (e.key === 'Enter') {
+                        applyBtn.click();
+                    }
+                };
+                
+                minInput.removeEventListener('keypress', handleInputKeyPress);
+                maxInput.removeEventListener('keypress', handleInputKeyPress);
+                minInput.addEventListener('keypress', handleInputKeyPress);
+                maxInput.addEventListener('keypress', handleInputKeyPress);
+            }
+        }, 100);
+    };
+    
+    // Remove existing listener if any
+    filterBtn.removeEventListener('shown.bs.popover', handlePopoverShown);
+    // Add new listener
+    filterBtn.addEventListener('shown.bs.popover', handlePopoverShown);
+    
+    // Handle click outside popover to close it
+    const handleClickOutside = function(event) {
+        const popoverInstance = bootstrap.Popover.getInstance(filterBtn);
+        if (!popoverInstance || !popoverInstance.tip) {
+            return;
+        }
+        
+        const popoverElement = popoverInstance.tip;
+        const isClickInsidePopover = popoverElement.contains(event.target);
+        const isClickOnFilterBtn = filterBtn.contains(event.target);
+        
+        // If click is outside both popover and filter button, close popover
+        if (!isClickInsidePopover && !isClickOnFilterBtn) {
+            popoverInstance.hide();
+        }
+    };
+    
+    // Add click outside listener when popover is shown
+    filterBtn.addEventListener('shown.bs.popover', function() {
+        // Use setTimeout to ensure popover is rendered
+        setTimeout(() => {
+            document.addEventListener('click', handleClickOutside);
+        }, 10);
+    });
+    
+    // Remove click outside listener when popover is hidden
+    filterBtn.addEventListener('hidden.bs.popover', function() {
+        document.removeEventListener('click', handleClickOutside);
+    });
+}
+
+// Initialize last visit filter popover
+function initLastVisitFilterPopover() {
+    const filterBtn = document.querySelector('.last-visit-filter-btn');
+    if (!filterBtn) return;
+    
+    // Remove existing popover instance if any
+    const existingPopover = bootstrap.Popover.getInstance(filterBtn);
+    if (existingPopover) {
+        existingPopover.dispose();
+    }
+    
+    // Remove existing tooltip if any (to avoid conflicts)
+    const existingTooltip = bootstrap.Tooltip.getInstance(filterBtn);
+    if (existingTooltip) {
+        existingTooltip.dispose();
+    }
+    
+    // Create popover content function that returns HTML string
+    const getPopoverContent = function() {
+        const currentFilter = paginationState.currentLastVisitFilter;
+        return `
+            <div class="last-visit-filter-popover">
+                <div class="mb-3">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label for="lastVisitFilterFrom" class="form-label small" style="color: var(--text);">From Date</label>
+                            <input type="date" class="form-control form-control-sm" id="lastVisitFilterFrom" 
+                                   value="${currentFilter.from !== null ? currentFilter.from : ''}"
+                                   style="color: var(--text); background-color: var(--bg-alt); border-color: var(--border);">
+                        </div>
+                        <div class="col-6">
+                            <label for="lastVisitFilterTo" class="form-label small" style="color: var(--text);">To Date</label>
+                            <input type="date" class="form-control form-control-sm" id="lastVisitFilterTo" 
+                                   value="${currentFilter.to !== null ? currentFilter.to : ''}"
+                                   style="color: var(--text); background-color: var(--bg-alt); border-color: var(--border);">
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-primary w-100 apply-last-visit-filter-btn" style="font-size: 0.875rem;">
+                        <i class="bi bi-check-circle me-1"></i>Apply Filter
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary w-100 clear-last-visit-filter-btn" style="font-size: 0.875rem;">
+                        <i class="bi bi-x-circle me-1"></i>Clear
+                    </button>
+                </div>
+            </div>
+        `;
+    };
+    
+    // Create popover title
+    const getPopoverTitle = function() {
+        return `
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <span style="font-weight: 300 !important;">Filter by Last Visit</span>
+            </div>
+        `;
+    };
+    
+    // Initialize Bootstrap popover using getOrCreateInstance
+    const popover = bootstrap.Popover.getOrCreateInstance(filterBtn, {
+        title: getPopoverTitle,
+        content: getPopoverContent,
+        html: true,
+        sanitize: false,
+        placement: 'bottom',
+        trigger: 'click',
+        container: 'body',
+        customClass: 'last-visit-filter-popover-glass'
+    });
+    
+    // Handle popover shown event
+    const handlePopoverShown = function() {
+        // Use setTimeout to ensure popover is fully rendered
+        setTimeout(() => {
+            // Find popover element by class - try multiple selectors
+            let popoverElement = document.querySelector('.popover.last-visit-filter-popover-glass');
+            if (!popoverElement) {
+                popoverElement = document.querySelector('.last-visit-filter-popover-glass');
+            }
+            if (!popoverElement) {
+                // Try to get from popover instance
+                const popoverInstance = bootstrap.Popover.getInstance(filterBtn);
+                if (popoverInstance && popoverInstance.tip) {
+                    popoverElement = popoverInstance.tip;
+                }
+            }
+            
+            if (!popoverElement) {
+                console.error('Popover element not found');
+                return;
+            }
+            
+            // Find the popover body
+            const popoverBody = popoverElement.querySelector('.popover-body');
+            if (!popoverBody) {
+                console.error('Popover body not found');
+                return;
+            }
+            
+            // Get input fields
+            const fromInput = popoverBody.querySelector('#lastVisitFilterFrom');
+            const toInput = popoverBody.querySelector('#lastVisitFilterTo');
+            
+            // Handle apply filter button
+            const applyBtn = popoverBody.querySelector('.apply-last-visit-filter-btn');
+            if (applyBtn) {
+                const handleApplyClick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const fromValue = fromInput.value || null;
+                    const toValue = toInput.value || null;
+                    
+                    // Validate range
+                    if (fromValue && toValue && new Date(fromValue) > new Date(toValue)) {
+                        alert('From date cannot be greater than To date');
+                        return;
+                    }
+                    
+                    // Apply filter
+                    paginationState.currentLastVisitFilter = {
+                        from: fromValue,
+                        to: toValue
+                    };
+                    
+                    // Update filter button appearance
+                    if (fromValue || toValue) {
+                        filterBtn.classList.add('active');
+                    } else {
+                        filterBtn.classList.remove('active');
+                    }
+                    
+                    // Apply filters
+                    applyDoctorFilter();
+                    
+                    // Apply current search filter if exists
+                    const quickSearch = document.getElementById('quickSearch');
+                    if (quickSearch && quickSearch.value.trim()) {
+                        filterPatientsLocally(quickSearch.value);
+                    } else {
+                    // Update display
+                    renderPatientsTable();
+                    updatePaginationInfo();
+                    renderPaginationNav();
+                }
+                
+                // Update clear filters button visibility
+                updateClearFiltersVisibility();
+                
+                popover.hide();
+            };
+            
+            // Remove old listener and add new one
+            applyBtn.removeEventListener('click', handleApplyClick);
+            applyBtn.addEventListener('click', handleApplyClick);
+        }
+        
+        // Handle clear filter button
+        const clearBtn = popoverBody.querySelector('.clear-last-visit-filter-btn');
+            if (clearBtn) {
+                const handleClearClick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Clear filter
+                    paginationState.currentLastVisitFilter = { from: null, to: null };
+                    
+                    // Clear inputs
+                    if (fromInput) fromInput.value = '';
+                    if (toInput) toInput.value = '';
+                    
+                    // Update filter button appearance
+                    filterBtn.classList.remove('active');
+                    
+                    // Apply filters
+                    applyDoctorFilter();
+                    
+                    // Apply current search filter if exists
+                    const quickSearch = document.getElementById('quickSearch');
+                    if (quickSearch && quickSearch.value.trim()) {
+                        filterPatientsLocally(quickSearch.value);
+                    } else {
+                        // Update display
+                        renderPatientsTable();
+                        updatePaginationInfo();
+                        renderPaginationNav();
+                    }
+                    
+                    // Update clear filters button visibility
+                    updateClearFiltersVisibility();
+                    
+                    popover.hide();
+                };
+                
+                // Remove old listener and add new one
+                clearBtn.removeEventListener('click', handleClearClick);
+                clearBtn.addEventListener('click', handleClearClick);
+            }
+            
+            // Handle Enter key on inputs
+            if (fromInput && toInput) {
+                const handleInputKeyPress = function(e) {
+                    if (e.key === 'Enter') {
+                        applyBtn.click();
+                    }
+                };
+                
+                fromInput.removeEventListener('keypress', handleInputKeyPress);
+                toInput.removeEventListener('keypress', handleInputKeyPress);
+                fromInput.addEventListener('keypress', handleInputKeyPress);
+                toInput.addEventListener('keypress', handleInputKeyPress);
+            }
+        }, 100);
+    };
+    
+    // Remove existing listener if any
+    filterBtn.removeEventListener('shown.bs.popover', handlePopoverShown);
+    // Add new listener
+    filterBtn.addEventListener('shown.bs.popover', handlePopoverShown);
+    
+    // Handle click outside popover to close it
+    const handleClickOutside = function(event) {
+        const popoverInstance = bootstrap.Popover.getInstance(filterBtn);
+        if (!popoverInstance || !popoverInstance.tip) {
+            return;
+        }
+        
+        const popoverElement = popoverInstance.tip;
+        const isClickInsidePopover = popoverElement.contains(event.target);
+        const isClickOnFilterBtn = filterBtn.contains(event.target);
+        
+        // If click is outside both popover and filter button, close popover
+        if (!isClickInsidePopover && !isClickOnFilterBtn) {
+            popoverInstance.hide();
+        }
+    };
+    
+    // Add click outside listener when popover is shown
+    filterBtn.addEventListener('shown.bs.popover', function() {
+        // Use setTimeout to ensure popover is rendered
+        setTimeout(() => {
+            document.addEventListener('click', handleClickOutside);
+        }, 10);
+    });
+    
+    // Remove click outside listener when popover is hidden
+    filterBtn.addEventListener('hidden.bs.popover', function() {
+        document.removeEventListener('click', handleClickOutside);
     });
 }
 
@@ -2388,6 +3278,35 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    
+    // Initialize gender filter popover
+    initGenderFilterPopover();
+    
+    // Initialize age filter popover
+    initAgeFilterPopover();
+    
+    // Initialize last visit filter popover
+    initLastVisitFilterPopover();
+    
+    // Initialize clear filters buttons
+    const clearAllFiltersBtn = document.querySelector('.clear-all-filters-btn');
+    if (clearAllFiltersBtn) {
+        clearAllFiltersBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            clearAllFilters();
+        });
+    }
+    
+    const clearSortingBtn = document.getElementById('clearSortingBtn');
+    if (clearSortingBtn) {
+        clearSortingBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            clearSorting();
+        });
+    }
+    
+    // Initial visibility check
+    updateClearFiltersVisibility();
 });
 
 // Also initialize when modals are shown

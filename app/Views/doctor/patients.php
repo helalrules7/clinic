@@ -1,4 +1,5 @@
 <link href="/app/Views/doctor/assets/css/patients.css?v=<?= file_exists(__DIR__ . '/assets/css/patients.css') ? filemtime(__DIR__ . '/assets/css/patients.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 
 <div class="row mb-4">
     <div class="col-md-8">
@@ -47,41 +48,82 @@
     </div>
 </div>
 
-<!-- Patients Statistics -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card border-primary">
-            <div class="card-body text-center">
-                <i class="bi bi-people text-primary" style="font-size: 2rem;"></i>
-                <h3 class="mt-2 mb-1"><?= count($patients) ?></h3>
-                <p class="text-muted mb-0">Total Patients</p>
+<!-- Patients Statistics Cards -->
+<?php
+    $totalPatients = count($patients);
+    $totalVisits = array_sum(array_column($patients, 'total_appointments'));
+    $recentVisits = count(array_filter($patients, fn($p) => $p['last_visit'] && date('Y-m-d', strtotime($p['last_visit'])) >= date('Y-m-d', strtotime('-7 days'))));
+    $newThisMonth = count(array_filter($patients, fn($p) => date('Y-m-d', strtotime($p['created_at'])) >= date('Y-m-d', strtotime('-30 days'))));
+?>
+<div class="row stats-cards-wrapper mb-4">
+    <!-- Total Patients Card -->
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-primary">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title">Total Patients</h4>
+                        <h3 class="stats-card-value" id="statsTotalPatients"><?= $totalPatients ?></h3>
+                        <p class="stats-card-change stats-card-change-positive">All Time</p>
+                    </div>
+                    <div class="stats-card-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card border-success">
-            <div class="card-body text-center">
-                <i class="bi bi-calendar-check text-success" style="font-size: 2rem;"></i>
-                <h3 class="mt-2 mb-1"><?= array_sum(array_column($patients, 'total_appointments')) ?></h3>
-                <p class="text-muted mb-0">Total Visits</p>
+
+    <!-- Total Visits Card -->
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-success">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title">Total Visits</h4>
+                        <h3 class="stats-card-value" id="statsTotalVisits"><?= $totalVisits ?></h3>
+                        <p class="stats-card-change stats-card-change-positive">All Appointments</p>
+                    </div>
+                    <div class="stats-card-icon">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card border-info">
-            <div class="card-body text-center">
-                <i class="bi bi-calendar-week text-info" style="font-size: 2rem;"></i>
-                <h3 class="mt-2 mb-1"><?= count(array_filter($patients, fn($p) => $p['last_visit'] && date('Y-m-d', strtotime($p['last_visit'])) >= date('Y-m-d', strtotime('-7 days')))) ?></h3>
-                <p class="text-muted mb-0">Recent Visits</p>
+
+    <!-- Recent Visits Card -->
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-info">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title">Recent Visits</h4>
+                        <h3 class="stats-card-value" id="statsRecentVisits"><?= $recentVisits ?></h3>
+                        <p class="stats-card-change stats-card-change-positive">Last 7 Days</p>
+                    </div>
+                    <div class="stats-card-icon">
+                        <i class="bi bi-calendar-week"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card border-warning">
-            <div class="card-body text-center">
-                <i class="bi bi-person-plus text-warning" style="font-size: 2rem;"></i>
-                <h3 class="mt-2 mb-1"><?= count(array_filter($patients, fn($p) => date('Y-m-d', strtotime($p['created_at'])) >= date('Y-m-d', strtotime('-30 days')))) ?></h3>
-                <p class="text-muted mb-0">New This Month</p>
+
+    <!-- New This Month Card -->
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="stats-card stats-card-warning">
+                <div class="stats-card-content">
+                    <div class="stats-card-header">
+                        <h4 class="stats-card-title">New This Month</h4>
+                        <h3 class="stats-card-value" id="statsNewThisMonth"><?= $newThisMonth ?></h3>
+                        <p class="stats-card-change stats-card-change-positive">Last 30 Days</p>
+                    </div>
+                    <div class="stats-card-icon">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -159,26 +201,37 @@
                 </h5>
             </div>
             <div class="col-md-6 text-end">
-                <div class="d-flex align-items-center justify-content-end gap-3">
-                    <!-- Quick Search -->
-                    <div class="d-flex align-items-center">
-                        <div class="input-group input-group-sm" style="width: 200px;">
-                            <span class="input-group-text">
-                                <i class="bi bi-search"></i>
-                            </span>
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="quickSearch" 
-                                   placeholder="Quick search..."
-                                   autocomplete="off">
-                            <button class="btn btn-outline-secondary" type="button" id="clearQuickSearch">
-                                <i class="bi bi-x-lg"></i>
-                            </button>
-                        </div>
+                <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
+                    <!-- Clear Filters and Sorting Buttons -->
+                    <div class="d-flex gap-2 align-items-center me-3 d-none" id="clearFiltersGroup">
+                        <button type="button" class="btn btn-sm btn-outline-danger clear-all-filters-btn" title="Clear all filters">
+                            <i class="bi bi-funnel-x me-1"></i>
+                            Clear Filters
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-warning clear-sorting-btn d-none" title="Clear sorting" id="clearSortingBtn">
+                            <i class="bi bi-arrow-down-up me-1"></i>
+                            Clear Sorting
+                        </button>
+                    </div>
+                    
+                    <!-- Quick Search Group -->
+                    <div class="input-group input-group-sm" style="width: auto; min-width: 220px;">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" 
+                               class="form-control border-start-0 border-end-0" 
+                               id="quickSearch" 
+                               placeholder="Quick search..."
+                               autocomplete="off"
+                               style="border-left: none; border-right: none;">
+                        <button class="btn btn-outline-secondary border-start-0" type="button" id="clearQuickSearch" style="display: none;">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
                     </div>
                     <!-- Items per page -->
                     <div class="d-flex align-items-center">
-                        <label for="paginationLimit" class="form-label mb-0 me-2 text-muted">View:</label>
+                        <label for="paginationLimit" class="form-label mb-0 me-2 text-muted small">View:</label>
                         <section class="field menu" style="min-width: 70px; width: auto;">
                             <div class="control">
                                 <select class="form-select form-select-sm d-none center-select" id="paginationLimit" style="width: auto;">
@@ -206,37 +259,84 @@
             </div>
         </div>
     </div>
-    <div class="card-body p-0" style="min-height: 600px; overflow: hidden;">
-        <div class="table-responsive" style="min-height: 700px; overflow-y: hidden; overflow-x: auto;">
+    <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: calc(100vh - 400px); overflow-y: auto; overflow-x: auto;">
             <table class="table table-hover mb-0">
                 <thead class="table-dark">
                     <tr>
                         <th>
-                            <div class="d-flex flex-column">
-                                <span>Patient Info</span>
-                                <div class="mt-2 position-relative">
-                                    <input type="text" 
-                                           class="form-control form-control-sm" 
-                                           id="patientNameFilter" 
-                                           placeholder="Filter by name..."
-                                           autocomplete="off"
-                                           style="min-width: 150px; padding-right: 30px;">
-                                    <button type="button" 
-                                            class="btn-close btn-close-white position-absolute" 
-                                            id="clearNameFilter"
-                                            style="top: 50%; right: 5px; transform: translateY(-50%); display: none; font-size: 0.7rem; opacity: 0.7; cursor: pointer;"
-                                            aria-label="Clear filter"
-                                            onclick="clearPatientNameFilter()">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="sort-controls d-flex flex-column">
+                                    <button class="sort-btn sort-asc" data-sort="first_name" data-order="asc" title="Sort ascending">
+                                        <i class="bi bi-chevron-up"></i>
+                                    </button>
+                                    <button class="sort-btn sort-desc" data-sort="first_name" data-order="desc" title="Sort descending">
+                                        <i class="bi bi-chevron-down"></i>
                                     </button>
                                 </div>
+                                <span>Patient Info</span>
                             </div>
                         </th>
                         <th>Contact</th>
-                        <th>Age</th>
-                        <th>Doctors</th>
                         <th>
                             <div class="d-flex align-items-center gap-2">
-                                <span>Last Visit</span>
+                                <div class="sort-controls d-flex flex-column">
+                                    <button class="sort-btn sort-asc" data-sort="gender" data-order="asc" title="Sort ascending">
+                                        <i class="bi bi-chevron-up"></i>
+                                    </button>
+                                    <button class="sort-btn sort-desc" data-sort="gender" data-order="desc" title="Sort descending">
+                                        <i class="bi bi-chevron-down"></i>
+                                    </button>
+                                </div>
+                                <span>Gender</span>
+                                <button class="btn btn-sm btn-link p-0 gender-filter-btn" 
+                                        data-bs-toggle="popover" 
+                                        data-bs-placement="bottom" 
+                                        data-bs-html="true"
+                                        data-bs-content=""
+                                        title="Filter by Gender"
+                                        style="color: var(--accent); font-size: 0.875rem; line-height: 1; min-width: auto; padding: 0.125rem 0.25rem !important;">
+                                    <i class="bi bi-funnel"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="sort-controls d-flex flex-column">
+                                    <button class="sort-btn sort-asc" data-sort="age" data-order="asc" title="Sort ascending">
+                                        <i class="bi bi-chevron-up"></i>
+                                    </button>
+                                    <button class="sort-btn sort-desc" data-sort="age" data-order="desc" title="Sort descending">
+                                        <i class="bi bi-chevron-down"></i>
+                                    </button>
+                                </div>
+                                <span>Age</span>
+                                <button class="btn btn-sm btn-link p-0 age-filter-btn" 
+                                        data-bs-toggle="popover" 
+                                        data-bs-placement="bottom" 
+                                        data-bs-html="true"
+                                        data-bs-content=""
+                                        title="Filter by Age"
+                                        style="color: var(--accent); font-size: 0.875rem; line-height: 1; min-width: auto; padding: 0.125rem 0.25rem !important;">
+                                    <i class="bi bi-funnel"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="sort-controls d-flex flex-column">
+                                    <button class="sort-btn sort-asc" data-sort="created_by_doctor_name" data-order="asc" title="Sort ascending">
+                                        <i class="bi bi-chevron-up"></i>
+                                    </button>
+                                    <button class="sort-btn sort-desc" data-sort="created_by_doctor_name" data-order="desc" title="Sort descending">
+                                        <i class="bi bi-chevron-down"></i>
+                                    </button>
+                                </div>
+                                <span>Doctors</span>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="d-flex align-items-center gap-2">
                                 <div class="sort-controls d-flex flex-column">
                                     <button class="sort-btn sort-asc" data-sort="last_visit" data-order="asc" title="Sort ascending">
                                         <i class="bi bi-chevron-up"></i>
@@ -245,11 +345,20 @@
                                         <i class="bi bi-chevron-down"></i>
                                     </button>
                                 </div>
+                                <span>Last Visit</span>
+                                <button class="btn btn-sm btn-link p-0 last-visit-filter-btn" 
+                                        data-bs-toggle="popover" 
+                                        data-bs-placement="bottom" 
+                                        data-bs-html="true"
+                                        data-bs-content=""
+                                        title="Filter by Last Visit"
+                                        style="color: var(--accent); font-size: 0.875rem; line-height: 1; min-width: auto; padding: 0.125rem 0.25rem !important;">
+                                    <i class="bi bi-funnel"></i>
+                                </button>
                             </div>
                         </th>
                         <th>
                             <div class="d-flex align-items-center gap-2">
-                                <span>Total Visits</span>
                                 <div class="sort-controls d-flex flex-column">
                                     <button class="sort-btn sort-asc" data-sort="total_appointments" data-order="asc" title="Sort ascending">
                                         <i class="bi bi-chevron-up"></i>
@@ -258,6 +367,7 @@
                                         <i class="bi bi-chevron-down"></i>
                                     </button>
                                 </div>
+                                <span>Total Visits</span>
                             </div>
                         </th>
                         <th>Actions</th>
@@ -271,18 +381,16 @@
     </div>
     <!-- Pagination Controls -->
     <div class="card-footer" id="paginationContainer">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                <div class="pagination-info text-muted">
+        <div class="row align-items-center justify-content-center">
+            <div class="col-12 text-center">
+                <div class="pagination-info text-muted mb-2">
                     <small>
                         View <span id="showingFrom">1</span> to <span id="showingTo">20</span> 
                         of <span id="totalPatients"><?= count($patients) ?></span> patients
                     </small>
                 </div>
-            </div>
-            <div class="col-md-6">
-                <nav aria-label="Patients pagination">
-                    <ul class="pagination pagination-sm justify-content-end mb-0" id="paginationNav">
+                <nav aria-label="Patients pagination" class="d-flex justify-content-center">
+                    <ul class="pagination pagination-sm justify-content-center mb-0" id="paginationNav">
                         <!-- Pagination items will be generated here -->
                     </ul>
                 </nav>

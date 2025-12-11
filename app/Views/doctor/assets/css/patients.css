@@ -48,6 +48,593 @@
     box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
 }
 
+/* Gender Badge Styles */
+.badge.bg-pink {
+    background-color: rgb(255, 85, 224) !important;
+    color: white !important;
+}
+
+.badge.bg-primary {
+    background-color: var(--accent) !important;
+    color: white !important;
+}
+
+/* Gender column styling */
+.table tbody td .badge {
+    font-size: 0.875rem;
+    padding: 0.4rem 0.6rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.table tbody td .badge i {
+    font-size: 0.9rem;
+}
+
+/* Dark mode gender badges */
+.dark .badge.bg-pink {
+    background-color: rgb(255, 85, 224) !important;
+    color: white !important;
+}
+
+.dark .badge.bg-primary {
+    background-color: var(--accent) !important;
+    color: white !important;
+}
+
+/* Gender Filter Button Styles */
+.gender-filter-btn {
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+.gender-filter-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.gender-filter-btn.active {
+    opacity: 1;
+    color: var(--accent) !important;
+}
+
+.gender-filter-btn.active i {
+    color: var(--accent) !important;
+}
+
+/* Gender Filter Popover - Glass Effect */
+.popover.gender-filter-popover-glass {
+    /* Glass Effect - Light Mode */
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    border-radius: 12px !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.15),
+        0 1px 2px rgba(255, 255, 255, 0.2) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+    color: var(--text) !important;
+    max-width: 280px;
+    padding: 0 !important;
+}
+
+.dark .popover.gender-filter-popover-glass {
+    /* Glass Effect - Dark Mode */
+    background: rgba(11, 18, 32, 0.40) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        0 1px 2px rgba(255, 255, 255, 0.05) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.popover.gender-filter-popover-glass .popover-header {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.2) !important;
+    padding: 0.75rem 1rem;
+    color: var(--text);
+    font-weight: 600;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dark .popover.gender-filter-popover-glass .popover-header {
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+/* Age Filter Popover - Glass Effect (same as gender filter) */
+.popover.age-filter-popover-glass {
+    /* Glass Effect - Light Mode */
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    border-radius: 12px !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.15),
+        0 1px 2px rgba(255, 255, 255, 0.2) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+    color: var(--text) !important;
+    max-width: 320px;
+    padding: 0 !important;
+}
+
+.dark .popover.age-filter-popover-glass {
+    /* Glass Effect - Dark Mode */
+    background: rgba(11, 18, 32, 0.40) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        0 1px 2px rgba(255, 255, 255, 0.05) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.popover.age-filter-popover-glass .popover-header {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.2) !important;
+    padding: 0.75rem 1rem;
+    color: var(--text);
+    font-weight: 600;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dark .popover.age-filter-popover-glass .popover-header {
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+.popover.age-filter-popover-glass .popover-body {
+    padding: 1rem;
+    color: var(--text);
+    background: transparent !important;
+}
+
+.dark .popover.age-filter-popover-glass .popover-body {
+    background: transparent !important;
+}
+
+/* Age Filter Popover Content */
+.age-filter-popover .form-control {
+    color: var(--text) !important;
+    background-color: var(--bg-alt) !important;
+    border-color: var(--border) !important;
+}
+
+.age-filter-popover .form-control:focus {
+    color: var(--text) !important;
+    background-color: var(--bg-alt) !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
+}
+
+.age-filter-popover .apply-age-filter-btn {
+    background-color: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: white !important;
+}
+
+.age-filter-popover .apply-age-filter-btn:hover {
+    background-color: var(--accent) !important;
+    border-color: var(--accent) !important;
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.age-filter-popover .clear-age-filter-btn {
+    border-color: var(--border);
+    color: var(--text);
+    transition: all 0.2s ease;
+}
+
+.age-filter-popover .clear-age-filter-btn:hover {
+    background-color: var(--bg-alt);
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+}
+
+.dark .age-filter-popover .clear-age-filter-btn {
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark .age-filter-popover .clear-age-filter-btn:hover {
+    background-color: rgba(var(--accent-rgb), 0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* Age Filter Button Styles */
+.age-filter-btn {
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+.age-filter-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.age-filter-btn.active {
+    opacity: 1;
+    color: var(--accent) !important;
+}
+
+.age-filter-btn.active i {
+    color: var(--accent) !important;
+}
+
+/* Age Filter Popover Arrow - Glass Effect */
+.popover.age-filter-popover-glass .popover-arrow::before {
+    border-bottom-color: rgba(248, 250, 252, 0.35) !important;
+    border-top-color: rgba(248, 250, 252, 0.35) !important;
+    border-left-color: rgba(248, 250, 252, 0.35) !important;
+    border-right-color: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
+
+.dark .popover.age-filter-popover-glass .popover-arrow::before {
+    border-bottom-color: rgba(11, 18, 32, 0.40) !important;
+    border-top-color: rgba(11, 18, 32, 0.40) !important;
+    border-left-color: rgba(11, 18, 32, 0.40) !important;
+    border-right-color: rgba(11, 18, 32, 0.40) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
+
+.popover.age-filter-popover-glass .popover-arrow::after {
+    border-bottom-color: rgba(248, 250, 252, 0.35) !important;
+    border-top-color: rgba(248, 250, 252, 0.35) !important;
+    border-left-color: rgba(248, 250, 252, 0.35) !important;
+    border-right-color: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
+
+.dark .popover.age-filter-popover-glass .popover-arrow::after {
+    border-bottom-color: rgba(11, 18, 32, 0.40) !important;
+    border-top-color: rgba(11, 18, 32, 0.40) !important;
+    border-left-color: rgba(11, 18, 32, 0.40) !important;
+    border-right-color: rgba(11, 18, 32, 0.40) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
+
+/* Last Visit Filter Popover - Glass Effect (same as age filter) */
+.popover.last-visit-filter-popover-glass {
+    /* Glass Effect - Light Mode */
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    border-radius: 12px !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.15),
+        0 1px 2px rgba(255, 255, 255, 0.2) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+    color: var(--text) !important;
+    max-width: 320px;
+    padding: 0 !important;
+}
+
+.dark .popover.last-visit-filter-popover-glass {
+    /* Glass Effect - Dark Mode */
+    background: rgba(11, 18, 32, 0.40) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        0 1px 2px rgba(255, 255, 255, 0.05) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.popover.last-visit-filter-popover-glass .popover-header {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.2) !important;
+    padding: 0.75rem 1rem;
+    color: var(--text);
+    font-weight: 600;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dark .popover.last-visit-filter-popover-glass .popover-header {
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+.popover.last-visit-filter-popover-glass .popover-body {
+    padding: 1rem;
+    color: var(--text);
+    background: transparent !important;
+}
+
+.dark .popover.last-visit-filter-popover-glass .popover-body {
+    background: transparent !important;
+}
+
+/* Last Visit Filter Popover Content */
+.last-visit-filter-popover .form-control {
+    color: var(--text) !important;
+    background-color: var(--bg-alt) !important;
+    border-color: var(--border) !important;
+}
+
+.last-visit-filter-popover .form-control:focus {
+    color: var(--text) !important;
+    background-color: var(--bg-alt) !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
+}
+
+.last-visit-filter-popover .apply-last-visit-filter-btn {
+    background-color: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: white !important;
+}
+
+.last-visit-filter-popover .apply-last-visit-filter-btn:hover {
+    background-color: var(--accent) !important;
+    border-color: var(--accent) !important;
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.last-visit-filter-popover .clear-last-visit-filter-btn {
+    border-color: var(--border);
+    color: var(--text);
+    transition: all 0.2s ease;
+}
+
+.last-visit-filter-popover .clear-last-visit-filter-btn:hover {
+    background-color: var(--bg-alt);
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+}
+
+.dark .last-visit-filter-popover .clear-last-visit-filter-btn {
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark .last-visit-filter-popover .clear-last-visit-filter-btn:hover {
+    background-color: rgba(var(--accent-rgb), 0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* Last Visit Filter Button Styles */
+.last-visit-filter-btn {
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+.last-visit-filter-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.last-visit-filter-btn.active {
+    opacity: 1;
+    color: var(--accent) !important;
+}
+
+.last-visit-filter-btn.active i {
+    color: var(--accent) !important;
+}
+
+/* Last Visit Filter Popover Arrow - Glass Effect */
+.popover.last-visit-filter-popover-glass .popover-arrow::before {
+    border-bottom-color: rgba(248, 250, 252, 0.35) !important;
+    border-top-color: rgba(248, 250, 252, 0.35) !important;
+    border-left-color: rgba(248, 250, 252, 0.35) !important;
+    border-right-color: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
+
+.dark .popover.last-visit-filter-popover-glass .popover-arrow::before {
+    border-bottom-color: rgba(11, 18, 32, 0.40) !important;
+    border-top-color: rgba(11, 18, 32, 0.40) !important;
+    border-left-color: rgba(11, 18, 32, 0.40) !important;
+    border-right-color: rgba(11, 18, 32, 0.40) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
+
+.popover.last-visit-filter-popover-glass .popover-arrow::after {
+    border-bottom-color: rgba(248, 250, 252, 0.35) !important;
+    border-top-color: rgba(248, 250, 252, 0.35) !important;
+    border-left-color: rgba(248, 250, 252, 0.35) !important;
+    border-right-color: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
+
+.dark .popover.last-visit-filter-popover-glass .popover-arrow::after {
+    border-bottom-color: rgba(11, 18, 32, 0.40) !important;
+    border-top-color: rgba(11, 18, 32, 0.40) !important;
+    border-left-color: rgba(11, 18, 32, 0.40) !important;
+    border-right-color: rgba(11, 18, 32, 0.40) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
+
+/* Close button in header */
+.popover.gender-filter-popover-glass .popover-header .gender-filter-close-btn {
+    margin-left: auto;
+    margin-right: 0;
+    padding: 0.25rem;
+}
+
+.popover.gender-filter-popover-glass .popover-body {
+    padding: 1rem;
+    color: var(--text);
+    background: transparent !important;
+}
+
+.dark .popover.gender-filter-popover-glass .popover-body {
+    background: transparent !important;
+}
+
+/* Gender Filter Popover Content */
+.gender-filter-popover .form-check {
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.gender-filter-popover .form-check:hover {
+    background-color: rgba(var(--accent-rgb), 0.1);
+}
+
+.dark .gender-filter-popover .form-check:hover {
+    background-color: rgba(var(--accent-rgb), 0.15);
+}
+
+.gender-filter-popover .form-check-input {
+    cursor: pointer;
+    margin-top: 0.25rem;
+}
+
+.gender-filter-popover .form-check-input:checked {
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.gender-filter-popover .form-check-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.gender-filter-popover .form-check-label i {
+    font-size: 1rem;
+}
+
+.gender-filter-popover .clear-gender-filter-btn {
+    border-color: var(--border);
+    color: var(--text);
+    transition: all 0.2s ease;
+}
+
+.gender-filter-popover .clear-gender-filter-btn:hover {
+    background-color: var(--bg-alt);
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+}
+
+.dark .gender-filter-popover .clear-gender-filter-btn {
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark .gender-filter-popover .clear-gender-filter-btn:hover {
+    background-color: rgba(var(--accent-rgb), 0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* Popover Arrow - Glass Effect (matching popover style) */
+.popover.gender-filter-popover-glass .popover-arrow::before {
+    border-bottom-color: rgba(248, 250, 252, 0.35) !important;
+    border-top-color: rgba(248, 250, 252, 0.35) !important;
+    border-left-color: rgba(248, 250, 252, 0.35) !important;
+    border-right-color: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
+
+.dark .popover.gender-filter-popover-glass .popover-arrow::before {
+    border-bottom-color: rgba(11, 18, 32, 0.40) !important;
+    border-top-color: rgba(11, 18, 32, 0.40) !important;
+    border-left-color: rgba(11, 18, 32, 0.40) !important;
+    border-right-color: rgba(11, 18, 32, 0.40) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
+
+.popover.gender-filter-popover-glass .popover-arrow::after {
+    border-bottom-color: rgba(248, 250, 252, 0.35) !important;
+    border-top-color: rgba(248, 250, 252, 0.35) !important;
+    border-left-color: rgba(248, 250, 252, 0.35) !important;
+    border-right-color: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
+
+.dark .popover.gender-filter-popover-glass .popover-arrow::after {
+    border-bottom-color: rgba(11, 18, 32, 0.40) !important;
+    border-top-color: rgba(11, 18, 32, 0.40) !important;
+    border-left-color: rgba(11, 18, 32, 0.40) !important;
+    border-right-color: rgba(11, 18, 32, 0.40) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
+
+/* Ensure popover arrow matches popover border style */
+.popover.gender-filter-popover-glass .popover-arrow {
+    width: 1rem;
+    height: 0.5rem;
+}
+
+.popover.gender-filter-popover-glass[data-popper-placement^="top"] .popover-arrow::before {
+    border-top-color: rgba(226, 232, 240, 0.3) !important;
+}
+
+.dark .popover.gender-filter-popover-glass[data-popper-placement^="top"] .popover-arrow::before {
+    border-top-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+.popover.gender-filter-popover-glass[data-popper-placement^="bottom"] .popover-arrow::before {
+    border-bottom-color: rgba(226, 232, 240, 0.3) !important;
+}
+
+.dark .popover.gender-filter-popover-glass[data-popper-placement^="bottom"] .popover-arrow::before {
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+/* Gender Filter Close Button */
+.gender-filter-popover .gender-filter-close-btn {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0.25rem;
+    opacity: 0.6;
+}
+
+.gender-filter-popover .gender-filter-close-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.dark .gender-filter-popover .gender-filter-close-btn {
+    filter: invert(1) brightness(2);
+    opacity: 0.7;
+}
+
+.dark .gender-filter-popover .gender-filter-close-btn:hover {
+    opacity: 1;
+    filter: invert(1) brightness(2.5);
+}
+
 .card {
     background-color: var(--bg);
     border-color: var(--border);
@@ -76,12 +663,34 @@
     border-color: var(--border) !important;
     color: var(--text) !important;
     text-align: left !important;
+    direction: ltr !important;
 }
 
 .table-dark th {
     background-color: var(--bg-dark) !important;
     border-color: var(--border) !important;
     color: var(--text) !important;
+    text-align: left !important;
+    direction: ltr !important;
+}
+
+/* Ensure all th content is LTR and left-aligned */
+.table thead th,
+.table-dark th {
+    direction: ltr !important;
+    text-align: left !important;
+}
+
+.table thead th > *,
+.table-dark th > * {
+    direction: ltr !important;
+    text-align: left !important;
+}
+
+.table thead th .d-flex,
+.table-dark th .d-flex {
+    direction: ltr !important;
+    justify-content: flex-start !important;
     text-align: left !important;
 }
 
@@ -90,7 +699,9 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    margin-left: auto;
+    margin-left: 0;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
 }
 
 .sort-btn {
@@ -124,6 +735,24 @@
 
 .table thead th .d-flex {
     align-items: center;
+    justify-content: flex-start !important;
+    direction: ltr !important;
+    text-align: left !important;
+}
+
+.table-dark th .d-flex {
+    justify-content: flex-start !important;
+    align-items: center;
+    direction: ltr !important;
+    text-align: left !important;
+}
+
+/* Ensure all text in th is left-aligned and LTR */
+.table thead th span,
+.table-dark th span {
+    direction: ltr !important;
+    text-align: left !important;
+    display: inline-block;
 }
 
 /* Table header filter input styling */
@@ -995,6 +1624,30 @@ kbd[lang="ar"] {
     display: none !important;
 }
 
+/* Center pagination container */
+#paginationContainer {
+    text-align: center;
+}
+
+#paginationContainer .row {
+    justify-content: center !important;
+}
+
+#paginationContainer .pagination-info {
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+#paginationContainer nav {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+#paginationContainer #paginationNav {
+    justify-content: center !important;
+}
+
 /* Pagination limit select styling */
 #paginationLimit {
     background-color: var(--bg);
@@ -1012,16 +1665,43 @@ kbd[lang="ar"] {
     box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
 }
 
-/* Quick search styling */
+/* Quick search styling - Improved grouped design */
+.card-header .input-group {
+    border-radius: 0.375rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    border: 1px solid var(--border);
+    background-color: var(--bg);
+}
+
+.card-header .input-group:focus-within {
+    box-shadow: 0 0 0 0.2rem rgba(14, 165, 233, 0.25);
+    border-color: var(--accent);
+}
+
+/* Dark mode - Input Group Container */
+.dark .card-header .input-group {
+    background-color: var(--bg) !important;
+    border-color: var(--border) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.dark .card-header .input-group:focus-within {
+    background-color: var(--bg) !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25);
+}
+
 #quickSearch {
     background-color: var(--bg);
     border-color: var(--border);
     color: var(--text);
     font-family: 'Cairo', Arial, sans-serif;
     font-size: 0.875rem;
-    border-radius: 0;
     border-left: none;
     border-right: none;
+    transition: all 0.2s ease;
 }
 
 #quickSearch:focus {
@@ -1040,16 +1720,45 @@ kbd[lang="ar"] {
 .input-group-sm .input-group-text {
     background-color: var(--bg-alt);
     border-color: var(--border);
-    color: var(--text);
+    color: var(--muted);
     font-size: 0.875rem;
-    border-right: 1px solid var(--border);
+    border-right: none;
+    padding: 0.5rem 0.75rem;
+}
+
+/* Ensure input-group-text doesn't have white background in dark mode */
+.dark .input-group-text {
+    background-color: var(--bg-alt) !important;
+    border-color: var(--border) !important;
+    color: var(--muted) !important;
+}
+
+.dark .card-header .input-group .input-group-text {
+    background-color: var(--bg-alt) !important;
+    border-color: var(--border) !important;
+    color: var(--muted) !important;
+}
+
+.dark .input-group-sm .input-group-text {
+    background-color: var(--bg-alt) !important;
+    border-color: var(--border) !important;
+    color: var(--muted) !important;
+}
+
+/* Override any white background */
+.dark .card-header .input-group .input-group-text,
+.dark .input-group .input-group-text {
+    background-color: var(--bg-alt) !important;
+    background: var(--bg-alt) !important;
 }
 
 .input-group-sm .btn-outline-secondary {
     border-color: var(--border);
     color: var(--muted);
     font-size: 0.875rem;
-    border-left: 1px solid var(--border);
+    border-left: none;
+    padding: 0.5rem 0.75rem;
+    transition: all 0.2s ease;
 }
 
 .input-group-sm .btn-outline-secondary:hover {
@@ -1058,13 +1767,196 @@ kbd[lang="ar"] {
     color: var(--text);
 }
 
-/* Quick search focus state */
-#quickSearch:focus + .btn-outline-secondary {
+.input-group-sm .btn-outline-secondary:focus {
+    box-shadow: none;
     border-color: var(--accent);
 }
 
+/* Quick search focus state */
 .input-group:focus-within .input-group-text {
     border-color: var(--accent);
+    background-color: var(--bg);
+}
+
+.input-group:focus-within #quickSearch {
+    border-color: var(--accent);
+}
+
+.input-group:focus-within .btn-outline-secondary {
+    border-color: var(--accent);
+}
+
+/* Dark mode adjustments */
+.dark .card-header .input-group {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    border-color: var(--border);
+}
+
+.dark .card-header .input-group:focus-within {
+    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25);
+    border-color: var(--accent);
+}
+
+/* Dark mode - Quick Search Input */
+.dark #quickSearch {
+    background-color: var(--bg);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark #quickSearch:focus {
+    background-color: var(--bg);
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.dark #quickSearch::placeholder {
+    color: var(--muted);
+}
+
+/* Dark mode - Input Group Text (Search Icon) */
+.dark .input-group-sm .input-group-text {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--muted) !important;
+}
+
+.dark .card-header .input-group .input-group-text {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--muted) !important;
+}
+
+.dark .input-group:focus-within .input-group-text {
+    border-color: var(--accent) !important;
+    background-color: var(--bg-alt) !important;
+    color: var(--accent) !important;
+}
+
+.dark .card-header .input-group:focus-within .input-group-text {
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+}
+
+/* Dark mode - Clear Button */
+.dark .input-group-sm .btn-outline-secondary {
+    border-color: var(--border) !important;
+    color: var(--muted) !important;
+}
+
+.dark .card-header .input-group .btn-outline-secondary {
+    border-color: var(--border) !important;
+    color: var(--muted) !important;
+}
+
+.dark .input-group-sm .btn-outline-secondary:hover {
+    background-color: var(--bg);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark .input-group-sm .btn-outline-secondary:focus {
+    background-color: var(--bg);
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: none;
+}
+
+.dark .input-group:focus-within .btn-outline-secondary {
+    border-color: var(--accent);
+}
+
+.dark .input-group:focus-within .btn-outline-secondary:hover {
+    background-color: var(--bg-alt);
+    color: var(--text);
+}
+
+/* Light mode - Ensure proper styling */
+.card-header .input-group {
+    border: 1px solid var(--border);
+}
+
+.card-header .input-group .input-group-text {
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.card-header .input-group #quickSearch {
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.card-header .input-group .btn-outline-secondary {
+    background-color: transparent;
+    border-color: var(--border);
+    color: var(--muted);
+}
+
+.card-header .input-group:focus-within {
+    border-color: var(--accent);
+}
+
+.card-header .input-group:focus-within .input-group-text {
+    background-color: var(--bg);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.card-header .input-group:focus-within #quickSearch {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.card-header .input-group:focus-within .btn-outline-secondary {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.card-header .input-group .btn-outline-secondary:hover {
+    background-color: var(--bg-alt);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+/* Ensure dark mode compatibility for all states */
+.dark .card-header .input-group .input-group-text {
+    background-color: var(--bg-alt);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark .card-header .input-group #quickSearch {
+    background-color: var(--bg);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark .card-header .input-group .btn-outline-secondary {
+    background-color: transparent;
+    border-color: var(--border);
+    color: var(--muted);
+}
+
+.dark .card-header .input-group:focus-within .input-group-text {
+    background-color: var(--bg);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.dark .card-header .input-group:focus-within #quickSearch {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.dark .card-header .input-group:focus-within .btn-outline-secondary {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.dark .card-header .input-group .btn-outline-secondary:hover {
+    background-color: var(--bg);
+    border-color: var(--border);
+    color: var(--text);
 }
 
 /* Table header gap adjustments */
@@ -2705,4 +3597,316 @@ kbd[lang="ar"] {
 .field.menu.open .control::before {
     height: 60%;
     opacity: 1;
+}
+
+.btn-outline-primary{
+    background-color: var(--accent) !important;
+    border-color: var(--accent) !important;
+    border-radius: 10px !important;
+    color: white !important;
+}
+
+.btn-outline-warning{
+    background-color: #ffb700 !important;
+    border-color: #ffb700 !important;
+    border-radius: 10px !important;
+    color: white !important;
+}
+
+.btn-outline-warning:hover{
+    background-color: #f6c23e !important;
+    border-color: #f6c23e !important;
+}
+
+.btn-outline-success{
+    background-color: #00a025 !important;
+    border-color: #00a025 !important;
+    border-radius: 10px !important;
+    color: white !important;
+}
+
+.btn-outline-success:hover{
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+}
+
+.btn-outline-danger{
+    background-color: #c90014 !important;
+    border-color: #c90014 !important;
+    border-radius: 10px !important;
+    color: white !important;
+}
+
+.btn-outline-danger:hover{
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+}
+
+#patientsTableBody .btn-group .btn-outline-danger{
+    background-color: #c90014 !important;
+    border-color: #c90014 !important;
+    border-radius: 10px !important;
+    color: white !important;
+}
+.dark #patientsTableBody .btn-group .btn-outline-danger{
+    background-color: #c90014 !important;
+    border-color: #c90014 !important;
+    border-radius: 10px !important;
+    color: white !important;
+}
+#patientsTableBody .btn-group .btn-outline-danger:hover{
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+}
+.dark #patientsTableBody .btn-group .btn-outline-danger:hover{
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+}
+
+#patientsTableBody .btn-group .btn-outline-success{
+    background-color: #00a025 !important;
+    border-color: #00a025 !important;
+    border-radius: 10px !important;
+    color: white !important;
+}
+.dark #patientsTableBody .btn-group .btn-outline-success{
+    background-color: #00a025 !important;
+    border-color: #00a025 !important;
+    border-radius: 10px !important;
+    color: white !important;
+}
+#patientsTableBody .btn-group .btn-outline-success:hover{
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+}
+.dark #patientsTableBody .btn-group .btn-outline-success:hover{
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+}
+#patientsTableBody .btn-group .btn-outline-info{
+    background-color: #0ea5e9 !important;
+    border-color: #0ea5e9 !important;
+    border-radius: 10px !important;
+    color: white !important;
+}
+.dark #patientsTableBody .btn-group .btn-outline-info{
+    background-color: #0ea5e9 !important;
+    border-color: #0ea5e9 !important;
+    border-radius: 10px !important;
+    color: white !important;
+}
+#patientsTableBody .btn-group .btn-outline-info:hover{
+    background-color: #0ea5e9 !important;
+    border-color: #0ea5e9 !important;
+}
+.dark #patientsTableBody .btn-group .btn-outline-info:hover{
+    background-color: #0ea5e9 !important;
+    border-color: #0ea5e9 !important;
+}
+#patientsTableBody .btn-group .btn-outline-warning{
+    background-color: #ffb700 !important;
+    border-color: #ffb700 !important;
+    border-radius: 10px !important;
+    color: white !important;
+}
+.dark #patientsTableBody .btn-group .btn-outline-warning{
+    background-color: #ffb700 !important;
+    border-color: #ffb700 !important;
+    border-radius: 10px !important;
+    color: white !important;
+}
+#patientsTableBody .btn-group .btn-outline-warning:hover{
+    background-color: #f6c23e !important;
+    border-color: #f6c23e !important;
+    color: white !important;
+}
+.dark #patientsTableBody .btn-group .btn-outline-warning:hover{
+    background-color: #f6c23e !important;
+    border-color: #f6c23e !important;
+    color: white !important;
+}
+
+/* ============================================
+   Statistics Cards Color Styling
+   ============================================ */
+
+/* Primary Card (Blue) */
+.stats-card-primary .stats-card-content {
+    border-left: 4px solid var(--accent);
+}
+
+.stats-card-primary .stats-card-icon i {
+    color: var(--accent);
+    opacity: 0.15;
+}
+
+.stats-card-primary .stats-card-value {
+    color: var(--accent);
+}
+
+.stats-card-primary:hover .stats-card-content {
+    border-left-color: var(--accent);
+    box-shadow: 0 6px 25px rgba(14, 165, 233, 0.2);
+}
+
+.dark .stats-card-primary .stats-card-icon i {
+    color: var(--accent);
+    opacity: 0.2;
+}
+
+/* Success Card (Green) */
+.stats-card-success .stats-card-content {
+    border-left: 4px solid var(--success);
+}
+
+.stats-card-success .stats-card-icon i {
+    color: var(--success);
+    opacity: 0.15;
+}
+
+.stats-card-success .stats-card-value {
+    color: var(--success);
+}
+
+.stats-card-success:hover .stats-card-content {
+    border-left-color: var(--success);
+    box-shadow: 0 6px 25px rgba(16, 185, 129, 0.2);
+}
+
+.dark .stats-card-success .stats-card-icon i {
+    color: var(--success);
+    opacity: 0.2;
+}
+
+/* Info Card (Cyan) */
+.stats-card-info .stats-card-content {
+    border-left: 4px solid #17a2b8;
+}
+
+.stats-card-info .stats-card-icon i {
+    color: #17a2b8;
+    opacity: 0.15;
+}
+
+.stats-card-info .stats-card-value {
+    color: #17a2b8;
+}
+
+.stats-card-info:hover .stats-card-content {
+    border-left-color: #17a2b8;
+    box-shadow: 0 6px 25px rgba(23, 162, 184, 0.2);
+}
+
+.dark .stats-card-info .stats-card-icon i {
+    color: #17a2b8;
+    opacity: 0.2;
+}
+
+/* Warning Card (Yellow/Orange) */
+.stats-card-warning .stats-card-content {
+    border-left: 4px solid #f6c23e;
+}
+
+.stats-card-warning .stats-card-icon i {
+    color: #f6c23e;
+    opacity: 0.15;
+}
+
+.stats-card-warning .stats-card-value {
+    color: #f6c23e;
+}
+
+.stats-card-warning:hover .stats-card-content {
+    border-left-color: #f6c23e;
+    box-shadow: 0 6px 25px rgba(246, 194, 62, 0.2);
+}
+
+.dark .stats-card-warning .stats-card-icon i {
+    color: #f6c23e;
+    opacity: 0.2;
+}
+
+/* Danger Card (Red) */
+.stats-card-danger .stats-card-content {
+    border-left: 4px solid var(--danger);
+}
+
+.stats-card-danger .stats-card-icon i {
+    color: var(--danger);
+    opacity: 0.15;
+}
+
+.stats-card-danger .stats-card-value {
+    color: var(--danger);
+}
+
+.stats-card-danger:hover .stats-card-content {
+    border-left-color: var(--danger);
+    box-shadow: 0 6px 25px rgba(239, 68, 68, 0.2);
+}
+
+.dark .stats-card-danger .stats-card-icon i {
+    color: var(--danger);
+    opacity: 0.2;
+}
+
+#popover350256 > h3 > div > button{
+    color: var(--text) !important;
+}
+
+/* Clear Filters and Sorting Buttons */
+#clearFiltersGroup {
+    transition: all 0.3s ease;
+}
+
+.clear-all-filters-btn,
+.clear-sorting-btn {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    color: white !important;
+}
+
+.dark .clear-all-filters-btn,
+.dark .clear-sorting-btn {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    color: white !important;
+}
+
+.clear-all-filters-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+    color: white !important;
+}
+
+.clear-sorting-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2);
+    color: white !important;
+}
+
+.dark .clear-all-filters-btn {
+    border-color: var(--danger);
+    color: white !important;
+}
+
+.dark .clear-all-filters-btn:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: var(--danger);
+    color: white !important;
+}
+
+.dark .clear-sorting-btn {
+    border-color: var(--border);
+    color: white !important;
+}
+
+.dark .clear-sorting-btn:hover {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-color: var(--warning);
+    color: white !important;
 }
