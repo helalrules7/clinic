@@ -1455,11 +1455,6 @@ async function showMetaAutocomplete(input, type, query, range) {
     const x = inputRect.left + window.scrollX;
     const y = inputRect.bottom + window.scrollY;
     
-    console.log('Meta Autocomplete Position (Absolute):', {
-        inputRect: inputRect,
-        calculatedX: x,
-        calculatedY: y
-    });
 
     // Remove any inline styles that might interfere
     autocompletePortal.style.removeProperty('top');
@@ -1744,12 +1739,6 @@ async function showEditMetaAutocomplete(input, type, query, range) {
     // Use absolute positioning (scrollY + rect.bottom)
     const x = inputRect.left + window.scrollX;
     const y = inputRect.bottom + window.scrollY;
-
-    console.log('Edit Meta Autocomplete Position (Absolute):', {
-        inputRect: inputRect,
-        calculatedX: x,
-        calculatedY: y
-    });
 
     // Remove any inline styles that might interfere
     autocompletePortal.style.removeProperty('top');

@@ -5433,7 +5433,6 @@ function getIconForSelect(selectElement) {
 // Custom Select Menu Logic
 function initCustomSelects() {
     const customSelects = document.querySelectorAll('.field.menu:not([data-initialized])');
-    console.log('initCustomSelects called, found', customSelects.length, 'custom selects');
 
     customSelects.forEach(field => {
         const select = field.querySelector('select');
@@ -5558,7 +5557,6 @@ function initCustomSelects() {
         button.addEventListener('click', (e) => {
             e.stopPropagation();
             e.preventDefault();
-            console.log('Button clicked, field:', field, 'isOpen:', field.classList.contains('open'));
             if (field.classList.contains('open')) {
                 closeMenu();
             } else {

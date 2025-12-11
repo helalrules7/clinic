@@ -221,7 +221,6 @@ document.addEventListener('DOMContentLoaded', function() {
         closeMenu();
         
         // Trigger form submission
-        console.log('Submitting form with report type:', value);
         const form = document.getElementById('reportForm');
         if (form) {
             form.submit();

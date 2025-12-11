@@ -991,11 +991,9 @@
     }
     
     function showLoading(message) {
-        console.log('Loading: ' + message);
     }
     
     function hideLoading() {
-        console.log('Loading complete');
     }
 </script>
 

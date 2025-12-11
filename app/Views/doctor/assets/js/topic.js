@@ -190,13 +190,6 @@ function renderPosts() {
         return;
     }
     
-    // Debug: Log posts structure
-    console.log('Forum renderPosts: Total top-level posts:', forumPosts.length);
-    forumPosts.forEach((post, index) => {
-        const childrenCount = post.children && Array.isArray(post.children) ? post.children.length : 0;
-        console.log(`Forum renderPosts: Post ${index + 1} (ID: ${post.id}) has ${childrenCount} children`);
-    });
-    
     let html = '';
     // forumPosts should already be a tree structure from buildPostTree
     // Only top-level posts are in the array, children are nested
@@ -1517,12 +1510,6 @@ async function showEditMetaAutocomplete(input, type, query, range) {
     // Use absolute positioning (scrollY + rect.bottom)
     const x = inputRect.left + window.scrollX;
     const y = inputRect.bottom + window.scrollY;
-
-    console.log('Topic Edit Meta Autocomplete Position (Absolute):', {
-        inputRect: inputRect,
-        calculatedX: x,
-        calculatedY: y
-    });
 
     // Remove any inline styles that might interfere
     autocompletePortal.style.removeProperty('top');
