@@ -239,7 +239,7 @@
         </div>
     </div>
     <div class="card-body p-0" style="min-height: 600px; overflow: hidden;">
-        <div class="table-responsive" style="min-height: 700px; overflow-y: hidden; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+        <div class="table-responsive" style="min-height: 700px; overflow-y: hidden; overflow-x: auto;">
             <table class="table table-hover mb-0">
                 <thead class="table-dark">
                     <tr>
@@ -1006,8 +1006,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize draggable modals after a short delay to ensure modals are ready
     setTimeout(initializeDraggableModals, 200);
     
-    // Initialize table touch/drag support for mobile
-    initTableTouchSupport();
     
     // Quick search
     const quickSearch = document.getElementById('quickSearch');
@@ -1093,67 +1091,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Initialize table touch/drag support
-    function initTableTouchSupport() {
-        const tableWrapper = document.querySelector('.table-responsive');
-        if (!tableWrapper) return;
-        
-        let isScrolling = false;
-        let startX = 0;
-        let scrollLeft = 0;
-        
-        // Touch support
-        tableWrapper.addEventListener('touchstart', function(e) {
-            isScrolling = true;
-            startX = e.touches[0].pageX - tableWrapper.offsetLeft;
-            scrollLeft = tableWrapper.scrollLeft;
-        }, { passive: true });
-        
-        tableWrapper.addEventListener('touchmove', function(e) {
-            if (!isScrolling) return;
-            e.preventDefault();
-            const x = e.touches[0].pageX - tableWrapper.offsetLeft;
-            const walk = (x - startX) * 2; // Scroll speed multiplier
-            tableWrapper.scrollLeft = scrollLeft - walk;
-        }, { passive: false });
-        
-        tableWrapper.addEventListener('touchend', function() {
-            isScrolling = false;
-        }, { passive: true });
-        
-        // Mouse drag support
-        let isDown = false;
-        let startMouseX = 0;
-        let scrollStartLeft = 0;
-        
-        tableWrapper.addEventListener('mousedown', function(e) {
-            isDown = true;
-            tableWrapper.style.cursor = 'grabbing';
-            startMouseX = e.pageX - tableWrapper.offsetLeft;
-            scrollStartLeft = tableWrapper.scrollLeft;
-        });
-        
-        tableWrapper.addEventListener('mouseleave', function() {
-            isDown = false;
-            tableWrapper.style.cursor = 'grab';
-        });
-        
-        tableWrapper.addEventListener('mouseup', function() {
-            isDown = false;
-            tableWrapper.style.cursor = 'grab';
-        });
-        
-        tableWrapper.addEventListener('mousemove', function(e) {
-            if (!isDown) return;
-            e.preventDefault();
-            const x = e.pageX - tableWrapper.offsetLeft;
-            const walk = (x - startMouseX) * 2;
-            tableWrapper.scrollLeft = scrollStartLeft - walk;
-        });
-        
-        // Set initial cursor style
-        tableWrapper.style.cursor = 'grab';
-    }
     
     // Initialize Bootstrap Tooltips
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');

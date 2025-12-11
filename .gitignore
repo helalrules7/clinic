@@ -7,6 +7,7 @@
 vendor/
 
 # Uploads and user-generated content
+remoteServer/
 uploads/
 storage/uploads/
 storage/sessions/
