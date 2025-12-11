@@ -67,7 +67,7 @@ export class Search {
     }
 
     open() {
-        if (!this.searchModal) return;
+        if (!this.searchModal || !this.searchInput || !this.searchResults) return;
         
         this.isOpen = true;
         this.searchModal.classList.add('active');
@@ -78,7 +78,7 @@ export class Search {
     }
 
     close() {
-        if (!this.searchModal) return;
+        if (!this.searchModal || !this.searchInput || !this.searchResults) return;
         
         this.isOpen = false;
         this.searchModal.classList.remove('active');
@@ -88,6 +88,8 @@ export class Search {
     }
 
     handleSearch(query) {
+        if (!this.searchResults) return;
+        
         if (!query || query.length < 2) {
             this.searchResults.classList.remove('active');
             this.searchResults.innerHTML = '';
@@ -151,9 +153,10 @@ export class Search {
             return;
         }
 
+        const query = this.searchInput ? this.searchInput.value : '';
         const html = results.map(result => `
             <div class="search-result-item" data-href="${result.href}">
-                <div class="search-result-title">${this.highlight(result.title, this.searchInput.value)}</div>
+                <div class="search-result-title">${this.highlight(result.title, query)}</div>
                 <div class="search-result-path">${result.path}</div>
             </div>
         `).join('');
@@ -175,7 +178,10 @@ export class Search {
 
     highlight(text, query) {
         if (!query) return text;
-        const regex = new RegExp(`(${query})`, 'gi');
+        
+        // Escape special regex characters to prevent regex injection
+        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${escapedQuery})`, 'gi');
         return text.replace(regex, '<mark>$1</mark>');
     }
 
