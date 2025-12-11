@@ -16,11 +16,7 @@
                 logo.src = theme === 'dark' ? '/assets/images/Dark.png' : '/assets/images/Light.png';
             }
             
-            // Update favicon
-            const favicon = document.getElementById('favicon');
-            if (favicon) {
-                favicon.href = theme === 'dark' ? '/assets/fav/Dark.ico' : '/assets/fav/Light.ico';
-            }
+            // Favicon is now static (faicon.ico) - no need to update
         }
         
         // Function to save theme to database and localStorage
@@ -784,7 +780,6 @@
                 
                 try {
                     const registration = await navigator.serviceWorker.register('/sw.js');
-                    console.log('Service Worker registered:', registration);
                     return registration;
                 } catch (error) {
                     console.error('Service Worker registration failed:', error);
@@ -2170,8 +2165,6 @@
                             playNotificationSound();
                         }
                         
-                        console.log('Notifications loaded:', data.notifications);
-                        console.log('Unread count:', data.unread_count);
                         renderNotifications(data.notifications);
                         updateBadge(data.unread_count);
                     } else {
@@ -2313,12 +2306,8 @@
                 
                 notificationsBody.innerHTML = html;
                 
-                // Trigger animation for newly added notifications
-                setTimeout(() => {
-                    notificationsBody.querySelectorAll('.notification-item').forEach((item, index) => {
-                        item.style.animationDelay = `${index * 0.1}s`;
-                    });
-                }, 10);
+                // macOS-style animations are handled via CSS nth-child selectors
+                // No need for JavaScript animation delays
                 
                 // Add event listeners to close buttons (now delete)
                 notificationsBody.querySelectorAll('.notification-item-close').forEach(btn => {
@@ -2515,17 +2504,27 @@
                         // Remove notification from DOM with animation
                         const notificationItem = notificationsBody.querySelector(`[data-notification-id="${notificationId}"]`);
                         if (notificationItem) {
-                            // Apply delete animation
+                            // Apply macOS-style delete animation
                             notificationItem.classList.add('notification-out');
                             setTimeout(() => {
                                 notificationItem.remove();
-                                // Recalculate panel height after deletion
-                                calculatePanelHeight();
-                                // Always reload notifications to ensure sync with database
-                                setTimeout(() => {
-                                    loadNotifications();
-                                }, 100);
-                            }, 750); // Wait for animation to complete
+
+                                // Check if this was the last notification (excluding the view-all button)
+                                const remainingNotifications = notificationsBody.querySelectorAll('.notification-item');
+                                if (remainingNotifications.length === 0) {
+                                    // Auto-close the notification panel when last notification is deleted
+                                    setTimeout(() => {
+                                        closeNotifications();
+                                    }, 200); // Small delay for visual feedback
+                                } else {
+                                    // Recalculate panel height after deletion
+                                    calculatePanelHeight();
+                                    // Reload notifications to ensure sync with database
+                                    setTimeout(() => {
+                                        loadNotifications();
+                                    }, 100);
+                                }
+                            }, 300); // Wait for macOS animation to complete
                         } else {
                             // If item not found in DOM, reload to sync
                             loadNotifications();
@@ -2630,32 +2629,26 @@
                         }
                         
                         if (data.success) {
-                            // Apply delete animation to all notifications using new animation classes
+                            // Apply macOS-style delete animation to all notifications
                             notificationItems.forEach((item, index) => {
                                 setTimeout(() => {
                                     item.classList.add('notification-out');
-                                }, index * 50); // Stagger animations
+                                }, index * 40); // Stagger animations
                             });
-                            
-                            // Wait for animations to complete, then remove from DOM
+
+                            // Wait for animations to complete, then close the panel
                             setTimeout(() => {
                                 // Remove all items from DOM
                                 notificationItems.forEach(item => {
                                     item.remove();
                                 });
-                                
-                                // Recalculate panel height
-                                calculatePanelHeight();
-                                
-                                // Reload to show empty state and ensure sync with database
-                                setTimeout(() => {
-                                    loadNotifications();
-                                    updateUnreadCount();
-                                    
-                                    // Close notification panel after clearing all (bonus feature)
-                                    closeNotifications();
-                                }, 100);
-                            }, (notificationItems.length * 50) + 750); // Wait for all animations (750ms for animation duration)
+
+                                // Update unread count
+                                updateUnreadCount();
+
+                                // Auto-close notification panel after clearing all
+                                closeNotifications();
+                            }, (notificationItems.length * 40) + 300); // Wait for all animations (300ms for macOS animation duration)
                         } else {
                             console.error('Error clearing all notifications:', data);
                             console.error('Error message: ' + (data.message || 'Unknown error'));

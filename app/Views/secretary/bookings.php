@@ -1463,6 +1463,40 @@ kbd[lang="ar"] {
         align-items: flex-start;
         gap: 0.25rem;
     }
+    
+    /* Booking Card Mobile Responsive */
+    .booking-card-content-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .booking-card-actions {
+        flex-direction: column;
+        align-items: stretch;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+    }
+    
+    .booking-badge-wrapper {
+        justify-content: flex-start;
+        margin-bottom: 0.5rem;
+    }
+    
+    .booking-action-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .booking-action-buttons .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .booking-action-buttons .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
 }
 
 /* Search Results Styles */
@@ -2091,6 +2125,90 @@ input[readonly] {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Booking Card Responsive Layout */
+.booking-card-content-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    direction: rtl;
+}
+
+.booking-card-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.booking-card-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+
+.booking-badge-wrapper {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.booking-action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.booking-action-buttons .btn {
+    width: 100%;
+    white-space: nowrap;
+}
+
+/* Mobile Responsive - Stack badges and buttons below details */
+@media (max-width: 768px) {
+    .booking-card-content-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .booking-card-actions {
+        flex-direction: column;
+        align-items: stretch;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+    }
+    
+    .booking-badge-wrapper {
+        justify-content: flex-start;
+        margin-bottom: 0.5rem;
+    }
+    
+    .booking-action-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .booking-action-buttons .btn-group {
+        flex-direction: column;
+        width: 100%;
+        margin-right: 0px !important;
+    }
+    
+    .booking-action-buttons .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+        margin-right: 0px !important;
+    }
+
+    .btn-group>.btn-group:not(:first-child), .btn-group>:not(.btn-check:first-child)+.btn{
+        margin-right: 0px !important;
+    }
+
+    .btn-sm, .btn-group-sm .btn, .btn-primary-dark, .btn-success-dark, .btn-danger-dark, .btn-primary, .btn-success, .btn-danger, .btn-outline-primary, .btn-outline-info, .btn-outline-success, .btn-outline-danger, .btn-outline-warning, .btn-outline-info, .btn-outline-primary, .btn-outline-success, .btn-outline-danger, .btn-outline-warning{
+        margin-right: 0px !important;
+    }
+}
+
 .bookings-available-slot {
     color: var(--success);
     text-align: center;
@@ -2692,8 +2810,8 @@ function renderAppointmentSlot(appointment) {
     return `
         <div class="bookings-appointment-card ${appointment.status.toLowerCase()}" 
              onclick="viewAppointmentDetails(${appointment.id})">
-            <div class="d-flex justify-content-between align-items-start">
-                <div class="flex-grow-1">
+            <div class="booking-card-content-wrapper">
+                <div class="booking-card-details">
                     <div class="arabic-text">
                        <strong>المريض: </strong> <strong>${appointment.patient_name}</strong>
                     </div>
@@ -2720,12 +2838,14 @@ function renderAppointmentSlot(appointment) {
                     </div>
                     ${appointment.notes ? `<div class="text-muted small mt-1">${appointment.notes.substring(0, 30)}...</div>` : ''}
                 </div>
-                <div class="d-flex align-items-center gap-1">
-                    <span class="badge ${statusClass} d-flex align-items-center gap-1">
-                        <i class="bi ${getStatusIcon(appointment.status)}"></i>
-                        ${getStatusDisplayText(appointment.status)}
-                    </span>
-                    <div class="btn-group" role="group">
+                <div class="booking-card-actions">
+                    <div class="booking-badge-wrapper">
+                        <span class="badge ${statusClass} d-flex align-items-center gap-1">
+                            <i class="bi ${getStatusIcon(appointment.status)}"></i>
+                            ${getStatusDisplayText(appointment.status)}
+                        </span>
+                    </div>
+                    <div class="btn-group booking-action-buttons" role="group">
                         ${appointment.status === 'Booked' ? `
                             <button class="btn btn-sm btn-success-dark" 
                                     onclick="event.stopPropagation(); confirmAttendance(${appointment.id}, '${appointment.patient_name}', '${formatTime(appointment.start_time.substring(0, 5))}', '${appointment.doctor_display_name}', '${appointment.visit_type}', ${totalPaid}, ${remainingAmount})"
@@ -4648,6 +4768,50 @@ body > div.modal-backdrop.fade.show{
 #prevDayBtn:hover, #nextDayBtn:hover, #todayBtn:hover{
     color: white !important;
 }
+/* Mobile Responsive - Stack badges and buttons below details */
+@media (max-width: 768px) {
+    .booking-card-content-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .booking-card-actions {
+        flex-direction: column;
+        align-items: stretch;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+    }
+    
+    .booking-badge-wrapper {
+        justify-content: flex-start;
+        margin-bottom: 0.5rem;
+    }
+    
+    .booking-action-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .booking-action-buttons .btn-group {
+        flex-direction: column;
+        width: 100%;
+        margin-right: 0px !important;
+    }
+    
+    .booking-action-buttons .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+        margin-right: 0px !important;
+    }
 
+    .btn-group>.btn-group:not(:first-child), .btn-group>:not(.btn-check:first-child)+.btn{
+        margin-right: 0px !important;
+    }
+
+    .btn-sm, .btn-group-sm .btn, .btn-primary-dark, .btn-success-dark, .btn-danger-dark, .btn-primary, .btn-success, .btn-danger, .btn-outline-primary, .btn-outline-info, .btn-outline-success, .btn-outline-danger, .btn-outline-warning, .btn-outline-info, .btn-outline-primary, .btn-outline-success, .btn-outline-danger, .btn-outline-warning{
+        margin-right: 0px !important;
+    }
+}
 
 </style>

@@ -6,8 +6,12 @@
     <title><?= $title ?? 'HClinic / عيادة رؤية - السكرتارية' ?></title>
     
     <!-- Favicons -->
-    <link id="favicon" rel="icon" type="image/x-icon" href="/assets/fav/Light.ico">
-    <link id="favicon-dark" rel="icon" type="image/x-icon" href="/assets/fav/Dark.ico" media="(prefers-color-scheme: dark)">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/public/assets/fav/faicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/public/assets/fav/faicon-180x180.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/public/assets/fav/faicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/public/assets/fav/faicon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/public/assets/fav/faicon-512x512.png">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -294,11 +298,7 @@
                 logo.src = isDark ? '/assets/images/Dark.png' : '/assets/images/Light.png';
             }
 
-            // Update favicon
-            const favicon = document.getElementById('favicon');
-            if (favicon) {
-                favicon.href = isDark ? '/assets/fav/Dark.ico' : '/assets/fav/Light.ico';
-            }
+            // Favicon is now static (faicon.ico) - no need to update
 
             // Update checkbox state
             const themeCheckbox = document.getElementById('themeToggleInput');

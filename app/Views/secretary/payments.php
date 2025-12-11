@@ -2,6 +2,7 @@
 <link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/../../doctor/assets/css/dashboard.css') ? filemtime(__DIR__ . '/../../doctor/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 
+<div class="container-fluid">
 <!-- Payments Header -->
 <div class="row mb-4">
     <div class="col-md-6">
@@ -140,12 +141,12 @@
 <!-- Payment Types Summary -->
 <div class="row mb-4">
     <div class="col-md-12">
-        <div class="card shadow dashboard-card">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary arabic-text">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 arabic-text">
                     <i class="bi bi-pie-chart me-2"></i>
                     ملخص المدفوعات حسب النوع
-                </h6>
+                </h5>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -200,37 +201,44 @@
 </div>
 
 <!-- Financial Transactions Log -->
-<div class="card shadow dashboard-card mb-4">
-    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-        <h6 class="m-0 font-weight-bold text-primary arabic-text">
-            <i class="bi bi-journal-text me-2"></i>
-            سجل المعاملات المالية
-        </h6>
-        <div class="d-flex align-items-center gap-2">
-            <!-- Export to Excel -->
-            <button class="btn btn-success btn-sm" onclick="exportToExcel()" title="تصدير إلى Excel">
-                <i class="bi bi-file-earmark-excel me-1"></i>
-                تصدير Excel
-            </button>
-            <!-- Date Filter -->
-            <div class="d-flex align-items-center">
-                <label for="dateFilter" class="form-label mb-0 me-2 text-muted arabic-text">التاريخ:</label>
-                <input type="date" class="form-control form-control-sm" id="dateFilter" style="width: auto;">
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h5 class="mb-0 arabic-text">
+                    <i class="bi bi-journal-text me-2"></i>
+                    سجل المعاملات المالية
+                </h5>
             </div>
-            <!-- Transaction Type Filter -->
-            <div class="d-flex align-items-center">
-                <label for="transactionTypeFilter" class="form-label mb-0 me-2 text-muted arabic-text">النوع:</label>
-                <select class="form-select form-select-sm" id="transactionTypeFilter" style="width: auto;">
-                    <option value="all" class="arabic-text">الكل</option>
-                    <option value="payment" class="arabic-text">مدفوعات</option>
-                    <option value="expense" class="arabic-text">مصروفات</option>
-                    <option value="balance" class="arabic-text">رصيد</option>
-                </select>
+            <div class="col-md-6 text-end">
+                <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
+                    <!-- Export to Excel -->
+                    <button class="btn btn-success btn-sm" onclick="exportToExcel()" title="تصدير إلى Excel">
+                        <i class="bi bi-file-earmark-excel me-1"></i>
+                        <span class="d-none d-sm-inline">تصدير Excel</span>
+                        <span class="d-sm-none">Excel</span>
+                    </button>
+                    <!-- Date Filter -->
+                    <div class="d-flex align-items-center">
+                        <label for="dateFilter" class="form-label mb-0 me-2 text-muted arabic-text d-none d-md-inline">التاريخ:</label>
+                        <input type="date" class="form-control form-control-sm" id="dateFilter" style="min-width: 140px;">
+                    </div>
+                    <!-- Transaction Type Filter -->
+                    <div class="d-flex align-items-center">
+                        <label for="transactionTypeFilter" class="form-label mb-0 me-2 text-muted arabic-text d-none d-md-inline">النوع:</label>
+                        <select class="form-select form-select-sm" id="transactionTypeFilter" style="min-width: 120px;">
+                            <option value="all" class="arabic-text">الكل</option>
+                            <option value="payment" class="arabic-text">مدفوعات</option>
+                            <option value="expense" class="arabic-text">مصروفات</option>
+                            <option value="balance" class="arabic-text">رصيد</option>
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive">
+        <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
             <table class="table table-hover mb-0">
                 <thead class="table-dark">
                     <tr>
@@ -263,16 +271,20 @@
 </div>
 
 <!-- Payments Table -->
-<div class="card shadow dashboard-card">
-    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-        <h6 class="m-0 font-weight-bold text-primary arabic-text">
-            <i class="bi bi-list-ul me-2"></i>
-            سجلات المدفوعات
-        </h6>
-        <div class="d-flex align-items-center gap-2">
+<div class="card">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h5 class="mb-0 arabic-text">
+                    <i class="bi bi-list-ul me-2"></i>
+                    سجلات المدفوعات
+                </h5>
+            </div>
+            <div class="col-md-6 text-end">
+                <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
                     <!-- Quick Search -->
                     <div class="d-flex align-items-center">
-                        <div class="input-group input-group-sm" style="width: 200px;">
+                        <div class="input-group input-group-sm">
                             <span class="input-group-text">
                                 <i class="bi bi-search"></i>
                             </span>
@@ -280,7 +292,8 @@
                                    class="form-control" 
                                    id="quickSearch" 
                                    placeholder="بحث سريع..."
-                                   autocomplete="off">
+                                   autocomplete="off"
+                                   style="min-width: 150px;">
                             <button class="btn btn-outline-secondary" type="button" id="clearQuickSearch">
                                 <i class="bi bi-x-lg"></i>
                             </button>
@@ -288,8 +301,8 @@
                     </div>
                     <!-- Filter by type -->
                     <div class="d-flex align-items-center">
-                        <label for="typeFilter" class="form-label mb-0 me-2 text-muted arabic-text">النوع:</label>
-                        <select class="form-select form-select-sm" id="typeFilter" style="width: auto;">
+                        <label for="typeFilter" class="form-label mb-0 me-2 text-muted arabic-text d-none d-md-inline">النوع:</label>
+                        <select class="form-select form-select-sm" id="typeFilter" style="min-width: 120px;">
                             <option value="all" class="arabic-text">الكل</option>
                             <option value="new_booking" class="arabic-text">حجز جديد</option>
                             <option value="followup" class="arabic-text">إعادة كشف</option>
@@ -299,18 +312,20 @@
                     </div>
                     <!-- Filter by payment method -->
                     <div class="d-flex align-items-center">
-                        <label for="methodFilter" class="form-label mb-0 me-2 text-muted arabic-text">طريقة الدفع:</label>
-                        <select class="form-select form-select-sm" id="methodFilter" style="width: auto;">
+                        <label for="methodFilter" class="form-label mb-0 me-2 text-muted arabic-text d-none d-md-inline">طريقة الدفع:</label>
+                        <select class="form-select form-select-sm" id="methodFilter" style="min-width: 120px;">
                             <option value="all" class="arabic-text">الكل</option>
                             <option value="Cash" class="arabic-text">نقدي</option>
                             <option value="Card" class="arabic-text">بطاقة ائتمان</option>
                             <option value="Transfer" class="arabic-text">تحويل بنكي</option>
                         </select>
                     </div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive">
+        <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
             <table class="table table-hover mb-0">
                 <thead class="table-dark">
                     <tr>
@@ -1944,6 +1959,29 @@ kbd[lang="ar"] {
     
     .table-responsive {
         font-size: 0.875rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: var(--accent) var(--bg);
+    }
+    
+    .table-responsive::-webkit-scrollbar {
+        height: 8px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: var(--bg);
+        border-radius: 4px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: var(--accent);
+        border-radius: 4px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: var(--accent);
+        opacity: 0.8;
     }
     
     .btn-group .btn {
@@ -1954,6 +1992,43 @@ kbd[lang="ar"] {
     .keyboard-hint {
         position: static;
         margin-top: 10px;
+    }
+    
+    /* Card header responsive */
+    .card-header .row {
+        margin: 0;
+    }
+    
+    .card-header .col-md-6 {
+        padding: 0.5rem 0;
+    }
+    
+    .card-header .d-flex {
+        flex-wrap: wrap;
+        gap: 0.5rem !important;
+    }
+    
+    /* Ensure filters stack on mobile */
+    .card-header .d-flex > div {
+        flex: 1 1 auto;
+        min-width: 100%;
+    }
+    
+    .card-header .input-group {
+        width: 100% !important;
+        margin-bottom: 0.5rem;
+    }
+    
+    .card-header .form-select {
+        width: 100% !important;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Table cells */
+    .table th,
+    .table td {
+        white-space: nowrap;
+        min-width: 100px;
     }
 }
 

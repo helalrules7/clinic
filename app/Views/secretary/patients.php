@@ -238,8 +238,8 @@
             </div>
         </div>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
+    <div class="card-body p-0" style="min-height: 600px; overflow: hidden;">
+        <div class="table-responsive" style="min-height: 700px; overflow-y: hidden; overflow-x: auto; -webkit-overflow-scrolling: touch;">
             <table class="table table-hover mb-0">
                 <thead class="table-dark">
                     <tr>
@@ -302,13 +302,13 @@
                                             <a href="tel:<?= htmlspecialchars($patient['phone']) ?>" 
                                                class="phone-number-link" 
                                                style="text-decoration: none; color: var(--accent); font-weight: 500; cursor: pointer; transition: all 0.2s ease;">
-                                                <i class="bi bi-telephone me-1"></i>
+                                                <i class="bi bi-phone me-1"></i>
                                                 <?= htmlspecialchars($patient['phone']) ?>
                                             </a>
                                             <span class="phone-htooltip">
                                                 <div class="phone-actions">
                                                     <a href="tel:<?= htmlspecialchars($patient['phone']) ?>" class="phone-action-btn" title="اتصال">
-                                                        <i class="bi bi-telephone-fill"></i>
+                                                        <i class="bi bi-phone-vibrate"></i>
                                                         <span>اتصال</span>
                                                     </a>
                                                     <a href="https://wa.me/+2<?= preg_replace('/[^0-9]/', '', $patient['phone']) ?>" target="_blank" class="phone-action-btn whatsapp-btn" title="واتساب">
@@ -1005,6 +1005,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize draggable modals after a short delay to ensure modals are ready
     setTimeout(initializeDraggableModals, 200);
+    
+    // Initialize table touch/drag support for mobile
+    initTableTouchSupport();
+    
     // Quick search
     const quickSearch = document.getElementById('quickSearch');
     const clearQuickSearch = document.getElementById('clearQuickSearch');
@@ -1088,6 +1092,68 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+    
+    // Initialize table touch/drag support
+    function initTableTouchSupport() {
+        const tableWrapper = document.querySelector('.table-responsive');
+        if (!tableWrapper) return;
+        
+        let isScrolling = false;
+        let startX = 0;
+        let scrollLeft = 0;
+        
+        // Touch support
+        tableWrapper.addEventListener('touchstart', function(e) {
+            isScrolling = true;
+            startX = e.touches[0].pageX - tableWrapper.offsetLeft;
+            scrollLeft = tableWrapper.scrollLeft;
+        }, { passive: true });
+        
+        tableWrapper.addEventListener('touchmove', function(e) {
+            if (!isScrolling) return;
+            e.preventDefault();
+            const x = e.touches[0].pageX - tableWrapper.offsetLeft;
+            const walk = (x - startX) * 2; // Scroll speed multiplier
+            tableWrapper.scrollLeft = scrollLeft - walk;
+        }, { passive: false });
+        
+        tableWrapper.addEventListener('touchend', function() {
+            isScrolling = false;
+        }, { passive: true });
+        
+        // Mouse drag support
+        let isDown = false;
+        let startMouseX = 0;
+        let scrollStartLeft = 0;
+        
+        tableWrapper.addEventListener('mousedown', function(e) {
+            isDown = true;
+            tableWrapper.style.cursor = 'grabbing';
+            startMouseX = e.pageX - tableWrapper.offsetLeft;
+            scrollStartLeft = tableWrapper.scrollLeft;
+        });
+        
+        tableWrapper.addEventListener('mouseleave', function() {
+            isDown = false;
+            tableWrapper.style.cursor = 'grab';
+        });
+        
+        tableWrapper.addEventListener('mouseup', function() {
+            isDown = false;
+            tableWrapper.style.cursor = 'grab';
+        });
+        
+        tableWrapper.addEventListener('mousemove', function(e) {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - tableWrapper.offsetLeft;
+            const walk = (x - startMouseX) * 2;
+            tableWrapper.scrollLeft = scrollStartLeft - walk;
+        });
+        
+        // Set initial cursor style
+        tableWrapper.style.cursor = 'grab';
+    }
     
     // Initialize Bootstrap Tooltips
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
@@ -3725,6 +3791,40 @@ color: var(--text) !important;
     .stats-card-header {
         padding: 1.25rem 0.75rem 0.5rem 0.75rem;
     }
+    
+    /* Table responsive on mobile */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: var(--accent) var(--bg);
+    }
+    
+    .table-responsive::-webkit-scrollbar {
+        height: 8px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: var(--bg);
+        border-radius: 4px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: var(--accent);
+        border-radius: 4px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: var(--accent);
+        opacity: 0.8;
+    }
+    
+    /* Make table cells stack better on mobile */
+    .table th,
+    .table td {
+        white-space: nowrap;
+        min-width: 120px;
+    }
 }
 
 /* ============================================
@@ -3888,5 +3988,14 @@ body > div.modal-backdrop.fade.show{
     max-width: 300px;
 }
 
-
+@media screen and (max-width: 768px) {
+    
+.dark #patientsTableBody .btn-group .btn-outline-primary,
+.dark #patientsTableBody .btn-group .btn-outline-warning,
+.dark #patientsTableBody .btn-group .btn-outline-info,
+.dark #patientsTableBody .btn-group .btn-outline-success,
+.dark #patientsTableBody .btn-group .btn-outline-danger{
+    margin-bottom: 5px !important;
+}
+}
 </style>

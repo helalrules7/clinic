@@ -90,10 +90,8 @@ class Auth
                 
                 return false;
             }
-            // Only update last activity for non-API requests (actual user interaction)
-            if (!$this->isApiRequest()) {
-                $this->updateLastActivity();
-            }
+            // Update last activity on each request
+            $this->updateLastActivity();
             return true;
         }
 
@@ -117,10 +115,8 @@ class Auth
             
             $this->user = $this->getUserById($_SESSION['user_id']);
             if ($this->user) {
-                // Only update last activity for non-API requests (actual user interaction)
-                if (!$this->isApiRequest()) {
-                    $this->updateLastActivity();
-                }
+                // Update last activity on each request
+                $this->updateLastActivity();
                 return true;
             }
         }
@@ -130,10 +126,8 @@ class Auth
             $this->user = $this->getUserByRememberToken($_COOKIE['remember_token']);
             if ($this->user) {
                 $this->createSession($this->user);
-                // Only update last activity for non-API requests (actual user interaction)
-                if (!$this->isApiRequest()) {
-                    $this->updateLastActivity();
-                }
+                // Update last activity on each request
+                $this->updateLastActivity();
                 return true;
             }
         }
@@ -143,7 +137,8 @@ class Auth
     
     /**
      * Check if session is still valid (not expired due to inactivity)
-     * Session expires after 4 hours (14400 seconds) of inactivity
+     * Session expires after 1 minute (60 seconds) for testing
+     * TODO: Change back to 4 hours (14400 seconds) after testing
      */
     private function isSessionValid()
     {

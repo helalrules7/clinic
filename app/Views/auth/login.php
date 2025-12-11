@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Roaya Clinic</title>
     
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/public/assets/fav/faicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/public/assets/fav/faicon-180x180.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/public/assets/fav/faicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/public/assets/fav/faicon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/public/assets/fav/faicon-512x512.png">
+    
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -294,57 +302,80 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Theme toggle functionality
-        const apply = mode => document.documentElement.classList.toggle('dark', mode === 'dark');
-        const saved = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        
-        apply(saved);
-        
-        document.getElementById('themeToggle').onclick = () => {
-            const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
-            apply(next);
-            localStorage.setItem('theme', next);
+        // Theme toggle functionality - synced with main layout using appTheme
+        function updateThemeUI(theme) {
+            const isDark = theme === 'dark';
+            document.documentElement.classList.toggle('dark', isDark);
             
             // Update icon
             const icon = document.querySelector('#themeToggle i');
-            icon.className = next === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
-        };
+            if (icon) {
+                icon.className = isDark ? 'bi bi-sun' : 'bi bi-moon';
+            }
+        }
         
-        // Update initial icon
-        const icon = document.querySelector('#themeToggle i');
-        icon.className = saved === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+        // Get saved theme - check both keys for compatibility
+        const saved = localStorage.getItem('appTheme') || localStorage.getItem('theme') || 
+            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        
+        // Apply initial theme
+        updateThemeUI(saved);
+        
+        // Theme toggle button handler
+        const themeToggleBtn = document.getElementById('themeToggle');
+        if (themeToggleBtn) {
+            themeToggleBtn.onclick = function() {
+                const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                const next = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                // Save to both keys for compatibility
+                localStorage.setItem('appTheme', next);
+                localStorage.setItem('theme', next);
+                
+                // Update UI
+                updateThemeUI(next);
+            };
+        }
         
         // Password toggle functionality
-        document.getElementById('passwordToggle').addEventListener('click', function() {
-            const passwordInput = document.getElementById('password');
-            const passwordIcon = document.getElementById('passwordToggleIcon');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                passwordIcon.className = 'fas fa-eye-slash';
-            } else {
-                passwordInput.type = 'password';
-                passwordIcon.className = 'fas fa-eye';
-            }
-        });
+        const passwordToggle = document.getElementById('passwordToggle');
+        if (passwordToggle) {
+            passwordToggle.addEventListener('click', function() {
+                const passwordInput = document.getElementById('password');
+                const passwordIcon = document.getElementById('passwordToggleIcon');
+                
+                if (passwordInput && passwordIcon) {
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        passwordIcon.className = 'fas fa-eye-slash';
+                    } else {
+                        passwordInput.type = 'password';
+                        passwordIcon.className = 'fas fa-eye';
+                    }
+                }
+            });
+        }
         
         // Form validation
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
-            
-            if (!username || !password) {
-                e.preventDefault();
-                alert('Please fill in all required fields');
-                return false;
-            }
-            
-            if (username.length < 3) {
-                e.preventDefault();
-                alert('Username must be at least 3 characters');
-                return false;
-            }
-        });
+        const loginForm = document.querySelector('form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', function(e) {
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value.trim();
+                
+                if (!username || !password) {
+                    e.preventDefault();
+                    alert('Please fill in all required fields');
+                    return false;
+                }
+                
+                if (username.length < 3) {
+                    e.preventDefault();
+                    alert('Username must be at least 3 characters');
+                    return false;
+                }
+            });
+        }
     </script>
 </body>
 </html>

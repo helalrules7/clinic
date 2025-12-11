@@ -141,7 +141,7 @@
     </div>
 
     <!-- System Health -->
-    <div class="col-md-4">
+    <div class="col-md-4" id="systemHealth">
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
@@ -784,6 +784,12 @@
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--accent);
+}
+
+@media (max-width: 768px) {
+    #systemHealth {
+        margin-top: 20px !important;
+    }
 }
 </style>
 

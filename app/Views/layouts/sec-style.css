@@ -95,6 +95,20 @@ body {
     overflow-y: auto;
 }
 
+/* Ensure sidebar is completely hidden on mobile by default */
+@media (max-width: 992px) {
+    .sidebar:not(.show) {
+        transform: translateX(100%) !important;
+        visibility: hidden;
+        pointer-events: none;
+    }
+    
+    .sidebar.show {
+        visibility: visible;
+        pointer-events: auto;
+    }
+}
+
 .dark .sidebar {
     background: rgba(11, 18, 32, 0.6);
     border-left: 1px solid rgba(51, 65, 85, 0.3); /* Changed from border-right for RTL */
@@ -1597,6 +1611,7 @@ body::before {
 @media (max-width: 768px) {
     .sidebar {
         transform: translateX(100%); /* Changed direction for RTL */
+        z-index: 1000002 !important; /* Ensure sidebar is above overlay */
     }
     
     .sidebar.show {
@@ -1612,8 +1627,10 @@ body::before {
     }
     
     .main-content {
-        margin-right: 0; /* Changed from margin-left for RTL */
+        margin-right: 0 !important; /* Changed from margin-left for RTL */
         padding: 1rem;
+        width: 100% !important;
+        max-width: 100% !important;
     }
     
     .top-bar {
@@ -1633,6 +1650,11 @@ body::before {
         pointer-events: auto;
         transform: scale(1);
         margin-left: 1rem; /* Changed from margin-right for RTL */
+    }
+    
+    /* Ensure overlay covers everything */
+    .overlay {
+        z-index: 1000001 !important;
     }
 }
 
@@ -1658,6 +1680,7 @@ body::before {
     .sidebar {
         transform: translateX(100%); /* Changed direction for RTL */
         transition: transform 0.3s ease;
+        width: 280px; /* Fixed width */
     }
     
     .sidebar.show {
@@ -1673,7 +1696,9 @@ body::before {
     }
     
     .main-content {
-        margin-right: 0; /* Changed from margin-left for RTL */
+        margin-right: 0 !important; /* Changed from margin-left for RTL */
+        width: 100% !important;
+        max-width: 100% !important;
     }
 }
         
@@ -1684,12 +1709,23 @@ body::before {
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
+            z-index: 1000001 !important;
             display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
         
         .overlay.show {
             display: block;
+            opacity: 1;
+        }
+        
+        /* Ensure sidebar is hidden by default on mobile */
+        @media (max-width: 992px) {
+            .sidebar:not(.show) {
+                transform: translateX(100%) !important;
+                visibility: hidden;
+            }
         }
         
         .sidebar-footer {
