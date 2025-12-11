@@ -2870,8 +2870,7 @@ class ApiController
 
             return $result;
         } catch (\Exception $e) {
-            // Log error but don't fail the consultation creation
-            error_log("Failed to create medical history from consultation: " . $e->getMessage());
+            // Don't fail the consultation creation
             return false;
         }
     }
@@ -4576,19 +4575,15 @@ class ApiController
                 try {
                     $xmlContent = $this->fetchRSSFeed($feed['url']);
                     if (!$xmlContent) {
-                        error_log('Failed to fetch RSS feed: ' . $feed['url']);
                         continue;
                     }
 
-                    // Suppress XML errors but log them
+                    // Suppress XML errors
                     libxml_use_internal_errors(true);
                     $xml = simplexml_load_string($xmlContent);
-                    $xmlErrors = libxml_get_errors();
                     libxml_clear_errors();
                     
                     if (!$xml) {
-                        $errorMsg = !empty($xmlErrors) ? $xmlErrors[0]->message : 'Unknown XML error';
-                        error_log('Failed to parse XML for ' . $feed['url'] . ': ' . $errorMsg);
                         continue;
                     }
 
@@ -4635,7 +4630,6 @@ class ApiController
                     }
                     
                     if (empty($items)) {
-                        error_log('No items found in RSS feed: ' . $feed['url'] . ' (XML root: ' . $xml->getName() . ')');
                         continue;
                     }
 
@@ -4738,7 +4732,6 @@ class ApiController
                         
                         // Skip if no title or link
                         if (empty($title) || empty($link)) {
-                            error_log('Skipping item: missing title or link. Title: ' . substr($title, 0, 50) . ', Link: ' . substr($link, 0, 50));
                             continue;
                         }
                         
@@ -4758,7 +4751,6 @@ class ApiController
                     }
                 } catch (\Exception $e) {
                     // Silently skip failed feeds
-                    error_log('RSS Feed Error for ' . $feed['url'] . ': ' . $e->getMessage());
                     continue;
                 }
             }
@@ -4817,21 +4809,15 @@ class ApiController
                 if (file_exists($cacheFile)) {
                     $oldCache = json_decode(file_get_contents($cacheFile), true);
                     if ($oldCache && isset($oldCache['articles']) && !empty($oldCache['articles'])) {
-                        error_log('Using expired cache as fallback');
                         $articles = array_slice($oldCache['articles'], 0, 15);
                     }
                 }
                 
                 if (empty($articles)) {
-                    error_log('No articles found from any RSS feed');
                     return $this->jsonResponse([
                         'success' => false,
                         'error' => 'No articles available',
-                        'articles' => [],
-                        'debug' => [
-                            'feeds_attempted' => count($feeds),
-                            'cache_exists' => file_exists($cacheFile)
-                        ]
+                        'articles' => []
                     ]);
                 }
             }
@@ -4851,8 +4837,6 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            error_log('Ophthalmology News API Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-            error_log('Stack trace: ' . $e->getTraceAsString());
             return $this->jsonResponse([
                 'success' => false,
                 'error' => 'Internal server error',
@@ -4884,15 +4868,10 @@ class ApiController
         $curlError = curl_error($ch);
         curl_close($ch);
         
-        if ($curlError) {
-            error_log('cURL error for ' . $url . ': ' . $curlError);
-        }
-        
         if ($httpCode === 200 && $content && strlen($content) > 100) {
             return $content;
         }
         
-        error_log('Failed to fetch RSS feed: ' . $url . ' (HTTP: ' . $httpCode . ', Size: ' . strlen($content ?? '') . ')');
         return false;
     }
 
@@ -8669,7 +8648,6 @@ class ApiController
             
             // If OpenWeatherMap fails, return error (no fallback)
             if (!$weatherData) {
-                error_log("OpenWeatherMap API failed for coordinates: {$lat}, {$lon}");
                 return $this->jsonResponse([
                     'success' => false,
                     'error' => 'Failed to fetch weather data from OpenWeatherMap API'
@@ -8685,7 +8663,6 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Weather API error: " . $e->getMessage());
             return $this->jsonResponse([
                 'success' => false,
                 'error' => 'Weather API exception: ' . $e->getMessage()
@@ -8733,7 +8710,6 @@ class ApiController
             curl_close($ch);
             
             if ($httpCode !== 200 || !$response) {
-                error_log("OpenWeatherMap Forecast API error: HTTP {$httpCode}");
                 return $this->jsonResponse([
                     'success' => false,
                     'error' => 'Failed to fetch weather forecast'
@@ -8743,7 +8719,6 @@ class ApiController
             $data = json_decode($response, true);
             
             if (!$data || !isset($data['list'])) {
-                error_log("OpenWeatherMap Forecast API: Invalid response structure");
                 return $this->jsonResponse([
                     'success' => false,
                     'error' => 'Invalid forecast data'
@@ -8814,10 +8789,9 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Weather Forecast API error: " . $e->getMessage());
             return $this->jsonResponse([
                 'success' => false,
-                'error' => 'Weather forecast exception: ' . $e->getMessage()
+                'error' => 'Weather forecast error'
             ], 500);
         }
     }
@@ -8872,7 +8846,6 @@ class ApiController
             $weatherData = $this->fetchWeatherFromOpenWeatherMapArabic($lat, $lon, $apiKey);
 
             if (!$weatherData) {
-                error_log("OpenWeatherMap Arabic API failed for coordinates: {$lat}, {$lon}");
                 return $this->jsonResponse([
                     'success' => false,
                     'error' => 'فشل في جلب بيانات الطقس'
@@ -8888,10 +8861,9 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Weather Arabic API error: " . $e->getMessage());
             return $this->jsonResponse([
                 'success' => false,
-                'error' => 'خطأ في واجهة الطقس: ' . $e->getMessage()
+                'error' => 'خطأ في واجهة الطقس'
             ], 500);
         }
     }
@@ -8936,7 +8908,6 @@ class ApiController
             curl_close($ch);
 
             if ($httpCode !== 200 || !$response) {
-                error_log("OpenWeatherMap Arabic Forecast API error: HTTP {$httpCode}");
                 return $this->jsonResponse([
                     'success' => false,
                     'error' => 'فشل في جلب توقعات الطقس'
@@ -9017,10 +8988,9 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            error_log("Weather Arabic Forecast API error: " . $e->getMessage());
             return $this->jsonResponse([
                 'success' => false,
-                'error' => 'خطأ في توقعات الطقس: ' . $e->getMessage()
+                'error' => 'خطأ في توقعات الطقس'
             ], 500);
         }
     }
@@ -9048,14 +9018,12 @@ class ApiController
             curl_close($ch);
 
             if ($httpCode !== 200 || !$response) {
-                error_log("OpenWeatherMap Arabic API error: HTTP {$httpCode}");
                 return null;
             }
 
             $data = json_decode($response, true);
 
             if (!$data || !isset($data['main'])) {
-                error_log("OpenWeatherMap Arabic API: Invalid response structure");
                 return null;
             }
 
@@ -9106,11 +9074,9 @@ class ApiController
                 'timestamp' => time()
             ];
 
-            error_log("OpenWeatherMap Arabic API: Successfully fetched weather data");
             return $weatherData;
 
         } catch (\Exception $e) {
-            error_log("OpenWeatherMap Arabic API exception: " . $e->getMessage());
             return null;
         }
     }
@@ -9140,14 +9106,12 @@ class ApiController
             curl_close($ch);
             
             if ($httpCode !== 200 || !$response || $curlError) {
-                error_log("Open-Meteo API error: HTTP {$httpCode}, cURL: {$curlError}");
                 return null;
             }
             
             $data = json_decode($response, true);
             
             if (!$data || !isset($data['current'])) {
-                error_log("Open-Meteo API: Invalid response structure");
                 return null;
             }
             
@@ -9180,11 +9144,9 @@ class ApiController
                 'timestamp' => time()
             ];
             
-            error_log("Open-Meteo API: Successfully fetched weather data for {$lat}, {$lon}");
             return $weatherData;
             
         } catch (\Exception $e) {
-            error_log("Open-Meteo API exception: " . $e->getMessage());
             return null;
         }
     }
@@ -9211,14 +9173,12 @@ class ApiController
             curl_close($ch);
             
             if ($httpCode !== 200 || !$response) {
-                error_log("OpenWeatherMap API error: HTTP {$httpCode}");
                 return null;
             }
             
             $data = json_decode($response, true);
             
             if (!$data || !isset($data['main'])) {
-                error_log("OpenWeatherMap API: Invalid response structure");
                 return null;
             }
             
@@ -9238,11 +9198,9 @@ class ApiController
                 'timestamp' => time()
             ];
             
-            error_log("OpenWeatherMap API: Successfully fetched weather data");
             return $weatherData;
             
         } catch (\Exception $e) {
-            error_log("OpenWeatherMap API exception: " . $e->getMessage());
             return null;
         }
     }
@@ -9372,11 +9330,9 @@ class ApiController
                 }
             }
         } catch (\Exception $e) {
-            error_log("Reverse geocoding error: " . $e->getMessage());
         }
         
         // No fallback - return coordinates only if geocoding fails
-        error_log("Reverse geocoding failed for coordinates: {$lat}, {$lon}");
         return sprintf('Location (%.2f, %.2f)', $lat, $lon);
     }
     

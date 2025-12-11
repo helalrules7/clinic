@@ -44,17 +44,7 @@ class ForumController
      */
     private function debugLog($message, $data = null)
     {
-        $timestamp = date('Y-m-d H:i:s');
-        $logMessage = "[{$timestamp}] {$message}";
-        if ($data !== null) {
-            $logMessage .= " | Data: " . json_encode($data, JSON_UNESCAPED_UNICODE);
-        }
-        $logMessage .= "\n";
-        
-        // Try multiple log locations
-        @file_put_contents($this->debugLogFile, $logMessage, FILE_APPEND);
-        @file_put_contents('/tmp/forum_debug.log', $logMessage, FILE_APPEND);
-        error_log("Forum Debug: {$message}");
+        // Debug logging disabled for production
     }
     
     /**
@@ -62,15 +52,7 @@ class ForumController
      */
     private function errorLog($message, $exception = null)
     {
-        $timestamp = date('Y-m-d H:i:s');
-        $logMessage = "[{$timestamp}] ERROR: {$message}";
-        if ($exception instanceof \Exception) {
-            $logMessage .= " | Exception: " . $exception->getMessage();
-            $logMessage .= " | Trace: " . $exception->getTraceAsString();
-        }
-        $logMessage .= "\n";
-        @file_put_contents($this->debugLogFile, $logMessage, FILE_APPEND);
-        error_log("Forum Error: {$message}" . ($exception ? " - " . $exception->getMessage() : ""));
+        // Error logging disabled for production
     }
     
     /**
@@ -336,7 +318,6 @@ class ForumController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Forum getTopics error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -415,7 +396,6 @@ class ForumController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Forum getTopic error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -490,7 +470,6 @@ class ForumController
             exit;
         } catch (\Exception $e) {
             $this->pdo->rollBack();
-            error_log("Forum createTopic error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -598,7 +577,6 @@ class ForumController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Forum updateTopic error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -648,7 +626,6 @@ class ForumController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Forum deleteTopic error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -708,7 +685,6 @@ class ForumController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Forum getPatientTopics error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -768,7 +744,6 @@ class ForumController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Forum getAppointmentTopics error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -910,7 +885,6 @@ class ForumController
             exit;
         } catch (\Exception $e) {
             $this->pdo->rollBack();
-            error_log("Forum createPost error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -1030,7 +1004,6 @@ class ForumController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Forum updatePost error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -1094,7 +1067,6 @@ class ForumController
             exit;
         } catch (\Exception $e) {
             $this->pdo->rollBack();
-            error_log("Forum deletePost error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -1163,7 +1135,6 @@ class ForumController
             exit;
         } catch (\Exception $e) {
             $this->pdo->rollBack();
-            error_log("Forum likePost error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -1290,7 +1261,6 @@ class ForumController
             exit;
         } catch (\Exception $e) {
             $this->pdo->rollBack();
-            error_log("Forum removeLike error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -1382,7 +1352,6 @@ class ForumController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Forum uploadImage error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -1444,7 +1413,6 @@ class ForumController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Forum deleteImage error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -1484,7 +1452,6 @@ class ForumController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Forum addTags error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -1517,7 +1484,6 @@ class ForumController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Forum removeTag error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -1569,7 +1535,6 @@ class ForumController
                         $drug = $drugStmt->fetch(PDO::FETCH_ASSOC);
                         $tag['tag_name'] = $drug ? $drug['drug_name'] : 'Drug #' . $tag['tag_id'];
                     } catch (\Exception $e) {
-                        error_log("Forum getTopicTags - Error fetching drug: " . $e->getMessage());
                         $tag['tag_name'] = 'Drug #' . $tag['tag_id'];
                     }
                 }
@@ -1577,7 +1542,6 @@ class ForumController
             
             return $tags;
         } catch (\Exception $e) {
-            error_log("Forum getTopicTags error: " . $e->getMessage());
             // Return empty array on error
             return [];
         }
@@ -1714,7 +1678,6 @@ class ForumController
             exit;
         } catch (\Exception $e) {
             $this->pdo->rollBack();
-            error_log("Forum likeTopic error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -1783,7 +1746,6 @@ class ForumController
             exit;
         } catch (\Exception $e) {
             $this->pdo->rollBack();
-            error_log("Forum dislikeTopic error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -1826,7 +1788,6 @@ class ForumController
                     $indexed[$parentId]['children'][] = &$indexed[$postId];
                 } else {
                     // Parent not found in indexed posts, treat as top-level
-                    error_log("Forum buildPostTree: Parent post {$parentId} not found for post {$postId}, treating as top-level");
                     $tree[] = &$indexed[$postId];
                 }
             }
@@ -1834,13 +1795,6 @@ class ForumController
         
         // Unset references to avoid issues
         unset($indexed);
-        
-        // Debug: Log tree structure
-        error_log("Forum buildPostTree: Built tree with " . count($tree) . " top-level posts");
-        foreach ($tree as $topPost) {
-            $childrenCount = isset($topPost['children']) ? count($topPost['children']) : 0;
-            error_log("Forum buildPostTree: Post {$topPost['id']} has {$childrenCount} children");
-        }
         
         return $tree;
     }
@@ -1908,7 +1862,6 @@ class ForumController
                 );
             }
         } catch (\Exception $e) {
-            error_log("Forum createPostNotification error: " . $e->getMessage());
         }
     }
 
@@ -1951,7 +1904,6 @@ class ForumController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Forum getCategoryStats error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -2018,7 +1970,6 @@ class ForumController
                 $customStmt->execute();
                 $customTags = $customStmt->fetchAll(PDO::FETCH_ASSOC);
             } catch (\Exception $e) {
-                error_log("Forum getTopMetaTags - Error fetching custom tags: " . $e->getMessage());
                 $customTags = [];
             }
             
@@ -2052,7 +2003,6 @@ class ForumController
                         }
                     }
                 } catch (\Exception $e) {
-                    error_log("Forum getTopMetaTags - Error processing tag: " . $e->getMessage());
                     $tag['tag_name'] = 'Unknown';
                 }
             }
@@ -2077,7 +2027,6 @@ class ForumController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Forum getTopMetaTags error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -2132,7 +2081,6 @@ class ForumController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Forum toggleResolved error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -2184,9 +2132,6 @@ class ForumController
     {
         header('Content-Type: application/json; charset=utf-8');
         
-        error_log("Forum uploadAttachment - START");
-        error_log("Forum uploadAttachment - POST data: " . print_r($_POST, true));
-        error_log("Forum uploadAttachment - FILES data: " . print_r($_FILES, true));
         
         $user = $this->auth->user();
         if (!$user) {
@@ -2220,14 +2165,7 @@ class ForumController
         }
         
         // For posts, post_id can be null (will be linked later)
-        if ($type === 'post' && !$postId) {
-            error_log("Forum uploadAttachment - Warning: post_id is null for post attachment (will be linked later)");
-        }
-        
         // For topics, topic_id can be null (will be linked later)
-        if ($type === 'topic' && !$topicId) {
-            error_log("Forum uploadAttachment - Warning: topic_id is null for topic attachment (will be linked later)");
-        }
 
         // Validate file size (10MB max)
         if ($file['size'] > 10 * 1024 * 1024) {
@@ -2257,12 +2195,9 @@ class ForumController
 
         try {
             $uploadDir = __DIR__ . '/../../storage/uploads/forum/attachments/';
-            error_log("Forum uploadAttachment - Upload directory: $uploadDir");
             
             if (!is_dir($uploadDir)) {
-                error_log("Forum uploadAttachment - Creating upload directory");
                 if (!mkdir($uploadDir, 0755, true)) {
-                    error_log("Forum uploadAttachment - Failed to create upload directory");
                     http_response_code(500);
                     echo json_encode(['success' => false, 'message' => 'Failed to create upload directory'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                     exit;
@@ -2273,23 +2208,17 @@ class ForumController
             $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
             $filename = 'forum_attach_' . ($type === 'topic' ? 'topic' : 'post') . '_' . ($topicId ? $topicId : ($postId ? $postId : 'temp')) . '_' . time() . '_' . uniqid() . '.' . $extension;
             $filePath = $uploadDir . $filename;
-            
-            error_log("Forum uploadAttachment - File path: $filePath");
 
             // Move uploaded file
             if (!move_uploaded_file($file['tmp_name'], $filePath)) {
-                error_log("Forum uploadAttachment - Failed to move uploaded file from " . $file['tmp_name'] . " to $filePath");
                 http_response_code(500);
                 echo json_encode(['success' => false, 'message' => 'Failed to save file'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 exit;
             }
             
-            error_log("Forum uploadAttachment - File moved successfully");
-
             // Save to database
             if ($type === 'topic') {
                 // Allow topic_id to be NULL for new topics (will be linked later)
-                error_log("Forum uploadAttachment - Inserting topic attachment with topic_id: " . ($topicId ?? 'NULL'));
                 $stmt = $this->pdo->prepare("
                     INSERT INTO doctor_forum_topic_attachments (topic_id, file_path, original_filename, file_size, mime_type)
                     VALUES (?, ?, ?, ?, ?)
@@ -2301,14 +2230,8 @@ class ForumController
                     $file['size'],
                     $mimeType
                 ]);
-                
-                if (!$result) {
-                    error_log("Forum uploadAttachment - Database insert failed for topic attachment");
-                    error_log("Forum uploadAttachment - PDO error: " . print_r($stmt->errorInfo(), true));
-                }
             } else {
                 // For posts, post_id can be NULL (will be linked later)
-                error_log("Forum uploadAttachment - Inserting post attachment with post_id: " . ($postId ?? 'NULL'));
                 $stmt = $this->pdo->prepare("
                     INSERT INTO doctor_forum_post_attachments (post_id, file_path, original_filename, file_size, mime_type)
                     VALUES (?, ?, ?, ?, ?)
@@ -2320,19 +2243,11 @@ class ForumController
                     $file['size'],
                     $mimeType
                 ]);
-                
-                if (!$result) {
-                    error_log("Forum uploadAttachment - Database insert failed for post attachment");
-                    error_log("Forum uploadAttachment - PDO error: " . print_r($stmt->errorInfo(), true));
-                }
             }
 
             $attachmentId = $this->pdo->lastInsertId();
-            error_log("Forum uploadAttachment - Attachment ID: $attachmentId");
             
             if (!$attachmentId) {
-                error_log("Forum uploadAttachment - Failed to get attachment ID");
-                error_log("Forum uploadAttachment - PDO error info: " . print_r($stmt->errorInfo(), true));
                 // Delete uploaded file if database insert failed
                 if (file_exists($filePath)) {
                     unlink($filePath);
@@ -2342,7 +2257,6 @@ class ForumController
                 exit;
             }
 
-            error_log("Forum uploadAttachment - Success! Attachment ID: $attachmentId, File: $filename");
             echo json_encode([
                 'success' => true,
                 'attachment_id' => $attachmentId,
@@ -2353,8 +2267,6 @@ class ForumController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Forum uploadAttachment error: " . $e->getMessage());
-            error_log("Forum uploadAttachment error trace: " . $e->getTraceAsString());
             // Delete uploaded file if exception occurred
             if (isset($filePath) && file_exists($filePath)) {
                 unlink($filePath);
@@ -2421,7 +2333,6 @@ class ForumController
             readfile($filePath);
             exit;
         } catch (\Exception $e) {
-            error_log("Forum viewAttachment error: " . $e->getMessage());
             http_response_code(500);
             header('Content-Type: text/plain');
             echo 'Error viewing attachment';
@@ -2491,7 +2402,6 @@ class ForumController
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (\Exception $e) {
-            error_log("Forum deleteAttachment error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,

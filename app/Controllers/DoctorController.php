@@ -1647,8 +1647,7 @@ class DoctorController
 
             return $result;
         } catch (\Exception $e) {
-            // Log error but don't fail the consultation creation
-            error_log("Failed to create medical history from consultation: " . $e->getMessage());
+            // Don't fail the consultation creation
             return false;
         }
     }

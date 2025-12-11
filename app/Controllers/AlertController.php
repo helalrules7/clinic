@@ -373,7 +373,7 @@ class AlertController
             
             $this->pushService->sendPushNotification($userId, $title, $body, $data);
         } catch (\Exception $e) {
-            error_log("Error sending push notification for alert: " . $e->getMessage());
+            // Silent fail for push notifications
         }
     }
 
