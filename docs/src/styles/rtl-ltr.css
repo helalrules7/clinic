@@ -1,0 +1,180 @@
+/* RTL/LTR Support */
+
+/* Base RTL Styles */
+[dir="rtl"] {
+    direction: rtl;
+    text-align: right;
+}
+
+[dir="ltr"] {
+    direction: ltr;
+    text-align: left;
+}
+
+/* RTL Specific Adjustments */
+[dir="rtl"] .sidebar {
+    border-right: 1px solid var(--border-color);
+    border-left: none;
+}
+
+[dir="rtl"] .nav-link {
+    border-left: 3px solid transparent;
+    border-right: none;
+}
+
+[dir="rtl"] .nav-link:hover,
+[dir="rtl"] .nav-link.active {
+    border-left-color: var(--primary);
+    border-right: none;
+}
+
+[dir="rtl"] .search-result-item:hover {
+    border-left: 3px solid var(--primary);
+    border-right: none;
+}
+
+[dir="rtl"] .header-left {
+    flex-direction: row;
+}
+
+[dir="rtl"] .header-right {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] ul,
+[dir="rtl"] ol {
+    margin-right: var(--spacing-xl);
+    margin-left: 0;
+}
+
+[dir="rtl"] table th,
+[dir="rtl"] table td {
+    text-align: right;
+}
+
+/* LTR Specific Adjustments */
+[dir="ltr"] .sidebar {
+    border-left: 1px solid var(--border-color);
+    border-right: none;
+}
+
+[dir="ltr"] .nav-link {
+    border-right: 3px solid transparent;
+    border-left: none;
+}
+
+[dir="ltr"] .nav-link:hover,
+[dir="ltr"] .nav-link.active {
+    border-right-color: var(--primary);
+    border-left: none;
+}
+
+[dir="ltr"] .search-result-item:hover {
+    border-right: 3px solid var(--primary);
+    border-left: none;
+}
+
+[dir="ltr"] ul,
+[dir="ltr"] ol {
+    margin-left: var(--spacing-xl);
+    margin-right: 0;
+}
+
+[dir="ltr"] table th,
+[dir="ltr"] table td {
+    text-align: left;
+}
+
+/* Direction-aware animations */
+[dir="rtl"] .animate-slide-in-right {
+    animation: slideInLeft 0.5s ease-out;
+}
+
+[dir="rtl"] .animate-slide-in-left {
+    animation: slideInRight 0.5s ease-out;
+}
+
+[dir="ltr"] .animate-slide-in-right {
+    animation: slideInRight 0.5s ease-out;
+}
+
+[dir="ltr"] .animate-slide-in-left {
+    animation: slideInLeft 0.5s ease-out;
+}
+
+/* Text Alignment Utilities */
+[dir="rtl"] .text-start {
+    text-align: right;
+}
+
+[dir="rtl"] .text-end {
+    text-align: left;
+}
+
+[dir="ltr"] .text-start {
+    text-align: left;
+}
+
+[dir="ltr"] .text-end {
+    text-align: right;
+}
+
+/* Margin/Padding Utilities for RTL/LTR */
+[dir="rtl"] .ms-auto {
+    margin-right: auto;
+    margin-left: 0;
+}
+
+[dir="rtl"] .me-auto {
+    margin-left: auto;
+    margin-right: 0;
+}
+
+[dir="ltr"] .ms-auto {
+    margin-left: auto;
+    margin-right: 0;
+}
+
+[dir="ltr"] .me-auto {
+    margin-right: auto;
+    margin-left: 0;
+}
+
+/* Flexbox Direction */
+[dir="rtl"] .flex-row {
+    flex-direction: row-reverse;
+}
+
+[dir="ltr"] .flex-row {
+    flex-direction: row;
+}
+
+/* Code Blocks */
+[dir="rtl"] .code-block {
+    direction: ltr;
+    text-align: left;
+}
+
+[dir="ltr"] .code-block {
+    direction: ltr;
+    text-align: left;
+}
+
+/* Responsive RTL/LTR */
+@media (max-width: 768px) {
+    [dir="rtl"] .sidebar {
+        transform: translateX(100%);
+    }
+
+    [dir="rtl"] .sidebar.open {
+        transform: translateX(0);
+    }
+
+    [dir="ltr"] .sidebar {
+        transform: translateX(-100%);
+    }
+
+    [dir="ltr"] .sidebar.open {
+        transform: translateX(0);
+    }
+}
