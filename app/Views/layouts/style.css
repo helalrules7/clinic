@@ -492,22 +492,17 @@
             transition: opacity 0.35s ease-out, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 0s;
         }
 
-        /* Collapsing state - smooth fade out without blinking */
+        /* Collapsing state - genie animation out */
         .global-search-container.collapsing {
-            opacity: 0 !important;
             pointer-events: none !important;
-            transition: opacity 0.25s ease-out, transform 0.25s ease-out, visibility 0s linear 0.25s !important;
         }
 
         .global-search-container.collapsing .global-search-input-wrapper {
-            opacity: 0;
-            transform: scale(0.95) translateY(-20px);
-            transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+            animation: genieOut 0.4s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
         }
 
         .global-search-container.collapsing .global-search-backdrop {
-            opacity: 0 !important;
-            transition: opacity 0.25s ease-out !important;
+            animation: backdropFadeOut 0.35s ease-out forwards;
         }
 
         .global-search-container.expanded {
@@ -523,8 +518,8 @@
             z-index: 999999 !important;
             display: flex !important;
             justify-content: center;
-            align-items: center;
-            padding-top: 0;
+            align-items: flex-start;
+            padding-top: 15vh;
             opacity: 1;
             transform: scale(1);
         }
@@ -550,6 +545,7 @@
         .global-search-container.expanded .global-search-backdrop {
             opacity: 1;
             pointer-events: all;
+            animation: backdropFadeIn 0.4s ease-out forwards;
         }
         
         /* Ensure backdrop transition is smooth when collapsing */
@@ -575,27 +571,31 @@
         .global-search-container.expanded .global-search-input-wrapper {
             width: 100% !important;
             max-width: 650px;
-            background: rgba(248, 250, 252, 0.95) !important;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.5),
-                        0 0 60px rgba(14, 165, 233, 0.3),
-                        0 0 100px rgba(14, 165, 233, 0.15);
+            background: rgba(255, 255, 255, 0.75) !important;
+            backdrop-filter: blur(14px) saturate(90%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                        0 0 40px rgba(14, 165, 233, 0.2),
+                        0 0 80px rgba(14, 165, 233, 0.1),
+                        inset 0 1px 1px rgba(255, 255, 255, 0.6);
             padding: 1.5rem;
-            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: genieIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
             z-index: 999999 !important;
             position: relative;
             transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            margin-top: 10% !important;
         }
-        
+
         .dark .global-search-container.expanded .global-search-input-wrapper {
-            background: rgba(11, 18, 32, 0.95) !important;
-            border-color: rgba(51, 65, 85, 0.8);
-            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.8),
-                        0 0 60px rgba(56, 189, 248, 0.3),
-                        0 0 100px rgba(56, 189, 248, 0.15);
+            background: rgba(15, 23, 42, 0.7) !important;
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                        0 0 40px rgba(56, 189, 248, 0.15),
+                        0 0 80px rgba(56, 189, 248, 0.08),
+                        inset 0 1px 1px rgba(255, 255, 255, 0.05);
+                        margin-top: 10% !important;
         }
         
         /* Input field wrapper inside input-wrapper */
@@ -892,7 +892,122 @@
                 opacity: 1;
             }
         }
-        
+
+        /* Genie animation for expanded search */
+        @keyframes genieIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3) translateY(-100px);
+                filter: blur(10px);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.05) translateY(10px);
+                filter: blur(2px);
+            }
+            75% {
+                transform: scale(0.98) translateY(-5px);
+                filter: blur(0);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+                filter: blur(0);
+            }
+        }
+
+        @keyframes genieOut {
+            0% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+                filter: blur(0);
+            }
+            30% {
+                opacity: 0.8;
+                transform: scale(1.02) translateY(-10px);
+                filter: blur(1px);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.3) translateY(-100px);
+                filter: blur(10px);
+            }
+        }
+
+        /* Genie backdrop animation */
+        @keyframes backdropFadeIn {
+            from {
+                opacity: 0;
+                backdrop-filter: blur(0px);
+                -webkit-backdrop-filter: blur(0px);
+            }
+            to {
+                opacity: 1;
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+            }
+        }
+
+        @keyframes backdropFadeOut {
+            from {
+                opacity: 1;
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+            }
+            to {
+                opacity: 0;
+                backdrop-filter: blur(0px);
+                -webkit-backdrop-filter: blur(0px);
+            }
+        }
+
+        /* Dismiss effect - subtle pulse before genie out */
+        @keyframes dismissPulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                            0 0 40px rgba(14, 165, 233, 0.2),
+                            0 0 80px rgba(14, 165, 233, 0.1),
+                            inset 0 1px 1px rgba(255, 255, 255, 0.6);
+            }
+            50% {
+                transform: scale(0.97);
+                box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.2),
+                            0 0 20px rgba(14, 165, 233, 0.15),
+                            0 0 40px rgba(14, 165, 233, 0.08),
+                            inset 0 1px 1px rgba(255, 255, 255, 0.4);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                            0 0 40px rgba(14, 165, 233, 0.2),
+                            0 0 80px rgba(14, 165, 233, 0.1),
+                            inset 0 1px 1px rgba(255, 255, 255, 0.6);
+            }
+        }
+
+        /* Dismissing state - plays pulse then genie out */
+        .global-search-container.dismissing .global-search-input-wrapper {
+            animation: dismissPulse 0.15s ease-out;
+        }
+
+        /* Backdrop ripple effect on dismiss */
+        @keyframes backdropRipple {
+            0% {
+                background: radial-gradient(circle at center, rgba(14, 165, 233, 0.15) 0%, rgba(0, 0, 0, 0.6) 0%);
+            }
+            50% {
+                background: radial-gradient(circle at center, rgba(14, 165, 233, 0.08) 30%, rgba(0, 0, 0, 0.55) 70%);
+            }
+            100% {
+                background: radial-gradient(circle at center, rgba(14, 165, 233, 0) 50%, rgba(0, 0, 0, 0.5) 100%);
+            }
+        }
+
+        .global-search-container.dismissing .global-search-backdrop {
+            animation: backdropRipple 0.2s ease-out;
+        }
+
         /* Mobile styles */
         @media (max-width: 768px) {
             .global-search-toggle {
