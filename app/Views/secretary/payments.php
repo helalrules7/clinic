@@ -87,10 +87,10 @@
                     <div class="stats-card-icon">
                         <i class="bi bi-wallet2"></i>
                     </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
     <div class="col-md-3 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="stats-card stats-card-primary">
@@ -98,14 +98,14 @@
                     <div class="stats-card-header">
                         <h4 class="stats-card-title arabic-text">إجمالي المستلم</h4>
                         <h3 class="stats-card-value arabic-text" id="totalReceived"><?= number_format($dailyBalance['total_received'] ?? 0, 2) ?></h3>
-                    </div>
+    </div>
                     <div class="stats-card-icon">
                         <i class="bi bi-arrow-up-circle"></i>
+                    </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
     <div class="col-md-3 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="stats-card stats-card-danger">
@@ -113,14 +113,14 @@
                     <div class="stats-card-header">
                         <h4 class="stats-card-title arabic-text">إجمالي المصروفات</h4>
                         <h3 class="stats-card-value arabic-text" id="totalExpenses"><?= number_format($dailyBalance['total_expenses'] ?? 0, 2) ?></h3>
-                    </div>
+    </div>
                     <div class="stats-card-icon">
                         <i class="bi bi-arrow-down-circle"></i>
+                    </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
     <div class="col-md-3 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="stats-card stats-card-info">
@@ -128,7 +128,7 @@
                     <div class="stats-card-header">
                         <h4 class="stats-card-title arabic-text">الرصيد الحالي</h4>
                         <h3 class="stats-card-value arabic-text" id="currentBalance"><?= number_format($dailyBalance['current_balance'] ?? 0, 2) ?></h3>
-                    </div>
+    </div>
                     <div class="stats-card-icon">
                         <i class="bi bi-calculator"></i>
                     </div>

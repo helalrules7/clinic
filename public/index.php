@@ -326,6 +326,9 @@ try {
     $router->get('/api/searchDrugsAutocomplete', 'ApiController@searchDrugsAutocomplete');
     $router->post('/api/drugs/update-database', 'ApiController@updateDrugsDatabase');
     
+    // Comprehensive Search API route
+    $router->get('/api/search/comprehensive', 'ApiController@comprehensiveSearch');
+    
     // Lab Tests & Radiology API routes
     $router->post('/api/lab-tests', 'ApiController@createLabTest');
     $router->put('/api/lab-tests/{id}', 'ApiController@updateLabTest');

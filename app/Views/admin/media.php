@@ -98,9 +98,9 @@
     border-radius: 12px;
     padding: 1rem 1.5rem;
     margin-bottom: 1.5rem;
-    display: flex;
+        display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
+        gap: 1rem;
     align-items: center;
     justify-content: space-between;
     box-shadow: 0 2px 8px var(--media-shadow);
@@ -110,13 +110,13 @@
     display: flex;
     gap: 1rem;
     align-items: center;
-    flex-wrap: wrap;
+        flex-wrap: wrap;
 }
 
 .media-toolbar-right {
     display: flex;
     gap: 1rem;
-    align-items: center;
+        align-items: center;
     flex-wrap: wrap;
 }
 
@@ -128,8 +128,8 @@
     padding: 0.25rem;
     border-radius: 8px;
     border: 1px solid var(--media-border);
-}
-
+    }
+    
 .view-mode-btn {
     padding: 0.5rem 0.75rem;
     border: none;
@@ -153,12 +153,12 @@
 
 /* Sort and Filter Controls */
 .media-controls {
-    display: flex;
+        display: flex;
     gap: 0.75rem;
-    align-items: center;
+        align-items: center;
     flex-wrap: wrap;
-}
-
+    }
+    
 .media-controls select,
 .media-controls input {
     padding: 0.5rem 0.75rem;
@@ -203,50 +203,50 @@
     padding: 1.5rem;
     min-height: 400px;
     box-shadow: 0 2px 8px var(--media-shadow);
-}
-
+    }
+    
 /* Thumbnail View */
 .media-thumbnail-grid {
-    display: grid;
+        display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 1rem;
 }
 
 .media-thumbnail-grid.view-small {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 0.75rem;
+        gap: 0.75rem;
 }
 
 .media-thumbnail-grid.view-large {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 1.25rem;
-}
-
+    }
+    
 .media-thumbnail-item {
-    position: relative;
+        position: relative;
     background: var(--bg-alt);
     border: 2px solid var(--media-border);
     border-radius: 12px;
-    overflow: hidden;
+        overflow: hidden;
     cursor: pointer;
     transition: all 0.3s ease;
     aspect-ratio: 1;
-}
-
+    }
+    
 .media-thumbnail-item:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 24px var(--media-shadow);
     border-color: var(--media-accent);
-}
-
+    }
+    
 .media-thumbnail-item.selected {
     border-color: var(--media-accent);
     box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.3);
-}
-
+    }
+    
 .media-thumbnail-item.selected::after {
     content: '';
-    position: absolute;
+        position: absolute;
     top: 0.5rem;
     right: 0.5rem;
     width: 24px;
@@ -256,7 +256,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10;
+        z-index: 10;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
@@ -274,15 +274,15 @@
     justify-content: center;
     z-index: 11;
     font-size: 0.875rem;
-}
-
+    }
+    
 .media-thumbnail-preview {
-    width: 100%;
+        width: 100%;
     height: 100%;
-    object-fit: cover;
-    background: var(--bg);
-}
-
+        object-fit: cover;
+        background: var(--bg);
+    }
+    
 .media-thumbnail-overlay {
     position: absolute;
     bottom: 0;
@@ -293,36 +293,36 @@
     color: white;
     opacity: 0;
     transition: opacity 0.2s ease;
-}
-
+    }
+    
 .media-thumbnail-item:hover .media-thumbnail-overlay {
     opacity: 1;
 }
 
 .media-thumbnail-name {
-    font-size: 0.75rem;
+        font-size: 0.75rem;
     font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     margin: 0;
-}
-
+    }
+    
 .media-thumbnail-size {
-    font-size: 0.65rem;
+        font-size: 0.65rem;
     opacity: 0.9;
     margin-top: 0.25rem;
-}
-
+    }
+    
 /* Table View */
 .media-table-view {
     width: 100%;
     border-collapse: collapse;
-}
-
+    }
+    
 .media-table-view thead th {
     background: var(--bg-alt);
-    padding: 1rem;
+        padding: 1rem;
     text-align: right;
     font-weight: 600;
     color: var(--media-text);
@@ -330,8 +330,8 @@
     cursor: pointer;
     user-select: none;
     transition: background 0.2s ease;
-}
-
+    }
+    
 .media-table-view thead th:hover {
     background: var(--media-card);
 }
@@ -357,8 +357,8 @@
 .media-table-view tbody tr {
     border-bottom: 1px solid var(--media-border);
     transition: background 0.2s ease;
-}
-
+    }
+    
 .media-table-view tbody tr:hover {
     background: var(--bg-alt);
 }
@@ -367,8 +367,8 @@
     padding: 1rem;
     color: var(--media-text);
     vertical-align: middle;
-}
-
+    }
+    
 .media-table-preview {
     width: 60px;
     height: 60px;
@@ -378,28 +378,28 @@
 }
 
 .media-table-name {
-    font-weight: 600;
+        font-weight: 600;
     color: var(--media-text);
-}
-
+    }
+    
 .media-table-path {
-    font-size: 0.875rem;
-    color: var(--muted);
+        font-size: 0.875rem;
+        color: var(--muted);
     font-family: monospace;
-}
-
+    }
+    
 /* Folder View */
 .media-folder-view {
-    display: flex;
+        display: flex;
     flex-direction: column;
-    gap: 1rem;
+        gap: 1rem;
 }
 
 .media-folder-item {
     background: var(--media-card);
     border: 1px solid var(--media-border);
     border-radius: 12px;
-    padding: 1rem;
+        padding: 1rem;
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -427,8 +427,8 @@
     justify-content: center;
     color: white;
     font-size: 1.5rem;
-}
-
+    }
+    
 .media-folder-name {
     font-weight: 600;
     color: var(--media-text);
@@ -490,7 +490,7 @@
 
 .context-menu-item {
     padding: 0.75rem 1rem;
-    border-radius: 8px;
+        border-radius: 8px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -528,8 +528,8 @@
 .context-menu-item.danger:hover {
     background: rgba(239, 68, 68, 0.15);
     color: #ef4444;
-}
-
+    }
+    
 .context-menu-item.danger::before {
     background: #ef4444;
 }
@@ -553,7 +553,7 @@
 }
 
 .file-info-preview {
-    width: 100%;
+        width: 100%;
     max-height: 300px;
     object-fit: contain;
     border-radius: 8px;
@@ -565,24 +565,24 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
-    margin-top: 1rem;
-}
-
+        margin-top: 1rem;
+    }
+    
 .file-info-item {
-    padding: 0.75rem;
+        padding: 0.75rem;
     background: var(--bg-alt);
     border-radius: 8px;
     border: 1px solid var(--media-border);
-}
-
+    }
+    
 .file-info-label {
     font-size: 0.75rem;
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 0.25rem;
-}
-
+    }
+    
 .file-info-value {
     font-size: 0.875rem;
     color: var(--media-text);
@@ -592,7 +592,7 @@
 
 /* Empty State */
 .media-empty-state {
-    text-align: center;
+        text-align: center;
     padding: 4rem 2rem;
     color: var(--muted);
 }
@@ -661,11 +661,11 @@
     border: 2px solid white;
     border-radius: 4px;
     background: rgba(0, 0, 0, 0.3);
-    cursor: pointer;
+        cursor: pointer;
     z-index: 5;
     transition: all 0.2s ease;
-}
-
+    }
+    
 .media-checkbox:hover {
     background: rgba(0, 0, 0, 0.5);
 }
@@ -677,8 +677,8 @@
     width: 100%;
     height: 100%;
     margin: 0;
-}
-
+    }
+    
 .media-checkbox input:checked + .checkmark {
     display: block;
 }
@@ -693,8 +693,8 @@
     height: 12px;
     background: var(--media-accent);
     border-radius: 2px;
-}
-
+    }
+    
 .checkmark::after {
     content: '✓';
     position: absolute;
@@ -704,39 +704,39 @@
     color: white;
     font-size: 10px;
     font-weight: bold;
-}
+    }
 </style>
 
 <div class="container-fluid">
     <!-- Header -->
     <div class="media-header">
         <h4>
-            <i class="bi bi-images me-2"></i>
-            Media Management
+                        <i class="bi bi-images me-2"></i>
+                        Media Management
         </h4>
         <p class="text-muted mb-0">Manage and view all media files in the system</p>
-    </div>
+                </div>
 
-    <!-- Statistics -->
+                    <!-- Statistics -->
     <div class="media-stats-wrapper">
         <div class="media-stat-card">
             <div class="media-stat-value" id="totalFiles">0</div>
             <div class="media-stat-label">Total Files</div>
-        </div>
+                            </div>
         <div class="media-stat-card">
             <div class="media-stat-value" id="totalSize">0 MB</div>
             <div class="media-stat-label">Total Size</div>
-        </div>
+                            </div>
         <div class="media-stat-card">
             <div class="media-stat-value" id="selectedCount">0</div>
             <div class="media-stat-label">Selected</div>
-        </div>
+                            </div>
         <div class="media-stat-card">
             <div class="media-stat-value" id="foldersCount">0</div>
             <div class="media-stat-label">Folders</div>
-        </div>
-    </div>
-
+                        </div>
+                    </div>
+                    
     <!-- Toolbar -->
     <div class="media-toolbar">
         <div class="media-toolbar-left">
@@ -751,19 +751,19 @@
                 <button class="view-mode-btn" data-view="folder" title="Folder View">
                     <i class="bi bi-folder"></i>
                 </button>
-            </div>
-
+                    </div>
+                    
             <!-- Thumbnail Size Toggle (only for thumbnail view) -->
             <div class="view-mode-group" id="thumbnailSizeGroup" style="display: none;">
                 <button class="view-mode-btn active" data-size="medium" title="Medium">
                     <i class="bi bi-square"></i>
-                </button>
+                        </button>
                 <button class="view-mode-btn" data-size="small" title="Small">
                     <i class="bi bi-square-fill" style="font-size: 0.75rem;"></i>
-                </button>
+                        </button>
                 <button class="view-mode-btn" data-size="large" title="Large">
                     <i class="bi bi-square-fill"></i>
-                </button>
+                        </button>
             </div>
 
             <!-- Bulk Actions -->
@@ -771,13 +771,13 @@
                 <span class="badge" id="selectedBadge">0 selected</span>
                 <button class="btn btn-sm btn-danger" onclick="deleteSelected()">
                     <i class="bi bi-trash me-1"></i>Delete Selected
-                </button>
+                        </button>
                 <button class="btn btn-sm btn-secondary" onclick="clearSelection()">
                     <i class="bi bi-x-lg me-1"></i>Clear Selection
-                </button>
+                        </button>
             </div>
-        </div>
-
+                    </div>
+                    
         <div class="media-toolbar-right">
             <!-- Sort Control -->
             <div class="media-controls">
@@ -792,7 +792,7 @@
                     <option value="asc">Ascending</option>
                     <option value="desc">Descending</option>
                 </select>
-            </div>
+                        </div>
 
             <!-- Filter Control -->
             <div class="media-controls">
@@ -800,20 +800,20 @@
                 <select id="folderFilter" class="form-select form-select-sm">
                     <option value="all">All</option>
                 </select>
-            </div>
-
+                    </div>
+                    
             <!-- Search -->
             <div class="media-controls">
                 <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search..." style="min-width: 200px;">
-            </div>
-
+                    </div>
+                    
             <!-- Actions -->
             <button class="btn btn-primary btn-sm" onclick="selectAll()">
                 <i class="bi bi-check-square me-1"></i>Select All
-            </button>
+                            </button>
         </div>
-    </div>
-
+                        </div>
+                        
     <!-- Media Container -->
     <div class="media-container">
         <!-- Loading State -->
@@ -822,8 +822,8 @@
                 <span class="visually-hidden">Loading...</span>
             </div>
             <p class="text-muted">Loading media files...</p>
-        </div>
-
+                        </div>
+                        
         <!-- Thumbnail View -->
         <div id="thumbnailView" style="display: none;">
             <div class="media-thumbnail-grid" id="thumbnailGrid"></div>
@@ -833,8 +833,8 @@
         <div id="tableView" style="display: none;">
             <div class="table-responsive">
                 <table class="media-table-view">
-                    <thead>
-                        <tr>
+                            <thead>
+                                <tr>
                             <th class="sortable" data-sort="name">
                                 <input type="checkbox" id="selectAllTable" onchange="toggleSelectAllTable(this.checked)">
                             </th>
@@ -844,25 +844,25 @@
                             <th class="sortable" data-sort="size">Size</th>
                             <th class="sortable" data-sort="type">Type</th>
                             <th class="sortable" data-sort="date">Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
                     <tbody id="tableBody"></tbody>
-                </table>
-            </div>
-        </div>
+                        </table>
+    </div>
+</div>
 
         <!-- Folder View -->
         <div id="folderView" style="display: none;">
             <div class="media-folder-view" id="folderViewContainer"></div>
-        </div>
+</div>
 
         <!-- Empty State -->
         <div class="media-empty-state" id="emptyState" style="display: none;">
             <i class="bi bi-folder-x"></i>
             <h5>No Files</h5>
             <p>No media files found</p>
-        </div>
+            </div>
     </div>
 </div>
 
@@ -871,11 +871,11 @@
     <div class="context-menu-item" onclick="event.stopPropagation(); showFileInfo(contextMenuFile); hideContextMenu();">
         <i class="bi bi-info-circle"></i>
         <span>File Info</span>
-    </div>
+            </div>
     <div class="context-menu-item" onclick="event.stopPropagation(); downloadFile(contextMenuFile); hideContextMenu();">
         <i class="bi bi-download"></i>
         <span>Download</span>
-    </div>
+            </div>
     <div class="context-menu-divider"></div>
     <div class="context-menu-item danger" onclick="event.stopPropagation(); deleteSingleFile(contextMenuFile); hideContextMenu();">
         <i class="bi bi-trash"></i>
@@ -910,24 +910,24 @@
 
 <script>
 // Global State
-let mediaFiles = [];
+    let mediaFiles = [];
 let filteredFiles = [];
-let selectedFiles = new Set();
+    let selectedFiles = new Set();
 let currentView = 'thumbnail'; // thumbnail, table, folder
 let thumbnailSize = 'medium'; // small, medium, large
 let sortBy = 'name';
 let sortOrder = 'asc';
-let currentFolder = 'all';
-let folders = [];
+    let currentFolder = 'all';
+    let folders = [];
 let contextMenuFile = null;
-
+    
 // Initialize
-document.addEventListener('DOMContentLoaded', function() {
-    loadMediaFiles();
+    document.addEventListener('DOMContentLoaded', function() {
+        loadMediaFiles();
     setupEventListeners();
     setupContextMenu();
-});
-
+    });
+    
 // Setup Event Listeners
 function setupEventListeners() {
     // View mode toggle
@@ -936,16 +936,16 @@ function setupEventListeners() {
             const view = this.dataset.view;
             switchView(view);
         });
-    });
-
+        });
+        
     // Thumbnail size toggle
     document.querySelectorAll('.view-mode-btn[data-size]').forEach(btn => {
         btn.addEventListener('click', function() {
             const size = this.dataset.size;
             setThumbnailSize(size);
         });
-    });
-
+        });
+        
     // Sort controls
     document.getElementById('sortBy').addEventListener('change', function() {
         sortBy = this.value;
@@ -955,8 +955,8 @@ function setupEventListeners() {
     document.getElementById('sortOrder').addEventListener('change', function() {
         sortOrder = this.value;
         applyFiltersAndSort();
-    });
-
+        });
+        
     // Folder filter
     document.getElementById('folderFilter').addEventListener('change', function() {
         currentFolder = this.value;
@@ -992,71 +992,71 @@ function setupEventListeners() {
             bootstrap.Modal.getInstance(document.getElementById('fileInfoModal')).hide();
         }
     });
-}
-
+    }
+    
 // Load Media Files
-async function loadMediaFiles() {
-    try {
+    async function loadMediaFiles() {
+        try {
         showLoading();
-        const response = await fetch('/api/admin/media/list');
-        const result = await response.json();
-        
-        if (result.success) {
-            mediaFiles = result.data || [];
-            organizeByFolders();
-            updateFolderFilter();
+            const response = await fetch('/api/admin/media/list');
+            const result = await response.json();
+            
+            if (result.success) {
+                mediaFiles = result.data || [];
+                organizeByFolders();
+                updateFolderFilter();
             applyFiltersAndSort();
-            updateStats();
+                updateStats();
             
             // Ensure the correct view is visible after loading
             switchView(currentView);
-        } else {
+            } else {
             showError('Failed to load files: ' + (result.message || 'Unknown error'));
-        }
-    } catch (error) {
-        console.error('Error loading media:', error);
+            }
+        } catch (error) {
+            console.error('Error loading media:', error);
         showError('Failed to load files. Please try again.');
     } finally {
         hideLoading();
-    }
-}
-
-// Organize by Folders
-function organizeByFolders() {
-    const folderMap = {};
-    
-    mediaFiles.forEach(file => {
-        const pathParts = file.path.split('/');
-        const folder = pathParts.length > 1 ? pathParts[0] : 'root';
-        
-        if (!folderMap[folder]) {
-            folderMap[folder] = [];
         }
-        folderMap[folder].push(file);
-    });
+    }
     
-    folders = Object.keys(folderMap).map(folder => ({
-        name: folder,
-        files: folderMap[folder]
-    }));
-}
-
+// Organize by Folders
+    function organizeByFolders() {
+        const folderMap = {};
+        
+        mediaFiles.forEach(file => {
+            const pathParts = file.path.split('/');
+            const folder = pathParts.length > 1 ? pathParts[0] : 'root';
+            
+            if (!folderMap[folder]) {
+                folderMap[folder] = [];
+            }
+            folderMap[folder].push(file);
+        });
+        
+        folders = Object.keys(folderMap).map(folder => ({
+            name: folder,
+            files: folderMap[folder]
+        }));
+    }
+    
 // Update Folder Filter
-function updateFolderFilter() {
-    const select = document.getElementById('folderFilter');
-    const currentValue = select.value;
-    
+    function updateFolderFilter() {
+        const select = document.getElementById('folderFilter');
+        const currentValue = select.value;
+        
     select.innerHTML = '<option value="all">All</option>';
-    folders.forEach(folder => {
-        const option = document.createElement('option');
-        option.value = folder.name;
-        option.textContent = folder.name + ' (' + folder.files.length + ')';
-        select.appendChild(option);
-    });
-    
-    select.value = currentValue || 'all';
+        folders.forEach(folder => {
+            const option = document.createElement('option');
+            option.value = folder.name;
+            option.textContent = folder.name + ' (' + folder.files.length + ')';
+            select.appendChild(option);
+        });
+        
+        select.value = currentValue || 'all';
     document.getElementById('foldersCount').textContent = folders.length;
-}
+    }
 
 // Apply Filters and Sort
 function applyFiltersAndSort() {
@@ -1100,8 +1100,8 @@ function applyFiltersAndSort() {
             default:
                 aVal = a.name.toLowerCase();
                 bVal = b.name.toLowerCase();
-        }
-        
+    }
+    
         if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
         if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
         return 0;
@@ -1134,8 +1134,8 @@ function switchView(view) {
         view === 'folder' ? 'block' : 'none';
     
     renderCurrentView();
-}
-
+    }
+    
 // Set Thumbnail Size
 function setThumbnailSize(size) {
     thumbnailSize = size;
@@ -1148,8 +1148,8 @@ function setThumbnailSize(size) {
     grid.className = 'media-thumbnail-grid view-' + size;
     
     renderCurrentView();
-}
-
+    }
+    
 // Render Current View
 function renderCurrentView() {
     if (filteredFiles.length === 0) {
@@ -1210,8 +1210,8 @@ function renderThumbnailView() {
                     <p class="media-thumbnail-name">${escapeHtml(file.name)}</p>
                     <p class="media-thumbnail-size">${formatFileSize(file.size || 0)}</p>
                 </div>
-            </div>
-        `;
+                </div>
+            `;
     }).join('');
 }
 
@@ -1296,11 +1296,11 @@ function renderFolderView() {
                 </div>
                 <div class="media-folder-content collapsed" id="folderContent-${escapeHtml(folder.name)}">
                     ${folderFiles.map((file, index) => {
-                        const globalIndex = mediaFiles.findIndex(f => f.path === file.path);
-                        const isImage = file.mime_type && file.mime_type.startsWith('image/');
+                                const globalIndex = mediaFiles.findIndex(f => f.path === file.path);
+                                const isImage = file.mime_type && file.mime_type.startsWith('image/');
                         const previewUrl = isImage ? file.url : getFileIcon(file.mime_type);
-                        
-                        return `
+                                
+                                return `
                             <div class="media-thumbnail-item" 
                                  data-index="${globalIndex}"
                                  oncontextmenu="event.preventDefault(); event.stopPropagation(); showContextMenu(event, ${globalIndex}); return false;"
@@ -1309,16 +1309,16 @@ function renderFolderView() {
                                      alt="${escapeHtml(file.name)}" 
                                      class="media-thumbnail-preview"
                                      loading="lazy"
-                                     onerror="this.src='/public/assets/icons/file.png'">
+                                             onerror="this.src='/public/assets/icons/file.png'">
                                 <div class="media-thumbnail-overlay">
                                     <p class="media-thumbnail-name">${escapeHtml(file.name)}</p>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
     }).join('');
 }
 
@@ -1435,8 +1435,8 @@ function showContextMenu(event, fileIndex) {
         document.addEventListener('contextmenu', closeMenuHandler);
         document.addEventListener('keydown', escapeHandler);
     }, 10);
-}
-
+    }
+    
 // Hide Context Menu
 function hideContextMenu() {
     const menu = document.getElementById('contextMenu');
@@ -1445,34 +1445,34 @@ function hideContextMenu() {
 }
 
 // Toggle Select
-function toggleSelect(index) {
-    if (selectedFiles.has(index)) {
-        selectedFiles.delete(index);
-    } else {
-        selectedFiles.add(index);
-    }
+    function toggleSelect(index) {
+        if (selectedFiles.has(index)) {
+            selectedFiles.delete(index);
+        } else {
+            selectedFiles.add(index);
+        }
     renderCurrentView();
     updateBulkActions();
-    updateStats();
-}
-
+        updateStats();
+    }
+    
 // Select All
-function selectAll() {
+    function selectAll() {
     filteredFiles.forEach((file, index) => {
         const globalIndex = mediaFiles.findIndex(f => f.path === file.path);
         selectedFiles.add(globalIndex);
     });
     renderCurrentView();
     updateBulkActions();
-    updateStats();
-}
-
+        updateStats();
+    }
+    
 // Clear Selection
 function clearSelection() {
-    selectedFiles.clear();
+        selectedFiles.clear();
     renderCurrentView();
     updateBulkActions();
-    updateStats();
+        updateStats();
 }
 
 // Toggle Select All Table
@@ -1491,8 +1491,8 @@ function toggleSelectAllTable(checked) {
     renderCurrentView();
     updateBulkActions();
     updateStats();
-}
-
+    }
+    
 // Update Bulk Actions
 function updateBulkActions() {
     const bulkActions = document.getElementById('bulkActions');
@@ -1507,13 +1507,13 @@ function updateBulkActions() {
 }
 
 // Update Stats
-function updateStats() {
-    document.getElementById('totalFiles').textContent = mediaFiles.length;
-    
-    const totalSize = mediaFiles.reduce((sum, file) => sum + (file.size || 0), 0);
-    document.getElementById('totalSize').textContent = formatFileSize(totalSize);
-    
-    document.getElementById('selectedCount').textContent = selectedFiles.size;
+    function updateStats() {
+        document.getElementById('totalFiles').textContent = mediaFiles.length;
+        
+        const totalSize = mediaFiles.reduce((sum, file) => sum + (file.size || 0), 0);
+        document.getElementById('totalSize').textContent = formatFileSize(totalSize);
+        
+        document.getElementById('selectedCount').textContent = selectedFiles.size;
     document.getElementById('foldersCount').textContent = folders.length;
 }
 
@@ -1529,15 +1529,15 @@ function updateSortUI() {
     
     document.getElementById('sortBy').value = sortBy;
     document.getElementById('sortOrder').value = sortOrder;
-}
-
+    }
+    
 // Show File Info
 function showFileInfo(fileIndex) {
     hideContextMenu();
     
     const file = mediaFiles[fileIndex];
     if (!file) return;
-    
+        
     const modal = document.getElementById('fileInfoModal');
     const preview = document.getElementById('fileInfoPreview');
     const grid = document.getElementById('fileInfoGrid');
@@ -1597,29 +1597,29 @@ async function deleteSingleFile(fileIndex) {
     
     try {
         const response = await fetch('/api/admin/media/delete', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
             },
             body: JSON.stringify({ files: [file.path] })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
             showSuccess('File deleted successfully');
             selectedFiles.delete(fileIndex);
             loadMediaFiles();
-        } else {
+            } else {
             showError('Failed to delete file: ' + (result.message || 'Unknown error'));
-        }
-    } catch (error) {
+            }
+        } catch (error) {
         console.error('Error deleting file:', error);
         showError('Failed to delete file. Please try again.');
+        }
     }
-}
-
+    
 // Delete Selected Files
 async function deleteSelected() {
     if (selectedFiles.size === 0) return;
@@ -1627,34 +1627,34 @@ async function deleteSelected() {
     const filesToDelete = Array.from(selectedFiles).map(index => mediaFiles[index].path);
     
     if (!confirm('Are you sure you want to delete ' + selectedFiles.size + ' file(s)?')) {
-        return;
-    }
-    
+            return;
+        }
+        
     try {
         const response = await fetch('/api/admin/media/delete', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
             body: JSON.stringify({ files: filesToDelete })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
             showSuccess('Successfully deleted ' + result.deleted + ' file(s)');
             selectedFiles.clear();
-            loadMediaFiles();
-        } else {
+                loadMediaFiles();
+            } else {
             showError('Failed to delete files: ' + (result.message || 'Unknown error'));
-        }
-    } catch (error) {
+            }
+        } catch (error) {
         console.error('Error deleting files:', error);
         showError('Failed to delete files. Please try again.');
+        }
     }
-}
-
+    
 // Download File
 function downloadFile(fileIndex) {
     hideContextMenu();
@@ -1684,29 +1684,29 @@ function getFileIcon(mimeType) {
     }
     
     return '/public/assets/icons/file.png';
-}
-
+    }
+    
 // Utility Functions
-function formatFileSize(bytes) {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-}
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
 
 function formatDate(dateString) {
     if (!dateString) return 'Not specified';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US') + ' ' + date.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
 }
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -1717,16 +1717,16 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
     };
-}
-
+    }
+    
 function showLoading() {
     document.getElementById('loadingState').style.display = 'flex';
     document.getElementById('thumbnailView').style.display = 'none';
     document.getElementById('tableView').style.display = 'none';
     document.getElementById('folderView').style.display = 'none';
     document.getElementById('emptyState').style.display = 'none';
-}
-
+    }
+    
 function hideLoading() {
     document.getElementById('loadingState').style.display = 'none';
 }
@@ -1765,5 +1765,5 @@ function showError(message) {
             toast.parentNode.removeChild(toast);
         }
     }, 5000);
-}
+    }
 </script>

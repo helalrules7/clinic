@@ -70,10 +70,10 @@
                     <div class="stats-card-icon">
                         <i class="bi bi-people"></i>
                     </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
     <div class="col-md-3 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="stats-card stats-card-success">
@@ -81,14 +81,14 @@
                     <div class="stats-card-header">
                         <h4 class="stats-card-title arabic-text">مرضى نشطين</h4>
                         <h3 class="stats-card-value arabic-text"><?= $stats['active'] ?? 0 ?></h3>
-                    </div>
+    </div>
                     <div class="stats-card-icon">
                         <i class="bi bi-person-check"></i>
+                    </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
     <div class="col-md-3 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="stats-card stats-card-warning">
@@ -96,14 +96,14 @@
                     <div class="stats-card-header">
                         <h4 class="stats-card-title arabic-text">جدد هذا الشهر</h4>
                         <h3 class="stats-card-value arabic-text"><?= $stats['recent'] ?? 0 ?></h3>
-                    </div>
+    </div>
                     <div class="stats-card-icon">
                         <i class="bi bi-person-plus"></i>
+                    </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
     <div class="col-md-3 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="stats-card stats-card-info">
@@ -111,7 +111,7 @@
                     <div class="stats-card-header">
                         <h4 class="stats-card-title arabic-text">مدفوعات إجمالية</h4>
                         <h3 class="stats-card-value arabic-text"><?= ($stats['total_paid'] ?? 0) ?></h3>
-                    </div>
+    </div>
                     <div class="stats-card-icon">
                         <i class="bi bi-credit-card"></i>
                     </div>
@@ -315,7 +315,7 @@
                                                         <i class="bi bi-whatsapp"></i>
                                                         <span>واتساب</span>
                                                     </a>
-                                                </div>
+                                    </div>
                                             </span>
                                         </div>
                                     <?php else: ?>
@@ -326,7 +326,7 @@
                                             <a href="tel:<?= htmlspecialchars($patient['alt_phone']) ?>" 
                                                class="phone-number-link" 
                                                style="text-decoration: none; color: var(--accent); font-weight: 500; cursor: pointer; transition: all 0.2s ease;">
-                                                <i class="bi bi-telephone-plus me-1"></i>
+                                            <i class="bi bi-telephone-plus me-1"></i>
                                                 <small><?= htmlspecialchars($patient['alt_phone']) ?></small>
                                             </a>
                                             <span class="phone-htooltip">
@@ -797,9 +797,9 @@ function getAvatarInitials(firstName, lastName) {
         return firstChar + lastChar;
     } else {
         // For non-Arabic text, use uppercase with dot
-        const firstChar = firstName.charAt(0).toUpperCase();
-        const lastChar = lastName.charAt(0).toUpperCase();
-        return firstChar + '.' + lastChar;
+    const firstChar = firstName.charAt(0).toUpperCase();
+    const lastChar = lastName.charAt(0).toUpperCase();
+    return firstChar + '.' + lastChar;
     }
 }
 

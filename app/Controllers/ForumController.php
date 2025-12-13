@@ -2215,7 +2215,7 @@ class ForumController
                 echo json_encode(['success' => false, 'message' => 'Failed to save file'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 exit;
             }
-            
+
             // Save to database
             if ($type === 'topic') {
                 // Allow topic_id to be NULL for new topics (will be linked later)

@@ -107,8 +107,8 @@
                                 <div class="weather-location" id="weatherLocation">
                                     <i class="bi bi-geo-alt-fill"></i>
                                     <span>جاري تحديد الموقع...</span>
-                                </div>
                             </div>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -140,109 +140,109 @@
                     </button>
                     <div class="quick-actions-grid" id="quickActionsGrid">
                             <!-- Bookings Card -->
-                            <div class="quick-action-card calendar-card">
-                                <div class="qa-background"></div>
-                                <div class="qa-logo">
+                    <div class="quick-action-card calendar-card">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
                                     <i class="bi bi-calendar-check"></i>
                                     <span class="qa-logo-name">الحجوزات</span>
-                                </div>
+                        </div>
                                 <div class="qa-box qa-box1" onclick="window.location.href='/secretary/bookings'">
-                                    <span class="qa-icon">
-                                        <i class="bi bi-calendar3"></i>
-                                    </span>
+                            <span class="qa-icon">
+                                <i class="bi bi-calendar3"></i>
+                            </span>
                                     <span class="qa-label">عرض</span>
-                                </div>
+                        </div>
                                 <div class="qa-box qa-box2" onclick="quickActionAddBooking()">
-                                    <span class="qa-icon">
-                                        <i class="bi bi-calendar-plus-fill"></i>
-                                    </span>
+                            <span class="qa-icon">
+                                <i class="bi bi-calendar-plus-fill"></i>
+                            </span>
                                     <span class="qa-label">حجز</span>
-                                </div>
-                            </div>
+                        </div>
+                    </div>
 
                             <!-- Patients Card -->
                             <div class="quick-action-card patients-card">
-                                <div class="qa-background"></div>
-                                <div class="qa-logo">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
                                     <i class="bi bi-people-fill"></i>
                                     <span class="qa-logo-name">المرضى</span>
-                                </div>
+                        </div>
                                 <div class="qa-box qa-box1" onclick="window.location.href='/secretary/patients'">
-                                    <span class="qa-icon">
+                            <span class="qa-icon">
                                         <i class="bi bi-person-lines-fill"></i>
-                                    </span>
+                            </span>
                                     <span class="qa-label">عرض</span>
-                                </div>
+                        </div>
                                 <div class="qa-box qa-box2" onclick="quickActionAddPatient()">
-                                    <span class="qa-icon">
+                            <span class="qa-icon">
                                         <i class="bi bi-person-plus-fill"></i>
-                                    </span>
+                            </span>
                                     <span class="qa-label">إضافة</span>
-                                </div>
-                            </div>
+                        </div>
+                    </div>
 
                             <!-- Payments Card -->
-                            <div class="quick-action-card financial-card">
-                                <div class="qa-background"></div>
-                                <div class="qa-logo">
+                    <div class="quick-action-card financial-card">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
                                     <i class="bi bi-credit-card"></i>
                                     <span class="qa-logo-name">المدفوعات</span>
-                                </div>
+                        </div>
                                 <div class="qa-box qa-box1" onclick="window.location.href='/secretary/payments'">
-                                    <span class="qa-icon">
+                            <span class="qa-icon">
                                         <i class="bi bi-wallet2"></i>
-                                    </span>
+                            </span>
                                     <span class="qa-label">عرض</span>
-                                </div>
+                        </div>
                                 <div class="qa-box qa-box2" onclick="quickActionAddBalance()">
-                                    <span class="qa-icon">
+                            <span class="qa-icon">
                                         <i class="bi bi-plus-circle-fill"></i>
-                                    </span>
+                            </span>
                                     <span class="qa-label">رصيد</span>
-                                </div>
-                            </div>
+                        </div>
+                    </div>
 
                             <!-- Expenses Card -->
                             <div class="quick-action-card expenses-card">
-                                <div class="qa-background"></div>
-                                <div class="qa-logo">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
                                     <i class="bi bi-dash-circle"></i>
                                     <span class="qa-logo-name">المصروفات</span>
-                                </div>
+                        </div>
                                 <div class="qa-box qa-box1" onclick="window.location.href='/secretary/payments'">
-                                    <span class="qa-icon">
+                            <span class="qa-icon">
                                         <i class="bi bi-eye-fill"></i>
-                                    </span>
+                            </span>
                                     <span class="qa-label">عرض</span>
-                                </div>
+                        </div>
                                 <div class="qa-box qa-box2" onclick="quickActionAddExpense()">
-                                    <span class="qa-icon">
+                            <span class="qa-icon">
                                         <i class="bi bi-dash-circle-fill"></i>
-                                    </span>
+                            </span>
                                     <span class="qa-label">إضافة</span>
-                                </div>
-                            </div>
-
-                            <!-- Profile Card (View only) -->
-                            <div class="quick-action-card profile-card single-action-card">
-                                <div class="qa-background"></div>
-                                <div class="qa-logo">
-                                    <i class="bi bi-person-circle"></i>
-                                    <span class="qa-logo-name">الملف الشخصي</span>
-                                </div>
-                                <div class="qa-box qa-box1" onclick="window.location.href='/secretary/profile'">
-                                    <span class="qa-icon">
-                                        <i class="bi bi-person-vcard"></i>
-                                    </span>
-                                    <span class="qa-label">عرض</span>
-                                </div>    
-                            </div>
                         </div>
                     </div>
-            </div>
-        </div>
-    </div>  
-</div>
+
+                    <!-- Profile Card (View only) -->
+                    <div class="quick-action-card profile-card single-action-card">
+                        <div class="qa-background"></div>
+                        <div class="qa-logo">
+                            <i class="bi bi-person-circle"></i>
+                                    <span class="qa-logo-name">الملف الشخصي</span>
+                        </div>
+                                <div class="qa-box qa-box1" onclick="window.location.href='/secretary/profile'">
+                            <span class="qa-icon">
+                                        <i class="bi bi-person-vcard"></i>
+                            </span>
+                                    <span class="qa-label">عرض</span>
+                        </div>
+                    </div>
+                        </div>
+                        </div>
+                    </div>
+                        </div>
+                        </div>
+                    </div>
 
 <div class="row mb-4">
     <!-- Today's Appointments -->
@@ -459,18 +459,18 @@
                         <div class="d-flex align-items-center">
                             <i class="bi bi-clock me-2 text-primary"></i>
                             ${new Date('2000-01-01 ' + apt.start_time).toLocaleTimeString('ar-EG', {hour: '2-digit', minute: '2-digit'})}
-                        </div>
+                    </div>
                     </td>
                     <td>
                         <div class="d-flex align-items-center">
                             <div class="avatar-sm me-2">
                                 <i class="bi bi-person-circle"></i>
-                            </div>
+                </div>
                             <div>
                                 <div class="fw-semibold">${apt.first_name} ${apt.last_name}</div>
                                 <small class="text-muted">${apt.phone || ''}</small>
-                            </div>
-                        </div>
+            </div>
+        </div>
                     </td>
                     <td>
                         <span class="badge bg-info">${apt.doctor_name || ''}</span>
@@ -493,7 +493,7 @@
                                     <i class="bi bi-check-circle"></i>
                                 </button>
                             ` : ''}
-                        </div>
+    </div>
                     </td>
                 </tr>
             `).join('');
@@ -512,7 +512,7 @@
                 <div class="text-center py-4">
                     <i class="bi bi-credit-card text-muted"></i>
                     <p class="text-muted mt-2 arabic-text">لا توجد مدفوعات حديثة</p>
-                </div>
+</div>
             `;
             return;
         }
@@ -649,14 +649,14 @@
 
         try {
             const response = await fetch(`/api/appointments/${appointmentId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
                 credentials: 'same-origin',
-                body: JSON.stringify({
-                    status: 'CheckedIn'
-                })
+            body: JSON.stringify({
+                status: 'CheckedIn'
+            })
             });
 
             const data = await response.json();

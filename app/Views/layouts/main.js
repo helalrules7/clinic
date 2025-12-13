@@ -79,7 +79,7 @@
             
             // Load from database if no valid theme in localStorage
             let dbTheme = null;
-            if (!savedTheme) {
+                if (!savedTheme) {
                 dbTheme = await loadThemeFromDatabase();
                 if (dbTheme === 'light' || dbTheme === 'dark') {
                     savedTheme = dbTheme;
@@ -3260,4 +3260,336 @@
                     checkForumNotifications();
                 }, 500);
             });
+        })();
+        
+        // Global Search Functionality
+        (function() {
+            const searchInput = document.getElementById('globalSearchInput');
+            const searchContainer = document.getElementById('globalSearchContainer');
+            const searchResults = document.getElementById('globalSearchResults');
+            const searchClear = document.getElementById('globalSearchClear');
+            const searchToggle = document.getElementById('globalSearchToggle');
+            const searchBackdrop = document.getElementById('globalSearchBackdrop');
+            
+            if (!searchInput || !searchContainer || !searchResults) return;
+            
+            let searchTimeout;
+            let currentResults = [];
+            let selectedIndex = -1;
+            
+            // Store original parent for restoration
+            let originalParent = null;
+            
+            // Expand search on click/focus
+            function expandSearch() {
+                if (window.innerWidth > 768) {
+                    // Move container to body to break out of any parent constraints
+                    if (searchContainer.parentElement !== document.body) {
+                        originalParent = searchContainer.parentElement;
+                        document.body.appendChild(searchContainer);
+                    }
+                    searchContainer.classList.add('expanded');
+                    document.body.style.overflow = 'hidden'; // Prevent background scroll
+                    setTimeout(() => {
+                        searchInput.focus();
+                        if (searchInput.value.trim().length >= 2 && currentResults.length > 0) {
+                            searchResults.classList.add('show');
+                        }
+                    }, 100);
+                } else {
+                    searchContainer.classList.add('show');
+                    setTimeout(() => searchInput.focus(), 100);
+                }
+            }
+            
+            // Collapse search
+            function collapseSearch() {
+                // Hide results first
+                hideResults();
+                searchInput.blur();
+                
+                // Remove expanded class to trigger transition
+                searchContainer.classList.remove('expanded', 'show');
+                
+                // Wait for backdrop transition to complete before restoring scroll
+                // This prevents content flash when backdrop disappears
+                if (searchBackdrop) {
+                    const handleBackdropTransitionEnd = function(e) {
+                        // Only handle backdrop transitions
+                        if (e.target !== searchBackdrop) return;
+                        
+                        searchBackdrop.removeEventListener('transitionend', handleBackdropTransitionEnd);
+                        document.body.style.overflow = ''; // Restore scroll after backdrop fades
+                    };
+                    
+                    searchBackdrop.addEventListener('transitionend', handleBackdropTransitionEnd);
+                    
+                    // Fallback: restore scroll after transition duration
+                    setTimeout(() => {
+                        searchBackdrop.removeEventListener('transitionend', handleBackdropTransitionEnd);
+                        document.body.style.overflow = '';
+                    }, 350);
+                } else {
+                    // If no backdrop, restore scroll immediately
+                    document.body.style.overflow = '';
+                }
+                
+                // Wait for transition to complete before moving element back
+                const handleTransitionEnd = function(e) {
+                    // Only handle transitions on the container itself, not children
+                    if (e.target !== searchContainer) return;
+                    
+                    searchContainer.removeEventListener('transitionend', handleTransitionEnd);
+                    
+                    // Move container back to original parent if it was moved
+                    if (originalParent && searchContainer.parentElement === document.body) {
+                        // Temporarily hide to prevent flash
+                        searchContainer.style.opacity = '0';
+                        searchContainer.style.pointerEvents = 'none';
+                        
+                        requestAnimationFrame(() => {
+                            originalParent.appendChild(searchContainer);
+                            originalParent = null;
+                            
+                            // Restore visibility after a brief moment
+                            requestAnimationFrame(() => {
+                                searchContainer.style.opacity = '';
+                                searchContainer.style.pointerEvents = '';
+                            });
+                        });
+                    }
+                };
+                
+                searchContainer.addEventListener('transitionend', handleTransitionEnd);
+                
+                // Fallback: if transition doesn't fire (e.g., no transition property), move immediately
+                setTimeout(() => {
+                    if (originalParent && searchContainer.parentElement === document.body) {
+                        searchContainer.removeEventListener('transitionend', handleTransitionEnd);
+                        searchContainer.style.opacity = '0';
+                        searchContainer.style.pointerEvents = 'none';
+                        
+                        requestAnimationFrame(() => {
+                            originalParent.appendChild(searchContainer);
+                            originalParent = null;
+                            
+                            requestAnimationFrame(() => {
+                                searchContainer.style.opacity = '';
+                                searchContainer.style.pointerEvents = '';
+                            });
+                        });
+                    }
+                }, 350); // Slightly longer than transition duration
+            }
+            
+            // Mobile toggle
+            if (searchToggle) {
+                searchToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (searchContainer.classList.contains('show')) {
+                        collapseSearch();
+                    } else {
+                        expandSearch();
+                    }
+                });
+            }
+            
+            // Expand on input click/focus
+            searchInput.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (window.innerWidth > 768 && !searchContainer.classList.contains('expanded')) {
+                    expandSearch();
+                }
+            });
+            
+            searchInput.addEventListener('focus', function(e) {
+                e.stopPropagation();
+                if (window.innerWidth > 768 && !searchContainer.classList.contains('expanded')) {
+                    expandSearch();
+                }
+                if (this.value.trim().length >= 2 && currentResults.length > 0) {
+                    searchResults.classList.add('show');
+                }
+            });
+            
+            // Backdrop click to close
+            if (searchBackdrop) {
+                searchBackdrop.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    collapseSearch();
+                });
+            }
+            
+            // Close on ESC key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && searchContainer.classList.contains('expanded')) {
+                    collapseSearch();
+                }
+            });
+            
+            // Clear button
+            if (searchClear) {
+                searchClear.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    searchInput.value = '';
+                    searchInput.focus();
+                    hideResults();
+                    searchClear.classList.add('d-none');
+                });
+            }
+            
+            // Search input handler
+            searchInput.addEventListener('input', function() {
+                const query = this.value.trim();
+                
+                if (searchClear) {
+                    searchClear.classList.toggle('d-none', query.length === 0);
+                }
+                
+                if (query.length < 2) {
+                    hideResults();
+                    return;
+                }
+                
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    performSearch(query);
+                }, 300);
+            });
+            
+            // Keyboard navigation
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    collapseSearch();
+                    return;
+                }
+                
+                if (!searchResults.classList.contains('show') || currentResults.length === 0) {
+                    if (e.key === 'Enter' && this.value.trim().length >= 2) {
+                        performSearch(this.value.trim());
+                    }
+                    return;
+                }
+                
+                const items = searchResults.querySelectorAll('.global-search-result-item');
+                
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                    updateSelection(items);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedIndex = Math.max(selectedIndex - 1, -1);
+                    updateSelection(items);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (selectedIndex >= 0 && items[selectedIndex]) {
+                        items[selectedIndex].click();
+                    }
+                }
+            });
+            
+            // Click outside to close (for mobile)
+            document.addEventListener('click', function(e) {
+                if (window.innerWidth <= 768) {
+                    if (!searchContainer.contains(e.target) && !searchToggle?.contains(e.target)) {
+                        searchContainer.classList.remove('show');
+                        hideResults();
+                    }
+                }
+            });
+            
+            function updateSelection(items) {
+                items.forEach((item, index) => {
+                    item.classList.toggle('active', index === selectedIndex);
+                    item.classList.toggle('selected', index === selectedIndex);
+                });
+            }
+            
+            function performSearch(query) {
+                // Ensure search is expanded before showing results
+                if (!searchContainer.classList.contains('expanded') && window.innerWidth > 768) {
+                    expandSearch();
+                }
+                
+                fetch(`/api/search/comprehensive?q=${encodeURIComponent(query)}&limit=10`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Search failed');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    currentResults = data.results || [];
+                    displayResults(currentResults, query);
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    searchResults.innerHTML = '<div class="global-search-results empty">Search error. Please try again.</div>';
+                    searchResults.classList.add('show');
+                });
+            }
+            
+            function displayResults(results, query) {
+                // Ensure container is visible
+                if (!searchContainer.classList.contains('expanded') && window.innerWidth > 768) {
+                    expandSearch();
+                }
+                
+                if (results.length === 0) {
+                    searchResults.innerHTML = '<div class="global-search-results empty">No results found for "' + escapeHtml(query) + '"</div>';
+                    searchResults.classList.add('show');
+                    return;
+                }
+                
+                const html = results.map((result, index) => {
+                    return `
+                        <div class="global-search-result-item" data-url="${escapeHtml(result.url)}" data-index="${index}">
+                            <div class="global-search-result-icon">
+                                <i class="bi ${escapeHtml(result.icon)}"></i>
+                            </div>
+                            <div class="global-search-result-content">
+                                <div class="global-search-result-title">${escapeHtml(result.title)}</div>
+                                <div class="global-search-result-subtitle">${escapeHtml(result.subtitle || '')}</div>
+                            </div>
+                            <span class="global-search-result-type">${escapeHtml(result.type)}</span>
+                        </div>
+                    `;
+                }).join('');
+                
+                searchResults.innerHTML = html;
+                searchResults.classList.add('show');
+                selectedIndex = -1;
+                
+                // Force reflow to ensure visibility
+                searchResults.offsetHeight;
+                
+                // Add click handlers
+                searchResults.querySelectorAll('.global-search-result-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const url = this.dataset.url;
+                        if (url) {
+                            window.location.href = url;
+                        }
+                    });
+                });
+            }
+            
+            function hideResults() {
+                searchResults.classList.remove('show');
+                selectedIndex = -1;
+            }
+            
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
         })();

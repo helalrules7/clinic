@@ -6127,6 +6127,339 @@ class ApiController
     }
 
     /**
+     * Comprehensive search across all entities
+     * Searches: appointments, drugs, patients, media, prescriptions, glass prescriptions, medical history, notes, alerts, forum
+     */
+    public function comprehensiveSearch()
+    {
+        try {
+            // Check authentication
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $query = trim($_GET['q'] ?? '');
+            $limit = min((int)($_GET['limit'] ?? 10), 20); // Max 20 results per category
+            
+            if (strlen($query) < 2) {
+                return $this->jsonResponse([
+                    'results' => [],
+                    'total' => 0
+                ]);
+            }
+
+            $user = $this->auth->user();
+            $results = [];
+            $searchTerm = '%' . $query . '%';
+
+            // 1. Search Patients
+            try {
+                $stmt = $this->pdo->prepare("
+                    SELECT id, first_name, last_name, phone, dob, gender, 'patient' as type
+                    FROM patients 
+                    WHERE first_name LIKE ? OR last_name LIKE ? OR phone LIKE ?
+                    ORDER BY 
+                        CASE 
+                            WHEN first_name LIKE ? THEN 1
+                            WHEN last_name LIKE ? THEN 2
+                            ELSE 3
+                        END,
+                        first_name, last_name
+                    LIMIT ?
+                ");
+                $exactMatch = '%' . $query . '%';
+                $stmt->execute([$searchTerm, $searchTerm, $searchTerm, $exactMatch, $exactMatch, $limit]);
+                $patients = $stmt->fetchAll();
+                foreach ($patients as $patient) {
+                    $results[] = [
+                        'id' => $patient['id'],
+                        'title' => $patient['first_name'] . ' ' . $patient['last_name'],
+                        'subtitle' => $patient['phone'] . ($patient['dob'] ? ' • ' . date('Y-m-d', strtotime($patient['dob'])) : ''),
+                        'type' => 'patient',
+                        'icon' => 'bi-people',
+                        'url' => '/doctor/patients/' . $patient['id']
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Continue if error
+            }
+
+            // 2. Search Appointments
+            try {
+                $stmt = $this->pdo->prepare("
+                    SELECT a.id, a.date, a.start_time, p.first_name, p.last_name, p.id as patient_id
+                    FROM appointments a
+                    LEFT JOIN patients p ON a.patient_id = p.id
+                    WHERE a.id LIKE ? OR p.first_name LIKE ? OR p.last_name LIKE ?
+                    ORDER BY a.date DESC, a.start_time DESC
+                    LIMIT ?
+                ");
+                $stmt->execute([$searchTerm, $searchTerm, $searchTerm, $limit]);
+                $appointments = $stmt->fetchAll();
+                foreach ($appointments as $appointment) {
+                    $patientName = ($appointment['first_name'] ?? '') . ' ' . ($appointment['last_name'] ?? '');
+                    $results[] = [
+                        'id' => $appointment['id'],
+                        'title' => 'Appointment #' . $appointment['id'] . ($patientName ? ' - ' . trim($patientName) : ''),
+                        'subtitle' => ($appointment['date'] ? date('M d, Y', strtotime($appointment['date'])) : '') . 
+                                     ($appointment['start_time'] ? ' at ' . date('H:i', strtotime($appointment['start_time'])) : ''),
+                        'type' => 'appointment',
+                        'icon' => 'bi-calendar3',
+                        'url' => '/doctor/appointments/' . $appointment['id']
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Continue if error
+            }
+
+            // 3. Search Drugs (from remote drugs database)
+            try {
+                $drugsPdo = $this->getDrugsDatabaseConnection();
+                $stmt = $drugsPdo->prepare("
+                    SELECT ID, FirstName as drug_name, LastName as active_ingredient, Company
+                    FROM drugs 
+                    WHERE FirstName LIKE ? OR LastName LIKE ? OR Company LIKE ?
+                    ORDER BY 
+                        CASE 
+                            WHEN FirstName LIKE ? THEN 1
+                            WHEN LastName LIKE ? THEN 2
+                            ELSE 3
+                        END,
+                        FirstName
+                    LIMIT ?
+                ");
+                $exactMatch = '%' . $query . '%';
+                $stmt->execute([$searchTerm, $searchTerm, $searchTerm, $exactMatch, $exactMatch, $limit]);
+                $drugs = $stmt->fetchAll();
+                foreach ($drugs as $drug) {
+                    $results[] = [
+                        'id' => $drug['ID'],
+                        'title' => $drug['drug_name'],
+                        'subtitle' => ($drug['active_ingredient'] ? $drug['active_ingredient'] : '') . 
+                                     ($drug['Company'] ? ' • ' . $drug['Company'] : ''),
+                        'type' => 'drug',
+                        'icon' => 'bi-capsule',
+                        'url' => '/doctor/drugs?search=' . urlencode($drug['drug_name'])
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Continue if error
+            }
+
+            // 4. Search Media
+            try {
+                $stmt = $this->pdo->prepare("
+                    SELECT m.id, m.file_name, m.file_path, p.first_name, p.last_name, p.id as patient_id
+                    FROM media m
+                    LEFT JOIN patients p ON m.patient_id = p.id
+                    WHERE m.file_name LIKE ? OR m.description LIKE ?
+                    ORDER BY m.created_at DESC
+                    LIMIT ?
+                ");
+                $stmt->execute([$searchTerm, $searchTerm, $limit]);
+                $media = $stmt->fetchAll();
+                foreach ($media as $item) {
+                    $patientName = ($item['first_name'] ?? '') . ' ' . ($item['last_name'] ?? '');
+                    $results[] = [
+                        'id' => $item['id'],
+                        'title' => $item['file_name'],
+                        'subtitle' => $patientName ? 'Patient: ' . trim($patientName) : 'Media',
+                        'type' => 'media',
+                        'icon' => 'bi-images',
+                        'url' => '/doctor/media?search=' . urlencode($item['file_name'])
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Continue if error
+            }
+
+            // 5. Search Prescriptions (Medications)
+            try {
+                $stmt = $this->pdo->prepare("
+                    SELECT pr.id, pr.drug_name, pr.dosage, a.id as appointment_id, p.first_name, p.last_name, p.id as patient_id
+                    FROM prescriptions pr
+                    LEFT JOIN appointments a ON pr.appointment_id = a.id
+                    LEFT JOIN patients p ON a.patient_id = p.id
+                    WHERE pr.drug_name LIKE ? OR pr.dosage LIKE ?
+                    ORDER BY pr.created_at DESC
+                    LIMIT ?
+                ");
+                $stmt->execute([$searchTerm, $searchTerm, $limit]);
+                $prescriptions = $stmt->fetchAll();
+                foreach ($prescriptions as $prescription) {
+                    $patientName = ($prescription['first_name'] ?? '') . ' ' . ($prescription['last_name'] ?? '');
+                    $results[] = [
+                        'id' => $prescription['id'],
+                        'title' => $prescription['drug_name'],
+                        'subtitle' => ($prescription['dosage'] ? $prescription['dosage'] . ' • ' : '') . 
+                                     ($patientName ? trim($patientName) : ''),
+                        'type' => 'prescription',
+                        'icon' => 'bi-capsule',
+                        'url' => $prescription['appointment_id'] ? '/doctor/appointments/' . $prescription['appointment_id'] : '/doctor/medications'
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Continue if error
+            }
+
+            // 6. Search Glass Prescriptions
+            try {
+                $stmt = $this->pdo->prepare("
+                    SELECT gp.id, gp.right_sphere, gp.left_sphere, a.id as appointment_id, p.first_name, p.last_name, p.id as patient_id
+                    FROM glasses_prescriptions gp
+                    LEFT JOIN appointments a ON gp.appointment_id = a.id
+                    LEFT JOIN patients p ON a.patient_id = p.id
+                    WHERE gp.right_sphere LIKE ? OR gp.left_sphere LIKE ? OR gp.right_cylinder LIKE ? OR gp.left_cylinder LIKE ?
+                    ORDER BY gp.created_at DESC
+                    LIMIT ?
+                ");
+                $stmt->execute([$searchTerm, $searchTerm, $searchTerm, $searchTerm, $limit]);
+                $glasses = $stmt->fetchAll();
+                foreach ($glasses as $glass) {
+                    $patientName = ($glass['first_name'] ?? '') . ' ' . ($glass['last_name'] ?? '');
+                    $results[] = [
+                        'id' => $glass['id'],
+                        'title' => 'Glasses Prescription',
+                        'subtitle' => ($glass['right_sphere'] || $glass['left_sphere'] ? 
+                                     'R: ' . ($glass['right_sphere'] ?? 'N/A') . ' L: ' . ($glass['left_sphere'] ?? 'N/A') . ' • ' : '') . 
+                                     ($patientName ? trim($patientName) : ''),
+                        'type' => 'glasses',
+                        'icon' => 'bi-eyeglasses',
+                        'url' => $glass['appointment_id'] ? '/doctor/appointments/' . $glass['appointment_id'] : '/doctor/glasses'
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Continue if error
+            }
+
+            // 7. Search Notes
+            try {
+                $stmt = $this->pdo->prepare("
+                    SELECT n.id, n.title, n.content, n.category, p.first_name, p.last_name, p.id as patient_id
+                    FROM notes n
+                    LEFT JOIN patients p ON n.patient_id = p.id
+                    WHERE n.title LIKE ? OR n.content LIKE ?
+                    ORDER BY n.created_at DESC
+                    LIMIT ?
+                ");
+                $stmt->execute([$searchTerm, $searchTerm, $limit]);
+                $notes = $stmt->fetchAll();
+                foreach ($notes as $note) {
+                    $patientName = ($note['first_name'] ?? '') . ' ' . ($note['last_name'] ?? '');
+                    $contentPreview = mb_substr(strip_tags($note['content'] ?? ''), 0, 50);
+                    $results[] = [
+                        'id' => $note['id'],
+                        'title' => $note['title'] ?: 'Untitled Note',
+                        'subtitle' => ($note['category'] ? ucfirst($note['category']) . ' • ' : '') . 
+                                     ($contentPreview ? $contentPreview . '...' : '') .
+                                     ($patientName ? ' • ' . trim($patientName) : ''),
+                        'type' => 'note',
+                        'icon' => 'bi-sticky',
+                        'url' => '/doctor/notes?search=' . urlencode($query)
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Continue if error
+            }
+
+            // 8. Search Alerts
+            try {
+                $stmt = $this->pdo->prepare("
+                    SELECT a.id, a.title, a.message, a.priority, p.first_name, p.last_name, p.id as patient_id
+                    FROM alerts a
+                    LEFT JOIN patients p ON a.patient_id = p.id
+                    WHERE a.title LIKE ? OR a.message LIKE ?
+                    ORDER BY a.created_at DESC
+                    LIMIT ?
+                ");
+                $stmt->execute([$searchTerm, $searchTerm, $limit]);
+                $alerts = $stmt->fetchAll();
+                foreach ($alerts as $alert) {
+                    $patientName = ($alert['first_name'] ?? '') . ' ' . ($alert['last_name'] ?? '');
+                    $results[] = [
+                        'id' => $alert['id'],
+                        'title' => $alert['title'],
+                        'subtitle' => ($alert['priority'] ? ucfirst($alert['priority']) . ' • ' : '') . 
+                                     mb_substr(strip_tags($alert['message'] ?? ''), 0, 50) .
+                                     ($patientName ? ' • ' . trim($patientName) : ''),
+                        'type' => 'alert',
+                        'icon' => 'bi-bell',
+                        'url' => '/doctor/alerts?search=' . urlencode($query)
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Continue if error
+            }
+
+            // 9. Search Forum Topics
+            try {
+                $stmt = $this->pdo->prepare("
+                    SELECT t.id, t.title, t.content, t.category, u.name as author_name
+                    FROM doctor_forum_topics t
+                    LEFT JOIN users u ON t.created_by = u.id
+                    WHERE t.title LIKE ? OR t.content LIKE ?
+                    ORDER BY t.created_at DESC
+                    LIMIT ?
+                ");
+                $stmt->execute([$searchTerm, $searchTerm, $limit]);
+                $topics = $stmt->fetchAll();
+                foreach ($topics as $topic) {
+                    $contentPreview = mb_substr(strip_tags($topic['content'] ?? ''), 0, 50);
+                    $results[] = [
+                        'id' => $topic['id'],
+                        'title' => $topic['title'],
+                        'subtitle' => ($topic['category'] ? ucfirst($topic['category']) . ' • ' : '') . 
+                                     ($contentPreview ? $contentPreview . '...' : '') .
+                                     ($topic['author_name'] ? ' • by ' . $topic['author_name'] : ''),
+                        'type' => 'forum',
+                        'icon' => 'bi-chat-dots',
+                        'url' => '/doctor/forum/topic/' . $topic['id']
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Continue if error
+            }
+
+            // 10. Search Medical History
+            try {
+                $stmt = $this->pdo->prepare("
+                    SELECT mh.id, mh.diagnosis, mh.medications, p.first_name, p.last_name, p.id as patient_id
+                    FROM medical_history mh
+                    LEFT JOIN patients p ON mh.patient_id = p.id
+                    WHERE mh.diagnosis LIKE ? OR mh.medications LIKE ? OR mh.allergies LIKE ?
+                    ORDER BY mh.created_at DESC
+                    LIMIT ?
+                ");
+                $stmt->execute([$searchTerm, $searchTerm, $searchTerm, $limit]);
+                $history = $stmt->fetchAll();
+                foreach ($history as $item) {
+                    $patientName = ($item['first_name'] ?? '') . ' ' . ($item['last_name'] ?? '');
+                    $results[] = [
+                        'id' => $item['id'],
+                        'title' => $item['diagnosis'] ?: 'Medical History',
+                        'subtitle' => ($item['medications'] ? 'Medications: ' . mb_substr($item['medications'], 0, 30) . '... • ' : '') . 
+                                     ($patientName ? trim($patientName) : ''),
+                        'type' => 'medical_history',
+                        'icon' => 'bi-file-medical',
+                        'url' => $item['patient_id'] ? '/doctor/patients/' . $item['patient_id'] : '/doctor/patients'
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Continue if error
+            }
+
+            return $this->jsonResponse([
+                'results' => $results,
+                'total' => count($results),
+                'query' => $query
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => 'Search failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Create daily balance entry
      */
     public function createDailyBalance()

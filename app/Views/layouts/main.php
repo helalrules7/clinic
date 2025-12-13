@@ -351,6 +351,31 @@
             </div>
             
             <div class="top-actions">
+                <?php if ($this->getCurrentUser()['role'] === 'doctor'): ?>
+                <!-- Global Search Bar -->
+                <div class="global-search-wrapper">
+                    <button class="btn btn-outline-secondary global-search-toggle d-md-none" id="globalSearchToggle" title="Search">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <div class="global-search-container" id="globalSearchContainer">
+                        <div class="global-search-backdrop" id="globalSearchBackdrop"></div>
+                        <div class="global-search-input-wrapper">
+                            <div class="global-search-input-field-wrapper">
+                                <i class="bi bi-search global-search-icon"></i>
+                                <input type="text" 
+                                       class="form-control global-search-input" 
+                                       id="globalSearchInput" 
+                                       placeholder="Search appointments, patients, drugs, media..." 
+                                       autocomplete="off">
+                                <button class="btn btn-link global-search-clear d-none" id="globalSearchClear" type="button">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                            <div class="global-search-results" id="globalSearchResults"></div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
                 <?php 
                 // Check if admin is in View As mode using session directly
                 if (isset($_SESSION['view_as_mode']) && $_SESSION['view_as_mode'] === true): 

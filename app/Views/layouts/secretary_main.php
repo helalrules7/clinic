@@ -306,7 +306,7 @@
                 themeCheckbox.checked = isDark;
             }
         }
-        
+
         // Function to save theme to database and localStorage
         async function saveThemeToDatabase(theme) {
             // Save to localStorage immediately (synchronous, no delay)
@@ -396,8 +396,8 @@
                 // No theme in database but we have one in localStorage - save it
                 await saveThemeToDatabase(savedTheme);
             }
-            
-            // Apply initial theme
+
+        // Apply initial theme
             updateThemeUI(savedTheme);
             
             // Mark theme as loaded to remove flash prevention

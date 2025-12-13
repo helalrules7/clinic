@@ -34,6 +34,28 @@ class DrugSearch {
         this.setupEventListeners();
         this.loadFilterOptions();
         this.updateFilterState(); // Initialize filter button state
+        
+        // Check if search parameter exists in URL and perform search
+        this.checkUrlSearchParam();
+    }
+    
+    checkUrlSearchParam() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchParam = urlParams.get('search');
+        
+        if (searchParam && searchParam.trim().length > 0) {
+            const searchTerm = searchParam.trim();
+            // Set the search input value
+            this.searchInput.value = searchTerm;
+            // Perform the search automatically
+            this.currentSearchTerm = searchTerm;
+            this.currentPage = 1;
+            this.performSearch(searchTerm, false);
+            
+            // Update URL without reload (remove search parameter to keep clean URL)
+            // But keep it for now so user can see what they searched for
+            // window.history.replaceState({}, '', window.location.pathname);
+        }
     }
     
     createPortal() {
