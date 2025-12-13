@@ -3302,19 +3302,19 @@
                 }
             }
             
-            // Collapse search - genie animation out
+            // Collapse search - 3D perspective close animation
             function collapseSearch() {
                 // Hide results first
                 hideResults();
                 searchInput.blur();
 
-                // Add collapsing class for genie out animation
+                // Add collapsing class for 3D perspective close animation
                 searchContainer.classList.add('collapsing');
 
-                // Wait for genie animation to complete
+                // Wait for CSS transition to complete (0.5s)
                 setTimeout(() => {
                     // Remove expanded and collapsing classes
-                    searchContainer.classList.remove('expanded', 'show', 'collapsing', 'dismissing');
+                    searchContainer.classList.remove('expanded', 'show', 'collapsing');
 
                     // Restore body scroll
                     document.body.style.overflow = '';
@@ -3333,18 +3333,7 @@
                             });
                         });
                     }
-                }, 420); // Match genie animation duration (0.4s + buffer)
-            }
-
-            // Dismiss search with visual effect (for lost focus / backdrop click / ESC)
-            function dismissSearch() {
-                // Add dismissing class for pulse effect
-                searchContainer.classList.add('dismissing');
-
-                // Wait for pulse animation, then collapse
-                setTimeout(() => {
-                    collapseSearch();
-                }, 150); // Match dismissPulse animation duration
+                }, 520); // Match CSS transition duration (0.5s + buffer)
             }
             
             // Mobile toggle
@@ -3377,18 +3366,18 @@
                 }
             });
             
-            // Backdrop click to close (with dismiss effect)
+            // Backdrop click to close
             if (searchBackdrop) {
                 searchBackdrop.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    dismissSearch();
+                    collapseSearch();
                 });
             }
 
-            // Close on ESC key (with dismiss effect)
+            // Close on ESC key
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape' && searchContainer.classList.contains('expanded')) {
-                    dismissSearch();
+                    collapseSearch();
                 }
             });
             
@@ -3425,7 +3414,7 @@
             // Keyboard navigation
             searchInput.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
-                    dismissSearch();
+                    collapseSearch();
                     return;
                 }
                 
