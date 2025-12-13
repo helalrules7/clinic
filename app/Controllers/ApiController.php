@@ -6239,7 +6239,7 @@ class ApiController
                                      ($drug['Company'] ? ' • ' . $drug['Company'] : ''),
                         'type' => 'drug',
                         'icon' => 'bi-capsule',
-                        'url' => '/doctor/drugs?search=' . urlencode($drug['drug_name'])
+                        'url' => '/doctor/drugs?search=' . urlencode($drug['drug_name']) . '&drugId=' . $drug['ID']
                     ];
                 }
             } catch (\Exception $e) {

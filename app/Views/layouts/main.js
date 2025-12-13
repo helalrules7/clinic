@@ -3302,84 +3302,38 @@
                 }
             }
             
-            // Collapse search
+            // Collapse search - smooth transition without blinking
             function collapseSearch() {
                 // Hide results first
                 hideResults();
                 searchInput.blur();
-                
-                // Remove expanded class to trigger transition
-                searchContainer.classList.remove('expanded', 'show');
-                
-                // Wait for backdrop transition to complete before restoring scroll
-                // This prevents content flash when backdrop disappears
-                if (searchBackdrop) {
-                    const handleBackdropTransitionEnd = function(e) {
-                        // Only handle backdrop transitions
-                        if (e.target !== searchBackdrop) return;
-                        
-                        searchBackdrop.removeEventListener('transitionend', handleBackdropTransitionEnd);
-                        document.body.style.overflow = ''; // Restore scroll after backdrop fades
-                    };
-                    
-                    searchBackdrop.addEventListener('transitionend', handleBackdropTransitionEnd);
-                    
-                    // Fallback: restore scroll after transition duration
-                    setTimeout(() => {
-                        searchBackdrop.removeEventListener('transitionend', handleBackdropTransitionEnd);
-                        document.body.style.overflow = '';
-                    }, 350);
-                } else {
-                    // If no backdrop, restore scroll immediately
+
+                // Add collapsing class for smooth fade out animation
+                searchContainer.classList.add('collapsing');
+
+                // Wait for collapse animation to complete
+                setTimeout(() => {
+                    // Remove expanded and collapsing classes
+                    searchContainer.classList.remove('expanded', 'show', 'collapsing');
+
+                    // Restore body scroll
                     document.body.style.overflow = '';
-                }
-                
-                // Wait for transition to complete before moving element back
-                const handleTransitionEnd = function(e) {
-                    // Only handle transitions on the container itself, not children
-                    if (e.target !== searchContainer) return;
-                    
-                    searchContainer.removeEventListener('transitionend', handleTransitionEnd);
-                    
+
                     // Move container back to original parent if it was moved
                     if (originalParent && searchContainer.parentElement === document.body) {
-                        // Temporarily hide to prevent flash
-                        searchContainer.style.opacity = '0';
-                        searchContainer.style.pointerEvents = 'none';
-                        
+                        // Use requestAnimationFrame for smooth DOM manipulation
                         requestAnimationFrame(() => {
                             originalParent.appendChild(searchContainer);
                             originalParent = null;
-                            
-                            // Restore visibility after a brief moment
+
+                            // Ensure container is visible in original position
                             requestAnimationFrame(() => {
                                 searchContainer.style.opacity = '';
                                 searchContainer.style.pointerEvents = '';
                             });
                         });
                     }
-                };
-                
-                searchContainer.addEventListener('transitionend', handleTransitionEnd);
-                
-                // Fallback: if transition doesn't fire (e.g., no transition property), move immediately
-                setTimeout(() => {
-                    if (originalParent && searchContainer.parentElement === document.body) {
-                        searchContainer.removeEventListener('transitionend', handleTransitionEnd);
-                        searchContainer.style.opacity = '0';
-                        searchContainer.style.pointerEvents = 'none';
-                        
-                        requestAnimationFrame(() => {
-                            originalParent.appendChild(searchContainer);
-                            originalParent = null;
-                            
-                            requestAnimationFrame(() => {
-                                searchContainer.style.opacity = '';
-                                searchContainer.style.pointerEvents = '';
-                            });
-                        });
-                    }
-                }, 350); // Slightly longer than transition duration
+                }, 280); // Match CSS transition duration
             }
             
             // Mobile toggle

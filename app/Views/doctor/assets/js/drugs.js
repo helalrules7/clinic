@@ -25,6 +25,7 @@ class DrugSearch {
         this.hasMoreResults = false;
         this.portal = null;
         this._portalUpdater = null;
+        this.shouldOpenFirstResult = false; // Flag to open first result modal after search
         
         this.init();
     }
@@ -42,6 +43,13 @@ class DrugSearch {
     checkUrlSearchParam() {
         const urlParams = new URLSearchParams(window.location.search);
         const searchParam = urlParams.get('search');
+        const drugIdParam = urlParams.get('drugId');
+        
+        // If drugId is provided, open that drug's modal directly
+        if (drugIdParam) {
+            this.showDrugDetails(parseInt(drugIdParam));
+            return;
+        }
         
         if (searchParam && searchParam.trim().length > 0) {
             const searchTerm = searchParam.trim();
@@ -50,6 +58,8 @@ class DrugSearch {
             // Perform the search automatically
             this.currentSearchTerm = searchTerm;
             this.currentPage = 1;
+            // Set flag to open first result modal after search completes
+            this.shouldOpenFirstResult = true;
             this.performSearch(searchTerm, false);
             
             // Update URL without reload (remove search parameter to keep clean URL)
@@ -213,10 +223,19 @@ class DrugSearch {
                     this.displaySuggestions(data.drugs);
                 } else {
                     this.displayResults(data.drugs, this.currentPage === 1);
+                    // If search was triggered from URL and we should open first result
+                    if (this.shouldOpenFirstResult && data.drugs.length > 0 && this.currentPage === 1) {
+                        // Small delay to ensure DOM is updated
+                        setTimeout(() => {
+                            this.showDrugDetails(data.drugs[0].ID);
+                            this.shouldOpenFirstResult = false; // Reset flag
+                        }, 300);
+                    }
                 }
                 this.hasMoreResults = data.drugs.length === 20;
             } else {
                 this.showNoResults();
+                this.shouldOpenFirstResult = false; // Reset flag if no results
             }
             
         } catch (error) {

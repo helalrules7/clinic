@@ -33,6 +33,36 @@
             font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
+
+        /* ============================================
+           Page Transition - Prevent Blinking
+           ============================================ */
+        html {
+            /* Ensure smooth rendering during navigation */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Smooth page load animation */
+        @keyframes pageLoad {
+            from {
+                opacity: 0.95;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        body {
+            animation: pageLoad 0.2s ease-out;
+        }
+
+        /* Prevent content flash during navigation */
+        .main-content {
+            will-change: opacity;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
         
         /* Prevent flash of wrong theme - default to dark */
         html:not(.theme-loaded) {
@@ -389,6 +419,28 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            /* Glass effect base */
+            background: rgba(248, 250, 252, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: all 0.3s ease;
+        }
+
+        .dark .top-bar {
+            background: rgba(11, 18, 32, 0.85);
+        }
+
+        /* Enhanced glass effect when scrolled */
+        .top-bar.scrolled {
+            background: rgba(248, 250, 252, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .dark .top-bar.scrolled {
+            background: rgba(11, 18, 32, 0.92);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
         }
         
         /* Ensure search expands above top-bar */
@@ -407,11 +459,6 @@
         
         .top-bar.scrolled {
             padding-top: 1rem;
-        }
-        
-        .dark .top-bar {
-            background: rgba(11, 18, 32, 0.70);
-            border-bottom: 1px solid rgba(51, 65, 85, 0.3);
         }
         
         .page-title h1 {
@@ -442,9 +489,27 @@
         
         /* When expanded, break out of any parent container */
         .global-search-container {
-            transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: opacity 0.35s ease-out, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 0s;
         }
-        
+
+        /* Collapsing state - smooth fade out without blinking */
+        .global-search-container.collapsing {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transition: opacity 0.25s ease-out, transform 0.25s ease-out, visibility 0s linear 0.25s !important;
+        }
+
+        .global-search-container.collapsing .global-search-input-wrapper {
+            opacity: 0;
+            transform: scale(0.95) translateY(-20px);
+            transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+        }
+
+        .global-search-container.collapsing .global-search-backdrop {
+            opacity: 0 !important;
+            transition: opacity 0.25s ease-out !important;
+        }
+
         .global-search-container.expanded {
             position: fixed !important;
             top: 0 !important;
@@ -478,9 +543,8 @@
             z-index: 999998 !important;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
-            -webkit-transition: opacity 0.3s ease, -webkit-backdrop-filter 0.3s ease;
-            animation: fadeIn 0.3s ease;
+            transition: opacity 0.35s ease-out, backdrop-filter 0.35s ease-out;
+            -webkit-transition: opacity 0.35s ease-out, -webkit-backdrop-filter 0.35s ease-out;
         }
         
         .global-search-container.expanded .global-search-backdrop {
@@ -564,7 +628,37 @@
             background: var(--card);
             color: var(--text);
             font-size: 0.9rem;
-            transition: all 0.3s ease;
+            transition: all 0.3s ease, opacity 0.3s ease;
+        }
+
+        /* Scroll-based opacity for searchbox in topbar */
+        .top-bar.scrolled .global-search-container:not(.expanded) .global-search-input {
+            opacity: 0.6;
+        }
+
+        .top-bar.scrolled .global-search-container:not(.expanded) .global-search-input:focus,
+        .top-bar.scrolled .global-search-container:not(.expanded) .global-search-input:hover {
+            opacity: 1;
+        }
+
+        .top-bar.scrolled .global-search-container:not(.expanded) .global-search-icon {
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+        }
+
+        .top-bar.scrolled .global-search-container:not(.expanded) .global-search-input:focus ~ .global-search-icon,
+        .top-bar.scrolled .global-search-container:not(.expanded) .global-search-input:hover ~ .global-search-icon,
+        .top-bar.scrolled .global-search-container:not(.expanded):hover .global-search-icon {
+            opacity: 1;
+        }
+
+        /* Ensure full opacity when focused regardless of scroll position */
+        .global-search-container:not(.expanded) .global-search-input:focus {
+            opacity: 1 !important;
+        }
+
+        .global-search-container:not(.expanded):focus-within .global-search-icon {
+            opacity: 1 !important;
         }
         
         .global-search-container.expanded .global-search-input {
