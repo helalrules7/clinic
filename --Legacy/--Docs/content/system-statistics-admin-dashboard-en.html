@@ -1,0 +1,292 @@
+<div class="getting-started-content">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">System Statistics - Admin Dashboard</h1>
+            <p class="hero-subtitle">Comprehensive Overview of System Metrics and Performance</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">Statistics</span>
+                <span class="badge badge-secondary">Admin</span>
+                <span class="badge badge-success">Analytics</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-bar-chart-box-line"></i> System Statistics Overview</h2>
+            <p class="section-description">The System Statistics component provides a comprehensive overview of key system metrics including total users, patients, appointments, and revenue. It displays four statistical cards with color-coded gradients, each showing primary metrics and detailed breakdowns.</p>
+        </div>
+
+        <!-- System Statistics Demo Image -->
+        <div class="system-statistics-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="system-statistics-demo-thumbnail" id="system-statistics-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/system-statistics-dark.png" alt="System Statistics Demo" class="system-statistics-demo-dark" />
+                <img src="/docs/opth/public/assets/images/system-statistics-light.png" alt="System Statistics Demo - Light Theme" class="system-statistics-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>Click to view full size</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> Visual demonstration of the System Statistics interface
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-dashboard-line"></i>
+                </div>
+                <h3>Real-Time Metrics</h3>
+                <p>Displays live statistics calculated from the database, providing instant insights into system performance and usage.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>Color-Coded Cards</h3>
+                <p>Each statistic card uses a distinct color gradient (Primary, Success, Info, Warning) for easy visual identification.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-refresh-line"></i>
+                </div>
+                <h3>Auto-Refresh</h3>
+                <p>Statistics are calculated fresh on each page load, ensuring data accuracy and up-to-date information.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistics Cards -->
+    <section class="content-section" id="statistics-cards">
+        <div class="section-header">
+            <h2><i class="ri-file-list-line"></i> Statistics Cards</h2>
+            <p class="section-description">The System Statistics component consists of four main cards, each displaying different metrics.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-line"></i>
+                </div>
+                <h3>Total Users Card (Primary Blue)</h3>
+                <p><strong>Primary Metric:</strong> Total number of users in the system</p>
+                <p><strong>Breakdown:</strong></p>
+                <ul>
+                    <li><strong>Doctors:</strong> Count of users with role 'doctor'</li>
+                    <li><strong>Secretaries:</strong> Count of users with role 'secretary'</li>
+                </ul>
+                <p><strong>Data Source:</strong> <code>users</code> table</p>
+                <p><strong>Query:</strong> Counts total users, active users, doctors, and secretaries</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-heart-line"></i>
+                </div>
+                <h3>Total Patients Card (Success Green)</h3>
+                <p><strong>Primary Metric:</strong> Total number of patients registered in the system</p>
+                <p><strong>Breakdown:</strong></p>
+                <ul>
+                    <li><strong>Active:</strong> Count of active users (from users table, not patients)</li>
+                </ul>
+                <p><strong>Data Source:</strong> <code>patients</code> table</p>
+                <p><strong>Query:</strong> Simple count of all patient records</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-check-line"></i>
+                </div>
+                <h3>Appointments Card (Info Cyan)</h3>
+                <p><strong>Primary Metric:</strong> Total appointments in the last 30 days</p>
+                <p><strong>Breakdown:</strong></p>
+                <ul>
+                    <li><strong>Completed:</strong> Count of appointments with status 'Completed'</li>
+                    <li><strong>Cancelled:</strong> Count of appointments with status 'Cancelled'</li>
+                </ul>
+                <p><strong>Data Source:</strong> <code>appointments</code> table</p>
+                <p><strong>Query:</strong> Filters appointments from last 30 days, counts by status</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-money-dollar-circle-line"></i>
+                </div>
+                <h3>Revenue Card (Warning Orange)</h3>
+                <p><strong>Primary Metric:</strong> Total revenue in EGP (Egyptian Pounds) for the last 30 days</p>
+                <p><strong>Breakdown:</strong></p>
+                <ul>
+                    <li><strong>Transactions:</strong> Total number of payment transactions</li>
+                    <li><strong>Discounts:</strong> Total discount amount applied</li>
+                </ul>
+                <p><strong>Data Source:</strong> <code>payments</code> table</p>
+                <p><strong>Query:</strong> Sums amount and discount_amount, counts transactions from last 30 days</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="content-section" id="how-it-works">
+        <div class="section-header">
+            <h2><i class="ri-settings-3-line"></i> How It Works</h2>
+            <p class="section-description">The System Statistics component fetches data from the database and displays it in visually appealing cards.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-server-line"></i>
+                </div>
+                <h3>Backend Processing</h3>
+                <p><code>AdminController::getSystemStats()</code> method:</p>
+                <ul>
+                    <li><strong>User Statistics:</strong> Queries <code>users</code> table for total, active, doctors, secretaries</li>
+                    <li><strong>Patient Statistics:</strong> Counts all records in <code>patients</code> table</li>
+                    <li><strong>Appointment Statistics:</strong> Filters last 30 days, counts by status</li>
+                    <li><strong>Financial Statistics:</strong> Sums revenue and discounts from <code>payments</code> table (last 30 days)</li>
+                    <li><strong>Returns:</strong> Array with 'users', 'patients', 'appointments', 'financial' keys</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-code-s-slash-line"></i>
+                </div>
+                <h3>Frontend Rendering</h3>
+                <p>The dashboard template renders statistics:</p>
+                <ul>
+                    <li><strong>Card Structure:</strong> Each card uses Bootstrap grid (col-md-3)</li>
+                    <li><strong>Styling:</strong> Gradient backgrounds with stat-card class</li>
+                    <li><strong>Icons:</strong> Font Awesome icons for visual identification</li>
+                    <li><strong>Formatting:</strong> Uses <code>number_format()</code> for readable numbers</li>
+                    <li><strong>Responsive:</strong> Adapts to different screen sizes (col-sm-6 on mobile)</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>Visual Design</h3>
+                <p>Card styling features:</p>
+                <ul>
+                    <li><strong>Gradient Backgrounds:</strong> Each card uses CSS gradients</li>
+                    <li><strong>Hover Effects:</strong> Cards lift up on hover with enhanced shadow</li>
+                    <li><strong>Icon Size:</strong> Large icons (2.5rem) for visual prominence</li>
+                    <li><strong>Typography:</strong> Large numbers (1.75rem), clear labels</li>
+                    <li><strong>Theme Support:</strong> Adapts to light and dark themes</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Data Details -->
+    <section class="content-section" id="data-details">
+        <div class="section-header">
+            <h2><i class="ri-database-line"></i> Data Details</h2>
+            <p class="section-description">Detailed breakdown of how each statistic is calculated and displayed.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-line"></i>
+                </div>
+                <h3>User Statistics</h3>
+                <p>Calculated from <code>users</code> table:</p>
+                <ul>
+                    <li><strong>Total Users:</strong> <code>COUNT(*)</code> from users table</li>
+                    <li><strong>Active Users:</strong> <code>SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END)</code></li>
+                    <li><strong>Doctors:</strong> <code>SUM(CASE WHEN role = 'doctor' THEN 1 ELSE 0 END)</code></li>
+                    <li><strong>Secretaries:</strong> <code>SUM(CASE WHEN role = 'secretary' THEN 1 ELSE 0 END)</code></li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-line"></i>
+                </div>
+                <h3>Appointment Statistics</h3>
+                <p>Calculated from <code>appointments</code> table (last 30 days):</p>
+                <ul>
+                    <li><strong>Total Appointments:</strong> <code>COUNT(*)</code> where date >= CURDATE() - INTERVAL 30 DAY</li>
+                    <li><strong>Completed:</strong> <code>SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END)</code></li>
+                    <li><strong>Cancelled:</strong> <code>SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END)</code></li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-money-dollar-circle-line"></i>
+                </div>
+                <h3>Financial Statistics</h3>
+                <p>Calculated from <code>payments</code> table (last 30 days):</p>
+                <ul>
+                    <li><strong>Total Revenue:</strong> <code>SUM(amount)</code> from payments</li>
+                    <li><strong>Total Discounts:</strong> <code>SUM(discount_amount)</code> from payments</li>
+                    <li><strong>Total Transactions:</strong> <code>COUNT(*)</code> from payments</li>
+                    <li><strong>Time Range:</strong> <code>DATE(created_at) >= CURDATE() - INTERVAL 30 DAY</code></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="content-section" id="features">
+        <div class="section-header">
+            <h2><i class="ri-star-line"></i> Key Features</h2>
+            <p class="section-description">The System Statistics component includes several features for effective data visualization.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-time-line"></i>
+                </div>
+                <h3>30-Day Window</h3>
+                <p>Appointments and revenue statistics focus on the last 30 days, providing recent performance insights without overwhelming historical data.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>Theme Support</h3>
+                <p>Cards automatically adapt to light and dark themes, ensuring optimal readability and visual consistency across all viewing conditions.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-responsive-line"></i>
+                </div>
+                <h3>Responsive Layout</h3>
+                <p>Cards are arranged in a responsive grid that adapts to screen size: 4 columns on desktop, 2 columns on tablets, 1 column on mobile.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-number-1"></i>
+                </div>
+                <h3>Number Formatting</h3>
+                <p>All numbers are formatted using <code>number_format()</code> for readability, with 2 decimal places for currency values.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Image Modal -->
+<div id="system-statistics-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-system-statistics-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/system-statistics-dark.png" alt="System Statistics Demo - Full Size" class="system-statistics-demo-dark" />
+        <img src="/docs/opth/public/assets/images/system-statistics-light.png" alt="System Statistics Demo - Light Theme - Full Size" class="system-statistics-demo-light" style="display: none;" />
+    </div>
+</div>

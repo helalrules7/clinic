@@ -1,0 +1,292 @@
+<div class="getting-started-content" dir="rtl">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">إحصائيات النظام - لوحة تحكم المسؤول</h1>
+            <p class="hero-subtitle">نظرة شاملة على مقاييس النظام والأداء</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">إحصائيات</span>
+                <span class="badge badge-secondary">مسؤول</span>
+                <span class="badge badge-success">تحليلات</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-bar-chart-box-line"></i> نظرة عامة على إحصائيات النظام</h2>
+            <p class="section-description">مكون إحصائيات النظام يوفر نظرة شاملة على المقاييس الرئيسية للنظام بما في ذلك إجمالي المستخدمين والمرضى والمواعيد والإيرادات. يعرض أربع بطاقات إحصائية بتدرجات لونية مشفرة، كل منها يظهر مقاييس رئيسية وتفاصيل مفصلة.</p>
+        </div>
+
+        <!-- System Statistics Demo Image -->
+        <div class="system-statistics-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="system-statistics-demo-thumbnail" id="system-statistics-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/system-statistics-dark.png" alt="عرض توضيحي لإحصائيات النظام" class="system-statistics-demo-dark" />
+                <img src="/docs/opth/public/assets/images/system-statistics-light.png" alt="عرض توضيحي لإحصائيات النظام - الوضع الفاتح" class="system-statistics-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>انقر لعرض الحجم الكامل</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> عرض توضيحي مرئي لواجهة إحصائيات النظام
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-dashboard-line"></i>
+                </div>
+                <h3>مقاييس مباشرة</h3>
+                <p>يعرض إحصائيات مباشرة محسوبة من قاعدة البيانات، مما يوفر رؤى فورية حول أداء النظام والاستخدام.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>بطاقات مشفرة بالألوان</h3>
+                <p>كل بطاقة إحصائية تستخدم تدرج لوني مميز (Primary، Success، Info، Warning) لتحديد بصري سهل.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-refresh-line"></i>
+                </div>
+                <h3>تحديث تلقائي</h3>
+                <p>الإحصائيات يتم حسابها حديثة عند كل تحميل للصفحة، مما يضمن دقة البيانات ومعلومات محدثة.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistics Cards -->
+    <section class="content-section" id="statistics-cards">
+        <div class="section-header">
+            <h2><i class="ri-file-list-line"></i> بطاقات الإحصائيات</h2>
+            <p class="section-description">مكون إحصائيات النظام يتكون من أربع بطاقات رئيسية، كل منها يعرض مقاييس مختلفة.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-line"></i>
+                </div>
+                <h3>بطاقة إجمالي المستخدمين (أزرق Primary)</h3>
+                <p><strong>المقياس الرئيسي:</strong> إجمالي عدد المستخدمين في النظام</p>
+                <p><strong>التفاصيل:</strong></p>
+                <ul>
+                    <li><strong>أطباء:</strong> عدد المستخدمين بدور 'doctor'</li>
+                    <li><strong>سكرتير:</strong> عدد المستخدمين بدور 'secretary'</li>
+                </ul>
+                <p><strong>مصدر البيانات:</strong> جدول <code>users</code></p>
+                <p><strong>الاستعلام:</strong> يحسب إجمالي المستخدمين، المستخدمين النشطين، الأطباء، والسكرتير</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-heart-line"></i>
+                </div>
+                <h3>بطاقة إجمالي المرضى (أخضر Success)</h3>
+                <p><strong>المقياس الرئيسي:</strong> إجمالي عدد المرضى المسجلين في النظام</p>
+                <p><strong>التفاصيل:</strong></p>
+                <ul>
+                    <li><strong>نشط:</strong> عدد المستخدمين النشطين (من جدول users، وليس patients)</li>
+                </ul>
+                <p><strong>مصدر البيانات:</strong> جدول <code>patients</code></p>
+                <p><strong>الاستعلام:</strong> عدد بسيط لجميع سجلات المرضى</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-check-line"></i>
+                </div>
+                <h3>بطاقة المواعيد (سماوي Info)</h3>
+                <p><strong>المقياس الرئيسي:</strong> إجمالي المواعيد في آخر 30 يومًا</p>
+                <p><strong>التفاصيل:</strong></p>
+                <ul>
+                    <li><strong>مكتملة:</strong> عدد المواعيد بحالة 'Completed'</li>
+                    <li><strong>ملغاة:</strong> عدد المواعيد بحالة 'Cancelled'</li>
+                </ul>
+                <p><strong>مصدر البيانات:</strong> جدول <code>appointments</code></p>
+                <p><strong>الاستعلام:</strong> يفلتر المواعيد من آخر 30 يومًا، يحسب حسب الحالة</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-money-dollar-circle-line"></i>
+                </div>
+                <h3>بطاقة الإيرادات (برتقالي Warning)</h3>
+                <p><strong>المقياس الرئيسي:</strong> إجمالي الإيرادات بالجنيه المصري (EGP) لآخر 30 يومًا</p>
+                <p><strong>التفاصيل:</strong></p>
+                <ul>
+                    <li><strong>المعاملات:</strong> إجمالي عدد معاملات الدفع</li>
+                    <li><strong>الخصومات:</strong> إجمالي مبلغ الخصم المطبق</li>
+                </ul>
+                <p><strong>مصدر البيانات:</strong> جدول <code>payments</code></p>
+                <p><strong>الاستعلام:</strong> يجمع amount و discount_amount، يحسب المعاملات من آخر 30 يومًا</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="content-section" id="how-it-works">
+        <div class="section-header">
+            <h2><i class="ri-settings-3-line"></i> كيف يعمل</h2>
+            <p class="section-description">مكون إحصائيات النظام يجلب البيانات من قاعدة البيانات ويعرضها في بطاقات جذابة بصرياً.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-server-line"></i>
+                </div>
+                <h3>المعالجة الخلفية</h3>
+                <p>طريقة <code>AdminController::getSystemStats()</code>:</p>
+                <ul>
+                    <li><strong>إحصائيات المستخدمين:</strong> يستعلم جدول <code>users</code> للإجمالي، النشط، الأطباء، السكرتير</li>
+                    <li><strong>إحصائيات المرضى:</strong> يحسب جميع السجلات في جدول <code>patients</code></li>
+                    <li><strong>إحصائيات المواعيد:</strong> يفلتر آخر 30 يومًا، يحسب حسب الحالة</li>
+                    <li><strong>الإحصائيات المالية:</strong> يجمع الإيرادات والخصومات من جدول <code>payments</code> (آخر 30 يومًا)</li>
+                    <li><strong>الإرجاع:</strong> مصفوفة مع مفاتيح 'users'، 'patients'، 'appointments'، 'financial'</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-code-s-slash-line"></i>
+                </div>
+                <h3>العرض الأمامي</h3>
+                <p>قالب لوحة التحكم يعرض الإحصائيات:</p>
+                <ul>
+                    <li><strong>بنية البطاقة:</strong> كل بطاقة تستخدم شبكة Bootstrap (col-md-3)</li>
+                    <li><strong>التنسيق:</strong> خلفيات متدرجة مع فئة stat-card</li>
+                    <li><strong>الأيقونات:</strong> أيقونات Font Awesome للتحديد البصري</li>
+                    <li><strong>التنسيق:</strong> يستخدم <code>number_format()</code> للأرقام القابلة للقراءة</li>
+                    <li><strong>متجاوب:</strong> يتكيف مع أحجام الشاشات المختلفة (col-sm-6 على الموبايل)</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>التصميم المرئي</h3>
+                <p>ميزات تنسيق البطاقة:</p>
+                <ul>
+                    <li><strong>خلفيات متدرجة:</strong> كل بطاقة تستخدم تدرجات CSS</li>
+                    <li><strong>تأثيرات التحويم:</strong> البطاقات ترتفع عند التحويم مع ظل محسّن</li>
+                    <li><strong>حجم الأيقونة:</strong> أيقونات كبيرة (2.5rem) للبروز البصري</li>
+                    <li><strong>الطباعة:</strong> أرقام كبيرة (1.75rem)، تسميات واضحة</li>
+                    <li><strong>دعم الثيم:</strong> يتكيف مع الثيمات الفاتحة والداكنة</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Data Details -->
+    <section class="content-section" id="data-details">
+        <div class="section-header">
+            <h2><i class="ri-database-line"></i> تفاصيل البيانات</h2>
+            <p class="section-description">تفصيل مفصل لكيفية حساب وعرض كل إحصائية.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-line"></i>
+                </div>
+                <h3>إحصائيات المستخدمين</h3>
+                <p>محسوبة من جدول <code>users</code>:</p>
+                <ul>
+                    <li><strong>إجمالي المستخدمين:</strong> <code>COUNT(*)</code> من جدول users</li>
+                    <li><strong>المستخدمون النشطون:</strong> <code>SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END)</code></li>
+                    <li><strong>الأطباء:</strong> <code>SUM(CASE WHEN role = 'doctor' THEN 1 ELSE 0 END)</code></li>
+                    <li><strong>السكرتير:</strong> <code>SUM(CASE WHEN role = 'secretary' THEN 1 ELSE 0 END)</code></li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-line"></i>
+                </div>
+                <h3>إحصائيات المواعيد</h3>
+                <p>محسوبة من جدول <code>appointments</code> (آخر 30 يومًا):</p>
+                <ul>
+                    <li><strong>إجمالي المواعيد:</strong> <code>COUNT(*)</code> حيث date >= CURDATE() - INTERVAL 30 DAY</li>
+                    <li><strong>المكتملة:</strong> <code>SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END)</code></li>
+                    <li><strong>الملغاة:</strong> <code>SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END)</code></li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-money-dollar-circle-line"></i>
+                </div>
+                <h3>الإحصائيات المالية</h3>
+                <p>محسوبة من جدول <code>payments</code> (آخر 30 يومًا):</p>
+                <ul>
+                    <li><strong>إجمالي الإيرادات:</strong> <code>SUM(amount)</code> من payments</li>
+                    <li><strong>إجمالي الخصومات:</strong> <code>SUM(discount_amount)</code> من payments</li>
+                    <li><strong>إجمالي المعاملات:</strong> <code>COUNT(*)</code> من payments</li>
+                    <li><strong>النطاق الزمني:</strong> <code>DATE(created_at) >= CURDATE() - INTERVAL 30 DAY</code></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="content-section" id="features">
+        <div class="section-header">
+            <h2><i class="ri-star-line"></i> الميزات الرئيسية</h2>
+            <p class="section-description">مكون إحصائيات النظام يتضمن عدة ميزات لتصور بيانات فعال.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-time-line"></i>
+                </div>
+                <h3>نافذة 30 يومًا</h3>
+                <p>إحصائيات المواعيد والإيرادات تركز على آخر 30 يومًا، مما يوفر رؤى أداء حديثة بدون إرهاق البيانات التاريخية.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>دعم الثيم</h3>
+                <p>البطاقات تتكيف تلقائياً مع الثيمات الفاتحة والداكنة، مما يضمن قابلية قراءة مثلى واتساقاً بصرياً عبر جميع ظروف العرض.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-responsive-line"></i>
+                </div>
+                <h3>تخطيط متجاوب</h3>
+                <p>البطاقات مرتبة في شبكة متجاوبة تتكيف مع حجم الشاشة: 4 أعمدة على سطح المكتب، عمودان على الأجهزة اللوحية، عمود واحد على الموبايل.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-number-1"></i>
+                </div>
+                <h3>تنسيق الأرقام</h3>
+                <p>جميع الأرقام يتم تنسيقها باستخدام <code>number_format()</code> للقراءة، مع منزلتين عشريتين لقيم العملة.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Image Modal -->
+<div id="system-statistics-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-system-statistics-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/system-statistics-dark.png" alt="عرض توضيحي لإحصائيات النظام - الحجم الكامل" class="system-statistics-demo-dark" />
+        <img src="/docs/opth/public/assets/images/system-statistics-light.png" alt="عرض توضيحي لإحصائيات النظام - الوضع الفاتح - الحجم الكامل" class="system-statistics-demo-light" style="display: none;" />
+    </div>
+</div>

@@ -1,0 +1,419 @@
+<div class="getting-started-content" dir="rtl">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">مرحباً بك في نظام إدارة عيادة طب العيون</h1>
+            <p class="hero-subtitle">حل شامل لإدارة عيادة طب العيون الإصدار v7.1.4</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">v7.1.4</span>
+                <span class="badge badge-secondary">PHP 8.2+</span>
+                <span class="badge badge-success">جاهز للإنتاج</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Overview -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-information-line"></i> نظرة عامة على المشروع</h2>
+            <p class="section-description">حل شامل لإدارة العيادات الطبية مصمم لتبسيط عمليات العيادة، وتحسين رعاية المرضى، وزيادة الكفاءة الإدارية.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-line"></i>
+                </div>
+                <h3>ثلاثة أدوار رئيسية</h3>
+                <ul>
+                    <li><strong>الطبيب</strong>: إدارة المرضى، المواعيد، الوصفات، والفحوصات</li>
+                    <li><strong>السكرتير</strong>: إدارة الحجوزات، المدفوعات، وتسجيل المرضى</li>
+                    <li><strong>المدير</strong>: إدارة النظام، المستخدمين، والتقارير</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-star-line"></i>
+                </div>
+                <h3>الميزات الرئيسية</h3>
+                <ul>
+                    <li>إدارة المرضى مع التاريخ الطبي</li>
+                    <li>تقويم مواعيد تفاعلي</li>
+                    <li>إدارة الوصفات الطبية (الأدوية والنظارات)</li>
+                    <li>الإدارة المالية والتقارير</li>
+                    <li>لوحة إحصائيات شاملة</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-code-s-slash-line"></i>
+                </div>
+                <h3>التقنيات المستخدمة</h3>
+                <ul>
+                    <li><strong>الخلفية</strong>: PHP 8.2+ مع بنية MVC</li>
+                    <li><strong>قاعدة البيانات</strong>: MySQL 8.0+</li>
+                    <li><strong>الواجهة</strong>: JavaScript و CSS حديث</li>
+                    <li><strong>الأمان</strong>: RBAC، حماية CSRF</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-global-line"></i>
+                </div>
+                <h3>المطور</h3>
+                <p><strong>أحمد هلال</strong></p>
+                <p>مطور Full Stack</p>
+                <a href="https://ahmedhelal.dev" target="_blank" class="developer-link">
+                    <i class="ri-external-link-line"></i> زيارة الموقع
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Installation Guide -->
+    <section class="content-section" id="installation">
+        <div class="section-header">
+            <h2><i class="ri-download-cloud-line"></i> دليل التثبيت</h2>
+            <p class="section-description">اتبع هذه الخطوات لتثبيت وإعداد النظام على الخادم الخاص بك.</p>
+        </div>
+
+        <div class="steps-container">
+            <div class="step-item">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>متطلبات النظام</h3>
+                    <div class="requirements-box">
+                        <h4>متطلبات الخادم:</h4>
+                        <ul>
+                            <li>PHP 8.2 أو أحدث</li>
+                            <li>MySQL 8.0 أو أحدث</li>
+                            <li>Apache/Nginx مع mod_rewrite</li>
+                            <li>Composer</li>
+                        </ul>
+                        <h4>ملحقات PHP:</h4>
+                        <ul>
+                            <li>ext-pdo</li>
+                            <li>ext-json</li>
+                            <li>ext-mbstring</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>استنساخ المشروع وتثبيت التبعيات</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Terminal</span>
+                            <button class="copy-btn" data-copy-target="code-1">
+                                <i class="ri-file-copy-line"></i> نسخ
+                            </button>
+                        </div>
+                        <pre id="code-1"><code># استنساخ المستودع
+git clone &lt;repository-url&gt;
+cd clinic
+
+# تثبيت التبعيات
+composer install</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>إعداد قاعدة البيانات</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Terminal</span>
+                            <button class="copy-btn" data-copy-target="code-2">
+                                <i class="ri-file-copy-line"></i> نسخ
+                            </button>
+                        </div>
+                        <pre id="code-2"><code># إنشاء قاعدة البيانات
+mysql -u root -p -e "CREATE DATABASE roaya CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+# استيراد المخطط
+mysql -u root -p roaya &lt; sql/schema.sql
+
+# استيراد البيانات الأولية
+mysql -u root -p roaya &lt; sql/seed.sql</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h3>إعدادات البيئة</h3>
+                    <p>أنشئ ملف <code>.env</code> في المجلد الرئيسي للمشروع:</p>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>.env</span>
+                            <button class="copy-btn" data-copy-target="code-3">
+                                <i class="ri-file-copy-line"></i> نسخ
+                            </button>
+                        </div>
+                        <pre id="code-3"><code># إعدادات قاعدة البيانات
+DB_HOST=localhost
+DB_NAME=roaya
+DB_USER=root
+DB_PASS=your_password
+
+# إعدادات التطبيق
+APP_ENV=local
+APP_KEY=roaya-clinic-system-2024-secret-key-32
+TIMEZONE=Africa/Cairo
+
+# الأمان
+SESSION_SECRET=roaya-session-secret-key-2024-32-chars
+CSRF_SECRET=roaya-csrf-secret-key-2024-32-chars</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <h3>تعيين الصلاحيات</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Terminal</span>
+                            <button class="copy-btn" data-copy-target="code-4">
+                                <i class="ri-file-copy-line"></i> نسخ
+                            </button>
+                        </div>
+                        <pre id="code-4"><code># إنشاء المجلدات المطلوبة
+mkdir -p storage/logs storage/uploads storage/exports
+chmod -R 755 storage/
+
+# إعادة توليد autoloader
+composer dump-autoload</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">6</div>
+                <div class="step-content">
+                    <h3>تشغيل التطبيق</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Terminal</span>
+                            <button class="copy-btn" data-copy-target="code-5">
+                                <i class="ri-file-copy-line"></i> نسخ
+                            </button>
+                        </div>
+                        <pre id="code-5"><code># استخدام خادم PHP المدمج
+php -S localhost:8000 router.php
+
+# أو مع Apache/Nginx
+# وجه document root إلى مجلد المشروع</code></pre>
+                    </div>
+                    <div class="info-box info-success">
+                        <i class="ri-checkbox-circle-line"></i>
+                        <div>
+                            <strong>روابط الوصول:</strong>
+                            <ul>
+                                <li>الصفحة الرئيسية: <code>http://localhost:8000/</code></li>
+                                <li>تسجيل الدخول: <code>http://localhost:8000/public/login</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start Guide -->
+    <section class="content-section" id="quick-start">
+        <div class="section-header">
+            <h2><i class="ri-rocket-line"></i> دليل البدء السريع</h2>
+            <p class="section-description">ابدأ بسرعة باستخدام بيانات تسجيل الدخول الافتراضية والتنقل الأساسي.</p>
+        </div>
+
+        <div class="accordion-container">
+            <div class="accordion-item">
+                <div class="accordion-header">
+                    <h3><i class="ri-user-settings-line"></i> بيانات تسجيل الدخول الافتراضية</h3>
+                    <i class="ri-arrow-down-s-line accordion-icon"></i>
+                </div>
+                <div class="accordion-content">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>الدور</th>
+                                    <th>اسم المستخدم</th>
+                                    <th>البريد الإلكتروني</th>
+                                    <th>كلمة المرور</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>د. أحمد</strong></td>
+                                    <td><code>dr_ahmed</code></td>
+                                    <td>dr.ahmed@roayaclinic.com</td>
+                                    <td><code>password</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>د. فرماوي</strong></td>
+                                    <td><code>dr_faramawy</code></td>
+                                    <td>dr.faramawy@roayaclinic.com</td>
+                                    <td><code>password</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>السكرتير</strong></td>
+                                    <td><code>sec</code></td>
+                                    <td>sec@roayaclinic.com</td>
+                                    <td><code>password</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>المدير</strong></td>
+                                    <td><code>admin</code></td>
+                                    <td>admin@roayaclinic.com</td>
+                                    <td><code>password</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="info-box info-warning">
+                        <i class="ri-alert-line"></i>
+                        <div>
+                            <strong>ملاحظة:</strong> النظام يستخدم <strong>اسم المستخدم</strong> بدلاً من البريد الإلكتروني لتسجيل الدخول.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <div class="accordion-header">
+                    <h3><i class="ri-navigation-line"></i> التنقل الأساسي</h3>
+                    <i class="ri-arrow-down-s-line accordion-icon"></i>
+                </div>
+                <div class="accordion-content">
+                    <div class="info-cards-grid">
+                        <div class="info-card">
+                            <h4>لوحة تحكم الطبيب</h4>
+                            <ul>
+                                <li>عرض قائمة المرضى والسجلات الطبية</li>
+                                <li>إدارة تقويم المواعيد</li>
+                                <li>إنشاء الوصفات (الأدوية والنظارات)</li>
+                                <li>عرض التقارير والإحصائيات</li>
+                            </ul>
+                        </div>
+                        <div class="info-card">
+                            <h4>لوحة تحكم السكرتير</h4>
+                            <ul>
+                                <li>تسجيل المرضى الجدد</li>
+                                <li>إدارة الحجوزات والمواعيد</li>
+                                <li>معالجة المدفوعات والفواتير</li>
+                                <li>عرض تفاصيل الحجوزات</li>
+                            </ul>
+                        </div>
+                        <div class="info-card">
+                            <h4>لوحة تحكم المدير</h4>
+                            <ul>
+                                <li>إدارة المستخدمين والأدوار</li>
+                                <li>إعدادات النظام والتكوين</li>
+                                <li>عرض سجلات النظام والنسخ الاحتياطية</li>
+                                <li>إدارة الوسائط</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture -->
+    <section class="content-section" id="architecture">
+        <div class="section-header">
+            <h2><i class="ri-stack-line"></i> هندسة النظام</h2>
+            <p class="section-description">فهم بنية المشروع والهندسة التقنية.</p>
+        </div>
+
+        <div class="tabs-container">
+            <div class="tabs-header">
+                <button class="tab-btn active" data-tab="structure">بنية المشروع</button>
+                <button class="tab-btn" data-tab="mvc">نمط MVC</button>
+                <button class="tab-btn" data-tab="database">قاعدة البيانات</button>
+            </div>
+
+            <div class="tab-content active" data-tab="structure">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>هيكل المجلدات</span>
+                    </div>
+                    <pre><code>clinic/
+├── app/
+│   ├── Config/          # ملفات الإعدادات
+│   ├── Controllers/     # وحدات التحكم
+│   ├── Lib/            # المكتبات الأساسية
+│   ├── Models/         # نماذج البيانات
+│   └── Views/          # قوالب الواجهة
+│       ├── admin/      # واجهة المدير
+│       ├── doctor/     # واجهة الطبيب
+│       ├── secretary/  # واجهة السكرتير
+│       └── print/      # قوالب الطباعة
+├── public/              # نقطة الدخول
+├── sql/                 # ملفات قاعدة البيانات
+├── storage/             # مجلد التخزين
+│   ├── logs/           # سجلات النظام
+│   ├── uploads/        # الملفات المرفوعة
+│   └── exports/        # التقارير المصدرة
+├── vendor/              # تبعيات Composer
+├── .env                 # إعدادات البيئة
+└── router.php           # الراوتر المخصص</code></pre>
+                </div>
+            </div>
+
+            <div class="tab-content" data-tab="mvc">
+                <div class="info-cards-grid">
+                    <div class="info-card">
+                        <h4><i class="ri-code-box-line"></i> Model</h4>
+                        <p>يتعامل مع منطق البيانات والتفاعل مع قاعدة البيانات. موجود في <code>app/Models/</code></p>
+                    </div>
+                    <div class="info-card">
+                        <h4><i class="ri-settings-3-line"></i> View</h4>
+                        <p>مسؤول عن طبقة العرض. القوالب في <code>app/Views/</code></p>
+                    </div>
+                    <div class="info-card">
+                        <h4><i class="ri-gamepad-line"></i> Controller</h4>
+                        <p>يعالج الطلبات وينسق بين Model و View. موجود في <code>app/Controllers/</code></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-tab="database">
+                <div class="info-box">
+                    <i class="ri-database-2-line"></i>
+                    <div>
+                        <strong>قاعدة البيانات:</strong> MySQL 8.0+
+                        <br><strong>مجموعة الأحرف:</strong> utf8mb4
+                        <br><strong>الترتيب:</strong> utf8mb4_unicode_ci
+                    </div>
+                </div>
+                <h4>الجداول الرئيسية:</h4>
+                <ul class="table-list">
+                    <li><code>users</code> - حسابات المستخدمين والمصادقة</li>
+                    <li><code>patients</code> - معلومات المرضى</li>
+                    <li><code>appointments</code> - جدولة المواعيد</li>
+                    <li><code>prescriptions</code> - الوصفات الطبية</li>
+                    <li><code>payments</code> - المعاملات المالية</li>
+                    <li><code>consultations</code> - الاستشارات الطبية</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Note -->
+    <div class="footer-note">
+        <p><strong>الإصدار:</strong> v7.1.4 | <strong>المطور:</strong> <a href="https://ahmedhelal.dev" target="_blank">أحمد هلال</a></p>
+    </div>
+</div>

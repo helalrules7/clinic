@@ -1,0 +1,419 @@
+<div class="getting-started-content">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Welcome to Roaya Clinic Management System</h1>
+            <p class="hero-subtitle">Comprehensive Eye Clinic Management Solution v7.1.4</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">v7.2.8</span>
+                <span class="badge badge-secondary">PHP 8.2+</span>
+                <span class="badge badge-success">Production Ready</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Overview -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-information-line"></i> Project Overview</h2>
+            <p class="section-description">A comprehensive healthcare management solution designed to streamline clinic operations, enhance patient care, and improve administrative efficiency.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-line"></i>
+                </div>
+                <h3>Three Main Roles</h3>
+                <ul>
+                    <li><strong>Doctor</strong>: Manage patients, appointments, prescriptions, and examinations</li>
+                    <li><strong>Secretary</strong>: Handle bookings, payments, and patient registration</li>
+                    <li><strong>Admin</strong>: System management, users, and reports</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-star-line"></i>
+                </div>
+                <h3>Key Features</h3>
+                <ul>
+                    <li>Patient management with medical history</li>
+                    <li>Interactive appointment calendar</li>
+                    <li>Prescription management (medications & glasses)</li>
+                    <li>Financial management & reporting</li>
+                    <li>Comprehensive statistics dashboard</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-code-s-slash-line"></i>
+                </div>
+                <h3>Technology Stack</h3>
+                <ul>
+                    <li><strong>Backend</strong>: PHP 8.2+ with MVC architecture</li>
+                    <li><strong>Database</strong>: MySQL 8.0+</li>
+                    <li><strong>Frontend</strong>: Modern JavaScript & CSS</li>
+                    <li><strong>Security</strong>: RBAC, CSRF protection</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-global-line"></i>
+                </div>
+                <h3>Developer</h3>
+                <p><strong>Ahmed Helal</strong></p>
+                <p>Full Stack Developer</p>
+                <a href="https://ahmedhelal.dev" target="_blank" class="developer-link">
+                    <i class="ri-external-link-line"></i> Visit Website
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Installation Guide -->
+    <section class="content-section" id="installation">
+        <div class="section-header">
+            <h2><i class="ri-download-cloud-line"></i> Installation Guide</h2>
+            <p class="section-description">Follow these steps to install and configure the system on your server.</p>
+        </div>
+
+        <div class="steps-container">
+            <div class="step-item">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>System Requirements</h3>
+                    <div class="requirements-box">
+                        <h4>Server Requirements:</h4>
+                        <ul>
+                            <li>PHP 8.2 or higher</li>
+                            <li>MySQL 8.0 or higher</li>
+                            <li>Apache/Nginx with mod_rewrite</li>
+                            <li>Composer</li>
+                        </ul>
+                        <h4>PHP Extensions:</h4>
+                        <ul>
+                            <li>ext-pdo</li>
+                            <li>ext-json</li>
+                            <li>ext-mbstring</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Clone and Install Dependencies</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Terminal</span>
+                            <button class="copy-btn" data-copy-target="code-1">
+                                <i class="ri-file-copy-line"></i> Copy
+                            </button>
+                        </div>
+                        <pre id="code-1"><code># Clone the repository
+git clone &lt;repository-url&gt;
+cd clinic
+
+# Install dependencies
+composer install</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>Database Setup</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Terminal</span>
+                            <button class="copy-btn" data-copy-target="code-2">
+                                <i class="ri-file-copy-line"></i> Copy
+                            </button>
+                        </div>
+                        <pre id="code-2"><code># Create database
+mysql -u root -p -e "CREATE DATABASE roaya CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+# Import schema
+mysql -u root -p roaya &lt; sql/schema.sql
+
+# Import seed data
+mysql -u root -p roaya &lt; sql/seed.sql</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h3>Environment Configuration</h3>
+                    <p>Create a <code>.env</code> file in the project root:</p>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>.env</span>
+                            <button class="copy-btn" data-copy-target="code-3">
+                                <i class="ri-file-copy-line"></i> Copy
+                            </button>
+                        </div>
+                        <pre id="code-3"><code># Database Configuration
+DB_HOST=localhost
+DB_NAME=roaya
+DB_USER=root
+DB_PASS=your_password
+
+# Application Configuration
+APP_ENV=local
+APP_KEY=roaya-clinic-system-2024-secret-key-32
+TIMEZONE=Africa/Cairo
+
+# Security
+SESSION_SECRET=roaya-session-secret-key-2024-32-chars
+CSRF_SECRET=roaya-csrf-secret-key-2024-32-chars</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <h3>Set Permissions</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Terminal</span>
+                            <button class="copy-btn" data-copy-target="code-4">
+                                <i class="ri-file-copy-line"></i> Copy
+                            </button>
+                        </div>
+                        <pre id="code-4"><code># Create required directories
+mkdir -p storage/logs storage/uploads storage/exports
+chmod -R 755 storage/
+
+# Regenerate autoloader
+composer dump-autoload</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">6</div>
+                <div class="step-content">
+                    <h3>Run the Application</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Terminal</span>
+                            <button class="copy-btn" data-copy-target="code-5">
+                                <i class="ri-file-copy-line"></i> Copy
+                            </button>
+                        </div>
+                        <pre id="code-5"><code># Using PHP built-in server
+php -S localhost:8000 router.php
+
+# Or with Apache/Nginx
+# Point document root to project directory</code></pre>
+                    </div>
+                    <div class="info-box info-success">
+                        <i class="ri-checkbox-circle-line"></i>
+                        <div>
+                            <strong>Access URLs:</strong>
+                            <ul>
+                                <li>Homepage: <code>http://localhost:8000/</code></li>
+                                <li>Login: <code>http://localhost:8000/public/login</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start Guide -->
+    <section class="content-section" id="quick-start">
+        <div class="section-header">
+            <h2><i class="ri-rocket-line"></i> Quick Start Guide</h2>
+            <p class="section-description">Get started quickly with default login credentials and basic navigation.</p>
+        </div>
+
+        <div class="accordion-container">
+            <div class="accordion-item">
+                <div class="accordion-header">
+                    <h3><i class="ri-user-settings-line"></i> Default Login Credentials</h3>
+                    <i class="ri-arrow-down-s-line accordion-icon"></i>
+                </div>
+                <div class="accordion-content">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Role</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Password</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Dr. Ahmed</strong></td>
+                                    <td><code>dr_ahmed</code></td>
+                                    <td>dr.ahmed@roayaclinic.com</td>
+                                    <td><code>password</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Dr. Faramawy</strong></td>
+                                    <td><code>dr_faramawy</code></td>
+                                    <td>dr.faramawy@roayaclinic.com</td>
+                                    <td><code>password</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Secretary</strong></td>
+                                    <td><code>sec</code></td>
+                                    <td>sec@roayaclinic.com</td>
+                                    <td><code>password</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Admin</strong></td>
+                                    <td><code>admin</code></td>
+                                    <td>admin@roayaclinic.com</td>
+                                    <td><code>password</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="info-box info-warning">
+                        <i class="ri-alert-line"></i>
+                        <div>
+                            <strong>Note:</strong> The system uses <strong>username</strong> instead of email for login.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <div class="accordion-header">
+                    <h3><i class="ri-navigation-line"></i> Basic Navigation</h3>
+                    <i class="ri-arrow-down-s-line accordion-icon"></i>
+                </div>
+                <div class="accordion-content">
+                    <div class="info-cards-grid">
+                        <div class="info-card">
+                            <h4>Doctor Dashboard</h4>
+                            <ul>
+                                <li>View patient list and medical records</li>
+                                <li>Manage appointments calendar</li>
+                                <li>Create prescriptions (medications & glasses)</li>
+                                <li>View reports and statistics</li>
+                            </ul>
+                        </div>
+                        <div class="info-card">
+                            <h4>Secretary Dashboard</h4>
+                            <ul>
+                                <li>Register new patients</li>
+                                <li>Manage bookings and appointments</li>
+                                <li>Process payments and invoices</li>
+                                <li>View booking details</li>
+                            </ul>
+                        </div>
+                        <div class="info-card">
+                            <h4>Admin Dashboard</h4>
+                            <ul>
+                                <li>Manage users and roles</li>
+                                <li>System settings and configuration</li>
+                                <li>View system logs and backups</li>
+                                <li>Media management</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture -->
+    <section class="content-section" id="architecture">
+        <div class="section-header">
+            <h2><i class="ri-stack-line"></i> System Architecture</h2>
+            <p class="section-description">Understanding the project structure and technical architecture.</p>
+        </div>
+
+        <div class="tabs-container">
+            <div class="tabs-header">
+                <button class="tab-btn active" data-tab="structure">Project Structure</button>
+                <button class="tab-btn" data-tab="mvc">MVC Pattern</button>
+                <button class="tab-btn" data-tab="database">Database</button>
+            </div>
+
+            <div class="tab-content active" data-tab="structure">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Directory Structure</span>
+                    </div>
+                    <pre><code>clinic/
+├── app/
+│   ├── Config/          # Configuration files
+│   ├── Controllers/     # Controller classes
+│   ├── Lib/            # Core libraries
+│   ├── Models/         # Data models
+│   └── Views/          # View templates
+│       ├── admin/      # Admin interface
+│       ├── doctor/     # Doctor interface
+│       ├── secretary/  # Secretary interface
+│       └── print/      # Print templates
+├── public/              # Entry point
+├── sql/                 # Database files
+├── storage/             # Storage directory
+│   ├── logs/           # System logs
+│   ├── uploads/        # Uploaded files
+│   └── exports/        # Exported reports
+├── vendor/              # Composer dependencies
+├── .env                 # Environment config
+└── router.php           # Custom router</code></pre>
+                </div>
+            </div>
+
+            <div class="tab-content" data-tab="mvc">
+                <div class="info-cards-grid">
+                    <div class="info-card">
+                        <h4><i class="ri-code-box-line"></i> Model</h4>
+                        <p>Handles data logic and database interactions. Located in <code>app/Models/</code></p>
+                    </div>
+                    <div class="info-card">
+                        <h4><i class="ri-settings-3-line"></i> View</h4>
+                        <p>Responsible for presentation layer. Templates in <code>app/Views/</code></p>
+                    </div>
+                    <div class="info-card">
+                        <h4><i class="ri-gamepad-line"></i> Controller</h4>
+                        <p>Processes requests and coordinates between Model and View. Located in <code>app/Controllers/</code></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-tab="database">
+                <div class="info-box">
+                    <i class="ri-database-2-line"></i>
+                    <div>
+                        <strong>Database:</strong> MySQL 8.0+
+                        <br><strong>Character Set:</strong> utf8mb4
+                        <br><strong>Collation:</strong> utf8mb4_unicode_ci
+                    </div>
+                </div>
+                <h4>Main Tables:</h4>
+                <ul class="table-list">
+                    <li><code>users</code> - User accounts and authentication</li>
+                    <li><code>patients</code> - Patient information</li>
+                    <li><code>appointments</code> - Appointment scheduling</li>
+                    <li><code>prescriptions</code> - Medical prescriptions</li>
+                    <li><code>payments</code> - Financial transactions</li>
+                    <li><code>consultations</code> - Medical consultations</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Note -->
+    <div class="footer-note">
+        <p><strong>Version:</strong> v7.2.8 | <strong>Developer:</strong> <a href="https://ahmedhelal.dev" target="_blank">Ahmed Helal</a></p>
+    </div>
+</div>

@@ -1,0 +1,261 @@
+<div class="getting-started-content" dir="rtl">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">الإجراءات السريعة</h1>
+            <p class="hero-subtitle">وصول سريع للميزات المستخدمة بشكل متكرر</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">إجراءات</span>
+                <span class="badge badge-secondary">وصول سريع</span>
+                <span class="badge badge-success">موبايل</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-flashlight-line"></i> نظرة عامة على الإجراءات السريعة</h2>
+            <p class="section-description">الإجراءات السريعة توفر وصولاً فورياً للميزات والوظائف الأكثر استخداماً في لوحة تحكم الطبيب. المكون يعرض بطاقات ملونة بأسلوب iOS مرتبة أفقياً، مما يسمح للأطباء بالتنقل بسرعة للوظائف الأساسية بنقرة واحدة أو لمسة.</p>
+        </div>
+
+        <!-- Quick Actions Demo Image -->
+        <div class="quick-actions-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="quick-actions-demo-thumbnail" id="quick-actions-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/quick-actions-dark.png" alt="عرض توضيحي للإجراءات السريعة" class="quick-actions-demo-dark" />
+                <img src="/docs/opth/public/assets/images/quick-actions-light.png" alt="عرض توضيحي للإجراءات السريعة - الوضع الفاتح" class="quick-actions-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>انقر لعرض الحجم الكامل</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> عرض توضيحي مرئي لواجهة الإجراءات السريعة
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-apps-line"></i>
+                </div>
+                <h3>بطاقات بأسلوب iOS</h3>
+                <p>بطاقات جميلة ملونة مع خلفيات متدرجة، زوايا مستديرة، وتصميم حديث مستوحى من أنماط واجهة iOS.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-layout-horizontal-line"></i>
+                </div>
+                <h3>تمرير أفقي</h3>
+                <p>البطاقات مرتبة أفقياً في حاوية قابلة للتمرير، مما يسمح بالوصول إلى العديد من الإجراءات في مساحة مضغوطة.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-smartphone-line"></i>
+                </div>
+                <h3>متجاوب مع اللمس</h3>
+                <p>محسّن بالكامل للأجهزة المحمولة مع إيماءات اللمس، دعم السحب، وحجم بطاقات متجاوب لأحجام الشاشات المختلفة.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="content-section" id="how-it-works">
+        <div class="section-header">
+            <h2><i class="ri-settings-3-line"></i> كيف يعمل</h2>
+            <p class="section-description">الإجراءات السريعة يتم تنفيذها باستخدام JavaScript لإدارة التمرير و CSS للتصميم المتجاوب وتحسين اللمس.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-scroll-to-bottom-line"></i>
+                </div>
+                <h3>إدارة التمرير الأفقي</h3>
+                <p>المكون يستخدم JavaScript لإدارة التمرير الأفقي:</p>
+                <ul>
+                    <li><strong>كمية التمرير:</strong> كل نقرة تنقل تمرر 160px (عرض البطاقة + الفجوة)</li>
+                    <li><strong>أسهم التنقل:</strong> أسهم يسار ويمين تظهر عند التمرير للتنقل عبر البطاقات</li>
+                    <li><strong>مؤشرات التلاشي:</strong> تدرجات تلاشي تظهر على الحواف عندما يتوفر المزيد من المحتوى</li>
+                    <li><strong>إخفاء تلقائي للأسهم:</strong> الأسهم تختفي عند البداية أو النهاية</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-hand-finger-line"></i>
+                </div>
+                <h3>دعم إيماءات اللمس</h3>
+                <p>إيماءات اللمس المحمولة مدعومة بالكامل:</p>
+                <ul>
+                    <li><strong>اكتشاف السحب:</strong> أحداث touch start، move، و end تتبع إيماءات السحب</li>
+                    <li><strong>سحب أفقي:</strong> السحب يسار/يمين يمرر شبكة البطاقات أفقياً</li>
+                    <li><strong>عتبة السحب:</strong> حد أدنى 50px مسافة سحب مطلوبة لتفعيل التمرير</li>
+                    <li><strong>دعم RTL:</strong> اتجاه السحب يتم تعديله تلقائياً للغات RTL</li>
+                    <li><strong>مستمعون سلبيون:</strong> أحداث اللمس تستخدم مستمعين سلبيين لأداء أفضل</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-mouse-line"></i>
+                </div>
+                <h3>دعم عجلة الماوس</h3>
+                <p>مستخدمو سطح المكتب يمكنهم التمرير باستخدام عجلة الماوس:</p>
+                <ul>
+                    <li><strong>تمرير أفقي:</strong> عجلة الماوس تمرر أفقياً عند التمرير فوق منطقة الإجراءات السريعة</li>
+                    <li><strong>منع التمرير العمودي:</strong> التمرير العمودي يتم منعه عند اكتشاف تمرير أفقي</li>
+                    <li><strong>سلوك سلس:</strong> رسوم متحركة تمرير سلس لتجربة مستخدم أفضل</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Touch Responsiveness on Mobile -->
+    <section class="content-section" id="touch-responsiveness">
+        <div class="section-header">
+            <h2><i class="ri-smartphone-line"></i> الاستجابة للمس على الموبايل</h2>
+            <p class="section-description">الإجراءات السريعة محسّنة بالكامل للأجهزة المحمولة مع دعم شامل للمس وتصميم متجاوب.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-hand-finger-line"></i>
+                </div>
+                <h3>إيماءات السحب</h3>
+                <p>إيماءات السحب باللمس تمكن التنقل الطبيعي:</p>
+                <ul>
+                    <li><strong>بدء اللمس:</strong> يسجل موضع اللمس الأولي (إحداثيات X و Y)</li>
+                    <li><strong>حركة اللمس:</strong> يتتبع حركة الإصبع لتحديد اتجاه السحب</li>
+                    <li><strong>نهاية اللمس:</strong> يحسب مسافة واتجاه السحب، يفعل التمرير إذا تم الوصول للعتبة</li>
+                    <li><strong>اكتشاف الاتجاه:</strong> يميز بين السحب الأفقي والعمودي</li>
+                    <li><strong>تعديل RTL:</strong> اتجاهات السحب معكوسة للغات RTL (العربية)</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-layout-grid-line"></i>
+                </div>
+                <h3>حجم بطاقات متجاوب</h3>
+                <p>البطاقات تتكيف تلقائياً مع أحجام الشاشات المختلفة:</p>
+                <ul>
+                    <li><strong>سطح المكتب:</strong> بطاقات أكبر (عادة 140px × 140px)</li>
+                    <li><strong>الجهاز اللوحي:</strong> بطاقات متوسطة الحجم محسّنة لشاشات الأجهزة اللوحية</li>
+                    <li><strong>الموبايل (≤768px):</strong> بطاقات أصغر (110px × 110px) لتناسب أفضل</li>
+                    <li><strong>موبايل صغير (≤480px):</strong> بطاقات أصغر (100px × 100px) للشاشات المضغوطة</li>
+                    <li><strong>Flex Shrink:</strong> البطاقات تستخدم <code>flex-shrink: 0</code> لمنع الضغط</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-scroll-to-bottom-line"></i>
+                </div>
+                <h3>تمرير سلس</h3>
+                <p>سلوك تمرير محسّن لأجهزة اللمس:</p>
+                <ul>
+                    <li><strong>Scroll Snap:</strong> <code>scroll-snap-type: x mandatory</code> للتمرير مع التوقف عند البطاقة</li>
+                    <li><strong>تمرير اللمس:</strong> <code>-webkit-overflow-scrolling: touch</code> لتمرير سلس على iOS</li>
+                    <li><strong>شريط تمرير مخفي:</strong> شريط التمرير مخفي لمظهر أنظف</li>
+                    <li><strong>سلوك سلس:</strong> <code>scroll-behavior: smooth</code> للتمرير المتحرك</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-fingerprint-line"></i>
+                </div>
+                <h3>تحسين هدف اللمس</h3>
+                <p>البطاقات مصممة بأهداف لمس مثلى:</p>
+                <ul>
+                    <li><strong>الحجم الأدنى:</strong> البطاقات تلبي إرشادات هدف اللمس الأدنى 44px × 44px</li>
+                    <li><strong>المسافة:</strong> فجوة كافية بين البطاقات تمنع النقرات العرضية</li>
+                    <li><strong>ردود فعل النقر:</strong> ردود فعل مرئية عند النقر/اللمس لتجربة مستخدم أفضل</li>
+                    <li><strong>لا hover على اللمس:</strong> أسهم التنقل مخفية على أجهزة اللمس (hover: none)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="info-box" style="margin-top: 2rem;">
+            <i class="ri-information-line"></i>
+            <div>
+                <strong>تحسين الموبايل:</strong>
+                <p>مكون الإجراءات السريعة يكتشف تلقائياً أجهزة اللمس ويعدل سلوكه accordingly. أسهم التنقل مخفية على أجهزة اللمس لأن المستخدمين يمكنهم السحب بشكل طبيعي. المكون يستخدم استعلامات CSS media و JavaScript feature detection لتوفير أفضل تجربة على كل نوع جهاز.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Available Actions -->
+    <section class="content-section" id="available-actions">
+        <div class="section-header">
+            <h2><i class="ri-layout-grid-line"></i> الإجراءات السريعة المتاحة</h2>
+            <p class="section-description">مكون الإجراءات السريعة يتضمن بطاقات إجراءات مختلفة للمهام الشائعة.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-line"></i>
+                </div>
+                <h3>المرضى</h3>
+                <p>الوصول لإدارة المرضى مع إجراءات فرعية لعرض وإضافة المرضى.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-line"></i>
+                </div>
+                <h3>التقويم</h3>
+                <p>وصول سريع لتقويم المواعيد والجدولة.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-chat-3-line"></i>
+                </div>
+                <h3>المناقشة</h3>
+                <p>الوصول لمناقشات المنتدى والمحادثات الطبية.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-wallet-line"></i>
+                </div>
+                <h3>المالية</h3>
+                <p>عرض المعلومات المالية وسجلات الدفع.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-text-line"></i>
+                </div>
+                <h3>الملاحظات</h3>
+                <p>وصول سريع للملاحظات الشخصية والتوثيق.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-notification-3-line"></i>
+                </div>
+                <h3>التنبيهات</h3>
+                <p>عرض وإدارة التنبيهات والتذكيرات الطبية.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Image Modal -->
+<div id="quick-actions-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-quick-actions-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/quick-actions-dark.png" alt="عرض توضيحي للإجراءات السريعة - الحجم الكامل" class="quick-actions-demo-dark" />
+        <img src="/docs/opth/public/assets/images/quick-actions-light.png" alt="عرض توضيحي للإجراءات السريعة - الوضع الفاتح - الحجم الكامل" class="quick-actions-demo-light" style="display: none;" />
+    </div>
+</div>

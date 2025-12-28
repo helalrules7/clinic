@@ -1,0 +1,670 @@
+<div class="getting-started-content" dir="rtl">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">تقويم الطبيب</h1>
+            <p class="hero-subtitle">نظام شامل لإدارة مواعيد الأطباء</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">التقويم</span>
+                <span class="badge badge-secondary">طبيب</span>
+                <span class="badge badge-success">مواعيد</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-calendar-line"></i> نظرة عامة على تقويم الطبيب</h2>
+            <p class="section-description">يعد تقويم الطبيب نظامًا شاملاً لإدارة المواعيد يسمح للأطباء بعرض المواعيد
+                وإدارتها وجدولتها بكفاءة. يوفر عرضًا يوميًا للمواعيد مع تحديثات في الوقت الفعلي وخيارات تصفية وتكامل سلس
+                لإدارة المرضى.</p>
+        </div>
+
+        <!-- تقويم Demo Image -->
+        <div class="doctors-calendar-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="doctors-calendar-demo-thumbnail" id="doctors-calendar-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/doctors-calendar-dark.png" alt="عرض توضيحي لتقويم الطبيب"
+                    class="doctors-calendar-demo-dark" />
+                <img src="/docs/opth/public/assets/images/doctors-calendar-light.png"
+                    alt="عرض توضيحي لتقويم الطبيب - السمة الفاتحة" class="doctors-calendar-demo-light"
+                    style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>انقر لعرض الحجم الكامل</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> عرض مرئي لواجهة تقويم الطبيب
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-time-line"></i>
+                </div>
+                <h3>تحديثات مباشرة</h3>
+                <p>تعمل وظيفة التحديث التلقائي على إبقاء بيانات الميعاد متزامنة مع أحدث المعلومات، مما يضمن رؤية الأطباء
+                    دائمًا لحالة المواعيد الحالية.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-search-line"></i>
+                </div>
+                <h3>تصفية متقدمة</h3>
+                <p>تصفية المواعيد حسب النطاقات الزمنية وحالة التوفر وأنواع المواعيد لعرض تقويم مركز.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-add-line"></i>
+                </div>
+                <h3>إدارة المرضى</h3>
+                <p>بحث متكامل عن المرضى مع الإكمال التلقائي والقدرة على إضافة مرضى جدد مباشرة من نافذة الموعد.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- عناصر التحكم في الصفحة -->
+    <section class="content-section" id="page-controls">
+        <div class="section-header">
+            <h2><i class="ri-settings-3-line"></i> عناصر التحكم في الصفحة</h2>
+            <p class="section-description">يحتوي تقويم الطبيب على عناصر تحكم مختلفة للتنقل والتصفية وإدارة المواعيد.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-refresh-line"></i>
+                </div>
+                <h3>تبديل التحديث التلقائي</h3>
+                <p><strong>الموقع:</strong> أعلى اليسار، بجوار عنوان "التقويم"</p>
+                <p><strong>الوظيفة:</strong> تمكين/تعطيل تحديثات التقويم التلقائية كل 60 ثانية</p>
+                <p><strong>السلوك:</strong> عند التمكين، يتم تحديث بيانات التقويم تلقائيًا دون تدخل يدوي. تتوقف
+                    التحديثات مؤقتًا عند فتح النوافذ المنبثقة لمنع فقدان البيانات.</p>
+                <p><strong>جافا سكريبت:</strong> <code>toggleCalendarAutoRefresh(checked)</code> في
+                    <code>calendar.js</code></p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-event-line"></i>
+                </div>
+                <h3>زر الذهاب إلى التاريخ</h3>
+                <p><strong>الموقع:</strong> منطقة التحكم العلوية اليمنى</p>
+                <p><strong>الوظيفة:</strong> يفتح نافذة لاختيار التاريخ للانتقال إلى تاريخ محدد</p>
+                <p><strong>السلوك:</strong> النقر فوق الزر يظهر تلميح اختيار التاريخ. يؤدي اختيار تاريخ والنقر فوق
+                    "الذهاب إلى التاريخ" إلى نقل التقويم إلى ذلك التاريخ.</p>
+                <p><strong>التحقق:</strong> يمنع اختيار تواريخ قبل اليوم (بناءً على توقيت مصر)</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-add-circle-line"></i>
+                </div>
+                <h3>زر موعد جديد</h3>
+                <p><strong>الموقع:</strong> أعلى اليمين، زر أخضر</p>
+                <p><strong>الوظيفة:</strong> يفتح نافذة "إضافة موعد جديد"</p>
+                <p><strong>السلوك:</strong> يفتح النافذة مع تحديد تاريخ التقويم الحالي مسبقًا. يسمح بإضافة مواعيد
+                    للتاريخ المعروض حاليًا.</p>
+                <p><strong>جافا سكريبت:</strong> <code>openAddAppointmentModal(null, currentDate)</code></p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-todo-line"></i>
+                </div>
+                <h3>زر اليوم</h3>
+                <p><strong>الموقع:</strong> أعلى اليمين، مجموعة أزرار التنقل</p>
+                <p><strong>الوظيفة:</strong> يعيد عرض التقويم بسرعة إلى تاريخ اليوم</p>
+                <p><strong>السلوك:</strong> يعيد تعيين <code>currentDate</code> إلى اليوم ويعيد تحميل التقويم</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-arrow-left-line"></i>
+                </div>
+                <h3>زر اليوم السابق</h3>
+                <p><strong>الموقع:</strong> أعلى اليمين، السهم الأيسر في مجموعة التنقل</p>
+                <p><strong>الوظيفة:</strong> ينتقل إلى اليوم السابق</p>
+                <p><strong>السلوك:</strong> ينقص <code>currentDate</code> بمقدار 24 ساعة ويعيد تحميل التقويم</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-arrow-right-line"></i>
+                </div>
+                <h3>زر اليوم التالي</h3>
+                <p><strong>الموقع:</strong> أعلى اليمين، السهم الأيمن في مجموعة التنقل</p>
+                <p><strong>الوظيفة:</strong> ينتقل إلى اليوم التالي</p>
+                <p><strong>السلوك:</strong> يزيد <code>currentDate</code> بمقدار 24 ساعة ويعيد تحميل التقويم</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-keyboard-line"></i>
+                </div>
+                <h3>اختصارات لوحة المفاتيح</h3>
+                <p><strong>معروضة:</strong> أسفل وصف الصفحة</p>
+                <p><strong>الاختصارات:</strong></p>
+                <ul>
+                    <li><strong>N / Ctrl+N:</strong> موعد جديد</li>
+                    <li><strong>F:</strong> البحث</li>
+                    <li><strong>Esc:</strong> إغلاق</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- عناصر التحكم في التصفية -->
+    <section class="content-section" id="filter-controls">
+        <div class="section-header">
+            <h2><i class="ri-filter-line"></i> عناصر التحكم في التصفية</h2>
+            <p class="section-description">تساعد الفلاتر الزمنية الأطباء على التركيز على فترات مواعيد محددة أو حالة
+                التوفر.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-time-line"></i>
+                </div>
+                <h3>فلاتر النطاق الزمني</h3>
+                <p><strong>الفلاتر المتاحة:</strong></p>
+                <ul>
+                    <li><strong>"2:00 م - 6:00 م":</strong> يظهر المواعيد في ساعات بعد الظهر</li>
+                    <li><strong>"6:00 م - 10:45 م":</strong> يظهر المواعيد في ساعات المساء</li>
+                </ul>
+                <p><strong>الوظيفة:</strong> يصفي التقويم لعرض المواعيد فقط ضمن النطاق الزمني المحدد</p>
+                <p><strong>جافا سكريبت:</strong> <code>applyTimeFilter(filter)</code> مع سمة <code>data-filter</code>
+                </p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-checkbox-circle-line"></i>
+                </div>
+                <h3>فلتر المتاح فقط</h3>
+                <p><strong>الوظيفة:</strong> يظهر فقط الفترات الزمنية المتاحة (بدون مواعيد)</p>
+                <p><strong>حالة الاستخدام:</strong> تحديد سريع للفترات المفتوحة لجدولة مواعيد جديدة</p>
+                <p><strong>بصري:</strong> يبرز الفترات المتاحة بتنسيق أخضر وأيقونة "+"</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-check-line"></i>
+                </div>
+                <h3>فلتر المواعيد فقط</h3>
+                <p><strong>الوظيفة:</strong> يظهر فقط المواعيد المحجوزة (يخفي الفترات المتاحة)</p>
+                <p><strong>حالة الاستخدام:</strong> التركيز على المواعيد المجدولة دون التشتيت بالفترات الفارغة</p>
+                <p><strong>بصري:</strong> يعرض فقط بطاقات الميعاد مع معلومات المريض</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-close-circle-line"></i>
+                </div>
+                <h3>زر مسح الفلاتر</h3>
+                <p><strong>الوظيفة:</strong> يزيل جميع الفلاتر النشطة ويظهر عرض التقويم الكامل</p>
+                <p><strong>السلوك:</strong> يعيد تعيين حالة الفلتر ويعيد تحميل بيانات التقويم الكاملة</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- هيكل التقويم -->
+    <section class="content-section" id="calendar-structure">
+        <div class="section-header">
+            <h2><i class="ri-layout-grid-line"></i> هيكل التقويم</h2>
+            <p class="section-description">يعرض التقويم المواعيد في تخطيط عمودين مع فترات زمنية وتفاصيل الموعد.</p>
+        </div>
+
+        <!-- صورة هيكل التقويم -->
+        <div class="doctors-calendar-structure-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="doctors-calendar-structure-demo-thumbnail" id="doctors-calendar-structure-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/doctors-calendar-structure-dark.png"
+                    alt="عرض توضيحي لهيكل التقويم" class="doctors-calendar-structure-demo-dark" />
+                <img src="/docs/opth/public/assets/images/doctors-calendar-structure-light.png"
+                    alt="عرض توضيحي لهيكل التقويم - السمة الفاتحة" class="doctors-calendar-structure-demo-light"
+                    style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>انقر لعرض الحجم الكامل</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> عرض توضيحي مرئي لهيكل التقويم
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-time-line"></i>
+                </div>
+                <h3>عمود الوقت (يسار)</h3>
+                <p><strong>الهيكل:</strong> قائمة رأسية للفترات الزمنية بفواصل 15 دقيقة</p>
+                <p><strong>التنسيق:</strong> يعرض الوقت بتنسيق 12 ساعة (مثال: "02:00 م"، "02:15 م")</p>
+                <p><strong>النطاق:</strong> يغطي ساعات العمل (عادة من 2:00 م إلى 10:45 م)</p>
+                <p><strong>الغرض:</strong> يوفر مرجعًا زمنيًا لكل فترة موعد</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-event-line"></i>
+                </div>
+                <h3>عمود المواعيد (يمين)</h3>
+                <p><strong>الهيكل:</strong> بطاقات المواعيد المقابلة أو الفترات المتاحة لكل وقت</p>
+                <p><strong>المواعيد المحجوزة:</strong> تعرض كبطاقات ملونة مع:</p>
+                <ul>
+                    <li>اسم المريض</li>
+                    <li>اسم الطبيب</li>
+                    <li>نوع الزيارة (جديد، متابعة، إجراء)</li>
+                    <li>النطاق الزمني (البداية - النهاية)</li>
+                    <li>شريط التقدم (للمواعيد النشطة)</li>
+                    <li>أزرار الإجراءات (عرض، تحرير، حذف)</li>
+                    <li>معاينة الملاحظات</li>
+                </ul>
+                <p><strong>الفترات المتاحة:</strong> تعرض كمربعات خضراء متقطعة مع "+ متاح - [الوقت]" وقابلة للنقر لإضافة
+                    موعد</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-line"></i>
+                </div>
+                <h3>عرض التاريخ</h3>
+                <p><strong>الموقع:</strong> رأس البطاقة فوق التقويم</p>
+                <p><strong>التنسيق:</strong> "اليوم، الشهر اليوم، السنة" (مثال: "الأحد، 14 ديسمبر 2025")</p>
+                <p><strong>التحديث:</strong> يتغير تلقائيًا عند التنقل بين التواريخ</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-pulse-line"></i>
+                </div>
+                <h3>مؤشر الحالة المباشرة</h3>
+                <p><strong>الموقع:</strong> أعلى يمين بطاقة التقويم</p>
+                <p><strong>المكونات:</strong></p>
+                <ul>
+                    <li><strong>شارة "مباشر":</strong> شارة خضراء تشير إلى التحديثات في الوقت الفعلي</li>
+                    <li><strong>آخر تحديث:</strong> طابع زمني يظهر وقت آخر تحديث (مثال: "آخر تحديث: 02:34:40 م")</li>
+                </ul>
+                <p><strong>تردد التحديث:</strong> يتم التحديث كل 60 ثانية عند تمكين التحديث التلقائي</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- كيفية إضافة موعد -->
+    <section class="content-section" id="add-appointment">
+        <div class="section-header">
+            <h2><i class="ri-add-circle-line"></i> كيفية إضافة موعد</h2>
+            <p class="section-description">تتضمن عملية إنشاء الموعد اختيار المريض، واختيار التاريخ/الوقت، وتكوين تفاصيل
+                الموعد.</p>
+        </div>
+
+        <!-- صورة نافذة إضافة موعد -->
+        <div class="doctors-calendar-add-modal-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="doctors-calendar-add-modal-demo-thumbnail" id="doctors-calendar-add-modal-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/doctors-calendar-add-modal-dark.png"
+                    alt="عرض توضيحي لنافذة إضافة موعد" class="doctors-calendar-add-modal-demo-dark" />
+                <img src="/docs/opth/public/assets/images/doctors-calendar-add-modal-light.png"
+                    alt="عرض توضيحي لنافذة إضافة موعد - السمة الفاتحة" class="doctors-calendar-add-modal-demo-light"
+                    style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>انقر لعرض الحجم الكامل</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> عرض توضيحي مرئي لنافذة إضافة الموعد
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-search-line"></i>
+                </div>
+                <h3>الخطوة 1: اختيار المريض</h3>
+                <p><strong>حقل بحث المريض:</strong> اكتب اسم المريض أو رقم الهاتف</p>
+                <p><strong>الإكمال التلقائي:</strong> أثناء الكتابة (حد أدنى حرفين)، يبحث النظام ويعرض المرضى المطابقين
+                </p>
+                <p><strong>نتائج البحث:</strong> انقر على مريض من النتائج لاختياره</p>
+                <p><strong>نقطة نهاية API:</strong> <code>/api/patients/search?q={query}</code></p>
+                <p><strong>جافا سكريبت:</strong> <code>searchPatients()</code> مع تأخير 300 مللي ثانية</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-line"></i>
+                </div>
+                <h3>الخطوة 2: اختيار التاريخ</h3>
+                <p><strong>حقل التاريخ:</strong> معبأ مسبقًا بتاريخ التقويم الحالي</p>
+                <p><strong>التحقق:</strong> لا يمكن اختيار تواريخ قبل اليوم (توقيت مصر)</p>
+                <p><strong>تحميل الفترة الزمنية:</strong> تغيير التاريخ يقوم تلقائيًا بتحميل الفترات الزمنية المتاحة
+                    لذلك التاريخ</p>
+                <p><strong>جافا سكريبت:</strong> <code>loadAvailableTimeSlots()</code> يتم تشغيله عند تغيير التاريخ</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-time-line"></i>
+                </div>
+                <h3>الخطوة 3: اختيار الفترة الزمنية</h3>
+                <p><strong>قائمة الوقت المنسدلة:</strong> قائمة مخصصة تظهر الفترات الزمنية المتاحة</p>
+                <p><strong>مصدر البيانات:</strong> تم جلبها من <code>/api/calendar?doctor_id={id}&date={date}</code></p>
+                <p><strong>التنسيق:</strong> فواصل 15 دقيقة (مثال: "02:00 م"، "02:15 م")</p>
+                <p><strong>إضافة سريعة:</strong> النقر فوق فترات "+ متاح" في التقويم يفتح النافذة مع تحديد ذلك الوقت
+                    مسبقًا</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-list-line"></i>
+                </div>
+                <h3>الخطوة 4: ملء تفاصيل الموعد</h3>
+                <p><strong>نوع الزيارة:</strong> اختر من القائمة المنسدلة (مريض جديد، متابعة، إجراء)</p>
+                <p><strong>المصدر:</strong> اختر مصدر الحجز (زيارة شخصية، هاتف)</p>
+                <p><strong>الملاحظات:</strong> مساحة نصية اختيارية لملاحظات الموعد الإضافية</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-save-line"></i>
+                </div>
+                <h3>الخطوة 5: حفظ الموعد</h3>
+                <p><strong>إرسال:</strong> انقر فوق زر "حفظ الموعد"</p>
+                <p><strong>التحقق:</strong> يتحقق النموذج من الحقول المطلوبة (المريض، التاريخ، الوقت، نوع الزيارة)</p>
+                <p><strong>استدعاء API:</strong> إرسال POST إلى <code>/api/appointments</code> مع بيانات الموعد</p>
+                <p><strong>النجاح:</strong> تغلق النافذة، ويتم تحديث التقويم، ويظهر إشعار نجاح</p>
+                <p><strong>جافا سكريبت:</strong> <code>handleAddAppointment(e)</code> يعالج إرسال النموذج</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- الإكمال التلقائي لاسم المريض -->
+    <section class="content-section" id="autocomplete">
+        <div class="section-header">
+            <h2><i class="ri-search-line"></i> الإكمال التلقائي لاسم المريض</h2>
+            <p class="section-description">يوفر حقل بحث المريض وظيفة الإكمال التلقائي في الوقت الفعلي للعثور على المرضى
+                واختيارهم بسرعة.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-keyboard-line"></i>
+                </div>
+                <h3>كيف يعمل</h3>
+                <p><strong>المشغل:</strong> يكتب المستخدم في حقل بحث المريض</p>
+                <p><strong>الحد الأدنى من الأحرف:</strong> يبدأ البحث بعد كتابة حرفين</p>
+                <p><strong>التأخير:</strong> تأخير 300 مللي ثانية يمنع الاستدعاءات المفرطة لـ API أثناء الكتابة</p>
+                <p><strong>جافا سكريبت:</strong>
+                    <code>document.getElementById('patientSearch').addEventListener('input', debounce(searchPatients, 300))</code>
+                </p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-server-line"></i>
+                </div>
+                <h3>البحث الخلفي</h3>
+                <p><strong>نقطة نهاية API:</strong> <code>GET /api/patients/search?q={query}</code></p>
+                <p><strong>حقول البحث:</strong> يبحث في الاسم الأول للمريض واسم العائلة ورقم الهاتف</p>
+                <p><strong>الاستجابة:</strong> يعيد مصفوفة من المرضى المطابقين مع:</p>
+                <ul>
+                    <li>معرف المريض</li>
+                    <li>الاسم الأول واسم العائلة</li>
+                    <li>رقم الهاتف</li>
+                    <li>العمر (إذا كان متاحًا)</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-list-check"></i>
+                </div>
+                <h3>عرض النتائج</h3>
+                <p><strong>الحاوية:</strong> <code>#patientSearchResults</code> div أسفل حقل البحث</p>
+                <p><strong>التنسيق:</strong> تظهر كل نتيجة:</p>
+                <ul>
+                    <li>اسم المريض الكامل (غامق)</li>
+                    <li>رقم الهاتف والعمر (نص أصغر)</li>
+                </ul>
+                <p><strong>الاختيار:</strong> النقر على نتيجة يستدعي <code>selectPatient(patientId, patientName)</code>
+                    الذي:</p>
+                <ul>
+                    <li>يحدد الحقل المخفي <code>#selectedPatientId</code></li>
+                    <li>يملأ حقل البحث باسم المريض</li>
+                    <li>يمسح نتائج البحث</li>
+                </ul>
+                <p><strong>جافا سكريبت:</strong> <code>displayPatientSearchResults(patients)</code> يعرض النتائج</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-error-warning-line"></i>
+                </div>
+                <h3>حالة فارغة</h3>
+                <p><strong>لا توجد نتائج:</strong> يعرض رسالة "لم يتم العثور على مرضى"</p>
+                <p><strong>أقل من حرفين:</strong> يتم مسح حاوية نتائج البحث</p>
+                <p><strong>مريض محدد مسبقًا:</strong> يتم تعطيل البحث إذا تم تحديد المريض مسبقًا (من معلمة URL)</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- إضافة مريض جديد -->
+    <section class="content-section" id="add-new-patient">
+        <div class="section-header">
+            <h2><i class="ri-user-add-line"></i> إضافة مريض جديد من نافذة الموعد</h2>
+            <p class="section-description">يسمح النظام بإضافة مرضى جدد مباشرة من نافذة إنشاء الموعد، مع الاختيار
+                التلقائي في نموذج الموعد.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-add-line"></i>
+                </div>
+                <h3>الوصول إلى إضافة مريض</h3>
+                <p><strong>موقع الزر:</strong> بجوار حقل بحث المريض (زر أيقونة شخص زائد)</p>
+                <p><strong>معرف الزر:</strong> <code>#newPatientBtn</code></p>
+                <p><strong>السلوك:</strong> النقر على الزر:</p>
+                <ul>
+                    <li>يغلق نافذة "إضافة موعد" الحالية</li>
+                    <li>يفتح نافذة "إضافة مريض جديد" بعد تأخير 300 مللي ثانية</li>
+                </ul>
+                <p><strong>جافا سكريبت:</strong> مستمع الحدث عند النقر على <code>#newPatientBtn</code></p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-edit-line"></i>
+                </div>
+                <h3>حقول نموذج المريض</h3>
+                <p><strong>الحقول المطلوبة:</strong></p>
+                <ul>
+                    <li>الاسم الأول</li>
+                    <li>اسم العائلة</li>
+                    <li>رقم الهاتف</li>
+                    <li>الجنس (ذكر/أنثى)</li>
+                </ul>
+                <p><strong>الحقول الاختيارية:</strong></p>
+                <ul>
+                    <li>العمر (بالسنوات) - يحسب تاريخ الميلاد تلقائيًا إذا تم توفيره</li>
+                    <li>تاريخ الميلاد - بديل للعمر</li>
+                    <li>العنوان</li>
+                </ul>
+                <p><strong>اختصار لوحة المفاتيح:</strong> Ctrl+S لإرسال النموذج</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-save-line"></i>
+                </div>
+                <h3>إرسال نموذج المريض</h3>
+                <p><strong>نقطة نهاية API:</strong> <code>POST /api/patients</code></p>
+                <p><strong>تنسيق الطلب:</strong> FormData مع معلومات المريض</p>
+                <p><strong>الاستجابة:</strong> يعيد كائن المريض الذي تم إنشاؤه مع المعرف</p>
+                <p><strong>جافا سكريبت:</strong> <code>submitPatientForm()</code> يعالج الإرسال</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-checkbox-circle-line"></i>
+                </div>
+                <h3>عملية الاختيار التلقائي</h3>
+                <p><strong>بعد إنشاء المريض:</strong></p>
+                <ol>
+                    <li>تغلق نافذة المريض بعد 1.5 ثانية</li>
+                    <li>يعاد فتح نافذة الموعد بعد 300 مللي ثانية</li>
+                    <li>يتم استدعاء <code>selectNewPatient(patientData)</code> مع بيانات المريض الجديد</li>
+                    <li>يتم ملء حقل بحث المريض بالاسم الكامل</li>
+                    <li>يتم تعيين معرف المريض في الحقل المخفي</li>
+                    <li>تظهر رسالة نجاح "تمت إضافة مريض جديد" مع معلومات المريض</li>
+                    <li>يتم تعيين نوع الزيارة تلقائيًا إلى "جديد"</li>
+                </ol>
+                <p><strong>وظيفة جافا سكريبت:</strong> <code>selectNewPatient(patientData)</code> في
+                    <code>calendar.js</code></p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-refresh-line"></i>
+                </div>
+                <h3>تحديث البحث</h3>
+                <p><strong>تحديث تلقائي:</strong> بعد الاختيار التلقائي، يتم تحديث بحث المريض بعد ثانية واحدة للتأكد من
+                    ظهور المريض الجديد في نتائج البحث</p>
+                <p><strong>الغرض:</strong> يتحقق من أن المريض قد أضيف بنجاح إلى قاعدة البيانات</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-error-warning-line"></i>
+                </div>
+                <h3>معالجة الأخطاء</h3>
+                <p><strong>أخطاء التحقق:</strong> يظهر التحقق من صحة النموذج رسائل خطأ خاصة بالحقل</p>
+                <p><strong>أخطاء الخادم:</strong> تظهر رسالة الخطأ في تنبيه النافذة</p>
+                <p><strong>فشل الاختيار التلقائي:</strong> إذا كانت بيانات المريض غير صالحة، يظهر إشعار تحذير ويجب على
+                    المستخدم البحث يدويًا</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- التنفيذ التقني -->
+    <section class="content-section" id="technical">
+        <div class="section-header">
+            <h2><i class="ri-code-s-slash-line"></i> التنفيذ التقني</h2>
+            <p class="section-description">وظائف جافا سكريبت الرئيسية ونقاط نهاية API التي تشغل وظائف التقويم.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-code-line"></i>
+                </div>
+                <h3>وظائف جافا سكريبت الرئيسية</h3>
+                <ul>
+                    <li><code>loadCalendar()</code> - تحميل بيانات التقويم للتاريخ الحالي</li>
+                    <li><code>openAddAppointmentModal()</code> - يفتح نافذة إنشاء الموعد</li>
+                    <li><code>searchPatients()</code> - يبحث عن المرضى مع الإكمال التلقائي</li>
+                    <li><code>selectPatient()</code> - يختار المريض من نتائج البحث</li>
+                    <li><code>loadAvailableTimeSlots()</code> - يحمل الفترات الزمنية المتاحة للتاريخ</li>
+                    <li><code>handleAddAppointment()</code> - يعالج إرسال نموذج الموعد</li>
+                    <li><code>selectNewPatient()</code> - يختار المريض المضاف حديثًا تلقائيًا</li>
+                    <li><code>quickAddAppointment()</code> - إضافة سريعة من النقر على الفترة المتاحة</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-server-line"></i>
+                </div>
+                <h3>نقاط نهاية API</h3>
+                <ul>
+                    <li><code>GET /api/calendar?doctor_id={id}&date={date}</code> - الحصول على بيانات التقويم</li>
+                    <li><code>GET /api/patients/search?q={query}</code> - البحث عن المرضى</li>
+                    <li><code>POST /api/patients</code> - إنشاء مريض جديد</li>
+                    <li><code>POST /api/appointments</code> - إنشاء موعد</li>
+                    <li><code>GET /api/appointments/{id}</code> - الحصول على تفاصيل الموعد</li>
+                    <li><code>PUT /api/appointments/{id}</code> - تحديث الموعد</li>
+                    <li><code>DELETE /api/appointments/{id}</code> - حذف الموعد</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-time-line"></i>
+                </div>
+                <h3>آلية التحديث التلقائي</h3>
+                <p><strong>الفاصل الزمني:</strong> 60 ثانية (60000 مللي ثانية)</p>
+                <p><strong>الوظيفة:</strong> <code>setInterval()</code> يستدعي <code>refreshCalendarData()</code></p>
+                <p><strong>الشرط:</strong> يتم التحديث فقط إذا لم تكن هناك نوافذ مفتوحة</p>
+                <p><strong>التحقق:</strong> يتحقق من حالة النافذة قبل التحديث لمنع فقدان البيانات</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-database-line"></i>
+                </div>
+                <h3>تدفق البيانات</h3>
+                <ol>
+                    <li>يفتح المستخدم صفحة التقويم</li>
+                    <li><code>loadCalendar()</code> يجلب المواعيد للتاريخ الحالي</li>
+                    <li>يعرض التقويم المواعيد والفترات المتاحة</li>
+                    <li>ينقر المستخدم فوق "إضافة موعد" أو فترة متاحة</li>
+                    <li>تفتح النافذة مع ملء التاريخ مسبقًا</li>
+                    <li>يبحث المستخدم/يختار مريضًا أو يضيف مريضًا جديدًا</li>
+                    <li>يتم تحميل الفترات الزمنية بناءً على التاريخ المحدد</li>
+                    <li>تم إرسال النموذج، تم إنشاء الموعد</li>
+                    <li>يتم تحديث التقويم لعرض الموعد الجديد</li>
+                </ol>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Image Modals -->
+<div id="doctors-calendar-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-doctors-calendar-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/doctors-calendar-dark.png" alt="تقويم الطبيب Demo - Full Size"
+            class="doctors-calendar-demo-dark" />
+        <img src="/docs/opth/public/assets/images/doctors-calendar-light.png"
+            alt="تقويم الطبيب Demo - Light Theme - Full Size" class="doctors-calendar-demo-light"
+            style="display: none;" />
+    </div>
+</div>
+
+<div id="doctors-calendar-structure-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-doctors-calendar-structure-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/doctors-calendar-structure-dark.png"
+            alt="تقويم Structure Demo - Full Size" class="doctors-calendar-structure-demo-dark" />
+        <img src="/docs/opth/public/assets/images/doctors-calendar-structure-light.png"
+            alt="تقويم Structure Demo - Light Theme - Full Size" class="doctors-calendar-structure-demo-light"
+            style="display: none;" />
+    </div>
+</div>
+
+<div id="doctors-calendar-add-modal-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-doctors-calendar-add-modal-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/doctors-calendar-add-modal-dark.png"
+            alt="Add Appointment Modal Demo - Full Size" class="doctors-calendar-add-modal-demo-dark" />
+        <img src="/docs/opth/public/assets/images/doctors-calendar-add-modal-light.png"
+            alt="Add Appointment Modal Demo - Light Theme - Full Size" class="doctors-calendar-add-modal-demo-light"
+            style="display: none;" />
+    </div>
+</div>

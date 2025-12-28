@@ -1,0 +1,452 @@
+<div class="getting-started-content" dir="rtl">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">دور الطبيب</h1>
+            <p class="hero-subtitle">وصول طبي شامل لرعاية المرضى والعمليات السريرية</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">وصول طبي</span>
+                <span class="badge badge-secondary">رعاية كاملة</span>
+                <span class="badge badge-success">عمليات سريرية</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-user-heart-line"></i> نظرة عامة على الدور</h2>
+            <p class="section-description">دور الطبيب هو الدور الطبي الأساسي في النظام، ويوفر وصولاً شاملاً لجميع وظائف رعاية المرضى، السجلات الطبية، الوصفات، وأدوات الإدارة السريرية.</p>
+        </div>
+
+        <div class="info-box">
+            <i class="ri-information-line"></i>
+            <div>
+                <strong>مستوى الوصول:</strong> وصول طبي وسريري كامل
+                <br><strong>المسؤوليات الرئيسية:</strong> رعاية المرضى، الاستشارات الطبية، الوصفات، التوثيق السريري
+                <br><strong>القيود:</strong> لا يمكن إدارة مستخدمي النظام أو الإعدادات العامة للنظام
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Features -->
+    <section class="content-section" id="features">
+        <div class="section-header">
+            <h2><i class="ri-star-line"></i> الميزات والقدرات الرئيسية</h2>
+            <p class="section-description">ميزات شاملة متاحة للأطباء لإدارة رعاية المرضى والعمليات السريرية.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-dashboard-3-line"></i>
+                </div>
+                <h3>لوحة التحكم</h3>
+                <p>لوحة تحكم تفاعلية مع إحصائيات مباشرة ووصول سريع للمعلومات المهمة.</p>
+                <ul>
+                    <li>نظرة عامة على مواعيد اليوم</li>
+                    <li>إحصائيات المرضى</li>
+                    <li>الاستشارات الأخيرة</li>
+                    <li>أزرار الإجراءات السريعة</li>
+                    <li>تحديث تلقائي كل 30 ثانية</li>
+                </ul>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>المسار</span>
+                    </div>
+                    <pre><code>/doctor/dashboard</code></pre>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-2-line"></i>
+                </div>
+                <h3>التقويم والمنظم</h3>
+                <p>تقويم مواعيد تفاعلي مع تحديثات مباشرة وعرض منظم يومي.</p>
+                <ul>
+                    <li>واجهة تقويم تفاعلية</li>
+                    <li>تحديث تلقائي كل 60 ثانية</li>
+                    <li>فترات زمنية مدتها 15 دقيقة</li>
+                    <li>ساعات العمل: 2:00 مساءً - 11:00 مساءً</li>
+                    <li>دعم إغلاق يوم الجمعة</li>
+                    <li>إدارة جدول لكل طبيب</li>
+                    <li>عرض المنظم اليومي (للجوال)</li>
+                </ul>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>المسارات</span>
+                    </div>
+                    <pre><code>/doctor/calendar
+/doctor/organizer</code></pre>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-line"></i>
+                </div>
+                <h3>إدارة المرضى</h3>
+                <p>نظام إدارة مرضى كامل مع التاريخ الطبي ومرفقات الملفات.</p>
+                <ul>
+                    <li>عرض قائمة المرضى مع البحث</li>
+                    <li>الوصول إلى السجلات الطبية الكاملة</li>
+                    <li>عرض الخط الزمني للمريض</li>
+                    <li>تحرير معلومات المريض</li>
+                    <li>إرفاق الملفات والصور</li>
+                    <li>عرض تاريخ الاستشارات</li>
+                </ul>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>المسارات</span>
+                    </div>
+                    <pre><code>/doctor/patients
+/doctor/patients/{id}
+/doctor/patients/{id}/edit</code></pre>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-text-line"></i>
+                </div>
+                <h3>الاستشارات والفحوصات</h3>
+                <p>إنشاء وإدارة الاستشارات الطبية مع سجلات فحوصات مفصلة.</p>
+                <ul>
+                    <li>إنشاء استشارات جديدة</li>
+                    <li>تحرير الاستشارات الموجودة</li>
+                    <li>تسجيل نتائج الفحص</li>
+                    <li>إضافة التشخيص وخطة العلاج</li>
+                    <li>عرض تاريخ الاستشارات</li>
+                    <li>ربط الاستشارات بالمواعيد</li>
+                </ul>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>المسارات</span>
+                    </div>
+                    <pre><code>/doctor/appointments/{id}
+/doctor/appointments/{id}/edit
+/doctor/appointments/{id}/edit/new</code></pre>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-medicine-bottle-line"></i>
+                </div>
+                <h3>إدارة الوصفات الطبية</h3>
+                <p>إنشاء وإدارة الوصفات الطبية بما في ذلك الأدوية ووصفات النظارات.</p>
+                <ul>
+                    <li>الوصفات الطبية (الأدوية)</li>
+                    <li>وصفات النظارات مع القياسات</li>
+                    <li>طلبات الفحوصات المخبرية</li>
+                    <li>طباعة الوصفات (تصميم RTL)</li>
+                    <li>تاريخ الوصفات</li>
+                </ul>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>المسارات</span>
+                    </div>
+                    <pre><code>/doctor/medications
+/doctor/glasses</code></pre>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-archive-line"></i>
+                </div>
+                <h3>المخزن الطبي</h3>
+                <p>الوصول إلى المخزن الطبي بما في ذلك الوصفات وملفات وسائط المرضى.</p>
+                <ul>
+                    <li>أرشيف الوصفات الطبية</li>
+                    <li>أرشيف وصفات النظارات</li>
+                    <li>ملفات وسائط المرضى (صور، مستندات)</li>
+                    <li>قدرات البحث والتصفية</li>
+                </ul>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>المسارات</span>
+                    </div>
+                    <pre><code>/doctor/medications
+/doctor/glasses
+/doctor/media</code></pre>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-money-dollar-circle-line"></i>
+                </div>
+                <h3>الإدارة المالية</h3>
+                <p>عرض وإدارة المعلومات المالية المتعلقة بمدفوعات المرضى وإيرادات العيادة.</p>
+                <ul>
+                    <li>عرض تاريخ المدفوعات</li>
+                    <li>التقارير المالية</li>
+                    <li>إحصائيات الإيرادات</li>
+                    <li>تفاصيل المدفوعات</li>
+                </ul>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>المسار</span>
+                    </div>
+                    <pre><code>/doctor/payments</code></pre>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-bar-chart-box-line"></i>
+                </div>
+                <h3>التقارير والإحصائيات</h3>
+                <p>نظام تقارير شامل مع إحصائيات سريرية وقدرات تصدير البيانات.</p>
+                <ul>
+                    <li>التقارير السريرية</li>
+                    <li>إحصائيات المرضى</li>
+                    <li>إحصائيات المواعيد</li>
+                    <li>تصدير إلى CSV</li>
+                    <li>نطاقات تاريخ مخصصة</li>
+                </ul>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>المسار</span>
+                    </div>
+                    <pre><code>/doctor/reports
+/doctor/reports/export</code></pre>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-bell-line"></i>
+                </div>
+                <h3>نظام التنبيهات</h3>
+                <p>نظام تنبيهات طبية للإشعارات والتذكيرات المهمة للمرضى.</p>
+                <ul>
+                    <li>عرض التنبيهات النشطة</li>
+                    <li>تنبيهات اليوم</li>
+                    <li>تنبيهات خاصة بالمريض</li>
+                    <li>إلغاء التنبيهات</li>
+                    <li>إدارة التنبيهات</li>
+                </ul>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>المسار</span>
+                    </div>
+                    <pre><code>/doctor/alerts</code></pre>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-sticky-note-line"></i>
+                </div>
+                <h3>الملاحظات والمنتدى</h3>
+                <p>نظام ملاحظات شخصي ومنتدى مناقشات طبية للتعاون.</p>
+                <ul>
+                    <li>إدارة الملاحظات الشخصية</li>
+                    <li>منتدى المناقشات الطبية</li>
+                    <li>إنشاء والمشاركة في المواضيع</li>
+                    <li>البحث في مواضيع المنتدى</li>
+                </ul>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>المسارات</span>
+                    </div>
+                    <pre><code>/doctor/notes
+/doctor/forum</code></pre>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-capsule-line"></i>
+                </div>
+                <h3>قاعدة بيانات الأدوية</h3>
+                <p>الوصول إلى قاعدة بيانات أدوية شاملة لإدارة الوصفات.</p>
+                <ul>
+                    <li>البحث في قاعدة بيانات الأدوية</li>
+                    <li>عرض معلومات الدواء</li>
+                    <li>تفاصيل الأدوية والجرعات</li>
+                </ul>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>المسار</span>
+                    </div>
+                    <pre><code>/doctor/drugs</code></pre>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-check-line"></i>
+                </div>
+                <h3>إغلاق اليوم</h3>
+                <p>وظيفة إغلاق اليومية لإنهاء يوم العمل وإقفال الحسابات.</p>
+                <ul>
+                    <li>إغلاق العمليات اليومية</li>
+                    <li>الإغلاق المالي</li>
+                    <li>ملخص يومي</li>
+                </ul>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>المسار</span>
+                    </div>
+                    <pre><code>/doctor/daily-closure</code></pre>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-settings-3-line"></i>
+                </div>
+                <h3>الملف الشخصي والإعدادات</h3>
+                <p>إدارة الملف الشخصي وتكوين الإعدادات.</p>
+                <ul>
+                    <li>تحديث معلومات الملف الشخصي</li>
+                    <li>تغيير كلمة المرور</li>
+                    <li>الإعدادات الشخصية</li>
+                    <li>تفضيلات لوحة التحكم</li>
+                    <li>إعدادات الملاحظات</li>
+                </ul>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>المسارات</span>
+                    </div>
+                    <pre><code>/doctor/profile
+/doctor/settings</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Detailed Workflows -->
+    <section class="content-section" id="workflows">
+        <div class="section-header">
+            <h2><i class="ri-flow-chart"></i> سير العمل الشائعة</h2>
+            <p class="section-description">سير العمل والعمليات النموذجية للأطباء في النظام.</p>
+        </div>
+
+        <div class="steps-container">
+            <div class="step-item">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>عرض مواعيد اليوم</h3>
+                    <p>الوصول إلى التقويم لعرض مواعيد اليوم والجدول القادم.</p>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>التنقل</span>
+                        </div>
+                        <pre><code>لوحة التحكم → التقويم
+أو
+/doctor/calendar</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>الوصول إلى سجل المريض</h3>
+                    <p>عرض معلومات المريض، التاريخ الطبي، والاستشارات السابقة.</p>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>التنقل</span>
+                        </div>
+                        <pre><code>المرضى → اختيار المريض
+أو
+/doctor/patients/{id}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>إنشاء استشارة</h3>
+                    <p>تسجيل نتائج الفحص، التشخيص، وخطة العلاج للمريض.</p>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>التنقل</span>
+                        </div>
+                        <pre><code>الموعد → تحرير الاستشارة
+أو
+/doctor/appointments/{id}/edit</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h3>إنشاء وصفة طبية</h3>
+                    <p>إنشاء وصفة طبية (أدوية أو نظارات) بناءً على الاستشارة.</p>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>التنقل</span>
+                        </div>
+                        <pre><code>المخزن الطبي → الأدوية/النظارات
+أو
+/doctor/medications
+/doctor/glasses</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <h3>مراجعة التقارير</h3>
+                    <p>الوصول إلى التقارير السريرية والإحصائيات للتحليل واتخاذ القرارات.</p>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>التنقل</span>
+                        </div>
+                        <pre><code>التقارير → اختيار نوع التقرير
+أو
+/doctor/reports</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Permissions -->
+    <section class="content-section" id="permissions">
+        <div class="section-header">
+            <h2><i class="ri-shield-check-line"></i> الصلاحيات والوصول</h2>
+            <p class="section-description">صلاحيات ومستويات وصول مفصلة لدور الطبيب.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <h4>وصول كامل</h4>
+                <ul>
+                    <li>جميع سجلات المرضى والتاريخ الطبي</li>
+                    <li>إنشاء وتحرير الاستشارات</li>
+                    <li>إنشاء الوصفات (أدوية ونظارات)</li>
+                    <li>عرض المعلومات المالية</li>
+                    <li>التقارير والإحصائيات السريرية</li>
+                    <li>نظام التنبيهات الطبية</li>
+                    <li>الملاحظات الشخصية والمنتدى</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h4>عرض فقط</h4>
+                <ul>
+                    <li>إحصائيات النظام العامة (محدودة)</li>
+                    <li>جداول الأطباء الآخرين (عرض فقط)</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h4>مقيد</h4>
+                <ul>
+                    <li>إدارة المستخدمين (لا يوجد وصول)</li>
+                    <li>إعدادات النظام (شخصية فقط)</li>
+                    <li>النسخ الاحتياطي والاستعادة (لا يوجد وصول)</li>
+                    <li>تكوين النظام العام (لا يوجد وصول)</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</div>

@@ -1,0 +1,319 @@
+<div class="getting-started-content">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Recent Activities</h1>
+            <p class="hero-subtitle">Track System Events and User Actions</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">Activities</span>
+                <span class="badge badge-secondary">Timeline</span>
+                <span class="badge badge-success">History</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-time-line"></i> Recent Activities Overview</h2>
+            <p class="section-description">The Recent Activities component displays a chronological timeline of system events and user actions, providing doctors with a comprehensive view of recent activities in the clinic management system. It tracks appointments, prescriptions, patient records, and other important events.</p>
+        </div>
+
+        <!-- Recent Activities Demo Image -->
+        <div class="recent-activities-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="recent-activities-demo-thumbnail" id="recent-activities-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/recent-activities-dark.png" alt="Recent Activities Demo" class="recent-activities-demo-dark" />
+                <img src="/docs/opth/public/assets/images/recent-activities-light.png" alt="Recent Activities Demo - Light Theme" class="recent-activities-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>Click to view full size</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> Visual demonstration of the Recent Activities interface
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-history-line"></i>
+                </div>
+                <h3>Activity Timeline</h3>
+                <p>Displays activities in chronological order with visual timeline indicators, showing the most recent events first.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-line"></i>
+                </div>
+                <h3>User Attribution</h3>
+                <p>Each activity shows the user who performed the action, making it easy to track who did what and when.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-line"></i>
+                </div>
+                <h3>Appointment Links</h3>
+                <p>Activities related to appointments include "View Appointment" links for quick access to appointment details.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Activity Types -->
+    <section class="content-section" id="activity-types">
+        <div class="section-header">
+            <h2><i class="ri-list-check"></i> Activity Types</h2>
+            <p class="section-description">The system tracks various types of activities and events.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-medicine-bottle-line"></i>
+                </div>
+                <h3>Medication Activities</h3>
+                <p>Track medication-related actions:</p>
+                <ul>
+                    <li>Medication prescription issued</li>
+                    <li>Medication deleted</li>
+                    <li>Medication updated</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-check-line"></i>
+                </div>
+                <h3>Appointment Activities</h3>
+                <p>Monitor appointment-related events:</p>
+                <ul>
+                    <li>Appointment booked</li>
+                    <li>Status changed (Booked → Completed, etc.)</li>
+                    <li>Appointment rescheduled</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-upload-line"></i>
+                </div>
+                <h3>File Activities</h3>
+                <p>Track file and media uploads:</p>
+                <ul>
+                    <li>Files uploaded (images, documents)</li>
+                    <li>Media attached to patient records</li>
+                    <li>File deletions</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-text-line"></i>
+                </div>
+                <h3>Prescription Activities</h3>
+                <p>Monitor prescription-related actions:</p>
+                <ul>
+                    <li>Medical prescriptions issued</li>
+                    <li>Glasses prescriptions created</li>
+                    <li>Prescription modifications</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- View All Modal -->
+    <section class="content-section" id="view-all-modal">
+        <div class="section-header">
+            <h2><i class="ri-window-line"></i> View All Modal</h2>
+            <p class="section-description">The "View All" button opens a comprehensive modal displaying all activities with advanced filtering and pagination capabilities.</p>
+        </div>
+
+        <!-- All Activities Modal Demo Image -->
+        <div class="all-activities-modal-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="all-activities-modal-demo-thumbnail" id="all-activities-modal-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/all-activities-modal-dark.png" alt="All Activities Modal Demo" class="all-activities-modal-demo-dark" />
+                <img src="/docs/opth/public/assets/images/all-activities-modal-light.png" alt="All Activities Modal Demo - Light Theme" class="all-activities-modal-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>Click to view full size</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> Visual demonstration of the All Activities modal interface
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-search-line"></i>
+                </div>
+                <h3>Filter Activities</h3>
+                <p>The modal includes a powerful filter system:</p>
+                <ul>
+                    <li><strong>Search Input:</strong> Filter activities by event summary, patient name, or phone number</li>
+                    <li><strong>Real-Time Filtering:</strong> Filter updates as you type with debouncing for performance</li>
+                    <li><strong>Text Highlighting:</strong> Matching text is highlighted in yellow for easy identification</li>
+                    <li><strong>Clear Filter:</strong> Button to quickly reset the filter and show all activities</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-list-3-line"></i>
+                </div>
+                <h3>Pagination</h3>
+                <p>Activities are paginated for better performance:</p>
+                <ul>
+                    <li><strong>Per Page Selection:</strong> Choose how many activities to display (10, 25, 50, 100 per page)</li>
+                    <li><strong>Page Navigation:</strong> Navigate between pages using pagination controls</li>
+                    <li><strong>Total Count:</strong> Display total number of activities matching the filter</li>
+                    <li><strong>Client-Side Filtering:</strong> All activities are loaded once, then filtered client-side for instant results</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-database-line"></i>
+                </div>
+                <h3>Data Loading</h3>
+                <p>The modal uses efficient data loading:</p>
+                <ul>
+                    <li><strong>Initial Load:</strong> Loads up to 1000 activities when modal opens</li>
+                    <li><strong>Client-Side Processing:</strong> Filtering and pagination happen in the browser for instant response</li>
+                    <li><strong>API Endpoint:</strong> Uses <code>/api/recent-activity</code> endpoint from ApiController</li>
+                    <li><strong>Caching:</strong> Activities are cached in memory during modal session</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="info-box" style="margin-top: 2rem;">
+            <i class="ri-information-line"></i>
+            <div>
+                <strong>Modal Features:</strong>
+                <p>The "View All" modal provides a comprehensive view of all system activities. It includes a search/filter input at the top, pagination controls, and displays activities in a scrollable list. Each activity shows the event description, associated user, timestamp, and relevant action links. The modal uses a glassmorphism design with backdrop blur for a modern appearance.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="content-section" id="how-it-works">
+        <div class="section-header">
+            <h2><i class="ri-settings-3-line"></i> How It Works</h2>
+            <p class="section-description">Recent Activities is powered by the API Controller and uses JavaScript for modal management and client-side filtering.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-database-line"></i>
+                </div>
+                <h3>API Endpoint</h3>
+                <p>The system uses <code>ApiController::getRecentActivity()</code>:</p>
+                <ul>
+                    <li><strong>Endpoint:</strong> <code>/api/recent-activity</code></li>
+                    <li><strong>Authentication:</strong> Requires user authentication</li>
+                    <li><strong>Pagination:</strong> Supports <code>page</code> and <code>per_page</code> parameters</li>
+                    <li><strong>Search:</strong> Supports <code>search</code> parameter for filtering</li>
+                    <li><strong>Data Source:</strong> Queries <code>timeline_events</code> table joined with <code>patients</code> and <code>appointments</code></li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-filter-3-line"></i>
+                </div>
+                <h3>Search and Filter</h3>
+                <p>The API supports server-side filtering:</p>
+                <ul>
+                    <li><strong>Search Fields:</strong> Event summary, patient first name, last name, full name, phone</li>
+                    <li><strong>SQL LIKE:</strong> Uses SQL LIKE queries with wildcards for flexible matching</li>
+                    <li><strong>Client-Side Filter:</strong> Modal also performs client-side filtering for instant results</li>
+                    <li><strong>Debouncing:</strong> Filter input uses debouncing to reduce API calls</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-window-line"></i>
+                </div>
+                <h3>Modal Management</h3>
+                <p>JavaScript handles modal functionality:</p>
+                <ul>
+                    <li><strong>Modal Open:</strong> Loads activities when modal is shown</li>
+                    <li><strong>Data Loading:</strong> Fetches up to 1000 activities on first open</li>
+                    <li><strong>Filter Application:</strong> Applies filter to loaded activities client-side</li>
+                    <li><strong>Pagination:</strong> Handles pagination of filtered results</li>
+                    <li><strong>Text Highlighting:</strong> Highlights matching text in search results</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="content-section" id="features">
+        <div class="section-header">
+            <h2><i class="ri-star-line"></i> Key Features</h2>
+            <p class="section-description">Recent Activities includes several features for comprehensive activity tracking.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-time-line"></i>
+                </div>
+                <h3>Chronological Display</h3>
+                <p>Activities are displayed in reverse chronological order (newest first), making it easy to see the most recent events.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-link-m"></i>
+                </div>
+                <h3>Quick Links</h3>
+                <p>Activities related to appointments include "View Appointment" links that navigate directly to appointment details.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>Theme Support</h3>
+                <p>The component automatically adapts to light and dark themes, ensuring optimal readability in all viewing conditions.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-smartphone-line"></i>
+                </div>
+                <h3>Responsive Design</h3>
+                <p>The modal and activity list are fully responsive, working seamlessly on desktop, tablet, and mobile devices.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Image Modals -->
+<div id="recent-activities-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-recent-activities-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/recent-activities-dark.png" alt="Recent Activities Demo - Full Size" class="recent-activities-demo-dark" />
+        <img src="/docs/opth/public/assets/images/recent-activities-light.png" alt="Recent Activities Demo - Light Theme - Full Size" class="recent-activities-demo-light" style="display: none;" />
+    </div>
+</div>
+
+<div id="all-activities-modal-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-all-activities-modal-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/all-activities-modal-dark.png" alt="All Activities Modal Demo - Full Size" class="all-activities-modal-demo-dark" />
+        <img src="/docs/opth/public/assets/images/all-activities-modal-light.png" alt="All Activities Modal Demo - Light Theme - Full Size" class="all-activities-modal-demo-light" style="display: none;" />
+    </div>
+</div>

@@ -1,0 +1,777 @@
+<div class="getting-started-content">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Financial Management</h1>
+            <p class="hero-subtitle">Complete control over your clinic's finances, expenses, and daily operations with real-time tracking and comprehensive reporting.</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">Payments</span>
+                <span class="badge badge-secondary">Expenses</span>
+                <span class="badge badge-success">Balance</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview Section -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-dashboard-line"></i> Dashboard Overview</h2>
+            <p class="section-description">
+                The Financial Dashboard provides a real-time snapshot of your daily financial status. It tracks all cash flows, including patient payments, expenses, and balance adjustments, giving you complete visibility into your clinic's financial health.
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-wallet-3-line"></i>
+                </div>
+                <h3>Opening Balance</h3>
+                <p>The amount of cash available at the start of the shift/day. This is set when you begin your workday.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-arrow-down-circle-line"></i>
+                </div>
+                <h3>Total Received</h3>
+                <p>Sum of all incoming payments from patient bookings, follow-ups, consultations, procedures, and other services.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-arrow-up-circle-line"></i>
+                </div>
+                <h3>Total Expenses</h3>
+                <p>Total amount paid out for clinic expenses including utilities, medical supplies, salaries, and maintenance.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calculator-line"></i>
+                </div>
+                <h3>Current Balance</h3>
+                <p>Real-time cash on hand calculated as: Opening Balance + Total Received - Total Expenses.</p>
+            </div>
+        </div>
+
+        <div class="info-cards-grid" style="margin-top: 1.5rem;">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-pie-chart-line"></i>
+                </div>
+                <h3>Payment Types Summary</h3>
+                <p>Breakdown by payment type: New Booking, Follow-up, Consultation, Procedure, Other, Withdrawals, and Expenses with counts and totals.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-list-3-line"></i>
+                </div>
+                <h3>Transaction Log</h3>
+                <p>Complete chronological log of all financial transactions with pagination, filtering, and export capabilities.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Managing Balance Section -->
+    <section class="content-section" id="balance">
+        <div class="section-header">
+            <h2><i class="ri-scales-line"></i> Managing Daily Balance</h2>
+            <p class="section-description">
+                The balance management system allows you to track opening cash, add additional funds, and record withdrawals throughout the day.
+            </p>
+        </div>
+
+        <div class="tech-card">
+            <div class="tech-card-header">
+                <div class="tech-card-icon">
+                    <i class="ri-add-circle-line"></i>
+                </div>
+                <h3 class="tech-card-title">Adding Balance</h3>
+            </div>
+            <div class="tech-card-content">
+                <p>Use the <strong>"Add Balance"</strong> button to input opening cash or add funds during the day. The system supports three types of balance entries:</p>
+                
+                <div class="process-flow">
+                    <div class="process-step">
+                        <div class="process-step-number">1</div>
+                        <div class="process-step-content">
+                            <div class="process-step-title">Opening Balance</div>
+                            <div class="process-step-desc">Set the initial cash amount at the start of the day. This is typically done once per day when opening the clinic.</div>
+                        </div>
+                    </div>
+                    <div class="process-step">
+                        <div class="process-step-number">2</div>
+                        <div class="process-step-content">
+                            <div class="process-step-title">Additional Balance</div>
+                            <div class="process-step-desc">Add emergency funds or petty cash top-ups during the day. Useful for replenishing cash when needed.</div>
+                        </div>
+                    </div>
+                    <div class="process-step">
+                        <div class="process-step-number">3</div>
+                        <div class="process-step-content">
+                            <div class="process-step-title">Withdrawals</div>
+                            <div class="process-step-desc">Record cash taken out for bank deposits or other purposes. This reduces the current balance.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box" style="margin-top: 1.5rem;">
+                    <i class="ri-keyboard-line"></i>
+                    <div>
+                        <strong>Keyboard Shortcut:</strong> Press <kbd>B</kbd> on your keyboard to quickly open the Add Balance modal from anywhere on the page.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tracking Expenses Section -->
+    <section class="content-section" id="expenses">
+        <div class="section-header">
+            <h2><i class="ri-hand-coin-line"></i> Tracking Expenses</h2>
+            <p class="section-description">
+                Keep track of every penny spent with categorized expense tracking. The system supports quick expense types and detailed categorization for better reporting.
+            </p>
+        </div>
+
+        <div class="tech-card">
+            <div class="tech-card-header">
+                <div class="tech-card-icon">
+                    <i class="ri-file-add-line"></i>
+                </div>
+                <h3 class="tech-card-title">Recording Expenses</h3>
+            </div>
+            <div class="tech-card-content">
+                <p><strong>Quick Expense Types:</strong> One-click selection for common expenses:</p>
+                <div class="function-list">
+                    <div class="function-item">
+                        <div class="function-name">Water Bill</div>
+                    </div>
+                    <div class="function-item">
+                        <div class="function-name">Electricity Bill</div>
+                    </div>
+                    <div class="function-item">
+                        <div class="function-name">Medical Supplies</div>
+                    </div>
+                    <div class="function-item">
+                        <div class="function-name">Cleaning Expenses</div>
+                    </div>
+                    <div class="function-item">
+                        <div class="function-name">Secretary Salary</div>
+                    </div>
+                    <div class="function-item">
+                        <div class="function-name">Maintenance</div>
+                    </div>
+                    <div class="function-item">
+                        <div class="function-name">Other</div>
+                    </div>
+                </div>
+
+                <p style="margin-top: 1.5rem;"><strong>Expense Categories:</strong> Group expenses into logical categories for better reporting:</p>
+                <ul>
+                    <li><strong>Utilities:</strong> Water, electricity, internet, phone bills</li>
+                    <li><strong>Medical:</strong> Medical supplies, equipment, medications</li>
+                    <li><strong>Maintenance:</strong> Repairs, maintenance, cleaning</li>
+                    <li><strong>Office:</strong> Office supplies, stationery, printing</li>
+                    <li><strong>Salary:</strong> Staff salaries and wages</li>
+                    <li><strong>Other:</strong> Miscellaneous expenses</li>
+                </ul>
+
+                <div class="info-box" style="margin-top: 1.5rem;">
+                    <i class="ri-keyboard-line"></i>
+                    <div>
+                        <strong>Keyboard Shortcut:</strong> Press <kbd>E</kbd> to quickly add a new expense.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Transaction Log & Search Section -->
+    <section class="content-section" id="transactions">
+        <div class="section-header">
+            <h2><i class="ri-file-list-3-line"></i> Transaction Log & Search</h2>
+            <p class="section-description">
+                Every financial action is logged automatically. Review, search, filter, and export your complete transaction history with powerful filtering options.
+            </p>
+        </div>
+
+        <div class="tech-card">
+            <div class="tech-card-header">
+                <div class="tech-card-icon">
+                    <i class="ri-filter-3-line"></i>
+                </div>
+                <h3 class="tech-card-title">Powerful Filters</h3>
+            </div>
+            <div class="tech-card-content">
+                <div class="info-cards-grid">
+                    <div class="info-card">
+                        <div class="info-card-icon">
+                            <i class="ri-calendar-event-line"></i>
+                        </div>
+                        <h3>Date Range</h3>
+                        <p>Filter transactions by specific dates or date ranges. View today's transactions or search historical data.</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-icon">
+                            <i class="ri-exchange-dollar-line"></i>
+                        </div>
+                        <h3>Transaction Type</h3>
+                        <p>View only Payments, Expenses, or Balance adjustments. Or view all transactions together.</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-icon">
+                            <i class="ri-money-dollar-box-line"></i>
+                        </div>
+                        <h3>Amount Range</h3>
+                        <p>Find transactions within a specific value range. Useful for auditing large transactions.</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-icon">
+                            <i class="ri-file-excel-2-line"></i>
+                        </div>
+                        <h3>Export to Excel</h3>
+                        <p>Download your filtered report as an Excel file for accounting, tax preparation, or record keeping.</p>
+                    </div>
+                </div>
+
+                <div class="info-box" style="margin-top: 1.5rem;">
+                    <i class="ri-keyboard-line"></i>
+                    <div>
+                        <strong>Keyboard Shortcut:</strong> Press <kbd>S</kbd> to open the search modal quickly.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Payment Management Section -->
+    <section class="content-section" id="payments">
+        <div class="section-header">
+            <h2><i class="ri-credit-card-line"></i> Payment Management</h2>
+            <p class="section-description">
+                View and manage all patient payments with detailed information, filtering options, and quick actions.
+            </p>
+        </div>
+
+        <div class="tech-card">
+            <div class="tech-card-header">
+                <div class="tech-card-icon">
+                    <i class="ri-list-check"></i>
+                </div>
+                <h3 class="tech-card-title">Today's Payments</h3>
+            </div>
+            <div class="tech-card-content">
+                <p>The payments table displays all payments received today with the following information:</p>
+                <ul>
+                    <li><strong>Date & Time:</strong> When the payment was received</li>
+                    <li><strong>Patient:</strong> Patient name and phone number</li>
+                    <li><strong>Type:</strong> Payment type (New Booking, Follow-up, Consultation, Procedure, Other)</li>
+                    <li><strong>Method:</strong> Payment method (Cash, Card, Transfer, Wallet)</li>
+                    <li><strong>Amount:</strong> Payment amount in EGP</li>
+                    <li><strong>Description:</strong> Additional notes or description</li>
+                </ul>
+
+                <p style="margin-top: 1rem;"><strong>Payment Actions:</strong></p>
+                <div class="function-list">
+                    <div class="function-item">
+                        <div class="function-name">View Details</div>
+                        <div class="function-desc">View complete payment information</div>
+                    </div>
+                    <div class="function-item">
+                        <div class="function-name">Print Receipt</div>
+                        <div class="function-desc">Generate and print payment receipt</div>
+                    </div>
+                    <div class="function-item">
+                        <div class="function-name">Edit Payment</div>
+                        <div class="function-desc">Modify payment amount, type, method, or description</div>
+                    </div>
+                    <div class="function-item">
+                        <div class="function-name">Delete Payment</div>
+                        <div class="function-desc">Remove payment record (with confirmation)</div>
+                    </div>
+                </div>
+
+                <p style="margin-top: 1rem;"><strong>Filtering:</strong> Filter payments by type using the quick filter buttons (All, New Booking, Follow-up, Consultation) or use the search box to find specific payments.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Daily Closure Section -->
+    <section class="content-section" id="closure">
+        <div class="section-header">
+            <h2><i class="ri-lock-2-line"></i> Daily Closure</h2>
+            <p class="section-description">
+                At the end of the shift, perform a "Day Close" to finalize all accounts and generate a comprehensive summary report.
+            </p>
+        </div>
+
+        <div class="tech-card">
+            <div class="tech-card-header">
+                <div class="tech-card-icon">
+                    <i class="ri-check-double-line"></i>
+                </div>
+                <h3 class="tech-card-title">Closing the Day</h3>
+            </div>
+            <div class="tech-card-content">
+                <p>When you're ready to close the day, click the <strong>"Day Close"</strong> button. This action:</p>
+                <ul>
+                    <li>Generates a summary report of the day's performance</li>
+                    <li>Calculates total revenue, expenses, and net cash</li>
+                    <li>Locks the day's transactions to prevent modifications</li>
+                    <li>Creates a permanent record for accounting purposes</li>
+                </ul>
+
+                <div class="info-box" style="margin-top: 1.5rem;">
+                    <i class="ri-information-line"></i>
+                    <div>
+                        <strong>Important:</strong> Once a day is closed, transactions for that day cannot be modified. Make sure all entries are correct before closing.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Implementation -->
+    <section class="content-section" id="technical">
+        <div class="section-header">
+            <h2><i class="ri-code-s-slash-line"></i> Technical Implementation</h2>
+            <p class="section-description">Technical details about the Financial Management implementation, including API endpoints, database structure, JavaScript functions, and workflow algorithms.</p>
+        </div>
+
+        <div class="technical-grid">
+            <!-- API Endpoints -->
+            <div class="tech-card">
+                <div class="tech-card-header">
+                    <div class="tech-card-icon">
+                        <i class="ri-router-line"></i>
+                    </div>
+                    <h3 class="tech-card-title">API Endpoints</h3>
+                </div>
+                <div class="tech-card-content">
+                    <p>The Financial Management system uses several API endpoints for operations:</p>
+                    
+                    <div class="api-endpoint">
+                        <div>
+                            <span class="api-method post">POST</span>
+                            <span class="api-endpoint-path">/api/daily-balance</span>
+                        </div>
+                        <p class="api-endpoint-desc">Create daily balance entry (opening, additional, or withdrawal)</p>
+                        <div class="api-params">
+                            <strong>Parameters:</strong>
+                            <ul>
+                                <li><code>amount</code> - Balance amount (required, decimal)</li>
+                                <li><code>balance_type</code> - Type: opening, additional, withdrawal (required)</li>
+                                <li><code>description</code> - Optional description</li>
+                                <li><code>balance_date</code> - Optional datetime</li>
+                            </ul>
+                            <strong>Returns:</strong> Success status with balance ID
+                        </div>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <div>
+                            <span class="api-method post">POST</span>
+                            <span class="api-endpoint-path">/api/expenses</span>
+                        </div>
+                        <p class="api-endpoint-desc">Create new expense entry</p>
+                        <div class="api-params">
+                            <strong>Parameters:</strong>
+                            <ul>
+                                <li><code>amount</code> - Expense amount (required, decimal)</li>
+                                <li><code>expense_name</code> - Name of expense (required)</li>
+                                <li><code>category</code> - Category: utilities, medical, maintenance, office, salary, other (required)</li>
+                                <li><code>notes</code> - Optional notes</li>
+                                <li><code>expense_date</code> - Optional datetime</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <div>
+                            <span class="api-method get">GET</span>
+                            <span class="api-endpoint-path">/api/financial-transactions</span>
+                        </div>
+                        <p class="api-endpoint-desc">Get paginated financial transactions</p>
+                        <div class="api-params">
+                            <strong>Parameters:</strong>
+                            <ul>
+                                <li><code>page</code> - Page number (default: 1)</li>
+                                <li><code>limit</code> - Items per page (default: 10)</li>
+                                <li><code>date</code> - Filter by date (YYYY-MM-DD)</li>
+                                <li><code>type</code> - Filter by type: all, payment, expense, balance</li>
+                            </ul>
+                            <strong>Returns:</strong> Paginated transactions with running balance
+                        </div>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <div>
+                            <span class="api-method get">GET</span>
+                            <span class="api-endpoint-path">/api/financial-transactions/export</span>
+                        </div>
+                        <p class="api-endpoint-desc">Export transactions to Excel/CSV</p>
+                        <div class="api-params">
+                            <strong>Parameters:</strong> Same as financial-transactions endpoint<br>
+                            <strong>Returns:</strong> Excel/CSV file download
+                        </div>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <div>
+                            <span class="api-method get">GET</span>
+                            <span class="api-endpoint-path">/api/payments/{id}</span>
+                        </div>
+                        <p class="api-endpoint-desc">Get payment details by ID</p>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <div>
+                            <span class="api-method put">PUT</span>
+                            <span class="api-endpoint-path">/api/payments/{id}</span>
+                        </div>
+                        <p class="api-endpoint-desc">Update payment (amount, type, method, description)</p>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <div>
+                            <span class="api-method delete">DELETE</span>
+                            <span class="api-endpoint-path">/api/payments/{id}</span>
+                        </div>
+                        <p class="api-endpoint-desc">Delete payment record</p>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <div>
+                            <span class="api-method get">GET</span>
+                            <span class="api-endpoint-path">/api/expenses/{id}</span>
+                        </div>
+                        <p class="api-endpoint-desc">Get expense details by ID</p>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <div>
+                            <span class="api-method put">PUT</span>
+                            <span class="api-endpoint-path">/api/expenses/{id}</span>
+                        </div>
+                        <p class="api-endpoint-desc">Update expense (amount, name, category, notes)</p>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <div>
+                            <span class="api-method delete">DELETE</span>
+                            <span class="api-endpoint-path">/api/expenses/{id}</span>
+                        </div>
+                        <p class="api-endpoint-desc">Delete expense record</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Database Structure -->
+            <div class="tech-card">
+                <div class="tech-card-header">
+                    <div class="tech-card-icon">
+                        <i class="ri-database-2-line"></i>
+                    </div>
+                    <h3 class="tech-card-title">Database Structure</h3>
+                </div>
+                <div class="tech-card-content">
+                    <div class="db-schema">
+                        <div class="db-table-name">
+                            <i class="ri-table-line"></i>
+                            <span>daily_balances</span>
+                        </div>
+                        <div class="db-columns">
+                            <div class="db-column">
+                                <div class="db-column-name">id</div>
+                                <div class="db-column-type">INTEGER, PRIMARY KEY</div>
+                                <div class="db-column-desc">Unique balance entry identifier</div>
+                            </div>
+                            <div class="db-column">
+                                <div class="db-column-name">amount</div>
+                                <div class="db-column-type">DECIMAL(10,2)</div>
+                                <div class="db-column-desc">Balance amount</div>
+                            </div>
+                            <div class="db-column">
+                                <div class="db-column-name">balance_type</div>
+                                <div class="db-column-type">VARCHAR(20)</div>
+                                <div class="db-column-desc">Type: opening, additional, withdrawal</div>
+                            </div>
+                            <div class="db-column">
+                                <div class="db-column-name">description</div>
+                                <div class="db-column-type">TEXT</div>
+                                <div class="db-column-desc">Optional description</div>
+                            </div>
+                            <div class="db-column">
+                                <div class="db-column-name">created_by</div>
+                                <div class="db-column-type">INTEGER</div>
+                                <div class="db-column-desc">User ID who created the entry</div>
+                            </div>
+                            <div class="db-column">
+                                <div class="db-column-name">created_at</div>
+                                <div class="db-column-type">DATETIME</div>
+                                <div class="db-column-desc">Creation timestamp</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="db-schema" style="margin-top: 1.5rem;">
+                        <div class="db-table-name">
+                            <i class="ri-table-line"></i>
+                            <span>expenses</span>
+                        </div>
+                        <div class="db-columns">
+                            <div class="db-column">
+                                <div class="db-column-name">id</div>
+                                <div class="db-column-type">INTEGER, PRIMARY KEY</div>
+                                <div class="db-column-desc">Unique expense identifier</div>
+                            </div>
+                            <div class="db-column">
+                                <div class="db-column-name">amount</div>
+                                <div class="db-column-type">DECIMAL(10,2)</div>
+                                <div class="db-column-desc">Expense amount</div>
+                            </div>
+                            <div class="db-column">
+                                <div class="db-column-name">expense_name</div>
+                                <div class="db-column-type">VARCHAR(255)</div>
+                                <div class="db-column-desc">Name of the expense</div>
+                            </div>
+                            <div class="db-column">
+                                <div class="db-column-name">category</div>
+                                <div class="db-column-type">VARCHAR(50)</div>
+                                <div class="db-column-desc">Category: utilities, medical, maintenance, office, salary, other</div>
+                            </div>
+                            <div class="db-column">
+                                <div class="db-column-name">notes</div>
+                                <div class="db-column-type">TEXT</div>
+                                <div class="db-column-desc">Additional notes</div>
+                            </div>
+                            <div class="db-column">
+                                <div class="db-column-name">created_by</div>
+                                <div class="db-column-type">INTEGER</div>
+                                <div class="db-column-desc">User ID who created the expense</div>
+                            </div>
+                            <div class="db-column">
+                                <div class="db-column-name">created_at</div>
+                                <div class="db-column-type">DATETIME</div>
+                                <div class="db-column-desc">Creation timestamp</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p style="margin-top: 1.5rem;"><strong>Related Tables:</strong></p>
+                    <ul>
+                        <li><code>payments</code> - Patient payment records</li>
+                        <li><code>daily_closures</code> - Daily closure records</li>
+                        <li><code>users</code> - User information for created_by references</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- JavaScript Functions -->
+            <div class="tech-card">
+                <div class="tech-card-header">
+                    <div class="tech-card-icon">
+                        <i class="ri-javascript-line"></i>
+                    </div>
+                    <h3 class="tech-card-title">Key JavaScript Functions</h3>
+                </div>
+                <div class="tech-card-content">
+                    <p><strong>File:</strong> <code>@app/Views/doctor/assets/js/payments.js</code></p>
+                    <p><strong>Main Functions:</strong></p>
+                    <div class="function-list">
+                        <div class="function-item">
+                            <div class="function-name">loadFinancialTransactions(page)</div>
+                            <div class="function-desc">Loads paginated financial transactions with filters</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">displayTransactions(transactions)</div>
+                            <div class="function-desc">Renders transactions in the table with badges and actions</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">updateDashboardCards()</div>
+                            <div class="function-desc">Updates dashboard summary cards via API</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">exportToExcel()</div>
+                            <div class="function-desc">Exports filtered transactions to Excel/CSV</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">editPayment(paymentId)</div>
+                            <div class="function-desc">Fetches and displays payment edit modal</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">deletePayment(paymentId)</div>
+                            <div class="function-desc">Shows confirmation and deletes payment</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">editExpense(expenseId)</div>
+                            <div class="function-desc">Fetches and displays expense edit modal</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">deleteExpense(expenseId)</div>
+                            <div class="function-desc">Shows confirmation and deletes expense</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">filterPaymentsByType(type)</div>
+                            <div class="function-desc">Filters payments table by payment type</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">initCustomSelects()</div>
+                            <div class="function-desc">Initializes custom select dropdown menus</div>
+                        </div>
+                    </div>
+
+                    <p style="margin-top: 1rem;"><strong>Keyboard Shortcuts:</strong></p>
+                    <ul>
+                        <li><kbd>B</kbd> - Open Add Balance modal</li>
+                        <li><kbd>E</kbd> - Open Add Expense modal</li>
+                        <li><kbd>S</kbd> - Open Search modal</li>
+                        <li><kbd>Esc</kbd> - Close any open modal</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Transaction Processing -->
+            <div class="tech-card">
+                <div class="tech-card-header">
+                    <div class="tech-card-icon">
+                        <i class="ri-exchange-line"></i>
+                    </div>
+                    <h3 class="tech-card-title">Transaction Processing</h3>
+                </div>
+                <div class="tech-card-content">
+                    <p><strong>Transaction Aggregation:</strong></p>
+                    <p>The system aggregates transactions from three sources:</p>
+                    <ul>
+                        <li><strong>Payments:</strong> From <code>payments</code> table with patient information</li>
+                        <li><strong>Expenses:</strong> From <code>expenses</code> table</li>
+                        <li><strong>Balances:</strong> From <code>daily_balances</code> table</li>
+                    </ul>
+
+                    <p style="margin-top: 1rem;"><strong>Running Balance Calculation:</strong></p>
+                    <p>Transactions are sorted chronologically and a running balance is calculated:</p>
+                    <ul>
+                        <li>Payments and balance additions increase the balance</li>
+                        <li>Expenses and withdrawals decrease the balance</li>
+                        <li>Each transaction shows the balance after that transaction</li>
+                    </ul>
+
+                    <p style="margin-top: 1rem;"><strong>Pagination:</strong></p>
+                    <ul>
+                        <li>Default: 10 transactions per page</li>
+                        <li>Configurable via <code>limit</code> parameter</li>
+                        <li>Pagination controls show current page, total pages, and record counts</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Key Files -->
+            <div class="tech-card">
+                <div class="tech-card-header">
+                    <div class="tech-card-icon">
+                        <i class="ri-file-code-line"></i>
+                    </div>
+                    <h3 class="tech-card-title">Key Files</h3>
+                </div>
+                <div class="tech-card-content">
+                    <div class="file-structure">
+                        <div class="file-item">
+                            <i class="ri-file-html-line file-icon"></i>
+                            <div>
+                                <div class="file-name">@app/Views/doctor/payments.php</div>
+                                <div class="file-desc">Main financial management page HTML structure with modals and tables</div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <i class="ri-file-code-line file-icon"></i>
+                            <div>
+                                <div class="file-name">@app/Views/doctor/assets/js/payments.js</div>
+                                <div class="file-desc">All financial management JavaScript logic, API calls, and UI interactions</div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <i class="ri-file-css-line file-icon"></i>
+                            <div>
+                                <div class="file-name">@app/Views/doctor/assets/css/payments.css</div>
+                                <div class="file-desc">Styling for financial management page</div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <i class="ri-settings-3-line file-icon"></i>
+                            <div>
+                                <div class="file-name">@app/Controllers/DoctorController.php</div>
+                                <div class="file-desc">Renders payments page (payments() method)</div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <i class="ri-router-line file-icon"></i>
+                            <div>
+                                <div class="file-name">@app/Controllers/ApiController.php</div>
+                                <div class="file-desc">All API endpoints:
+                                    <ul>
+                                        <li>createDailyBalance() - Create balance entry</li>
+                                        <li>createExpense() - Create expense</li>
+                                        <li>updateExpense() - Update expense</li>
+                                        <li>deleteExpense() - Delete expense</li>
+                                        <li>updatePayment() - Update payment</li>
+                                        <li>deletePayment() - Delete payment</li>
+                                        <li>getFinancialTransactions() - Get transactions with pagination</li>
+                                        <li>exportFinancialTransactions() - Export to Excel/CSV</li>
+                                        <li>getPayment() - Get payment details</li>
+                                        <li>getExpense() - Get expense details</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <i class="ri-route-line file-icon"></i>
+                            <div>
+                                <div class="file-name">@index.php</div>
+                                <div class="file-desc">Defines all routes:
+                                    <ul>
+                                        <li>GET /doctor/payments - Main page</li>
+                                        <li>POST /api/daily-balance - Create balance</li>
+                                        <li>POST /api/expenses - Create expense</li>
+                                        <li>GET /api/financial-transactions - Get transactions</li>
+                                        <li>GET /api/financial-transactions/export - Export</li>
+                                        <li>PUT /api/payments/{id} - Update payment</li>
+                                        <li>DELETE /api/payments/{id} - Delete payment</li>
+                                        <li>PUT /api/expenses/{id} - Update expense</li>
+                                        <li>DELETE /api/expenses/{id} - Delete expense</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Handling -->
+            <div class="tech-card">
+                <div class="tech-card-header">
+                    <div class="tech-card-icon">
+                        <i class="ri-error-warning-line"></i>
+                    </div>
+                    <h3 class="tech-card-title">Error Handling</h3>
+                </div>
+                <div class="tech-card-content">
+                    <p><strong>Client-Side:</strong></p>
+                    <ul>
+                        <li>Form validation before submission</li>
+                        <li>Loading indicators during API calls</li>
+                        <li>Success/error messages displayed in modals</li>
+                        <li>Automatic dashboard refresh after successful operations</li>
+                        <li>Confirmation dialogs for destructive actions (delete)</li>
+                    </ul>
+                    <p><strong>Server-Side:</strong></p>
+                    <ul>
+                        <li>Authentication check on all endpoints (401 if unauthorized)</li>
+                        <li>Input validation with detailed error messages</li>
+                        <li>Database transaction safety</li>
+                        <li>Error messages returned in JSON format</li>
+                        <li>Proper HTTP status codes (200, 400, 401, 404, 500)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

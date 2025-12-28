@@ -1,0 +1,695 @@
+<div class="getting-started-content">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Notes Board</h1>
+            <p class="hero-subtitle">Interactive Sticky Notes for Quick Reminders and Organization</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">Notes</span>
+                <span class="badge badge-secondary">Interactive</span>
+                <span class="badge badge-success">Real-Time</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-sticky-note-line"></i> Notes Board Overview</h2>
+            <p class="section-description">The Notes Board is an interactive component that displays sticky notes on the dashboard, allowing doctors to create, organize, and manage personal notes. Each note can be customized with different colors, moved around, resized, and linked to alerts. The Notes Board is fully synchronized with the main Notes page, ensuring consistency across both interfaces.</p>
+        </div>
+
+        <!-- Notes Board Demo Image -->
+        <div class="notes-board-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="notes-board-demo-thumbnail" id="notes-board-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/notes-board-dark.png" alt="Notes Board Demo" class="notes-board-demo-dark" />
+                <img src="/docs/opth/public/assets/images/notes-board-light.png" alt="Notes Board Demo - Light Theme" class="notes-board-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>Click to view full size</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> Visual demonstration of the Notes Board interface
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-sticky-note-line"></i>
+                </div>
+                <h3>Sticky Notes</h3>
+                <p>Create and manage multiple sticky notes with customizable colors, positions, and sizes.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-sync-line"></i>
+                </div>
+                <h3>Real-Time Sync</h3>
+                <p>All changes are automatically synchronized between the Notes Board and the main Notes page.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-link-m"></i>
+                </div>
+                <h3>Smart Links</h3>
+                <p>Use special symbols (@, #, $) to link patients, appointments, and drugs directly in notes.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Components -->
+    <section class="content-section" id="components">
+        <div class="section-header">
+            <h2><i class="ri-layout-grid-line"></i> Component Structure</h2>
+            <p class="section-description">The Notes Board consists of several interactive components that work together to provide a comprehensive note-taking experience.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-heading"></i>
+                </div>
+                <h3>Header Section</h3>
+                <p>The header includes:</p>
+                <ul>
+                    <li><strong>Title:</strong> "Notes Board" with sticky note icon</li>
+                    <li><strong>Add Note Button:</strong> Creates a new note with default settings</li>
+                    <li><strong>Notes Board Link:</strong> Navigates to the main Notes page (<code>/doctor/notes</code>)</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-edit-line"></i>
+                </div>
+                <h3>Note Widget</h3>
+                <p>Each note is a draggable widget containing:</p>
+                <ul>
+                    <li><strong>Title Field:</strong> Editable text input for note title</li>
+                    <li><strong>Content Area:</strong> Rich text editor with autocomplete support</li>
+                    <li><strong>Action Buttons:</strong> Color picker, alert, bring to front, delete</li>
+                    <li><strong>Footer:</strong> Created and updated timestamps</li>
+                    <li><strong>Resize Handle:</strong> Corner handle for resizing</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>Color Picker</h3>
+                <p>Dropdown menu with color options:</p>
+                <ul>
+                    <li><strong>White:</strong> #ffffff</li>
+                    <li><strong>Red:</strong> #ef4444</li>
+                    <li><strong>Black:</strong> #1e293b</li>
+                    <li><strong>Dodger Blue:</strong> #1e90ff</li>
+                    <li><strong>Warning Yellow:</strong> #fbbf24 (default)</li>
+                    <li><strong>Success Green:</strong> #10b981</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Changing the Theme -->
+    <section class="content-section" id="changing-theme">
+        <div class="section-header">
+            <h2><i class="ri-palette-line"></i> Changing the Theme (Note Color)</h2>
+            <p class="section-description">Each note can have its own background color, allowing you to organize notes visually by category or priority.</p>
+        </div>
+
+        <!-- Color Picker Demo Image -->
+        <div class="notes-board-color-picker-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="notes-board-color-picker-demo-thumbnail" id="notes-board-color-picker-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/notes-board-color-picker-light.png" alt="Color Picker Demo" class="notes-board-color-picker-demo-dark" />
+                <img src="/docs/opth/public/assets/images/notes-board-color-picker-light.png" alt="Color Picker Demo - Light Theme" class="notes-board-color-picker-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>Click to view full size</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> Visual demonstration of the color picker interface
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>How to Change Color</h3>
+                <p>The color change process:</p>
+                <ul>
+                    <li><strong>Click Color Icon:</strong> Click the palette icon in the note's header</li>
+                    <li><strong>Color Picker Opens:</strong> A dropdown menu appears with 6 color options</li>
+                    <li><strong>Select Color:</strong> Click on the desired color square</li>
+                    <li><strong>Auto-Update:</strong> Note background color changes immediately</li>
+                    <li><strong>Auto-Save:</strong> Color is saved to database via API call</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-database-line"></i>
+                </div>
+                <h3>Technical Implementation</h3>
+                <p>The color change is handled by:</p>
+                <ul>
+                    <li><strong>Function:</strong> <code>dashboardChangeNoteColor(noteId, color)</code></li>
+                    <li><strong>API Call:</strong> <code>PUT /api/notes/{id}</code> with <code>background_color</code> parameter</li>
+                    <li><strong>Database:</strong> Updates <code>notes.background_color</code> column</li>
+                    <li><strong>CSS Classes:</strong> Dynamically adds/removes color classes (e.g., <code>color-warning</code>)</li>
+                    <li><strong>Text Color:</strong> Automatically adjusts text color based on background brightness</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-sync-line"></i>
+                </div>
+                <h3>Synchronization</h3>
+                <p>Color changes are synchronized:</p>
+                <ul>
+                    <li><strong>Immediate Update:</strong> Note color updates instantly in Notes Board</li>
+                    <li><strong>Database Save:</strong> Color is saved to database immediately</li>
+                    <li><strong>Main Page Sync:</strong> Color appears correctly when viewing main Notes page</li>
+                    <li><strong>Cross-Device:</strong> Changes are visible on all devices after refresh</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bring to Front -->
+    <section class="content-section" id="bring-to-front">
+        <div class="section-header">
+            <h2><i class="ri-layers-line"></i> Bring to Front</h2>
+            <p class="section-description">When multiple notes overlap, you can bring a note to the front to make it the topmost note.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-layers-line"></i>
+                </div>
+                <h3>How It Works</h3>
+                <p>The "Bring to Front" feature:</p>
+                <ul>
+                    <li><strong>Button:</strong> Click the layers icon in the note's header</li>
+                    <li><strong>Z-Index Calculation:</strong> Finds the highest z-index among all notes</li>
+                    <li><strong>Increment:</strong> Sets the note's z-index to max + 1</li>
+                    <li><strong>Visual Update:</strong> Note immediately appears on top</li>
+                    <li><strong>Auto-Save:</strong> New z-index is saved to database</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-code-s-slash-line"></i>
+                </div>
+                <h3>Technical Details</h3>
+                <p>Implementation details:</p>
+                <ul>
+                    <li><strong>Function:</strong> <code>dashboardBringToFront(noteId)</code></li>
+                    <li><strong>Z-Index Query:</strong> Scans all notes to find maximum z-index</li>
+                    <li><strong>CSS Update:</strong> Sets <code>style.zIndex</code> property</li>
+                    <li><strong>API Call:</strong> <code>PUT /api/notes/{id}</code> with <code>z_index</code> parameter</li>
+                    <li><strong>Database:</strong> Updates <code>notes.z_index</code> column</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-mouse-line"></i>
+                </div>
+                <h3>Automatic Behavior</h3>
+                <p>Notes are automatically brought to front when:</p>
+                <ul>
+                    <li><strong>Dragging:</strong> Note is brought to front when you start dragging it</li>
+                    <li><strong>Resizing:</strong> Note is brought to front when you start resizing it</li>
+                    <li><strong>Clicking:</strong> Note can be brought to front manually via button</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Moving the Notes -->
+    <section class="content-section" id="moving-notes">
+        <div class="section-header">
+            <h2><i class="ri-drag-move-line"></i> Moving the Notes</h2>
+            <p class="section-description">Notes can be freely moved around the board by dragging them to any position.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-hand-finger-line"></i>
+                </div>
+                <h3>Drag and Drop</h3>
+                <p>The drag functionality:</p>
+                <ul>
+                    <li><strong>Drag Handle:</strong> Click and hold on the note's header area</li>
+                    <li><strong>Mouse Events:</strong> Supports both mouse and touch events</li>
+                    <li><strong>Real-Time Movement:</strong> Note follows cursor/finger during drag</li>
+                    <li><strong>Boundary Constraints:</strong> Note stays within container bounds</li>
+                    <li><strong>Auto-Save Position:</strong> Position is saved when drag ends</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-code-s-slash-line"></i>
+                </div>
+                <h3>Technical Implementation</h3>
+                <p>Drag system components:</p>
+                <ul>
+                    <li><strong>Start Function:</strong> <code>dashboardStartDrag(event, noteId)</code></li>
+                    <li><strong>Drag Function:</strong> <code>dashboardOnDrag(event)</code> - updates position</li>
+                    <li><strong>Stop Function:</strong> <code>dashboardStopDrag()</code> - saves position</li>
+                    <li><strong>Position Calculation:</strong> Calculates relative position within container</li>
+                    <li><strong>API Call:</strong> <code>PUT /api/notes/{id}</code> with <code>position_x</code> and <code>position_y</code></li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-smartphone-line"></i>
+                </div>
+                <h3>Touch Support</h3>
+                <p>Full touch device support:</p>
+                <ul>
+                    <li><strong>Touch Events:</strong> Supports <code>touchstart</code>, <code>touchmove</code>, <code>touchend</code></li>
+                    <li><strong>Multi-Touch:</strong> Handles single touch gestures</li>
+                    <li><strong>Prevent Default:</strong> Prevents page scrolling during drag</li>
+                    <li><strong>Responsive:</strong> Works seamlessly on mobile devices</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Setting Alerts -->
+    <section class="content-section" id="setting-alerts">
+        <div class="section-header">
+            <h2><i class="ri-alarm-line"></i> Setting Alerts as per the Note</h2>
+            <p class="section-description">You can create alerts directly from notes, linking the alert message to the note's content.</p>
+        </div>
+
+        <!-- Alert Modal Demo Image -->
+        <div class="notes-board-alert-modal-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="notes-board-alert-modal-demo-thumbnail" id="notes-board-alert-modal-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/notes-board-alert-modal-light.png" alt="Alert Modal Demo" class="notes-board-alert-modal-demo-dark" />
+                <img src="/docs/opth/public/assets/images/notes-board-alert-modal-light.png" alt="Alert Modal Demo - Light Theme" class="notes-board-alert-modal-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>Click to view full size</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> Visual demonstration of the alert creation interface
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-bell-line"></i>
+                </div>
+                <h3>Creating Alerts</h3>
+                <p>The alert creation process:</p>
+                <ul>
+                    <li><strong>Click Bell Icon:</strong> Click the bell icon in the note's header</li>
+                    <li><strong>Alert Picker Opens:</strong> A dropdown modal appears with date and time fields</li>
+                    <li><strong>Set Date:</strong> Select the alert date using the date picker</li>
+                    <li><strong>Set Time:</strong> Enter hour, minute, and AM/PM</li>
+                    <li><strong>Create Alert:</strong> Click "Create Alert" button</li>
+                    <li><strong>Auto-Link:</strong> Alert is automatically linked to note content</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-link-m"></i>
+                </div>
+                <h3>Alert-Note Linking</h3>
+                <p>The system links alerts to notes:</p>
+                <ul>
+                    <li><strong>Message Matching:</strong> Alert message matches note's HTML content</li>
+                    <li><strong>Automatic Detection:</strong> System detects if note already has an alert</li>
+                    <li><strong>Update Existing:</strong> If alert exists, it updates instead of creating new</li>
+                    <li><strong>Content Sync:</strong> If note content changes, alert message updates</li>
+                    <li><strong>Delete on Note Delete:</strong> Alert is deleted when note is deleted</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-code-s-slash-line"></i>
+                </div>
+                <h3>Technical Implementation</h3>
+                <p>Alert creation process:</p>
+                <ul>
+                    <li><strong>Function:</strong> <code>dashboardCreateAlertFromNote(noteId)</code></li>
+                    <li><strong>API Endpoint:</strong> <code>POST /api/alerts</code></li>
+                    <li><strong>Message Content:</strong> Uses note's HTML content as alert message</li>
+                    <li><strong>Time Conversion:</strong> Converts 12-hour format to 24-hour format</li>
+                    <li><strong>Alert Model:</strong> Uses <code>AlertModel</code> to create/update alerts</li>
+                    <li><strong>Status Display:</strong> Note footer shows alert status if alert exists</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Deleting -->
+    <section class="content-section" id="deleting">
+        <div class="section-header">
+            <h2><i class="ri-delete-bin-line"></i> Deleting Notes</h2>
+            <p class="section-description">Notes can be deleted individually with a confirmation dialog to prevent accidental deletion.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-delete-bin-line"></i>
+                </div>
+                <h3>Deletion Process</h3>
+                <p>The deletion workflow:</p>
+                <ul>
+                    <li><strong>Click Delete Icon:</strong> Click the trash icon in the note's header</li>
+                    <li><strong>Confirmation Modal:</strong> A confirmation dialog appears</li>
+                    <li><strong>Confirm or Cancel:</strong> Choose to delete or cancel</li>
+                    <li><strong>Animation:</strong> Note fades out with scale animation</li>
+                    <li><strong>Remove from DOM:</strong> Note is removed from the board</li>
+                    <li><strong>Database Delete:</strong> Note is deleted from database</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-link-m"></i>
+                </div>
+                <h3>Associated Data Cleanup</h3>
+                <p>When a note is deleted:</p>
+                <ul>
+                    <li><strong>Note Record:</strong> Deleted from <code>notes</code> table</li>
+                    <li><strong>Linked Alert:</strong> Associated alert is automatically deleted</li>
+                    <li><strong>Alert Matching:</strong> System finds alert by matching note content</li>
+                    <li><strong>Cascade Delete:</strong> All related data is cleaned up</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-code-s-slash-line"></i>
+                </div>
+                <h3>Technical Implementation</h3>
+                <p>Deletion system:</p>
+                <ul>
+                    <li><strong>Function:</strong> <code>dashboardDeleteNote(noteId)</code></li>
+                    <li><strong>Confirmation:</strong> <code>dashboardShowDeleteConfirmModal(noteId)</code></li>
+                    <li><strong>API Call:</strong> <code>DELETE /api/notes/{id}</code></li>
+                    <li><strong>Controller:</strong> <code>NotesController::deleteNote($id)</code></li>
+                    <li><strong>Alert Cleanup:</strong> <code>AlertModel::delete()</code> for linked alerts</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Resizing -->
+    <section class="content-section" id="resizing">
+        <div class="section-header">
+            <h2><i class="ri-expand-diagonal-line"></i> Resizing Notes</h2>
+            <p class="section-description">Notes can be resized by dragging the resize handle in the bottom-right corner of each note.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-expand-diagonal-line"></i>
+                </div>
+                <h3>Resize Process</h3>
+                <p>How to resize a note:</p>
+                <ul>
+                    <li><strong>Resize Handle:</strong> Click and hold the diagonal lines in bottom-right corner</li>
+                    <li><strong>Drag to Resize:</strong> Drag diagonally to change width and height</li>
+                    <li><strong>Minimum Size:</strong> 250px × 200px (desktop), 250px × 180px (mobile)</li>
+                    <li><strong>Maximum Size:</strong> Constrained by container bounds</li>
+                    <li><strong>Auto-Save:</strong> New size is saved when resize ends</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-code-s-slash-line"></i>
+                </div>
+                <h3>Technical Implementation</h3>
+                <p>Resize system components:</p>
+                <ul>
+                    <li><strong>Start Function:</strong> <code>dashboardStartResize(event, noteId)</code></li>
+                    <li><strong>Resize Function:</strong> <code>dashboardOnResize(event)</code> - updates dimensions</li>
+                    <li><strong>Stop Function:</strong> <code>dashboardStopResize()</code> - saves dimensions</li>
+                    <li><strong>Size Calculation:</strong> Calculates new width/height based on mouse/touch movement</li>
+                    <li><strong>API Call:</strong> <code>PUT /api/notes/{id}</code> with <code>width</code> and <code>height</code></li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-smartphone-line"></i>
+                </div>
+                <h3>Touch Support</h3>
+                <p>Full touch device support:</p>
+                <ul>
+                    <li><strong>Touch Events:</strong> Supports touch-based resizing</li>
+                    <li><strong>Prevent Default:</strong> Prevents page scrolling during resize</li>
+                    <li><strong>Responsive Sizing:</strong> Different min sizes for mobile vs desktop</li>
+                    <li><strong>Smooth Experience:</strong> Works seamlessly on touch devices</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Merging with Main Notes Page -->
+    <section class="content-section" id="merging-main-page">
+        <div class="section-header">
+            <h2><i class="ri-link-m"></i> Merging with Main Notes Page</h2>
+            <p class="section-description">The Notes Board displays the same notes as the main Notes page, with real-time synchronization between both interfaces.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-database-line"></i>
+                </div>
+                <h3>Shared Data Source</h3>
+                <p>Both interfaces use the same data:</p>
+                <ul>
+                    <li><strong>Database Table:</strong> <code>notes</code> table stores all note data</li>
+                    <li><strong>User Filtering:</strong> Only notes for the current user are displayed</li>
+                    <li><strong>API Endpoint:</strong> Both use <code>GET /api/notes</code> to fetch notes</li>
+                    <li><strong>Controller:</strong> <code>NotesController::getNotes()</code> handles data retrieval</li>
+                    <li><strong>Ordering:</strong> Notes ordered by <code>z_index DESC, created_at DESC</code></li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-sync-line"></i>
+                </div>
+                <h3>Real-Time Synchronization</h3>
+                <p>Changes sync automatically:</p>
+                <ul>
+                    <li><strong>Create Note:</strong> New note appears in both interfaces</li>
+                    <li><strong>Update Note:</strong> Changes reflect immediately in both places</li>
+                    <li><strong>Delete Note:</strong> Deletion removes note from both interfaces</li>
+                    <li><strong>Position Changes:</strong> Note positions sync across interfaces</li>
+                    <li><strong>Color Changes:</strong> Color updates appear in both places</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-refresh-line"></i>
+                </div>
+                <h3>Data Flow</h3>
+                <p>How data flows between interfaces:</p>
+                <ul>
+                    <li><strong>Notes Board:</strong> Calls <code>loadDashboardNotes()</code> on page load</li>
+                    <li><strong>Main Notes Page:</strong> Calls <code>loadNotes()</code> on page load</li>
+                    <li><strong>Both Fetch:</strong> Both call <code>GET /api/notes</code> endpoint</li>
+                    <li><strong>Same Data:</strong> Both receive identical note data</li>
+                    <li><strong>Auto-Refresh:</strong> Both can refresh to get latest changes</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-code-s-slash-line"></i>
+                </div>
+                <h3>API Endpoints</h3>
+                <p>Shared API endpoints:</p>
+                <ul>
+                    <li><strong>GET /api/notes:</strong> Fetch all notes for current user</li>
+                    <li><strong>POST /api/notes:</strong> Create new note</li>
+                    <li><strong>PUT /api/notes/{id}:</strong> Update note (title, content, color, position, size, z_index)</li>
+                    <li><strong>DELETE /api/notes/{id}:</strong> Delete note</li>
+                    <li><strong>Controller:</strong> <code>NotesController</code> handles all operations</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="info-box" style="margin-top: 2rem;">
+            <i class="ri-information-line"></i>
+            <div>
+                <strong>Bidirectional Sync:</strong>
+                <p>Changes made in the Notes Board are immediately saved to the database and will appear on the main Notes page when it's loaded or refreshed. Similarly, changes made on the main Notes page will appear in the Notes Board after a refresh. Both interfaces use the same API endpoints and database table, ensuring complete data consistency.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="content-section" id="how-it-works">
+        <div class="section-header">
+            <h2><i class="ri-settings-3-line"></i> How It Works</h2>
+            <p class="section-description">The Notes Board is powered by JavaScript for interactivity and PHP controllers for data management.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-database-line"></i>
+                </div>
+                <h3>Database Structure</h3>
+                <p>The <code>notes</code> table stores:</p>
+                <ul>
+                    <li><strong>id:</strong> Primary key</li>
+                    <li><strong>user_id:</strong> Owner of the note</li>
+                    <li><strong>title:</strong> Note title</li>
+                    <li><strong>content:</strong> HTML content of the note</li>
+                    <li><strong>background_color:</strong> Hex color code</li>
+                    <li><strong>position_x, position_y:</strong> Note position on board</li>
+                    <li><strong>width, height:</strong> Note dimensions</li>
+                    <li><strong>z_index:</strong> Stacking order</li>
+                    <li><strong>created_at, updated_at:</strong> Timestamps</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-code-s-slash-line"></i>
+                </div>
+                <h3>JavaScript Functions</h3>
+                <p>Key functions in <code>dashboard.js</code>:</p>
+                <ul>
+                    <li><strong>loadDashboardNotes():</strong> Fetches and renders notes</li>
+                    <li><strong>dashboardAddNote():</strong> Creates new note</li>
+                    <li><strong>dashboardStartDrag():</strong> Initiates drag operation</li>
+                    <li><strong>dashboardStartResize():</strong> Initiates resize operation</li>
+                    <li><strong>dashboardChangeNoteColor():</strong> Changes note color</li>
+                    <li><strong>dashboardBringToFront():</strong> Brings note to front</li>
+                    <li><strong>dashboardCreateAlertFromNote():</strong> Creates alert from note</li>
+                    <li><strong>dashboardDeleteNote():</strong> Deletes note</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-server-line"></i>
+                </div>
+                <h3>Backend Controller</h3>
+                <p><code>NotesController</code> methods:</p>
+                <ul>
+                    <li><strong>getNotes():</strong> Returns all notes for user</li>
+                    <li><strong>createNote():</strong> Creates new note</li>
+                    <li><strong>updateNote($id):</strong> Updates note properties</li>
+                    <li><strong>deleteNote($id):</strong> Deletes note and linked alert</li>
+                    <li><strong>deleteAllNotes():</strong> Deletes all user's notes</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="content-section" id="features">
+        <div class="section-header">
+            <h2><i class="ri-star-line"></i> Key Features</h2>
+            <p class="section-description">The Notes Board includes several features designed to enhance productivity and organization.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-at-line"></i>
+                </div>
+                <h3>Smart Autocomplete</h3>
+                <p>Use special symbols for quick linking:</p>
+                <ul>
+                    <li><strong>@:</strong> Link to patients (e.g., <code>@Ahmed</code>)</li>
+                    <li><strong>#:</strong> Link to appointments (e.g., <code>#123</code>)</li>
+                    <li><strong>$:</strong> Link to drugs (e.g., <code>$Tobradex</code>)</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>Theme Support</h3>
+                <p>The Notes Board automatically adapts to light and dark themes, ensuring optimal readability in all viewing conditions.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-smartphone-line"></i>
+                </div>
+                <h3>Responsive Design</h3>
+                <p>Fully responsive layout that works seamlessly on desktop, tablet, and mobile devices with touch support.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-resize-line"></i>
+                </div>
+                <h3>Resizable Container</h3>
+                <p>The Notes Board container can be resized using the resize handle, with the size saved to user settings.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Image Modals -->
+<div id="notes-board-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-notes-board-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/notes-board-dark.png" alt="Notes Board Demo - Full Size" class="notes-board-demo-dark" />
+        <img src="/docs/opth/public/assets/images/notes-board-light.png" alt="Notes Board Demo - Light Theme - Full Size" class="notes-board-demo-light" style="display: none;" />
+    </div>
+</div>
+
+<div id="notes-board-color-picker-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-notes-board-color-picker-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/notes-board-color-picker-light.png" alt="Color Picker Demo - Full Size" class="notes-board-color-picker-demo-dark" />
+        <img src="/docs/opth/public/assets/images/notes-board-color-picker-light.png" alt="Color Picker Demo - Light Theme - Full Size" class="notes-board-color-picker-demo-light" style="display: none;" />
+    </div>
+</div>
+
+<div id="notes-board-alert-modal-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-notes-board-alert-modal-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/notes-board-alert-modal-light.png" alt="Alert Modal Demo - Full Size" class="notes-board-alert-modal-demo-dark" />
+        <img src="/docs/opth/public/assets/images/notes-board-alert-modal-light.png" alt="Alert Modal Demo - Light Theme - Full Size" class="notes-board-alert-modal-demo-light" style="display: none;" />
+    </div>
+</div>

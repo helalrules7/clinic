@@ -1,0 +1,319 @@
+<div class="getting-started-content" dir="rtl">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">الأنشطة الأخيرة</h1>
+            <p class="hero-subtitle">تتبع أحداث النظام وإجراءات المستخدم</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">أنشطة</span>
+                <span class="badge badge-secondary">الخط الزمني</span>
+                <span class="badge badge-success">تاريخ</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-time-line"></i> نظرة عامة على الأنشطة الأخيرة</h2>
+            <p class="section-description">مكون الأنشطة الأخيرة يعرض خط زمني زمني لأحداث النظام وإجراءات المستخدم، مما يوفر للأطباء نظرة شاملة للأنشطة الأخيرة في نظام إدارة العيادة. يتتبع المواعيد، الوصفات، سجلات المرضى، وأحداث مهمة أخرى.</p>
+        </div>
+
+        <!-- Recent Activities Demo Image -->
+        <div class="recent-activities-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="recent-activities-demo-thumbnail" id="recent-activities-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/recent-activities-dark.png" alt="عرض توضيحي للأنشطة الأخيرة" class="recent-activities-demo-dark" />
+                <img src="/docs/opth/public/assets/images/recent-activities-light.png" alt="عرض توضيحي للأنشطة الأخيرة - الوضع الفاتح" class="recent-activities-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>انقر لعرض الحجم الكامل</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> عرض توضيحي مرئي لواجهة الأنشطة الأخيرة
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-history-line"></i>
+                </div>
+                <h3>الخط الزمني للأنشطة</h3>
+                <p>يعرض الأنشطة بترتيب زمني مع مؤشرات خط زمني مرئية، مما يظهر أحدث الأحداث أولاً.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-line"></i>
+                </div>
+                <h3>نسبة المستخدم</h3>
+                <p>كل نشاط يظهر المستخدم الذي قام بالإجراء، مما يجعل من السهل تتبع من فعل ماذا ومتى.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-line"></i>
+                </div>
+                <h3>روابط المواعيد</h3>
+                <p>الأنشطة المتعلقة بالمواعيد تتضمن روابط "عرض الموعد" للوصول السريع إلى تفاصيل الموعد.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Activity Types -->
+    <section class="content-section" id="activity-types">
+        <div class="section-header">
+            <h2><i class="ri-list-check"></i> أنواع الأنشطة</h2>
+            <p class="section-description">النظام يتتبع أنواع مختلفة من الأنشطة والأحداث.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-medicine-bottle-line"></i>
+                </div>
+                <h3>أنشطة الأدوية</h3>
+                <p>تتبع الإجراءات المتعلقة بالأدوية:</p>
+                <ul>
+                    <li>إصدار وصفة دواء</li>
+                    <li>حذف دواء</li>
+                    <li>تحديث دواء</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-check-line"></i>
+                </div>
+                <h3>أنشطة المواعيد</h3>
+                <p>مراقبة الأحداث المتعلقة بالمواعيد:</p>
+                <ul>
+                    <li>حجز موعد</li>
+                    <li>تغيير الحالة (محجوز → مكتمل، إلخ)</li>
+                    <li>إعادة جدولة موعد</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-upload-line"></i>
+                </div>
+                <h3>أنشطة الملفات</h3>
+                <p>تتبع رفع الملفات والوسائط:</p>
+                <ul>
+                    <li>رفع ملفات (صور، مستندات)</li>
+                    <li>إرفاق وسائط بسجلات المرضى</li>
+                    <li>حذف ملفات</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-text-line"></i>
+                </div>
+                <h3>أنشطة الوصفات</h3>
+                <p>مراقبة الإجراءات المتعلقة بالوصفات:</p>
+                <ul>
+                    <li>إصدار وصفات طبية</li>
+                    <li>إنشاء وصفات نظارات</li>
+                    <li>تعديلات الوصفات</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- View All Modal -->
+    <section class="content-section" id="view-all-modal">
+        <div class="section-header">
+            <h2><i class="ri-window-line"></i> نافذة عرض الكل</h2>
+            <p class="section-description">زر "عرض الكل" يفتح نافذة شاملة تعرض جميع الأنشطة مع قدرات فلترة وترقيم متقدمة.</p>
+        </div>
+
+        <!-- All Activities Modal Demo Image -->
+        <div class="all-activities-modal-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="all-activities-modal-demo-thumbnail" id="all-activities-modal-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/all-activities-modal-dark.png" alt="عرض توضيحي لنافذة جميع الأنشطة" class="all-activities-modal-demo-dark" />
+                <img src="/docs/opth/public/assets/images/all-activities-modal-light.png" alt="عرض توضيحي لنافذة جميع الأنشطة - الوضع الفاتح" class="all-activities-modal-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>انقر لعرض الحجم الكامل</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> عرض توضيحي مرئي لواجهة نافذة جميع الأنشطة
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-search-line"></i>
+                </div>
+                <h3>فلترة الأنشطة</h3>
+                <p>النافذة تتضمن نظام فلترة قوي:</p>
+                <ul>
+                    <li><strong>إدخال البحث:</strong> فلترة الأنشطة حسب ملخص الحدث، اسم المريض، أو رقم الهاتف</li>
+                    <li><strong>فلترة مباشرة:</strong> الفلترة تتحدث أثناء الكتابة مع debouncing للأداء</li>
+                    <li><strong>تمييز النص:</strong> النص المطابق يتم تمييزه بالأصفر للتعريف السهل</li>
+                    <li><strong>مسح الفلتر:</strong> زر لمسح الفلتر بسرعة وعرض جميع الأنشطة</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-list-3-line"></i>
+                </div>
+                <h3>الترقيم</h3>
+                <p>الأنشطة مرقمة لأداء أفضل:</p>
+                <ul>
+                    <li><strong>اختيار لكل صفحة:</strong> اختر عدد الأنشطة للعرض (10، 25، 50، 100 لكل صفحة)</li>
+                    <li><strong>تنقل الصفحات:</strong> التنقل بين الصفحات باستخدام ضوابط الترقيم</li>
+                    <li><strong>العدد الإجمالي:</strong> عرض العدد الإجمالي للأنشطة المطابقة للفلتر</li>
+                    <li><strong>فلترة من جانب العميل:</strong> جميع الأنشطة يتم تحميلها مرة واحدة، ثم فلترتها من جانب العميل لنتائج فورية</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-database-line"></i>
+                </div>
+                <h3>تحميل البيانات</h3>
+                <p>النافذة تستخدم تحميل بيانات فعال:</p>
+                <ul>
+                    <li><strong>التحميل الأولي:</strong> يحمل حتى 1000 نشاط عند فتح النافذة</li>
+                    <li><strong>المعالجة من جانب العميل:</strong> الفلترة والترقيم تحدث في المتصفح لاستجابة فورية</li>
+                    <li><strong>نقطة نهاية API:</strong> يستخدم نقطة النهاية <code>/api/recent-activity</code> من ApiController</li>
+                    <li><strong>التخزين المؤقت:</strong> الأنشطة يتم تخزينها مؤقتاً في الذاكرة أثناء جلسة النافذة</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="info-box" style="margin-top: 2rem;">
+            <i class="ri-information-line"></i>
+            <div>
+                <strong>ميزات النافذة:</strong>
+                <p>نافذة "عرض الكل" توفر نظرة شاملة لجميع أنشطة النظام. تتضمن إدخال بحث/فلتر في الأعلى، ضوابط الترقيم، وتعرض الأنشطة في قائمة قابلة للتمرير. كل نشاط يظهر وصف الحدث، المستخدم المرتبط، الطابع الزمني، وروابط الإجراءات ذات الصلة. النافذة تستخدم تصميم glassmorphism مع backdrop blur لمظهر حديث.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="content-section" id="how-it-works">
+        <div class="section-header">
+            <h2><i class="ri-settings-3-line"></i> كيف يعمل</h2>
+            <p class="section-description">الأنشطة الأخيرة تعمل من خلال API Controller وتستخدم JavaScript لإدارة النافذة والفلترة من جانب العميل.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-database-line"></i>
+                </div>
+                <h3>نقطة نهاية API</h3>
+                <p>النظام يستخدم <code>ApiController::getRecentActivity()</code>:</p>
+                <ul>
+                    <li><strong>نقطة النهاية:</strong> <code>/api/recent-activity</code></li>
+                    <li><strong>المصادقة:</strong> يتطلب مصادقة المستخدم</li>
+                    <li><strong>الترقيم:</strong> يدعم معاملات <code>page</code> و <code>per_page</code></li>
+                    <li><strong>البحث:</strong> يدعم معامل <code>search</code> للفلترة</li>
+                    <li><strong>مصدر البيانات:</strong> يستعلم جدول <code>timeline_events</code> مع join مع <code>patients</code> و <code>appointments</code></li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-filter-3-line"></i>
+                </div>
+                <h3>البحث والفلترة</h3>
+                <p>API يدعم الفلترة من جانب الخادم:</p>
+                <ul>
+                    <li><strong>حقول البحث:</strong> ملخص الحدث، اسم المريض الأول، اسم العائلة، الاسم الكامل، الهاتف</li>
+                    <li><strong>SQL LIKE:</strong> يستخدم استعلامات SQL LIKE مع wildcards للمطابقة المرنة</li>
+                    <li><strong>فلتر من جانب العميل:</strong> النافذة أيضاً تقوم بفلترة من جانب العميل لنتائج فورية</li>
+                    <li><strong>Debouncing:</strong> إدخال الفلتر يستخدم debouncing لتقليل طلبات API</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-window-line"></i>
+                </div>
+                <h3>إدارة النافذة</h3>
+                <p>JavaScript يتعامل مع وظائف النافذة:</p>
+                <ul>
+                    <li><strong>فتح النافذة:</strong> يحمل الأنشطة عند عرض النافذة</li>
+                    <li><strong>تحميل البيانات:</strong> يجلب حتى 1000 نشاط عند الفتح الأول</li>
+                    <li><strong>تطبيق الفلتر:</strong> يطبق الفلتر على الأنشطة المحملة من جانب العميل</li>
+                    <li><strong>الترقيم:</strong> يتعامل مع ترقيم النتائج المفلترة</li>
+                    <li><strong>تمييز النص:</strong> يميز النص المطابق في نتائج البحث</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="content-section" id="features">
+        <div class="section-header">
+            <h2><i class="ri-star-line"></i> الميزات الرئيسية</h2>
+            <p class="section-description">الأنشطة الأخيرة تتضمن عدة ميزات لتتبع شامل للأنشطة.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-time-line"></i>
+                </div>
+                <h3>عرض زمني</h3>
+                <p>الأنشطة معروضة بترتيب زمني عكسي (الأحدث أولاً)، مما يجعل من السهل رؤية أحدث الأحداث.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-link-m"></i>
+                </div>
+                <h3>روابط سريعة</h3>
+                <p>الأنشطة المتعلقة بالمواعيد تتضمن روابط "عرض الموعد" التي تنتقل مباشرة إلى تفاصيل الموعد.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>دعم الثيم</h3>
+                <p>المكون يتكيف تلقائياً مع الثيمات الفاتحة والداكنة، مما يضمن قابلية قراءة مثلى في جميع ظروف العرض.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-smartphone-line"></i>
+                </div>
+                <h3>تصميم متجاوب</h3>
+                <p>النافذة وقائمة الأنشطة متجاوبة بالكامل، تعمل بسلاسة على سطح المكتب، الجهاز اللوحي، والأجهزة المحمولة.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Image Modals -->
+<div id="recent-activities-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-recent-activities-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/recent-activities-dark.png" alt="عرض توضيحي للأنشطة الأخيرة - الحجم الكامل" class="recent-activities-demo-dark" />
+        <img src="/docs/opth/public/assets/images/recent-activities-light.png" alt="عرض توضيحي للأنشطة الأخيرة - الوضع الفاتح - الحجم الكامل" class="recent-activities-demo-light" style="display: none;" />
+    </div>
+</div>
+
+<div id="all-activities-modal-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-all-activities-modal-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/all-activities-modal-dark.png" alt="عرض توضيحي لنافذة جميع الأنشطة - الحجم الكامل" class="all-activities-modal-demo-dark" />
+        <img src="/docs/opth/public/assets/images/all-activities-modal-light.png" alt="عرض توضيحي لنافذة جميع الأنشطة - الوضع الفاتح - الحجم الكامل" class="all-activities-modal-demo-light" style="display: none;" />
+    </div>
+</div>

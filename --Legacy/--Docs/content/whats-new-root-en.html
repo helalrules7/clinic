@@ -1,0 +1,279 @@
+<div class="getting-started-content">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">What's New</h1>
+            <p class="hero-subtitle">Latest Updates and Version History for Roaya Clinic Management System</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">v7.1.4</span>
+                <span class="badge badge-secondary">Current Version</span>
+                <span class="badge badge-success">Active Development</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Version -->
+    <section class="content-section" id="current-version">
+        <div class="section-header">
+            <h2><i class="ri-sparkling-line"></i> Current Version: v7.1.4</h2>
+            <p class="section-description">The latest version of Roaya Clinic Management System with enhanced features, improved performance, and bug fixes.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-search-line"></i>
+                </div>
+                <h3>Comprehensive Search System</h3>
+                <ul>
+                    <li>Advanced search across all entities: appointments, drugs, patients, media, prescriptions, medical history, notes, alerts, forum, and consultation notes</li>
+                    <li>Smart filtering using <code>&amp;</code> operator: refine results by patient ID, appointment ID, or patient name</li>
+                    <li>Date filtering using <code>#</code> symbol: filter by specific date, month, or year</li>
+                    <li>3D perspective animations for enhanced search UX</li>
+                    <li>Real-time search results with improved UI/UX</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-star-line"></i>
+                </div>
+                <h3>Enhanced Features</h3>
+                <ul>
+                    <li>Improved user interface and user experience</li>
+                    <li>Enhanced security measures</li>
+                    <li>Better performance optimization</li>
+                    <li>Updated documentation system</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-bug-line"></i>
+                </div>
+                <h3>Bug Fixes</h3>
+                <ul>
+                    <li>Fixed calendar synchronization issues</li>
+                    <li>Resolved payment processing bugs</li>
+                    <li>Fixed report generation errors</li>
+                    <li>Improved data validation</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-shield-check-line"></i>
+                </div>
+                <h3>Security Updates</h3>
+                <ul>
+                    <li>Enhanced CSRF protection</li>
+                    <li>Improved session management</li>
+                    <li>Updated password hashing</li>
+                    <li>Better input sanitization</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-speed-up-line"></i>
+                </div>
+                <h3>Performance</h3>
+                <ul>
+                    <li>Optimized database queries</li>
+                    <li>Improved page load times</li>
+                    <li>Better caching mechanisms</li>
+                    <li>Reduced memory usage</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Search Features -->
+    <section class="content-section" id="search-features">
+        <div class="section-header">
+            <h2><i class="ri-search-2-line"></i> Advanced Search & Filtering</h2>
+            <p class="section-description">Powerful search capabilities with smart filtering options using special operators.</p>
+        </div>
+
+        <div class="info-box" style="margin-bottom: 2rem;">
+            <i class="ri-information-line"></i>
+            <div>
+                <strong>Search Across All Entities:</strong>
+                <p>The comprehensive search system searches across appointments, drugs, patients, media, prescriptions, glass prescriptions, medical history, notes, alerts, forum posts, and consultation notes simultaneously.</p>
+            </div>
+        </div>
+
+        <!-- Search Demo Image -->
+        <div class="search-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="search-demo-thumbnail" id="search-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/advanced-search-demo.png" alt="Advanced Search Demo" class="search-demo-dark" />
+                <img src="/docs/opth/public/assets/images/advanced-search-demo-light.png" alt="Advanced Search Demo - Light Theme" class="search-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>Click to view full size</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> Visual demonstration of the advanced search interface
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-filter-3-line"></i>
+                </div>
+                <h3>Filter by Patient/Appointment (<code>&amp;</code>)</h3>
+                <p>Use the <code>&amp;</code> operator to refine your search results:</p>
+                <ul>
+                    <li><strong>Numeric refinement:</strong> Filter by patient ID or appointment ID
+                        <br><code>diabetes &amp; 123</code> - searches for "diabetes" in patient/appointment ID 123</li>
+                    <li><strong>Text refinement:</strong> Filter by patient name
+                        <br><code>medication &amp; Ahmed</code> - searches for "medication" in Ahmed's records</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-line"></i>
+                </div>
+                <h3>Filter by Date (<code>#</code>)</h3>
+                <p>Use the <code>#</code> symbol to filter results by date:</p>
+                <ul>
+                    <li><strong>Full date:</strong> <code>appointment # 2024-12-25</code> - searches on specific date</li>
+                    <li><strong>Month:</strong> <code>prescription # 2024-12</code> - searches in December 2024</li>
+                    <li><strong>Year:</strong> <code>patient # 2024</code> - searches in year 2024</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-code-s-slash-line"></i>
+                </div>
+                <h3>Combined Filters</h3>
+                <p>You can combine both operators for precise searches:</p>
+                <ul>
+                    <li><code>diabetes &amp; Ahmed # 2024-12</code> - searches for "diabetes" in Ahmed's records from December 2024</li>
+                    <li><code>medication &amp; 123 # 2024-12-25</code> - searches for "medication" in patient/appointment 123 on December 25, 2024</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="info-box" style="margin-top: 2rem;">
+            <i class="ri-lightbulb-line"></i>
+            <div>
+                <strong>Search Tips:</strong>
+                <ul>
+                    <li>Minimum 2 characters required for search</li>
+                    <li>Search is case-insensitive</li>
+                    <li>Results are limited to 20 per category for optimal performance</li>
+                    <li>Date filter (<code>#</code>) takes precedence over patient filter (<code>&amp;</code>) when both are present</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Image Modal -->
+    <div id="image-modal" class="image-modal">
+        <div class="image-modal-backdrop"></div>
+        <div class="image-modal-content">
+            <button class="image-modal-close" id="close-image-modal">
+                <i class="ri-close-line"></i>
+            </button>
+            <img src="/docs/opth/public/assets/images/advanced-search-demo.png" alt="Advanced Search Demo - Full Size" class="search-demo-dark" />
+            <img src="/docs/opth/public/assets/images/advanced-search-demo-light.png" alt="Advanced Search Demo - Light Theme - Full Size" class="search-demo-light" style="display: none;" />
+        </div>
+    </div>
+
+    <!-- Version History -->
+    <section class="content-section" id="version-history">
+        <div class="section-header">
+            <h2><i class="ri-history-line"></i> Version History</h2>
+            <p class="section-description">Explore the evolution of Roaya Clinic Management System through major version releases.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <h3><i class="ri-number-7"></i> Version 7.0.0</h3>
+                <p>Major overhaul with new features and architecture improvements.</p>
+                <a href="?id=8&lang=en" class="developer-link">
+                    <i class="ri-arrow-right-line"></i> Learn More
+                </a>
+            </div>
+
+            <div class="info-card">
+                <h3><i class="ri-number-6"></i> Version 6.0</h3>
+                <p>Significant updates and new capabilities.</p>
+                <a href="?id=9&lang=en" class="developer-link">
+                    <i class="ri-arrow-right-line"></i> Learn More
+                </a>
+            </div>
+
+            <div class="info-card">
+                <h3><i class="ri-number-5"></i> Version 5.0</h3>
+                <p>Enhanced functionality and user experience improvements.</p>
+                <a href="?id=10&lang=en" class="developer-link">
+                    <i class="ri-arrow-right-line"></i> Learn More
+                </a>
+            </div>
+
+            <div class="info-card">
+                <h3><i class="ri-number-4"></i> Version 4.0</h3>
+                <p>Major feature additions and system enhancements.</p>
+                <a href="?id=11&lang=en" class="developer-link">
+                    <i class="ri-arrow-right-line"></i> Learn More
+                </a>
+            </div>
+
+            <div class="info-card">
+                <h3><i class="ri-number-3"></i> Version 3.0</h3>
+                <p>Important updates and new modules.</p>
+                <a href="?id=12&lang=en" class="developer-link">
+                    <i class="ri-arrow-right-line"></i> Learn More
+                </a>
+            </div>
+
+            <div class="info-card">
+                <h3><i class="ri-number-2"></i> Version 2.0</h3>
+                <p>Foundation improvements and feature expansions.</p>
+                <a href="?id=13&lang=en" class="developer-link">
+                    <i class="ri-arrow-right-line"></i> Learn More
+                </a>
+            </div>
+
+            <div class="info-card">
+                <h3><i class="ri-number-1"></i> Version 1.0</h3>
+                <p>The initial release of Roaya Clinic Management System.</p>
+                <a href="?id=14&lang=en" class="developer-link">
+                    <i class="ri-arrow-right-line"></i> Learn More
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Upgrade Guide -->
+    <section class="content-section" id="upgrade">
+        <div class="section-header">
+            <h2><i class="ri-arrow-up-circle-line"></i> Upgrade Information</h2>
+            <p class="section-description">Important information for upgrading to the latest version.</p>
+        </div>
+
+        <div class="info-box">
+            <i class="ri-information-line"></i>
+            <div>
+                <strong>System Requirements:</strong>
+                <ul>
+                    <li>PHP 8.2 or higher</li>
+                    <li>MySQL 8.0 or higher</li>
+                    <li>Modern web browser with JavaScript enabled</li>
+                </ul>
+                <strong>Before Upgrading:</strong>
+                <ul>
+                    <li>Backup your database and files</li>
+                    <li>Review the changelog for breaking changes</li>
+                    <li>Test in a staging environment first</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</div>

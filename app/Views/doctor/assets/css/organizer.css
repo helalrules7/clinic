@@ -1,0 +1,857 @@
+
+
+   /* ============================================
+   Organizer Page Styles   (from organizer.php)
+   ============================================ */
+
+
+   :root {
+    --bg: #f8fafc;
+    --text: #0f172a;
+    --card: #ffffff;
+    --muted: #475569;
+    --accent: #0ea5e9;
+    --success: #10b981;
+    --danger: #ef4444;
+    --border: #e2e8f0;
+    --sidebar-width: 280px;
+    --user-info-bg: rgb(248, 250, 252);
+}
+
+.dark {
+    --bg: #0b1220;
+    --text: #f8fafc;
+    --card: #1e293b;
+    --muted: #cbd5e1;
+    --accent: #38bdf8;
+    --success: #4ade80;
+    --danger: #fb7185;
+    --border: #334155;
+    --user-info-bg: rgb(30, 41, 59);
+}
+.organizer-calendar {
+display: grid;
+grid-template-columns: repeat(7, 1fr);
+gap: 1px;
+background: var(--border);
+border: 1px solid var(--border);
+border-radius: 8px;
+overflow: hidden;
+}
+
+.organizer-day-header {
+background: var(--bg);
+padding: 0.75rem;
+text-align: center;
+font-weight: 600;
+color: var(--text);
+border-bottom: 2px solid var(--border);
+}
+
+.organizer-day {
+background: var(--card);
+min-height: 120px;
+height: 120px;
+padding: 0.5rem;
+position: relative;
+border: 1px solid var(--border);
+transition: all 0.2s ease;
+display: flex;
+flex-direction: column;
+}
+
+/* Ensure all days have equal size on desktop */
+@media (min-width: 769px) {
+.organizer-day {
+min-height: 120px;
+height: 120px;
+max-height: 120px;
+}
+}
+
+.organizer-day:hover {
+background: var(--bg);
+transform: scale(1.02);
+z-index: 1;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.organizer-day.other-month {
+opacity: 0.4;
+background: var(--bg);
+}
+
+.organizer-day.today {
+background: rgba(14, 165, 233, 0.1);
+border: 2px solid var(--accent);
+}
+
+/* Glowing border effect for focused days (mobile only) */
+.organizer-day.focused {
+border: 2px solid var(--accent);
+box-shadow: 0 0 15px rgba(14, 165, 233, 0.5),
+        0 0 30px rgba(14, 165, 233, 0.3),
+        0 0 45px rgba(14, 165, 233, 0.2);
+z-index: 10;
+transform: scale(1);
+}
+
+.dark .organizer-day.focused {
+box-shadow: 0 0 15px rgba(56, 189, 248, 0.6),
+        0 0 30px rgba(56, 189, 248, 0.4),
+        0 0 45px rgba(56, 189, 248, 0.3);
+}
+
+/* Show All button (mobile only) */
+.organizer-day-show-all-btn {
+width: 100%;
+margin-top: 0.5rem;
+padding: 0.6rem 1rem;
+background: rgba(14, 165, 233, 0.1);
+border: 1px solid rgba(14, 165, 233, 0.3);
+color: var(--accent);
+border-radius: 8px;
+font-size: 0.9rem;
+font-weight: 600;
+cursor: pointer;
+transition: all 0.2s ease;
+display: none;
+}
+
+@media (max-width: 768px) {
+.organizer-day-show-all-btn {
+display: block;
+}
+}
+
+.organizer-day-show-all-btn:hover {
+background: rgba(14, 165, 233, 0.2);
+transform: translateY(-2px);
+box-shadow: 0 4px 8px rgba(14, 165, 233, 0.2);
+}
+
+.dark .organizer-day-show-all-btn {
+background: rgba(56, 189, 248, 0.15);
+border-color: rgba(56, 189, 248, 0.4);
+color: var(--accent);
+}
+
+.dark .organizer-day-show-all-btn:hover {
+background: rgba(56, 189, 248, 0.25);
+}
+
+/* Day name and date display during navigation (mobile only) */
+.organizer-day-navigation-info {
+position: absolute;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+text-align: center;
+z-index: 20;
+pointer-events: none;
+opacity: 0;
+transition: opacity 0.3s ease;
+}
+
+.organizer-day.navigating .organizer-day-navigation-info {
+opacity: 1;
+}
+
+.organizer-day-navigation-info-day-name {
+font-size: 2rem;
+font-weight: 700;
+color: var(--accent);
+margin-bottom: 0.5rem;
+text-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
+}
+
+.organizer-day-navigation-info-date {
+font-size: 1.5rem;
+font-weight: 600;
+color: var(--text);
+}
+
+.dark .organizer-day-navigation-info-day-name {
+color: var(--accent);
+text-shadow: 0 2px 8px rgba(56, 189, 248, 0.4);
+}
+
+/* Hide items during navigation */
+.organizer-day.navigating .organizer-day-items,
+.organizer-day.navigating .organizer-day-show-all-btn,
+.organizer-day.navigating .organizer-day-view-btn,
+.organizer-day.navigating .organizer-day-add-alert-btn {
+opacity: 0;
+pointer-events: none;
+}
+
+/* Mobile navigation buttons */
+.organizer-mobile-nav-btn {
+font-size: 0.85rem;
+padding: 0.5rem 0.75rem;
+}
+
+@media (min-width: 769px) {
+.organizer-mobile-nav-btn {
+display: none !important;
+}
+}
+
+/* Mobile Fullscreen Navigation Overlay (for day name/date display during navigation only) */
+.organizer-mobile-navigation-overlay {
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: rgba(0, 0, 0, 0.7);
+backdrop-filter: blur(5px);
+-webkit-backdrop-filter: blur(5px);
+z-index: 9999;
+display: none;
+opacity: 0;
+transition: opacity 0.3s ease;
+pointer-events: none;
+}
+
+.organizer-mobile-navigation-overlay.active {
+display: flex;
+opacity: 1;
+align-items: center;
+justify-content: center;
+}
+
+.organizer-mobile-navigation-overlay-content {
+text-align: center;
+pointer-events: none;
+}
+
+.organizer-mobile-navigation-overlay-day-name {
+font-size: 3rem;
+font-weight: 700;
+color: var(--accent);
+margin-bottom: 1rem;
+text-shadow: 0 2px 8px rgba(14, 165, 233, 0.5);
+}
+
+.organizer-mobile-navigation-overlay-date {
+font-size: 1.5rem;
+font-weight: 600;
+color: var(--text);
+text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dark .organizer-mobile-navigation-overlay-day-name {
+text-shadow: 0 2px 8px rgba(56, 189, 248, 0.6);
+}
+
+/* Disable delete buttons when day is not fully expanded */
+@media (max-width: 768px) {
+.organizer-day:not(.focused) .organizer-item-delete,
+.organizer-day.navigating .organizer-item-delete {
+display: none !important;
+pointer-events: none;
+}
+}
+
+.organizer-day-number {
+font-weight: 600;
+color: var(--text);
+margin-bottom: 0.5rem;
+font-size: 0.9rem;
+}
+
+.organizer-day.today .organizer-day-number {
+color: var(--accent);
+font-weight: 700;
+}
+
+.organizer-day-items {
+display: flex;
+flex-direction: column;
+gap: 0.25rem;
+max-height: 80px;
+overflow-y: auto;
+}
+
+.organizer-item {
+font-size: 0.75rem;
+padding: 0.25rem 0.5rem;
+border-radius: 4px;
+cursor: pointer;
+transition: all 0.2s ease;
+display: flex;
+align-items: center;
+gap: 0.25rem;
+position: relative;
+}
+
+.organizer-item:hover {
+transform: translateX(2px);
+}
+
+.organizer-item.appointment {
+background: rgba(16, 185, 129, 0.15);
+color: var(--success);
+border-left: 3px solid var(--success);
+}
+
+.organizer-item.note {
+background: rgba(59, 130, 246, 0.15);
+color: var(--accent);
+border-left: 3px solid var(--accent);
+}
+
+.organizer-item.alert {
+background: rgba(239, 68, 68, 0.15);
+color: var(--danger);
+border-left: 3px solid var(--danger);
+}
+
+.organizer-item i {
+font-size: 0.7rem;
+}
+
+.organizer-item-text {
+flex: 1;
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+}
+
+.organizer-item-delete {
+opacity: 0;
+transition: opacity 0.2s ease;
+background: rgba(239, 68, 68, 0.2);
+border: none;
+color: var(--danger);
+padding: 0.1rem 0.3rem;
+border-radius: 3px;
+cursor: pointer;
+font-size: 0.7rem;
+}
+
+.organizer-item:hover .organizer-item-delete {
+opacity: 1;
+}
+
+.organizer-item-delete:hover {
+background: rgba(239, 68, 68, 0.4);
+}
+
+.organizer-day-more {
+font-size: 0.7rem;
+color: var(--muted);
+margin-top: 0.25rem;
+text-align: center;
+cursor: pointer;
+}
+
+.organizer-day-more:hover {
+color: var(--accent);
+}
+
+/* Day Overlay for "Show All" */
+.organizer-day-overlay {
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: rgba(0, 0, 0, 0.3);
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+z-index: 5;
+border-radius: 8px;
+transition: all 0.2s ease;
+opacity: 0;
+pointer-events: auto;
+}
+
+.organizer-day:hover .organizer-day-overlay {
+opacity: 1;
+}
+
+.organizer-day-overlay:hover {
+background: rgba(0, 0, 0, 0.3);
+}
+
+.organizer-day-overlay-text {
+color: #ffffff;
+font-weight: 600;
+font-size: 0.9rem;
+text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+padding: 0.5rem 1rem;
+border: 1px solid var(--text);
+background: var(--bg);
+color: var(--text);
+border-radius: 6px;
+transition: all 0.8s ease;
+}
+
+.organizer-day-overlay:hover .organizer-day-overlay-text {
+border: 1px solid var(--accent);
+background: var(--bg);
+transform: scale(1.05);
+}
+
+.dark .organizer-day-overlay {
+background: rgba(0, 0, 0, 0.3);
+}
+
+.dark .organizer-day-overlay:hover {
+background: rgba(0, 0, 0, 0.3);
+}
+
+/* Scrollbar styling */
+.organizer-day-items::-webkit-scrollbar {
+width: 4px;
+}
+
+.organizer-day-items::-webkit-scrollbar-track {
+background: transparent;
+}
+
+.organizer-day-items::-webkit-scrollbar-thumb {
+background: var(--border);
+border-radius: 2px;
+}
+
+.organizer-day-items::-webkit-scrollbar-thumb:hover {
+background: var(--muted);
+}
+
+/* Month/Year Header */
+#monthYearHeader {
+font-size: 1.5rem;
+font-weight: 700;
+color: var(--accent);
+transition: all 0.3s ease;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+/* Header adjustments */
+#monthYearHeader {
+font-size: 1.5rem;
+}
+
+.d-flex.justify-content-between.align-items-center.mb-3 {
+flex-direction: column;
+gap: 1rem;
+align-items: flex-start !important;
+}
+
+.d-flex.gap-2.align-items-center {
+width: 100%;
+justify-content: space-between;
+}
+
+.d-flex.gap-2.align-items-center .btn {
+font-size: 0.85rem;
+padding: 0.4rem 0.6rem;
+}
+
+.d-flex.gap-2.align-items-center .btn i {
+font-size: 0.9rem;
+}
+
+h4.mb-0 {
+font-size: 1.25rem;
+}
+
+/* Calendar grid adjustments - Mobile specific layout */
+.organizer-calendar {
+display: flex !important;
+flex-direction: row !important;
+overflow-x: auto;
+overflow-y: hidden;
+scroll-snap-type: x mandatory;
+-webkit-overflow-scrolling: touch;
+scrollbar-width: thin;
+gap: 1rem;
+padding: 1rem 0;
+}
+
+/* Hide day headers on mobile */
+.organizer-day-header {
+display: none;
+}
+
+/* Each day as a card in mobile */
+.organizer-day {
+min-width: 85vw;
+max-width: 85vw;
+min-height: 60vh;
+max-height: 60vh;
+padding: 1rem;
+margin-right: 1rem;
+scroll-snap-align: center;
+flex-shrink: 0;
+border-radius: 12px;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Other days (not focused) - smaller */
+.organizer-day:not(.focused) {
+min-width: 20vw;
+max-width: 20vw;
+min-height: 15vh;
+max-height: 15vh;
+padding: 0.5rem;
+opacity: 0.6;
+transform: scale(0.85);
+}
+
+/* Focused day - larger and centered */
+.organizer-day.focused {
+min-width: 85vw;
+max-width: 85vw;
+min-height: 60vh;
+max-height: 60vh;
+opacity: 1;
+transform: scale(1);
+border-radius: 12px;
+}
+
+/* Day number on mobile */
+.organizer-day-number {
+font-size: 1.2rem;
+margin-bottom: 0.75rem;
+font-weight: 700;
+}
+
+.organizer-day.focused .organizer-day-number {
+font-size: 1.5rem;
+}
+
+/* Day items adjustments */
+.organizer-day-items {
+max-height: calc(60vh - 100px);
+gap: 0.5rem;
+overflow-y: auto;
+}
+
+.organizer-day:not(.focused) .organizer-day-items {
+max-height: calc(15vh - 50px);
+overflow: hidden;
+}
+
+/* When focused, show all items without height limit */
+.organizer-day.focused .organizer-day-items {
+max-height: calc(60vh - 120px);
+overflow-y: auto;
+}
+
+.organizer-item {
+font-size: 0.85rem;
+padding: 0.4rem 0.6rem;
+gap: 0.4rem;
+}
+
+.organizer-day:not(.focused) .organizer-item {
+font-size: 0.6rem;
+padding: 0.2rem 0.3rem;
+}
+
+.organizer-item i {
+font-size: 0.8rem;
+}
+
+.organizer-day:not(.focused) .organizer-item i {
+font-size: 0.5rem;
+}
+
+.organizer-item-text {
+font-size: 0.8rem;
+}
+
+.organizer-day:not(.focused) .organizer-item-text {
+font-size: 0.55rem;
+}
+
+.organizer-item-delete {
+padding: 0.2rem 0.4rem;
+font-size: 0.7rem;
+}
+
+/* Buttons adjustments */
+.organizer-day-view-btn,
+.organizer-day-add-alert-btn {
+padding: 0.4rem 0.6rem;
+font-size: 0.85rem;
+top: 0.5rem;
+opacity: 1 !important;
+}
+
+.organizer-day:not(.focused) .organizer-day-view-btn,
+.organizer-day:not(.focused) .organizer-day-add-alert-btn {
+display: none;
+}
+
+.organizer-day-view-btn {
+right: 0.5rem;
+}
+
+.organizer-day-add-alert-btn {
+right: 3rem;
+}
+
+
+/* Show more text */
+.organizer-day-more {
+font-size: 0.75rem;
+margin-top: 0.5rem;
+}
+
+/* Overlay adjustments */
+.organizer-day-overlay {
+border-radius: 8px;
+}
+
+.organizer-day-overlay-text {
+font-size: 0.9rem;
+padding: 0.6rem 1rem;
+}
+
+/* Hide overlay on mobile completely */
+.organizer-day-overlay {
+display: none !important;
+}
+
+/* Card body padding */
+.card-body.p-3 {
+padding: 0.75rem !important;
+}
+
+/* Modal adjustments */
+.organizer-modal-glass .modal-dialog {
+margin: 0.5rem;
+max-width: calc(100% - 1rem);
+}
+
+.organizer-modal-glass .modal-content {
+font-size: 0.9rem;
+}
+
+.organizer-modal-glass .modal-header h5 {
+font-size: 1rem;
+}
+
+.organizer-modal-glass .modal-body {
+padding: 1rem;
+}
+
+.organizer-modal-glass .btn {
+font-size: 0.85rem;
+padding: 0.4rem 0.8rem;
+}
+}
+
+/* Extra small devices */
+@media (max-width: 576px) {
+#monthYearHeader {
+font-size: 1.25rem;
+}
+
+h4.mb-0 {
+font-size: 1.1rem;
+}
+
+.d-flex.gap-2.align-items-center .btn {
+font-size: 0.75rem;
+padding: 0.35rem 0.5rem;
+}
+
+.d-flex.gap-2.align-items-center .btn span {
+font-size: 0.75rem;
+}
+
+.organizer-day {
+min-height: 70px;
+padding: 0.2rem;
+}
+
+.organizer-day-number {
+font-size: 0.7rem;
+}
+
+.organizer-day-items {
+max-height: 50px;
+}
+
+.organizer-item {
+font-size: 0.6rem;
+padding: 0.1rem 0.25rem;
+}
+
+.organizer-item-text {
+font-size: 0.55rem;
+}
+
+.organizer-day-view-btn,
+.organizer-day-add-alert-btn {
+padding: 0.1rem 0.25rem;
+font-size: 0.6rem;
+}
+
+.organizer-day-add-alert-btn {
+right: 1.5rem;
+}
+
+.organizer-day-overlay-text {
+font-size: 0.7rem;
+padding: 0.3rem 0.6rem;
+}
+
+/* Make buttons always visible on extra small devices */
+.organizer-day-view-btn,
+.organizer-day-add-alert-btn {
+opacity: 1 !important;
+}
+
+.organizer-day-header {
+font-size: 0.65rem;
+padding: 0.4rem 0.2rem;
+}
+}
+
+/* Day View Button */
+.organizer-day-view-btn {
+position: absolute;
+top: 0.25rem;
+right: 0.25rem;
+background: rgba(14, 165, 233, 0.1);
+border: 1px solid rgba(14, 165, 233, 0.3);
+color: var(--accent);
+border-radius: 4px;
+padding: 0.25rem 0.5rem;
+font-size: 0.75rem;
+cursor: pointer;
+transition: all 0.2s ease;
+z-index: 15;
+}
+
+.organizer-day:hover .organizer-day-view-btn {
+opacity: 1;
+}
+
+.organizer-day-view-btn:hover {
+background: rgba(14, 165, 233, 0.2);
+transform: scale(1.1);
+}
+
+/* Day Add Alert Button */
+.organizer-day-add-alert-btn {
+position: absolute;
+top: 0.25rem;
+right: 2.3rem;
+background: rgba(239, 68, 68, 0.1);
+border: 1px solid rgba(239, 68, 68, 0.3);
+color: var(--danger);
+border-radius: 4px;
+padding: 0.25rem 0.5rem;
+font-size: 0.75rem;
+cursor: pointer;
+transition: all 0.2s ease;
+z-index: 15;
+}
+
+@media (min-width: 769px) {
+.organizer-day-add-alert-btn {
+right: 2.3rem;
+}
+}
+
+.organizer-day:hover .organizer-day-add-alert-btn {
+opacity: 1;
+}
+
+.organizer-day-add-alert-btn:hover {
+background: rgba(239, 68, 68, 0.2);
+transform: scale(1.1);
+}
+
+/* Modal Glass Effect - Same as appointment.php */
+.organizer-modal-glass .modal-content {
+background: rgba(248, 250, 252, 0.7) !important;
+backdrop-filter: blur(15px);
+-webkit-backdrop-filter: blur(15px);
+border: 1px solid rgba(226, 232, 240, 0.4) !important;
+box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.15);
+color: var(--text) !important;
+}
+
+.dark .organizer-modal-glass .modal-content {
+background: rgba(11, 18, 32, 0.40) !important;
+border: 1px solid rgba(51, 65, 85, 0.3) !important;
+box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
+color: var(--text) !important;
+}
+
+.organizer-modal-glass .modal-header {
+background: transparent !important;
+border-bottom-color: rgba(226, 232, 240, 0.4) !important;
+color: var(--text) !important;
+}
+
+.dark .organizer-modal-glass .modal-header {
+background: transparent !important;
+border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+color: var(--text) !important;
+}
+
+.organizer-modal-glass .modal-body {
+background: transparent !important;
+color: var(--text) !important;
+}
+
+.organizer-modal-glass .modal-footer {
+background: transparent !important;
+border-top-color: rgba(226, 232, 240, 0.4) !important;
+}
+
+.dark .organizer-modal-glass .modal-footer {
+border-top-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+/* Close button white in dark mode */
+.dark .organizer-modal-glass .modal-header .btn-close {
+filter: invert(1) brightness(2);
+opacity: 0.9;
+}
+
+.dark .organizer-modal-glass .modal-header .btn-close:hover {
+opacity: 1;
+filter: invert(1) brightness(2.5);
+}
+
+/* Enable dragging */
+.organizer-modal-glass .modal-content {
+cursor: move;
+}
+
+.organizer-modal-glass .modal-dialog {
+cursor: default;
+transition: transform 0.2s ease;
+margin: 1.75rem auto;
+position: relative;
+}
+
+.organizer-modal-glass .modal-header {
+user-select: none;
+-webkit-user-select: none;
+-moz-user-select: none;
+-ms-user-select: none;
+cursor: move;
+}
+
+.organizer-modal-glass .modal-header button {
+cursor: pointer;
+}
+
+.organizer-modal-glass .modal-dialog.dragging {
+transition: none !important;
+}

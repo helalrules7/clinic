@@ -1,0 +1,289 @@
+<div class="getting-started-content" dir="rtl">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">ويدجت الطقس</h1>
+            <p class="hero-subtitle">معلومات الطقس مع مؤشرات طبية</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">طقس</span>
+                <span class="badge badge-secondary">طبي</span>
+                <span class="badge badge-success">ذكي</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-sun-line"></i> نظرة عامة على ويدجت الطقس</h2>
+            <p class="section-description">ويدجت الطقس يوفر معلومات طقس شاملة مع مؤشرات طبية متخصصة لأطباء العيون، مما يساعدهم على اتخاذ قرارات مستنيرة بناءً على الظروف البيئية.</p>
+        </div>
+
+        <!-- Weather Widget Demo Image -->
+        <div class="weather-widget-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="weather-widget-demo-thumbnail" id="weather-widget-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/weather-widget-dark.png" alt="عرض توضيحي لويدجت الطقس" class="weather-widget-demo-dark" />
+                <img src="/docs/opth/public/assets/images/weather-widget-light.png" alt="عرض توضيحي لويدجت الطقس - الوضع الفاتح" class="weather-widget-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>انقر لعرض الحجم الكامل</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> عرض توضيحي مرئي لواجهة ويدجت الطقس
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-map-pin-line"></i>
+                </div>
+                <h3>الكشف التلقائي عن الموقع</h3>
+                <p>الويدجت يكتشف تلقائياً موقعك الحالي باستخدام خدمات تحديد الموقع الجغرافي للمتصفح، مما يضمن أنك ترى دائماً معلومات الطقس ذات الصلة بمنطقتك.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-todo-line"></i>
+                </div>
+                <h3>توقعات 4 أيام</h3>
+                <p>الوصول إلى توقعات طقس مفصلة للأيام الأربعة القادمة، مما يساعدك على التخطيط مسبقاً والاستعداد لظروف الطقس القادمة.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-eye-line"></i>
+                </div>
+                <h3>مؤشرات طبية</h3>
+                <p>مؤشرات متخصصة لمستويات حبوب اللقاح ومخاطر جفاف العين توفر معلومات قيمة لأطباء العيون ومرضاهم.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Current Weather -->
+    <section class="content-section" id="current-weather">
+        <div class="section-header">
+            <h2><i class="ri-cloud-line"></i> عرض الطقس الحالي</h2>
+            <p class="section-description">الويدجت يعرض ظروف الطقس الحالية مع أيقونات ديناميكية تتغير بناءً على الوقت الحالي وحالة الطقس.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-temp-cold-line"></i>
+                </div>
+                <h3>درجة الحرارة</h3>
+                <p>يعرض درجة الحرارة الحالية بالدرجات المئوية، معروضة بشكل بارز للرجوع السريع.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-cloudy-line"></i>
+                </div>
+                <h3>حالة الطقس</h3>
+                <p>يعرض وصفاً موجزاً لظروف الطقس الحالية (مثلاً: "أمطار خفيفة"، "سماء صافية"، "غيوم متفرقة").</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-image-edit-line"></i>
+                </div>
+                <h3>أيقونات ديناميكية</h3>
+                <p>أيقونات الطقس تتغير تلقائياً بناءً على الوقت الحالي (نهار/ليل) وظروف الطقس، مما يوفر تمثيلاً مرئياً دقيقاً.</p>
+                <ul>
+                    <li>الأيقونات تتكيف مع وقت اليوم (شمس للنهار، قمر للليل)</li>
+                    <li>أيقونات خاصة بالطقس (مطر، غيوم، شمس، إلخ)</li>
+                    <li>تحديثات تلقائية مع تغير الظروف</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-map-pin-2-line"></i>
+                </div>
+                <h3>عرض الموقع</h3>
+                <p>يعرض اسم الموقع المكتشف (مثلاً: "كفر الشيخ") مع أيقونة دبوس موقع، مما يؤكد ميزة الكشف التلقائي.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4-Day Forecast -->
+    <section class="content-section" id="forecast">
+        <div class="section-header">
+            <h2><i class="ri-calendar-line"></i> توقعات الطقس لمدة 4 أيام</h2>
+            <p class="section-description">الوصول إلى توقعات طقس مفصلة للأيام الأربعة القادمة، بما في ذلك نطاقات درجات الحرارة، ظروف الطقس، والمؤشرات الطبية.</p>
+        </div>
+
+        <!-- Forecast Demo Image -->
+        <div class="weather-forecast-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="weather-forecast-demo-thumbnail" id="weather-forecast-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/weather-forecast-dark.png" alt="عرض توضيحي لتوقعات الطقس" class="weather-forecast-demo-dark" />
+                <img src="/docs/opth/public/assets/images/weather-forecast-light.png" alt="عرض توضيحي لتوقعات الطقس - الوضع الفاتح" class="weather-forecast-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>انقر لعرض الحجم الكامل</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> عرض توضيحي مرئي لواجهة توقعات الطقس لمدة 4 أيام
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-todo-line"></i>
+                </div>
+                <h3>بطاقات التوقعات اليومية</h3>
+                <p>كل يوم معروض في بطاقة منفصلة توضح:</p>
+                <ul>
+                    <li>اسم اليوم والتاريخ (مثلاً: "الأحد 14 ديسمبر")</li>
+                    <li>أيقونة الطقس التي تمثل الظروف</li>
+                    <li>نطاق درجات الحرارة (عالية ومنخفضة)</li>
+                    <li>وصف حالة الطقس</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-temp-hot-line"></i>
+                </div>
+                <h3>معلومات درجات الحرارة</h3>
+                <p>بطاقات التوقعات تعرض درجات الحرارة العالية والمنخفضة لكل يوم، مما يساعد الأطباء على فهم التباينات في درجات الحرارة طوال فترة التوقعات.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-image-edit-line"></i>
+                </div>
+                <h3>أيقونات الطقس</h3>
+                <p>كل بطاقة توقعات تتضمن أيقونة طقس تتغير بناءً على الظروف المتوقعة، مما يوفر مرجعاً مرئياً سريعاً للطقس المتوقع.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Medical Indicators -->
+    <section class="content-section" id="medical-indicators">
+        <div class="section-header">
+            <h2><i class="ri-medicine-bottle-line"></i> المؤشرات الطبية لطب العيون</h2>
+            <p class="section-description">ويدجت الطقس يتضمن مؤشرات طبية متخصصة مصممة خصيصاً لأطباء العيون، مما يوفر معلومات قيمة عن الصحة البيئية.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-flower-line"></i>
+                </div>
+                <h3>مؤشر حبوب اللقاح</h3>
+                <p>يعرض مستوى حبوب اللقاح الحالي كنسبة مئوية، مما يساعد الأطباء على تقديم المشورة للمرضى الذين يعانون من الحساسية أو حساسية العين.</p>
+                <ul>
+                    <li>يعرض نسبة مستوى حبوب اللقاح (مثلاً: 55%، 70%، 85%)</li>
+                    <li>شريط تقدم مشفر بالألوان (أخضر، برتقالي، أحمر) يشير إلى الشدة</li>
+                    <li>يتحدث يومياً بناءً على الظروف البيئية</li>
+                    <li>يساعد الأطباء على التوصية بالاحتياطات المناسبة</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-eye-line"></i>
+                </div>
+                <h3>مخاطر جفاف العين</h3>
+                <p>يشير إلى مستوى المخاطر لحالات جفاف العين بناءً على عوامل الطقس، مما يساعد الأطباء على تقديم رعاية أفضل للمرضى.</p>
+                <ul>
+                    <li>يعرض نسبة مخاطر جفاف العين (مثلاً: 33%، 48%)</li>
+                    <li>شريط تقدم مشفر بالألوان (أخضر للمنخفض، برتقالي للمتوسط، أحمر للعالي)</li>
+                    <li>محسوب بناءً على الرطوبة، الرياح، وعوامل درجات الحرارة</li>
+                    <li>يساعد الأطباء على تقديم المشورة للمرضى حول رعاية العين خلال ظروف طقس محددة</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-list-3-line"></i>
+                </div>
+                <h3>مؤشرات التوقعات</h3>
+                <p>كلا المؤشرين متاحان لكل يوم في توقعات الأيام الأربعة، مما يسمح للأطباء بالتخطيط مسبقاً وإعلام المرضى بالظروف القادمة.</p>
+                <ul>
+                    <li>مؤشرات حبوب اللقاح وجفاف العين معروضة لكل يوم توقعات</li>
+                    <li>التشفير بالألوان يساعد في تحديد الأيام عالية المخاطر</li>
+                    <li>يمكن التواصل الاستباقي مع المرضى</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="info-box" style="margin-top: 2rem;">
+            <i class="ri-information-line"></i>
+            <div>
+                <strong>مرجع طبي:</strong>
+                <p>هذه المؤشرات مصممة خصيصاً لأطباء العيون للرجوع إليها عند علاج المرضى. المستويات العالية من حبوب اللقاح قد تؤثر على المرضى الذين يعانون من الحساسية، بينما قد تتطلب مخاطر جفاف العين العالية توصيات رعاية إضافية للمرضى خلال ظروف طقس محددة.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="content-section" id="features">
+        <div class="section-header">
+            <h2><i class="ri-star-line"></i> الميزات الرئيسية</h2>
+            <p class="section-description">ويدجت الطقس يتضمن عدة ميزات مصممة لتوفير معلومات طقس وطبية شاملة.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-map-pin-line"></i>
+                </div>
+                <h3>الكشف التلقائي عن الموقع</h3>
+                <p>الويدجت يكتشف تلقائياً موقعك باستخدام خدمات تحديد الموقع الجغرافي للمتصفح، مما يلغي الحاجة لإدخال الموقع يدوياً.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-refresh-line"></i>
+                </div>
+                <h3>تحديثات مباشرة</h3>
+                <p>معلومات الطقس والمؤشرات تتحدث مباشرة، مما يضمن أن لديك دائماً أحدث البيانات المتاحة.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>دعم الثيم</h3>
+                <p>الويدجت يتكيف تلقائياً مع الثيم المحدد (فاتح أو داكن)، مما يضمن قابلية القراءة المثلى والاتساق المرئي.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-image-edit-line"></i>
+                </div>
+                <h3>نظام أيقونات ديناميكي</h3>
+                <p>أيقونات الطقس تتغير تلقائياً بناءً على الوقت الحالي والظروف، مما يوفر تمثيلاً مرئياً دقيقاً طوال النهار والليل.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Image Modals -->
+<div id="weather-widget-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-weather-widget-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/weather-widget-dark.png" alt="عرض توضيحي لويدجت الطقس - الحجم الكامل" class="weather-widget-demo-dark" />
+        <img src="/docs/opth/public/assets/images/weather-widget-light.png" alt="عرض توضيحي لويدجت الطقس - الوضع الفاتح - الحجم الكامل" class="weather-widget-demo-light" style="display: none;" />
+    </div>
+</div>
+
+<div id="weather-forecast-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-weather-forecast-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/weather-forecast-dark.png" alt="عرض توضيحي لتوقعات الطقس - الحجم الكامل" class="weather-forecast-demo-dark" />
+        <img src="/docs/opth/public/assets/images/weather-forecast-light.png" alt="عرض توضيحي لتوقعات الطقس - الوضع الفاتح - الحجم الكامل" class="weather-forecast-demo-light" style="display: none;" />
+    </div>
+</div>
