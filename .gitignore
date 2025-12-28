@@ -1,0 +1,76 @@
+# Environment & Configuration
+.env.local
+.env.*.local
+
+# Dependencies
+/vendor/
+node_modules/
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+/storage/logs/*.log
+/app/storage/logs/*.log
+
+# Uploads & Media
+/uploads/*
+!/uploads/.gitkeep
+/public/uploads/*
+!/public/uploads/.gitkeep
+/storage/uploads/*
+!/storage/uploads/.gitkeep
+/app/storage/uploads/*
+!/app/storage/uploads/.gitkeep
+
+# Cache & Temporary Files
+/storage/cache/*
+!/storage/cache/.gitkeep
+/app/storage/cache/*
+!/app/storage/cache/.gitkeep
+*.cache
+.phpunit.result.cache
+
+# Database Backups
+/storage/backups/*
+!/storage/backups/.gitkeep
+/app/storage/backups/*
+!/app/storage/backups/.gitkeep
+
+# Build & Distribution
+/dist/
+/build/
+*.zip
+*.tar.gz
+
+# OS Files
+Thumbs.db
+desktop.ini
+
+# Docker volumes data (if any)
+db_data/
+vendor_data/
+
+# Sensitive Files
+*.pem
+*.key
+*.crt
+credentials.json
+secrets.yml
+
+# Testing
+/coverage/
+/.phpunit.cache/
+
+# Composer
+composer.phar
+
+# Documentation build
+/documentation_site/dist/
+/documentation_site/node_modules/
