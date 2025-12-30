@@ -209,8 +209,8 @@ php -S localhost:8000 router.php &
 
 | الدور | اسم المستخدم | البريد الإلكتروني |
 |-------|-------------|------------------|
-| **Dr. Ahmed** | `dr_1` | `dr.1@yoursite.com` |
-| **Dr. Faramawy** | `dr_2` | `dr.2@yoursite.com` |
+| **Dr. 1** | `dr_1` | `dr.1@yoursite.com` |
+| **Dr. 2** | `dr_2` | `dr.2@yoursite.com` |
 | **Secretary** | `sec` | `sec@yoursite.com` |
 | **Admin** | `admin` | `admin@yoursite.com` |
 
@@ -304,34 +304,88 @@ clinic/
 - `GET /api/auth/session-time` - وقت الجلسة المتبقي
 
 #### **المرضى**
-- `GET /api/patients` - قائمة المرضى
+- `GET /api/patients` - قائمة جميع المرضى
 - `GET /api/patients/search?q={query}` - البحث عن المرضى
 - `GET /api/patients/{id}` - تفاصيل مريض
 - `POST /api/patients` - إنشاء مريض جديد
 - `PUT /api/patients/{id}/emergency-contact` - تحديث جهة اتصال الطوارئ
 - `DELETE /api/patients/{id}` - حذف مريض
-- `GET /api/patients/{id}/timeline` - الجدول الزمني للمريض
-- `GET /api/patients/{id}/files` - ملفات المريض
-- `GET /api/patients/{id}/appointments` - مواعيد المريض
-- `GET /api/patients/{id}/export` - تصدير بيانات المريض
+- `GET /api/patients/{id}/timeline` - الجدول الزمني الكامل للمريض
+- `GET /api/patients/{id}/files` - ملفات المريض المرفقة
+- `GET /api/patients/{id}/appointments` - مواعيد المريض الحالية
+- `GET /api/patients/{id}/appointments/history` - تاريخ مواعيد المريض
+- `GET /api/patients/{id}/appointments/check-active` - التحقق من وجود مواعيد نشطة
+- `GET /api/patients/{id}/export` - تصدير بيانات المريض (CSV/Excel)
+- `HEAD /api/patients/{id}/export` - التحقق من صلاحية التصدير
+- `POST /api/patients/files/upload` - رفع ملف للمريض
+- `GET /api/patients/files/view/{id}` - عرض ملف المريض
+- `GET /api/patients/files/download/{id}` - تحميل ملف المريض
+- `DELETE /api/patients/files/{id}` - حذف ملف المريض
+- `POST /api/patients/notes` - إنشاء ملاحظة للمريض
+- `PUT /api/patients/notes/{id}` - تحديث ملاحظة المريض
+- `DELETE /api/patients/notes/{id}` - حذف ملاحظة المريض
+- `GET /api/patients/{id}/medical-history` - التاريخ الطبي للمريض
+- `POST /api/patients/{id}/medical-history` - إضافة سجل للتاريخ الطبي
+- `GET /api/patients/{id}/medical-history/{historyId}` - تفاصيل سجل طبي محدد
+- `PUT /api/patients/{id}/medical-history/{historyId}` - تحديث سجل طبي
+- `DELETE /api/patients/{id}/medical-history/{historyId}` - حذف سجل طبي
 
 #### **المواعيد**
-- `GET /api/calendar` - بيانات التقويم
+- `GET /api/calendar` - بيانات التقويم (يتطلب `doctor_id` و `date`)
+- `GET /api/organizer/month` - بيانات المنظم الشهرية
 - `GET /api/appointments/{id}` - تفاصيل موعد
 - `GET /api/appointments/search?q={query}` - البحث في المواعيد
-- `POST /api/appointments` - إنشاء موعد
+- `POST /api/appointments` - إنشاء موعد جديد
 - `PUT /api/appointments/{id}` - تحديث موعد
 - `DELETE /api/appointments/{id}` - حذف موعد
 - `POST /api/appointments/{id}/reschedule` - إعادة جدولة موعد
+- `POST /api/appointments/{id}/reschedule-followup` - إعادة جدولة موعد المتابعة
+- `GET /api/appointments/{id}/attachments` - مرفقات الموعد
+- `GET /api/appointments/{id}/medications` - وصفات الأدوية للموعد
+- `GET /api/appointments/{id}/glasses` - وصفات النظارات للموعد
+- `GET /api/appointments/{id}/followup` - موعد المتابعة المرتبط
+- `GET /api/appointments/{id}/original` - الموعد الأصلي
 - `GET /api/upcoming-appointments` - المواعيد القادمة
 - `GET /api/missed-appointments` - المواعيد الفائتة
+
+#### **الاستشارات والملاحظات**
+- `POST /api/consultations` - إنشاء استشارة جديدة
+- `DELETE /api/consultation-notes/{id}` - حذف ملاحظة استشارة
+
+#### **الوصفات الطبية**
+- `POST /api/prescriptions/meds` - إنشاء وصفة أدوية
+- `PUT /api/prescriptions/meds/{id}` - تحديث وصفة أدوية
+- `DELETE /api/prescriptions/meds/{id}` - حذف وصفة أدوية
+- `POST /api/prescriptions/glasses` - إنشاء وصفة نظارات
+- `PUT /api/prescriptions/glasses/{id}` - تحديث وصفة نظارات
+- `DELETE /api/prescriptions/glasses/{id}` - حذف وصفة نظارات
+- `GET /api/prescriptions/glasses/{id}` - تفاصيل وصفة نظارات
+- `GET /api/glasses/prescriptions` - قائمة وصفات النظارات
+- `GET /api/glasses/prescriptions/patient` - وصفات النظارات لمريض محدد
+- `GET /api/medications/prescriptions` - قائمة وصفات الأدوية
+- `GET /api/medications/prescriptions/patient` - وصفات الأدوية لمريض محدد
 
 #### **المساعد الطبي الذكي (AI)** - جديد في الإصدار 8.0.0
 - `POST /api/ai/chat` - إرسال رسالة للمساعد الذكي
 - `GET /api/ai/chat/history?patientId={id}&appointmentId={id}` - سجل المحادثة
-- `GET /api/consultation/common-complaints` - الشكاوى الشائعة
-- `GET /api/consultation/suggestions?complaint={text}` - اقتراحات الاستشارة
-- `GET /api/prescriptions/suggestions?complaint={text}` - اقتراحات الوصفات
+- `GET /api/consultation/common-complaints` - الشكاوى الشائعة من قاعدة البيانات
+- `GET /api/consultation/suggestions?complaint={text}` - اقتراحات الاستشارة بناءً على الشكوى
+- `GET /api/prescriptions/suggestions?complaint={text}` - اقتراحات الوصفات بناءً على الشكوى
+
+#### **الفحوصات المخبرية والأشعة**
+- `POST /api/lab-tests` - إنشاء طلب فحص مخبري
+- `PUT /api/lab-tests/{id}` - تحديث طلب فحص مخبري
+- `DELETE /api/lab-tests/{id}` - حذف طلب فحص مخبري
+- `GET /api/lab-tests/appointment/{id}` - فحوصات مخبرية لموعد محدد
+
+#### **البحث**
+- `GET /api/search/comprehensive?q={query}` - بحث شامل في النظام (مرضى، مواعيد، أدوية)
+- `GET /api/searchDrugs?q={query}` - البحث في قاعدة بيانات الأدوية
+- `GET /api/searchDrugsAutocomplete?q={query}` - الإكمال التلقائي للأدوية
+- `GET /api/getDrugDetails` - تفاصيل دواء محدد
+- `GET /api/getFilterOptions` - خيارات التصفية للأدوية
+- `GET /api/getMostUsedDrugs` - الأدوية الأكثر استخداماً
+- `POST /api/drugs/update-database` - تحديث قاعدة بيانات الأدوية
 
 #### **المنتدى**
 - `GET /api/forum/topics` - قائمة المواضيع
@@ -339,33 +393,139 @@ clinic/
 - `POST /api/forum/topics` - إنشاء موضوع جديد
 - `PUT /api/forum/topics/{id}` - تحديث موضوع
 - `DELETE /api/forum/topics/{id}` - حذف موضوع
-- `GET /api/forum/posts/topic/{topicId}` - مشاركات الموضوع
+- `GET /api/forum/topics/patient/{patientId}` - مواضيع متعلقة بمريض
+- `GET /api/forum/topics/appointment/{appointmentId}` - مواضيع متعلقة بموعد
+- `GET /api/forum/posts/topic/{topicId}` - مشاركات موضوع محدد
+- `GET /api/forum/posts/{id}` - تفاصيل مشاركة
 - `POST /api/forum/posts` - إنشاء مشاركة جديدة
+- `PUT /api/forum/posts/{id}` - تحديث مشاركة
+- `DELETE /api/forum/posts/{id}` - حذف مشاركة
 - `POST /api/forum/posts/{id}/like` - إعجاب بمشاركة
+- `POST /api/forum/posts/{id}/dislike` - عدم إعجاب بمشاركة
+- `DELETE /api/forum/posts/{id}/like` - إزالة إعجاب
+- `POST /api/forum/topics/{id}/like` - إعجاب بموضوع
+- `POST /api/forum/topics/{id}/dislike` - عدم إعجاب بموضوع
+- `POST /api/forum/posts/{id}/images` - رفع صورة لمشاركة
+- `DELETE /api/forum/images/{id}` - حذف صورة
+- `POST /api/forum/topics/{id}/tags` - إضافة علامات لموضوع
+- `DELETE /api/forum/topics/{id}/tags/{tagId}` - حذف علامة من موضوع
+- `POST /api/forum/attachments/upload` - رفع مرفق للمنتدى
+- `GET /api/forum/attachments/view/{id}` - عرض مرفق
+- `DELETE /api/forum/attachments/{id}` - حذف مرفق
+- `GET /api/forum/stats/categories` - إحصائيات التصنيفات
+- `GET /api/forum/stats/top-meta` - العلامات الأكثر استخداماً
+- `POST /api/forum/topics/{id}/toggle-resolved` - تبديل حالة الحل
+- `POST /api/forum/topics/{id}/toggle-pin` - تثبيت/إلغاء تثبيت موضوع
 
 #### **الإشعارات**
-- `GET /api/notifications` - قائمة الإشعارات
+- `GET /api/notifications` - قائمة جميع الإشعارات
 - `GET /api/notifications/unread-count` - عدد الإشعارات غير المقروءة
 - `PUT /api/notifications/{id}/read` - تحديد إشعار كمقروء
 - `PUT /api/notifications/read-all` - تحديد جميع الإشعارات كمقروءة
+- `DELETE /api/notifications/clear-all` - حذف جميع الإشعارات
 - `DELETE /api/notifications/{id}` - حذف إشعار
+- `POST /api/notifications/system` - إنشاء إشعار نظام
 
-#### **البحث**
-- `GET /api/search/comprehensive?q={query}` - بحث شامل
-- `GET /api/searchDrugs?q={query}` - البحث في الأدوية
-- `GET /api/searchDrugsAutocomplete?q={query}` - الإكمال التلقائي للأدوية
+#### **التنبيهات (Alerts)**
+- `GET /api/alerts` - قائمة جميع التنبيهات
+- `GET /api/alerts/{id}` - تفاصيل تنبيه
+- `POST /api/alerts` - إنشاء تنبيه جديد
+- `PUT /api/alerts/{id}` - تحديث تنبيه
+- `DELETE /api/alerts/{id}` - حذف تنبيه
+- `GET /api/alerts/today` - التنبيهات اليوم
+- `GET /api/alerts/active` - التنبيهات النشطة
+- `POST /api/alerts/dismiss` - إلغاء تنبيه
+- `POST /api/alerts/{id}/toggle-status` - تبديل حالة التنبيه
+- `GET /api/alerts/patient/{patientId}` - تنبيهات مريض محدد
+- `POST /api/alerts/disable-all` - تعطيل جميع التنبيهات
+- `DELETE /api/alerts/delete-all` - حذف جميع التنبيهات
+
+#### **الملاحظات (Notes)**
+- `GET /api/notes` - قائمة الملاحظات
+- `GET /api/notes/{id}` - تفاصيل ملاحظة
+- `POST /api/notes` - إنشاء ملاحظة جديدة
+- `PUT /api/notes/{id}` - تحديث ملاحظة
+- `DELETE /api/notes/{id}` - حذف ملاحظة
+- `DELETE /api/notes/delete-all` - حذف جميع الملاحظات
 
 #### **لوحة التحكم**
 - `GET /api/dashboard-summary` - ملخص لوحة التحكم
 - `GET /api/dashboard-charts` - بيانات الرسوم البيانية
 - `GET /api/recent-activity` - النشاطات الأخيرة
 - `GET /api/secretary/dashboard` - لوحة تحكم السكرتير
+- `GET /api/clinical-dashboard/snapshot` - لقطة شاشة للوحة التحكم السريرية
+
+#### **المدفوعات والمصروفات**
+- `POST /api/payments` - تسجيل دفعة
+- `PUT /api/payments/{id}` - تحديث دفعة
+- `DELETE /api/payments/{id}` - حذف دفعة
+- `GET /api/payments/{id}` - تفاصيل دفعة
+- `POST /api/expenses` - تسجيل مصروف
+- `PUT /api/expenses/{id}` - تحديث مصروف
+- `DELETE /api/expenses/{id}` - حذف مصروف
+- `GET /api/expenses/{id}` - تفاصيل مصروف
+- `GET /api/financial-transactions` - جميع المعاملات المالية
+- `GET /api/financial-transactions/export` - تصدير المعاملات المالية
+- `POST /api/daily-balance` - إنشاء رصيد يومي
+- `POST /api/daily-closure` - إغلاق يومي
+- `POST /api/daily-closure/lock` - قفل الإغلاق اليومي
 
 #### **المرفقات**
-- `POST /api/attachments/upload` - رفع مرفق
+- `POST /api/attachments/upload` - رفع مرفق عام
 - `GET /api/attachments/view/{id}` - عرض مرفق
 - `GET /api/attachments/download/{id}` - تحميل مرفق
 - `DELETE /api/attachments/{id}` - حذف مرفق
+
+#### **الوسائط (Media)**
+- `GET /api/media` - قائمة الوسائط
+- `GET /api/media/patient` - صور المريض
+
+#### **الخدمات الطبية المتقدمة**
+- `POST /api/iol/calculate` - حساب قوة عدسة IOL
+- `GET /api/iop/analyze` - تحليل اتجاه ضغط العين (IOP Trend)
+- `POST /api/pediatric-iol/calculate` - حساب IOL للأطفال
+- `POST /api/astigmatism/calculate` - حساب الاستجماتيزم القرني
+- `POST /api/target-iop/calculate` - حساب ضغط العين المستهدف
+- `POST /api/refraction/consistency` - فحص اتساق الانكسار
+- `POST /api/visual-acuity/progress` - حساب تقدم حدة البصر
+- `POST /api/osdi/calculate` - حساب مؤشر جفاف العين (OSDI)
+- `GET /api/patients/:patientId/osdi/history` - تاريخ OSDI للمريض
+- `POST /api/pachymetry-adjusted-iop/calculate` - حساب IOP المعدل بسمك القرنية
+- `POST /api/diabetic-retinopathy/risk-estimate` - تقدير خطر اعتلال الشبكية السكري
+- `POST /api/macular-thickness/trend` - تحليل اتجاه سمك البقعة
+- `GET /api/patients/:patientId/macular-thickness/history` - تاريخ سمك البقعة للمريض
+- `POST /api/cataract-surgery/readiness` - تقييم جاهزية جراحة الساد
+- `POST /api/cataract-surgery/postop-outcome` - تحليل نتائج ما بعد الجراحة
+- `GET /api/cataract-surgery/audit` - مراجعة نتائج الجراحات
+
+#### **إدارة المستخدمين (Admin)**
+- `POST /api/users/change-password` - تغيير كلمة المرور
+- `POST /api/admin/backup/database` - نسخ احتياطي لقاعدة البيانات
+- `POST /api/admin/backup/full` - نسخ احتياطي كامل
+- `POST /api/admin/backup/website` - نسخ احتياطي للموقع
+- `GET /api/admin/backup/list` - قائمة النسخ الاحتياطية
+- `POST /api/admin/backup/restore` - استعادة نسخة احتياطية
+- `POST /api/admin/backup/restore-upload` - استعادة من ملف مرفوع
+- `GET /api/admin/backup/download/{type}/{name}` - تحميل نسخة احتياطية
+- `GET /api/admin/media/list` - قائمة الوسائط
+- `POST /api/admin/media/delete` - حذف وسائط
+- `POST /api/admin/media/delete-all` - حذف جميع الوسائط
+- `POST /api/admin/media/backup` - نسخ احتياطي للوسائط
+- `GET /api/admin/media/backups` - قائمة نسخ الوسائط
+- `POST /api/admin/media/restore` - استعادة وسائط
+- `POST /api/admin/media/restore-upload` - استعادة وسائط من ملف
+- `GET /api/admin/media/backup-download/{name}` - تحميل نسخة وسائط
+
+#### **إعدادات الطبيب**
+- `GET /api/doctor/settings` - إعدادات الطبيب
+- `PUT /api/doctor/settings` - تحديث إعدادات الطبيب
+
+#### **معلومات إضافية**
+- `GET /api/weather` - معلومات الطقس
+- `GET /api/weather-forecast` - توقعات الطقس
+- `GET /api/weather-ar` - معلومات الطقس بالعربية
+- `GET /api/weather-forecast-ar` - توقعات الطقس بالعربية
+- `GET /api/ophthalmology-news` - أخبار طب العيون
 
 ### **استجابة API**
 ```json

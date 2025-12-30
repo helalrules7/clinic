@@ -19,29 +19,6 @@ node_modules/
 /storage/logs/*.log
 /app/storage/logs/*.log
 
-# Uploads & Media
-/uploads/*
-!/uploads/.gitkeep
-/public/uploads/*
-!/public/uploads/.gitkeep
-/storage/uploads/*
-!/storage/uploads/.gitkeep
-/app/storage/uploads/*
-!/app/storage/uploads/.gitkeep
-
-# Cache & Temporary Files
-/storage/cache/*
-!/storage/cache/.gitkeep
-/app/storage/cache/*
-!/app/storage/cache/.gitkeep
-*.cache
-.phpunit.result.cache
-
-# Database Backups
-/storage/backups/*
-!/storage/backups/.gitkeep
-/app/storage/backups/*
-!/app/storage/backups/.gitkeep
 
 # Build & Distribution
 /dist/
@@ -72,5 +49,5 @@ secrets.yml
 composer.phar
 
 # Documentation build
-/documentation_site/dist/
-/documentation_site/node_modules/
+/--Documentation_site/dist/
+/--Documentation_site/node_modules/
