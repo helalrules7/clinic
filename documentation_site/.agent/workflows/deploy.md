@@ -2,39 +2,41 @@
 description: Full deployment pipeline: Optimize images, update references, clean local, build, clean remote, and deploy.
 ---
 
-1. Optimize images
+1. Optimize images (SKIPPED)
+<!--
 // turbo
-```bash
 python3 optimize_images.py
-```
+-->
 
-2. Update code references to use optimized images
+2. Update code references to use optimized images (SKIPPED)
+<!--
 // turbo
-```bash
 python3 replace_new_refs.py
-```
+-->
 
-3. Clean unused local unoptimized images
+3. Clean unused local unoptimized images (SKIPPED)
+<!--
 // turbo
-```bash
 python3 cleanup_local.py
-```
+-->
 
 4. Build the project
-// turbo
+   // turbo
+
 ```bash
 npm run build
 ```
 
-
 6. Upload new build to remote server
-// turbo
+   // turbo
+
 ```bash
-rsync -avz -e "ssh -i /var/www/html/clinic/keys/OpenSSHPrivate -o StrictHostKeyChecking=no" dist/ root@45.93.138.184:/home/AhmedHelal/web/hclinic.clinic/public_html/docs/opth
+rsync -avz -e "ssh -i \"/Users/ahmed/Docker/My Sites/clinic/documentation_site/secret/OpenSSHPrivate\" -o StrictHostKeyChecking=no" dist/ root@45.93.138.184:/home/AhmedHelal/web/hclinic.clinic/public_html/docs/opth
 ```
 
 7. Fix remote permissions
-// turbo
+   // turbo
+
 ```bash
-ssh -i /var/www/html/clinic/keys/OpenSSHPrivate -o StrictHostKeyChecking=no root@45.93.138.184 "chown -R AhmedHelal:AhmedHelal /home/AhmedHelal/web/hclinic.clinic/public_html/docs/opth"
+ssh -i "/Users/ahmed/Docker/My Sites/clinic/documentation_site/secret/OpenSSHPrivate" -o StrictHostKeyChecking=no root@45.93.138.184 "chown -R AhmedHelal:AhmedHelal /home/AhmedHelal/web/hclinic.clinic/public_html/docs/opth"
 ```

@@ -1,17 +1,79 @@
 import Hero from '../components/ui/Hero';
 import Section from '../components/ui/Section';
 import Card from '../components/ui/Card';
-import { Bot, HeartPulse, ClipboardList, Lightbulb, Search, MessageSquare, Code, Zap } from 'lucide-react';
+import { ClipboardList, Lightbulb, Search, MessageSquare, Code, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import '../styles/mockups.css';
 
 export default function MedicalAIAssistant() {
     const { t } = useTranslation();
-    const [chatOpen, setChatOpen] = useState(false);
+    const [chatWindowOpen, setChatWindowOpen] = useState(false);
+    const [messagesVisible, setMessagesVisible] = useState<boolean[]>([]);
+    const [autocompleteVisible, setAutocompleteVisible] = useState(false);
+    const [complaintsModalVisible, setComplaintsModalVisible] = useState(false);
+    const mouseCursorRef = useRef<HTMLDivElement>(null);
+    const chatButtonRef = useRef<HTMLDivElement>(null);
 
-    // Simulate chat widget animation
+    // AI Chat Mockup Animation
     useEffect(() => {
-        const timer = setTimeout(() => setChatOpen(true), 1000);
+        const timer = setTimeout(() => {
+            if (mouseCursorRef.current && chatButtonRef.current) {
+                // Start cursor from top-left area
+                mouseCursorRef.current.classList.add('show');
+                mouseCursorRef.current.style.left = '20px';
+                mouseCursorRef.current.style.top = '20px';
+                
+                // Move cursor towards chat button
+                setTimeout(() => {
+                    if (mouseCursorRef.current) {
+                        mouseCursorRef.current.style.left = 'calc(100% - 45px)';
+                        mouseCursorRef.current.style.top = 'calc(100% - 45px)';
+                        
+                        // Small pause, then click effect
+                        setTimeout(() => {
+                            if (mouseCursorRef.current) {
+                                mouseCursorRef.current.style.top = 'calc(100% - 43px)';
+                                
+                                setTimeout(() => {
+                                    if (mouseCursorRef.current) {
+                                        mouseCursorRef.current.style.top = 'calc(100% - 45px)';
+                                        
+                                        // Show chat window after click
+                                        setTimeout(() => {
+                                            setChatWindowOpen(true);
+                                            if (mouseCursorRef.current) {
+                                                mouseCursorRef.current.style.display = 'none';
+                                            }
+                                            
+                                            // Show messages sequentially
+                                            setTimeout(() => {
+                                                setMessagesVisible([true]);
+                                                setTimeout(() => setMessagesVisible([true, true]), 800);
+                                                setTimeout(() => setMessagesVisible([true, true, true]), 1600);
+                                            }, 500);
+                                        }, 300);
+                                    }
+                                }, 200);
+                            }
+                        }, 500);
+                    }
+                }, 1500);
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Common Complaints Mockup Animation
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setAutocompleteVisible(true);
+            setTimeout(() => {
+                setComplaintsModalVisible(true);
+            }, 1000);
+        }, 500);
+
         return () => clearTimeout(timer);
     }, []);
 
@@ -63,79 +125,45 @@ export default function MedicalAIAssistant() {
                 </div>
 
                 {/* Chat Widget Mockup */}
-                <div className="mb-8 rounded-xl overflow-hidden border-2 border-gray-300 dark:border-gray-700 shadow-2xl bg-gradient-to-r from-slate-50 to-gray-100 dark:from-slate-900 dark:to-gray-800">
-                    <div className="p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
-                        <div className="relative bg-white dark:bg-slate-800 rounded-lg p-8 shadow-lg" style={{ minHeight: '500px' }}>
-                            {/* Mockup Screen */}
-                            <div className="relative h-full">
-                                {/* Chat Button */}
-                                <div className={`absolute bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg cursor-pointer transition-all duration-300 ${chatOpen ? 'scale-110' : ''}`}>
-                                    <div className="relative">
-                                        <HeartPulse size={16} className="absolute -top-2 -left-2 text-red-500 animate-pulse" />
-                                        <Bot size={24} />
+                <div className="whats-new-mockup-container">
+                    <div className="whats-new-mockup-label">AI Chat Widget Demo</div>
+                    <div className="ai-chat-mockup">
+                        <div className="mockup-screen">
+                            {/* Chat Button */}
+                            <div ref={chatButtonRef} className="mockup-chat-button">
+                                <span className="mockup-icon-wrapper">
+                                    <i className="bi bi-heart-pulse mockup-icon-medical"></i>
+                                    <i className="bi bi-robot mockup-icon-robot"></i>
+                                </span>
+                            </div>
+                            
+                            {/* Chat Window */}
+                            <div className={`mockup-chat-window ${chatWindowOpen ? 'show' : ''}`}>
+                                <div className="mockup-chat-header">
+                                    <span className="mockup-icon-wrapper-header">
+                                        <i className="bi bi-heart-pulse mockup-icon-medical"></i>
+                                        <i className="bi bi-robot mockup-icon-robot"></i>
+                                    </span>
+                                    <span>Medical AI Assistant</span>
+                                </div>
+                                <div className="mockup-chat-messages">
+                                    <div className={`mockup-message mockup-message-user ${messagesVisible[0] ? 'show' : ''}`} style={messagesVisible[0] ? { opacity: 1, transform: 'translateY(0)', transition: 'opacity 0.5s ease, transform 0.5s ease' } : {}}>
+                                        <div className="mockup-message-content">Send Patient History</div>
+                                    </div>
+                                    <div className={`mockup-message mockup-message-assistant ${messagesVisible[1] ? 'show' : ''}`} style={messagesVisible[1] ? { opacity: 1, transform: 'translateY(0)', transition: 'opacity 0.5s ease, transform 0.5s ease' } : {}}>
+                                        <div className="mockup-message-content">Analyzing patient history...</div>
+                                    </div>
+                                    <div className={`mockup-message mockup-message-assistant ${messagesVisible[2] ? 'show' : ''}`} style={messagesVisible[2] ? { opacity: 1, transform: 'translateY(0)', transition: 'opacity 0.5s ease, transform 0.5s ease' } : {}}>
+                                        <div className="mockup-message-content">Based on the patient's medical history, I've identified:<br/><br/>• Chronic hypertension (5 years)<br/>• Type 2 diabetes (3 years)<br/>• Regular eye examinations show stable vision<br/><br/>Recommendations: Continue current medication regimen and schedule follow-up in 3 months.</div>
                                     </div>
                                 </div>
-                                
-                                {/* Chat Window */}
-                                <div className={`absolute bottom-24 right-0 w-80 h-96 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300 ${chatOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-                                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gradient-to-r from-indigo-500 to-purple-600">
-                                        <div className="flex items-center gap-2">
-                                            <div className="relative">
-                                                <HeartPulse size={12} className="absolute -top-1 -left-1 text-red-500" />
-                                                <Bot size={16} className="text-white" />
-                                            </div>
-                                            <span className="text-sm font-semibold text-white">Medical AI Assistant</span>
-                                        </div>
-                                        <button className="text-white hover:text-gray-200">
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                    
-                                    <div className="px-3 py-2 bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800">
-                                        <p className="text-xs text-yellow-800 dark:text-yellow-200 flex items-start gap-2">
-                                            <span>⚠️</span>
-                                            <span>{t('sections.ai_assistant.chat_widget.disclaimer')}</span>
-                                        </p>
-                                    </div>
-                                    
-                                    <div className="flex-1 p-3 overflow-y-auto space-y-3">
-                                        <div className="flex justify-end">
-                                            <div className="bg-indigo-500 text-white text-sm px-4 py-2 rounded-lg max-w-[80%]">
-                                                Send Patient History
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-start">
-                                            <div className="bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white text-sm px-4 py-2 rounded-lg max-w-[80%]">
-                                                Analyzing patient history...
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-start">
-                                            <div className="bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white text-sm px-4 py-2 rounded-lg max-w-[80%]">
-                                                Based on the patient's medical history, I've identified:<br/><br/>
-                                                • Chronic hypertension (5 years)<br/>
-                                                • Type 2 diabetes (3 years)<br/>
-                                                • Regular eye examinations show stable vision<br/><br/>
-                                                Recommendations: Continue current medication regimen and schedule follow-up in 3 months.
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="px-3 py-2 border-t border-gray-200 dark:border-gray-700 space-y-2">
-                                        <div className="flex gap-2">
-                                            <button className="flex-1 text-xs px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-center hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">
-                                                <MessageSquare size={14} className="inline mr-1" />
-                                                Send Patient History
-                                            </button>
-                                            <button className="flex-1 text-xs px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-center hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">
-                                                <ClipboardList size={14} className="inline mr-1" />
-                                                Summarize Consultation
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div className="mockup-chat-actions">
+                                    <button className="mockup-action-btn">Send Patient History</button>
+                                    <button className="mockup-action-btn">Summarize Consultation</button>
                                 </div>
                             </div>
+                            {/* Mouse Cursor */}
+                            <div ref={mouseCursorRef} className="mockup-mouse-cursor"></div>
                         </div>
                     </div>
                 </div>
@@ -238,35 +266,19 @@ export default function MedicalAIAssistant() {
                 </div>
 
                 {/* Autocomplete Mockup */}
-                <div className="mb-8 rounded-xl overflow-hidden border-2 border-gray-300 dark:border-gray-700 shadow-2xl bg-gradient-to-r from-slate-50 to-gray-100 dark:from-slate-900 dark:to-gray-800">
-                    <div className="p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
-                        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-lg">
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">Chief Complaint</label>
-                                    <div className="relative">
-                                        <input 
-                                            type="text" 
-                                            className="w-full px-4 py-2 border-2 border-purple-300 dark:border-purple-700 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800"
-                                            placeholder="Type complaint..." 
-                                            defaultValue="Headache"
-                                        />
-                                        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
-                                            <div className="p-2 hover:bg-purple-50 dark:hover:bg-purple-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700">
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-sm text-gray-900 dark:text-white">Headache - Migraine</span>
-                                                    <span className="text-xs text-gray-500 dark:text-gray-400">Used 45 times</span>
-                                                </div>
-                                            </div>
-                                            <div className="p-2 hover:bg-purple-50 dark:hover:bg-purple-900/30 cursor-pointer">
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-sm text-gray-900 dark:text-white">Headache - Tension</span>
-                                                    <span className="text-xs text-gray-500 dark:text-gray-400">Used 32 times</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                <div className="whats-new-mockup-container">
+                    <div className="whats-new-mockup-label">Intelligent Autocomplete Demo</div>
+                    <div className="complaints-mockup">
+                        <div className="mockup-screen">
+                            <div className="mockup-form-field">
+                                <label>Chief Complaint</label>
+                                <div className="mockup-input-group">
+                                    <input type="text" className="mockup-input" placeholder="Type complaint..." defaultValue="Headache" />
                                 </div>
+                            </div>
+                            <div className={`mockup-autocomplete ${autocompleteVisible ? 'show' : ''}`}>
+                                <div className="mockup-autocomplete-item">Headache - Migraine</div>
+                                <div className="mockup-autocomplete-item">Headache - Tension</div>
                             </div>
                         </div>
                     </div>
@@ -341,62 +353,34 @@ export default function MedicalAIAssistant() {
                 </div>
 
                 {/* Common Complaints Mockup */}
-                <div className="mb-8 rounded-xl overflow-hidden border-2 border-gray-300 dark:border-gray-700 shadow-2xl bg-gradient-to-r from-slate-50 to-gray-100 dark:from-slate-900 dark:to-gray-800">
-                    <div className="p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
-                        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-lg">
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">Chief Complaint</label>
-                                    <div className="flex gap-2">
-                                        <input 
-                                            type="text" 
-                                            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                                            placeholder="Type complaint..." 
-                                            defaultValue="Headache"
-                                        />
-                                        <button className="px-6 py-2 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors">
-                                            Most Common Cases
-                                        </button>
+                <div className="whats-new-mockup-container">
+                    <div className="whats-new-mockup-label">Common Complaints System Demo</div>
+                    <div className="complaints-mockup">
+                        <div className="mockup-screen">
+                            <div className="mockup-form-field">
+                                <label>Chief Complaint</label>
+                                <div className="mockup-input-group">
+                                    <input type="text" className="mockup-input" placeholder="Type complaint..." defaultValue="Headache" />
+                                    <button className="mockup-btn-primary">Most Common Cases</button>
+                                </div>
+                            </div>
+                            <div className={`mockup-modal-overlay ${complaintsModalVisible ? 'show' : ''}`}>
+                                <div className="mockup-modal">
+                                    <div className="mockup-modal-header">
+                                        <h5>Most Common Cases</h5>
+                                        <button className="mockup-close-btn">&times;</button>
+                                    </div>
+                                    <div className="mockup-modal-body">
+                                        <div className="mockup-complaint-item">Headache - Migraine</div>
+                                        <div className="mockup-complaint-item">Eye pain - Conjunctivitis</div>
+                                        <div className="mockup-complaint-item">Blurred vision - Refractive error</div>
+                                        <div className="mockup-complaint-item">Dry eyes - Dry eye syndrome</div>
                                     </div>
                                 </div>
-                                
-                                {/* Modal Overlay */}
-                                <div className="relative bg-black/50 rounded-lg p-4">
-                                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl">
-                                        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                                            <h5 className="font-semibold text-gray-900 dark:text-white">Most Common Cases</h5>
-                                            <button className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">×</button>
-                                        </div>
-                                        <div className="p-4 space-y-2 max-h-64 overflow-y-auto">
-                                            <div className="p-3 bg-gray-50 dark:bg-slate-700 rounded-lg cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors">
-                                                <div className="flex justify-between items-start">
-                                                    <div>
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <span className="badge bg-green-500">1</span>
-                                                            <span className="font-semibold text-gray-900 dark:text-white">Headache - Migraine</span>
-                                                        </div>
-                                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1"><strong>Diagnosis:</strong> Migraine</p>
-                                                        <p className="text-sm text-gray-600 dark:text-gray-400"><strong>Plan:</strong> Prescribe pain relief medication</p>
-                                                    </div>
-                                                    <span className="text-xs text-gray-500 dark:text-gray-400">Used 45 times</span>
-                                                </div>
-                                            </div>
-                                            <div className="p-3 bg-gray-50 dark:bg-slate-700 rounded-lg cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors">
-                                                <div className="flex justify-between items-start">
-                                                    <div>
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <span className="badge bg-green-500">2</span>
-                                                            <span className="font-semibold text-gray-900 dark:text-white">Eye pain - Conjunctivitis</span>
-                                                        </div>
-                                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1"><strong>Diagnosis:</strong> Conjunctivitis</p>
-                                                        <p className="text-sm text-gray-600 dark:text-gray-400"><strong>Plan:</strong> Antibiotic eye drops</p>
-                                                    </div>
-                                                    <span className="text-xs text-gray-500 dark:text-gray-400">Used 38 times</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                            </div>
+                            <div className={`mockup-autocomplete ${autocompleteVisible ? 'show' : ''}`}>
+                                <div className="mockup-autocomplete-item">Headache - Migraine</div>
+                                <div className="mockup-autocomplete-item">Headache - Tension</div>
                             </div>
                         </div>
                     </div>

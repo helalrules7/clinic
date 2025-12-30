@@ -1,0 +1,583 @@
+/* Mockup Styles - Matching main.js styles */
+
+:root {
+    --accent: #3b82f6;
+    --accent-rgb: 59, 130, 246;
+    --text: #1e293b;
+    --muted: #64748b;
+    --border: rgba(226, 232, 240, 0.3);
+}
+
+.dark {
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --border: rgba(51, 65, 85, 0.3);
+}
+
+.whats-new-mockup-container {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 10px;
+    border: 1px solid rgba(226, 232, 240, 0.3);
+}
+
+.dark .whats-new-mockup-container {
+    background: rgba(30, 41, 59, 0.5);
+    border-color: rgba(51, 65, 85, 0.3);
+}
+
+.whats-new-mockup-label {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mockup-screen {
+    position: relative;
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    min-height: 300px;
+    overflow: hidden;
+}
+
+.dark .mockup-screen {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+/* AI Chat Mockup */
+.ai-chat-mockup {
+    position: relative;
+}
+
+.ai-chat-mockup .mockup-screen {
+    height: 350px;
+    min-height: 350px;
+    max-height: 350px;
+    overflow: visible;
+    padding: 1rem;
+}
+
+.mockup-chat-button {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent) 0%, #0ea5e9 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+    z-index: 10;
+    transition: transform 0.3s ease;
+}
+
+.mockup-icon-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.mockup-icon-medical {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    font-size: 0.8em;
+    color: #ff073a;
+    z-index: 2;
+    filter: drop-shadow(0 0 3px rgba(255, 7, 58, 0.9));
+}
+
+.mockup-icon-robot {
+    font-size: 1.1em;
+    position: relative;
+    z-index: 1;
+}
+
+.mockup-icon-wrapper-header {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    margin-right: 0.4rem;
+}
+
+.mockup-icon-wrapper-header .mockup-icon-medical {
+    top: -5px;
+    left: -5px;
+    font-size: 0.6em;
+}
+
+.mockup-icon-wrapper-header .mockup-icon-robot {
+    font-size: 0.95em;
+}
+
+.mockup-chat-window {
+    position: absolute;
+    bottom: 65px;
+    right: 0;
+    width: 260px;
+    height: 280px;
+    background: rgba(248, 250, 252, 0.95);
+    border-radius: 10px;
+    border: 1px solid rgba(226, 232, 240, 0.3);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 9;
+}
+
+.dark .mockup-chat-window {
+    background: rgba(11, 18, 32, 0.95);
+    border-color: rgba(51, 65, 85, 0.3);
+}
+
+.mockup-chat-window.show {
+    display: flex;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mockup-chat-header {
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.3);
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.dark .mockup-chat-header {
+    background: rgba(30, 41, 59, 0.5);
+    border-bottom-color: rgba(51, 65, 85, 0.3);
+}
+
+.mockup-chat-messages {
+    flex: 1;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    overflow-y: auto;
+}
+
+.mockup-message {
+    display: flex;
+    gap: 0.5rem;
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.mockup-message-user {
+    flex-direction: row-reverse;
+}
+
+.mockup-message-assistant {
+    flex-direction: row;
+}
+
+@keyframes fadeInMessage {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mockup-message-content {
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    max-width: 75%;
+    line-height: 1.3;
+}
+
+.mockup-message-user .mockup-message-content {
+    background: linear-gradient(135deg, var(--accent) 0%, #0ea5e9 100%);
+    color: white;
+}
+
+.mockup-message-assistant .mockup-message-content {
+    background: rgba(255, 255, 255, 0.8);
+    color: var(--text);
+    border: 1px solid rgba(226, 232, 240, 0.3);
+}
+
+.dark .mockup-message-assistant .mockup-message-content {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(51, 65, 85, 0.3);
+}
+
+.mockup-chat-actions {
+    padding: 0.5rem;
+    display: flex;
+    gap: 0.4rem;
+    border-top: 1px solid rgba(226, 232, 240, 0.3);
+}
+
+.dark .mockup-chat-actions {
+    border-top-color: rgba(51, 65, 85, 0.3);
+}
+
+.mockup-action-btn {
+    flex: 1;
+    padding: 0.35rem 0.4rem;
+    background: rgba(14, 165, 233, 0.1);
+    border: 1px solid rgba(14, 165, 233, 0.3);
+    border-radius: 5px;
+    font-size: 0.65rem;
+    color: var(--accent);
+    cursor: pointer;
+    line-height: 1.2;
+}
+
+/* Mouse Cursor Animation */
+.mockup-mouse-cursor {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    pointer-events: none;
+    z-index: 100;
+    display: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.mockup-mouse-cursor.show {
+    display: block;
+}
+
+.mockup-mouse-cursor::before {
+    content: '👆';
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 20px;
+    line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Common Complaints Mockup */
+.complaints-mockup {
+    position: relative;
+}
+
+.mockup-form-field {
+    margin-bottom: 1rem;
+}
+
+.mockup-form-field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.mockup-input-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.mockup-input {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background: white;
+    color: var(--text);
+}
+
+.dark .mockup-input {
+    background: rgba(15, 23, 42, 0.8);
+    border-color: rgba(51, 65, 85, 0.5);
+}
+
+.mockup-btn-primary {
+    padding: 0.5rem 1rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mockup-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+}
+
+.mockup-modal-overlay.show {
+    display: flex;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.mockup-modal {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80%;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.dark .mockup-modal {
+    background: rgba(11, 18, 32, 0.98);
+    border: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+.mockup-modal-header {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dark .mockup-modal-header {
+    border-bottom-color: rgba(51, 65, 85, 0.3);
+}
+
+.mockup-modal-header h5 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.mockup-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text);
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mockup-modal-body {
+    padding: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.mockup-complaint-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: rgba(14, 165, 233, 0.05);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.mockup-complaint-item:hover {
+    background: rgba(14, 165, 233, 0.1);
+}
+
+.dark .mockup-complaint-item {
+    background: rgba(14, 165, 233, 0.1);
+}
+
+.mockup-autocomplete {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    border-radius: 6px;
+    margin-top: 0.25rem;
+    display: none;
+    z-index: 15;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dark .mockup-autocomplete {
+    background: rgba(15, 23, 42, 0.98);
+    border-color: rgba(51, 65, 85, 0.5);
+}
+
+.mockup-autocomplete.show {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+
+.mockup-autocomplete-item {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s ease;
+}
+
+.mockup-autocomplete-item:hover {
+    background: rgba(14, 165, 233, 0.1);
+}
+
+/* Patient Page Mockup */
+.patient-mockup {
+    position: relative;
+}
+
+.mockup-patient-list {
+    margin-bottom: 1.5rem;
+}
+
+.mockup-patient-item {
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    border: 1px solid rgba(226, 232, 240, 0.3);
+}
+
+.dark .mockup-patient-item {
+    background: rgba(30, 41, 59, 0.5);
+    border-color: rgba(51, 65, 85, 0.3);
+}
+
+.mockup-patient-info strong {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.mockup-phone-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mockup-phone {
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.mockup-copy-btn {
+    padding: 0.25rem 0.5rem;
+    background: rgba(14, 165, 233, 0.1);
+    border: 1px solid rgba(14, 165, 233, 0.3);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: var(--accent);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.mockup-validation-success {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 6px;
+    color: #22c55e;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mockup-copy-feedback {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 1rem 1.5rem;
+    background: rgba(34, 197, 94, 0.9);
+    color: white;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    display: none;
+    z-index: 30;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.mockup-copy-feedback.show {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    animation: fadeInOut 1.5s ease;
+}
+
+@keyframes fadeInOut {
+    0%, 100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+    20%, 80% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .ai-chat-mockup .mockup-screen {
+        height: 300px;
+        min-height: 300px;
+        max-height: 300px;
+    }
+
+    .mockup-chat-window {
+        width: 240px;
+        height: 240px;
+        bottom: 55px;
+    }
+}
