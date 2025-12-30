@@ -198,6 +198,7 @@ export default function ApiDocs() {
                     <Endpoint method="GET" url="/api/prescriptions/glasses/{id}" desc={t('sections.api.prescriptions.endpoints.get_glasses')} />
                     <Endpoint method="GET" url="/api/glasses/prescriptions" desc={t('sections.api.prescriptions.endpoints.list_glasses')} />
                     <Endpoint method="GET" url="/api/medications/prescriptions" desc={t('sections.api.prescriptions.endpoints.list_medications')} />
+                    <Endpoint method="GET" url="/api/prescriptions/suggestions?diagnosis={diagnosis}&complaint={complaint}" desc={t('sections.api.prescriptions.endpoints.suggestions')} />
                 </div>
             </Section>
 
@@ -214,6 +215,16 @@ export default function ApiDocs() {
                 <div className="space-y-3">
                     <Endpoint method="POST" url="/api/consultations" desc={t('sections.api.consultations.endpoints.create')} />
                     <Endpoint method="DELETE" url="/api/consultation-notes/{id}" desc={t('sections.api.consultations.endpoints.delete_note')} />
+                    <Endpoint method="GET" url="/api/consultation/common-complaints" desc={t('sections.api.consultations.endpoints.common_complaints')} />
+                    <Endpoint method="GET" url="/api/consultation/suggestions?field={field}&query={query}" desc={t('sections.api.consultations.endpoints.suggestions')} />
+                </div>
+            </Section>
+
+            <Section title={t('sections.api.ai.title')} id="ai" className="mb-16">
+                <div className="space-y-3">
+                    <Endpoint method="POST" url="/api/ai/chat" desc={t('sections.api.ai.endpoints.chat')} />
+                    <Endpoint method="GET" url="/api/ai/chat/history" desc={t('sections.api.ai.endpoints.chat_history')} />
+                    <Endpoint method="DELETE" url="/api/ai/chat/history" desc={t('sections.api.ai.endpoints.clear_history')} />
                 </div>
             </Section>
 

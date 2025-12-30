@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Architecture from './pages/Architecture';
+import MedicalAIAssistant from './pages/MedicalAIAssistant';
 import ApiDocs from './pages/ApiDocs';
 import Setup from './pages/Setup';
 import ChangeLog from './pages/ChangeLog';
@@ -44,6 +45,7 @@ function App() {
                 <Route path="/" element={<Layout />}>
                     <Route index element={<Home />} />
                     <Route path="architecture" element={<Architecture />} />
+                    <Route path="medical-ai-assistant" element={<MedicalAIAssistant />} />
                     <Route path="api" element={<ApiDocs />} />
                     <Route path="setup" element={<Setup />} />
                     <Route path="changelog" element={<ChangeLog />} />

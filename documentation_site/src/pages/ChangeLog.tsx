@@ -61,6 +61,56 @@ export default function ChangeLog() {
                 </p>
             </Section>
 
+            {/* Version 8.0.0 */}
+            <VersionSection 
+                version="v8.0.0" 
+                date="2025-12-25"
+                badgeColor="bg-gradient-to-r from-indigo-500 to-purple-600"
+                icon={<Sparkles size={20} />}
+            >
+                {t('sections.changelog.v8_0_0.content')}
+            </VersionSection>
+
+            {/* Version 7.3.2 */}
+            <VersionSection 
+                version="v7.3.2" 
+                date="2025-12-24"
+                badgeColor="bg-gradient-to-r from-purple-500 to-pink-600"
+                icon={<Sparkles size={20} />}
+            >
+                {t('sections.changelog.v7_3_2.content')}
+            </VersionSection>
+
+            {/* Version 7.3.1 */}
+            <VersionSection 
+                version="v7.3.1" 
+                date="2025-12-23"
+                badgeColor="bg-gradient-to-r from-purple-500 to-pink-600"
+                icon={<Sparkles size={20} />}
+            >
+                {t('sections.changelog.v7_3_1.content')}
+            </VersionSection>
+
+            {/* Version 7.3.0 */}
+            <VersionSection 
+                version="v7.3.0" 
+                date="2025-12-23"
+                badgeColor="bg-gradient-to-r from-purple-500 to-pink-600"
+                icon={<Sparkles size={20} />}
+            >
+                {t('sections.changelog.v7_3_0.content')}
+            </VersionSection>
+
+            {/* Version 7.2.9 */}
+            <VersionSection 
+                version="v7.2.9" 
+                date="2025-12-23"
+                badgeColor="bg-gradient-to-r from-purple-500 to-pink-600"
+                icon={<Sparkles size={20} />}
+            >
+                {t('sections.changelog.v7_2_9.content')}
+            </VersionSection>
+
             {/* Version 7.2.8 */}
             <VersionSection 
                 version="v7.2.8" 

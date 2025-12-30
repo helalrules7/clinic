@@ -61,14 +61,15 @@
         "notes": "Notes",
         "profile": "Profile",
         "settings": "Settings",
-        "changelog": "Change Log"
+        "changelog": "Change Log",
+        "medical_ai_assistant": "Medical AI Assistant"
     },
     "sections": {
         "home": {
             "hero": {
                 "title": "Roaya Clinic System",
                 "subtitle": "The next-generation management platform for modern ophthalmology clinics. Streamlined. Secure. Intelligent.",
-                "badge": "v7.2.8 Stable"
+                "badge": "v8.0.0 Stable"
             },
             "cards": {
                 "doctor_portal": "Doctor Portal",
@@ -101,10 +102,10 @@
                 "fallback": "Your browser does not support the video tag."
             },
             "whats_new": {
-                "title": "What's New in Version v7.2.8",
-                "version": "Version 7.2.8",
+                "title": "What's New in Version v8.0.0",
+                "version": "Version 8.0.0",
                 "subtitle": "Latest Updates & Enhancements",
-                "description": "Version 7.2.8 brings enhanced UI/UX improvements with updated CSS styles, theme toggle animations, and improved login/welcome pages. Version 7.2.7 introduced the revolutionary Tool Bar (Notice Bar) - a comprehensive top navigation component that provides instant access to essential information and powerful ophthalmology calculation tools. These updates bring enhanced mobile responsiveness, real-time data updates, seamless integration with patient workflows, and comprehensive appointment management documentation.",
+                "description": "Version 8.0.0 introduces groundbreaking AI-powered features including the Medical AI Assistant for comprehensive patient history analysis and consultation summarization, a Common Complaints System with intelligent autocomplete, enhanced Patient Page features with phone validation and copy functionality, and numerous system fixes and improvements.",
                 "v7_2_8": {
                     "title": "Version 7.2.8 Updates",
                     "description": "Latest enhancements focusing on UI/UX improvements and visual polish.",
@@ -156,7 +157,59 @@
                     "title": "15+ Clinical Calculators",
                     "description": "Comprehensive suite of ophthalmology calculation tools:"
                 },
-                "learn_more": "Learn More About Tool Bar"
+                "learn_more": "Learn More About Tool Bar",
+                "v8_0_0": {
+                    "title": "Version 8.0.0 - Major Update",
+                    "description": "Revolutionary AI-powered features and system enhancements.",
+                    "ai_assistant": {
+                        "title": "Medical AI Assistant",
+                        "description": "Our new AI-powered assistant helps you analyze patient history, summarize consultations, and provides clinical insights based on patient data. The AI assistant is available in both patient and appointment pages, offering quick actions like \"Send Patient History\" and \"Summarize Consultation\".",
+                        "features": {
+                            "history_analysis": "Comprehensive patient history analysis",
+                            "consultation_summary": "Consultation summarization",
+                            "medical_guidance": "Context-aware medical guidance",
+                            "chat_history": "Chat history persistence across appointments"
+                        },
+                        "demo_label": "AI Chat Widget Demo"
+                    },
+                    "common_complaints": {
+                        "title": "Common Complaints System",
+                        "description": "The system automatically extracts and groups common complaints from consultation notes, making it easier to quickly select frequently used complaints and diagnoses.",
+                        "features": {
+                            "extraction": "Common Complaints Extraction: Automatically groups similar complaints from consultation notes",
+                            "quick_selection": "Quick Selection: \"Most Common Cases\" button provides instant access to top 30 common complaints",
+                            "autocomplete": "Auto-complete: Intelligent autocomplete suggests complaints as you type",
+                            "prescription_suggestions": "Prescription Suggestions: Get medication suggestions based on diagnosis and complaint",
+                            "auto_updates": "Automatic Updates: Common complaints are updated daily via cron job"
+                        },
+                        "demo_label": "Common Complaints System Demo"
+                    },
+                    "patient_enhancements": {
+                        "title": "Patient Page Enhancements",
+                        "description": "Improved patient management with phone validation and copy functionality.",
+                        "phone_validation": {
+                            "title": "Fixed Regex for Phone Field",
+                            "description": "Phone numbers now must start with '0' and consist of exactly 11 digits. Real-time validation provides immediate feedback when entering phone numbers."
+                        },
+                        "copy_phone": {
+                            "title": "Copy Phone Number to Clipboard",
+                            "description": "Added a convenient \"Copy\" button next to phone numbers, allowing you to quickly copy patient contact information with a single click."
+                        },
+                        "demo_label": "Patient Page Enhancements Demo"
+                    },
+                    "fixes": {
+                        "title": "System Fixes & Improvements",
+                        "description": "Bug fixes and enhancements across the system.",
+                        "lab_tests": "Fixed Lab Test Menus and Modal",
+                        "lab_tests_desc": "Resolved issues with test category dropdown loading. Categories now populate correctly when selecting test types, and the edit modal properly displays selected categories.",
+                        "modals": "Fixed Modals Backdrop Issues",
+                        "modals_desc": "Resolved backdrop display problems across the entire system. Modals now properly show and hide backdrops, improving visual consistency.",
+                        "dark_mode": "Fixed Dark Mode Styling",
+                        "dark_mode_desc": "Improved dark mode support across all components, ensuring proper contrast and readability in low-light environments.",
+                        "z_index": "Fixed Modals Z-Index Across System",
+                        "z_index_desc": "All modals now appear on top of all UI elements, including the sidebar. Additionally, all modals are now draggable, providing better user experience and flexibility."
+                    }
+                }
             }
         },
         "architecture": {
@@ -1148,7 +1201,8 @@
                     "delete_glasses": "Delete a glasses prescription.",
                     "get_glasses": "Get a specific glasses prescription by ID.",
                     "list_glasses": "Get all glasses prescriptions with filtering.",
-                    "list_medications": "Get all medication prescriptions with filtering."
+                    "list_medications": "Get all medication prescriptions with filtering.",
+                    "suggestions": "Get prescription suggestions based on diagnosis and complaint. Returns medications previously prescribed for similar cases."
                 }
             },
             "lab_tests": {
@@ -1164,7 +1218,17 @@
                 "title": "Consultations",
                 "endpoints": {
                     "create": "Create a new consultation record.",
-                    "delete_note": "Delete a consultation note."
+                    "delete_note": "Delete a consultation note.",
+                    "common_complaints": "Get the list of most common complaints extracted from consultation notes.",
+                    "suggestions": "Get autocomplete suggestions for consultation fields (chief_complaint, diagnosis, plan) based on user input."
+                }
+            },
+            "ai": {
+                "title": "AI Assistant",
+                "endpoints": {
+                    "chat": "Send a message to the AI assistant and receive a response. Supports patient history analysis and consultation summarization.",
+                    "chat_history": "Get chat history for a specific patient and optional appointment.",
+                    "clear_history": "Clear chat history for a specific patient and optional appointment."
                 }
             },
             "secretary": {
@@ -6320,10 +6384,151 @@
                 }
             }
         },
+        "ai_assistant": {
+            "hero": {
+                "title": "Medical AI Assistant",
+                "subtitle": "Intelligent AI-powered assistant for patient history analysis, consultation summarization, and clinical decision support",
+                "badge": "AI-Powered"
+            },
+            "overview": {
+                "title": "Overview",
+                "description": "The Medical AI Assistant is a comprehensive AI-powered tool integrated into patient and appointment pages. It provides intelligent analysis of patient medical history, consultation summarization, and context-aware clinical guidance. The system also includes intelligent autocomplete for consultation fields, common complaints extraction, and prescription suggestions based on diagnosis and complaints.",
+                "features": {
+                    "patient_history": {
+                        "title": "Patient History Analysis",
+                        "description": "Comprehensive analysis of complete patient medical history including conditions, medications, consultations, lab tests, and glasses prescriptions."
+                    },
+                    "consultation_summary": {
+                        "title": "Consultation Summarization",
+                        "description": "Automatic summarization of consultation data including chief complaint, clinical findings, diagnosis, treatment plan, and follow-up recommendations."
+                    },
+                    "context_aware": {
+                        "title": "Context-Aware Responses",
+                        "description": "AI responses are based strictly on provided patient data and consultation information, ensuring accuracy and relevance."
+                    }
+                }
+            },
+            "chat_widget": {
+                "title": "AI Chat Widget",
+                "description": "A floating chat widget available on patient and appointment pages that provides quick access to AI-powered analysis and summarization features.",
+                "disclaimer": "AI Assistant: This tool provides guidance and suggestions only. Always use your clinical judgment and verify all information. AI responses should not replace professional medical decision-making.",
+                "quick_actions": {
+                    "title": "Quick Actions",
+                    "patient_history": {
+                        "title": "Send Patient History",
+                        "description": "Analyzes complete patient medical history and provides comprehensive insights.",
+                        "items": {
+                            "medical_conditions": "Key medical conditions and their progression",
+                            "medication_history": "Medication history and patterns",
+                            "consultation_notes": "Consultation notes and diagnoses over time",
+                            "lab_tests": "Lab tests and radiology results",
+                            "glasses_prescriptions": "Glasses prescriptions if applicable",
+                            "patterns": "Notable patterns or concerns",
+                            "recommendations": "Recommendations for follow-up care"
+                        }
+                    },
+                    "consultation_summary": {
+                        "title": "Summarize Consultation",
+                        "description": "Provides a comprehensive summary of the current consultation.",
+                        "items": {
+                            "chief_complaint": "Chief complaint and presenting symptoms",
+                            "clinical_findings": "Clinical findings and examination results",
+                            "diagnosis": "Diagnosis and assessment",
+                            "treatment_plan": "Treatment plan and prescribed medications",
+                            "lab_tests": "Lab tests or radiology ordered",
+                            "follow_up": "Follow-up recommendations",
+                            "history_context": "Context from patient's previous medical history"
+                        }
+                    }
+                },
+                "technical": {
+                    "title": "Technical Details",
+                    "api_description": "The chat widget communicates with the backend API to send messages and receive AI-generated responses. The backend builds comprehensive context from patient data and consultation records.",
+                    "context_building": "The system automatically builds context from multiple data sources:",
+                    "context_items": {
+                        "patient_data": "Patient demographics and basic information",
+                        "appointments": "All appointment records and consultation notes",
+                        "prescriptions": "Medication prescriptions and history",
+                        "lab_tests": "Laboratory test results and radiology reports",
+                        "chat_history": "Previous chat messages for conversation continuity"
+                    }
+                }
+            },
+            "autocomplete": {
+                "title": "Intelligent Autocomplete",
+                "description": "Smart autocomplete functionality for consultation fields (Chief Complaint, Diagnosis, Plan) that suggests previously used entries based on user input.",
+                "features": {
+                    "title": "Features",
+                    "debounce": {
+                        "title": "Debounced Input",
+                        "description": "Input is debounced with a 300ms delay to reduce API calls and improve performance."
+                    },
+                    "keyboard_nav": {
+                        "title": "Keyboard Navigation",
+                        "description": "Full keyboard support with Arrow Up/Down for navigation, Enter to select, and Escape to close suggestions."
+                    },
+                    "fields": {
+                        "title": "Supported Fields",
+                        "description": "Autocomplete is available for the following consultation fields:"
+                    }
+                },
+                "technical": {
+                    "title": "Technical Implementation",
+                    "implementation": "The autocomplete system queries the database for similar entries based on the field type and user input. Suggestions are ranked by usage frequency and relevance."
+                }
+            },
+            "common_complaints": {
+                "title": "Common Complaints System",
+                "description": "Automatically extracts and groups common complaints from consultation notes, providing quick access to frequently used complaints and diagnoses.",
+                "features": {
+                    "title": "Features",
+                    "extraction": {
+                        "title": "Automatic Extraction",
+                        "description": "The system analyzes consultation notes and extracts common complaint-diagnosis-plan combinations, grouping similar entries together."
+                    },
+                    "auto_update": {
+                        "title": "Daily Updates",
+                        "description": "Common complaints are automatically updated daily via cron job, ensuring the list reflects the most current patterns."
+                    },
+                    "quick_fill": {
+                        "title": "Quick Fill",
+                        "description": "Clicking on a common complaint automatically fills the Chief Complaint, Diagnosis, and Plan fields, saving time during consultation entry."
+                    }
+                },
+                "technical": {
+                    "title": "Technical Details",
+                    "storage": "Common complaints are stored in a JSON file (app/storage/common_complaints.json) and updated daily via a cron job script.",
+                    "cron": "The cron job runs daily at 10 PM to update the common complaints list:"
+                }
+            },
+            "prescription_suggestions": {
+                "title": "Prescription Suggestions",
+                "description": "Intelligent prescription suggestions based on diagnosis and complaint, showing medications that have been previously prescribed for similar cases.",
+                "features": {
+                    "title": "Features",
+                    "based_on": {
+                        "title": "Based on Diagnosis & Complaint",
+                        "description": "Suggestions are generated by matching the current diagnosis and complaint with historical prescription data."
+                    },
+                    "usage_stats": {
+                        "title": "Usage Statistics",
+                        "description": "Each suggestion displays how many times it has been used, helping doctors make informed decisions."
+                    },
+                    "bulk_add": {
+                        "title": "Bulk Add",
+                        "description": "Multiple prescriptions can be selected and added at once, streamlining the prescription entry process."
+                    }
+                },
+                "technical": {
+                    "title": "Technical Details",
+                    "algorithm": "The system queries the database for prescriptions that match the diagnosis and complaint, ranks them by frequency of use, and presents them in a user-friendly modal interface."
+                }
+            }
+        },
         "changelog": {
             "hero": {
                 "title": "Change Log",
-                "subtitle": "Complete version history and feature updates from v1.0 to v7.2.8",
+                "subtitle": "Complete version history and feature updates from v1.0 to v8.0.0",
                 "badge": "Version History"
             },
             "notice": {
@@ -6332,7 +6537,7 @@
             },
             "overview": {
                 "title": "Overview",
-                "content": "This page documents all major features, improvements, and changes introduced in each version of the HClinic / Roaya Clinic Management System. The changelog is organized chronologically from the latest version (v7.2.7) to the initial release (v1.0)."
+                "content": "This page documents all major features, improvements, and changes introduced in each version of the HClinic / Roaya Clinic Management System. The changelog is organized chronologically from the latest version (v8.0.0) to the initial release (v1.0)."
             },
             "v7_1_3": {
                 "content": "- Implement toggle status functionality for alerts\n- Enhance timepicker functionality and theme synchronization in alert modal\n- Integrate timepicker UI for enhanced alert time selection\n- Enhance alert handling and user experience"
@@ -6351,6 +6556,21 @@
             },
             "v7_0_8": {
                 "content": "- Add new image assets for forum and patient sections\n- Add discussion forum page and documentation management scripts\n- Enhance sidebar and theme handling\n- Improve image modal functionality\n- Implement nested sub-items"
+            },
+            "v8_0_0": {
+                "content": "- Introduced Medical AI Assistant with comprehensive patient history analysis and consultation summarization\n- Added AI Chat Widget with floating interface available on patient and appointment pages\n- Implemented intelligent autocomplete for consultation fields (Chief Complaint, Diagnosis, Plan)\n- Added Common Complaints System with automatic extraction and daily updates via cron job\n- Implemented Prescription Suggestions based on diagnosis and complaint matching\n- Enhanced patient page with phone number validation (11 digits starting with 0) and copy-to-clipboard functionality\n- Fixed lab test menus and modal display issues\n- Resolved modal backdrop display problems across the system\n- Improved dark mode styling and contrast across all components\n- Fixed modals z-index issues ensuring all modals appear above sidebar and other UI elements\n- Made all modals draggable for better user experience\n- Added comprehensive Medical AI Assistant documentation page"
+            },
+            "v7_3_2": {
+                "content": "- Enhanced AI Chat Widget with improved context building for follow-up messages\n- Added chat history persistence across appointments for conversation continuity\n- Improved system prompts for better AI response accuracy\n- Fixed context inclusion logic to ensure patient data is always available in follow-up conversations\n- Enhanced error handling and logging for AI chat requests\n- Improved autocomplete debounce timing for better performance\n- Added keyboard navigation improvements for autocomplete suggestions"
+            },
+            "v7_3_1": {
+                "content": "- Implemented Common Complaints extraction system with JSON storage\n- Added 'Most Common Cases' button in consultation forms\n- Created cron job script for daily common complaints updates\n- Enhanced autocomplete to show usage statistics for suggestions\n- Improved prescription suggestions algorithm for better matching\n- Added bulk selection functionality for prescription suggestions\n- Fixed autocomplete field initialization issues"
+            },
+            "v7_3_0": {
+                "content": "- Initial release of Medical AI Assistant features\n- Added AI Chat Widget toggle button with medical and robot icons\n- Implemented patient history context building from appointments, prescriptions, lab tests, and glasses\n- Added consultation summary context building with comprehensive data extraction\n- Created API endpoints for AI chat (/api/ai/chat) and autocomplete suggestions\n- Added prescription suggestions API endpoint with diagnosis and complaint matching\n- Implemented chat message storage and retrieval system\n- Enhanced consultation form with autocomplete for Chief Complaint, Diagnosis, and Plan fields"
+            },
+            "v7_2_9": {
+                "content": "- Fixed phone number validation regex to require 11 digits starting with 0\n- Added copy-to-clipboard functionality for patient phone numbers\n- Improved patient page UI with better phone number display\n- Enhanced form validation feedback for phone number fields\n- Fixed modal z-index conflicts with sidebar\n- Improved dark mode support for patient information cards\n- Added visual feedback for successful phone number copy operations"
             },
             "v7_2_8": {
                 "content": "- Updated version references across multiple files to reflect the new version v7.2.8\n- Enhanced CSS styles for light and dark themes, including new gradient backgrounds and improved transition effects\n- Implemented a theme toggle switch with animations for better user interaction\n- Added wave animation to the background for a dynamic visual effect\n- Improved layout and responsiveness of the login and welcome pages, ensuring a cohesive user experience across devices"

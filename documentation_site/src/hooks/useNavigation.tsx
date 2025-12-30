@@ -1,4 +1,4 @@
-import { Home, Server, Layers, Settings, FileCode, LayoutDashboard, Palette, User, GitBranch, Calendar, Users, Wallet, Stethoscope, Shield } from 'lucide-react';
+import { Home, Server, Layers, Settings, FileCode, LayoutDashboard, Palette, User, GitBranch, Calendar, Users, Wallet, Stethoscope, Shield, Bot } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useMemo } from 'react';
 
@@ -15,6 +15,7 @@ export function useNavigation() {
     const links: NavItem[] = useMemo(() => [
         { to: '/', icon: Home, label: t('nav.overview') },
         { to: '/architecture', icon: Server, label: t('nav.architecture') },
+        { to: '/medical-ai-assistant', icon: Bot, label: t('nav.medical_ai_assistant') },
         {
             label: t('nav.modules'),
             icon: Layers,
