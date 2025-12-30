@@ -303,11 +303,10 @@
         </nav>
     </div>
     
-    <!-- Overlay for mobile -->
-    <div class="overlay" id="overlay"></div>
-    
     <!-- Main Content -->
     <div class="main-content">
+        <!-- Overlay for mobile -->
+        <div class="overlay" id="overlay"></div>
         <?php 
         // View As Banner - Very visible indicator
         if (isset($_SESSION['view_as_mode']) && $_SESSION['view_as_mode'] === true): 
