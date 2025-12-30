@@ -9,11 +9,23 @@
 
 ## الميزات الرئيسية
 
+### 🤖 **المساعد الطبي الذكي (AI Assistant)** - جديد في الإصدار 8.0.0
+- **تحليل تاريخ المريض**: تحليل شامل لتاريخ المريض الطبي الكامل
+- **تلخيص الاستشارات**: تلخيص تلقائي للاستشارات مع التشخيص وخطة العلاج
+- **إرشادات سريرية ذكية**: إرشادات مبنية على سياق بيانات المريض
+- **ودجت محادثة ذكية**: واجهة محادثة عائمة في صفحات المرضى والمواعيد
+- **سجل المحادثة**: حفظ سجل المحادثات عبر المواعيد المختلفة
+- **الإكمال التلقائي الذكي**: اقتراحات ذكية لحقول الاستشارة
+- **الشكاوى الشائعة**: استخراج وتحليل الشكاوى الأكثر شيوعاً
+- **اقتراحات الوصفات**: اقتراحات ذكية للوصفات بناءً على التشخيص والشكاوى
+
 ### 🏥 **إدارة المرضى**
 - تسجيل المرضى الجدد مع التاريخ الطبي
 - ملف طبي شامل مع الأحداث الزمنية
 - إرفاق الملفات والصور
 - البحث المتقدم والتصفية
+- التحقق من أرقام الهواتف ونسخها بسهولة
+- عرض الجدول الزمني الكامل للمريض
 
 ### 📅 **إدارة المواعيد**
 - تقويم تفاعلي مع تحديث تلقائي كل 60 ثانية
@@ -21,30 +33,49 @@
 - ساعات العمل: 2:00 مساءً - 11:00 مساءً
 - إغلاق يوم الجمعة
 - جدول عمل منفصل لكل طبيب
+- إعادة جدولة المواعيد
+- تتبع المواعيد الفائتة
 
 ### 💊 **الوصفات الطبية**
 - وصفات الأدوية مع التفاصيل الكاملة
 - وصفات النظارات مع القياسات الدقيقة
 - طلبات الفحوصات المخبرية
 - طباعة احترافية بتصميم RTL
+- اقتراحات ذكية للوصفات بناءً على الشكاوى الشائعة
 
 ### 💰 **إدارة المالية**
 - تسجيل المدفوعات بأنواع مختلفة
 - نظام الخصومات والإعفاءات
 - فواتير مفصلة مع التوازن
 - تقارير الإيرادات والمصروفات
+- تصدير البيانات المالية
 
 ### 📊 **التقارير والإحصائيات**
 - لوحات تحكم تفاعلية
 - تقارير مالية شاملة
 - إحصائيات المواعيد والمرضى
-- تصدير البيانات بصيغة CSV
+- تصدير البيانات بصيغة CSV و Excel
+- رسوم بيانية تفاعلية
 
 ### 🔒 **الأمان والصلاحيات**
 - نظام مصادقة آمن
 - إدارة الأدوار والصلاحيات (RBAC)
 - حماية CSRF
 - تسجيل الأحداث والتدقيق
+- إدارة الجلسات الآمنة
+
+### 💬 **منتدى النقاش**
+- منتدى داخلي للأطباء
+- إنشاء مواضيع ومناقشات
+- رفع المرفقات والصور
+- نظام الإعجاب والتعليقات
+- التصنيفات والعلامات
+
+### 🔔 **الإشعارات**
+- إشعارات فورية للمواعيد والأحداث
+- إشعارات النظام المهمة
+- إشعارات Push للمتصفح
+- تتبع الإشعارات غير المقروءة
 
 ## المتطلبات التقنية
 
@@ -58,12 +89,20 @@
 - ext-pdo
 - ext-json
 - ext-mbstring
+- ext-gd
+- ext-zip
+
+### **مكتبات PHP**
+- phpoffice/phpword: ^1.4
+- openspout/openspout: ^4.0
+- phpoffice/phpspreadsheet: ^1.29
+- minishlink/web-push: ^7.0
 
 ## التثبيت والإعداد
 
 ### 1. **استنساخ المشروع**
 ```bash
-git clone <repository-url>
+git clone https://github.com/helalrules7/clinic.git
 cd clinic
 ```
 
@@ -75,38 +114,47 @@ composer install
 ### 3. **إعداد قاعدة البيانات**
 ```bash
 # إنشاء قاعدة البيانات
-mysql -u root -pCarmen -e "CREATE DATABASE roaya CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u [username] -p -e "CREATE DATABASE roaya CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
 # استيراد مخطط قاعدة البيانات
-mysql -u root -pCarmen roaya < sql/schema.sql
+mysql -u [username] -p roaya < sql/schema.sql
 
 # استيراد البيانات الأولية (قد تظهر تحذيرات للبيانات المكررة - هذا طبيعي)
-mysql -u root -pCarmen roaya < sql/seed.sql
+mysql -u [username] -p roaya < sql/seed.sql
 ```
 
 ### 4. **تكوين البيئة**
 ```bash
-# إنشاء ملف .env
-cat > .env << 'EOF'
+# نسخ ملف الإعدادات
+cp env.example .env
+
+# تعديل ملف .env وإضافة بيانات قاعدة البيانات والمفاتيح
+# تأكد من تغيير جميع القيم الافتراضية في بيئة الإنتاج
+```
+
+ملف `.env` يجب أن يحتوي على:
+```env
 # Database Configuration
 DB_HOST=localhost
 DB_NAME=roaya
-DB_USER=root
-DB_PASS=Carmen
+DB_USER=your_username
+DB_PASS=your_password
 
 # Application Configuration
-APP_ENV=local
-APP_KEY=roaya-clinic-system-2024-secret-key-32
+APP_ENV=production
+APP_KEY=your-secret-key-here-32-chars-minimum
 TIMEZONE=Africa/Cairo
 
 # Security
-SESSION_SECRET=roaya-session-secret-key-2024-32-chars
-CSRF_SECRET=roaya-csrf-secret-key-2024-32-chars
+SESSION_SECRET=your-session-secret-key-32-chars
+CSRF_SECRET=your-csrf-secret-key-32-chars
 
 # Logging
 LOG_LEVEL=info
 LOG_FILE=storage/logs/app.log
-EOF
+
+# AI Configuration (Optional)
+GROQ_API_KEY=your-groq-api-key-if-using-ai-features
 ```
 
 ### 5. **إعداد خادم الويب**
@@ -129,7 +177,7 @@ location / {
 ### 6. **إعداد الصلاحيات**
 ```bash
 # إنشاء المجلدات المطلوبة وتعيين الصلاحيات
-mkdir -p storage/logs storage/uploads storage/exports
+mkdir -p storage/logs storage/uploads storage/exports storage/cache
 chmod -R 755 storage/
 
 # إعادة توليد autoloader
@@ -157,14 +205,16 @@ php -S localhost:8000 router.php &
 
 ## بيانات تسجيل الدخول الافتراضية
 
-| الدور | اسم المستخدم | البريد الإلكتروني | كلمة المرور |
-|-------|-------------|------------------|-------------|
-| **Dr. Ahmed** | `dr_ahmed` | `dr.ahmed@roayaclinic.com` | `password` |
-| **Dr. Faramawy** | `dr_faramawy` | `dr.faramawy@roayaclinic.com` | `password` |
-| **Secretary** | `sec` | `sec@roayaclinic.com` | `password` |
-| **Admin** | `admin` | `admin@roayaclinic.com` | `password` |
+**⚠️ تحذير مهم:** يجب تغيير جميع كلمات المرور الافتراضية فوراً في بيئة الإنتاج!
 
-**ملاحظة مهمة:** النظام الآن يستخدم **اسم المستخدم** بدلاً من البريد الإلكتروني لتسجيل الدخول.
+| الدور | اسم المستخدم | البريد الإلكتروني |
+|-------|-------------|------------------|
+| **Dr. Ahmed** | `dr_ahmed` | `dr.ahmed@roayaclinic.com` |
+| **Dr. Faramawy** | `dr_faramawy` | `dr.faramawy@roayaclinic.com` |
+| **Secretary** | `sec` | `sec@roayaclinic.com` |
+| **Admin** | `admin` | `admin@roayaclinic.com` |
+
+**ملاحظة:** النظام يستخدم **اسم المستخدم** بدلاً من البريد الإلكتروني لتسجيل الدخول.
 
 ## هيكل المشروع
 
@@ -174,19 +224,24 @@ clinic/
 │   ├── Config/          # ملفات الإعدادات
 │   ├── Controllers/     # وحدات التحكم
 │   ├── Lib/            # المكتبات الأساسية
+│   ├── Models/         # نماذج البيانات
+│   ├── Services/       # خدمات الأعمال (حسابات طبية، تحليلات)
+│   ├── Scripts/        # سكريبتات مساعدة
 │   └── Views/          # قوالب الواجهة
 │       ├── admin/      # واجهة المدير
 │       ├── doctor/     # واجهة الطبيب
 │       ├── secretary/  # واجهة السكرتير
 │       └── print/      # قوالب الطباعة
-├── public/              # نقطة الدخول
-├── sql/                 # ملفات قاعدة البيانات
-├── storage/             # الملفات المخزنة
+├── documentation_site/  # موقع التوثيق (React + TypeScript)
+├── public/             # نقطة الدخول
+├── sql/                # ملفات قاعدة البيانات
+├── storage/            # الملفات المخزنة
 │   ├── logs/           # سجلات النظام
 │   ├── uploads/        # الملفات المرفقة
-│   └── exports/        # التقارير المصدرة
+│   ├── exports/        # التقارير المصدرة
+│   └── cache/          # التخزين المؤقت
 ├── vendor/              # مكتبات Composer
-├── .env                 # إعدادات البيئة
+├── .env                 # إعدادات البيئة (لا يتم رفعه إلى Git)
 ├── .env.example         # نموذج الإعدادات
 ├── composer.json        # تبعيات المشروع
 └── README.md            # هذا الملف
@@ -199,7 +254,9 @@ clinic/
 2. عرض لوحة التحكم مع الإحصائيات
 3. إدارة التقويم والمواعيد
 4. عرض ملفات المرضى وإنشاء الوصفات
-5. إغلاق اليوم وإقفال الحسابات
+5. استخدام المساعد الطبي الذكي لتحليل التاريخ وتلخيص الاستشارات
+6. استخدام الإكمال التلقائي والشكاوى الشائعة لتسريع العمل
+7. إغلاق اليوم وإقفال الحسابات
 
 ### **السكرتير**
 1. تسجيل الدخول باستخدام بيانات السكرتير
@@ -214,6 +271,7 @@ clinic/
 3. عرض تقارير النظام
 4. مراقبة صحة النظام
 5. تصدير البيانات والتقارير
+6. إدارة النسخ الاحتياطية
 
 ## الطباعة
 
@@ -241,11 +299,73 @@ clinic/
 ## API
 
 ### **النقاط النهائية الرئيسية**
+
+#### **المصادقة**
+- `GET /api/auth/session-time` - وقت الجلسة المتبقي
+
+#### **المرضى**
+- `GET /api/patients` - قائمة المرضى
+- `GET /api/patients/search?q={query}` - البحث عن المرضى
+- `GET /api/patients/{id}` - تفاصيل مريض
+- `POST /api/patients` - إنشاء مريض جديد
+- `PUT /api/patients/{id}/emergency-contact` - تحديث جهة اتصال الطوارئ
+- `DELETE /api/patients/{id}` - حذف مريض
+- `GET /api/patients/{id}/timeline` - الجدول الزمني للمريض
+- `GET /api/patients/{id}/files` - ملفات المريض
+- `GET /api/patients/{id}/appointments` - مواعيد المريض
+- `GET /api/patients/{id}/export` - تصدير بيانات المريض
+
+#### **المواعيد**
 - `GET /api/calendar` - بيانات التقويم
+- `GET /api/appointments/{id}` - تفاصيل موعد
+- `GET /api/appointments/search?q={query}` - البحث في المواعيد
 - `POST /api/appointments` - إنشاء موعد
 - `PUT /api/appointments/{id}` - تحديث موعد
-- `POST /api/payments` - تسجيل دفعة
-- `GET /api/patients/search` - البحث عن المرضى
+- `DELETE /api/appointments/{id}` - حذف موعد
+- `POST /api/appointments/{id}/reschedule` - إعادة جدولة موعد
+- `GET /api/upcoming-appointments` - المواعيد القادمة
+- `GET /api/missed-appointments` - المواعيد الفائتة
+
+#### **المساعد الطبي الذكي (AI)** - جديد في الإصدار 8.0.0
+- `POST /api/ai/chat` - إرسال رسالة للمساعد الذكي
+- `GET /api/ai/chat/history?patientId={id}&appointmentId={id}` - سجل المحادثة
+- `GET /api/consultation/common-complaints` - الشكاوى الشائعة
+- `GET /api/consultation/suggestions?complaint={text}` - اقتراحات الاستشارة
+- `GET /api/prescriptions/suggestions?complaint={text}` - اقتراحات الوصفات
+
+#### **المنتدى**
+- `GET /api/forum/topics` - قائمة المواضيع
+- `GET /api/forum/topics/{id}` - تفاصيل موضوع
+- `POST /api/forum/topics` - إنشاء موضوع جديد
+- `PUT /api/forum/topics/{id}` - تحديث موضوع
+- `DELETE /api/forum/topics/{id}` - حذف موضوع
+- `GET /api/forum/posts/topic/{topicId}` - مشاركات الموضوع
+- `POST /api/forum/posts` - إنشاء مشاركة جديدة
+- `POST /api/forum/posts/{id}/like` - إعجاب بمشاركة
+
+#### **الإشعارات**
+- `GET /api/notifications` - قائمة الإشعارات
+- `GET /api/notifications/unread-count` - عدد الإشعارات غير المقروءة
+- `PUT /api/notifications/{id}/read` - تحديد إشعار كمقروء
+- `PUT /api/notifications/read-all` - تحديد جميع الإشعارات كمقروءة
+- `DELETE /api/notifications/{id}` - حذف إشعار
+
+#### **البحث**
+- `GET /api/search/comprehensive?q={query}` - بحث شامل
+- `GET /api/searchDrugs?q={query}` - البحث في الأدوية
+- `GET /api/searchDrugsAutocomplete?q={query}` - الإكمال التلقائي للأدوية
+
+#### **لوحة التحكم**
+- `GET /api/dashboard-summary` - ملخص لوحة التحكم
+- `GET /api/dashboard-charts` - بيانات الرسوم البيانية
+- `GET /api/recent-activity` - النشاطات الأخيرة
+- `GET /api/secretary/dashboard` - لوحة تحكم السكرتير
+
+#### **المرفقات**
+- `POST /api/attachments/upload` - رفع مرفق
+- `GET /api/attachments/view/{id}` - عرض مرفق
+- `GET /api/attachments/download/{id}` - تحميل مرفق
+- `DELETE /api/attachments/{id}` - حذف مرفق
 
 ### **استجابة API**
 ```json
@@ -254,6 +374,26 @@ clinic/
     "data": {...},
     "error": null
 }
+```
+
+## موقع التوثيق
+
+يتضمن المشروع موقع توثيق شامل مبني بـ React + TypeScript + Vite:
+
+- **الموقع**: متاح في مجلد `documentation_site/`
+- **اللغات المدعومة**: العربية والإنجليزية
+- **المحتوى**: 
+  - نظرة عامة على النظام
+  - دليل الميزات
+  - وثائق API الكاملة
+  - سجل التغييرات
+  - معلومات المساعد الطبي الذكي
+
+### **تشغيل موقع التوثيق**
+```bash
+cd documentation_site
+npm install
+npm run dev
 ```
 
 ## الأمان
@@ -265,31 +405,42 @@ clinic/
 ### **إدارة الجلسات**
 - جلسات آمنة مع تجديد تلقائي
 - إلغاء الجلسات عند تغيير كلمة المرور
+- انتهاء الجلسة بعد فترة عدم نشاط
 
 ### **التحقق من الصلاحيات**
 - نظام أدوار متقدم (RBAC)
 - التحقق من الصلاحيات لكل عملية
+- حماية نقاط النهاية API
+
+### **حماية البيانات**
+- تشفير كلمات المرور
+- حماية من SQL Injection
+- تنظيف المدخلات والتحقق منها
+- حماية الملفات المرفقة
 
 ## الأداء
 
 ### **تحسين قاعدة البيانات**
 - فهارس محسنة للاستعلامات المتكررة
 - استعلامات محسنة مع JOIN
+- استعلامات محسنة للبحث
 
 ### **التخزين المؤقت**
 - ETags للاستجابات
 - Last-Modified headers
+- تخزين مؤقت للشكاوى الشائعة
 
 ### **التحديث التلقائي**
 - التقويم: تحديث كل 60 ثانية
 - لوحة التحكم: تحديث كل 30 ثانية
+- الإشعارات: تحديث فوري
 
 ## استكشاف الأخطاء
 
 ### **مشاكل قاعدة البيانات**
 ```bash
 # فحص الاتصال
-mysql -u root -p -h localhost
+mysql -u [username] -p -h localhost
 
 # فحص قاعدة البيانات
 SHOW DATABASES;
@@ -303,7 +454,7 @@ SHOW TABLES;
 php -v
 
 # فحص الملحقات
-php -m | grep -E "(pdo|json|mbstring)"
+php -m | grep -E "(pdo|json|mbstring|gd|zip)"
 ```
 
 ### **مشاكل الصلاحيات**
@@ -315,18 +466,28 @@ ls -la storage/
 chmod -R 755 storage/
 ```
 
+### **مشاكل المساعد الذكي**
+- تأكد من إعداد `GROQ_API_KEY` في ملف `.env`
+- تحقق من سجلات النظام في `storage/logs/app.log`
+- تأكد من اتصال الإنترنت للوصول إلى API
+
 ## التطوير
 
 ### **إضافة ميزات جديدة**
 1. إنشاء Controller جديد في `app/Controllers/`
 2. إضافة القوالب في `app/Views/`
-3. تحديث المسارات في `public/index.php`
+3. تحديث المسارات في `index.php`
 4. إضافة API endpoints إذا لزم الأمر
 
 ### **تخصيص التصميم**
-- تعديل CSS في `app/Views/layouts/main.php`
+- تعديل CSS في `app/Views/layouts/style.css`
 - تخصيص قوالب الطباعة في `app/Views/print/`
-- إضافة JavaScript مخصص
+- إضافة JavaScript مخصص في `app/Views/doctor/assets/js/`
+
+### **إضافة خدمات طبية**
+- إضافة Services جديدة في `app/Services/`
+- استخدام الخدمات الموجودة كمرجع
+- تحديث API Controller لاستخدام الخدمة الجديدة
 
 ## الدعم
 
@@ -334,6 +495,7 @@ chmod -R 755 storage/
 - فحص ملفات السجل في `storage/logs/`
 - مراجعة إعدادات قاعدة البيانات
 - التأكد من صحة ملف `.env`
+- مراجعة موقع التوثيق في `documentation_site/`
 
 ### **التحديثات**
 ```bash
@@ -341,8 +503,21 @@ chmod -R 755 storage/
 composer update
 
 # تحديث قاعدة البيانات
-mysql -u root -p roaya < sql/migrations/new_migration.sql
+mysql -u [username] -p roaya < sql/migrations/new_migration.sql
 ```
+
+## الإصدار
+
+**الإصدار الحالي**: 8.0.0  
+**آخر تحديث**: ديسمبر 2024
+
+### **ملاحظات الإصدار 8.0.0**
+- إضافة المساعد الطبي الذكي (AI Assistant)
+- نظام الإكمال التلقائي الذكي
+- استخراج وتحليل الشكاوى الشائعة
+- اقتراحات ذكية للوصفات
+- تحسينات في واجهة المستخدم
+- موقع توثيق شامل
 
 ## الترخيص
 
@@ -352,14 +527,16 @@ mysql -u root -p roaya < sql/migrations/new_migration.sql
 
 نرحب بالمساهمات! يرجى:
 1. Fork المشروع
-2. إنشاء فرع للميزة الجديدة
-3. إرسال Pull Request
-
-## الإصدار
-
-**الإصدار الحالي**: 1.0.0
-**آخر تحديث**: ديسمبر 2024
+2. إنشاء فرع للميزة الجديدة (`git checkout -b feature/AmazingFeature`)
+3. Commit التغييرات (`git commit -m 'Add some AmazingFeature'`)
+4. Push إلى الفرع (`git push origin feature/AmazingFeature`)
+5. فتح Pull Request
 
 ---
 
-**ملاحظة**: تأكد من تغيير كلمات المرور الافتراضية في بيئة الإنتاج.
+**⚠️ تحذير أمني مهم:**
+- تأكد من تغيير جميع كلمات المرور الافتراضية في بيئة الإنتاج
+- لا ترفع ملف `.env` إلى Git
+- استخدم مفاتيح أمان قوية وفريدة
+- قم بعمل نسخ احتياطية منتظمة
+- راجع إعدادات الأمان قبل النشر
