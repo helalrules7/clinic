@@ -1,15 +1,23 @@
-import React, { useEffect, useState } from 'react';
 import Hero from '../components/ui/Hero';
 import Section from '../components/ui/Section';
 import Card from '../components/ui/Card';
 import { Link } from 'react-router-dom';
-import { Activity, Shield, Users, Database, Menu, CloudSun, Clock, Calendar, Calculator, Sparkles, Bot, HeartPulse, ClipboardList, UserCheck, Wrench } from 'lucide-react';
+import { Activity, Shield, Users, Database, Menu, CloudSun, Clock, Calendar, Calculator, Sparkles, Bot, ClipboardList, UserCheck, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useEffect, useState, useRef } from 'react';
+import '../styles/mockups.css';
 
 export default function Home() {
     const { t } = useTranslation();
     const [currentTime, setCurrentTime] = useState(new Date());
     const [appointmentIndex, setAppointmentIndex] = useState(0);
+    const [chatWindowOpen, setChatWindowOpen] = useState(false);
+    const [messagesVisible, setMessagesVisible] = useState<boolean[]>([]);
+    const [autocompleteVisible, setAutocompleteVisible] = useState(false);
+    const [complaintsModalVisible, setComplaintsModalVisible] = useState(false);
+    const [copyFeedbackVisible, setCopyFeedbackVisible] = useState(false);
+    const mouseCursorRef = useRef<HTMLDivElement>(null);
+    const chatButtonRef = useRef<HTMLDivElement>(null);
 
     // Update time every second
     useEffect(() => {
@@ -75,16 +83,12 @@ export default function Home() {
                 playPromise
                     .then(() => {
                         // Autoplay started successfully
-                        console.log('Video autoplay started');
                     })
-                    .catch((error) => {
+                    .catch(() => {
                         // Autoplay was prevented
-                        console.log('Autoplay prevented, trying with muted:', error);
                         // Try again with muted
                         video.muted = true;
-                        video.play().catch((err) => {
-                            console.log('Autoplay failed even with muted:', err);
-                        });
+                        video.play().catch(() => {});
                     });
             }
 
@@ -112,6 +116,80 @@ export default function Home() {
                 observer.disconnect();
             };
         }
+    }, []);
+
+    // AI Chat Mockup Animation
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (mouseCursorRef.current && chatButtonRef.current) {
+                // Start cursor from top-left area
+                mouseCursorRef.current.classList.add('show');
+                mouseCursorRef.current.style.left = '20px';
+                mouseCursorRef.current.style.top = '20px';
+                
+                // Move cursor towards chat button
+                setTimeout(() => {
+                    if (mouseCursorRef.current) {
+                        mouseCursorRef.current.style.left = 'calc(100% - 45px)';
+                        mouseCursorRef.current.style.top = 'calc(100% - 45px)';
+                        
+                        // Small pause, then click effect
+                        setTimeout(() => {
+                            if (mouseCursorRef.current) {
+                                mouseCursorRef.current.style.top = 'calc(100% - 43px)';
+                                
+                                setTimeout(() => {
+                                    if (mouseCursorRef.current) {
+                                        mouseCursorRef.current.style.top = 'calc(100% - 45px)';
+                                        
+                                        // Show chat window after click
+                                        setTimeout(() => {
+                                            setChatWindowOpen(true);
+                                            if (mouseCursorRef.current) {
+                                                mouseCursorRef.current.style.display = 'none';
+                                            }
+                                            
+                                            // Show messages sequentially
+                                            setTimeout(() => {
+                                                setMessagesVisible([true]);
+                                                setTimeout(() => setMessagesVisible([true, true]), 800);
+                                                setTimeout(() => setMessagesVisible([true, true, true]), 1600);
+                                            }, 500);
+                                        }, 300);
+                                    }
+                                }, 200);
+                            }
+                        }, 500);
+                    }
+                }, 1500);
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Common Complaints Mockup Animation
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setAutocompleteVisible(true);
+            setTimeout(() => {
+                setComplaintsModalVisible(true);
+            }, 1000);
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Patient Page Mockup Animation
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setCopyFeedbackVisible(true);
+            setTimeout(() => {
+                setCopyFeedbackVisible(false);
+            }, 1500);
+        }, 1000);
+
+        return () => clearTimeout(timer);
     }, []);
 
     return (
@@ -179,59 +257,47 @@ export default function Home() {
                         </ul>
                         
                         {/* AI Chat Mockup */}
-                        <div className="mt-4 p-4 bg-white/50 dark:bg-slate-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                            <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
+                        <div className="whats-new-mockup-container">
+                            <div className="whats-new-mockup-label">
                                 {t('sections.home.whats_new.v8_0_0.ai_assistant.demo_label')}
                             </div>
-                            <div className="relative bg-white dark:bg-slate-800 rounded-lg p-4 shadow-lg" style={{ minHeight: '280px' }}>
-                                <div className="relative h-full">
+                            <div className="ai-chat-mockup">
+                                <div className="mockup-screen">
                                     {/* Chat Button */}
-                                    <div className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg cursor-pointer hover:scale-110 transition-transform">
-                                        <div className="relative">
-                                            <HeartPulse size={12} className="absolute -top-1 -left-1 text-red-500" />
-                                            <Bot size={18} />
-                                        </div>
+                                    <div ref={chatButtonRef} className="mockup-chat-button">
+                                        <span className="mockup-icon-wrapper">
+                                            <i className="bi bi-heart-pulse mockup-icon-medical"></i>
+                                            <i className="bi bi-robot mockup-icon-robot"></i>
+                                        </span>
                                     </div>
                                     
                                     {/* Chat Window */}
-                                    <div className="absolute bottom-16 right-0 w-64 h-64 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 flex flex-col">
-                                        <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
-                                            <div className="relative">
-                                                <HeartPulse size={10} className="absolute -top-0.5 -left-0.5 text-red-500" />
-                                                <Bot size={14} />
-                                            </div>
-                                            <span className="text-xs font-semibold text-gray-900 dark:text-white">Medical AI Assistant</span>
+                                    <div className={`mockup-chat-window ${chatWindowOpen ? 'show' : ''}`}>
+                                        <div className="mockup-chat-header">
+                                            <span className="mockup-icon-wrapper-header">
+                                                <i className="bi bi-heart-pulse mockup-icon-medical"></i>
+                                                <i className="bi bi-robot mockup-icon-robot"></i>
+                                            </span>
+                                            <span>Medical AI Assistant</span>
                                         </div>
-                                        <div className="flex-1 p-3 overflow-y-auto space-y-2">
-                                            <div className="flex justify-end">
-                                                <div className="bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-lg max-w-[80%]">
-                                                    Send Patient History
-                                                </div>
+                                        <div className="mockup-chat-messages">
+                                            <div className={`mockup-message mockup-message-user ${messagesVisible[0] ? 'show' : ''}`} style={messagesVisible[0] ? { opacity: 1, transform: 'translateY(0)', transition: 'opacity 0.5s ease, transform 0.5s ease' } : {}}>
+                                                <div className="mockup-message-content">Send Patient History</div>
                                             </div>
-                                            <div className="flex justify-start">
-                                                <div className="bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white text-xs px-3 py-1.5 rounded-lg max-w-[80%]">
-                                                    Analyzing patient history...
-                                                </div>
+                                            <div className={`mockup-message mockup-message-assistant ${messagesVisible[1] ? 'show' : ''}`} style={messagesVisible[1] ? { opacity: 1, transform: 'translateY(0)', transition: 'opacity 0.5s ease, transform 0.5s ease' } : {}}>
+                                                <div className="mockup-message-content">Analyzing patient history...</div>
                                             </div>
-                                            <div className="flex justify-start">
-                                                <div className="bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white text-xs px-3 py-1.5 rounded-lg max-w-[80%]">
-                                                    Based on the patient's medical history, I've identified:<br/><br/>
-                                                    • Chronic hypertension (5 years)<br/>
-                                                    • Type 2 diabetes (3 years)<br/>
-                                                    • Regular eye examinations show stable vision<br/><br/>
-                                                    Recommendations: Continue current medication regimen and schedule follow-up in 3 months.
-                                                </div>
+                                            <div className={`mockup-message mockup-message-assistant ${messagesVisible[2] ? 'show' : ''}`} style={messagesVisible[2] ? { opacity: 1, transform: 'translateY(0)', transition: 'opacity 0.5s ease, transform 0.5s ease' } : {}}>
+                                                <div className="mockup-message-content">Based on the patient's medical history, I've identified:<br/><br/>• Chronic hypertension (5 years)<br/>• Type 2 diabetes (3 years)<br/>• Regular eye examinations show stable vision<br/><br/>Recommendations: Continue current medication regimen and schedule follow-up in 3 months.</div>
                                             </div>
                                         </div>
-                                        <div className="px-2 py-2 border-t border-gray-200 dark:border-gray-700 flex gap-2">
-                                            <button className="flex-1 text-xs px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded text-center">
-                                                Send Patient History
-                                            </button>
-                                            <button className="flex-1 text-xs px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded text-center">
-                                                Summarize Consultation
-                                            </button>
+                                        <div className="mockup-chat-actions">
+                                            <button className="mockup-action-btn">Send Patient History</button>
+                                            <button className="mockup-action-btn">Summarize Consultation</button>
                                         </div>
                                     </div>
+                                    {/* Mouse Cursor */}
+                                    <div ref={mouseCursorRef} className="mockup-mouse-cursor"></div>
                                 </div>
                             </div>
                         </div>
@@ -276,33 +342,36 @@ export default function Home() {
                         </ul>
 
                         {/* Common Complaints Mockup */}
-                        <div className="mt-4 p-4 bg-white/50 dark:bg-slate-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                            <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
+                        <div className="whats-new-mockup-container">
+                            <div className="whats-new-mockup-label">
                                 {t('sections.home.whats_new.v8_0_0.common_complaints.demo_label')}
                             </div>
-                            <div className="relative bg-white dark:bg-slate-800 rounded-lg p-4 shadow-lg">
-                                <div className="space-y-3">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">Chief Complaint</label>
-                                        <div className="flex gap-2">
-                                            <input 
-                                                type="text" 
-                                                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white"
-                                                placeholder="Type complaint..." 
-                                                defaultValue="Headache"
-                                            />
-                                            <button className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm font-semibold hover:bg-purple-600 transition-colors">
-                                                Most Common Cases
-                                            </button>
+                            <div className="complaints-mockup">
+                                <div className="mockup-screen">
+                                    <div className="mockup-form-field">
+                                        <label>Chief Complaint</label>
+                                        <div className="mockup-input-group">
+                                            <input type="text" className="mockup-input" placeholder="Type complaint..." defaultValue="Headache" />
+                                            <button className="mockup-btn-primary">Most Common Cases</button>
                                         </div>
                                     </div>
-                                    <div className="mt-2 space-y-1">
-                                        <div className="px-3 py-2 bg-gray-50 dark:bg-slate-700 rounded text-sm text-gray-700 dark:text-gray-300">
-                                            Headache - Migraine
+                                    <div className={`mockup-modal-overlay ${complaintsModalVisible ? 'show' : ''}`}>
+                                        <div className="mockup-modal">
+                                            <div className="mockup-modal-header">
+                                                <h5>Most Common Cases</h5>
+                                                <button className="mockup-close-btn">&times;</button>
+                                            </div>
+                                            <div className="mockup-modal-body">
+                                                <div className="mockup-complaint-item">Headache - Migraine</div>
+                                                <div className="mockup-complaint-item">Eye pain - Conjunctivitis</div>
+                                                <div className="mockup-complaint-item">Blurred vision - Refractive error</div>
+                                                <div className="mockup-complaint-item">Dry eyes - Dry eye syndrome</div>
+                                            </div>
                                         </div>
-                                        <div className="px-3 py-2 bg-gray-50 dark:bg-slate-700 rounded text-sm text-gray-700 dark:text-gray-300">
-                                            Eye pain - Conjunctivitis
-                                        </div>
+                                    </div>
+                                    <div className={`mockup-autocomplete ${autocompleteVisible ? 'show' : ''}`}>
+                                        <div className="mockup-autocomplete-item">Headache - Migraine</div>
+                                        <div className="mockup-autocomplete-item">Headache - Tension</div>
                                     </div>
                                 </div>
                             </div>
@@ -344,34 +413,37 @@ export default function Home() {
                         </div>
 
                         {/* Patient Page Mockup */}
-                        <div className="mt-4 p-4 bg-white/50 dark:bg-slate-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                            <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
+                        <div className="whats-new-mockup-container">
+                            <div className="whats-new-mockup-label">
                                 {t('sections.home.whats_new.v8_0_0.patient_enhancements.demo_label')}
                             </div>
-                            <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-lg">
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
-                                        <div>
-                                            <div className="font-semibold text-gray-900 dark:text-white">Ahmed Mohamed</div>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-sm text-gray-600 dark:text-gray-400">01234567890</span>
-                                                <button className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600 transition-colors">
-                                                    Copy
-                                                </button>
+                            <div className="patient-mockup">
+                                <div className="mockup-screen">
+                                    <div className="mockup-patient-list">
+                                        <div className="mockup-patient-item">
+                                            <div className="mockup-patient-info">
+                                                <strong>Ahmed Mohamed</strong>
+                                                <div className="mockup-phone-group">
+                                                    <span className="mockup-phone">01234567890</span>
+                                                    <button className="mockup-copy-btn">
+                                                        <i className="bi bi-clipboard"></i>
+                                                        Copy
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">Phone Number</label>
-                                        <input 
-                                            type="text" 
-                                            className="w-full px-3 py-2 border border-green-500 rounded-lg bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white"
-                                            defaultValue="01234567890"
-                                        />
-                                        <div className="mt-1 flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                                    <div className="mockup-form-field">
+                                        <label>Phone Number</label>
+                                        <input type="text" className="mockup-input" defaultValue="01234567890" />
+                                        <div className="mockup-validation-success">
                                             <span>✓</span>
                                             <span>Valid phone number</span>
                                         </div>
+                                    </div>
+                                    <div className={`mockup-copy-feedback ${copyFeedbackVisible ? 'show' : ''}`}>
+                                        <span>✓</span>
+                                        <span>Copied to clipboard!</span>
                                     </div>
                                 </div>
                             </div>
