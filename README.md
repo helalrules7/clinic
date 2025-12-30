@@ -209,10 +209,10 @@ php -S localhost:8000 router.php &
 
 | الدور | اسم المستخدم | البريد الإلكتروني |
 |-------|-------------|------------------|
-| **Dr. Ahmed** | `dr_ahmed` | `dr.ahmed@roayaclinic.com` |
-| **Dr. Faramawy** | `dr_faramawy` | `dr.faramawy@roayaclinic.com` |
-| **Secretary** | `sec` | `sec@roayaclinic.com` |
-| **Admin** | `admin` | `admin@roayaclinic.com` |
+| **Dr. Ahmed** | `dr_1` | `dr.1@yoursite.com` |
+| **Dr. Faramawy** | `dr_2` | `dr.2@yoursite.com` |
+| **Secretary** | `sec` | `sec@yoursite.com` |
+| **Admin** | `admin` | `admin@yoursite.com` |
 
 **ملاحظة:** النظام يستخدم **اسم المستخدم** بدلاً من البريد الإلكتروني لتسجيل الدخول.
 
@@ -509,7 +509,7 @@ mysql -u [username] -p roaya < sql/migrations/new_migration.sql
 ## الإصدار
 
 **الإصدار الحالي**: 8.0.0  
-**آخر تحديث**: ديسمبر 2024
+**آخر تحديث**: ديسمبر 2025
 
 ### **ملاحظات الإصدار 8.0.0**
 - إضافة المساعد الطبي الذكي (AI Assistant)
