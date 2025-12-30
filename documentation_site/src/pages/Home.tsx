@@ -1,10 +1,10 @@
+import React, { useEffect, useState } from 'react';
 import Hero from '../components/ui/Hero';
 import Section from '../components/ui/Section';
 import Card from '../components/ui/Card';
 import { Link } from 'react-router-dom';
 import { Activity, Shield, Users, Database, Menu, CloudSun, Clock, Calendar, Calculator, Sparkles, Bot, HeartPulse, ClipboardList, UserCheck, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useState } from 'react';
 
 export default function Home() {
     const { t } = useTranslation();

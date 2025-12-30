@@ -1,3 +1,4 @@
+import React from 'react';
 import Hero from '../components/ui/Hero';
 import Section from '../components/ui/Section';
 import { useTranslation } from 'react-i18next';

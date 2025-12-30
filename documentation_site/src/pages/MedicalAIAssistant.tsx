@@ -1,9 +1,9 @@
+import React, { useEffect, useState } from 'react';
 import Hero from '../components/ui/Hero';
 import Section from '../components/ui/Section';
 import Card from '../components/ui/Card';
 import { Bot, HeartPulse, ClipboardList, Lightbulb, Search, MessageSquare, Code, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useState } from 'react';
 
 export default function MedicalAIAssistant() {
     const { t } = useTranslation();
