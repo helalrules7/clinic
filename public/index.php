@@ -153,6 +153,7 @@ try {
     $router->get('/api/alerts/today', 'AlertController@getTodayAlerts');
     $router->get('/api/alerts/active', 'AlertController@getActiveAlerts');
     $router->post('/api/alerts/dismiss', 'AlertController@dismiss');
+    $router->post('/api/alerts/{id}/toggle-status', 'AlertController@toggleStatus');
     $router->get('/api/alerts/patient/{patientId}', 'AlertController@getPatientAlerts');
     $router->post('/api/alerts/disable-all', 'AlertController@disableAllAlerts');
     $router->delete('/api/alerts/delete-all', 'AlertController@deleteAllAlerts');
@@ -244,6 +245,7 @@ try {
 
     // Weather API route
     $router->get('/api/weather', 'ApiController@getWeather');
+    $router->get('/api/weather-forecast', 'ApiController@getWeatherForecast');
     $router->get('/api/weather-ar', 'ApiController@getWeatherArabic');
     $router->get('/api/weather-forecast-ar', 'ApiController@getWeatherForecastArabic');
 
@@ -305,6 +307,7 @@ try {
     // More specific routes first
     $router->get('/api/patients/{id}/files', 'ApiController@getPatientFiles');
     $router->get('/api/patients/{id}/timeline', 'ApiController@getPatientTimeline');
+    $router->get('/api/patients/{id}/appointments/check-active', 'ApiController@checkPatientActiveAppointments');
     $router->get('/api/patients/{id}/export', 'ApiController@exportPatientData');
     $router->head('/api/patients/{id}/export', 'ApiController@checkExportAccess');
     $router->get('/api/patients/{id}', 'ApiController@getPatient');
@@ -374,6 +377,60 @@ try {
     // Payment and Expense API routes
     $router->get('/api/payments/{id}', 'ApiController@getPayment');
     $router->get('/api/expenses/{id}', 'ApiController@getExpense');
+    
+    // IOL Power Calculator API route
+    $router->post('/api/iol/calculate', 'ApiController@calculateIOL');
+    
+    // IOP Trend Analyzer API route
+    $router->get('/api/iop/analyze', 'ApiController@analyzeIOPTrend');
+    
+    // Pediatric IOL Undercorrection Calculator API routes
+    $router->post('/api/pediatric-iol/calculate', 'ApiController@calculatePediatricIOL');
+    $router->get('/api/pediatric-iol/calculate', 'ApiController@calculatePediatricIOL');
+    
+    // Corneal Astigmatism Calculator API routes
+    $router->post('/api/astigmatism/calculate', 'ApiController@calculateCornealAstigmatism');
+    $router->get('/api/astigmatism/calculate', 'ApiController@calculateCornealAstigmatism');
+    
+    // Target IOP Calculator API routes
+    $router->post('/api/target-iop/calculate', 'ApiController@calculateTargetIOP');
+    $router->get('/api/target-iop/calculate', 'ApiController@calculateTargetIOP');
+    
+    // Refraction Consistency Checker API routes
+    $router->post('/api/refraction/consistency', 'ApiController@calculateRefractionConsistency');
+    $router->get('/api/refraction/consistency', 'ApiController@calculateRefractionConsistency');
+    
+    // Visual Acuity Progress Calculator API routes
+    $router->post('/api/visual-acuity/progress', 'ApiController@calculateVisualAcuityProgress');
+    $router->get('/api/visual-acuity/progress', 'ApiController@calculateVisualAcuityProgress');
+    
+    // OSDI Calculator API routes
+    $router->post('/api/osdi/calculate', 'ApiController@calculateOSDI');
+    $router->get('/api/osdi/calculate', 'ApiController@calculateOSDI');
+    $router->get('/api/patients/:patientId/osdi/history', 'ApiController@getPatientOSDIHistory');
+    
+    // Pachymetry-Adjusted IOP Calculator API routes
+    $router->post('/api/pachymetry-adjusted-iop/calculate', 'ApiController@calculatePachymetryAdjustedIOP');
+    $router->get('/api/pachymetry-adjusted-iop/calculate', 'ApiController@calculatePachymetryAdjustedIOP');
+    
+    // Diabetic Retinopathy Risk Estimator API routes
+    $router->post('/api/diabetic-retinopathy/risk-estimate', 'ApiController@estimateDiabeticRetinopathyRisk');
+    $router->get('/api/diabetic-retinopathy/risk-estimate', 'ApiController@estimateDiabeticRetinopathyRisk');
+    
+    // Macular Thickness Trend Analyzer API routes
+    $router->post('/api/macular-thickness/trend', 'ApiController@analyzeMacularThicknessTrend');
+    $router->get('/api/macular-thickness/trend', 'ApiController@analyzeMacularThicknessTrend');
+    $router->get('/api/patients/:patientId/macular-thickness/history', 'ApiController@getPatientMacularThicknessHistory');
+    
+    // Cataract Surgery Tools API routes
+    $router->post('/api/cataract-surgery/readiness', 'ApiController@calculateCataractSurgeryReadiness');
+    $router->get('/api/cataract-surgery/readiness', 'ApiController@calculateCataractSurgeryReadiness');
+    $router->post('/api/cataract-surgery/postop-outcome', 'ApiController@analyzePostOperativeOutcome');
+    $router->get('/api/cataract-surgery/postop-outcome', 'ApiController@analyzePostOperativeOutcome');
+    $router->get('/api/cataract-surgery/audit', 'ApiController@getSurgicalOutcomesAudit');
+    
+    // Unified Clinical Dashboard API routes
+    $router->get('/api/clinical-dashboard/snapshot', 'ApiController@getClinicalDashboardSnapshot');
         
     // Handle the request
     $router->dispatch();

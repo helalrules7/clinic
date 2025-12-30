@@ -1,0 +1,516 @@
+<div class="getting-started-content">
+    
+    <section class="content-section" id="modal">
+        <div class="section-header">
+            <h2><i class="ri-file-list-line"></i> Prescription Details Modal</h2>
+            <p class="section-description">
+                Clicking a prescription card opens a detailed modal showing all medication prescriptions for that patient, organized by appointment with expandable accordion sections.
+            </p>
+        </div>
+
+        <div class="tech-card">
+            <div class="tech-card-header">
+                <div class="tech-card-icon">
+                    <i class="ri-window-line"></i>
+                </div>
+                <h3 class="tech-card-title">Modal Structure</h3>
+            </div>
+            <div class="tech-card-content">
+                
+                </div>
+
+                <p><strong>Modal Header:</strong></p>
+                <ul>
+                    <li>Title: "{Patient Name} - Medication Prescriptions"</li>
+                    <li>Close button (X) in top-right corner</li>
+                </ul>
+
+                <p style="margin-top: 1rem;"><strong>Appointment Accordion:</strong></p>
+                <p>Each appointment with prescriptions is displayed as an accordion item:</p>
+                <div class="process-flow">
+                    <div class="process-step">
+                        <div class="process-step-number">1</div>
+                        <div class="process-step-content">
+                            <div class="process-step-title">Appointment Header</div>
+                            <div class="process-step-desc">Shows appointment ID, date, time, visit type, and prescription count. Includes expand/collapse icon (chevron)</div>
+                        </div>
+                    </div>
+                    <div class="process-step">
+                        <div class="process-step-number">2</div>
+                        <div class="process-step-content">
+                            <div class="process-step-title">Action Buttons</div>
+                            <div class="process-step-desc">"View Appointment" (green) and "Print Prescription" (blue) buttons for each appointment</div>
+                        </div>
+                    </div>
+                    <div class="process-step">
+                        <div class="process-step-number">3</div>
+                        <div class="process-step-content">
+                            <div class="process-step-title">Prescription List</div>
+                            <div class="process-step-desc">When expanded, shows all medications prescribed in that appointment with full details</div>
+                        </div>
+                    </div>
+                </div>
+
+                <p style="margin-top: 1.5rem;"><strong>Medication Details:</strong></p>
+                <p>Each medication in the expanded appointment shows:</p>
+                <ul>
+                    <li><strong>Drug Name:</strong> Full medication name (e.g., "CIDAMEX 250 MG 20 TABS.")</li>
+                    <li><strong>Rx Symbol:</strong> Red "℞" symbol indicating prescription</li>
+                    <li><strong>Dose:</strong> Medication dosage if available</li>
+                    <li><strong>Frequency:</strong> How often to take the medication</li>
+                    <li><strong>Duration:</strong> How long to take the medication</li>
+                    <li><strong>Route:</strong> Method of administration (e.g., "Topical", "Oral")</li>
+                    <li><strong>Special Instructions:</strong> Additional notes or instructions if provided</li>
+                </ul>
+
+                <p style="margin-top: 1rem;"><strong>Modal Footer:</strong></p>
+                <ul>
+                    <li><strong>View Patient Button:</strong> Opens patient details page in new tab</li>
+                    <li><strong>Close Button:</strong> Closes the modal</li>
+                </ul>
+
+                <p style="margin-top: 1rem;"><strong>Accordion Behavior:</strong></p>
+                <ul>
+                    <li>First (newest) appointment is expanded by default</li>
+                    <li>Clicking an appointment header toggles expand/collapse</li>
+                    <li>Only one appointment can be expanded at a time (Bootstrap accordion)</li>
+                    <li>Chevron icon rotates to indicate state (down = collapsed, up = expanded)</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pagination Section -->
+    <section class="content-section" id="pagination">
+        <div class="section-header">
+            <h2><i class="ri-more-line"></i> Pagination & Load More</h2>
+            <p class="section-description">
+                The gallery uses infinite scroll pagination with a "Load More" button to load additional prescription cards as needed.
+            </p>
+        </div>
+
+        <div class="tech-card">
+            <div class="tech-card-header">
+                <div class="tech-card-icon">
+                    <i class="ri-arrow-down-circle-line"></i>
+                </div>
+                <h3 class="tech-card-title">Load More Button</h3>
+            </div>
+            <div class="tech-card-content">
+                <p><strong>Features:</strong></p>
+                <ul>
+                    <li><strong>Initial Load:</strong> First 12 prescription cards are loaded automatically</li>
+                    <li><strong>Load More:</strong> Button appears when more prescriptions are available</li>
+                    <li><strong>Loading State:</strong> Spinner replaces button during loading</li>
+                    <li><strong>Auto-hide:</strong> Button hides when all prescriptions are loaded</li>
+                </ul>
+
+                <p style="margin-top: 1rem;"><strong>Button Design:</strong></p>
+                <ul>
+                    <li>Centered between horizontal lines for visual separation</li>
+                    <li>Large, prominent button with down arrow icon</li>
+                    <li>Primary blue color to match theme</li>
+                    <li>Disabled state during loading to prevent multiple clicks</li>
+                </ul>
+
+                <p style="margin-top: 1rem;"><strong>Pagination Details:</strong></p>
+                <ul>
+                    <li><strong>Per Page:</strong> 12 prescription cards per page</li>
+                    <li><strong>Page Tracking:</strong> Current page is tracked internally</li>
+                    <li><strong>Has More:</strong> Server indicates if more pages are available</li>
+                    <li><strong>Reset on Filter:</strong> Pagination resets when patient filter is applied or cleared</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Empty State Section -->
+    <section class="content-section" id="empty">
+        <div class="section-header">
+            <h2><i class="ri-inbox-line"></i> Empty State</h2>
+            <p class="section-description">
+                When no medication prescriptions are found, a friendly empty state message is displayed to inform the user.
+            </p>
+        </div>
+
+        <div class="tech-card">
+            <div class="tech-card-header">
+                <div class="tech-card-icon">
+                    <i class="ri-capsule-line"></i>
+                </div>
+                <h3 class="tech-card-title">Empty State Display</h3>
+            </div>
+            <div class="tech-card-content">
+                <p><strong>When Shown:</strong></p>
+                <ul>
+                    <li>No medication prescriptions exist in the system</li>
+                    <li>Patient filter returns no results</li>
+                    <li>All prescriptions have been loaded and none remain</li>
+                </ul>
+
+                <p style="margin-top: 1rem;"><strong>Empty State Content:</strong></p>
+                <ul>
+                    <li>Large capsule icon (muted color)</li>
+                    <li>Heading: "No medication prescriptions found"</li>
+                    <li>Message: "No medication prescriptions are available at this time."</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Implementation -->
+    <section class="content-section" id="technical">
+        <div class="section-header">
+            <h2><i class="ri-code-s-slash-line"></i> Technical Implementation</h2>
+            <p class="section-description">Technical details about the Medications Prescriptions implementation, including API endpoints, database queries, JavaScript functions, and workflow algorithms.</p>
+        </div>
+
+        <div class="technical-grid">
+            <!-- API Endpoints -->
+            <div class="tech-card">
+                <div class="tech-card-header">
+                    <div class="tech-card-icon">
+                        <i class="ri-router-line"></i>
+                    </div>
+                    <h3 class="tech-card-title">API Endpoints</h3>
+                </div>
+                <div class="tech-card-content">
+                    <div class="api-endpoint">
+                        <div>
+                            <span class="api-method get">GET</span>
+                            <span class="api-endpoint-path">/doctor/medications</span>
+                        </div>
+                        <p class="api-endpoint-desc">Main medications prescriptions gallery page</p>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <div>
+                            <span class="api-method get">GET</span>
+                            <span class="api-endpoint-path">/api/medications/prescriptions</span>
+                        </div>
+                        <p class="api-endpoint-desc">Get paginated medication prescriptions grouped by patient</p>
+                        <div class="api-params">
+                            <strong>Query Parameters:</strong>
+                            <ul>
+                                <li><code>page</code> - Page number (default: 1)</li>
+                                <li><code>patient_id</code> - Optional filter by patient ID</li>
+                            </ul>
+                            <strong>Response:</strong>
+                            <ul>
+                                <li><code>success</code> - Boolean indicating success</li>
+                                <li><code>data</code> - Array of patient prescription objects</li>
+                                <li><code>pagination</code> - Pagination metadata (current_page, total_pages, total, per_page, has_more)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <div>
+                            <span class="api-method get">GET</span>
+                            <span class="api-endpoint-path">/api/medications/prescriptions/patient</span>
+                        </div>
+                        <p class="api-endpoint-desc">Get all medication prescriptions for a specific patient, grouped by appointment</p>
+                        <div class="api-params">
+                            <strong>Query Parameters:</strong>
+                            <ul>
+                                <li><code>patient_id</code> - Required patient ID</li>
+                            </ul>
+                            <strong>Response:</strong>
+                            <ul>
+                                <li><code>success</code> - Boolean indicating success</li>
+                                <li><code>data</code> - Array of appointment objects, each containing prescriptions array</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <div>
+                            <span class="api-method get">GET</span>
+                            <span class="api-endpoint-path">/api/patients/search</span>
+                        </div>
+                        <p class="api-endpoint-desc">Search patients by name for autocomplete (used by patient filter)</p>
+                        <div class="api-params">
+                            <strong>Query Parameters:</strong>
+                            <ul>
+                                <li><code>q</code> - Search query (minimum 2 characters)</li>
+                                <li><code>limit</code> - Maximum results (default: 10)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Database Queries -->
+            <div class="tech-card">
+                <div class="tech-card-header">
+                    <div class="tech-card-icon">
+                        <i class="ri-database-2-line"></i>
+                    </div>
+                    <h3 class="tech-card-title">Database Queries</h3>
+                </div>
+                <div class="tech-card-content">
+                    <p><strong>Main Gallery Query:</strong></p>
+                    <div class="db-schema">
+                        <div class="db-table-name">getMedicationsPrescriptions()</div>
+                        <div class="db-columns">
+                            <div class="db-column">
+                                <span class="db-column-name">Tables:</span>
+                                <span class="db-column-type">prescriptions, appointments, patients</span>
+                                <span class="db-column-desc">Groups prescriptions by patient_id, counts distinct appointments per patient, gets latest prescription date, and includes latest prescription details for thumbnail</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p style="margin-top: 1rem;"><strong>Patient Prescriptions Query:</strong></p>
+                    <div class="db-schema">
+                        <div class="db-table-name">getPatientMedicationsPrescriptions()</div>
+                        <div class="db-columns">
+                            <div class="db-column">
+                                <span class="db-column-name">Tables:</span>
+                                <span class="db-column-type">appointments, prescriptions</span>
+                                <span class="db-column-desc">Gets distinct appointments with prescriptions for a patient, then fetches full prescription details for each appointment, ordered by date DESC</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p style="margin-top: 1rem;"><strong>Query Features:</strong></p>
+                    <ul>
+                        <li>Uses <code>GROUP BY</code> to group prescriptions by patient</li>
+                        <li>Uses <code>COUNT(DISTINCT appointment_id)</code> to count appointments, not prescriptions</li>
+                        <li>Uses <code>MAX(created_at)</code> to get latest prescription date</li>
+                        <li>Supports optional <code>WHERE</code> clause for patient filtering</li>
+                        <li>Orders results by latest prescription date (DESC)</li>
+                        <li>Pagination using <code>LIMIT</code> and <code>OFFSET</code></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- JavaScript Functions -->
+            <div class="tech-card">
+                <div class="tech-card-header">
+                    <div class="tech-card-icon">
+                        <i class="ri-javascript-line"></i>
+                    </div>
+                    <h3 class="tech-card-title">Key JavaScript Functions</h3>
+                </div>
+                <div class="tech-card-content">
+                    <p><strong>File:</strong> <code>@app/Views/doctor/assets/js/medications.js</code></p>
+                    <p><strong>Main Functions:</strong></p>
+                    <div class="function-list">
+                        <div class="function-item">
+                            <div class="function-name">loadPrescriptions()</div>
+                            <div class="function-desc">Loads prescription cards from API with pagination, handles loading states, and renders cards to gallery</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">renderPrescriptionCards(patients)</div>
+                            <div class="function-desc">Creates and renders prescription card elements for each patient with thumbnail, badge, and overlay</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">setupPatientSearch()</div>
+                            <div class="function-desc">Sets up autocomplete search with input listeners, keyboard navigation, and click handlers</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">searchPatients(query)</div>
+                            <div class="function-desc">Fetches patient search results from API and displays autocomplete dropdown</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">displayAutocomplete(patients)</div>
+                            <div class="function-desc">Renders autocomplete dropdown with patient results, handles click and hover events</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">navigateAutocomplete(direction)</div>
+                            <div class="function-desc">Handles keyboard navigation (Arrow Up/Down) through autocomplete results</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">selectPatient(patientId, patientName)</div>
+                            <div class="function-desc">Applies patient filter, updates UI, and reloads prescriptions for selected patient</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">clearFilter()</div>
+                            <div class="function-desc">Removes patient filter, clears UI, and reloads all prescriptions</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">openPrescriptionView(patientId, patientName)</div>
+                            <div class="function-desc">Opens prescription preview modal, loads patient prescriptions, and renders accordion list</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">renderPrescriptionList(appointments, patientId)</div>
+                            <div class="function-desc">Renders accordion list of appointments with prescriptions, including medication details</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">formatDate(dateString)</div>
+                            <div class="function-desc">Formats date string to Arabic locale format (e.g., "10 ديسمبر، ٢٠٢٥")</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">formatTime(timeString)</div>
+                            <div class="function-desc">Formats time string to HH:MM format</div>
+                        </div>
+                        <div class="function-item">
+                            <div class="function-name">escapeHtml(text)</div>
+                            <div class="function-desc">Escapes HTML characters to prevent XSS attacks in medication names and notes</div>
+                        </div>
+                    </div>
+
+                    <p style="margin-top: 1rem;"><strong>State Management:</strong></p>
+                    <ul>
+                        <li><code>currentPage</code> - Tracks current pagination page</li>
+                        <li><code>isLoading</code> - Prevents multiple simultaneous API calls</li>
+                        <li><code>hasMore</code> - Indicates if more pages are available</li>
+                        <li><code>selectedPatientId</code> - Currently filtered patient ID</li>
+                        <li><code>selectedPatientName</code> - Currently filtered patient name</li>
+                        <li><code>autocompleteItems</code> - Array of autocomplete search results</li>
+                        <li><code>selectedAutocompleteIndex</code> - Currently highlighted autocomplete item</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Key Files -->
+            <div class="tech-card">
+                <div class="tech-card-header">
+                    <div class="tech-card-icon">
+                        <i class="ri-file-code-line"></i>
+                    </div>
+                    <h3 class="tech-card-title">Key Files</h3>
+                </div>
+                <div class="tech-card-content">
+                    <div class="file-structure">
+                        <div class="file-item">
+                            <i class="ri-file-html-line file-icon"></i>
+                            <div>
+                                <div class="file-name">@app/Views/medications/index.php</div>
+                                <div class="file-desc">Main medications prescriptions page HTML structure with patient filter, gallery grid, load more button, empty state, and prescription preview modal</div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <i class="ri-file-css-line file-icon"></i>
+                            <div>
+                                <div class="file-name">@app/Views/doctor/assets/css/medications.css</div>
+                                <div class="file-desc">Styling for prescription cards, autocomplete dropdown, modal, accordion, and medication details</div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <i class="ri-javascript-line file-icon"></i>
+                            <div>
+                                <div class="file-name">@app/Views/doctor/assets/js/medications.js</div>
+                                <div class="file-desc">JavaScript for loading prescriptions, patient search autocomplete, card rendering, modal management, and accordion interactions</div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <i class="ri-settings-3-line file-icon"></i>
+                            <div>
+                                <div class="file-name">@app/Controllers/MedicationsController.php</div>
+                                <div class="file-desc">Controller methods:
+                                    <ul>
+                                        <li>index() - Renders main medications prescriptions page</li>
+                                        <li>getMedicationsPrescriptions() - API endpoint for paginated prescription gallery</li>
+                                        <li>getPatientMedicationsPrescriptions() - API endpoint for patient-specific prescriptions</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <i class="ri-router-line file-icon"></i>
+                            <div>
+                                <div class="file-name">@index.php</div>
+                                <div class="file-desc">Defines routes:
+                                    <ul>
+                                        <li>GET /doctor/medications - Main gallery page</li>
+                                        <li>GET /api/medications/prescriptions - Gallery API</li>
+                                        <li>GET /api/medications/prescriptions/patient - Patient prescriptions API</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Rendering -->
+            <div class="tech-card">
+                <div class="tech-card-header">
+                    <div class="tech-card-icon">
+                        <i class="ri-layout-grid-line"></i>
+                    </div>
+                    <h3 class="tech-card-title">Card Rendering Algorithm</h3>
+                </div>
+                <div class="tech-card-content">
+                    <p><strong>Card Creation Process:</strong></p>
+                    <div class="process-flow">
+                        <div class="process-step">
+                            <div class="process-step-number">1</div>
+                            <div class="process-step-content">
+                                <div class="process-step-title">Create Column</div>
+                                <div class="process-step-desc">Create Bootstrap column div (col-md-4 col-lg-3 col-sm-6)</div>
+                            </div>
+                        </div>
+                        <div class="process-step">
+                            <div class="process-step-number">2</div>
+                            <div class="process-step-content">
+                                <div class="process-step-title">Create Card</div>
+                                <div class="process-step-desc">Create prescription-card div with click handler to open modal</div>
+                            </div>
+                        </div>
+                        <div class="process-step">
+                            <div class="process-step-number">3</div>
+                            <div class="process-step-content">
+                                <div class="process-step-title">Create Thumbnail</div>
+                                <div class="process-step-desc">Add gradient background, prescription icon, and latest medication preview</div>
+                            </div>
+                        </div>
+                        <div class="process-step">
+                            <div class="process-step-number">4</div>
+                            <div class="process-step-content">
+                                <div class="process-step-title">Add Badge</div>
+                                <div class="process-step-desc">Add appointment count badge in top-right corner</div>
+                            </div>
+                        </div>
+                        <div class="process-step">
+                            <div class="process-step-number">5</div>
+                            <div class="process-step-content">
+                                <div class="process-step-title">Add Overlay</div>
+                                <div class="process-step-desc">Add overlay with patient name, appointment count, and last prescription date</div>
+                            </div>
+                        </div>
+                        <div class="process-step">
+                            <div class="process-step-number">6</div>
+                            <div class="process-step-content">
+                                <div class="process-step-title">Append to Gallery</div>
+                                <div class="process-step-desc">Append completed card to medicationsGallery container</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Handling -->
+            <div class="tech-card">
+                <div class="tech-card-header">
+                    <div class="tech-card-icon">
+                        <i class="ri-error-warning-line"></i>
+                    </div>
+                    <h3 class="tech-card-title">Error Handling</h3>
+                </div>
+                <div class="tech-card-content">
+                    <p><strong>Client-Side:</strong></p>
+                    <ul>
+                        <li>Loading indicators during API calls</li>
+                        <li>Empty state display when no results found</li>
+                        <li>Error handling in fetch promises with console logging</li>
+                        <li>Debounced search to prevent excessive API calls</li>
+                        <li>Input validation (minimum 2 characters for search)</li>
+                        <li>XSS protection via escapeHtml() function</li>
+                    </ul>
+                    <p><strong>Server-Side:</strong></p>
+                    <ul>
+                        <li>Authentication check (doctor or admin role required)</li>
+                        <li>Input validation (patient_id must be integer)</li>
+                        <li>SQL query error handling with try-catch blocks</li>
+                        <li>JSON error responses with appropriate HTTP status codes</li>
+                        <li>Empty result handling (returns empty array, not error)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+

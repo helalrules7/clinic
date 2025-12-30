@@ -16,6 +16,485 @@ function debounce(func, wait) {
 let currentAlertIdToEdit = null;
 let originalAlertData = null; // Store original alert data for comparison
 
+// Timepicker UI helper functions
+(function() {
+    let timepickerInstance = null;
+    
+    // Detect current theme (dark/light) - sync with main.js theme system
+    function getCurrentTheme() {
+        // Check documentElement class (same as main.js)
+        const htmlElement = document.documentElement;
+        const isDark = htmlElement.classList.contains('dark');
+        
+        // Return 'dark' theme for dark mode, 'basic' for light mode
+        // This matches timepicker-ui theme names
+        return isDark ? 'dark' : 'basic';
+    }
+    
+    // Detect if device is mobile/touch device
+    // DISABLED: Always use desktop mode regardless of device
+    function isMobileDevice() {
+        // Always return false to force desktop mode
+        return false;
+    }
+    
+    // Initialize timepicker
+    function initTimepicker() {
+        const timeInput = document.getElementById('alertTime');
+        if (!timeInput) return;
+        
+        // Destroy existing instance if any (check if it's not already destroyed)
+        if (timepickerInstance) {
+            try {
+                // Check if instance is still valid before destroying
+                const element = timepickerInstance.getElement ? timepickerInstance.getElement() : null;
+                if (element) {
+                    timepickerInstance.destroy();
+                }
+            } catch (e) {
+                // Instance might already be destroyed, ignore
+            }
+            timepickerInstance = null;
+        }
+        
+        // Wait for TimepickerUI to be available
+        if (typeof TimepickerUI === 'undefined') {
+            setTimeout(initTimepicker, 100);
+            return;
+        }
+        
+        try {
+            const currentTheme = getCurrentTheme();
+            const isMobile = isMobileDevice();
+            
+            // Create new instance with all options
+            timepickerInstance = new TimepickerUI(timeInput, {
+                ui: {
+                    theme: currentTheme,
+                    animation: true,
+                    backdrop: true,
+                    mobile: isMobile, // Enable mobile mode only on mobile devices
+                    enableSwitchIcon: true, // Enable switch icon for mobile/desktop toggle
+                    editable: false,
+                    enableScrollbar: false
+                },
+                clock: {
+                    type: '12h',
+                    incrementHours: 1,
+                    incrementMinutes: 1,
+                    autoSwitchToMinutes: false
+                },
+                labels: {
+                    am: 'AM',
+                    pm: 'PM',
+                    ok: 'OK',
+                    cancel: 'Cancel',
+                    time: 'Select time',
+                    mobileTime: 'Enter Time',
+                    mobileHour: 'Hour',
+                    mobileMinute: 'Minute'
+                },
+                behavior: {
+                    focusInputAfterClose: false,
+                    focusTrap: true,
+                    delayHandler: 300
+                },
+                callbacks: {
+                    onConfirm: function(data) {
+                        // Update hidden input with 24-hour format
+                        try {
+                            // data can be object with time property or string
+                            let timeStr = '';
+                            if (typeof data === 'string') {
+                                timeStr = data;
+                            } else if (data && data.time) {
+                                timeStr = data.time;
+                            } else if (data && data.hour && data.minutes) {
+                                const type = data.type || 'AM';
+                                timeStr = `${data.hour}:${data.minutes} ${type}`;
+                            }
+                            
+                            if (timeStr && timeStr !== '12:00 AM') {
+                                const time24 = convert12To24(timeStr);
+                                const hiddenInput = document.getElementById('alertTimeValue');
+                                if (hiddenInput && time24) {
+                                    hiddenInput.value = time24;
+                                }
+                                
+                                // Also update the input value to ensure consistency
+                                const timeInput = document.getElementById('alertTime');
+                                if (timeInput) {
+                                    timeInput.value = timeStr;
+                                }
+                            }
+                        } catch (e) {
+                            // Silent error handling
+                        }
+                    },
+                    onUpdate: function(data) {
+                        // Update hidden input in real-time
+                        try {
+                            // data can be object with time property or string
+                            let timeStr = '';
+                            if (typeof data === 'string') {
+                                timeStr = data;
+                            } else if (data && data.time) {
+                                timeStr = data.time;
+                            } else if (data && data.hour && data.minutes) {
+                                const type = data.type || 'AM';
+                                timeStr = `${data.hour}:${data.minutes} ${type}`;
+                            }
+                            
+                            if (timeStr && timeStr !== '12:00 AM') {
+                                const time24 = convert12To24(timeStr);
+                                const hiddenInput = document.getElementById('alertTimeValue');
+                                if (hiddenInput && time24) {
+                                    hiddenInput.value = time24;
+                                }
+                            }
+                        } catch (e) {
+                            // Silent error handling
+                        }
+                    }
+                }
+            });
+            
+            // IMPORTANT: Create the timepicker after instantiation (required by timepicker-ui)
+            if (timepickerInstance && typeof timepickerInstance.create === 'function') {
+                timepickerInstance.create();
+                
+                // Mobile mode disabled - always use desktop mode
+                // Touch support setup removed since we're using desktop mode only
+            }
+        } catch (e) {
+            // Silent error handling
+            timepickerInstance = null;
+        }
+    }
+    
+    // Convert 12-hour format to 24-hour format
+    function convert12To24(time12) {
+        if (!time12) return '';
+        
+        // Ensure time12 is a string
+        if (typeof time12 !== 'string') {
+            if (typeof time12 === 'object' && time12.time) {
+                time12 = time12.time;
+            } else {
+                return '';
+            }
+        }
+        
+        // Trim whitespace
+        time12 = time12.trim();
+        
+        // Parse "HH:MM AM/PM" format
+        const match = time12.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (!match) {
+            // Try to parse as 24-hour format already
+            const match24 = time12.match(/(\d{1,2}):(\d{2})/);
+            if (match24) {
+                const hours = String(parseInt(match24[1], 10)).padStart(2, '0');
+                const minutes = match24[2];
+                return `${hours}:${minutes}:00`;
+            }
+            return '';
+        }
+        
+        let hours = parseInt(match[1], 10);
+        const minutes = match[2];
+        const period = match[3].toUpperCase();
+        
+        // Validate hours (1-12 for 12-hour format)
+        if (hours < 1 || hours > 12) {
+            return '';
+        }
+        
+        // Convert to 24-hour format
+        if (period === 'PM' && hours !== 12) {
+            hours += 12;
+        } else if (period === 'AM' && hours === 12) {
+            hours = 0;
+        }
+        
+        return `${String(hours).padStart(2, '0')}:${minutes}:00`;
+    }
+    
+    // Convert 24-hour format to 12-hour format
+    function convert24To12(time24) {
+        if (!time24) return '12:00 AM';
+        
+        // Ensure time24 is a string
+        if (typeof time24 !== 'string') {
+            time24 = String(time24);
+        }
+        
+        // Handle HH:mm:ss or HH:mm format
+        const timeParts = time24.split(':');
+        let hours = parseInt(timeParts[0], 10);
+        const minutes = (timeParts[1] || '00').padStart(2, '0');
+        
+        // Validate hours
+        if (isNaN(hours) || hours < 0 || hours > 23) {
+            return '12:00 AM';
+        }
+        
+        const period = hours >= 12 ? 'PM' : 'AM';
+        if (hours === 0) {
+            hours = 12;
+        } else if (hours > 12) {
+            hours -= 12;
+        }
+        
+        // Format: "H:MM AM/PM" (single digit hour for 1-9, double for 10-12)
+        return `${hours}:${minutes} ${period}`;
+    }
+    
+    // Get timepicker value in 24-hour format
+    function getTimepickerValue() {
+        // Priority 1: Get from input value directly (timepicker updates input.value on confirm)
+        const timeInput = document.getElementById('alertTime');
+        if (timeInput && timeInput.value && timeInput.value !== '12:00 AM') {
+            const converted = convert12To24(timeInput.value);
+            if (converted) {
+                return converted;
+            }
+        }
+        
+        // Priority 2: Get from timepicker instance (check if instance is valid)
+        if (!timepickerInstance) {
+            return null;
+        }
+        
+        try {
+            // Check if instance is still valid (not destroyed)
+            if (timepickerInstance.getElement) {
+                const element = timepickerInstance.getElement();
+                if (!element) {
+                    // Instance is destroyed, return null
+                    return null;
+                }
+            }
+            
+            const value = timepickerInstance.getValue();
+            if (value) {
+                // timepickerInstance.getValue() returns an object like {hour, minutes, type, time}
+                // Use the time property if available, otherwise build from hour/minutes/type
+                let time12 = value.time || '';
+                if (!time12 && value.hour && value.minutes) {
+                    const type = value.type || 'AM';
+                    time12 = `${value.hour}:${value.minutes} ${type}`;
+                }
+                
+                if (time12 && time12 !== '12:00 AM') {
+                    return convert12To24(time12);
+                }
+            }
+        } catch (e) {
+            // Instance might be destroyed, return null
+            return null;
+        }
+        return null;
+    }
+    
+    // Set timepicker value from 24-hour format
+    function setTimepickerValue(time24) {
+        if (!time24) return;
+        
+        // If instance doesn't exist, initialize it first
+        if (!timepickerInstance) {
+            initTimepicker();
+            // Wait for initialization, then try again
+            setTimeout(function() {
+                if (timepickerInstance) {
+                    setTimepickerValue(time24);
+                } else {
+                    // Fallback: set input value directly
+                    const timeInput = document.getElementById('alertTime');
+                    const hiddenInput = document.getElementById('alertTimeValue');
+                    if (timeInput) {
+                        const time12 = convert24To12(time24);
+                        if (time12) {
+                            timeInput.value = time12;
+                        }
+                    }
+                    if (hiddenInput) {
+                        hiddenInput.value = time24;
+                    }
+                }
+            }, 200);
+            return;
+        }
+        
+        try {
+            // Check if instance is still valid (not destroyed)
+            if (timepickerInstance.getElement) {
+                const element = timepickerInstance.getElement();
+                if (!element) {
+                    // Instance is destroyed, re-initialize
+                    initTimepicker();
+                    setTimeout(function() {
+                        setTimepickerValue(time24);
+                    }, 200);
+                    return;
+                }
+            }
+            
+            // Ensure time24 is in HH:mm:ss format, extract HH:mm
+            let timeStr = time24;
+            if (timeStr.includes(':')) {
+                const parts = timeStr.split(':');
+                timeStr = `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+            }
+            
+            const time12 = convert24To12(timeStr + ':00'); // Add :00 for conversion
+            if (time12) {
+                timepickerInstance.setValue(time12);
+                
+                // Update hidden input
+                const hiddenInput = document.getElementById('alertTimeValue');
+                if (hiddenInput) {
+                    // Ensure time24 is in HH:mm:ss format
+                    const timeParts = time24.split(':');
+                    if (timeParts.length === 2) {
+                        hiddenInput.value = `${timeParts[0].padStart(2, '0')}:${timeParts[1].padStart(2, '0')}:00`;
+                    } else {
+                        hiddenInput.value = time24;
+                    }
+                }
+            }
+        } catch (e) {
+            // Fallback: try to set input value directly
+            const timeInput = document.getElementById('alertTime');
+            if (timeInput) {
+                try {
+                    const time12 = convert24To12(time24);
+                    if (time12) {
+                        timeInput.value = time12;
+                    }
+                } catch (e2) {
+                    // Silent error handling
+                }
+            }
+        }
+    }
+    
+    // Update theme when it changes (debounced to avoid multiple calls)
+    const debouncedUpdateTheme = debounce(function() {
+        if (!timepickerInstance) {
+            // If no instance, initialize it
+            const timeInput = document.getElementById('alertTime');
+            if (timeInput) {
+                initTimepicker();
+            }
+            return;
+        }
+        
+        try {
+            // Check if instance is still valid
+            const element = timepickerInstance.getElement ? timepickerInstance.getElement() : null;
+            if (!element) {
+                // Instance is destroyed, re-initialize
+                const timeInput = document.getElementById('alertTime');
+                if (timeInput) {
+                    initTimepicker();
+                }
+                return;
+            }
+            
+            // Use update() method to change theme and mobile mode
+            // According to docs: update({ options: newOptions })
+            // Get current theme (syncs with main.js - checks documentElement class)
+            const currentTheme = getCurrentTheme();
+            const isMobile = isMobileDevice();
+            timepickerInstance.update({
+                options: {
+                    ui: {
+                        theme: currentTheme, // 'dark' for dark mode, 'basic' for light mode
+                        mobile: isMobile, // Update mobile mode based on device
+                        enableSwitchIcon: true
+                    }
+                }
+            });
+        } catch (e) {
+            // If update fails, re-initialize
+            const timeInput = document.getElementById('alertTime');
+            if (timeInput) {
+                initTimepicker();
+            }
+        }
+    }, 300);
+    
+    function updateTimepickerTheme() {
+        debouncedUpdateTheme();
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(initTimepicker, 500);
+        });
+    } else {
+        setTimeout(initTimepicker, 500);
+    }
+    
+    // Re-initialize when modal is shown (desktop mode only)
+    document.addEventListener('shown.bs.modal', function(e) {
+        if (e.target && e.target.id === 'alertModal') {
+            // Small delay to ensure DOM is ready and modal is fully visible
+            const delay = 400;
+            setTimeout(function() {
+                const timeInput = document.getElementById('alertTime');
+                if (timeInput) {
+                    initTimepicker();
+                }
+            }, delay);
+        }
+    });
+    
+    // Listen for theme changes - sync with main.js theme toggle
+    // Watch for changes to documentElement class (same as main.js applies theme)
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                // Check if 'dark' class was added or removed
+                const target = mutation.target;
+                if (target === document.documentElement) {
+                    // Theme changed, update timepicker
+                    updateTimepickerTheme();
+                }
+            }
+        });
+    });
+    
+    // Observe documentElement for class changes (same as main.js theme system)
+    if (document.documentElement) {
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+    }
+    
+    // Also listen to theme toggle events from main.js if available
+    // This ensures immediate update when theme is toggled
+    document.addEventListener('DOMContentLoaded', function() {
+        const themeToggleInput = document.getElementById('themeToggleInput');
+        if (themeToggleInput) {
+            themeToggleInput.addEventListener('change', function() {
+                // Small delay to ensure class is updated first
+                setTimeout(function() {
+                    updateTimepickerTheme();
+                }, 50);
+            });
+        }
+    });
+    
+    // Expose functions globally
+    window.getTimepickerValue = getTimepickerValue;
+    window.setTimepickerValue = setTimepickerValue;
+    window.timepickerInstance = timepickerInstance;
+})();
+
 function openAlertModal(patientId, appointmentId, alertData = null) {
     // Reset to create mode or set edit mode
     currentAlertIdToEdit = alertData ? alertData.id : null;
@@ -39,7 +518,22 @@ function openAlertModal(patientId, appointmentId, alertData = null) {
             document.getElementById('alertMessage').value = alertData.message || '';
         }
         document.getElementById('alertDate').value = alertData.alert_date || '';
-        document.getElementById('alertTime').value = alertData.alert_time || '';
+        
+        // Set timepicker value from 24-hour format
+        if (alertData.alert_time && typeof setTimepickerValue === 'function') {
+            setTimepickerValue(alertData.alert_time);
+        } else {
+            // Clear timepicker - set to default
+            const timeInput = document.getElementById('alertTime');
+            if (timeInput) {
+                timeInput.value = '12:00 AM';
+            }
+            const hiddenInput = document.getElementById('alertTimeValue');
+            if (hiddenInput) {
+                hiddenInput.value = '';
+            }
+        }
+        
         document.getElementById('alertRepeatCount').value = alertData.repeat_count || '1';
         document.getElementById('alertRepeatInterval').value = alertData.repeat_interval || '0';
         
@@ -81,7 +575,16 @@ function openAlertModal(patientId, appointmentId, alertData = null) {
         document.getElementById('alertMessage').value = '';
         document.getElementById('alertMessageHtmlEditor').innerHTML = '';
         document.getElementById('alertDate').value = '';
+        if (typeof jQuery !== 'undefined' && typeof jQuery.fn.timepicker !== 'undefined') {
+            const timeInput = jQuery('#alertTime');
+            if (timeInput.length && timeInput.data('timepicker')) {
+                timeInput.timepicker('setTime', null);
+            } else {
+                timeInput.val('');
+            }
+        } else {
         document.getElementById('alertTime').value = '';
+        }
         document.getElementById('alertRepeatCount').value = '1';
         document.getElementById('alertRepeatInterval').value = '0';
         
@@ -138,7 +641,7 @@ function openAlertModal(patientId, appointmentId, alertData = null) {
                         }
                     })
                     .catch(error => {
-                        console.debug('Error fetching patient:', error);
+                        // Silent error handling
                     });
             }
         }
@@ -158,9 +661,14 @@ function openAlertModal(patientId, appointmentId, alertData = null) {
         // Set default time to current time + 1 hour
         const now = new Date();
         now.setHours(now.getHours() + 1);
-        const hours = String(now.getHours()).padStart(2, '0');
+        const hour24 = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
-        document.getElementById('alertTime').value = `${hours}:${minutes}`;
+        const defaultTime = `${hour24}:${minutes}:00`;
+        
+        // Set timepicker value using timepicker-ui API
+        if (typeof setTimepickerValue === 'function') {
+            setTimepickerValue(defaultTime);
+        }
     }
     
     const modal = new bootstrap.Modal(document.getElementById('alertModal'));
@@ -183,7 +691,7 @@ function searchAlertPatients() {
             }
         })
         .catch(error => {
-            console.debug('Error searching patients:', error);
+            // Silent error handling
         });
 }
 
@@ -468,7 +976,42 @@ function saveAlert() {
     }
     
     const alertDate = document.getElementById('alertDate').value;
-    const alertTime = document.getElementById('alertTime').value;
+    let alertTime = '';
+    
+    // Priority 1: Get from timepicker instance directly (most reliable)
+    if (typeof getTimepickerValue === 'function') {
+        alertTime = getTimepickerValue();
+    }
+    
+    // Priority 2: Parse from input value (12-hour format) - timepicker updates this on confirm
+    if (!alertTime) {
+        const timeInput = document.getElementById('alertTime');
+        if (timeInput && timeInput.value && timeInput.value !== '12:00 AM') {
+            // Convert 12-hour to 24-hour
+            const match = timeInput.value.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+            if (match) {
+                let hours = parseInt(match[1], 10);
+                const minutes = match[2];
+                const period = match[3].toUpperCase();
+                
+                if (period === 'PM' && hours !== 12) {
+                    hours += 12;
+                } else if (period === 'AM' && hours === 12) {
+                    hours = 0;
+                }
+                
+                alertTime = `${String(hours).padStart(2, '0')}:${minutes}:00`;
+            }
+        }
+    }
+    
+    // Priority 3: Fallback to hidden input (only if timepicker and input are not available)
+    if (!alertTime) {
+        const hiddenInput = document.getElementById('alertTimeValue');
+        if (hiddenInput && hiddenInput.value) {
+            alertTime = hiddenInput.value;
+        }
+    }
     
     if (!alertDate || !alertTime) {
         if (typeof showToast === 'function') {
@@ -477,6 +1020,18 @@ function saveAlert() {
         return;
     }
     
+    // Validate time format (HH:mm:ss)
+    const timePattern = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:00$/;
+    if (!timePattern.test(alertTime)) {
+        if (typeof showToast === 'function') {
+            showToast('error', 'Error', 'Please select a valid time.');
+        }
+        return;
+    }
+    
+    
+    // Create date (alertTime is already in 24-hour format, no timezone conversion needed)
+    // Use local time by creating date string without timezone
     const alertDateTime = new Date(alertDate + 'T' + alertTime);
     const isFuture = alertDateTime > new Date();
     const wasInactive = originalAlertData && (originalAlertData.is_active == 0 || originalAlertData.is_dismissed == 1);

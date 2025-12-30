@@ -962,6 +962,15 @@
     z-index: 9999999 !important;
     min-width: 250px;
     max-width: 400px;
+    /* Removed !important from display, visibility, opacity to allow JS to control them */
+    pointer-events: auto !important;
+    }
+    
+    .note-autocomplete-portal.hidden {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
     }
     
     .dark .note-autocomplete-portal {
@@ -1112,6 +1121,15 @@
     font-weight: 500;
     margin: 0 0.2rem;
     border: 1px solid rgba(16, 185, 129, 0.3);
+    cursor: pointer !important;
+    transition: all 0.2s ease;
+    }
+    
+    .note-widget-content .note-content-drug-badge:hover,
+    .note-content-drug-badge:hover {
+    cursor: pointer !important;
+    opacity: 0.9;
+    transform: translateY(-1px);
     }
     
     .dark .note-widget-content .note-content-drug-badge,
@@ -1267,6 +1285,98 @@
     .empty-state p {
         font-size: 0.9rem;
     }
+    }
+    
+    /* Drug Popover Styles - Glass Effect */
+    .note-drug-popover-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        z-index: 9999999;
+        animation: fadeIn 0.2s ease;
+    }
+    
+    .note-drug-popover {
+        /* Glass effect */
+        background: rgba(248, 250, 252, 0.95) !important;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(226, 232, 240, 0.5) !important;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: slideIn 0.3s ease;
+    }
+    
+    .dark .note-drug-popover {
+        background: rgba(11, 18, 32, 0.95) !important;
+        border-color: rgba(51, 65, 85, 0.5) !important;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+    
+    .note-drug-popover-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .note-drug-popover-title {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text);
+    }
+    
+    .note-drug-popover-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    }
+    
+    .note-drug-popover-close:hover {
+        background: var(--border);
+        color: var(--text);
+    }
+    
+    .note-drug-popover-body {
+        padding: 1.5rem;
+        color: var(--text);
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
     }
     
     

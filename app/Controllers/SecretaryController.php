@@ -218,6 +218,27 @@ class SecretaryController
             $startTime = $input['start_time'];
             $endTime = $this->calculateEndTime($startTime);
 
+            // Check if patient already has an active appointment for today
+            $today = date('Y-m-d');
+            if ($input['date'] === $today) {
+                $checkStmt = $this->pdo->prepare("
+                    SELECT COUNT(*) as count
+                    FROM appointments 
+                    WHERE patient_id = ? 
+                    AND date = CURDATE()
+                    AND status NOT IN ('Completed', 'Cancelled')
+                ");
+                $checkStmt->execute([$input['patient_id']]);
+                $checkResult = $checkStmt->fetch(\PDO::FETCH_ASSOC);
+                
+                if ($checkResult['count'] > 0) {
+                    return $this->jsonResponse([
+                        'error' => 'المريض لديه موعد محجوز اليوم بالفعل',
+                        'message' => 'هذا المريض لديه موعد محجوز اليوم بالفعل. يرجى إكمال أو إلغاء الموعد الموجود أولاً.'
+                    ], 400);
+                }
+            }
+
             // Check if time slot is available
             if (!$this->isTimeSlotAvailable($input['doctor_id'], $input['date'], $startTime)) {
                 return $this->jsonResponse(['error' => 'Time slot is not available'], 400);

@@ -11,10 +11,10 @@ class Database
     {
         $this->loadEnvironment();
         
-        $host = $_ENV['DB_HOST'] ?? 'localhost';
-        $dbname = $_ENV['DB_NAME'] ?? 'hclinic_roaya';
-        $username = $_ENV['DB_USER'] ?? 'hclinic_roaya';
-        $password = $_ENV['DB_PASS'] ?? 'Carmen@1230';
+        $host = $_ENV['DB_HOST'] ?? 'db';
+        $dbname = $_ENV['DB_NAME'] ?? 'roaya';
+        $username = $_ENV['DB_USER'] ?? 'roaya_user';
+        $password = $_ENV['DB_PASS'] ?? 'roaya_password';
         
         $dsn = "mysql:host={$host};dbname={$dbname};charset=utf8mb4";
         

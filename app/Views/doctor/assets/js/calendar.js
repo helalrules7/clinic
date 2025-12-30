@@ -724,6 +724,9 @@ function confirmDeleteAppointment() {
             
             // Refresh calendar
             loadCalendar();
+            
+            // Dispatch custom event to update carousel
+            window.dispatchEvent(new CustomEvent('appointmentDeleted'));
         } else {
             // Error from server
             const errorMsg = data.error || data.message || 'Failed to delete appointment. Please try again.';
@@ -1159,6 +1162,12 @@ function openAddAppointmentModal(preselectedTime = null, preselectedDate = null)
     
     document.getElementById('appointmentDate').value = dateToUse;
     
+    // Check for visit_type from URL parameters or CALENDAR_CONFIG
+    const urlParams = new URLSearchParams(window.location.search);
+    const visitTypeFromURL = urlParams.get('visit_type');
+    const visitTypeFromConfig = window.CALENDAR_CONFIG?.visitType || window.CALENDAR_CONFIG?.preselectedVisitType;
+    const preselectedVisitType = visitTypeFromURL || visitTypeFromConfig;
+    
     // Clear form
     document.getElementById('addAppointmentForm').reset();
     document.getElementById('selectedPatientId').value = '';
@@ -1166,6 +1175,56 @@ function openAddAppointmentModal(preselectedTime = null, preselectedDate = null)
     
     // Re-set the date after form reset
     document.getElementById('appointmentDate').value = dateToUse;
+    
+    // Reset visit_type unless it was preselected from another page
+    // Use setTimeout to ensure modal is fully rendered before accessing elements
+    setTimeout(() => {
+        const visitTypeSelect = document.getElementById('visitType');
+        if (!visitTypeSelect) return;
+        
+        const visitTypeField = visitTypeSelect.closest('.field.menu');
+        const visitTypeButton = visitTypeField?.querySelector('.custom-select-toggle');
+        const visitTypeMenu = visitTypeField?.querySelector('menu');
+        
+        if (preselectedVisitType && visitTypeSelect.querySelector(`option[value="${preselectedVisitType}"]`)) {
+            // Use preselected visit_type from another page
+            visitTypeSelect.value = preselectedVisitType;
+            if (visitTypeButton && visitTypeMenu) {
+                const selectedOption = visitTypeMenu.querySelector(`li[data-option="${preselectedVisitType}"]`);
+                if (selectedOption) {
+                    visitTypeMenu.querySelectorAll('li').forEach(li => li.classList.remove('selected'));
+                    selectedOption.classList.add('selected');
+                    // Copy HTML structure from selected option to button (preserves icon + text)
+                    const optionIcon = selectedOption.querySelector('i');
+                    const optionText = selectedOption.querySelector('h3')?.textContent || preselectedVisitType;
+                    if (optionIcon) {
+                        visitTypeButton.innerHTML = optionIcon.outerHTML + ' <h3>' + optionText + '</h3>';
+                    } else {
+                        visitTypeButton.innerHTML = '<h3>' + optionText + '</h3>';
+                    }
+                }
+            }
+        } else {
+            // Reset visit_type to default (empty) - use original HTML structure
+            visitTypeSelect.value = '';
+            if (visitTypeButton && visitTypeMenu) {
+                visitTypeMenu.querySelectorAll('li').forEach(li => li.classList.remove('selected'));
+                const defaultOption = visitTypeMenu.querySelector('li[data-option=""]');
+                if (defaultOption) {
+                    defaultOption.classList.add('selected');
+                    // Reset to original HTML structure
+                    visitTypeButton.innerHTML = '<h6>Select visit type...</h6>';
+                }
+            }
+        }
+        
+        // Clear visit_type from URL after using it (if it was from URL)
+        if (visitTypeFromURL) {
+            const newUrl = new URL(window.location);
+            newUrl.searchParams.delete('visit_type');
+            window.history.replaceState({}, '', newUrl);
+        }
+    }, 100);
     
     // Handle preselected patient
     const patientSearchField = document.getElementById('patientSearch');
@@ -1540,7 +1599,33 @@ function handleAddAppointment(e) {
     // Add doctor_id (any doctor can book appointments)
     appointmentData.doctor_id = window.CALENDAR_CONFIG.doctorId;
     
+    // Check if date is today - if so, check for existing appointments
+    const today = new Date().toISOString().split('T')[0];
+    if (appointmentData.date === today && appointmentData.patient_id) {
+        // Use promise-based approach
+        fetch(`/api/patients/${appointmentData.patient_id}/appointments/check-active`)
+            .then(checkResponse => checkResponse.json())
+            .then(checkData => {
+                if (checkData.has_active) {
+                    showErrorMessage('This patient already has an appointment scheduled for today. Please complete or cancel the existing appointment first.');
+                    return;
+                }
+                // Continue with appointment creation
+                proceedWithAppointmentCreation(appointmentData);
+            })
+            .catch(error => {
+                console.error('Error checking active appointments:', error);
+                // Continue with appointment creation if check fails
+                proceedWithAppointmentCreation(appointmentData);
+            });
+        return; // Exit early, proceedWithAppointmentCreation will handle the rest
+    }
     
+    // If date is not today, proceed directly
+    proceedWithAppointmentCreation(appointmentData);
+}
+
+function proceedWithAppointmentCreation(appointmentData) {
     // Save appointment
     fetch('/api/appointments', {
         method: 'POST',
@@ -1549,7 +1634,22 @@ function handleAddAppointment(e) {
         },
         body: JSON.stringify(appointmentData)
     })
-    .then(response => response.json())
+    .then(response => {
+        // Check if response is ok
+        if (!response.ok) {
+            // Try to parse error response
+            return response.text().then(text => {
+                try {
+                    const errorData = JSON.parse(text);
+                    throw new Error(errorData.message || errorData.error || 'Unknown error occurred');
+                } catch (e) {
+                    // If parsing fails, use the text as error message
+                    throw new Error(text || 'Unknown error occurred');
+                }
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.ok) {
             // Close modal
@@ -1558,41 +1658,112 @@ function handleAddAppointment(e) {
             // Refresh calendar
             loadCalendar();
             
+            // Dispatch custom event to update carousel
+            window.dispatchEvent(new CustomEvent('appointmentAdded'));
+            
             // Show success message
             showNotification('Appointment added successfully!', 'success');
         } else {
             const errorMessage = data.message || data.error || 'Unknown error occurred';
             console.error('API Error:', errorMessage);
-            alert('Error: ' + errorMessage);
+            showNotification(errorMessage, 'danger');
         }
     })
     .catch(error => {
         console.error('Error saving appointment:', error);
-        alert('Error saving appointment: ' + error.message);
+        const errorMessage = error.message || 'Error saving appointment: ' + error.message;
+        showNotification(errorMessage, 'danger');
     });
 }
 
 function showNotification(message, type = 'info') {
-    // Create notification element (any doctor can see notifications)
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    notification.innerHTML = `
-        <div class="d-flex align-items-center">
-            <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
-            <div class="flex-grow-1">${message}</div>
-            <button type="button" class="btn-close ms-2" data-bs-dismiss="alert"></button>
+    // Ensure Bootstrap is loaded
+    if (typeof bootstrap === 'undefined' || typeof bootstrap.Toast === 'undefined') {
+        console.error('Bootstrap Toast is not available. Falling back to alert.');
+        alert(message);
+        return;
+    }
+    
+    // Create toast container if it doesn't exist
+    let toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toastContainer';
+        toastContainer.className = 'toast-container position-fixed bottom-0 start-50 translate-middle-x p-3';
+        toastContainer.style.zIndex = '99999';
+        toastContainer.style.pointerEvents = 'none';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Create unique toast ID
+    const toastId = 'toast-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    
+    // Determine icon and classes based on type
+    let iconClass = 'info-circle';
+    let toastClass = 'alert-toast-glass';
+    
+    if (type === 'success') {
+        iconClass = 'check-circle';
+    } else if (type === 'danger') {
+        iconClass = 'exclamation-triangle';
+        toastClass = 'alert-toast-glass alert-toast-danger';
+    } else if (type === 'warning') {
+        iconClass = 'exclamation-triangle';
+        toastClass = 'alert-toast-glass alert-toast-warning';
+    }
+    
+    // Create toast HTML
+    const toastHtml = `
+        <div id="${toastId}" class="toast ${toastClass} align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000" style="min-width: 350px; max-width: 500px; pointer-events: auto;">
+            <div class="d-flex align-items-center">
+                <div class="toast-body flex-grow-1">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-${iconClass} me-2" style="font-size: 1.25rem;"></i>
+                        <div class="flex-grow-1">${escapeHtml(message)}</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close alert-toast-close-btn me-2" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
         </div>
     `;
     
-    document.body.appendChild(notification);
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    const toastElement = document.getElementById(toastId);
     
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.remove();
+    if (toastElement) {
+        try {
+            const toast = new bootstrap.Toast(toastElement, {
+                autohide: true,
+                delay: 5000
+            });
+            
+            // Add exit animation when toast is being hidden
+            toastElement.addEventListener('hide.bs.toast', function() {
+                if (!toastElement.classList.contains('hiding')) {
+                    toastElement.classList.add('hiding');
+                }
+            });
+            
+            toast.show();
+            
+            toastElement.addEventListener('hidden.bs.toast', function() {
+                toastElement.remove();
+            });
+        } catch (error) {
+            console.error('Error showing toast:', error);
+            // Fallback to alert if toast fails
+            alert(message);
+            toastElement.remove();
         }
-    }, 5000);
+    }
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // Enhanced error message function (any doctor can see error messages)

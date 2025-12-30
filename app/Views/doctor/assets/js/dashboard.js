@@ -73,8 +73,15 @@ function loadTodayAlerts() {
                     const patientName = alert.patient_first_name && alert.patient_last_name 
                         ? `${alert.patient_first_name} ${alert.patient_last_name}` 
                         : 'N/A';
-                    const alertDateTime = new Date(`${alert.alert_date}T${alert.alert_time}`);
-                    const timeStr = alertDateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    // Convert 24-hour time to 12-hour format
+                    let timeStr = '';
+                    if (alert.alert_time) {
+                        const [hours, minutes] = alert.alert_time.split(':');
+                        const hour24 = parseInt(hours);
+                        const hour12 = hour24 === 0 ? 12 : (hour24 > 12 ? hour24 - 12 : hour24);
+                        const period = hour24 >= 12 ? 'PM' : 'AM';
+                        timeStr = `${hour12}:${minutes} ${period}`;
+                    }
                     
                     html += `
                         <div class="list-group-item list-group-item-action">
@@ -439,7 +446,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                 ${escapeHtml((appointment.first_name || '') + ' ' + (appointment.last_name || ''))}
                             </a>
                         </h6>
-                        <small class="text-muted">
+                        <small class="text-muted appointment-time-link" 
+                               style="cursor: pointer; color: dodgerblue;" 
+                               onclick="window.location.href='/doctor/calendar?date=${appointment.date}&appointment_id=${appointment.id}'"
+                               onmouseover="this.style.fontWeight='bold' !important; this.style.color='dodgerblue' !important; this.style.textDecoration='none' !important;"
+                               onmouseout="this.style.fontWeight='normal' !important; this.style.color='dodgerblue' !important; this.style.textDecoration='none' !important;"
+                               data-bs-toggle="tooltip" 
+                               data-bs-placement="top" 
+                               data-bs-title="Navigate to Appointment in your calendar">
                             <i class="bi bi-clock me-1"></i>
                             ${formattedStartTime} - ${formattedEndTime}
                         </small>
@@ -491,10 +505,21 @@ document.addEventListener('DOMContentLoaded', function() {
         
         container.innerHTML = html;
         
-        // Reinitialize tooltips
+        // Reinitialize tooltips (including appointment time links)
         const tooltipTriggerList = [].slice.call(container.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Also initialize tooltips for appointment time links
+        const appointmentTimeLinks = container.querySelectorAll('.appointment-time-link');
+        appointmentTimeLinks.forEach(link => {
+            if (!link.hasAttribute('data-bs-toggle')) {
+                link.setAttribute('data-bs-toggle', 'tooltip');
+                link.setAttribute('data-bs-placement', 'top');
+                link.setAttribute('data-bs-title', 'Navigate to Appointment in your calendar');
+                new bootstrap.Tooltip(link);
+            }
         });
         
         // Initialize progress bars
@@ -572,13 +597,30 @@ document.addEventListener('DOMContentLoaded', function() {
     window.loadUpcomingAppointmentsPage = function(page) {
         upcomingCurrentPage = page;
         loadUpcomingAppointments(upcomingCurrentPage, upcomingPerPage);
-        // Scroll to top of container
-        document.getElementById('upcomingAppointmentsContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        
+        // Smooth scroll to the beginning of the Upcoming Appointments row
+        setTimeout(() => {
+            const row = document.getElementById('upcomingAppointmentsRow');
+            if (row) {
+                row.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                // Fallback: scroll to container if row not found
+                const container = document.getElementById('upcomingAppointmentsContainer');
+                if (container) {
+                    const card = container.closest('.card');
+                    if (card) {
+                        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else {
+                        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
+            }
+        }, 100); // Small delay to ensure DOM is updated after data loads
     };
     
     // Missed Appointments Pagination
     let missedCurrentPage = 1;
-    let missedPerPage = 10;
+    let missedPerPage = 5;
     
     // Load missed appointments on page load
     loadMissedAppointments(missedCurrentPage, missedPerPage);
@@ -1088,7 +1130,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Modal Activities Management
     let modalCurrentPage = 1;
-    let modalPerPage = 10;
+    let modalPerPage = 5;
     let modalFilterQuery = '';
     let modalFilterTimeout = null;
     let modalAllActivities = []; // Store all activities for client-side filtering
@@ -1207,11 +1249,31 @@ document.addEventListener('DOMContentLoaded', function() {
         // Load activities when modal is shown
         allActivitiesModal.addEventListener('show.bs.modal', function() {
             modalCurrentPage = 1;
-            modalPerPage = 10;
+            modalPerPage = 5;
             modalFilterQuery = '';
             modalAllActivities = []; // Reset to reload all activities
             const filterInput = document.getElementById('activitiesFilterInput');
             if (filterInput) filterInput.value = '';
+            // Update the custom select button text
+            const modalPerPageSelect = document.getElementById('modalPerPageSelect');
+            const customSelectToggle = modalPerPageSelect?.closest('.field.menu')?.querySelector('.custom-select-toggle');
+            if (customSelectToggle) {
+                customSelectToggle.textContent = '5 per page';
+            }
+            // Update selected option in menu
+            const menuItems = modalPerPageSelect?.closest('.field.menu')?.querySelectorAll('menu li');
+            if (menuItems) {
+                menuItems.forEach(item => {
+                    item.classList.remove('selected');
+                    if (item.getAttribute('data-option') === '5') {
+                        item.classList.add('selected');
+                    }
+                });
+            }
+            // Update select value
+            if (modalPerPageSelect) {
+                modalPerPageSelect.value = '5';
+            }
             loadModalActivities(modalCurrentPage, modalPerPage);
         });
         
@@ -1432,6 +1494,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const DEFAULT_CARD_ORDER = [
         'quick-actions',
         'notes-dashboard',
+        'unified-clinical-dashboard',
         'today-alerts',
         'upcoming-appointments',
         'missed-appointments',
@@ -1723,7 +1786,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     order = DEFAULT_CARD_ORDER;
                 }
                 
-                // Validate order
+                // Validate order - filter out invalid IDs and ensure all default cards are included
                 const validOrder = order.filter(id => DEFAULT_CARD_ORDER.includes(id));
                 const missingCards = DEFAULT_CARD_ORDER.filter(id => !validOrder.includes(id));
                 const finalOrder = [...validOrder, ...missingCards];
@@ -1742,6 +1805,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!mainContainer) return;
                 
                 // Reorder cards based on finalOrder
+                // Only reorder cards that exist in the DOM
                 finalOrder.forEach(cardId => {
                     const card = cardMap.get(cardId);
                     if (card && card.parentElement === mainContainer) {
@@ -1749,6 +1813,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         mainContainer.appendChild(card);
                     }
                 });
+                
+                // Ensure unified-clinical-dashboard is included in saved order if it exists
+                // This handles migration for existing users
+                const unifiedCard = cardMap.get('unified-clinical-dashboard');
+                if (unifiedCard && !validOrder.includes('unified-clinical-dashboard')) {
+                    // Card exists but wasn't in saved order, save updated order
+                    setTimeout(() => {
+                        saveDashboardCardOrder();
+                    }, 100);
+                }
                 
                 // Update buttons after loading order
                 updateCardButtons();
@@ -1916,12 +1990,55 @@ document.addEventListener('DOMContentLoaded', function() {
                     const widget = createDashboardNoteWidget(note, index);
                     container.appendChild(widget);
                     
+                    // Add click listener to widget to hide autocomplete portal when clicking anywhere on widget
+                    widget.addEventListener('mousedown', function(event) {
+                        // Don't hide if clicking on contenteditable (autocomplete should work there)
+                        const contentEditable = widget.querySelector('.dashboard-note-widget-content[contenteditable="true"]');
+                        if (contentEditable && (contentEditable.contains(event.target) || contentEditable === event.target)) {
+                            return; // Allow autocomplete to work in contenteditable
+                        }
+                        // Hide autocomplete portal when clicking anywhere else on the widget
+                        dashboardHideAutocomplete();
+                    });
+                    
                     // Initialize autocomplete for this contenteditable
                     const contentEditable = widget.querySelector('.dashboard-note-widget-content[contenteditable="true"]');
                     if (contentEditable) {
+                        // Add click listener to contenteditable to hide autocomplete portal when clicking
+                        // (but not when clicking on autocomplete items or links)
+                        contentEditable.addEventListener('mousedown', function(event) {
+                            const target = event.target;
+                            // Don't hide if clicking on autocomplete items (links, badges) or autocomplete portal
+                            const isAutocompleteItem = target.closest('a[data-type], span[data-type]');
+                            const isAutocompletePortal = target.closest('.dashboard-note-autocomplete-portal');
+                            
+                            if (!isAutocompleteItem && !isAutocompletePortal) {
+                                // Check if cursor is at a position with trigger symbol
+                                const selection = window.getSelection();
+                                if (selection.rangeCount > 0) {
+                                    const range = selection.getRangeAt(0);
+                                    const fullRange = document.createRange();
+                                    fullRange.selectNodeContents(contentEditable);
+                                    fullRange.setEnd(range.startContainer, range.startOffset);
+                                    const textBeforeCursor = fullRange.toString();
+                                    const match = textBeforeCursor.match(/(@|#|\$)([^\s@#$]*)$/);
+                                    
+                                    // Only hide if there's no active trigger symbol
+                                    if (!match) {
+                                        dashboardHideAutocomplete();
+                                    }
+                                } else {
+                                    dashboardHideAutocomplete();
+                                }
+                            }
+                        });
+                        
                         dashboardInitAutocomplete(contentEditable);
                     }
                 });
+                
+                // Initialize drug badge click handlers after loading notes
+                dashboardInitDrugBadges();
                 
                 // Keep header button enabled (no limit)
                 const headerBtn = document.getElementById('dashboardAddNoteBtnHeader');
@@ -2373,6 +2490,169 @@ document.addEventListener('DOMContentLoaded', function() {
     let dashboardAutocompleteDebounceTimer = null;
     let dashboardAutocompleteUpdateHandler = null;
     
+    // Process autocomplete input - must be defined before dashboardInitAutocomplete
+    function dashboardProcessAutocompleteInput(event) {
+        const contentEditable = event.target;
+        const selection = window.getSelection();
+        
+        if (!selection.rangeCount) {
+            dashboardHideAutocomplete();
+            return;
+        }
+        
+        const range = selection.getRangeAt(0).cloneRange();
+        
+        const fullRange = document.createRange();
+        fullRange.selectNodeContents(contentEditable);
+        fullRange.setEnd(range.startContainer, range.startOffset);
+        const textBeforeCursor = fullRange.toString();
+        
+        const match = textBeforeCursor.match(/(@|#|\$)([^\s@#$]*)$/);
+        
+        if (match) {
+            const trigger = match[1];
+            const query = match[2];
+            
+            
+            // Minimum query length: 2 characters for patients and drugs
+            // For appointments: if numeric (ID search), allow 1 char; if date format, allow 8+ chars; if text (patient name), require 2 chars
+            let minLength = 2;
+            if (trigger === '#') {
+                // For appointments: check if it's a date format, numeric ID, or patient name
+                if (query.length === 0) {
+                    minLength = 0; // Allow showing recent appointments when just typing #
+                } else {
+                    // Check if query looks like a date (DD-MM-YYYY, YYYY-MM-DD, DD/MM/YYYY, etc.)
+                    const datePattern = /^(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}|\d{2,4}[-\/]\d{1,2}[-\/]\d{1,2})$/;
+                    if (datePattern.test(query)) {
+                        minLength = 8; // Minimum date length (DD-MM-YY)
+                    } else if (/^\d+$/.test(query)) {
+                        minLength = 1; // Numeric ID search
+                    } else {
+                        minLength = 2; // Patient name search
+                    }
+                }
+            } else if (trigger === '$') {
+                minLength = 2; // Drug search
+            } else if (trigger === '@') {
+                minLength = 2; // Patient search
+            }
+            
+            
+            if (query.length >= minLength && query !== dashboardCurrentAutocompleteQuery) {
+                dashboardCurrentAutocompleteType = trigger === '@' ? 'patient' : (trigger === '#' ? 'appointment' : 'drug');
+                dashboardCurrentAutocompleteQuery = query;
+                dashboardAutocompleteTextarea = contentEditable;
+                
+                
+                const rect = range.getBoundingClientRect();
+                dashboardAutocompleteCursorPosition = {
+                    range: range,
+                    textBefore: textBeforeCursor,
+                    match: match
+                };
+                
+                dashboardShowAutocomplete(contentEditable, rect, query);
+            } else if (query.length < minLength) {
+                dashboardHideAutocomplete();
+            }
+        } else {
+            // No trigger symbol found - hide autocomplete
+            dashboardHideAutocomplete();
+        }
+    }
+    
+    // Handle contenteditable input with debounce
+    function dashboardHandleContentEditableInput(event) {
+        const contentEditable = event.target;
+        
+        // Check if user is deleting content from autocomplete elements
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const startContainer = range.startContainer;
+            
+            // Check if cursor is inside or at the edge of an autocomplete element
+            let autocompleteElement = null;
+            if (startContainer.nodeType === Node.TEXT_NODE) {
+                autocompleteElement = startContainer.parentElement;
+            } else if (startContainer.nodeType === Node.ELEMENT_NODE) {
+                autocompleteElement = startContainer;
+            }
+            
+            // Check if it's an autocomplete element (patient, appointment, or drug)
+            while (autocompleteElement && autocompleteElement !== contentEditable) {
+                const dataType = autocompleteElement.getAttribute('data-type');
+                if (dataType === 'patient' || dataType === 'appointment' || dataType === 'drug') {
+                    // Check if user is actually deleting (not just clicking)
+                    const inputType = event.inputType;
+                    if (inputType === 'deleteContentBackward' || inputType === 'deleteContentForward' || 
+                        inputType === 'deleteByDrag' || inputType === 'deleteByCut' ||
+                        (!inputType && event.data === null)) {
+                        // User is editing/deleting from an autocomplete element
+                        // Remove the entire element
+                        const parent = autocompleteElement.parentNode;
+                        if (parent) {
+                            // Create a text node with space to maintain cursor position
+                            const space = document.createTextNode(' ');
+                            parent.replaceChild(space, autocompleteElement);
+                            
+                            // Set cursor after space
+                            const newRange = document.createRange();
+                            newRange.setStartAfter(space);
+                            newRange.collapse(true);
+                            selection.removeAllRanges();
+                            selection.addRange(newRange);
+                            
+                            // Ensure focus
+                            contentEditable.focus();
+                            
+                            // Update note content
+                            const noteId = contentEditable.getAttribute('data-note-id');
+                            if (noteId) {
+                                dashboardUpdateNoteContent(parseInt(noteId), contentEditable.innerHTML);
+                            }
+                        }
+                        // Hide autocomplete when deleting autocomplete element
+                        dashboardHideAutocomplete();
+                        return; // Don't process autocomplete after deletion
+                    }
+                    // If not deleting, allow normal interaction
+                    break;
+                }
+                autocompleteElement = autocompleteElement.parentElement;
+            }
+        }
+        
+        // Check immediately if trigger symbol was deleted (for immediate response)
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0).cloneRange();
+            const fullRange = document.createRange();
+            fullRange.selectNodeContents(contentEditable);
+            fullRange.setEnd(range.startContainer, range.startOffset);
+            const textBeforeCursor = fullRange.toString();
+            const match = textBeforeCursor.match(/(@|#|\$)([^\s@#$]*)$/);
+            
+            // If no trigger symbol found, hide immediately
+            if (!match && dashboardAutocompletePortal) {
+                const computedStyle = window.getComputedStyle(dashboardAutocompletePortal);
+                const isVisible = computedStyle.display !== 'none' && computedStyle.visibility !== 'hidden' && computedStyle.opacity !== '0' && !dashboardAutocompletePortal.classList.contains('hidden');
+                if (isVisible) {
+                    dashboardHideAutocomplete();
+                }
+            }
+        }
+        
+        // Debounce autocomplete processing
+        if (dashboardAutocompleteDebounceTimer) {
+            clearTimeout(dashboardAutocompleteDebounceTimer);
+        }
+        
+        dashboardAutocompleteDebounceTimer = setTimeout(() => {
+            dashboardProcessAutocompleteInput(event);
+        }, 150);
+    }
+    
     // Initialize autocomplete for a contenteditable div
     function dashboardInitAutocomplete(contentEditable) {
         if (!contentEditable) return;
@@ -2506,15 +2786,37 @@ document.addEventListener('DOMContentLoaded', function() {
             const trigger = match[1];
             const query = match[2];
             
+            
+            // Minimum query length: 2 characters for patients and drugs
+            // For appointments: if numeric (ID search), allow 1 char; if date format, allow 8+ chars; if text (patient name), require 2 chars
             let minLength = 2;
             if (trigger === '#') {
-                minLength = /^\d+$/.test(query) ? 1 : 2;
+                // For appointments: check if it's a date format, numeric ID, or patient name
+                if (query.length === 0) {
+                    minLength = 0; // Allow showing recent appointments when just typing #
+                } else {
+                    // Check if query looks like a date (DD-MM-YYYY, YYYY-MM-DD, DD/MM/YYYY, etc.)
+                    const datePattern = /^(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}|\d{2,4}[-\/]\d{1,2}[-\/]\d{1,2})$/;
+                    if (datePattern.test(query)) {
+                        minLength = 8; // Minimum date length (DD-MM-YY)
+                    } else if (/^\d+$/.test(query)) {
+                        minLength = 1; // Numeric ID search
+                    } else {
+                        minLength = 2; // Patient name search
             }
+                }
+            } else if (trigger === '$') {
+                minLength = 2; // Drug search
+            } else if (trigger === '@') {
+                minLength = 2; // Patient search
+            }
+            
             
             if (query.length >= minLength && query !== dashboardCurrentAutocompleteQuery) {
                 dashboardCurrentAutocompleteType = trigger === '@' ? 'patient' : (trigger === '#' ? 'appointment' : 'drug');
                 dashboardCurrentAutocompleteQuery = query;
                 dashboardAutocompleteTextarea = contentEditable;
+                
                 
                 const rect = range.getBoundingClientRect();
                 dashboardAutocompleteCursorPosition = {
@@ -2528,6 +2830,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 dashboardHideAutocomplete();
             }
         } else {
+            // No trigger symbol found - hide autocomplete
             dashboardHideAutocomplete();
         }
     }
@@ -2535,6 +2838,30 @@ document.addEventListener('DOMContentLoaded', function() {
     function dashboardHandleContentEditableKeydown(event) {
         const contentEditable = event.target;
         const selection = window.getSelection();
+        
+        // Handle Backspace/Delete to immediately check if trigger symbols are deleted
+        if (event.key === 'Backspace' || event.key === 'Delete' || event.keyCode === 8 || event.keyCode === 46) {
+            // Use setTimeout to check after the deletion happens
+            setTimeout(() => {
+                if (!selection.rangeCount) {
+                    dashboardHideAutocomplete();
+                    return;
+                }
+                
+                const range = selection.getRangeAt(0).cloneRange();
+                const fullRange = document.createRange();
+                fullRange.selectNodeContents(contentEditable);
+                fullRange.setEnd(range.startContainer, range.startOffset);
+                const textBeforeCursor = fullRange.toString();
+                
+                // Check if trigger symbol still exists
+                const match = textBeforeCursor.match(/(@|#|\$)([^\s@#$]*)$/);
+                if (!match) {
+                    // Trigger symbol was deleted - hide autocomplete immediately
+                    dashboardHideAutocomplete();
+                }
+            }, 0);
+        }
         
         if (selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
@@ -2606,15 +2933,31 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.appendChild(dashboardAutocompletePortal);
         }
         
+        // Remove existing click handler before adding a new one (to avoid duplicates)
+        document.removeEventListener('click', dashboardHandleClickOutside, true);
+        // Add click outside handler to close autocomplete (use capture phase for early detection)
+        document.addEventListener('click', dashboardHandleClickOutside, true);
+        
+        // Also add mousedown handler for better responsiveness
+        document.removeEventListener('mousedown', dashboardHandleClickOutside, true);
+        document.addEventListener('mousedown', dashboardHandleClickOutside, true);
+        
         // Position portal at cursor location (not following mouse)
-        const x = cursorRect.left + window.scrollX;
-        const y = cursorRect.bottom + window.scrollY + 5;
+        // For position: fixed, we use viewport coordinates directly (no scroll offset needed)
+        const x = cursorRect.left;
+        const y = cursorRect.bottom + 5;
+        
+        // Remove hidden class first
+        dashboardAutocompletePortal.classList.remove('hidden');
         
         dashboardAutocompletePortal.style.position = 'fixed';
         dashboardAutocompletePortal.style.left = `${x}px`;
         dashboardAutocompletePortal.style.top = `${y}px`;
         dashboardAutocompletePortal.style.display = 'block';
-        dashboardAutocompletePortal.style.zIndex = '9999999';
+        dashboardAutocompletePortal.style.visibility = 'visible';
+        dashboardAutocompletePortal.style.opacity = '1';
+        dashboardAutocompletePortal.style.zIndex = '10000010';
+        dashboardAutocompletePortal.style.pointerEvents = 'auto';
         
         // Remove any existing mouse tracking handler (we don't want it to follow mouse)
         if (dashboardAutocompleteUpdateHandler) {
@@ -2623,6 +2966,51 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         await dashboardLoadAutocompleteItems(query);
+    }
+    
+    // Handle click outside autocomplete portal
+    function dashboardHandleClickOutside(event) {
+        if (!dashboardAutocompletePortal) {
+            return;
+        }
+        
+        // Check if portal is visible
+        const computedStyle = window.getComputedStyle(dashboardAutocompletePortal);
+        const isHidden = computedStyle.display === 'none' || computedStyle.visibility === 'hidden' || computedStyle.opacity === '0' || dashboardAutocompletePortal.classList.contains('hidden');
+        
+        if (isHidden) {
+            return;
+        }
+        
+        // Check if click is outside portal and contenteditable
+        const target = event.target;
+        const clickedOnPortal = dashboardAutocompletePortal.contains(target);
+        
+        // Check if clicking on contenteditable
+        let clickedOnContentEditable = false;
+        if (dashboardAutocompleteTextarea) {
+            clickedOnContentEditable = (
+                dashboardAutocompleteTextarea.contains(target) || 
+                dashboardAutocompleteTextarea === target ||
+                dashboardAutocompleteTextarea.isSameNode(target)
+            );
+            
+            // Also check if target is inside the contenteditable's parent container
+            if (!clickedOnContentEditable) {
+                const contentEditableParent = dashboardAutocompleteTextarea.closest('.note-widget-content-container, .note-widget-content');
+                if (contentEditableParent && contentEditableParent.contains(target)) {
+                    clickedOnContentEditable = true;
+                }
+            }
+        }
+        
+        // Also check if clicking on autocomplete items (they should not close the portal)
+        const clickedOnAutocompleteItem = target.closest('.dashboard-note-autocomplete-item');
+        
+        // If clicking outside both portal and contenteditable, close the portal
+        if (!clickedOnPortal && !clickedOnContentEditable && !clickedOnAutocompleteItem) {
+            dashboardHideAutocomplete();
+        }
     }
     
     async function dashboardLoadAutocompleteItems(query) {
@@ -2640,18 +3028,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 url = `/api/searchDrugsAutocomplete?q=${encodeURIComponent(query)}&limit=10`;
             }
             
-            if (!url) return;
+            if (!url) {
+                return;
+            }
             
             const response = await fetch(url, {
+                method: 'GET',
                 headers: {
+                    'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
-                }
+                },
+                credentials: 'same-origin'
             });
             
             if (!response.ok) {
-                if (response.status !== 400 && response.status !== 404) {
-                    console.error('Error loading autocomplete:', response.status);
-                }
                 return;
             }
             
@@ -2673,8 +3063,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 }));
             } else if (dashboardCurrentAutocompleteType === 'appointment' && data.ok && data.data) {
                 items = data.data.map(apt => {
-                    const date = new Date(apt.date);
-                    const dateStr = date.toLocaleDateString('en-GB');
+                    // Handle date properly - apt.date is in 'YYYY-MM-DD' format
+                    // Convert to DD-MM-YYYY format
+                    let dateStr = '';
+                    if (apt.date) {
+                        try {
+                            // Parse date string (YYYY-MM-DD) and convert to DD-MM-YYYY
+                            const dateParts = apt.date.split('-');
+                            if (dateParts.length === 3) {
+                                // Format: DD-MM-YYYY
+                                const day = dateParts[2].padStart(2, '0');
+                                const month = dateParts[1].padStart(2, '0');
+                                const year = dateParts[0];
+                                dateStr = `${day}-${month}-${year}`;
+                            } else {
+                                dateStr = apt.date;
+                            }
+                        } catch (e) {
+                            dateStr = apt.date; // Fallback to original string
+                        }
+                    }
                     const timeStr = apt.start_time ? apt.start_time.substring(0, 5) : '';
                     const patientName = escapeHtml(apt.patient_name || 'Unknown');
                     const status = escapeHtml(apt.status || '');
@@ -2682,7 +3090,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         type: 'appointment',
                         id: apt.id,
                         title: `#${apt.id} - ${patientName}`,
-                        subtitle: `${dateStr} ${timeStr} - ${status}`,
+                        subtitle: `${dateStr}${timeStr ? ' at ' + timeStr : ''}${status ? ' - ' + status : ''}`,
                         data: apt
                     };
                 });
@@ -2702,7 +3110,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 dashboardRenderAutocompleteItems(items);
             }
         } catch (error) {
-            console.error('Error loading autocomplete items:', error);
+            // Silent error handling
         }
     }
     
@@ -2711,6 +3119,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (items.length === 0) {
             dashboardAutocompletePortal.innerHTML = '<div class="dashboard-note-autocomplete-item"><div class="item-content">No results found</div></div>';
+            dashboardAutocompletePortal.style.display = 'block';
+            dashboardAutocompletePortal.style.visibility = 'visible';
+            dashboardAutocompletePortal.style.opacity = '1';
             return;
         }
         
@@ -2720,7 +3131,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += `
                 <div class="dashboard-note-autocomplete-item ${index === dashboardSelectedAutocompleteIndex ? 'selected' : ''}" 
                      data-index="${index}"
-                     onclick="dashboardSelectAutocompleteItem(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                     onclick="event.stopPropagation(); dashboardSelectAutocompleteItem(${JSON.stringify(item).replace(/"/g, '&quot;')}); return false;">
                     <i class="bi ${icon} item-icon"></i>
                     <div class="item-content">
                         <div class="item-title">${escapeHtml(item.title)}</div>
@@ -2731,6 +3142,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         dashboardAutocompletePortal.innerHTML = html;
+        dashboardAutocompletePortal.style.display = 'block';
+        dashboardAutocompletePortal.style.visibility = 'visible';
+        dashboardAutocompletePortal.style.opacity = '1';
     }
     
     function dashboardUpdateAutocompleteSelection() {
@@ -2748,11 +3162,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function dashboardSelectAutocompleteItem(item) {
-        if (!dashboardAutocompleteTextarea || !item || !dashboardAutocompleteCursorPosition) return;
+        if (!dashboardAutocompleteTextarea || !item || !dashboardAutocompleteCursorPosition) {
+            dashboardHideAutocomplete();
+            return;
+        }
         
         const contentEditable = dashboardAutocompleteTextarea;
         const range = dashboardAutocompleteCursorPosition.range;
         const match = dashboardAutocompleteCursorPosition.match;
+        
+        // Hide autocomplete immediately to prevent any delays
+        dashboardHideAutocomplete();
         
         if (match && range) {
             range.setStart(range.startContainer, range.startOffset - match[0].length);
@@ -2784,6 +3204,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 replacement.setAttribute('data-type', 'drug');
                 replacement.setAttribute('data-id', item.id);
                 replacement.innerHTML = `<i class="bi bi-capsule drug-icon"></i>${escapeHtml(item.title)}`;
+                // Add click event to show drug popover
+                replacement.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dashboardShowDrugPopover(item.id, item.title, e);
+                });
             }
             
             if (replacement) {
@@ -2850,13 +3276,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        dashboardHideAutocomplete();
         contentEditable.focus();
     }
     
     function dashboardHideAutocomplete() {
         if (dashboardAutocompletePortal) {
+            // Use multiple methods to ensure hiding
             dashboardAutocompletePortal.style.display = 'none';
+            dashboardAutocompletePortal.style.visibility = 'hidden';
+            dashboardAutocompletePortal.style.opacity = '0';
+            dashboardAutocompletePortal.style.pointerEvents = 'none';
+            dashboardAutocompletePortal.classList.add('hidden');
         }
         
         // Remove mouse tracking handler
@@ -2865,11 +3295,180 @@ document.addEventListener('DOMContentLoaded', function() {
             dashboardAutocompleteUpdateHandler = null;
         }
         
+        // Remove click and mousedown outside handlers
+        document.removeEventListener('click', dashboardHandleClickOutside, true);
+        document.removeEventListener('mousedown', dashboardHandleClickOutside, true);
+        
         dashboardCurrentAutocompleteType = null;
         dashboardCurrentAutocompleteQuery = '';
         dashboardCurrentAutocompleteItems = [];
         dashboardSelectedAutocompleteIndex = -1;
         dashboardAutocompleteTextarea = null;
+    }
+    
+    // Drug Popover Functions
+    let dashboardCurrentDrugPopover = null;
+    
+    async function dashboardShowDrugPopover(drugId, drugName, event) {
+        // Close existing popover if any
+        if (dashboardCurrentDrugPopover) {
+            dashboardCloseDrugPopover();
+        }
+        
+        // Create popover element
+        const popover = document.createElement('div');
+        popover.className = 'note-drug-popover';
+        popover.id = 'dashboardNoteDrugPopover';
+        
+        // Create backdrop
+        const backdrop = document.createElement('div');
+        backdrop.className = 'note-drug-popover-backdrop';
+        backdrop.addEventListener('click', dashboardCloseDrugPopover);
+        
+        // Position popover in center of viewport
+        popover.style.position = 'fixed';
+        popover.style.left = '50%';
+        popover.style.top = '50%';
+        popover.style.transform = 'translate(-50%, -50%)';
+        popover.style.zIndex = '10000000';
+        popover.style.maxWidth = '600px';
+        popover.style.width = '90%';
+        popover.style.maxHeight = '80vh';
+        popover.style.overflowY = 'auto';
+        
+        // Show loading state
+        popover.innerHTML = `
+            <div class="note-drug-popover-header">
+                <h5 class="note-drug-popover-title">${escapeHtml(drugName)}</h5>
+                <button type="button" class="note-drug-popover-close" onclick="dashboardCloseDrugPopover()" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="note-drug-popover-body">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(backdrop);
+        document.body.appendChild(popover);
+        dashboardCurrentDrugPopover = popover;
+        
+        try {
+            // Fetch drug details
+            const response = await fetch(`/api/getDrugDetails?id=${drugId}`);
+            const data = await response.json();
+            
+            if (data.drug) {
+                const drug = data.drug;
+                popover.innerHTML = `
+                    <div class="note-drug-popover-header">
+                        <h5 class="note-drug-popover-title">${escapeHtml(drug.drug_name || drugName)}</h5>
+                        <button type="button" class="note-drug-popover-close" onclick="dashboardCloseDrugPopover()" aria-label="Close">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div class="note-drug-popover-body">
+                        <div class="mb-3">
+                            <h6 class="text-primary mb-2">Active Ingredient</h6>
+                            <p class="mb-0">${escapeHtml(drug.active_ingredient || 'N/A')}</p>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-2">
+                                <h6 class="text-primary mb-1">Company</h6>
+                                <p class="mb-0">${escapeHtml(drug.Company || 'N/A')}</p>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <h6 class="text-primary mb-1">Category</h6>
+                                <p class="mb-0">${escapeHtml(drug.category || 'N/A')}</p>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <h6 class="text-primary mb-1">Price</h6>
+                                <p class="text-success fw-bold mb-0">${drug.price ? 'EGP ' + escapeHtml(drug.price) : 'N/A'}</p>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <h6 class="text-primary mb-1">Route</h6>
+                                <p class="mb-0">${escapeHtml(drug.administration_route || 'N/A')}</p>
+                            </div>
+                        </div>
+                        
+                        ${drug.GI ? `
+                            <div class="mb-3">
+                                <h6 class="text-primary mb-2">General Information</h6>
+                                <p class="mb-0" style="line-height: 1.6;">${escapeHtml(drug.GI)}</p>
+                            </div>
+                        ` : ''}
+                        
+                        ${drug.SRDE ? `
+                            <div>
+                                <h6 class="text-primary mb-2">Additional Information</h6>
+                                <p class="mb-0" style="line-height: 1.6;">${escapeHtml(drug.SRDE)}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                popover.innerHTML = `
+                    <div class="note-drug-popover-header">
+                        <h5 class="note-drug-popover-title">${escapeHtml(drugName)}</h5>
+                        <button type="button" class="note-drug-popover-close" onclick="dashboardCloseDrugPopover()" aria-label="Close">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div class="note-drug-popover-body">
+                        <div class="text-center py-4">
+                            <p class="mb-0">Drug information not available</p>
+                        </div>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Error fetching drug details:', error);
+            popover.innerHTML = `
+                <div class="note-drug-popover-header">
+                    <h5 class="note-drug-popover-title">${escapeHtml(drugName)}</h5>
+                    <button type="button" class="note-drug-popover-close" onclick="dashboardCloseDrugPopover()" aria-label="Close">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <div class="note-drug-popover-body">
+                    <div class="text-center py-4">
+                        <p class="text-danger mb-0">Error loading drug information</p>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    function dashboardCloseDrugPopover() {
+        if (dashboardCurrentDrugPopover) {
+            dashboardCurrentDrugPopover.remove();
+            dashboardCurrentDrugPopover = null;
+        }
+        const backdrop = document.querySelector('.note-drug-popover-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+    }
+    
+    // Initialize drug badge click handlers
+    function dashboardInitDrugBadges() {
+        document.querySelectorAll('.note-content-drug-badge').forEach(badge => {
+            const drugId = badge.getAttribute('data-id');
+            const drugName = badge.textContent.trim();
+            
+            badge.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (drugId) {
+                    dashboardShowDrugPopover(parseInt(drugId), drugName, e);
+                }
+            });
+        });
     }
     
     // Make functions global
@@ -2884,6 +3483,9 @@ document.addEventListener('DOMContentLoaded', function() {
     window.dashboardUpdateNoteContent = dashboardUpdateNoteContent;
     window.dashboardAddNote = dashboardAddNote;
     window.dashboardSelectAutocompleteItem = dashboardSelectAutocompleteItem;
+    window.dashboardShowDrugPopover = dashboardShowDrugPopover;
+    window.dashboardCloseDrugPopover = dashboardCloseDrugPopover;
+    window.dashboardInitDrugBadges = dashboardInitDrugBadges;
 });
 
 // Wait for Chart.js to load
@@ -4498,9 +5100,17 @@ function updateAppointmentProgressBar(container) {
             const secondsUntilStart = Math.floor((startTime - nowTime) / 1000);
             const remainingSeconds = Math.max(0, secondsUntilStart);
             
-            // Format time text (show hours if more than 60 minutes)
+            // Format time text (show days if more than 24 hours)
             let timeValue = '';
-            if (remainingSeconds >= 3600) {
+            const secondsPerDay = 24 * 60 * 60; // 86400 seconds
+            if (remainingSeconds >= secondsPerDay) {
+                const days = Math.floor(remainingSeconds / secondsPerDay);
+                const remainingAfterDays = remainingSeconds % secondsPerDay;
+                const hours = Math.floor(remainingAfterDays / 3600);
+                const minutes = Math.floor((remainingAfterDays % 3600) / 60);
+                const seconds = remainingAfterDays % 60;
+                timeValue = `${days} day${days !== 1 ? 's' : ''}, ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            } else if (remainingSeconds >= 3600) {
                 const hours = Math.floor(remainingSeconds / 3600);
                 const minutes = Math.floor((remainingSeconds % 3600) / 60);
                 const seconds = remainingSeconds % 60;
@@ -5168,7 +5778,7 @@ function updateWeatherCard(weatherData) {
 }
 
 // Fetch weather data from backend
-async function fetchWeatherData(latitude, longitude) {
+async function fetchWeatherData(latitude, longitude, saveToStorage = true) {
     try {
         const response = await fetch(`/api/weather?lat=${latitude}&lon=${longitude}`);
         
@@ -5180,6 +5790,17 @@ async function fetchWeatherData(latitude, longitude) {
 
         if (data.success && data.weather) {
             updateWeatherCard(data.weather);
+            
+            // Save to localStorage with timestamp
+            if (saveToStorage) {
+                const weatherData = {
+                    data: data.weather,
+                    latitude: latitude,
+                    longitude: longitude,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('dashboard_weather_data', JSON.stringify(weatherData));
+            }
         } else {
             throw new Error(data.error || data.message || 'Failed to get weather data');
         }
@@ -5195,6 +5816,32 @@ async function fetchWeatherData(latitude, longitude) {
         const descElement = document.getElementById('weatherDesc');
         if (tempElement) tempElement.textContent = '--°C';
         if (descElement) descElement.textContent = 'Weather API error';
+    }
+}
+
+// Load weather data from localStorage
+function loadWeatherFromStorage() {
+    try {
+        const stored = localStorage.getItem('dashboard_weather_data');
+        if (!stored) return null;
+        
+        const weatherData = JSON.parse(stored);
+        const now = Date.now();
+        const age = now - weatherData.timestamp;
+        const maxAge = 15 * 60 * 1000; // 15 minutes
+        
+        // Return data if it's less than 15 minutes old
+        if (age < maxAge && weatherData.data) {
+            return weatherData;
+        }
+        
+        // Data is too old, remove it
+        localStorage.removeItem('dashboard_weather_data');
+        return null;
+    } catch (error) {
+        console.error('Error loading weather from storage:', error);
+        localStorage.removeItem('dashboard_weather_data');
+        return null;
     }
 }
 
@@ -5424,16 +6071,489 @@ function renderWeatherForecast(forecast) {
     body.innerHTML = html;
 }
 
-// Initialize weather on page load
+// Initialize weather on page load - load last after all dashboard content
 document.addEventListener('DOMContentLoaded', function() {
-    initWeatherCard();
-    
     // Forecast button handler
     const forecastBtn = document.getElementById('weatherForecastBtn');
     if (forecastBtn) {
         forecastBtn.addEventListener('click', showWeatherForecastPopover);
     }
 
+    // Load weather data from cache first (fast)
+    // Then update in background after all other content loads
+    setTimeout(() => {
+        initWeatherCard(true); // Load cached data first
+    }, 100);
+    
+    // Update weather data after all dashboard content loads (last thing to load)
+    setTimeout(() => {
+        initWeatherCard(false); // Force fresh fetch
+    }, 2000); // Wait 2 seconds for other content to load first
+
     // Refresh weather every 15 minutes
-    setInterval(initWeatherCard, 15 * 60 * 1000);
+    setInterval(() => initWeatherCard(false), 15 * 60 * 1000);
+
+    // Load Unified Clinical Dashboard
+    loadUnifiedClinicalDashboard();
 });
+
+// ============================================
+// Unified Clinical Dashboard
+// ============================================
+
+/**
+ * Load Unified Clinical Dashboard data
+ */
+async function loadUnifiedClinicalDashboard() {
+    // Get last viewed patient_id from localStorage
+    const lastViewedPatientId = localStorage.getItem('lastViewedPatientId');
+    
+    const noPatientDiv = document.getElementById('unifiedClinicalDashboardNoPatient');
+    const contentDiv = document.getElementById('unifiedClinicalDashboardContent');
+    
+    if (!lastViewedPatientId || !lastViewedPatientId.match(/^\d+$/)) {
+        // No patient selected
+        if (noPatientDiv) noPatientDiv.style.display = 'block';
+        if (contentDiv) contentDiv.style.display = 'none';
+        return;
+    }
+
+    try {
+        // Show loading state
+        if (noPatientDiv) noPatientDiv.style.display = 'none';
+        if (contentDiv) contentDiv.style.display = 'block';
+
+        const response = await fetch(`/api/clinical-dashboard/snapshot?patient_id=${lastViewedPatientId}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.ok && data.data) {
+            renderClinicalDashboard(data.data);
+            // Show patient info notice with patient ID for clickable link
+            renderPatientInfoNotice(
+                data.data.patient_name || 'Unknown Patient',
+                data.data.patient_id || lastViewedPatientId
+            );
+        } else {
+            // Error or no data
+            if (noPatientDiv) noPatientDiv.style.display = 'block';
+            if (contentDiv) contentDiv.style.display = 'none';
+            // Hide patient info notice
+            const noticeDiv = document.getElementById('patientInfoNotice');
+            if (noticeDiv) noticeDiv.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error loading clinical dashboard:', error);
+        if (noPatientDiv) noPatientDiv.style.display = 'block';
+        if (contentDiv) contentDiv.style.display = 'none';
+    }
+}
+
+/**
+ * Render patient info notice
+ */
+function renderPatientInfoNotice(patientName, patientId) {
+    const noticeDiv = document.getElementById('patientInfoNotice');
+    const nameEl = document.getElementById('patientInfoName');
+    const noticeContent = document.getElementById('patientInfoNoticeContent');
+    
+    if (noticeDiv && nameEl) {
+        nameEl.textContent = patientName || 'Unknown Patient';
+        noticeDiv.style.display = 'block';
+        
+        // Make clickable if patientId is provided
+        if (patientId && noticeContent) {
+            noticeContent.style.cursor = 'pointer';
+            noticeContent.onclick = () => {
+                window.location.href = `/doctor/patients/${patientId}`;
+            };
+            
+            // Add hover effect class
+            noticeContent.classList.add('patient-info-clickable');
+            
+            // Make name link style
+            if (nameEl) {
+                nameEl.classList.add('patient-info-name-link');
+            }
+        }
+    }
+}
+
+/**
+ * Render clinical dashboard data
+ */
+function renderClinicalDashboard(data) {
+    const snapshot = data.snapshot || {};
+    
+    // Render IOP Status
+    renderIOPStatus(snapshot.iop || {});
+    
+    // Render Visual Acuity
+    renderVisualAcuity(snapshot.visual_acuity || {});
+    
+    // Render Cataract Status
+    renderCataractStatus(snapshot.cataract || {});
+    
+    // Render Dry Eye Status
+    renderDryEyeStatus(snapshot.dry_eye || {});
+    
+    // Render Alerts
+    renderClinicalAlerts(data.alerts || []);
+    
+    // Render Mini Trends
+    renderMiniTrends(snapshot);
+    
+    // Render Clinical Summary
+    renderClinicalSummary(data.summary || 'Clinical data not available.');
+}
+
+/**
+ * Render IOP Status indicator
+ */
+function renderIOPStatus(iop) {
+    const valueEl = document.getElementById('iopValue');
+    const statusEl = document.getElementById('iopStatus');
+    
+    if (!valueEl || !statusEl) return;
+    
+    if (iop.value === null || iop.value === undefined) {
+        valueEl.textContent = '--';
+        statusEl.innerHTML = '<span class="badge bg-secondary">Not available</span>';
+        return;
+    }
+    
+    valueEl.textContent = `${iop.value} mmHg`;
+    if (iop.target !== null && iop.target !== undefined) {
+        valueEl.textContent += ` (Target: ${iop.target} mmHg)`;
+    }
+    
+    let badgeClass = 'bg-success';
+    if (iop.status === 'warning') {
+        badgeClass = 'bg-warning text-dark';
+    } else if (iop.status === 'critical') {
+        badgeClass = 'bg-danger';
+    }
+    
+    statusEl.innerHTML = `<span class="badge ${badgeClass}">${iop.message || 'Normal'}</span>`;
+    
+    // Make clickable to navigate to appointment
+    if (iop.appointment_id) {
+        const indicatorCard = document.getElementById('clinicalIndicatorIOP');
+        if (indicatorCard) {
+            indicatorCard.style.cursor = 'pointer';
+            indicatorCard.onclick = () => {
+                window.location.href = `/doctor/appointments/${iop.appointment_id}`;
+            };
+        }
+    }
+}
+
+/**
+ * Render Visual Acuity indicator
+ */
+function renderVisualAcuity(va) {
+    const valueEl = document.getElementById('vaValue');
+    const trendEl = document.getElementById('vaTrend');
+    
+    if (!valueEl || !trendEl) return;
+    
+    if (va.last === null || va.last === undefined) {
+        valueEl.textContent = '--';
+        trendEl.innerHTML = '<span class="trend-indicator">→</span><span class="trend-text">Not available</span>';
+        return;
+    }
+    
+    // Truncate if too long
+    const displayValue = va.last.length > 30 ? va.last.substring(0, 30) + '...' : va.last;
+    valueEl.textContent = displayValue;
+    
+    const trendIcon = va.trend === '↑' ? '↑' : (va.trend === '↓' ? '↓' : '→');
+    const trendClass = va.trend === '↑' ? 'text-danger' : (va.trend === '↓' ? 'text-success' : 'text-muted');
+    
+    trendEl.innerHTML = `<span class="trend-indicator ${trendClass}">${trendIcon}</span><span class="trend-text">${va.message || 'Stable'}</span>`;
+    
+    // Make clickable
+    if (va.appointment_id) {
+        const indicatorCard = document.getElementById('clinicalIndicatorVA');
+        if (indicatorCard) {
+            indicatorCard.style.cursor = 'pointer';
+            indicatorCard.onclick = () => {
+                window.location.href = `/doctor/appointments/${va.appointment_id}`;
+            };
+        }
+    }
+}
+
+/**
+ * Render Cataract Status indicator
+ */
+function renderCataractStatus(cataract) {
+    const valueEl = document.getElementById('cataractValue');
+    const statusEl = document.getElementById('cataractStatus');
+    
+    if (!valueEl || !statusEl) return;
+    
+    if (cataract.readiness === null || cataract.readiness === undefined) {
+        valueEl.textContent = '--';
+        statusEl.innerHTML = '<span class="badge bg-secondary">Not available</span>';
+        return;
+    }
+    
+    valueEl.textContent = cataract.readiness || '--';
+    
+    let badgeClass = 'bg-info';
+    if (cataract.status === 'surgery_recommended') {
+        badgeClass = 'bg-danger';
+    } else if (cataract.status === 'consider_surgery') {
+        badgeClass = 'bg-warning text-dark';
+    }
+    
+    statusEl.innerHTML = `<span class="badge ${badgeClass}">${cataract.message || 'Monitor'}</span>`;
+    
+    // Make clickable
+    if (cataract.appointment_id) {
+        const indicatorCard = document.getElementById('clinicalIndicatorCataract');
+        if (indicatorCard) {
+            indicatorCard.style.cursor = 'pointer';
+            indicatorCard.onclick = () => {
+                window.location.href = `/doctor/appointments/${cataract.appointment_id}`;
+            };
+        }
+    }
+}
+
+/**
+ * Render Dry Eye Status indicator
+ */
+function renderDryEyeStatus(dryEye) {
+    const valueEl = document.getElementById('dryEyeValue');
+    const trendEl = document.getElementById('dryEyeTrend');
+    
+    if (!valueEl || !trendEl) return;
+    
+    if (dryEye.osdi_score === null || dryEye.osdi_score === undefined) {
+        valueEl.textContent = '--';
+        trendEl.innerHTML = '<span class="trend-indicator">→</span><span class="trend-text">Not available</span>';
+        return;
+    }
+    
+    valueEl.textContent = `OSDI: ${dryEye.osdi_score}`;
+    if (dryEye.severity) {
+        valueEl.textContent += ` (${dryEye.severity})`;
+    }
+    
+    const trendText = dryEye.trend === 'improving' ? 'Improving' : 
+                     (dryEye.trend === 'worsening' ? 'Worsening' : 'Stable');
+    const trendClass = dryEye.trend === 'worsening' ? 'text-danger' : 
+                      (dryEye.trend === 'improving' ? 'text-success' : 'text-muted');
+    const trendIcon = dryEye.trend === 'worsening' ? '↑' : 
+                     (dryEye.trend === 'improving' ? '↓' : '→');
+    
+    trendEl.innerHTML = `<span class="trend-indicator ${trendClass}">${trendIcon}</span><span class="trend-text">${trendText}</span>`;
+    
+    // Make clickable
+    if (dryEye.appointment_id) {
+        const indicatorCard = document.getElementById('clinicalIndicatorDryEye');
+        if (indicatorCard) {
+            indicatorCard.style.cursor = 'pointer';
+            indicatorCard.onclick = () => {
+                window.location.href = `/doctor/appointments/${dryEye.appointment_id}`;
+            };
+        }
+    }
+}
+
+/**
+ * Render Clinical Alerts
+ */
+function renderClinicalAlerts(alerts) {
+    const container = document.getElementById('clinicalAlertsContainer');
+    if (!container) return;
+    
+    if (alerts.length === 0) {
+        container.innerHTML = `
+            <div class="alert alert-info mb-0">
+                <i class="bi bi-info-circle me-2"></i>
+                No active alerts
+            </div>
+        `;
+        return;
+    }
+    
+    let alertsHTML = '';
+    alerts.forEach(alert => {
+        let alertClass = 'alert-info';
+        if (alert.severity === 'warning') {
+            alertClass = 'alert-warning';
+        } else if (alert.severity === 'critical') {
+            alertClass = 'alert-danger';
+        }
+        
+        const clickHandler = alert.appointment_id ? 
+            `onclick="window.location.href='/doctor/appointments/${alert.appointment_id}'" style="cursor: pointer;"` : '';
+        
+        alertsHTML += `
+            <div class="alert ${alertClass} mb-2" ${clickHandler}>
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                ${escapeHtml(alert.message)}
+            </div>
+        `;
+    });
+    
+    container.innerHTML = alertsHTML;
+}
+
+/**
+ * Render Mini Trends
+ */
+function renderMiniTrends(snapshot) {
+    // IOP Trend (simplified - just show status)
+    const iopTrendEl = document.getElementById('iopTrendChart');
+    if (iopTrendEl) {
+        if (snapshot.iop && snapshot.iop.value !== null) {
+            const status = snapshot.iop.status === 'warning' ? '⚠️ Above target' : '✓ Within target';
+            iopTrendEl.innerHTML = `<div class="mini-trend-status">${status}</div>`;
+        } else {
+            iopTrendEl.innerHTML = '<div class="mini-trend-placeholder">No data</div>';
+        }
+    }
+    
+    // Visual Acuity Trend
+    const vaTrendEl = document.getElementById('vaTrendChart');
+    if (vaTrendEl) {
+        if (snapshot.visual_acuity && snapshot.visual_acuity.trend) {
+            const trendIcon = snapshot.visual_acuity.trend === '↑' ? '↑ Worsening' : 
+                            (snapshot.visual_acuity.trend === '↓' ? '↓ Improving' : '→ Stable');
+            vaTrendEl.innerHTML = `<div class="mini-trend-status">${trendIcon}</div>`;
+        } else {
+            vaTrendEl.innerHTML = '<div class="mini-trend-placeholder">No data</div>';
+        }
+    }
+    
+    // Macular Thickness Trend
+    const macularTrendEl = document.getElementById('macularTrendChart');
+    if (macularTrendEl) {
+        if (snapshot.macular_thickness && snapshot.macular_thickness.latest !== null) {
+            const trendText = snapshot.macular_thickness.trend === 'worsening' ? '⚠️ Worsening' :
+                            (snapshot.macular_thickness.trend === 'improving' ? '↓ Improving' : '→ Stable');
+            macularTrendEl.innerHTML = `<div class="mini-trend-status">${trendText}</div>`;
+        } else {
+            macularTrendEl.innerHTML = '<div class="mini-trend-placeholder">No data</div>';
+        }
+    }
+}
+
+/**
+ * Render Clinical Summary
+ */
+function renderClinicalSummary(summary) {
+    const summaryEl = document.getElementById('clinicalSummaryText');
+    if (summaryEl) {
+        summaryEl.textContent = summary;
+    }
+}
+
+/**
+ * Copy clinical summary to clipboard
+ */
+function copyClinicalSummary() {
+    const summaryEl = document.getElementById('clinicalSummaryText');
+    if (!summaryEl) return;
+    
+    const summaryText = summaryEl.textContent;
+    
+    navigator.clipboard.writeText(summaryText).then(() => {
+        const btn = document.getElementById('copySummaryBtn');
+        if (btn) {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check me-1"></i>Copied!';
+            btn.classList.add('btn-success');
+            btn.classList.remove('btn-outline-primary');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-outline-primary');
+            }, 2000);
+        }
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+    });
+}
+
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Listen for patient page views and appointment page views to update lastViewedPatientId
+if (typeof window !== 'undefined') {
+    function savePatientIdAndReload(patientId) {
+        if (patientId && patientId !== 'null' && patientId !== null) {
+            localStorage.setItem('lastViewedPatientId', patientId.toString());
+            if (typeof loadUnifiedClinicalDashboard === 'function') {
+                loadUnifiedClinicalDashboard();
+            }
+        }
+    }
+    
+    // Save patient ID when viewing patient page
+    const currentPath = window.location.pathname;
+    const patientMatch = currentPath.match(/\/doctor\/patients\/(\d+)/);
+    if (patientMatch) {
+        savePatientIdAndReload(patientMatch[1]);
+    }
+    
+    // Save patient ID when viewing appointment page (from APPOINTMENT_CONFIG)
+    const appointmentMatch = currentPath.match(/\/doctor\/appointments\/(\d+)/);
+    if (appointmentMatch) {
+        // Wait for APPOINTMENT_CONFIG to be available
+        if (window.APPOINTMENT_CONFIG && window.APPOINTMENT_CONFIG.patientId) {
+            savePatientIdAndReload(window.APPOINTMENT_CONFIG.patientId);
+        } else {
+            // Wait a bit for script to load
+            setTimeout(() => {
+                if (window.APPOINTMENT_CONFIG && window.APPOINTMENT_CONFIG.patientId) {
+                    savePatientIdAndReload(window.APPOINTMENT_CONFIG.patientId);
+                }
+            }, 500);
+        }
+    }
+    
+    // Also listen for navigation events
+    window.addEventListener('popstate', () => {
+        const path = window.location.pathname;
+        const patientMatch = path.match(/\/doctor\/patients\/(\d+)/);
+        if (patientMatch) {
+            savePatientIdAndReload(patientMatch[1]);
+        }
+        
+        const appointmentMatch = path.match(/\/doctor\/appointments\/(\d+)/);
+        if (appointmentMatch && window.APPOINTMENT_CONFIG && window.APPOINTMENT_CONFIG.patientId) {
+            savePatientIdAndReload(window.APPOINTMENT_CONFIG.patientId);
+        }
+    });
+    
+    // Monitor APPOINTMENT_CONFIG if it loads after page load
+    if (appointmentMatch) {
+        let configCheckCount = 0;
+        const configCheckInterval = setInterval(() => {
+            configCheckCount++;
+            if (window.APPOINTMENT_CONFIG && window.APPOINTMENT_CONFIG.patientId) {
+                savePatientIdAndReload(window.APPOINTMENT_CONFIG.patientId);
+                clearInterval(configCheckInterval);
+            } else if (configCheckCount >= 50) {
+                // Stop checking after 5 seconds (50 * 100ms)
+                clearInterval(configCheckInterval);
+            }
+        }, 100);
+    }
+}

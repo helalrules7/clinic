@@ -1,0 +1,15 @@
+/* Timepicker UI - Custom Theme Integration with Clinic App Colors */
+/* 
+ * This file imports index.css which contains all base styles and theme variables.
+ * The theme variables in index.css are customized to match the clinic app's color scheme.
+ * 
+ * Light Mode: Uses app colors (#f8fafc bg, #0ea5e9 accent, etc.)
+ * Dark Mode: Uses app dark colors (#0b1220 bg, #38bdf8 accent, etc.)
+ */
+
+/* Import base styles from index.css (contains all CSS variables and styles) */
+@import url('./index.css');
+/* Dark mode modal background */
+.dark .tp-ui-modal {
+    background-color: hsl(0deg 2.47% 22.47% / 60%) !important;
+}

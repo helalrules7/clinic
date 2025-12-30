@@ -189,7 +189,7 @@
         </div>
         
         <div class="mt-4">
-            <small class="text-muted" style="color:white !important;">
+            <small class="text-muted" style="var(--text) !important;">
                 If you believe this is an error, please contact support.
             </small>
         </div>

@@ -2750,6 +2750,8 @@ canvas {
     font-size: 0.85rem;
     font-weight: 500;
     margin: 0 0.2rem;
+    cursor: pointer !important;
+    transition: all 0.2s ease;
     border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
@@ -2759,6 +2761,12 @@ canvas {
     border-color: rgba(16, 185, 129, 0.4);
 }
 
+.dashboard-note-widget-content .note-content-drug-badge:hover {
+    cursor: pointer !important;
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
 .dashboard-note-widget-content .note-content-drug-badge .drug-icon {
     font-size: 0.9rem;
 }
@@ -2766,15 +2774,24 @@ canvas {
 /* Autocomplete Portal Styles */
 .dashboard-note-autocomplete-portal {
     position: fixed !important;
-    background: var(--card);
-    border: 1px solid var(--border);
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
     max-height: 300px;
     overflow-y: auto;
-    z-index: 9999999 !important;
+    z-index: 10000010 !important;
     min-width: 250px;
     max-width: 400px;
+    /* Removed !important from display, visibility, opacity to allow JS to control them */
+    pointer-events: auto !important;
+}
+
+.dashboard-note-autocomplete-portal.hidden {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 .dark .dashboard-note-autocomplete-portal {
@@ -2834,6 +2851,98 @@ canvas {
 
 .dashboard-note-widget.dark-text {
     color: #0f172a;
+}
+
+/* Drug Popover Styles - Glass Effect (same as notes.css) */
+.note-drug-popover-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 9999999;
+    animation: fadeIn 0.2s ease;
+}
+
+.note-drug-popover {
+    /* Glass effect */
+    background: rgba(248, 250, 252, 0.95) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(226, 232, 240, 0.5) !important;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.3s ease;
+}
+
+.dark .note-drug-popover {
+    background: rgba(11, 18, 32, 0.95) !important;
+    border-color: rgba(51, 65, 85, 0.5) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.note-drug-popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.note-drug-popover-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.note-drug-popover-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.note-drug-popover-close:hover {
+    background: var(--border);
+    color: var(--text);
+}
+
+.note-drug-popover-body {
+    padding: 1.5rem;
+    color: var(--text);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
 }
 
 .dashboard-note-widget.dark-text .dashboard-note-widget-title,
@@ -4353,16 +4462,16 @@ canvas {
     border-color: rgba(255, 255, 255, 0.25);
 }
 
-/* Weather Forecast Popover */
+/* Weather Forecast Popover - Glass Morphism Style */
 .weather-forecast-popover {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -4371,32 +4480,44 @@ canvas {
 }
 
 .weather-forecast-popover-content {
-    background: var(--card);
-    border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    /* Glass Effect - Light Mode */
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    border-radius: 16px !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.15),
+        0 1px 2px rgba(255, 255, 255, 0.2) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
     max-width: 900px;
     width: 90%;
     max-height: 90vh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
     animation: slideUp 0.3s ease;
 }
 
 .dark .weather-forecast-popover-content {
-    background: rgba(26, 29, 46, 0.95);
-    border-color: rgba(255, 255, 255, 0.15);
+    /* Glass Effect - Dark Mode */
+    background: rgba(11, 18, 32, 0.40) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        0 1px 2px rgba(255, 255, 255, 0.05) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
 }
 
 .weather-forecast-popover-header {
     padding: 20px 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .weather-forecast-popover-header h5 {
@@ -4453,7 +4574,7 @@ canvas {
 }
 
 .weather-forecast-day {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.55) !important;
     border-radius: 12px;
     padding: 16px;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -4468,7 +4589,7 @@ canvas {
 }
 
 .dark .weather-forecast-day {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(166, 139, 139, 0.09) !important;
     border-color: rgba(255, 255, 255, 0.1);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
@@ -4644,5 +4765,347 @@ canvas {
     
     .weather-forecast-day {
         padding: 12px;
+    }
+}
+
+/* ============================================
+   Unified Clinical Dashboard Styles
+   ============================================ */
+
+.clinical-indicator-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.clinical-indicator-card:hover {
+    box-shadow: 0 4px 12px var(--shadow);
+    transform: translateY(-2px);
+}
+
+.clinical-indicator-header {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+}
+
+.clinical-indicator-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.clinical-indicator-status {
+    margin-top: 0.5rem;
+}
+
+.clinical-indicator-trend {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.trend-indicator {
+    font-size: 1.25rem;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.trend-text {
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+.mini-trend-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    height: 100%;
+}
+
+.mini-trend-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+}
+
+.mini-trend-chart {
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mini-trend-placeholder {
+    color: var(--muted);
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+.mini-trend-status {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text);
+    text-align: center;
+}
+
+.clinical-summary-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    position: relative;
+}
+
+.clinical-summary-box p {
+    color: var(--text);
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+#clinicalAlertsContainer .alert {
+    border-left: 4px solid;
+    transition: all 0.2s ease;
+}
+
+#clinicalAlertsContainer .alert:hover {
+    transform: translateX(2px);
+}
+
+#clinicalAlertsContainer .alert-info {
+    border-left-color: #0ea5e9;
+}
+
+#clinicalAlertsContainer .alert-warning {
+    border-left-color: #f59e0b;
+}
+
+#clinicalAlertsContainer .alert-danger {
+    border-left-color: #ef4444;
+}
+
+.dark .clinical-indicator-card,
+.dark .mini-trend-card,
+.dark .clinical-summary-box {
+    background: var(--card);
+    border-color: var(--border);
+}
+
+.dark .clinical-indicator-value {
+    color: var(--text);
+}
+
+.dark .trend-indicator.text-danger {
+    color: #fb7185;
+}
+
+.dark .trend-indicator.text-success {
+    color: #4ade80;
+}
+
+.dark .trend-indicator.text-muted {
+    color: var(--muted);
+}
+
+/* Patient Info Notice Styles */
+.patient-info-notice {
+    margin-bottom: 1.25rem;
+    margin-top: -0.5rem;
+    animation: noticeSlideIn 0.4s ease-out;
+}
+
+@keyframes noticeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.patient-info-notice-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-radius: 10px;
+    /* Glass Effect - Light Mode */
+    background: rgba(14, 165, 233, 0.08) !important;
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    border: 1px solid rgba(14, 165, 233, 0.2);
+    transition: all 0.3s ease;
+}
+
+.patient-info-notice-content:hover {
+    background: rgba(14, 165, 233, 0.12) !important;
+    border-color: rgba(14, 165, 233, 0.3);
+    transform: translateX(3px);
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.15);
+}
+
+.patient-info-notice-content.patient-info-clickable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.patient-info-notice-content.patient-info-clickable:hover {
+    background: rgba(14, 165, 233, 0.15) !important;
+    border-color: rgba(14, 165, 233, 0.4);
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+    text-decoration: none !important;
+}
+
+.patient-info-notice-content.patient-info-clickable:active {
+    transform: translateX(3px) scale(0.98);
+}
+
+.dark .patient-info-notice-content {
+    /* Glass Effect - Dark Mode */
+    background: rgba(56, 189, 248, 0.12) !important;
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    border-color: rgba(56, 189, 248, 0.25);
+    text-decoration: none !important;
+}
+
+.dark .patient-info-notice-content:hover {
+    background: rgba(56, 189, 248, 0.18) !important;
+    border-color: rgba(56, 189, 248, 0.35);
+    box-shadow: 0 2px 8px rgba(56, 189, 248, 0.25);
+    text-decoration: none !important;
+}
+
+.patient-info-notice-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(59, 130, 246, 0.15));
+    color: var(--accent);
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.9;
+    }
+}
+
+.dark .patient-info-notice-icon {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(99, 102, 241, 0.2));
+    color: #60a5fa;
+}
+
+.patient-info-notice-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.patient-info-notice-main {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.patient-info-notice-main strong {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.patient-info-name-link {
+    color: var(--accent);
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid transparent;
+}
+
+.patient-info-notice-content.patient-info-clickable:hover .patient-info-name-link {
+    color: #0284c7;
+    border-bottom-color: rgba(14, 165, 233, 0.4);
+}
+
+.dark .patient-info-notice-main strong,
+.dark .patient-info-name-link {
+    color: #60a5fa;
+}
+
+.dark .patient-info-notice-content.patient-info-clickable:hover .patient-info-name-link {
+    color: #38bdf8;
+    border-bottom-color: rgba(56, 189, 248, 0.5);
+}
+
+.patient-info-notice-sub {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-style: italic;
+    opacity: 0.85;
+}
+
+.dark .patient-info-notice-sub {
+    color: var(--muted);
+    opacity: 0.9;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .clinical-indicator-card {
+        margin-bottom: 1rem;
+    }
+    
+    .mini-trend-card {
+        margin-bottom: 1rem;
+    }
+    
+    .clinical-indicator-value {
+        font-size: 1.1rem;
+    }
+    
+    .patient-info-notice-content {
+        padding: 0.75rem 0.875rem;
+        gap: 0.625rem;
+    }
+    
+    .patient-info-notice-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.3rem;
+    }
+    
+    .patient-info-notice-main {
+        font-size: 0.875rem;
+    }
+    
+    .patient-info-notice-sub {
+        font-size: 0.7rem;
     }
 }

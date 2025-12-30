@@ -1442,10 +1442,10 @@ class AdminController
             $pdo = $dbConfig->getConnection();
             
             // Get database name from connection
-            $dbName = $_ENV['DB_NAME'] ?? 'hclinic_roaya';
-            $dbUser = $_ENV['DB_USER'] ?? 'hclinic_roaya';
-            $dbPass = $_ENV['DB_PASS'] ?? 'Carmen@1230';
-            $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
+            $dbName = $_ENV['DB_NAME'] ?? 'roaya';
+            $dbUser = $_ENV['DB_USER'] ?? 'roaya_user';
+            $dbPass = $_ENV['DB_PASS'] ?? 'roaya_password';
+            $dbHost = $_ENV['DB_HOST'] ?? 'db';
             
             $backupName = 'db_backup_' . date('Y-m-d_His') . '.sql';
             $backupPath = $backupDir . $backupName;
@@ -1550,10 +1550,10 @@ class AdminController
             }
             
             // Backup database
-            $dbName = $_ENV['DB_NAME'] ?? 'hclinic_roaya';
-            $dbUser = $_ENV['DB_USER'] ?? 'hclinic_roaya';
-            $dbPass = $_ENV['DB_PASS'] ?? 'Carmen@1230';
-            $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
+            $dbName = $_ENV['DB_NAME'] ?? 'roaya';
+            $dbUser = $_ENV['DB_USER'] ?? 'roaya_user';
+            $dbPass = $_ENV['DB_PASS'] ?? 'roaya_password';
+            $dbHost = $_ENV['DB_HOST'] ?? 'db';
             
             $tempDbFile = sys_get_temp_dir() . '/db_backup_' . uniqid() . '.sql';
             $command = sprintf(
@@ -1642,10 +1642,10 @@ class AdminController
             }
             
             // Backup database
-            $dbName = $_ENV['DB_NAME'] ?? 'hclinic_roaya';
-            $dbUser = $_ENV['DB_USER'] ?? 'hclinic_roaya';
-            $dbPass = $_ENV['DB_PASS'] ?? 'Carmen@1230';
-            $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
+            $dbName = $_ENV['DB_NAME'] ?? 'roaya';
+            $dbUser = $_ENV['DB_USER'] ?? 'roaya_user';
+            $dbPass = $_ENV['DB_PASS'] ?? 'roaya_password';
+            $dbHost = $_ENV['DB_HOST'] ?? 'db';
             
             $tempDbFile = sys_get_temp_dir() . '/db_backup_' . uniqid() . '.sql';
             $command = sprintf(
@@ -1799,10 +1799,10 @@ class AdminController
                 throw new \Exception('Backup file not found');
             }
             
-            $dbName = $_ENV['DB_NAME'] ?? 'hclinic_roaya';
-            $dbUser = $_ENV['DB_USER'] ?? 'hclinic_roaya';
-            $dbPass = $_ENV['DB_PASS'] ?? 'Carmen@1230';
-            $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
+            $dbName = $_ENV['DB_NAME'] ?? 'roaya';
+            $dbUser = $_ENV['DB_USER'] ?? 'roaya_user';
+            $dbPass = $_ENV['DB_PASS'] ?? 'roaya_password';
+            $dbHost = $_ENV['DB_HOST'] ?? 'db';
             
             // Extract SQL from ZIP if needed
             $sqlFile = $backupPath;
@@ -1890,10 +1890,10 @@ class AdminController
         }
         
         try {
-            $dbName = $_ENV['DB_NAME'] ?? 'hclinic_roaya';
-            $dbUser = $_ENV['DB_USER'] ?? 'hclinic_roaya';
-            $dbPass = $_ENV['DB_PASS'] ?? 'Carmen@1230';
-            $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
+            $dbName = $_ENV['DB_NAME'] ?? 'roaya';
+            $dbUser = $_ENV['DB_USER'] ?? 'roaya_user';
+            $dbPass = $_ENV['DB_PASS'] ?? 'roaya_password';
+            $dbHost = $_ENV['DB_HOST'] ?? 'db';
             
             $sqlFile = $file['tmp_name'];
             

@@ -86,7 +86,7 @@ class DoctorController
         ]);
         
         echo $this->view->render('layouts/main', [
-            'title' => 'Doctor Dashboard',
+            'title' => 'HClinic / Roaya | Dashboard',
             'pageTitle' => 'Dashboard',
             'pageSubtitle' => 'Welcome back, ' . $user['name'],
             'content' => $content
@@ -116,7 +116,7 @@ class DoctorController
         ]);
         
         echo $this->view->render('layouts/main', [
-            'title' => 'Calendar - Doctor Dashboard',
+            'title' => 'HClinic / Roaya | Calendar',
             'pageTitle' => 'Calendar',
             'pageSubtitle' => 'Manage your appointments',
             'content' => $content
@@ -134,7 +134,7 @@ class DoctorController
         ]);
         
         echo $this->view->render('layouts/main', [
-            'title' => 'Organizer - Doctor Dashboard',
+            'title' => 'HClinic / Roaya | Organizer',
             'pageTitle' => 'Organizer',
             'pageSubtitle' => 'Monthly calendar with appointments, notes, and alerts',
             'content' => $content
@@ -153,7 +153,7 @@ class DoctorController
         ]);
         
         echo $this->view->render('layouts/main', [
-            'title' => 'Patients - Doctor Dashboard',
+            'title' => 'HClinic / Roaya | Patients',
             'pageTitle' => 'Patients',
             'pageSubtitle' => 'Manage patient records',
             'content' => $content
@@ -246,7 +246,7 @@ class DoctorController
         ]);
         
         echo $this->view->render('layouts/main', [
-            'title' => 'Patient Profile - Doctor Dashboard',
+            'title' => 'HClinic / Roaya | Patient Profile',
             'pageTitle' => 'Patient Profile',
             'pageSubtitle' => $patient['first_name'] . ' ' . $patient['last_name'],
             'content' => $content
@@ -308,7 +308,7 @@ class DoctorController
         ]);
         
         echo $this->view->render('layouts/main', [
-            'title' => 'Appointment Details - Doctor Dashboard',
+            'title' => 'HClinic / Roaya | Appointment Details',
             'pageTitle' => 'Appointment Details',
             'pageSubtitle' => 'Manage patient consultation',
             'content' => $content
@@ -334,7 +334,7 @@ class DoctorController
         ]);
         
         echo $this->view->render('layouts/main', [
-            'title' => 'Profile - Doctor Dashboard',
+            'title' => 'HClinic / Roaya | Profile',
             'pageTitle' => 'My Profile',
             'pageSubtitle' => 'Manage your account settings',
             'content' => $content
@@ -388,7 +388,7 @@ class DoctorController
         ]);
         
         echo $this->view->render('layouts/main', [
-            'title' => 'Edit Consultation - Doctor Dashboard',
+            'title' => 'HClinic / Roaya | Edit Consultation',
             'pageTitle' => 'Edit Consultation',
             'pageSubtitle' => 'Update consultation notes',
             'content' => $content
@@ -427,7 +427,7 @@ class DoctorController
         ]);
         
         echo $this->view->render('layouts/main', [
-            'title' => 'New Consultation - Doctor Dashboard',
+            'title' => 'HClinic / Roaya | New Consultation',
             'pageTitle' => 'New Consultation',
             'pageSubtitle' => 'Add new consultation notes',
             'content' => $content
@@ -1707,7 +1707,7 @@ class DoctorController
         ]);
         
         echo $this->view->render('layouts/main', [
-            'title' => 'Edit Patient - Doctor Dashboard',
+            'title' => 'HClinic / Roaya | Edit Patient',
             'pageTitle' => 'Edit Patient',
             'pageSubtitle' => $patient['first_name'] . ' ' . $patient['last_name'],
             'content' => $content
@@ -1813,7 +1813,7 @@ class DoctorController
         ]);
         
         echo $this->view->render('layouts/main', [
-            'title' => 'Reports - Doctor Dashboard',
+            'title' => 'HClinic / Roaya | Reports',
             'pageTitle' => 'Medical Reports',
             'pageSubtitle' => 'View your practice reports',
             'content' => $content
@@ -1849,7 +1849,7 @@ class DoctorController
         ]);
         
         echo $this->view->render('layouts/main', [
-            'title' => 'Drug Search - Doctor Dashboard',
+            'title' => 'HClinic / Roaya | Drug Search',
             'pageTitle' => 'Drug Search',
             'pageSubtitle' => 'Search and browse medications',
             'content' => $content
@@ -1888,7 +1888,7 @@ class DoctorController
             ]);
             
             echo $this->view->render('layouts/main', [
-                'title' => 'Settings - Doctor Dashboard',
+                'title' => 'HClinic / Roaya | Settings',
                 'pageTitle' => 'Settings',
                 'pageSubtitle' => 'Manage system configuration',
                 'content' => $content
@@ -3363,8 +3363,31 @@ class DoctorController
                     case 'json':
                         $result[$key] = json_decode($value, true);
                         break;
+                    case 'string':
+                        // For dashboard_cards_order, parse JSON string if it's valid JSON
+                        if ($key === 'dashboard_cards_order' && is_string($value)) {
+                            $decoded = json_decode($value, true);
+                            if (json_last_error() === JSON_ERROR_NONE) {
+                                $result[$key] = $decoded;
+                            } else {
+                                $result[$key] = $value;
+                            }
+                        } else {
+                            $result[$key] = $value;
+                        }
+                        break;
                     default:
-                        $result[$key] = $value;
+                        // For dashboard_cards_order stored as string, try to parse as JSON
+                        if ($key === 'dashboard_cards_order' && is_string($value)) {
+                            $decoded = json_decode($value, true);
+                            if (json_last_error() === JSON_ERROR_NONE) {
+                                $result[$key] = $decoded;
+                            } else {
+                                $result[$key] = $value;
+                            }
+                        } else {
+                            $result[$key] = $value;
+                        }
                 }
             }
             

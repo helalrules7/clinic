@@ -263,12 +263,70 @@ async function loadNotes() {
                 const widget = createNoteWidget(note);
                 container.appendChild(widget);
                 
+                // Add click listener to widget to hide autocomplete portal when clicking anywhere on widget
+                widget.addEventListener('mousedown', function(event) {
+                    const target = event.target;
+                    // Don't hide if clicking on contenteditable (autocomplete should work there)
+                    const contentEditable = widget.querySelector('.note-widget-content[contenteditable="true"]');
+                    if (contentEditable && (contentEditable.contains(target) || contentEditable === target)) {
+                        return; // Allow autocomplete to work in contenteditable
+                    }
+                    // Hide autocomplete portal when clicking anywhere else on the widget
+                    hideAutocomplete();
+                });
+                
                 // Initialize autocomplete for this contenteditable
                 const contentEditable = widget.querySelector('.note-widget-content[contenteditable="true"]');
                 if (contentEditable) {
+                    // Add click listener to contenteditable to hide autocomplete portal when clicking
+                    // (but not when clicking on autocomplete items or links)
+                    contentEditable.addEventListener('mousedown', function(event) {
+                        const target = event.target;
+                        // Don't hide if clicking on autocomplete items (links, badges) or autocomplete portal
+                        const isAutocompleteItem = target.closest('a[data-type], span[data-type]');
+                        const isAutocompletePortal = target.closest('.note-autocomplete-portal');
+                        
+                        if (!isAutocompleteItem && !isAutocompletePortal) {
+                            // Check if cursor is at a position with trigger symbol
+                            const selection = window.getSelection();
+                            if (selection.rangeCount > 0) {
+                                const range = selection.getRangeAt(0);
+                                const fullRange = document.createRange();
+                                fullRange.selectNodeContents(contentEditable);
+                                fullRange.setEnd(range.startContainer, range.startOffset);
+                                const textBeforeCursor = fullRange.toString();
+                                const match = textBeforeCursor.match(/(@|#|\$)([^\s@#$]*)$/);
+                                
+                                // Only hide if there's no active trigger symbol
+                                if (!match) {
+                                    hideAutocomplete();
+                                }
+                            } else {
+                                hideAutocomplete();
+                            }
+                        }
+                    });
+                    
                     initAutocomplete(contentEditable);
                 }
             });
+            
+            // Add click listener to notes-container to hide autocomplete portal
+            if (container) {
+                container.addEventListener('mousedown', function(event) {
+                    const target = event.target;
+                    // Don't hide if clicking on contenteditable or autocomplete portal
+                    const contentEditable = target.closest('.note-widget-content[contenteditable="true"]');
+                    const isAutocompletePortal = target.closest('.note-autocomplete-portal');
+                    
+                    if (!contentEditable && !isAutocompletePortal) {
+                        hideAutocomplete();
+                    }
+                });
+            }
+            
+            // Initialize drug badge click handlers after loading notes
+            initDrugBadges();
         } else {
             console.error('Error loading notes:', data.message || 'Unknown error');
         }
@@ -904,6 +962,25 @@ function handleContentEditableInput(event) {
         }
     }
     
+    // Check immediately if trigger symbol was deleted (for immediate response)
+    if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0).cloneRange();
+        const fullRange = document.createRange();
+        fullRange.selectNodeContents(contentEditable);
+        fullRange.setEnd(range.startContainer, range.startOffset);
+        const textBeforeCursor = fullRange.toString();
+        const match = textBeforeCursor.match(/(@|#|\$)([^\s@#$]*)$/);
+        
+        // If no trigger symbol found, hide immediately
+        if (!match && autocompletePortal) {
+            const computedStyle = window.getComputedStyle(autocompletePortal);
+            const isVisible = computedStyle.display !== 'none' && computedStyle.visibility !== 'hidden' && computedStyle.opacity !== '0' && !autocompletePortal.classList.contains('hidden');
+            if (isVisible) {
+                hideAutocomplete();
+            }
+        }
+    }
+    
     // Clear previous debounce timer
     if (autocompleteDebounceTimer) {
         clearTimeout(autocompleteDebounceTimer);
@@ -912,7 +989,7 @@ function handleContentEditableInput(event) {
     // Debounce the actual processing
     autocompleteDebounceTimer = setTimeout(() => {
         processAutocompleteInput(event);
-    }, 300);
+    }, 150);
 }
 
 // Process autocomplete input (called after debounce)
@@ -946,11 +1023,23 @@ function processAutocompleteInput(event) {
         const query = match[2];
         
         // Minimum query length: 2 characters for patients and drugs
-        // For appointments: if numeric (ID search), allow 1 char; if text (patient name), require 2 chars
+        // For appointments: if numeric (ID search), allow 1 char; if date format, allow 8+ chars; if text (patient name), require 2 chars
         let minLength = 2;
         if (trigger === '#') {
-            // For appointments: if query is numeric (ID search), allow 1 char; otherwise require 2 chars
-            minLength = /^\d+$/.test(query) ? 1 : 2;
+            // For appointments: check if it's a date format, numeric ID, or patient name
+            if (query.length === 0) {
+                minLength = 0; // Allow showing recent appointments when just typing #
+            } else {
+                // Check if query looks like a date (DD-MM-YYYY, YYYY-MM-DD, DD/MM/YYYY, etc.)
+                const datePattern = /^(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}|\d{2,4}[-\/]\d{1,2}[-\/]\d{1,2})$/;
+                if (datePattern.test(query)) {
+                    minLength = 8; // Minimum date length (DD-MM-YY)
+                } else if (/^\d+$/.test(query)) {
+                    minLength = 1; // Numeric ID search
+                } else {
+                    minLength = 2; // Patient name search
+                }
+            }
         }
         
         if (query.length >= minLength && query !== currentAutocompleteQuery) {
@@ -980,6 +1069,30 @@ function processAutocompleteInput(event) {
 function handleContentEditableKeydown(event) {
     const contentEditable = event.target;
     const selection = window.getSelection();
+    
+    // Handle Backspace/Delete to immediately check if trigger symbols are deleted
+    if (event.key === 'Backspace' || event.key === 'Delete' || event.keyCode === 8 || event.keyCode === 46) {
+        // Use setTimeout to check after the deletion happens
+        setTimeout(() => {
+            if (!selection.rangeCount) {
+                hideAutocomplete();
+                return;
+            }
+            
+            const range = selection.getRangeAt(0).cloneRange();
+            const fullRange = document.createRange();
+            fullRange.selectNodeContents(contentEditable);
+            fullRange.setEnd(range.startContainer, range.startOffset);
+            const textBeforeCursor = fullRange.toString();
+            
+            // Check if trigger symbol still exists
+            const match = textBeforeCursor.match(/(@|#|\$)([^\s@#$]*)$/);
+            if (!match) {
+                // Trigger symbol was deleted - hide autocomplete immediately
+                hideAutocomplete();
+            }
+        }, 0);
+    }
     
     // Check if cursor is inside an autocomplete element (badge/link)
     if (selection.rangeCount > 0) {
@@ -1060,18 +1173,78 @@ async function showAutocomplete(contentEditable, cursorRect, query) {
         document.body.appendChild(autocompletePortal);
     }
     
+    // Remove existing click handler before adding a new one (to avoid duplicates)
+    document.removeEventListener('click', handleClickOutside, true);
+    // Add click outside handler to close autocomplete (use capture phase for early detection)
+    document.addEventListener('click', handleClickOutside, true);
+    
+    // Also add mousedown handler for better responsiveness
+    document.removeEventListener('mousedown', handleClickOutside, true);
+    document.addEventListener('mousedown', handleClickOutside, true);
+    
     // Position the portal near the cursor - use fixed positioning for highest z-index
     const x = cursorRect.left + window.scrollX;
     const y = cursorRect.bottom + window.scrollY + 5;
+    
+    // Remove hidden class first
+    autocompletePortal.classList.remove('hidden');
     
     autocompletePortal.style.position = 'fixed';
     autocompletePortal.style.left = `${x}px`;
     autocompletePortal.style.top = `${y}px`;
     autocompletePortal.style.display = 'block';
+    autocompletePortal.style.visibility = 'visible';
+    autocompletePortal.style.opacity = '1';
     autocompletePortal.style.zIndex = '9999999';
+    autocompletePortal.style.pointerEvents = 'auto';
     
     // Load autocomplete items
     await loadAutocompleteItems(query);
+}
+
+// Handle click outside autocomplete portal
+function handleClickOutside(event) {
+    if (!autocompletePortal) {
+        return;
+    }
+    
+    // Check if portal is visible
+    const computedStyle = window.getComputedStyle(autocompletePortal);
+    const isHidden = computedStyle.display === 'none' || computedStyle.visibility === 'hidden' || computedStyle.opacity === '0' || autocompletePortal.classList.contains('hidden');
+    
+    if (isHidden) {
+        return;
+    }
+    
+    // Check if click is outside portal and contenteditable
+    const target = event.target;
+    const clickedOnPortal = autocompletePortal.contains(target);
+    
+    // Check if clicking on contenteditable
+    let clickedOnContentEditable = false;
+    if (autocompleteTextarea) {
+        clickedOnContentEditable = (
+            autocompleteTextarea.contains(target) || 
+            autocompleteTextarea === target ||
+            autocompleteTextarea.isSameNode(target)
+        );
+        
+        // Also check if target is inside the contenteditable's parent container
+        if (!clickedOnContentEditable) {
+            const contentEditableParent = autocompleteTextarea.closest('.note-widget-content-container, .note-widget-content, .note-widget');
+            if (contentEditableParent && contentEditableParent.contains(target)) {
+                clickedOnContentEditable = true;
+            }
+        }
+    }
+    
+    // Also check if clicking on autocomplete items (they should not close the portal)
+    const clickedOnAutocompleteItem = target.closest('.note-autocomplete-item');
+    
+    // If clicking outside both portal and contenteditable, close the portal
+    if (!clickedOnPortal && !clickedOnContentEditable && !clickedOnAutocompleteItem) {
+        hideAutocomplete();
+    }
 }
 
 // Load autocomplete items based on type
@@ -1091,7 +1264,9 @@ async function loadAutocompleteItems(query) {
             url = `/api/searchDrugsAutocomplete?q=${encodeURIComponent(query)}&limit=10`;
         }
         
-        if (!url) return;
+        if (!url) {
+            return;
+        }
         
         const response = await fetch(url, {
             headers: {
@@ -1100,9 +1275,6 @@ async function loadAutocompleteItems(query) {
         });
         
         if (!response.ok) {
-            if (response.status !== 400 && response.status !== 404) {
-                console.error('Error loading autocomplete:', response.status);
-            }
             return;
         }
         
@@ -1125,8 +1297,26 @@ async function loadAutocompleteItems(query) {
             }));
         } else if (currentAutocompleteType === 'appointment' && data.ok && data.data) {
             items = data.data.map(apt => {
-                const date = new Date(apt.date);
-                const dateStr = date.toLocaleDateString('en-GB');
+                // Handle date properly - apt.date is in 'YYYY-MM-DD' format
+                // Convert to DD-MM-YYYY format
+                let dateStr = '';
+                if (apt.date) {
+                    try {
+                        // Parse date string (YYYY-MM-DD) and convert to DD-MM-YYYY
+                        const dateParts = apt.date.split('-');
+                        if (dateParts.length === 3) {
+                            // Format: DD-MM-YYYY
+                            const day = dateParts[2].padStart(2, '0');
+                            const month = dateParts[1].padStart(2, '0');
+                            const year = dateParts[0];
+                            dateStr = `${day}-${month}-${year}`;
+                        } else {
+                            dateStr = apt.date;
+                        }
+                    } catch (e) {
+                        dateStr = apt.date; // Fallback to original string
+                    }
+                }
                 const timeStr = apt.start_time ? apt.start_time.substring(0, 5) : '';
                 const patientName = escapeHtml(apt.patient_name || 'Unknown');
                 const status = escapeHtml(apt.status || '');
@@ -1155,7 +1345,7 @@ async function loadAutocompleteItems(query) {
             renderAutocompleteItems(items);
         }
     } catch (error) {
-        console.error('Error loading autocomplete items:', error);
+        // Silent error handling
     }
 }
 
@@ -1204,11 +1394,17 @@ function updateAutocompleteSelection() {
 
 // Select autocomplete item
 function selectAutocompleteItem(item) {
-    if (!autocompleteTextarea || !item || !autocompleteCursorPosition) return;
+    if (!autocompleteTextarea || !item || !autocompleteCursorPosition) {
+        hideAutocomplete();
+        return;
+    }
     
     const contentEditable = autocompleteTextarea;
     const range = autocompleteCursorPosition.range;
     const match = autocompleteCursorPosition.match;
+    
+    // Hide autocomplete immediately to prevent any delays
+    hideAutocomplete();
     
     if (match && range) {
         // Delete the trigger and query text
@@ -1239,6 +1435,12 @@ function selectAutocompleteItem(item) {
             replacement.setAttribute('data-type', 'drug');
             replacement.setAttribute('data-id', item.id);
             replacement.innerHTML = `<i class="bi bi-capsule drug-icon"></i>${escapeHtml(item.title)}`;
+            // Add click event to show drug popover
+            replacement.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                showDrugPopover(item.id, item.title, e);
+            });
         }
         
         if (replacement) {
@@ -1345,8 +1547,18 @@ function selectAutocompleteItem(item) {
 // Hide autocomplete
 function hideAutocomplete() {
     if (autocompletePortal) {
+        // Use multiple methods to ensure hiding
         autocompletePortal.style.display = 'none';
+        autocompletePortal.style.visibility = 'hidden';
+        autocompletePortal.style.opacity = '0';
+        autocompletePortal.style.pointerEvents = 'none';
+        autocompletePortal.classList.add('hidden');
     }
+    
+    // Remove click outside handlers
+    document.removeEventListener('click', handleClickOutside, true);
+    document.removeEventListener('mousedown', handleClickOutside, true);
+    
     currentAutocompleteType = null;
     currentAutocompleteQuery = '';
     currentAutocompleteItems = [];
@@ -1354,10 +1566,237 @@ function hideAutocomplete() {
     autocompleteTextarea = null;
 }
 
+// Drug Popover Functions
+let currentDrugPopover = null;
+
+async function showDrugPopover(drugId, drugName, event) {
+    // Close existing popover if any
+    if (currentDrugPopover) {
+        closeDrugPopover();
+    }
+    
+    // Create popover element
+    const popover = document.createElement('div');
+    popover.className = 'note-drug-popover';
+    popover.id = 'noteDrugPopover';
+    
+    // Create backdrop
+    const backdrop = document.createElement('div');
+    backdrop.className = 'note-drug-popover-backdrop';
+    backdrop.addEventListener('click', closeDrugPopover);
+    
+    // Position popover in center of viewport
+    popover.style.position = 'fixed';
+    popover.style.left = '50%';
+    popover.style.top = '50%';
+    popover.style.transform = 'translate(-50%, -50%)';
+    popover.style.zIndex = '10000000';
+    popover.style.maxWidth = '600px';
+    popover.style.width = '90%';
+    popover.style.maxHeight = '80vh';
+    popover.style.overflowY = 'auto';
+    
+    // Show loading state
+    popover.innerHTML = `
+        <div class="note-drug-popover-header">
+            <h5 class="note-drug-popover-title">${escapeHtml(drugName)}</h5>
+            <button type="button" class="note-drug-popover-close" onclick="closeDrugPopover()" aria-label="Close">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="note-drug-popover-body">
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(backdrop);
+    document.body.appendChild(popover);
+    currentDrugPopover = popover;
+    
+    try {
+        // Fetch drug details
+        const response = await fetch(`/api/getDrugDetails?id=${drugId}`);
+        const data = await response.json();
+        
+        if (data.drug) {
+            const drug = data.drug;
+            popover.innerHTML = `
+                <div class="note-drug-popover-header">
+                    <h5 class="note-drug-popover-title">${escapeHtml(drug.drug_name || drugName)}</h5>
+                    <button type="button" class="note-drug-popover-close" onclick="closeDrugPopover()" aria-label="Close">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <div class="note-drug-popover-body">
+                    <div class="mb-3">
+                        <h6 class="text-primary mb-2">Active Ingredient</h6>
+                        <p class="mb-0">${escapeHtml(drug.active_ingredient || 'N/A')}</p>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-2">
+                            <h6 class="text-primary mb-1">Company</h6>
+                            <p class="mb-0">${escapeHtml(drug.Company || 'N/A')}</p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <h6 class="text-primary mb-1">Category</h6>
+                            <p class="mb-0">${escapeHtml(drug.category || 'N/A')}</p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <h6 class="text-primary mb-1">Price</h6>
+                            <p class="text-success fw-bold mb-0">${drug.price ? 'EGP ' + escapeHtml(drug.price) : 'N/A'}</p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <h6 class="text-primary mb-1">Route</h6>
+                            <p class="mb-0">${escapeHtml(drug.administration_route || 'N/A')}</p>
+                        </div>
+                    </div>
+                    
+                    ${drug.GI ? `
+                        <div class="mb-3">
+                            <h6 class="text-primary mb-2">General Information</h6>
+                            <p class="mb-0" style="line-height: 1.6;">${escapeHtml(drug.GI)}</p>
+                        </div>
+                    ` : ''}
+                    
+                    ${drug.SRDE ? `
+                        <div>
+                            <h6 class="text-primary mb-2">Additional Information</h6>
+                            <p class="mb-0" style="line-height: 1.6;">${escapeHtml(drug.SRDE)}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        } else {
+            popover.innerHTML = `
+                <div class="note-drug-popover-header">
+                    <h5 class="note-drug-popover-title">${escapeHtml(drugName)}</h5>
+                    <button type="button" class="note-drug-popover-close" onclick="closeDrugPopover()" aria-label="Close">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <div class="note-drug-popover-body">
+                    <div class="text-center py-4">
+                        <p class="mb-0">Drug information not available</p>
+                    </div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error fetching drug details:', error);
+        popover.innerHTML = `
+            <div class="note-drug-popover-header">
+                <h5 class="note-drug-popover-title">${escapeHtml(drugName)}</h5>
+                <button type="button" class="note-drug-popover-close" onclick="closeDrugPopover()" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="note-drug-popover-body">
+                <div class="text-center py-4">
+                    <p class="text-danger mb-0">Error loading drug information</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function closeDrugPopover() {
+    if (currentDrugPopover) {
+        currentDrugPopover.remove();
+        currentDrugPopover = null;
+    }
+    const backdrop = document.querySelector('.note-drug-popover-backdrop');
+    if (backdrop) {
+        backdrop.remove();
+    }
+}
+
+// Make function global
+window.showDrugPopover = showDrugPopover;
+window.closeDrugPopover = closeDrugPopover;
+
+// Initialize drug badge click handlers
+function initDrugBadges() {
+    document.querySelectorAll('.note-content-drug-badge').forEach(badge => {
+        const drugId = badge.getAttribute('data-id');
+        const drugName = badge.textContent.trim();
+        
+        badge.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (drugId) {
+                showDrugPopover(parseInt(drugId), drugName, e);
+            }
+        });
+    });
+}
+
 // Initialize autocomplete for all note content editables
 function initAllAutocompletes() {
     document.querySelectorAll('.note-widget-content[contenteditable="true"]').forEach(contentEditable => {
+        // Add click listener to contenteditable to hide autocomplete portal when clicking
+        // (but not when clicking on autocomplete items or links)
+        contentEditable.addEventListener('mousedown', function(event) {
+            const target = event.target;
+            // Don't hide if clicking on autocomplete items (links, badges) or autocomplete portal
+            const isAutocompleteItem = target.closest('a[data-type], span[data-type]');
+            const isAutocompletePortal = target.closest('.note-autocomplete-portal');
+            
+            if (!isAutocompleteItem && !isAutocompletePortal) {
+                // Check if cursor is at a position with trigger symbol
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    const fullRange = document.createRange();
+                    fullRange.selectNodeContents(contentEditable);
+                    fullRange.setEnd(range.startContainer, range.startOffset);
+                    const textBeforeCursor = fullRange.toString();
+                    const match = textBeforeCursor.match(/(@|#|\$)([^\s@#$]*)$/);
+                    
+                    // Only hide if there's no active trigger symbol
+                    if (!match) {
+                        hideAutocomplete();
+                    }
+                } else {
+                    hideAutocomplete();
+                }
+            }
+        });
+        
         initAutocomplete(contentEditable);
+    });
+    
+    // Add click listener to notes-container to hide autocomplete portal
+    const notesContainer = document.getElementById('notesContainer');
+    if (notesContainer) {
+        notesContainer.addEventListener('mousedown', function(event) {
+            const target = event.target;
+            // Don't hide if clicking on contenteditable or autocomplete portal
+            const contentEditable = target.closest('.note-widget-content[contenteditable="true"]');
+            const isAutocompletePortal = target.closest('.note-autocomplete-portal');
+            
+            if (!contentEditable && !isAutocompletePortal) {
+                hideAutocomplete();
+            }
+        });
+    }
+    
+    // Add click listener to all note-widget elements to hide autocomplete portal
+    document.querySelectorAll('.note-widget').forEach(widget => {
+        widget.addEventListener('mousedown', function(event) {
+            const target = event.target;
+            // Don't hide if clicking on contenteditable (autocomplete should work there)
+            const contentEditable = widget.querySelector('.note-widget-content[contenteditable="true"]');
+            if (contentEditable && (contentEditable.contains(target) || contentEditable === target)) {
+                return; // Allow autocomplete to work in contenteditable
+            }
+            // Hide autocomplete portal when clicking anywhere else on the widget
+            hideAutocomplete();
+        });
     });
 }
 
@@ -1459,6 +1898,7 @@ const originalLoadNotes = loadNotes;
 loadNotes = async function() {
     await originalLoadNotes();
     setTimeout(initAllAutocompletes, 100);
+    setTimeout(initDrugBadges, 100);
 };
 
 // Show note alert picker dropdown
@@ -1923,3 +2363,17 @@ function resetContainerSize() {
 }
 </script>
 
+<style>
+    .modal-backdrop.show{
+        display: none !important;
+    }
+    body > div.modal-backdrop.fade.show{
+        display: none !important;
+    }
+    .dark .modal-content{
+    background: rgba(11, 18, 32, 0.8) !important;
+    }
+    .modal-content{
+    background: rgba(248, 250, 252, 0.8) !important;
+    }
+</style>

@@ -454,3 +454,17 @@ $isEditing = !empty($consultation);
 </div>
 
 <script src="/app/Views/doctor/assets/js/edit_consultation.js?v=<?= file_exists(__DIR__ . '/assets/js/edit_consultation.js') ? filemtime(__DIR__ . '/assets/js/edit_consultation.js') : time() ?>"></script>
+<style>
+    .modal-backdrop.show{
+        display: none !important;
+    }
+    body > div.modal-backdrop.fade.show{
+        display: none !important;
+    }
+    .dark .modal-content{
+    background: rgba(11, 18, 32, 0.8) !important;
+    }
+    .modal-content{
+    background: rgba(248, 250, 252, 0.8) !important;
+    }
+</style>

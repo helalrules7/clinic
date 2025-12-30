@@ -1,0 +1,284 @@
+<div class="getting-started-content" dir="rtl">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">حالة النظام - لوحة تحكم المسؤول</h1>
+            <p class="hero-subtitle">مراقبة حالة النظام وصحة البنية التحتية</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">الصحة</span>
+                <span class="badge badge-secondary">مسؤول</span>
+                <span class="badge badge-success">مراقبة</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-heart-pulse-line"></i> نظرة عامة على حالة النظام</h2>
+            <p class="section-description">مكون حالة النظام يوفر مراقبة مباشرة للبنية التحتية الحرجة للنظام بما في ذلك اتصال قاعدة البيانات ومساحة التخزين وإصدار PHP والملحقات المطلوبة. يساعد المسؤولين على تحديد مشاكل النظام بسرعة وضمان أداء مثلى.</p>
+        </div>
+
+        <!-- System Health Demo Image -->
+        <div class="system-health-admin-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="system-health-admin-demo-thumbnail" id="system-health-admin-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/system-health-recent-activities-dark.png" alt="عرض توضيحي لحالة النظام" class="system-health-admin-demo-dark" />
+                <img src="/docs/opth/public/assets/images/system-health-recent-activities-light.png" alt="عرض توضيحي لحالة النظام - الوضع الفاتح" class="system-health-admin-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>انقر لعرض الحجم الكامل</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> عرض توضيحي مرئي لواجهة حالة النظام
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-database-line"></i>
+                </div>
+                <h3>حالة قاعدة البيانات</h3>
+                <p>يراقب اتصال قاعدة البيانات ويعرض حالة الاتصال مباشرة، مما يساعد في تحديد مشاكل قاعدة البيانات فوراً.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-hdd-line"></i>
+                </div>
+                <h3>مراقبة التخزين</h3>
+                <p>يتتبع استخدام مساحة القرص مع شريط تقدم مرئي ومؤشر نسبة مئوية، مما ينبه عندما يكون التخزين منخفضاً.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-code-s-slash-line"></i>
+                </div>
+                <h3>PHP والملحقات</h3>
+                <p>يعرض إصدار PHP ويفحص الملحقات المطلوبة، مما يضمن توافق النظام والوظائف.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Component Structure -->
+    <section class="content-section" id="components">
+        <div class="section-header">
+            <h2><i class="ri-layout-grid-line"></i> بنية المكون</h2>
+            <p class="section-description">مكون حالة النظام يتكون من عدة عناصر فحص صحة معروضة في بطاقة.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-heading"></i>
+                </div>
+                <h3>قسم الرأس</h3>
+                <p>الرأس يتضمن:</p>
+                <ul>
+                    <li><strong>العنوان:</strong> "حالة النظام" مع أيقونة نبضات القلب</li>
+                    <li><strong>التنسيق:</strong> رأس بطاقة مع فاصل border-bottom</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-list-line"></i>
+                </div>
+                <h3>عناصر الصحة</h3>
+                <p>كل عنصر فحص صحة يحتوي على:</p>
+                <ul>
+                    <li><strong>الأيقونة:</strong> أيقونة ذات صلة بمقياس الصحة (قاعدة البيانات، التخزين، PHP)</li>
+                    <li><strong>التسمية:</strong> اسم مقياس الصحة</li>
+                    <li><strong>شارة الحالة:</strong> شارة مشفرة بالألوان تظهر الحالة (success، warning، danger)</li>
+                    <li><strong>التفاصيل:</strong> معلومات إضافية (للتخزين: شريط تقدم ونص الاستخدام)</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Health Metrics -->
+    <section class="content-section" id="health-metrics">
+        <div class="section-header">
+            <h2><i class="ri-file-list-line"></i> مقاييس الصحة</h2>
+            <p class="section-description">شرح مفصل لكل مقياس صحة معروض في المكون.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-database-line"></i>
+                </div>
+                <h3>حالة قاعدة البيانات</h3>
+                <p><strong>طريقة الفحص:</strong> ينفذ استعلام <code>SELECT 1</code> لاختبار الاتصال</p>
+                <p><strong>عرض الحالة:</strong></p>
+                <ul>
+                    <li><strong>متصل:</strong> شارة خضراء إذا نجح الاستعلام</li>
+                    <li><strong>خطأ:</strong> شارة حمراء مع رسالة خطأ إذا فشل الاستعلام</li>
+                </ul>
+                <p><strong>الغرض:</strong> يضمن أن اتصال قاعدة البيانات يعمل بشكل صحيح</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-hdd-line"></i>
+                </div>
+                <h3>مساحة التخزين</h3>
+                <p><strong>طريقة الفحص:</strong> يستخدم PHP <code>disk_free_space()</code> و <code>disk_total_space()</code></p>
+                <p><strong>المقاييس المعروضة:</strong></p>
+                <ul>
+                    <li><strong>المساحة المستخدمة:</strong> بايت منسقة (مثلاً "15.51 GB")</li>
+                    <li><strong>المساحة الإجمالية:</strong> بايت منسقة (مثلاً "968.99 GB")</li>
+                    <li><strong>نسبة الاستخدام:</strong> محسوبة ومعروضة كشارة</li>
+                    <li><strong>شريط التقدم:</strong> تمثيل مرئي لاستخدام التخزين</li>
+                </ul>
+                <p><strong>التشفير بالألوان:</strong></p>
+                <ul>
+                    <li><strong>أخضر:</strong> &lt; 80% استخدام (صحي)</li>
+                    <li><strong>أصفر:</strong> 80-90% استخدام (تحذير)</li>
+                    <li><strong>أحمر:</strong> &gt; 90% استخدام (حرج)</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-code-s-slash-line"></i>
+                </div>
+                <h3>إصدار PHP</h3>
+                <p><strong>طريقة الفحص:</strong> يستخدم ثابت PHP <code>PHP_VERSION</code></p>
+                <p><strong>العرض:</strong> يظهر إصدار PHP الحالي (مثلاً "8.2.28")</p>
+                <p><strong>لون الشارة:</strong> شارة Info (سماوي)</p>
+                <p><strong>الغرض:</strong> يساعد في التحقق من توافق إصدار PHP</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-plug-line"></i>
+                </div>
+                <h3>الملحقات المطلوبة</h3>
+                <p><strong>طريقة الفحص:</strong> يستخدم دالة PHP <code>extension_loaded()</code></p>
+                <p><strong>الملحقات المفحوصة:</strong></p>
+                <ul>
+                    <li><strong>pdo:</strong> ملحق PHP Data Objects</li>
+                    <li><strong>pdo_mysql:</strong> برنامج تشغيل PDO MySQL</li>
+                    <li><strong>json:</strong> ترميز/فك ترميز JSON</li>
+                    <li><strong>mbstring:</strong> دوال سلسلة متعددة البايت</li>
+                </ul>
+                <p><strong>عرض الحالة:</strong></p>
+                <ul>
+                    <li><strong>مُحمَّل:</strong> شارة خضراء إذا كان الملحق متاحاً</li>
+                    <li><strong>مفقود:</strong> شارة حمراء إذا لم يتم تحميل الملحق</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="content-section" id="how-it-works">
+        <div class="section-header">
+            <h2><i class="ri-settings-3-line"></i> كيف يعمل</h2>
+            <p class="section-description">مكون حالة النظام ينفذ فحوصات مباشرة ويعرض النتائج مع مؤشرات حالة مشفرة بالألوان.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-server-line"></i>
+                </div>
+                <h3>المعالجة الخلفية</h3>
+                <p>طريقة <code>AdminController::getSystemHealth()</code>:</p>
+                <ul>
+                    <li><strong>فحص قاعدة البيانات:</strong> يحاول <code>$pdo->query('SELECT 1')</code>، يلتقط الاستثناءات</li>
+                    <li><strong>فحص التخزين:</strong> يحسب المساحة الحرة/الإجمالية/المستخدمة من مجلد <code>storage</code></li>
+                    <li><strong>إصدار PHP:</strong> يحصل على ثابت <code>PHP_VERSION</code></li>
+                    <li><strong>فحص الملحقات:</strong> يتكرر عبر الملحقات المطلوبة، يفحص باستخدام <code>extension_loaded()</code></li>
+                    <li><strong>التنسيق:</strong> يستخدم مساعد <code>formatBytes()</code> لعرض التخزين</li>
+                    <li><strong>الإرجاع:</strong> مصفوفة مع مفاتيح 'database'، 'storage'، 'php_version'، 'extensions'</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-code-s-slash-line"></i>
+                </div>
+                <h3>العرض الأمامي</h3>
+                <p>قالب لوحة التحكم يعرض مقاييس الصحة:</p>
+                <ul>
+                    <li><strong>عناصر الصحة:</strong> كل مقياس يستخدم فئة <code>health-item</code></li>
+                    <li><strong>شارات الحالة:</strong> ألوان شارات ديناميكية بناءً على الحالة</li>
+                    <li><strong>شريط التقدم:</strong> شريط تقدم Bootstrap لاستخدام التخزين</li>
+                    <li><strong>تنسيق شرطي:</strong> ألوان الشارات تتغير بناءً على العتبات</li>
+                    <li><strong>متجاوب:</strong> يتكيف مع أحجام الشاشات المختلفة</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>التشفير بالألوان</h3>
+                <p>ألوان شارات الحالة:</p>
+                <ul>
+                    <li><strong>Success (أخضر):</strong> قاعدة البيانات متصلة، التخزين &lt; 80%، الملحقات محملة</li>
+                    <li><strong>Warning (أصفر):</strong> استخدام التخزين 80-90%</li>
+                    <li><strong>Danger (أحمر):</strong> خطأ قاعدة البيانات، التخزين &gt; 90%، الملحقات مفقودة</li>
+                    <li><strong>Info (سماوي):</strong> عرض إصدار PHP</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="content-section" id="features">
+        <div class="section-header">
+            <h2><i class="ri-star-line"></i> الميزات الرئيسية</h2>
+            <p class="section-description">مكون حالة النظام يتضمن عدة ميزات لمراقبة فعالة للنظام.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-time-line"></i>
+                </div>
+                <h3>فحوصات مباشرة</h3>
+                <p>جميع مقاييس الصحة يتم فحصها مباشرة عند كل تحميل للصفحة، مما يضمن عرض حالة النظام الحالية دائماً.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-alert-line"></i>
+                </div>
+                <h3>تنبيهات مرئية</h3>
+                <p>شارات مشفرة بالألوان وأشرطة التقدم توفر ملاحظات بصرية فورية حول حالة صحة النظام.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-info-line"></i>
+                </div>
+                <h3>معلومات مفصلة</h3>
+                <p>كل مقياس يوفر معلومات مفصلة (مبالغ التخزين، إصدار PHP، حالة الملحق) لمراقبة شاملة.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>دعم الثيم</h3>
+                <p>المكون يتكيف تلقائياً مع الثيمات الفاتحة والداكنة، مما يضمن قابلية قراءة مثلى في جميع ظروف العرض.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Image Modal -->
+<div id="system-health-admin-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-system-health-admin-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/system-health-recent-activities-dark.png" alt="عرض توضيحي لحالة النظام - الحجم الكامل" class="system-health-admin-demo-dark" />
+        <img src="/docs/opth/public/assets/images/system-health-recent-activities-light.png" alt="عرض توضيحي لحالة النظام - الوضع الفاتح - الحجم الكامل" class="system-health-admin-demo-light" style="display: none;" />
+    </div>
+</div>

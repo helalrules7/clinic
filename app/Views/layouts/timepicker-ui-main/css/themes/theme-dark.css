@@ -1,0 +1,27 @@
+/* Dark Theme - Matching app style.css colors */
+[data-theme="dark"] {
+    --tp-bg: #0b1220;
+    --tp-surface: #1e293b;
+    --tp-surface-hover: #334155;
+    --tp-input-bg: #1e293b;
+    --tp-text: #f8fafc;
+    --tp-text-secondary: #cbd5e1;
+    --tp-text-disabled: rgba(203, 213, 225, 0.6);
+    --tp-text-type-time: #cbd5e1;
+    --tp-text-icon: #cbd5e1;
+    --tp-am-pm-active: #1e3a5f;
+    --tp-am-pm-text-selected: #38bdf8;
+    --tp-am-pm-text-unselected: #cbd5e1;
+    --tp-primary: #38bdf8;
+    --tp-on-primary: #0b1220;
+    --tp-primary-container: #1e3a5f;
+    --tp-on-primary-container: #38bdf8;
+    --tp-tertiary-container: #1e3a5f;
+    --tp-on-tertiary-container: #38bdf8;
+    --tp-border: #334155;
+    --tp-outline: #38bdf8;
+    --tp-hover-bg: #334155;
+    --tp-backdrop: rgba(0, 0, 0, 0.7);
+    --tp-backdrop-filter: blur(8px);
+    --tp-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}

@@ -1,0 +1,1040 @@
+<div class="getting-started-content" dir="rtl">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">منتدى النقاش</h1>
+            <p class="hero-subtitle">نظام منتدى شامل لمناقشة الحالات ومشاركة المعرفة</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">منتدى</span>
+                <span class="badge badge-secondary">مناقشات</span>
+                <span class="badge badge-success">تعاون</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-discuss-line"></i> نظرة عامة على منتدى النقاش</h2>
+            <p class="section-description">يوفر منتدى النقاش منصة شاملة للأطباء لمناقشة الحالات، مشاركة المعرفة، طرح
+                الأسئلة، والتعاون. ويشمل إنشاء المواضيع، التعليقات المترابطة، الوسوم، المرفقات، التثبيت، تتبع الحلول،
+                ووظائف الإعجاب/عدم الإعجاب.</p>
+        </div>
+
+        <!-- Main Forum Page Demo Image -->
+        <div class="forum-main-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="forum-main-demo-thumbnail" id="forum-main-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/forum-main-new.png" alt="عرض الصفحة الرئيسية للمنتدى"
+                    class="forum-main-demo-dark" />
+                <img src="/docs/opth/public/assets/images/forum-main-new.png"
+                    alt="عرض الصفحة الرئيسية للمنتدى - الثيم الفاتح" class="forum-main-demo-light"
+                    style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>انقر لعرض الحجم الكامل</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> عرض مرئي للصفحة الرئيسية لمنتدى النقاش
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-bar-chart-box-line"></i>
+                </div>
+                <h3>إحصائيات الفئات</h3>
+                <p>تعرض بطاقات الإحصائيات عدد المواضيع لكل فئة (الكل، مناقشة عامة، حالة سريرية، إلخ) للتصفية السريعة.
+                </p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-price-tag-3-line"></i>
+                </div>
+                <h3>أكثر الوسوم شيوعاً</h3>
+                <p>يعرض أكثر الوسوم استخداماً (المرضى، المواعيد، الأدوية، وسوم مخصصة) مع عدد الاستخدامات للتصفية
+                    السريعة.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-pushpin-line"></i>
+                </div>
+                <h3>المواضيع المثبتة</h3>
+                <p>يمكن تثبيت المواضيع المهمة لتظهر في أعلى المنتدى، مما يضمن ظهور المناقشات الحرجة.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-checkbox-circle-line"></i>
+                </div>
+                <h3>وضع علامة كمحلول</h3>
+                <p>يمكن وضع علامة على المواضيع كمحلولة عند الإجابة على الأسئلة أو إغلاق الحالات، مما يساعد في تنظيم
+                    المناقشات.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-attachment-line"></i>
+                </div>
+                <h3>المرفقات</h3>
+                <p>دعم مرفقات الملفات (الصور، PDF، المستندات) في كل من المواضيع والردود لتوثيق شامل للحالات.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-thumb-up-line"></i>
+                </div>
+                <h3>الإعجاب/عدم الإعجاب</h3>
+                <p>يمكن للمستخدمين الإعجاب أو عدم الإعجاب بالمواضيع والتعليقات للتعبير عن الموافقة أو الرفض، مع تحديثات
+                    العدد في الوقت الفعلي.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Forum Page -->
+    <section class="content-section" id="main-page">
+        <div class="section-header">
+            <h2><i class="ri-discuss-line"></i> الصفحة الرئيسية للمنتدى</h2>
+            <p class="section-description">تعرض صفحة المنتدى الرئيسية إحصائيات الفئات وأكثر الوسوم شيوعاً ووظيفة البحث
+                والمواضيع المثبتة والمواضيع العادية مع إمكانيات التصفية والترتيب.</p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-bar-chart-box-line"></i> بطاقات إحصائيات الفئات</h3>
+            <p>في الجزء العلوي من صفحة المنتدى، تعرض بطاقات الإحصائيات عدد المواضيع في كل فئة:</p>
+            <ul>
+                <li><strong>الكل (All):</strong> العدد الكلي لجميع المواضيع</li>
+                <li><strong>مناقشة عامة (General Discussion):</strong> مواضيع في فئة المناقشة العامة</li>
+                <li><strong>حالة سريرية (Clinical Case):</strong> مواضيع متعلقة بالحالات السريرية</li>
+                <li><strong>ملاحظات الإجراء (Procedure Feedback):</strong> مواضيع حول ملاحظات الإجراءات</li>
+                <li><strong>تحديث البروتوكول (Protocol Update):</strong> مواضيع حول تحديثات البروتوكول</li>
+                <li><strong>تفاعل دوائي (Drug Interaction):</strong> مواضيع حول التفاعلات الدوائية</li>
+                <li><strong>استفسار وصفة طبية (Prescription Inquiry):</strong> مواضيع حول استفسارات الوصفات الطبية</li>
+                <li><strong>تفسير مختبر/تصوير (Lab/Imaging Interpretation):</strong> مواضيع حول تفسير المختبر أو التصوير
+                </li>
+            </ul>
+            <p><strong>الوظيفة:</strong> النقر على بطاقة فئة يقوم بتصفية المنتدى لعرض المواضيع في تلك الفئة فقط. يتم
+                تمييز الفئة النشطة.</p>
+            <p><strong>التنفيذ:</strong> يتم تحميل البطاقات عبر نقطة النهاية <code>/api/forum/category-stats</code> ويتم
+                عرضها ديناميكياً بواسطة <code>loadCategoryStats()</code> في <code>forum_index.js</code>.</p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-price-tag-3-line"></i> أكثر الوسوم شيوعاً</h3>
+            <p>أسفل إحصائيات الفئات، يعرض قسم أهم الوسوم الوصفية (Meta Tags) أكثر الوسوم استخداماً عبر جميع المواضيع:
+            </p>
+            <ul>
+                <li><strong>وسوم المرضى (@):</strong> وسوم تربط بمرضى محددين</li>
+                <li><strong>وسوم المواعيد (#):</strong> وسوم تربط بمواعيد محددة</li>
+                <li><strong>وسوم الأدوية ($):</strong> وسوم تربط بأدوية محددة</li>
+                <li><strong>وسوم مخصصة:</strong> وسوم مخصصة معرفة من قبل المستخدم</li>
+            </ul>
+            <p><strong>تنسيق العرض:</strong> يظهر كل وسم اسم الوسم وعدد المواضيع التي تستخدمه (مثال: "Ahmed zien Zien
+                (3)").</p>
+            <p><strong>الوظيفة:</strong> النقر على وسم يقوم بتصفية المنتدى لعرض المواضيع التي تحتوي على ذلك الوسم فقط.
+            </p>
+            <p><strong>التنفيذ:</strong> يتم تحميل الوسوم عبر نقطة النهاية <code>/api/forum/top-meta-tags</code> ويتم
+                عرضها بواسطة <code>loadTopMetaTags()</code> في <code>forum_index.js</code>.</p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-search-line"></i> وظيفة البحث</h3>
+            <p>يتضمن المنتدى شريط بحث قوي مع وظيفة الإكمال التلقائي:</p>
+            <ul>
+                <li><strong>إدخال البحث:</strong> يقع في الجزء العلوي من المنتدى، ويسمح بالبحث حسب عنوان الموضوع أو
+                    المحتوى</li>
+                <li><strong>الإكمال التلقائي:</strong> أثناء الكتابة (حد أدنى حرفين)، تظهر مقترحات تعرض المواضيع
+                    المطابقة مع العنوان، المعاينة، الفئة، والمؤلف</li>
+                <li><strong>التنقل بلوحة المفاتيح:</strong> استخدم مفاتيح الأسهم للتنقل بين المقترحات، Enter للاختيار،
+                    Escape للإغلاق</li>
+                <li><strong>التصفية في الوقت الفعلي:</strong> يتم تصفية المواضيع في الوقت الفعلي أثناء الكتابة (مع تأخير
+                    debounce)</li>
+            </ul>
+            <p><strong>التنفيذ:</strong> تتم معالجة البحث بواسطة دالتي <code>searchTopicsAutocomplete()</code> و
+                <code>loadTopics()</code> في <code>forum_index.js</code>، باستدعاء نقطة النهاية
+                <code>/api/forum/topics?search=...</code>.
+            </p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-add-circle-line"></i> زر مناقشة جديدة</h3>
+            <p>زر بارز "مناقشة جديدة" في شريط الأدوات يفتح نافذة لإنشاء مواضيع جديدة:</p>
+            <ul>
+                <li><strong>الموقع:</strong> أعلى يسار شريط أدوات المنتدى</li>
+                <li><strong>الأيقونة:</strong> أيقونة زائد دائرية مع نص "New Discussion"</li>
+                <li><strong>الإجراء:</strong> يفتح نافذة "إنشاء مناقشة جديدة"</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Pinned Topics -->
+    <section class="content-section" id="pinned-topics">
+        <div class="section-header">
+            <h2><i class="ri-pushpin-line"></i> المواضيع المثبتة</h2>
+            <p class="section-description">تظهر المواضيع المثبتة في الجزء العلوي من المنتدى في قسم مخصص، مما يضمن بقاء
+                المناقشات المهمة مرئية.</p>
+        </div>
+
+        <div class="forum-pinned-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="forum-pinned-demo-thumbnail" id="forum-pinned-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/forum-pinned-new.png" alt="عرض المواضيع المثبتة"
+                    class="forum-pinned-demo-dark" />
+                <img src="/docs/opth/public/assets/images/forum-pinned-new.png"
+                    alt="عرض المواضيع المثبتة - الثيم الفاتح" class="forum-pinned-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>انقر لعرض الحجم الكامل</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> عرض مرئي لقسم المواضيع المثبتة
+            </p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-pushpin-fill"></i> ميزة تثبيت المنشورات</h3>
+            <p><strong>الغرض:</strong> تثبيت المواضيع المهمة لإبقائها في الجزء العلوي من المنتدى لأقصى قدر من الرؤية.
+            </p>
+            <p><strong>كيفية التثبيت:</strong></p>
+            <ul>
+                <li>افتح صفحة أي موضوع</li>
+                <li>انقر فوق زر أيقونة الدبوس في الزاوية العلوية اليسرى من الموضوع</li>
+                <li>سيتم نقل الموضوع إلى قسم "المواضيع المثبتة" في أعلى المنتدى</li>
+            </ul>
+            <p><strong>المؤشر المرئي:</strong> تعرض المواضيع المثبتة أيقونة دبوس (📌) بجوار العنوان وتظهر في قسم
+                "المواضيع المثبتة" المنفصل مع رأس أيقونة دبوس.</p>
+            <p><strong>الصلاحيات:</strong> يمكن لجميع الأطباء تثبيت/إلغاء تثبيت المواضيع (غير مقتصر على المشرفين).</p>
+            <p><strong>التنفيذ:</strong> يتم تبديل حالة التثبيت عبر الدالة <code>togglePin(topicId)</code> في
+                <code>topic.js</code>، باستدعاء نقطة النهاية <code>PUT /api/forum/topics/{id}/pin</code> في
+                <code>ForumController.php</code>.
+            </p>
+            <p><strong>قاعدة البيانات:</strong> تخزن حالة التثبيت في العمود <code>is_pinned</code> في جدول
+                <code>doctor_forum_topics</code>.
+            </p>
+            <p><strong>الترتيب:</strong> يتم ترتيب المواضيع المثبتة حسب
+                <code>is_pinned DESC, last_reply_at DESC, created_at DESC</code> لضمان ظهور العناصر المثبتة أولاً.
+            </p>
+        </div>
+    </section>
+
+    <!-- Regular Topics -->
+    <section class="content-section" id="regular-topics">
+        <div class="section-header">
+            <h2><i class="ri-file-list-line"></i> المواضيع العادية</h2>
+            <p class="section-description">يتم عرض المواضيع العادية (غير المثبتة) أسفل المواضيع المثبتة، مرتبة حسب وقت
+                آخر رد أو وقت الإنشاء.</p>
+        </div>
+
+        <div class="forum-topic-card-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="forum-topic-card-demo-thumbnail" id="forum-topic-card-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/forum-topic-card-new.png" alt="عرض بطاقة الموضوع"
+                    class="forum-topic-card-demo-dark" />
+                <img src="/docs/opth/public/assets/images/forum-topic-card-new.png"
+                    alt="عرض بطاقة الموضوع - الثيم الفاتح" class="forum-topic-card-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>انقر لعرض الحجم الكامل</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> عرض مرئي لبطاقة الموضوع
+            </p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-file-list-3-line"></i> هيكل بطاقة الموضوع</h3>
+            <p>يتم عرض كل موضوع كبطاقة تحتوي على المعلومات التالية:</p>
+            <ul>
+                <li><strong>شارة الفئة:</strong> تظهر فئة الموضوع (مثل "الكل"، "حالة سريرية")</li>
+                <li><strong>شارة محلول:</strong> شارة خضراء "Resolved" إذا تم وضع علامة على الموضوع كمحلول (فقط للمواضيع
+                    غير العامة)</li>
+                <li><strong>العنوان:</strong> عنوان الموضوع قابل للنقر (مع أيقونة دبوس إذا كان مثبتاً)</li>
+                <li><strong>معلومات المؤلف:</strong> اسم المؤلف، الصورة الرمزية، والوقت المنقضي (مثل "By Helal-Testing •
+                    1h ago")</li>
+                <li><strong>آخر رد:</strong> "Last reply 1h ago" إذا كانت هناك ردود</li>
+                <li><strong>معاينة المحتوى:</strong> السطر الأول من محتوى الموضوع</li>
+                <li><strong>رابط قراءة المزيد:</strong> رابط "Read More →..." لعرض الموضوع الكامل</li>
+                <li><strong>الوسوم:</strong> وسوم المريض، الموعد، الدواء، أو وسوم مخصصة معروضة كشارات</li>
+                <li><strong>المقاييس:</strong> عدد المشاهدات (👁️)، عدد الردود (💬)، عدد المرفقات (📎)، الإعجابات (👍)،
+                    عدم الإعجاب (👎)</li>
+                <li><strong>الإجراءات:</strong> أزرار التثبيت، التعديل، الحذف (إذا كان للمستخدم صلاحيات)</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- New Topic Modal -->
+    <section class="content-section" id="new-topic-modal">
+        <div class="section-header">
+            <h2><i class="ri-add-circle-line"></i> نافذة إنشاء مناقشة جديدة</h2>
+            <p class="section-description">توفر نافذة "إنشاء مناقشة جديدة" نموذجاً شاملاً لإنشاء مواضيع منتدى جديدة مع
+                العنوان والفئة والوسوم الوصفية ومحرر المحتوى والمرفقات.</p>
+        </div>
+
+        <div class="forum-new-topic-modal-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="forum-new-topic-modal-demo-thumbnail" id="forum-new-topic-modal-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/forum-modal-new.png" alt="عرض نافذة موضوع جديد"
+                    class="forum-new-topic-modal-demo-dark" />
+                <img src="/docs/opth/public/assets/images/forum-modal-new.png" alt="عرض نافذة موضوع جديد - الثيم الفاتح"
+                    class="forum-new-topic-modal-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>انقر لعرض الحجم الكامل</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> عرض مرئي لنافذة إنشاء مناقشة جديدة
+            </p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-file-text-line"></i> حقول النموذج</h3>
+            <ul>
+                <li><strong>العنوان (Title):</strong> إدخال نصي مطلوب لعنوان المناقشة</li>
+                <li><strong>الفئة (Category):</strong> قائمة منسدلة مع الفئات:
+                    <ul>
+                        <li>الكل (All)</li>
+                        <li>مناقشة عامة (General Discussion)</li>
+                        <li>حالة سريرية (Clinical Case)</li>
+                        <li>ملاحظات الإجراء (Procedure Feedback)</li>
+                        <li>تحديث البروتوكول (Protocol Update)</li>
+                        <li>تفاعل دوائي (Drug Interaction)</li>
+                        <li>استفسار وصفة طبية (Prescription Inquiry)</li>
+                        <li>تفسير مختبر/تصوير (Lab/Imaging Interpretation)</li>
+                    </ul>
+                </li>
+                <li><strong>الوسوم الوصفية (Meta Tags):</strong> نظام وسوم متقدم (انظر قسم الوسوم أدناه)</li>
+                <li><strong>المحتوى (Content):</strong> محرر نصوص غني مع شريط أدوات التنسيق</li>
+                <li><strong>المرفقات:</strong> رفع ملفات للصور، PDF، والمستندات</li>
+            </ul>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-edit-box-line"></i> محرر النصوص الغني</h3>
+            <p>يتضمن محرر المحتوى شريط أدوات مع خيارات التنسيق التالية:</p>
+            <ul>
+                <li><strong>عريض (B):</strong> يجعل النص المحدد عريضاً</li>
+                <li><strong>مائل (I):</strong> يجعل النص المحدد مائلاً</li>
+                <li><strong>تسطير (U):</strong> يضع خطاً تحت النص المحدد</li>
+                <li><strong>محاذاة اليسار:</strong> يحاذي الفقرات لليسار</li>
+                <li><strong>محاذاة الوسط:</strong> يوسط الفقرات</li>
+                <li><strong>محاذاة اليمين:</strong> يحاذي الفقرات لليمين</li>
+                <li><strong>قائمة نقطية:</strong> ينشئ قوائم غير مرتبة (نقطية)</li>
+                <li><strong>قائمة رقمية:</strong> ينشئ قوائم مرتبة (رقمية)</li>
+                <li><strong>إدراج رابط:</strong> يضيف روابط تشعبية للنص المحدد</li>
+            </ul>
+            <p><strong>التنفيذ:</strong> يستخدم <code>document.execCommand()</code> للتنسيق، مع div قابل للتعديل
+                (contenteditable) لمنطقة المحرر.</p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-attachment-line"></i> المرفقات في الموضوع الجديد</h3>
+            <p><strong>أنواع الملفات المدعومة:</strong></p>
+            <ul>
+                <li>الصور: JPEG, JPG, PNG, GIF, WebP</li>
+                <li>المستندات: PDF, DOC, DOCX</li>
+            </ul>
+            <p><strong>حد حجم الملف:</strong> 10 ميجابايت لكل ملف</p>
+            <p><strong>الوظيفة:</strong></p>
+            <ul>
+                <li>انقر زر "Add Files" لاختيار الملفات</li>
+                <li>يتم رفع الملفات فوراً عند اختيارها</li>
+                <li>تظهر صور مصغرة للمعاينة للصور</li>
+                <li>تظهر أيقونات ملفات للمستندات</li>
+                <li>زر الحذف (×) يسمح بإزالة المرفقات قبل الإرسال</li>
+                <li>أشرطة التقدم تظهر حالة الرفع</li>
+            </ul>
+            <p><strong>التنفيذ:</strong> يتم رفع المرفقات عبر <code>POST /api/forum/attachments/upload</code> مع المعلمة
+                <code>type=topic</code>. تخزن الملفات في <code>/storage/uploads/forum/attachments/</code> وترتبط
+                بالمواضيع عبر جدول <code>doctor_forum_topic_attachments</code>.
+            </p>
+        </div>
+    </section>
+
+    <!-- Tag System -->
+    <section class="content-section" id="tags">
+        <div class="section-header">
+            <h2><i class="ri-price-tag-3-line"></i> نظام الوسوم</h2>
+            <p class="section-description">يتضمن المنتدى نظام وسوم وصفية قوي يسمح بربط المواضيع بالمرضى والمواعيد
+                والأدوية أو وسوم مخصصة لتنظيم وتصفية أفضل.</p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-user-line"></i> وسوم المرضى (@)</h3>
+            <p><strong>الاستخدام:</strong> اكتب <code>@</code> متبوعاً باسم المريض للإشارة لمريض.</p>
+            <p><strong>الإكمال التلقائي:</strong> أثناء الكتابة بعد <code>@</code>، تظهر قائمة منسدلة تعرض المرضى
+                المطابقين مع:</p>
+            <ul>
+                <li>اسم المريض (الاسم الأول + اسم العائلة)</li>
+                <li>رقم الهاتف</li>
+            </ul>
+            <p><strong>الاختيار:</strong> استخدم مفاتيح الأسهم للتنقل، Enter أو النقر للاختيار. يظهر الوسم كشارة مع
+                أيقونة شخص.</p>
+            <p><strong>الوظيفة:</strong> وسوم المرضى قابلة للنقر وتربط بصفحة ملف المريض
+                (<code>/doctor/patients/{id}</code>).</p>
+            <p><strong>التنفيذ:</strong> يتم التعامل مع إكمال المريض التلقائي بواسطة <code>initMetaAutocomplete()</code>
+                في <code>forum_index.js</code>، باستدعاء نقطة النهاية <code>/api/patients/search</code>.</p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-calendar-event-line"></i> وسوم المواعيد (#)</h3>
+            <p><strong>الاستخدام:</strong> اكتب <code>#</code> متبوعاً برقم الموعد للإشارة لموعد.</p>
+            <p><strong>الإكمال التلقائي:</strong> أثناء الكتابة بعد <code>#</code>، تظهر قائمة منسدلة تعرض المواعيد
+                المطابقة مع:</p>
+            <ul>
+                <li>رقم الموعد (#ID)</li>
+                <li>اسم المريض</li>
+                <li>التاريخ والوقت</li>
+            </ul>
+            <p><strong>الاختيار:</strong> استخدم مفاتيح الأسهم للتنقل، Enter أو النقر للاختيار. يظهر الوسم كشارة مع
+                أيقونة تقويم.</p>
+            <p><strong>الوظيفة:</strong> وسوم المواعيد قابلة للنقر وتربط بصفحة تفاصيل الموعد
+                (<code>/doctor/appointments/{id}</code>).</p>
+            <p><strong>التنفيذ:</strong> يتم التعامل مع إكمال الموعد التلقائي بواسطة <code>initMetaAutocomplete()</code>
+                في <code>forum_index.js</code>، باستدعاء نقطة النهاية <code>/api/appointments/search</code>.</p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-medicine-bottle-line"></i> وسوم الأدوية ($)</h3>
+            <p><strong>الاستخدام:</strong> اكتب <code>$</code> متبوعاً باسم الدواء للإشارة لدواء.</p>
+            <p><strong>الإكمال التلقائي:</strong> أثناء الكتابة بعد <code>$</code>، تظهر قائمة منسدلة تعرض الأدوية
+                المطابقة من قاعدة بيانات <code>hclinic_drugs</code> مع:</p>
+            <ul>
+                <li>اسم الدواء (FirstName من جدول drugs)</li>
+                <li>معرف الدواء</li>
+            </ul>
+            <p><strong>الاختيار:</strong> استخدم مفاتيح الأسهم للتنقل، Enter أو النقر للاختيار. يظهر الوسم كشارة مع
+                أيقونة كبسولة.</p>
+            <p><strong>الوظيفة:</strong> وسوم الأدوية قابلة للنقر وتفتح نافذة منبثقة تعرض معلومات الدواء عند النقر.</p>
+            <p><strong>التنفيذ:</strong> يتم التعامل مع إكمال الدواء التلقائي بواسطة <code>initMetaAutocomplete()</code>
+                في <code>forum_index.js</code>، باستدعاء نقطة النهاية <code>/api/drugs/search</code>. يتم جلب معلومات
+                الدواء من قاعدة بيانات <code>hclinic_drugs</code>.</p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-price-tag-line"></i> وسوم مخصصة</h3>
+            <p><strong>الاستخدام:</strong> اكتب أي نص مخصص واضغط <code>;</code> (فاصلة منقوطة) أو <code>Enter</code>
+                لإنشاء وسم مخصص.</p>
+            <p><strong>التنسيق:</strong> يمكن أن تحتوي الوسوم المخصصة على أي نص وتظهر مع أيقونة وسم.</p>
+            <p><strong>الوظيفة:</strong> الوسوم المخصصة غير مرتبطة بأي كيان ولكن يمكن استخدامها للتصنيف العام أو الكلمات
+                المفتاحية.</p>
+            <p><strong>التنفيذ:</strong> تخزن الوسوم المخصصة في جدول <code>doctor_forum_tags</code> مع
+                <code>tag_type='custom'</code> ويحتوي <code>tag_name</code> على النص المخصص.
+            </p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-filter-3-line"></i> تصفية الوسوم</h3>
+            <p><strong>قسم أكثر الوسوم شيوعاً:</strong> تظهر الوسوم الأكثر استخداماً في الجزء العلوي من المنتدى مع أعداد
+                الاستخدام.</p>
+            <p><strong>النقر للتصفية:</strong> النقر على أي وسم (مريض، موعد، دواء، أو مخصص) يصفي المنتدى لعرض المواضيع
+                التي تحتوي على ذلك الوسم فقط.</p>
+            <p><strong>التنفيذ:</strong> يتم التعامل مع تصفية الوسوم بواسطة <code>filterByMetaTag()</code> في
+                <code>forum_index.js</code>، الذي يعين <code>currentMetaFilter</code> ويستدعي <code>loadTopics()</code>
+                مع معلمات <code>meta_type</code> و <code>meta_id</code> أو <code>meta_name</code>.
+            </p>
+        </div>
+    </section>
+
+    <!-- Categories -->
+    <section class="content-section" id="categories">
+        <div class="section-header">
+            <h2><i class="ri-folder-line"></i> الفئات</h2>
+            <p class="section-description">يمكن تنظيم المواضيع في فئات لبنية وتصفية أفضل.</p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-folder-2-line"></i> الفئات المتاحة</h3>
+            <ul>
+                <li><strong>الكل (All):</strong> الفئة الافتراضية، تعرض جميع المواضيع</li>
+                <li><strong>مناقشة عامة (General Discussion):</strong> محادثات وأسئلة عامة</li>
+                <li><strong>حالة سريرية (Clinical Case):</strong> مناقشات حول حالات سريرية محددة</li>
+                <li><strong>ملاحظات الإجراء (Procedure Feedback):</strong> ملاحظات وتجارب حول الإجراءات</li>
+                <li><strong>تحديث البروتوكول (Protocol Update):</strong> تحديثات وتغييرات على البروتوكولات</li>
+                <li><strong>تفاعل دوائي (Drug Interaction):</strong> مناقشات حول التفاعلات الدوائية</li>
+                <li><strong>استفسار وصفة طبية (Prescription Inquiry):</strong> أسئلة حول الوصفات الطبية</li>
+                <li><strong>تفسير مختبر/تصوير (Lab/Imaging Interpretation):</strong> مناقشات حول نتائج المختبر أو تفسير
+                    التصوير</li>
+            </ul>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-bar-chart-box-line"></i> إحصائيات الفئات</h3>
+            <p>تعرض بطاقات إحصائيات الفئات في الجزء العلوي من المنتدى عدد المواضيع في كل فئة. النقر على بطاقة فئة يصفي
+                المنتدى لعرض المواضيع في تلك الفئة فقط.</p>
+            <p><strong>التنفيذ:</strong> يتم تحميل الإحصائيات عبر نقطة النهاية <code>/api/forum/category-stats</code>،
+                التي تستعلم جدول <code>doctor_forum_topics</code> مجمعة حسب <code>category</code>.</p>
+        </div>
+    </section>
+
+    <!-- Mark as Resolved -->
+    <section class="content-section" id="mark-resolved">
+        <div class="section-header">
+            <h2><i class="ri-checkbox-circle-line"></i> وضع علامة كمحلول</h2>
+            <p class="section-description">يمكن وضع علامة على المواضيع كمحلولة عند الإجابة على الأسئلة أو إغلاق الحالات،
+                مما يساعد في تنظيم المناقشات وتتبع حالة الإنجاز.</p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-check-double-line"></i> حالة الحل</h3>
+            <p><strong>الغرض:</strong> وضع علامة على المواضيع كمحلولة للإشارة إلى أن الأسئلة قد تمت الإجابة عليها أو أن
+                الحالات قد أغلقت.</p>
+            <p><strong>المؤشر المرئي:</strong> تعرض المواضيع المحلولة شارة خضراء "Resolved" مع أيقونة علامة صح (✔
+                Resolved) بجوار شارة الفئة.</p>
+            <p><strong>القيود:</strong> لا يمكن وضع علامة كمحلول على المواضيع في فئة "مناقشة عامة" (يتم فرض هذا القيد في
+                الخلفية).</p>
+            <p><strong>كيفية وضع علامة كمحلول:</strong></p>
+            <ul>
+                <li>افتح صفحة الموضوع</li>
+                <li>انقر زر "Mark as Resolved" (زر أخضر مع علامة صح)</li>
+                <li>سيعرض الموضوع شارة "Resolved"</li>
+                <li>انقر مرة أخرى لإلغاء وضع العلامة كمحلول</li>
+            </ul>
+            <p><strong>الصلاحيات:</strong> يمكن لجميع الأطباء وضع علامة على المواضيع كمحلولة (غير مقتصر على المشرفين أو
+                مؤلفي الموضوع).</p>
+            <p><strong>التنفيذ:</strong> يتم تبديل الحالة المحلولة عبر الدالة <code>toggleResolved(topicId)</code> في
+                <code>topic.js</code>، باستدعاء نقطة النهاية <code>PUT /api/forum/topics/{id}/resolve</code> في
+                <code>ForumController.php</code>.
+            </p>
+            <p><strong>قاعدة البيانات:</strong> تخزن الحالة المحلولة في العمود <code>is_resolved</code> في جدول
+                <code>doctor_forum_topics</code>.
+            </p>
+        </div>
+    </section>
+
+    <!-- Topic Page -->
+    <section class="content-section" id="topic-page">
+        <div class="section-header">
+            <h2><i class="ri-file-text-line"></i> صفحة الموضوع</h2>
+            <p class="section-description">تعرض صفحة الموضوع محتوى الموضوع الكامل والمرفقات والوسوم وجميع الردود في بنية
+                هرمية مترابطة.</p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-arrow-left-line"></i> زر العودة للمنتدى</h3>
+            <p>يظهر زر "Back to Forum" مع أيقونة سهم يسار في أعلى يسار صفحة الموضوع، مما يسمح بالتنقل السريع للعودة
+                لصفحة المنتدى الرئيسية.</p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-file-text-line"></i> عرض محتوى الموضوع</h3>
+            <p>يعرض قسم محتوى الموضوع:</p>
+            <ul>
+                <li><strong>العنوان:</strong> عنوان الموضوع الكامل</li>
+                <li><strong>معلومات المؤلف:</strong> اسم المؤلف، الصورة الرمزية، و "By [Name] • [time ago]"</li>
+                <li><strong>البيانات الوصفية:</strong> عدد المشاهدات (👁️)، عدد الردود (💬)</li>
+                <li><strong>شارات المريض/الموعد:</strong> إذا كان الموضوع مرتبطاً بمريض أو موعد، تظهر شارات مع روابط
+                </li>
+                <li><strong>المحتوى:</strong> محتوى الموضوع الكامل مع تنسيق النص الغني</li>
+                <li><strong>الوسوم:</strong> جميع الوسوم (مريض، موعد، دواء، مخصص) معروضة كشارات قابلة للنقر</li>
+                <li><strong>المرفقات:</strong> قائمة بالملفات المرفقة مع روابط التحميل</li>
+                <li><strong>الإجراءات:</strong> أزرار التثبيت، التعديل، الحذف (إذا كان للمستخدم صلاحيات)</li>
+            </ul>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-attachment-line"></i> عرض المرفقات</h3>
+            <p>إذا كان الموضوع يحتوي على مرفقات، يتم عرضها في قسم "Attachments" مخصص:</p>
+            <ul>
+                <li><strong>الرأس:</strong> "Attachments (N)" مع أيقونة مشبك ورق</li>
+                <li><strong>قائمة الملفات:</strong> يظهر كل مرفق:
+                    <ul>
+                        <li>أيقونة نوع الملف (صورة، PDF، مستند)</li>
+                        <li>اسم الملف الأصلي</li>
+                        <li>حجم الملف (منسق، مثل "14.07 KB")</li>
+                        <li>أيقونة التحميل</li>
+                    </ul>
+                </li>
+                <li><strong>النقر للتحميل:</strong> النقر على مرفق يقوم بتحميل الملف</li>
+            </ul>
+            <p><strong>التنفيذ:</strong> يتم تحميل المرفقات عبر نقطة النهاية <code>/api/forum/topics/{id}</code>، التي
+                تتضمن مصفوفة <code>attachments</code> في الاستجابة.</p>
+        </div>
+    </section>
+
+    <!-- Comments & Replies -->
+    <section class="content-section" id="comments">
+        <div class="section-header">
+            <h2><i class="ri-chat-3-line"></i> التعليقات والردود</h2>
+            <p class="section-description">يدعم المنتدى التعليقات المترابطة (الردود) مع بنية هرمية، مما يسمح بمناقشات
+                متداخلة وردود على تعليقات محددة.</p>
+        </div>
+
+        <div class="forum-comments-hierarchy-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="forum-comments-hierarchy-demo-thumbnail" id="forum-comments-hierarchy-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/forum-comments-hierarchy-new.png" alt="عرض هرمية التعليقات"
+                    class="forum-comments-hierarchy-demo-dark" />
+                <img src="/docs/opth/public/assets/images/forum-comments-hierarchy-new.png"
+                    alt="عرض هرمية التعليقات - الثيم الفاتح" class="forum-comments-hierarchy-demo-light"
+                    style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>انقر لعرض الحجم الكامل</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> عرض مرئي لهيكل التعليقات الهرمي
+            </p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-node-tree"></i> هرمية التعليقات</h3>
+            <p><strong>الهيكل:</strong> تنظم التعليقات في هيكل شجري حيث:</p>
+            <ul>
+                <li><strong>المنشورات عالية المستوى:</strong> ردود مباشرة على الموضوع (بدون أصل)</li>
+                <li><strong>الردود المتداخلة:</strong> ردود على تعليقات أخرى (لها <code>parent_post_id</code>)</li>
+                <li><strong>الإزاحة المرئية:</strong> الردود المتداخلة مزاحة بصرياً مع سهم منحني يشير لعلاقة الرد</li>
+                <li><strong>مستويات العمق:</strong> يمكن أن تتداخل الردود لعدة مستويات (كلاسات reply, reply-2, reply-3
+                    CSS)</li>
+            </ul>
+            <p><strong>المؤشرات المرئية:</strong></p>
+            <ul>
+                <li>سهم منحني (↪) يظهر على يسار الردود المتداخلة</li>
+                <li>يتم إزاحة الردود بناءً على مستوى عمقها</li>
+                <li>كل مستوى له تنسيق مختلف قليلاً لإظهار الهرمية</li>
+            </ul>
+            <p><strong>التنفيذ:</strong> يتم بناء الهرمية بواسطة الدالة <code>buildPostTree()</code> في
+                <code>ForumController.php</code>، التي تنظم المنشورات حسب <code>parent_post_id</code>. يتم عرض هيكل
+                الشجرة بشكل تكراري بواسطة <code>renderPost(post, depth)</code> في <code>topic.js</code>.
+            </p>
+            <p><strong>قاعدة البيانات:</strong> تخزن المنشورات في جدول <code>doctor_forum_posts</code> مع عمود
+                <code>parent_post_id</code>. إذا كان <code>parent_post_id</code> NULL، فالمنشور رد عالي المستوى. وإلا،
+                فهو رد على المنشور بذلك المعرف.
+            </p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-chat-1-line"></i> نشر الردود</h3>
+            <p><strong>نموذج الرد:</strong> يظهر نموذج "Post a Reply" في أسفل صفحة الموضوع مع:</p>
+            <ul>
+                <li><strong>محرر نصوص غني:</strong> نفس شريط أدوات التنسيق كإنشاء الموضوع</li>
+                <li><strong>منطقة المحتوى:</strong> div قابل للتعديل للكتابة</li>
+                <li><strong>رفع الصور:</strong> زر "Add Images" لرفع الصور</li>
+                <li><strong>مرفقات الملفات:</strong> زر "Add Files" لرفع المستندات</li>
+                <li><strong>زر نشر الرد:</strong> يرسل الرد</li>
+            </ul>
+            <p><strong>الرد على تعليقات محددة:</strong></p>
+            <ul>
+                <li>انقر زر "Reply" على أي تعليق</li>
+                <li>يظهر نموذج الرد مع قسم مميز يظهر التعليق الأصلي</li>
+                <li>اكتب ردك وانقر "Post Reply"</li>
+                <li>سيظهر ردك متداخلاً تحت التعليق الأصلي</li>
+            </ul>
+            <p><strong>التنفيذ:</strong> يتم إنشاء الردود عبر الدالة <code>submitReply()</code> في
+                <code>topic.js</code>، باستدعاء <code>POST /api/forum/posts</code> مع <code>topic_id</code>،
+                <code>parent_post_id</code> (إذا كان رداً على تعليق)، و <code>content</code>.
+            </p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-thumb-up-line"></i> الإعجاب وعدم الإعجاب على التعليقات</h3>
+            <p><strong>الوظيفة:</strong> كل تعليق (رد) له أزرار إعجاب وعدم إعجاب:</p>
+            <ul>
+                <li><strong>زر الإعجاب (👍):</strong> أيقونة إبهام لأعلى مع عدد الإعجابات</li>
+                <li><strong>زر عدم الإعجاب (👎):</strong> أيقونة إبهام لأسفل مع عدد عدم الإعجاب</li>
+                <li><strong>الحالة النشطة:</strong> إذا أعجبت بتعليق، يتم تمييز رز الإعجاب (أخضر). إذا لم يعجبك، يتم
+                    تمييز زر عدم الإعجاب (أحمر)</li>
+                <li><strong>سلوك التبديل:</strong> النقر على إعجاب عند الإعجاب مسبقاً يزيل الإعجاب. وتعمل المثل لعدم
+                    الإعجاب. النقر على إعجاب عند عدم الإعجاب يبدلها لإعجاب (والعكس)</li>
+            </ul>
+            <p><strong>تحديثات فورية:</strong> يتم تحديث أعداد الإعجاب/عدم الإعجاب فوراً بعد النقر، دون تحديث الصفحة.
+            </p>
+            <p><strong>التنفيذ:</strong> يتم التعامل مع الإعجابات/عدم الإعجاب بواسطة الدالة
+                <code>toggleLike(postId, isLike)</code> في <code>topic.js</code>.
+            </p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-edit-line"></i> تعديل التعليقات</h3>
+            <p><strong>الصلاحيات:</strong> يمكن فقط لمؤلف التعليق أو المشرفين تعديل التعليقات.</p>
+            <p><strong>كيفية التعديل:</strong></p>
+            <ul>
+                <li>انقر أيقونة التعديل (قلم) في الزاوية العلوية اليمنى من تعليقك</li>
+                <li>يصبح محتوى التعليق قابلاً للتعديل</li>
+                <li>قم بإجراء تغييراتك</li>
+                <li>انقر "Save" لحفظ التغييرات أو "Cancel" للإلغاء</li>
+            </ul>
+            <p><strong>التنفيذ:</strong> يتم التعامل مع التعديل بواسطة الدالة <code>editPost(postId)</code> في
+                <code>topic.js</code>.
+            </p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-delete-bin-line"></i> حذف التعليقات</h3>
+            <p><strong>الصلاحيات:</strong> يمكن فقط لمؤلف التعليق أو المشرفين حذف التعليقات.</p>
+            <p><strong>كيفية الحذف:</strong></p>
+            <ul>
+                <li>انقر أيقونة الحذف (سلة مهملات) في الزاوية العلوية اليمنى من تعليقك</li>
+                <li>يظهر تمهيد للتأكيد</li>
+                <li>أكد الحذف</li>
+                <li>تتم إزالة التعليق (ملاحظة: إذا كان للتعليق ردود، قد يتم حذف تلك الردود أيضاً أو التعامل معها بناءً
+                    على قواعد التتابع)</li>
+            </ul>
+            <p><strong>التنفيذ:</strong> يتم التعامل مع الحذف بواسطة الدالتين <code>deletePostConfirm(postId)</code> و
+                <code>deletePost(postId)</code> في <code>topic.js</code>.
+            </p>
+        </div>
+    </section>
+
+    <!-- Like/Dislike Topics -->
+    <section class="content-section" id="like-dislike-topics">
+        <div class="section-header">
+            <h2><i class="ri-thumb-up-line"></i> الإعجاب وعدم الإعجاب على المواضيع</h2>
+            <p class="section-description">يمكن الإعجاب بالمواضيع أو عدم الإعجاب بها للتعبير عن الموافقة أو الرفض مع
+                المناقشة.</p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-thumb-up-fill"></i> وظيفة الإعجاب/عدم الإعجاب للمواضيع</h3>
+            <p><strong>العرض:</strong> تظهر بطاقات المواضيع أعداد الإعجاب وعدم الإعجاب مع أيقونات (👍 للإعجاب، 👎 لعدم
+                الإعجاب).</p>
+            <p><strong>الوظيفة:</strong> مشابهة لإعجابات/عدم إعجاب التعليقات:</p>
+            <ul>
+                <li>انقر إعجاب للإعجاب بالموضوع (أو إزالة الإعجاب إذا تم الإعجاب مسبقاً)</li>
+                <li>انقر عدم إعجاب لعدم الإعجاب بالموضوع (أو إزالة عدم الإعجاب إذا تم عدم الإعجاب مسبقاً)</li>
+                <li>التبديل بين الإعجاب وعدم الإعجاب مدعوم</li>
+            </ul>
+            <p><strong>التنفيذ:</strong> يتم التعامل مع إعجابات/عدم إعجاب المواضيع بواسطة الدالة
+                <code>toggleTopicLike(topicId, isLike)</code> في <code>forum_index.js</code> أو <code>topic.js</code>.
+            </p>
+        </div>
+    </section>
+
+    <!-- Edit Function -->
+    <section class="content-section" id="edit-function">
+        <div class="section-header">
+            <h2><i class="ri-edit-line"></i> وظيفة التحرير</h2>
+            <p class="section-description">يمكن تحرير المواضيع من قبل مؤلفيها أو المشرفين لتحديث المحتوى والوسوم والفئة
+                أو المرفقات.</p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-edit-box-line"></i> تعديل الموضوع</h3>
+            <p><strong>الصلاحيات:</strong> يمكن فقط لمؤلف الموضوع أو المشرفين تعديل المواضيع.</p>
+            <p><strong>كيفية التعديل:</strong></p>
+            <ul>
+                <li>افتح صفحة الموضوع</li>
+                <li>انقر أيقونة التعديل (قلم) في الزاوية العلوية اليمنى</li>
+                <li>تظهر نافذة تعديل بنفس حقول نموذج "Create New Discussion"</li>
+                <li>عدل العنوان، الفئة، المحتوى، الوسوم، أو المرفقات</li>
+                <li>انقر "Save Changes" للتحديث أو "Cancel" للإلغاء</li>
+            </ul>
+            <p><strong>الحقول القابلة للتعديل:</strong></p>
+            <ul>
+                <li>العنوان</li>
+                <li>الفئة</li>
+                <li>المحتوى (نص غني)</li>
+                <li>الوسوم الوصفية (إضافة/إزالة وسوم)</li>
+                <li>المرفقات (إضافة/إزالة ملفات)</li>
+                <li>حالة التثبيت (للمشرفين فقط، أو كل الأطباء إذا مكن)</li>
+            </ul>
+            <p><strong>التنفيذ:</strong> يتم التعامل مع التعديل بواسطة الدالة <code>editTopic(topicId)</code> في
+                <code>topic.js</code>.
+            </p>
+        </div>
+    </section>
+
+    <!-- Delete Function -->
+    <section class="content-section" id="delete-function">
+        <div class="section-header">
+            <h2><i class="ri-delete-bin-line"></i> وظيفة الحذف</h2>
+            <p class="section-description">يمكن حذف المواضيع من قبل مؤلفيها أو المشرفين. الحذف دائم ويزيل الموضوع وجميع
+                البيانات المرتبطة.</p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-delete-bin-fill"></i> حذف الموضوع</h3>
+            <p><strong>الصلاحيات:</strong> يمكن فقط لمؤلف الموضوع أو المشرفين حذف المواضيع.</p>
+            <p><strong>كيفية الحذف:</strong></p>
+            <ul>
+                <li>افتح صفحة الموضوع</li>
+                <li>انقر أيقونة الحذف (سلة مهملات) في الزاوية العلوية اليمنى</li>
+                <li>تظهر نافذة تأكيد تحذر من أن الحذف دائم</li>
+                <li>أكد الحذف</li>
+                <li>يتم حذف الموضوع وجميع ردوده، مرفقاته، والبيانات المرتبطة</li>
+                <li>يتم إعادة توجيهك لصفحة المنتدى الرئيسية</li>
+            </ul>
+            <p><strong>تحذير:</strong> الحذف دائم ولا يمكن التراجع عنه. سيتم حذف جميع الردود، المرفقات، الصور،
+                والإعجابات المرتبطة بالموضوع أيضاً.</p>
+            <p><strong>التنفيذ:</strong> يتم التعامل مع الحذف بواسطة الدالتين <code>deleteTopicConfirm(topicId)</code> و
+                <code>deleteTopic(topicId)</code> في <code>topic.js</code>.
+            </p>
+        </div>
+    </section>
+
+    <!-- Technical Implementation -->
+    <section class="content-section" id="technical">
+        <div class="section-header">
+            <h2><i class="ri-code-s-slash-line"></i> التنفيذ التقني</h2>
+            <p class="section-description">تفاصيل تقنية حول تنفيذ منتدى النقاش، بما في ذلك الملفات الرئيسية، نقاط نهاية
+                API، هيكل قاعدة البيانات، ودوال جافا سكريبت.</p>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-file-code-line"></i> الملفات الرئيسية</h3>
+            <ul>
+                <li><strong>Controller:</strong> <code>@app/Controllers/ForumController.php</code> - يعالج كل نقاط نهاية
+                    API للمنتدى ومنطق العمل</li>
+                <li><strong>Main Page View:</strong> <code>@app/Views/doctor/forum/index.php</code> - يعرض صفحة المنتدى
+                    الرئيسية مع الفئات، الوسوم، والبحث</li>
+                <li><strong>Topic Page View:</strong> <code>@app/Views/doctor/forum/topic.php</code> - يعرض صفحات
+                    المواضيع الفردية مع الردود</li>
+                <li><strong>Main Page JavaScript:</strong> <code>@app/Views/doctor/assets/js/forum_index.js</code> -
+                    يعالج تفاعلات الصفحة الرئيسية للمنتدى</li>
+                <li><strong>Topic Page JavaScript:</strong> <code>@app/Views/doctor/assets/js/topic.js</code> - يعالج
+                    تفاعلات صفحة الموضوع، الردود، والإعجابات</li>
+            </ul>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-router-line"></i> نقاط نهاية API</h3>
+            <div class="table-container">
+                <table class="tech-table">
+                    <thead>
+                        <tr>
+                            <th>النوع</th>
+                            <th>المسار</th>
+                            <th>الوصف</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge badge-info">GET</span></td>
+                            <td>/api/forum/topics</td>
+                            <td>جلب كل المواضيع</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-info">GET</span></td>
+                            <td>/api/forum/topics/{id}</td>
+                            <td>جلب موضوع واحد</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-success">POST</span></td>
+                            <td>/api/forum/topics</td>
+                            <td>إنشاء موضوع جديد</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-warning">PUT</span></td>
+                            <td>/api/forum/topics/{id}</td>
+                            <td>تحديث موضوع</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-danger">DELETE</span></td>
+                            <td>/api/forum/topics/{id}</td>
+                            <td>حذف موضوع</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-success">POST</span></td>
+                            <td>/api/forum/topics/{id}/like</td>
+                            <td>الإعجاب بموضوع</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-success">POST</span></td>
+                            <td>/api/forum/topics/{id}/dislike</td>
+                            <td>عدم الإعجاب بموضوع</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-warning">PUT</span></td>
+                            <td>/api/forum/topics/{id}/pin</td>
+                            <td>تبديل حالة التثبيت</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-warning">PUT</span></td>
+                            <td>/api/forum/topics/{id}/resolve</td>
+                            <td>تبديل حالة الحل</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-info">GET</span></td>
+                            <td>/api/forum/posts/topic/{topicId}</td>
+                            <td>جلب المنشورات (هيكل شجري)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-success">POST</span></td>
+                            <td>/api/forum/posts</td>
+                            <td>إنشاء منشور (رد)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-warning">PUT</span></td>
+                            <td>/api/forum/posts/{id}</td>
+                            <td>تحديث منشور</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-danger">DELETE</span></td>
+                            <td>/api/forum/posts/{id}</td>
+                            <td>حذف منشور</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-database-2-line"></i> جداول قاعدة البيانات</h3>
+            <div class="table-container">
+                <table class="tech-table">
+                    <thead>
+                        <tr>
+                            <th>الجدول</th>
+                            <th>الوصف</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>doctor_forum_topics</code></td>
+                            <td>يخزن المواضيع والبيانات الأساسية</td>
+                        </tr>
+                        <tr>
+                            <td><code>doctor_forum_posts</code></td>
+                            <td>يخزن الردود والتعليقات</td>
+                        </tr>
+                        <tr>
+                            <td><code>doctor_forum_tags</code></td>
+                            <td>يخزن الوسوم المرتبطة بالمواضيع</td>
+                        </tr>
+                        <tr>
+                            <td><code>doctor_forum_topic_likes</code></td>
+                            <td>يخزن إعجابات المواضيع حسب المستخدم</td>
+                        </tr>
+                        <tr>
+                            <td><code>doctor_forum_post_likes</code></td>
+                            <td>يخزن إعجابات المنشورات حسب المستخدم</td>
+                        </tr>
+                        <tr>
+                            <td><code>doctor_forum_topic_attachments</code></td>
+                            <td>يخزن ملفات مرفقات المواضيع</td>
+                        </tr>
+                        <tr>
+                            <td><code>doctor_forum_post_attachments</code></td>
+                            <td>يخزن ملفات مرفقات المنشورات</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="feature-detail">
+            <h3><i class="ri-javascript-line"></i> دوال JavaScript الرئيسية</h3>
+            <p><strong>forum_index.js</strong></p>
+            <pre><code class="language-javascript">
+// تحميل المواضيع
+function loadTopics(page = 1) {
+    // ... logic to fetch and render topics
+}
+
+// تحميل الإحصائيات
+function loadCategoryStats() {
+    // ... fetch category counts
+}
+
+// البحث
+function searchTopicsAutocomplete(query) {
+    // ... handle search input
+}
+            </code></pre>
+
+            <p><strong>topic.js</strong></p>
+            <pre><code class="language-javascript">
+// عرض الهيكل الشجري للتعليقات
+function renderPost(post, depth = 0) {
+    const isNested = depth > 0;
+    // ... render post HTML
+    if (post.replies) {
+        post.replies.forEach(reply => renderPost(reply, depth + 1));
+    }
+}
+
+// إرسال رد
+function submitReply(topicId, content, parentId = null) {
+    // ... post API call
+}
+            </code></pre>
+        </div>
+    </section>
+</div>
+
+
+<!-- Image Modals for Forum -->
+<div id="forum-main-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-forum-main-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/forum-main-new.png" alt="Forum Main Page Demo - Full Size"
+            class="forum-main-demo-dark" />
+        <img src="/docs/opth/public/assets/images/forum-main-new.png"
+            alt="Forum Main Page Demo - Light Theme - Full Size" class="forum-main-demo-light" style="display: none;" />
+    </div>
+</div>
+
+<div id="forum-pinned-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-forum-pinned-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/forum-pinned-new.png" alt="Pinned Topics Demo - Full Size"
+            class="forum-pinned-demo-dark" />
+        <img src="/docs/opth/public/assets/images/forum-pinned-new.png"
+            alt="Pinned Topics Demo - Light Theme - Full Size" class="forum-pinned-demo-light" style="display: none;" />
+    </div>
+</div>
+
+<div id="forum-topic-card-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-forum-topic-card-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/forum-topic-card-new.png" alt="Topic Card Demo - Full Size"
+            class="forum-topic-card-demo-dark" />
+        <img src="/docs/opth/public/assets/images/forum-topic-card-new.png"
+            alt="Topic Card Demo - Light Theme - Full Size" class="forum-topic-card-demo-light"
+            style="display: none;" />
+    </div>
+</div>
+
+<div id="forum-new-topic-modal-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-forum-new-topic-modal-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/forum-new-topic-modal-new.png" alt="New Topic Modal Demo - Full Size"
+            class="forum-new-topic-modal-demo-dark" />
+        <img src="/docs/opth/public/assets/images/forum-new-topic-modal-new.png"
+            alt="New Topic Modal Demo - Light Theme - Full Size" class="forum-new-topic-modal-demo-light"
+            style="display: none;" />
+    </div>
+</div>
+
+<div id="forum-topic-page-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-forum-topic-page-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/forum-topic-page-new.png" alt="Topic Page Demo - Full Size"
+            class="forum-topic-page-demo-dark" />
+        <img src="/docs/opth/public/assets/images/forum-topic-page-new.png"
+            alt="Topic Page Demo - Light Theme - Full Size" class="forum-topic-page-demo-light"
+            style="display: none;" />
+    </div>
+</div>
+
+<div id="forum-comments-hierarchy-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-forum-comments-hierarchy-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/forum-comments-hierarchy-new.png"
+            alt="Comments Hierarchy Demo - Full Size" class="forum-comments-hierarchy-demo-dark" />
+        <img src="/docs/opth/public/assets/images/forum-comments-hierarchy-new.png"
+            alt="Comments Hierarchy Demo - Light Theme - Full Size" class="forum-comments-hierarchy-demo-light"
+            style="display: none;" />
+    </div>
+</div>
+<!-- Similar modals for other images (pinned, topic card, new topic, topic page, comments) would go here -->

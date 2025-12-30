@@ -320,13 +320,40 @@ class AlertController
     {
         header('Content-Type: application/json');
         
+        try {
         $user = $this->auth->user();
+            if (!$user) {
+                http_response_code(401);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ]);
+                return;
+            }
+            
         $doctorId = $this->getDoctorId($user['id']);
         
         $date = $_GET['date'] ?? date('Y-m-d');
         $time = $_GET['time'] ?? date('H:i:s');
+            
+            // Log for debugging
+            error_log("getActiveAlerts - userId: " . $user['id'] . ", doctorId: $doctorId, date: $date, time: $time");
         
         $alerts = $this->alertModel->getActiveAlertsForTime($doctorId, $date, $time);
+            
+            // Log results with more details
+            error_log("getActiveAlerts - Found " . count($alerts) . " alerts for doctorId: $doctorId");
+            if (count($alerts) == 0) {
+                // Check if there are alerts for this doctor on this date
+                $db = Database::getInstance()->getConnection();
+                $checkStmt = $db->prepare("SELECT COUNT(*) as count FROM alerts WHERE doctor_id = ? AND alert_date = ? AND is_active = 1 AND is_dismissed = 0");
+                $checkStmt->execute([$doctorId, $date]);
+                $checkResult = $checkStmt->fetch(\PDO::FETCH_ASSOC);
+                error_log("getActiveAlerts - Total active alerts for doctorId $doctorId on $date: " . ($checkResult['count'] ?? 0));
+            }
+            
+            // Log results
+            error_log("getActiveAlerts - Found " . count($alerts) . " alerts");
         
         // Send push notifications for new alerts
         if (!empty($alerts)) {
@@ -334,8 +361,13 @@ class AlertController
                 // Check if this alert was already sent (to avoid duplicates)
                 $alertKey = 'push_sent_' . $alert['id'] . '_' . $alert['alert_date'] . '_' . $alert['alert_time'];
                 if (!isset($_SESSION[$alertKey])) {
+                        try {
                     $this->sendPushNotificationForAlert($user['id'], $alert);
                     $_SESSION[$alertKey] = true;
+                        } catch (\Exception $e) {
+                            // Continue even if push notification fails
+                            error_log('Push notification error: ' . $e->getMessage());
+                        }
                 }
             }
         }
@@ -344,6 +376,15 @@ class AlertController
             'success' => true,
             'alerts' => $alerts
         ]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            error_log('Error in getActiveAlerts: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'System error. Please try again.',
+                'error' => $e->getMessage()
+            ]);
+        }
     }
     
     /**
@@ -413,6 +454,60 @@ class AlertController
             echo json_encode([
                 'success' => false,
                 'message' => 'Failed to dismiss alert'
+            ]);
+        }
+    }
+
+    /**
+     * Toggle alert active status (activate/deactivate)
+     */
+    public function toggleStatus($id)
+    {
+        header('Content-Type: application/json');
+        
+        $user = $this->auth->user();
+        $doctorId = $this->getDoctorId($user['id']);
+        
+        $alertId = $id ?? null;
+        
+        if (!$alertId) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Alert ID is required'
+            ]);
+            return;
+        }
+        
+        // Get current alert status
+        $alert = $this->alertModel->getById($alertId, $doctorId);
+        
+        if (!$alert) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Alert not found'
+            ]);
+            return;
+        }
+        
+        // Toggle is_active status
+        $newStatus = $alert['is_active'] == 1 ? 0 : 1;
+        
+        $updateData = [
+            'is_active' => $newStatus
+        ];
+        
+        $result = $this->alertModel->update($alertId, $updateData, $doctorId);
+        
+        if ($result) {
+            echo json_encode([
+                'success' => true,
+                'message' => $newStatus == 1 ? 'Alert activated' : 'Alert deactivated',
+                'is_active' => $newStatus
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to update alert status'
             ]);
         }
     }
@@ -638,9 +733,12 @@ class AlertController
             $stmt = $db->prepare("SELECT id FROM doctors WHERE user_id = :user_id LIMIT 1");
             $stmt->execute([':user_id' => $userId]);
             $doctor = $stmt->fetch();
-            return $doctor ? $doctor['id'] : $userId;
+            $doctorId = $doctor ? $doctor['id'] : $userId;
+            error_log("getDoctorId - userId: $userId, doctorId: $doctorId");
+            return $doctorId;
         } catch (\Exception $e) {
             // If doctors table doesn't exist or query fails, use user_id directly
+            error_log("getDoctorId - Exception: " . $e->getMessage() . ", using userId: $userId");
             return $userId;
         }
     }

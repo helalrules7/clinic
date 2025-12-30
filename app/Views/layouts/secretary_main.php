@@ -159,7 +159,7 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="text-muted">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v7.0.6
+                        HClinic / Roaya Clinic v7.2.8
                     </div>
                     <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none" style="color: var(--accent);">Ahmed Helal</a></div>
                 </small>
@@ -695,6 +695,47 @@
             let warningShown = false;
             const warningThreshold = 30; // Show warning 30 seconds before expiry
             const checkInterval = 5000; // Check every 5 seconds
+            
+            // Check session on page load (especially for settings page)
+            function checkSessionOnLoad() {
+                // Only check if we're on a protected page (not login page)
+                if (window.location.pathname.includes('/login') || window.location.pathname.includes('/logout')) {
+                    return;
+                }
+                
+                fetch('/api/auth/session-time', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        // Session expired or not authenticated
+                        window.location.href = '/login?expired=1';
+                        return;
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && (!data.success || data.remaining <= 0)) {
+                        // Session expired or not authenticated
+                        window.location.href = '/login?expired=1';
+                    }
+                })
+                .catch(error => {
+                    // Silent error handling for network errors
+                });
+            }
+            
+            // Run check on page load
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', checkSessionOnLoad);
+            } else {
+                checkSessionOnLoad();
+            }
             
             function checkSessionTime() {
                 fetch('/api/auth/session-time', {

@@ -763,3 +763,21 @@
     };
 </script>
 <script src="/app/Views/doctor/assets/js/patients.js?v=<?= file_exists(__DIR__ . '/assets/js/patients.js') ? filemtime(__DIR__ . '/assets/js/patients.js') : time() ?>"></script>
+<style>
+    .modal-backdrop.show{
+        display: none !important;
+    }
+    body > div.modal-backdrop.fade.show{
+        display: none !important;
+    }
+    .dark .modal-content{
+    background: rgba(11, 18, 32, 0.8) !important;
+    }
+    .modal-content{
+    background: rgba(248, 250, 252, 0.8) !important;
+    }
+.dark .btn-outline-primary, .btn-outline-primary, .dark .btn-outline-success, .btn-outline-success, .dark .btn-outline-danger, .btn-outline-danger{
+color: white !important;
+margin-bottom: 5px !important;
+}
+</style>

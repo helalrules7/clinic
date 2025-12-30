@@ -1,0 +1,278 @@
+<div class="getting-started-content">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Missed Appointments</h1>
+            <p class="hero-subtitle">Track and Manage Appointments That Were Not Completed</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">Appointments</span>
+                <span class="badge badge-secondary">Tracking</span>
+                <span class="badge badge-success">Management</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-calendar-close-line"></i> Missed Appointments Overview</h2>
+            <p class="section-description">The Missed Appointments component displays all appointments from previous days that were not completed. This helps doctors track appointments that need follow-up, rescheduling, or completion marking.</p>
+        </div>
+
+        <!-- Missed Appointments Demo Image -->
+        <div class="missed-appointments-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="missed-appointments-demo-thumbnail" id="missed-appointments-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/missed-appointments-dark.png" alt="Missed Appointments Demo" class="missed-appointments-demo-dark" />
+                <img src="/docs/opth/public/assets/images/missed-appointments-light.png" alt="Missed Appointments Demo - Light Theme" class="missed-appointments-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>Click to view full size</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> Visual demonstration of the Missed Appointments interface
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-close-line"></i>
+                </div>
+                <h3>Missed Tracking</h3>
+                <p>Automatically identifies appointments from previous days that have status other than 'Completed' or 'Cancelled', helping you track follow-ups.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-list-line"></i>
+                </div>
+                <h3>Pagination</h3>
+                <p>Supports pagination with customizable items per page (5, 10, 20, 50), making it easy to navigate through large lists of missed appointments.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-checkbox-circle-line"></i>
+                </div>
+                <h3>Quick Actions</h3>
+                <p>Provides quick action buttons to mark appointments as completed, view appointment details, or access patient profiles.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Component Structure -->
+    <section class="content-section" id="components">
+        <div class="section-header">
+            <h2><i class="ri-layout-grid-line"></i> Component Structure</h2>
+            <p class="section-description">The Missed Appointments component consists of a header with controls and a paginated list of appointments.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-heading"></i>
+                </div>
+                <h3>Header Section</h3>
+                <p>The header includes:</p>
+                <ul>
+                    <li><strong>Title:</strong> "Missed Appointments" with warning triangle icon</li>
+                    <li><strong>Per Page Selector:</strong> Dropdown to select items per page (5, 10, 20, 50)</li>
+                    <li><strong>Card Controls:</strong> Move up/down buttons and drag handle for reordering</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-list-line"></i>
+                </div>
+                <h3>Appointment List</h3>
+                <p>Each appointment is displayed as a list item containing:</p>
+                <ul>
+                    <li><strong>Patient Name:</strong> Full name in blue, clickable link to patient profile</li>
+                    <li><strong>Time Range:</strong> Start and end time (e.g., "17:15 - 17:30")</li>
+                    <li><strong>Date:</strong> Appointment date in DD/MM/YYYY format</li>
+                    <li><strong>Status Badge:</strong> Shows appointment status (e.g., "Booked")</li>
+                    <li><strong>Visit Type:</strong> Shows visit type (e.g., "New", "FollowUp")</li>
+                    <li><strong>Action Buttons:</strong> Mark Completed, View Appointment, View Patient</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-list-3-line"></i>
+                </div>
+                <h3>Pagination</h3>
+                <p>Pagination controls include:</p>
+                <ul>
+                    <li><strong>Previous/Next:</strong> Navigation arrows to move between pages</li>
+                    <li><strong>Page Numbers:</strong> Clickable page numbers with current page highlighted</li>
+                    <li><strong>Ellipsis:</strong> Shows "..." when there are many pages</li>
+                    <li><strong>Total Pages:</strong> Displays total number of pages available</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="content-section" id="how-it-works">
+        <div class="section-header">
+            <h2><i class="ri-settings-3-line"></i> How It Works</h2>
+            <p class="section-description">The Missed Appointments component fetches appointments from previous days that were not completed.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-code-s-slash-line"></i>
+                </div>
+                <h3>JavaScript Functions</h3>
+                <p>Key functions in <code>dashboard.js</code>:</p>
+                <ul>
+                    <li><strong>loadMissedAppointments(page, limit):</strong> Fetches appointments from API</li>
+                    <li><strong>renderMissedAppointments(appointments):</strong> Renders appointment list</li>
+                    <li><strong>renderMissedPagination(pagination):</strong> Renders pagination controls</li>
+                    <li><strong>loadMissedAppointmentsPage(page):</strong> Loads specific page</li>
+                    <li><strong>markMissedAppointmentCompleted(id):</strong> Shows completion modal</li>
+                    <li><strong>confirmMissedAppointmentCompleted(id):</strong> Updates appointment status</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-server-line"></i>
+                </div>
+                <h3>Backend API</h3>
+                <p><code>ApiController::getMissedAppointments()</code> method:</p>
+                <ul>
+                    <li><strong>Pagination:</strong> Supports page and per_page parameters</li>
+                    <li><strong>Date Filter:</strong> <code>WHERE date < CURDATE()</code></li>
+                    <li><strong>Status Filter:</strong> <code>status != 'Completed' AND status != 'Cancelled'</code></li>
+                    <li><strong>Ordering:</strong> Ordered by date DESC, start_time DESC</li>
+                    <li><strong>Joins:</strong> JOIN with patients table for patient information</li>
+                    <li><strong>Response:</strong> Returns JSON with items array and pagination info</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-database-line"></i>
+                </div>
+                <h3>Database Query</h3>
+                <p>The query structure:</p>
+                <ul>
+                    <li><strong>Table:</strong> <code>appointments</code> joined with <code>patients</code></li>
+                    <li><strong>Date Condition:</strong> <code>a.date < CURDATE()</code> (previous days only)</li>
+                    <li><strong>Status Condition:</strong> Excludes 'Completed' and 'Cancelled' statuses</li>
+                    <li><strong>Fields:</strong> Selects appointment fields plus patient first_name, last_name, phone</li>
+                    <li><strong>Pagination:</strong> Uses LIMIT and OFFSET for efficient data retrieval</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Action Buttons -->
+    <section class="content-section" id="actions">
+        <div class="section-header">
+            <h2><i class="ri-checkbox-circle-line"></i> Action Buttons</h2>
+            <p class="section-description">Each missed appointment includes action buttons for quick management.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-checkbox-circle-line"></i>
+                </div>
+                <h3>Mark Completed</h3>
+                <p>The "Mark Completed" button:</p>
+                <ul>
+                    <li><strong>Function:</strong> <code>markMissedAppointmentCompleted(appointmentId)</code></li>
+                    <li><strong>Modal:</strong> Shows confirmation modal before updating</li>
+                    <li><strong>API Call:</strong> <code>PUT /api/appointments/{id}</code> with status: 'Completed'</li>
+                    <li><strong>Update:</strong> Updates appointment status in database</li>
+                    <li><strong>Refresh:</strong> Reloads missed appointments list after update</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-line"></i>
+                </div>
+                <h3>View Appointment</h3>
+                <p>The "Appointment" button:</p>
+                <ul>
+                    <li><strong>Link:</strong> <code>/doctor/appointments/{id}</code></li>
+                    <li><strong>Purpose:</strong> Navigates to full appointment details page</li>
+                    <li><strong>Icon:</strong> Calendar icon for visual clarity</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-line"></i>
+                </div>
+                <h3>View Patient</h3>
+                <p>The "View Patient" button:</p>
+                <ul>
+                    <li><strong>Link:</strong> <code>/doctor/patients/{patient_id}</code></li>
+                    <li><strong>Purpose:</strong> Navigates to patient profile page</li>
+                    <li><strong>Icon:</strong> Person icon for visual clarity</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="content-section" id="features">
+        <div class="section-header">
+            <h2><i class="ri-star-line"></i> Key Features</h2>
+            <p class="section-description">The Missed Appointments component includes several features for effective appointment management.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-list-line"></i>
+                </div>
+                <h3>Pagination</h3>
+                <p>Supports pagination with configurable items per page (5, 10, 20, 50), making it easy to navigate through large lists efficiently.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-close-line"></i>
+                </div>
+                <h3>Automatic Detection</h3>
+                <p>Automatically identifies missed appointments based on date (previous days) and status (not Completed or Cancelled).</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-checkbox-circle-line"></i>
+                </div>
+                <h3>Status Update</h3>
+                <p>Allows marking missed appointments as completed with a confirmation modal to prevent accidental updates.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-line"></i>
+                </div>
+                <h3>Quick Navigation</h3>
+                <p>Provides quick links to appointment details and patient profiles for efficient workflow management.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Image Modal -->
+<div id="missed-appointments-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-missed-appointments-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/missed-appointments-dark.png" alt="Missed Appointments Demo - Full Size" class="missed-appointments-demo-dark" />
+        <img src="/docs/opth/public/assets/images/missed-appointments-light.png" alt="Missed Appointments Demo - Light Theme - Full Size" class="missed-appointments-demo-light" style="display: none;" />
+    </div>
+</div>

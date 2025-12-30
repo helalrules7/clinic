@@ -1,55 +1,76 @@
-# Environment files
-.env
+# Environment & Configuration
 .env.local
 .env.*.local
 
-# Vendor directory (should be installed via composer)
-vendor/
+# Dependencies
+/vendor/
+node_modules/
 
-# Uploads and user-generated content
-remoteServer/
-uploads/
-storage/uploads/
-storage/sessions/
-storage/cache/
-storage/logs/
-storage/exports/
-storage/patient_files/
-
-# Logs
-*.log
-logs/
-
-# Temporary files
-*.tmp
-*.temp
+# IDE & Editor
+.vscode/
+.idea/
 *.swp
 *.swo
 *~
-
-# OS files
 .DS_Store
-Thumbs.db
-.idea/
-.vscode/
 
-# Archive files
+# Logs
+*.log
+/storage/logs/*.log
+/app/storage/logs/*.log
+
+# Uploads & Media
+/uploads/*
+!/uploads/.gitkeep
+/public/uploads/*
+!/public/uploads/.gitkeep
+/storage/uploads/*
+!/storage/uploads/.gitkeep
+/app/storage/uploads/*
+!/app/storage/uploads/.gitkeep
+
+# Cache & Temporary Files
+/storage/cache/*
+!/storage/cache/.gitkeep
+/app/storage/cache/*
+!/app/storage/cache/.gitkeep
+*.cache
+.phpunit.result.cache
+
+# Database Backups
+/storage/backups/*
+!/storage/backups/.gitkeep
+/app/storage/backups/*
+!/app/storage/backups/.gitkeep
+
+# Build & Distribution
+/dist/
+/build/
 *.zip
 *.tar.gz
-*.rar
 
-# Database files
-*.sql
-*.db
-*.sqlite
+# OS Files
+Thumbs.db
+desktop.ini
 
-# Cookies
-cookies.txt
+# Docker volumes data (if any)
+db_data/
+vendor_data/
 
-# Node modules (if any)
-node_modules/
+# Sensitive Files
+*.pem
+*.key
+*.crt
+credentials.json
+secrets.yml
 
-# Build files
-dist/
-build/
+# Testing
+/coverage/
+/.phpunit.cache/
 
+# Composer
+composer.phar
+
+# Documentation build
+/documentation_site/dist/
+/documentation_site/node_modules/

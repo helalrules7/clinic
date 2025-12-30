@@ -52,80 +52,6 @@
     </div>
 </div>
 
-<?php include __DIR__ . '/../alert_modal.php'; ?>
-
-<!-- Delete Confirmation Modal -->
-<div class="modal fade alerts-modal-glass" id="deleteAlertModal" tabindex="-1" aria-labelledby="deleteAlertModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteAlertModalLabel">
-                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>Confirm Delete
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this alert?</p>
-                <p class="text-muted mb-0"><small>This action cannot be undone.</small></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDeleteAlert()">
-                    <i class="bi bi-trash me-1"></i>Delete Alert
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Disable All Confirmation Modal -->
-<div class="modal fade alerts-modal-glass" id="disableAllAlertsModal" tabindex="-1" aria-labelledby="disableAllAlertsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="disableAllAlertsModalLabel">
-                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>Confirm Disable All
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to disable all alerts?</p>
-                <p class="text-muted mb-0"><small>All alerts will be set to inactive. You can reactivate them individually later.</small></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-warning" id="confirmDisableAllBtn" onclick="confirmDisableAllAlerts()">
-                    <i class="bi bi-pause-circle me-1"></i>Disable All Alerts
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Delete All Confirmation Modal -->
-<div class="modal fade alerts-modal-glass" id="deleteAllAlertsModal" tabindex="-1" aria-labelledby="deleteAllAlertsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteAllAlertsModalLabel">
-                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>Confirm Delete All
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete <strong>ALL</strong> alerts?</p>
-                <p class="text-muted mb-0"><small>This action cannot be undone. All alerts will be permanently deleted.</small></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteAllBtn" onclick="confirmDeleteAllAlerts()">
-                    <i class="bi bi-trash me-1"></i>Delete All Alerts
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
 let currentAlertIdToDelete = null;
 let currentPage = 1;
@@ -185,8 +111,8 @@ function loadAlerts(page = 1, limit = 10) {
     paginationNav.style.display = 'none';
     
     const url = limit >= 999999 
-        ? '/api/alerts' 
-        : `/api/alerts?page=${page}&per_page=${limit}`;
+        ? `/api/alerts?_=${Date.now()}` 
+        : `/api/alerts?page=${page}&per_page=${limit}&_=${Date.now()}`;
     
     fetch(url)
         .then(response => response.json())
@@ -288,6 +214,13 @@ function renderAlerts(alerts) {
                     : '<span class="badge bg-success">Active</span>')
                 : '<span class="badge bg-secondary">Inactive</span>');
         
+        // Add click handler to status badge for quick dismiss (if active and not dismissed)
+        const statusBadgeClickable = isDismissed 
+            ? statusBadge
+            : (isActive 
+                ? `<span class="badge ${isPast ? 'bg-warning' : 'bg-success'}" style="cursor: pointer;" onclick="dismissAlert(${alert.id})" title="Click to dismiss">${isPast ? 'Past Due' : 'Active'}</span>`
+                : statusBadge);
+        
         const repeatInfo = alert.repeat_count > 0 
             ? `${alert.current_repeat}/${alert.repeat_count}` 
             : 'Infinite';
@@ -307,13 +240,20 @@ function renderAlerts(alerts) {
                     ` : '<span class="text-muted">-</span>'}
                 </td>
                 <td>${repeatInfo}${alert.repeat_interval > 0 ? ` (every ${alert.repeat_interval} days)` : ''}</td>
-                <td>${statusBadge}</td>
+                <td>${statusBadgeClickable}</td>
                 <td>
                     <div class="btn-group btn-group-sm">
                         ${alert.patient_id ? `
                             <a href="/doctor/patients/${alert.patient_id}" class="btn btn-outline-primary" title="View Patient">
                                 <i class="bi bi-person"></i>
                             </a>
+                        ` : ''}
+                        ${!isDismissed ? `
+                            <button class="btn ${isActive ? 'btn-outline-warning' : 'btn-outline-success'}" 
+                                    onclick="toggleAlertStatus(${alert.id}, ${isActive ? 0 : 1})" 
+                                    title="${isActive ? 'Deactivate' : 'Activate'} Alert">
+                                <i class="bi ${isActive ? 'bi-pause-circle' : 'bi-play-circle'}"></i>
+                            </button>
                         ` : ''}
                         <button class="btn btn-outline-info" onclick="editAlert(${alert.id})" title="Edit Alert">
                             <i class="bi bi-pencil"></i>
@@ -727,4 +667,142 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// Toggle alert status (activate/deactivate) via AJAX
+function toggleAlertStatus(alertId, newStatus) {
+    if (!alertId) {
+        showToast('error', 'Error', 'Alert ID is required');
+        return;
+    }
+    
+    fetch(`/api/alerts/${alertId}/toggle-status`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('success', 'Success', data.message || 'Alert status updated successfully');
+            // Reload alerts without page refresh - add small delay to ensure server has updated
+            setTimeout(() => {
+                loadAlerts(currentPage, perPage);
+            }, 300);
+        } else {
+            showToast('error', 'Error', data.message || 'Failed to update alert status');
+        }
+    })
+    .catch(error => {
+        showToast('error', 'Error', 'Failed to update alert status. Please try again.');
+    });
+}
+
+// Dismiss alert via AJAX
+function dismissAlert(alertId) {
+    if (!alertId) {
+        showToast('error', 'Error', 'Alert ID is required');
+        return;
+    }
+    
+    fetch('/api/alerts/dismiss', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            alert_id: alertId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('success', 'Success', data.message || 'Alert dismissed successfully');
+            // Reload alerts without page refresh - add small delay to ensure server has updated
+            setTimeout(() => {
+                loadAlerts(currentPage, perPage);
+            }, 300);
+        } else {
+            showToast('error', 'Error', data.message || 'Failed to dismiss alert');
+        }
+    })
+    .catch(error => {
+        showToast('error', 'Error', 'Failed to dismiss alert. Please try again.');
+    });
+}
 </script>
+
+<!-- Alerts Modals - Moved outside container for proper z-index and draggability -->
+<?php include __DIR__ . '/../alert_modal.php'; ?>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade alerts-modal-glass" id="deleteAlertModal" tabindex="-1" aria-labelledby="deleteAlertModalLabel" aria-hidden="true" style="z-index: 1000003 !important;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteAlertModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this alert?</p>
+                <p class="text-muted mb-0"><small>This action cannot be undone.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDeleteAlert()">
+                    <i class="bi bi-trash me-1"></i>Delete Alert
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Disable All Confirmation Modal -->
+<div class="modal fade alerts-modal-glass" id="disableAllAlertsModal" tabindex="-1" aria-labelledby="disableAllAlertsModalLabel" aria-hidden="true" style="z-index: 1000003 !important;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="disableAllAlertsModalLabel">
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>Confirm Disable All
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to disable all alerts?</p>
+                <p class="text-muted mb-0"><small>All alerts will be set to inactive. You can reactivate them individually later.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" id="confirmDisableAllBtn" onclick="confirmDisableAllAlerts()">
+                    <i class="bi bi-pause-circle me-1"></i>Disable All Alerts
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete All Confirmation Modal -->
+<div class="modal fade alerts-modal-glass" id="deleteAllAlertsModal" tabindex="-1" aria-labelledby="deleteAllAlertsModalLabel" aria-hidden="true" style="z-index: 1000003 !important;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteAllAlertsModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>Confirm Delete All
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong>ALL</strong> alerts?</p>
+                <p class="text-muted mb-0"><small>This action cannot be undone. All alerts will be permanently deleted.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteAllBtn" onclick="confirmDeleteAllAlerts()">
+                    <i class="bi bi-trash me-1"></i>Delete All Alerts
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

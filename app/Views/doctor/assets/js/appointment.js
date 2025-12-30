@@ -267,16 +267,33 @@ async function loadMostUsedDrugs() {
         const container = document.getElementById('mostUsedDrugs');
         if (data.drugs && data.drugs.length > 0) {
             container.innerHTML = '';
+            
+            // Render all drugs with prices directly from API response
             data.drugs.forEach(drug => {
                 const badge = document.createElement('span');
                 badge.className = 'badge bg-primary me-2 mb-2 drug-suggestion-badge';
                 badge.style.cursor = 'pointer';
+                badge.setAttribute('data-drug-name', drug.drug_name);
+                
+                // Check for special case: Fluca Ed
+                let displayPrice = drug.price;
+                if (drug.drug_name && drug.drug_name.toLowerCase().includes('fluca ed')) {
+                    displayPrice = '66';
+                }
+                
+                // Show price circle - always show, use "unknown" if no price
+                const priceValue = displayPrice ? `EGP ${displayPrice}` : 'unknown';
+                const priceCircle = `<span class="drug-price-circle me-1" title="${priceValue}">${priceValue}</span>`;
+                
                 badge.innerHTML = `
                     <i class="bi bi-capsule me-1"></i>
                     ${drug.drug_name}
+                    ${priceCircle}
                     <span class="usage-count-badge">${drug.usage_count}</span>
                 `;
-                badge.title = `Used ${drug.usage_count} times. Common doses: ${drug.common_doses || 'N/A'}. Common frequencies: ${drug.common_frequencies || 'N/A'}`;
+                
+                const priceText = displayPrice ? `. Price: EGP ${displayPrice}` : '. Price: unknown';
+                badge.title = `Used ${drug.usage_count} times. Common doses: ${drug.common_doses || 'N/A'}. Common frequencies: ${drug.common_frequencies || 'N/A'}${priceText}`;
                 
                 badge.addEventListener('click', () => {
                     document.getElementById('drugNameInput').value = drug.drug_name;
@@ -349,9 +366,15 @@ function setupDrugNameAutocomplete() {
                 const suggestionItem = document.createElement('div');
                 suggestionItem.className = 'p-1 border-bottom suggestion-item';
                 suggestionItem.style.cursor = 'pointer';
+                const priceBadge = drug.price ? `<span class="badge bg-success text-white ms-2" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">EGP ${drug.price}</span>` : '';
                 suggestionItem.innerHTML = `
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="flex-grow-1">
                     <div class="fw-bold text-primary" style="font-size: 0.8rem;">${drug.drug_name}</div>
                     <small class="text-muted" style="font-size: 0.7rem;">${drug.active_ingredient || ''} ${drug.Company ? '- ' + drug.Company : ''}</small>
+                        </div>
+                        ${priceBadge}
+                    </div>
                 `;
                 
                 suggestionItem.addEventListener('click', () => {
@@ -3414,6 +3437,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize Medical History Carousel
     initMedicalHistoryCarousel();
     
+    // Load medications with prices from API
+    if (window.APPOINTMENT_CONFIG && window.APPOINTMENT_CONFIG.appointmentId) {
+        reloadMedications();
+    }
+    
     // Initialize status badge
     updateStatusBadge(window.APPOINTMENT_CONFIG.appointmentStatus);
     
@@ -4200,10 +4228,20 @@ function reloadMedications() {
                 } else {
                     let html = '';
                     data.medications.forEach(med => {
+                        const priceBadge = med.drug_price ? `
+                            <span class="drug-price-badge badge bg-success text-white">
+                                <i class="bi bi-currency-exchange me-1"></i>
+                                <span class="drug-price-value">EGP ${med.drug_price}</span>
+                            </span>
+                        ` : '';
+                        
                         html += `
-                            <div class="prescription-card p-3 mb-3" data-medication-id="${med.id}">
+                            <div class="prescription-card p-3 mb-3" data-medication-id="${med.id}" data-drug-name="${escapeHtml(med.drug_name)}">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
                                     <h6 class="text-primary mb-0" onclick="showDrugPopoverFromName('${escapeHtml(med.drug_name).replace(/'/g, "\\'")}', event)" style="cursor: pointer;">${escapeHtml(med.drug_name)}</h6>
+                                        ${priceBadge}
+                                    </div>
                                     <div class="btn-group btn-group-sm" role="group">
                                         <button class="btn btn-outline-primary" onclick="event.stopPropagation(); editMedication(${med.id}, '${escapeHtml(med.drug_name).replace(/'/g, "\\'")}', '${escapeHtml(med.notes || '').replace(/'/g, "\\'")}')" title="Edit Medication">
                                             <i class="bi bi-pencil"></i>
@@ -4247,6 +4285,7 @@ function reloadMedications() {
             showErrorMessage('Error loading medications');
         });
 }
+
 
 function reloadGlasses() {
     const appointmentId = window.APPOINTMENT_CONFIG.appointmentId;
@@ -4364,6 +4403,7 @@ function reloadGlasses() {
                         `;
                     });
                     container.innerHTML = html;
+                    
     
     // Add event delegation for collapse triggers
     container.querySelectorAll('.history-collapse-trigger').forEach(trigger => {
@@ -4700,6 +4740,338 @@ function renderAppointmentHistory(appointments, container) {
     });
 }
 
+// ============================================
+// Unified Clinical Dashboard Popover (from patient.js)
+// ============================================
+
+/**
+ * Show Unified Clinical Dashboard Popover
+ * This function is shared between patient.js and appointment.js
+ */
+function showUnifiedClinicalDashboardPopover(patientId) {
+    // Close any existing popover
+    const existingPopover = document.getElementById('unifiedClinicalDashboardPopover');
+    if (existingPopover) {
+        existingPopover.remove();
+    }
+    
+    // Create popover container
+    const popover = document.createElement('div');
+    popover.id = 'unifiedClinicalDashboardPopover';
+    popover.className = 'unified-clinical-dashboard-popover';
+    
+    // Create backdrop
+    const backdrop = document.createElement('div');
+    backdrop.className = 'unified-clinical-dashboard-popover-backdrop';
+    backdrop.onclick = () => closeUnifiedClinicalDashboardPopover();
+    
+    // Create popover content
+    const content = document.createElement('div');
+    content.className = 'unified-clinical-dashboard-popover-content';
+    
+    // Create header
+    const header = document.createElement('div');
+    header.className = 'unified-clinical-dashboard-popover-header';
+    header.innerHTML = `
+        <h3><i class="bi bi-clipboard-pulse me-2"></i>Unified Clinical Dashboard</h3>
+        <button class="btn-close-popover" onclick="closeUnifiedClinicalDashboardPopover()" aria-label="Close">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    `;
+    
+    // Create body
+    const body = document.createElement('div');
+    body.className = 'unified-clinical-dashboard-popover-body';
+    body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="text-muted mt-2">Loading clinical snapshot...</p></div>';
+    
+    content.appendChild(header);
+    content.appendChild(body);
+    popover.appendChild(backdrop);
+    popover.appendChild(content);
+    
+    document.body.appendChild(popover);
+    
+    // Center the popover
+    centerUnifiedClinicalDashboardPopover(content);
+    
+    // Fetch clinical dashboard data
+    fetch(`/api/clinical-dashboard/snapshot?patient_id=${patientId}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok && data.data) {
+            renderClinicalDashboardInPopover(data.data, body);
+        } else {
+            body.innerHTML = `
+                <div class="alert alert-warning text-center">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    ${data.error || 'No clinical data available'}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error loading clinical dashboard:', error);
+        body.innerHTML = `
+            <div class="alert alert-danger text-center">
+                <i class="bi bi-exclamation-circle me-2"></i>
+                Error loading clinical data
+            </div>
+        `;
+    });
+}
+
+/**
+ * Close Unified Clinical Dashboard Popover
+ */
+function closeUnifiedClinicalDashboardPopover() {
+    const popover = document.getElementById('unifiedClinicalDashboardPopover');
+    if (popover) {
+        popover.remove();
+    }
+}
+
+/**
+ * Center popover on screen
+ */
+function centerUnifiedClinicalDashboardPopover(content) {
+    content.style.position = 'fixed';
+    content.style.left = '50%';
+    content.style.top = '50%';
+    content.style.transform = 'translate(-50%, -50%)';
+    content.style.maxWidth = '90vw';
+    content.style.maxHeight = '90vh';
+    content.style.overflow = 'auto';
+}
+
+/**
+ * Render clinical dashboard data in popover
+ */
+function renderClinicalDashboardInPopover(data, container) {
+    const snapshot = data.snapshot || {};
+    
+    let html = '';
+    
+    // Clinical Snapshot Section
+    html += `<div class="mb-4">
+        <h6 class="mb-3"><i class="bi bi-clipboard-data me-2"></i>Clinical Snapshot</h6>
+        <div class="row g-3">`;
+    
+    // IOP Status
+    if (snapshot.iop) {
+        const iop = snapshot.iop;
+        const badgeClass = iop.status === 'warning' ? 'bg-warning text-dark' : (iop.status === 'critical' ? 'bg-danger' : 'bg-success');
+        const iopValue = iop.value !== null && iop.value !== undefined ? 
+            `${iop.value} mmHg${iop.target !== null && iop.target !== undefined ? ` (Target: ${iop.target} mmHg)` : ''}` : 
+            '--';
+        html += `<div class="col-md-6 col-lg-3">
+            <div class="clinical-indicator-card" ${iop.appointment_id ? `onclick="window.location.href='/doctor/appointments/${iop.appointment_id}'" style="cursor: pointer;"` : ''}>
+                <div class="clinical-indicator-header">
+                    <i class="bi bi-eyedropper me-2"></i>
+                    <span>IOP Status</span>
+                </div>
+                <div class="clinical-indicator-value">${iopValue}</div>
+                <div class="clinical-indicator-status">
+                    <span class="badge ${badgeClass}">${iop.message || 'Normal'}</span>
+                </div>
+            </div>
+        </div>`;
+    }
+    
+    // Visual Acuity
+    if (snapshot.visual_acuity) {
+        const va = snapshot.visual_acuity;
+        const trendIcon = va.trend === '↑' ? '↑' : (va.trend === '↓' ? '↓' : '→');
+        const trendClass = va.trend === '↑' ? 'text-danger' : (va.trend === '↓' ? 'text-success' : 'text-muted');
+        const displayValue = va.last && va.last.length > 30 ? va.last.substring(0, 30) + '...' : (va.last || '--');
+        html += `<div class="col-md-6 col-lg-3">
+            <div class="clinical-indicator-card" ${va.appointment_id ? `onclick="window.location.href='/doctor/appointments/${va.appointment_id}'" style="cursor: pointer;"` : ''}>
+                <div class="clinical-indicator-header">
+                    <i class="bi bi-eye me-2"></i>
+                    <span>Visual Acuity</span>
+                </div>
+                <div class="clinical-indicator-value">${displayValue}</div>
+                <div class="clinical-indicator-trend">
+                    <span class="trend-indicator ${trendClass}">${trendIcon}</span>
+                    <span class="trend-text">${va.message || 'Stable'}</span>
+                </div>
+            </div>
+        </div>`;
+    }
+    
+    // Cataract Status
+    if (snapshot.cataract) {
+        const cataract = snapshot.cataract;
+        let badgeClass = 'bg-info';
+        if (cataract.status === 'surgery_recommended') {
+            badgeClass = 'bg-danger';
+        } else if (cataract.status === 'consider_surgery') {
+            badgeClass = 'bg-warning text-dark';
+        }
+        html += `<div class="col-md-6 col-lg-3">
+            <div class="clinical-indicator-card" ${cataract.appointment_id ? `onclick="window.location.href='/doctor/appointments/${cataract.appointment_id}'" style="cursor: pointer;"` : ''}>
+                <div class="clinical-indicator-header">
+                    <i class="bi bi-scissors me-2"></i>
+                    <span>Cataract Status</span>
+                </div>
+                <div class="clinical-indicator-value">${cataract.readiness || '--'}</div>
+                <div class="clinical-indicator-status">
+                    <span class="badge ${badgeClass}">${cataract.message || 'Monitor'}</span>
+                </div>
+            </div>
+        </div>`;
+    }
+    
+    // Dry Eye Status
+    if (snapshot.dry_eye) {
+        const dryEye = snapshot.dry_eye;
+        const trendText = dryEye.trend === 'improving' ? 'Improving' : 
+                         (dryEye.trend === 'worsening' ? 'Worsening' : 'Stable');
+        const trendClass = dryEye.trend === 'worsening' ? 'text-danger' : 
+                          (dryEye.trend === 'improving' ? 'text-success' : 'text-muted');
+        const trendIcon = dryEye.trend === 'worsening' ? '↑' : 
+                         (dryEye.trend === 'improving' ? '↓' : '→');
+        const dryEyeValue = dryEye.osdi_score !== null && dryEye.osdi_score !== undefined ? 
+            `OSDI: ${dryEye.osdi_score}${dryEye.severity ? ` (${dryEye.severity})` : ''}` : 
+            '--';
+        html += `<div class="col-md-6 col-lg-3">
+            <div class="clinical-indicator-card" ${dryEye.appointment_id ? `onclick="window.location.href='/doctor/appointments/${dryEye.appointment_id}'" style="cursor: pointer;"` : ''}>
+                <div class="clinical-indicator-header">
+                    <i class="bi bi-droplet me-2"></i>
+                    <span>Dry Eye Status</span>
+                </div>
+                <div class="clinical-indicator-value">${dryEyeValue}</div>
+                <div class="clinical-indicator-trend">
+                    <span class="trend-indicator ${trendClass}">${trendIcon}</span>
+                    <span class="trend-text">${trendText}</span>
+                </div>
+            </div>
+        </div>`;
+    }
+    
+    html += `</div></div>`;
+    
+    // Active Clinical Alerts
+    if (data.alerts && data.alerts.length > 0) {
+        html += `<div class="mb-4">
+            <h6 class="mb-3"><i class="bi bi-exclamation-triangle me-2"></i>Active Clinical Alerts</h6>
+            <div class="list-group">`;
+        data.alerts.forEach(alert => {
+            const alertClass = alert.severity === 'critical' ? 'list-group-item-danger' : 
+                            (alert.severity === 'warning' ? 'list-group-item-warning' : 'list-group-item-info');
+            const clickHandler = alert.appointment_id ? 
+                `onclick="window.location.href='/doctor/appointments/${alert.appointment_id}'" style="cursor: pointer;"` : '';
+            html += `<div class="list-group-item ${alertClass}" ${clickHandler}>
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                ${escapeHtmlForPopover(alert.message)}
+            </div>`;
+        });
+        html += `</div></div>`;
+    }
+    
+    // Mini Trends Overview
+    if (snapshot.macular_thickness || snapshot.iop || snapshot.visual_acuity) {
+        html += `<div class="mb-4">
+            <h6 class="mb-3"><i class="bi bi-graph-up me-2"></i>Mini Trends Overview</h6>
+            <div class="row g-3">`;
+        
+        if (snapshot.iop && snapshot.iop.value !== null) {
+            const status = snapshot.iop.status === 'warning' ? '⚠️ Above target' : '✓ Within target';
+            html += `<div class="col-md-4">
+                <div class="mini-trend-card">
+                    <div class="mini-trend-label">IOP Trend</div>
+                    <div class="mini-trend-chart">
+                        <div class="mini-trend-status">${status}</div>
+                    </div>
+                </div>
+            </div>`;
+        }
+        
+        if (snapshot.visual_acuity && snapshot.visual_acuity.trend) {
+            const trendIcon = snapshot.visual_acuity.trend === '↑' ? '↑ Worsening' : 
+                            (snapshot.visual_acuity.trend === '↓' ? '↓ Improving' : '→ Stable');
+            html += `<div class="col-md-4">
+                <div class="mini-trend-card">
+                    <div class="mini-trend-label">Visual Acuity Trend</div>
+                    <div class="mini-trend-chart">
+                        <div class="mini-trend-status">${trendIcon}</div>
+                    </div>
+                </div>
+            </div>`;
+        }
+        
+        if (snapshot.macular_thickness && snapshot.macular_thickness.latest !== null) {
+            const trendText = snapshot.macular_thickness.trend === 'worsening' ? '⚠️ Worsening' :
+                            (snapshot.macular_thickness.trend === 'improving' ? '↓ Improving' : '→ Stable');
+            html += `<div class="col-md-4">
+                <div class="mini-trend-card">
+                    <div class="mini-trend-label">Macular Thickness Trend</div>
+                    <div class="mini-trend-chart">
+                        <div class="mini-trend-status">${trendText}</div>
+                    </div>
+                </div>
+            </div>`;
+        }
+        
+        html += `</div></div>`;
+    }
+    
+    // Clinical Summary
+    if (data.summary) {
+        html += `<div class="mb-0">
+            <h6 class="mb-3"><i class="bi bi-file-text me-2"></i>Clinical Summary</h6>
+            <div class="clinical-summary-box">
+                <p class="mb-0">${escapeHtmlForPopover(data.summary)}</p>
+                <button class="btn btn-sm btn-outline-primary mt-2" onclick="copyClinicalSummaryFromPopover()">
+                    <i class="bi bi-clipboard me-1"></i>Copy to Clipboard
+                </button>
+            </div>
+        </div>`;
+    }
+    
+    container.innerHTML = html;
+}
+
+/**
+ * Copy clinical summary from popover
+ */
+function copyClinicalSummaryFromPopover() {
+    const summaryBox = document.querySelector('#unifiedClinicalDashboardPopover .clinical-summary-box p');
+    if (!summaryBox) return;
+    
+    const summaryText = summaryBox.textContent;
+    
+    navigator.clipboard.writeText(summaryText).then(() => {
+        const btn = event.target.closest('button');
+        if (btn) {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check me-1"></i>Copied!';
+            btn.classList.add('btn-success');
+            btn.classList.remove('btn-outline-primary');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-outline-primary');
+            }, 2000);
+        }
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+    });
+}
+
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtmlForPopover(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 function toggleHistoryCollapse(collapseId) {
     const collapseElement = document.getElementById(collapseId);
     if (collapseElement) {
@@ -4853,13 +5225,12 @@ async function showDrugPopoverFromName(drugName, event) {
         </div>
     `;
     
-    // Position popover near the clicked element
-    const rect = event.target.getBoundingClientRect();
-    const popoverX = rect.left + window.scrollX;
-    const popoverY = rect.bottom + window.scrollY + 10;
-    
-    popover.style.left = `${Math.min(popoverX, window.innerWidth - 520)}px`;
-    popover.style.top = `${Math.min(popoverY, window.innerHeight - 200)}px`;
+    // Position popover in center of viewport
+    popover.style.position = 'fixed';
+    popover.style.left = '50%';
+    popover.style.top = '50%';
+    popover.style.transform = 'translate(-50%, -50%)';
+    popover.style.zIndex = '10000000';
     
     document.body.appendChild(popover);
     currentDrugPopover = popover;

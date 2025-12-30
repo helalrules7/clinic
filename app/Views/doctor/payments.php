@@ -956,3 +956,17 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
     };
 </script>
 <script src="/app/Views/doctor/assets/js/payments.js?v=<?= file_exists(__DIR__ . '/assets/js/payments.js') ? filemtime(__DIR__ . '/assets/js/payments.js') : time() ?>"></script>
+<style>
+    .modal-backdrop.show{
+        display: none !important;
+    }
+    body > div.modal-backdrop.fade.show{
+        display: none !important;
+    }
+    .dark .modal-content{
+    background: rgba(11, 18, 32, 0.8) !important;
+    }
+    .modal-content{
+    background: rgba(248, 250, 252, 0.8) !important;
+    }
+</style>

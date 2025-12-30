@@ -358,6 +358,13 @@ class DrugSearch {
         const modalTitle = document.getElementById('modalDrugName');
         const modalBody = document.getElementById('modalDrugDetails');
         
+        // Remove any existing backdrops (from global search or other modals)
+        const existingBackdrops = document.querySelectorAll('.global-search-backdrop, .modal-backdrop');
+        existingBackdrops.forEach(backdrop => backdrop.remove());
+        
+        // Ensure body overflow is restored
+        document.body.style.overflow = '';
+        
         modalTitle.textContent = drug.drug_name;
         
         modalBody.innerHTML = `

@@ -201,6 +201,13 @@ if ($status === 'completed') {
                     data-appointment-id="<?= $appointment['id'] ?>">
                 <i class="bi bi-clock-history me-1"></i>Appointment History
             </button>
+            <button type="button" class="btn btn-info hide-on-mobile" 
+                    onclick="showUnifiedClinicalDashboardPopover(<?= $patient['id'] ?>)"
+                    data-bs-toggle="tooltip" 
+                    data-bs-placement="bottom" 
+                    data-bs-title="View unified clinical dashboard for this patient">
+                <i class="bi bi-clipboard-pulse me-1"></i>Clinical Dashboard
+            </button>
             <?php if (!empty($medications)): ?>
             <button type="button" class="btn btn-outline-warning hide-on-mobile" onclick="printPrescription(<?= $appointment['id'] ?>)">
                 <i class="bi bi-printer me-1"></i>Print Prescription
@@ -260,6 +267,9 @@ if ($status === 'completed') {
                         <?php endif; ?>
                         <div class='more-actions-popover-item' onclick='bootstrap.Popover.getInstance(document.getElementById(&quot;moreActionsBtn&quot;)).hide(); viewPatient(<?= $patient['id'] ?>);'>
                             <i class='bi bi-person me-2'></i>View Patient Profile
+                        </div>
+                        <div class='more-actions-popover-item' onclick='bootstrap.Popover.getInstance(document.getElementById(&quot;moreActionsBtn&quot;)).hide(); showUnifiedClinicalDashboardPopover(<?= $patient['id'] ?>);'>
+                            <i class='bi bi-clipboard-pulse me-2'></i>Clinical Dashboard
                         </div>
 
                     </div>">
@@ -786,9 +796,15 @@ if ($status === 'completed') {
             <div class="card-body" id="medicationsContainer">
                 <?php if (!empty($medications)): ?>
                     <?php foreach ($medications as $med): ?>
-                    <div class="prescription-card p-3 mb-3" data-medication-id="<?= $med['id'] ?>">
+                    <div class="prescription-card p-3 mb-3" data-medication-id="<?= $med['id'] ?>" data-drug-name="<?= htmlspecialchars($med['drug_name']) ?>">
                         <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
                             <h6 class="text-primary mb-0" onclick="showDrugPopoverFromName('<?= addslashes($med['drug_name']) ?>', event)" style="cursor: pointer;"><?= htmlspecialchars($med['drug_name']) ?></h6>
+                                <span class="drug-price-badge badge bg-success text-white" data-drug-name="<?= htmlspecialchars($med['drug_name']) ?>" style="display: none;">
+                                    <i class="bi bi-currency-exchange me-1"></i>
+                                    <span class="drug-price-value">Loading...</span>
+                                </span>
+                            </div>
                             <div class="btn-group btn-group-sm" role="group">
                                 <button class="btn btn-outline-primary" onclick="event.stopPropagation(); editMedication(<?= $med['id'] ?>, '<?= addslashes($med['drug_name']) ?>', '<?= addslashes($med['notes'] ?? '') ?>')" title="Edit Medication">
                                     <i class="bi bi-pencil"></i>
@@ -1358,3 +1374,29 @@ window.APPOINTMENT_CONFIG = {
 };
 </script>
 <script src="/app/Views/doctor/assets/js/appointment.js?v=<?= file_exists(__DIR__ . '/assets/js/appointment.js') ? filemtime(__DIR__ . '/assets/js/appointment.js') : time() ?>"></script>
+<script>
+    // Medications are loaded with prices from API via reloadMedications() when needed
+</script>
+<style>
+    .modal-backdrop.show{
+        display: none !important;
+    }
+    body > div.modal-backdrop.fade.show{
+        display: none !important;
+    }
+    .dark .modal-content{
+    background: rgba(11, 18, 32, 0.8) !important;
+    }
+    .modal-content{
+    background: rgba(248, 250, 252, 0.8) !important;
+    }
+</style>
+<script>
+    // Auto-detect patient ID for IOP Trend Analyzer
+    (function() {
+        const patientId = <?= json_encode($appointment['patient_id'] ?? $patient['id'] ?? null) ?>;
+        if (patientId) {
+            window.currentPatientId = patientId;
+        }
+    })();
+</script>

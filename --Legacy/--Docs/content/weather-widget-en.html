@@ -1,0 +1,289 @@
+<div class="getting-started-content">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Weather Widget</h1>
+            <p class="hero-subtitle">Weather Information with Medical Indicators</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">Weather</span>
+                <span class="badge badge-secondary">Medical</span>
+                <span class="badge badge-success">Smart</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-sun-line"></i> Weather Widget Overview</h2>
+            <p class="section-description">The Weather Widget provides comprehensive weather information along with specialized medical indicators for ophthalmology doctors, helping them make informed decisions based on environmental conditions.</p>
+        </div>
+
+        <!-- Weather Widget Demo Image -->
+        <div class="weather-widget-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="weather-widget-demo-thumbnail" id="weather-widget-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/weather-widget-dark.png" alt="Weather Widget Demo" class="weather-widget-demo-dark" />
+                <img src="/docs/opth/public/assets/images/weather-widget-light.png" alt="Weather Widget Demo - Light Theme" class="weather-widget-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>Click to view full size</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> Visual demonstration of the Weather Widget interface
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-map-pin-line"></i>
+                </div>
+                <h3>Auto Location Detection</h3>
+                <p>The widget automatically detects your current location using browser geolocation services, ensuring you always see weather information relevant to your area.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-todo-line"></i>
+                </div>
+                <h3>4-Day Forecast</h3>
+                <p>Access detailed weather forecasts for the next 4 days, helping you plan ahead and prepare for upcoming weather conditions.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-eye-line"></i>
+                </div>
+                <h3>Medical Indicators</h3>
+                <p>Specialized indicators for pollen levels and dry eye risk provide valuable information for ophthalmology doctors and their patients.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Current Weather -->
+    <section class="content-section" id="current-weather">
+        <div class="section-header">
+            <h2><i class="ri-cloud-line"></i> Current Weather Display</h2>
+            <p class="section-description">The widget displays current weather conditions with dynamic icons that change based on the current time and weather state.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-temp-cold-line"></i>
+                </div>
+                <h3>Temperature</h3>
+                <p>Shows the current temperature in Celsius, prominently displayed for quick reference.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-cloudy-line"></i>
+                </div>
+                <h3>Weather Condition</h3>
+                <p>Displays a brief description of current weather conditions (e.g., "Light Rain", "Clear Sky", "Broken Clouds").</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-image-edit-line"></i>
+                </div>
+                <h3>Dynamic Icons</h3>
+                <p>Weather icons automatically change based on the current time (day/night) and weather conditions, providing accurate visual representation.</p>
+                <ul>
+                    <li>Icons adapt to time of day (sun for day, moon for night)</li>
+                    <li>Weather-specific icons (rain, clouds, sun, etc.)</li>
+                    <li>Automatic updates as conditions change</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-map-pin-2-line"></i>
+                </div>
+                <h3>Location Display</h3>
+                <p>Shows the detected location name (e.g., "Kafr ash Shaykh") with a location pin icon, confirming the auto-detection feature.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4-Day Forecast -->
+    <section class="content-section" id="forecast">
+        <div class="section-header">
+            <h2><i class="ri-calendar-line"></i> 4-Day Weather Forecast</h2>
+            <p class="section-description">Access detailed weather forecasts for the next four days, including temperature ranges, weather conditions, and medical indicators.</p>
+        </div>
+
+        <!-- Forecast Demo Image -->
+        <div class="weather-forecast-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="weather-forecast-demo-thumbnail" id="weather-forecast-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/weather-forecast-dark.png" alt="Weather Forecast Demo" class="weather-forecast-demo-dark" />
+                <img src="/docs/opth/public/assets/images/weather-forecast-light.png" alt="Weather Forecast Demo - Light Theme" class="weather-forecast-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>Click to view full size</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> Visual demonstration of the 4-day weather forecast interface
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-todo-line"></i>
+                </div>
+                <h3>Daily Forecast Cards</h3>
+                <p>Each day is displayed in a separate card showing:</p>
+                <ul>
+                    <li>Day name and date (e.g., "Sun 14 Dec")</li>
+                    <li>Weather icon representing conditions</li>
+                    <li>Temperature range (high and low)</li>
+                    <li>Weather condition description</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-temp-hot-line"></i>
+                </div>
+                <h3>Temperature Information</h3>
+                <p>Forecast cards display both high and low temperatures for each day, helping doctors understand temperature variations throughout the forecast period.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-image-edit-line"></i>
+                </div>
+                <h3>Weather Icons</h3>
+                <p>Each forecast card includes a weather icon that changes based on predicted conditions, providing quick visual reference for expected weather.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Medical Indicators -->
+    <section class="content-section" id="medical-indicators">
+        <div class="section-header">
+            <h2><i class="ri-medicine-bottle-line"></i> Medical Indicators for Ophthalmology</h2>
+            <p class="section-description">The Weather Widget includes specialized medical indicators designed specifically for ophthalmology doctors, providing valuable environmental health information.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-flower-line"></i>
+                </div>
+                <h3>Pollen Index</h3>
+                <p>Displays the current pollen level as a percentage, helping doctors advise patients with allergies or eye sensitivity.</p>
+                <ul>
+                    <li>Shows pollen level percentage (e.g., 55%, 70%, 85%)</li>
+                    <li>Color-coded progress bar (green, orange, red) indicating severity</li>
+                    <li>Updated daily based on environmental conditions</li>
+                    <li>Helps doctors recommend appropriate precautions</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-eye-line"></i>
+                </div>
+                <h3>Dry Eye Risk</h3>
+                <p>Indicates the risk level for dry eye conditions based on weather factors, helping doctors provide better patient care.</p>
+                <ul>
+                    <li>Shows dry eye risk percentage (e.g., 33%, 48%)</li>
+                    <li>Color-coded progress bar (green for low, orange for moderate, red for high)</li>
+                    <li>Calculated based on humidity, wind, and temperature factors</li>
+                    <li>Helps doctors advise patients on eye care during specific weather conditions</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-list-3-line"></i>
+                </div>
+                <h3>Forecast Indicators</h3>
+                <p>Both indicators are available for each day in the 4-day forecast, allowing doctors to plan ahead and inform patients about upcoming conditions.</p>
+                <ul>
+                    <li>Pollen and Dry Eye indicators shown for each forecast day</li>
+                    <li>Color coding helps identify high-risk days</li>
+                    <li>Enables proactive patient communication</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="info-box" style="margin-top: 2rem;">
+            <i class="ri-information-line"></i>
+            <div>
+                <strong>Medical Reference:</strong>
+                <p>These indicators are specifically designed for ophthalmology doctors to reference when treating patients. High pollen levels may affect patients with allergies, while high dry eye risk may require additional patient care recommendations during specific weather conditions.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="content-section" id="features">
+        <div class="section-header">
+            <h2><i class="ri-star-line"></i> Key Features</h2>
+            <p class="section-description">The Weather Widget includes several features designed to provide comprehensive weather and medical information.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-map-pin-line"></i>
+                </div>
+                <h3>Automatic Location Detection</h3>
+                <p>The widget automatically detects your location using browser geolocation services, eliminating the need for manual location entry.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-refresh-line"></i>
+                </div>
+                <h3>Real-Time Updates</h3>
+                <p>Weather information and indicators update in real-time, ensuring you always have the latest data available.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>Theme Support</h3>
+                <p>The widget automatically adapts to your selected theme (light or dark), ensuring optimal readability and visual consistency.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-image-edit-line"></i>
+                </div>
+                <h3>Dynamic Icon System</h3>
+                <p>Weather icons change automatically based on current time and conditions, providing accurate visual representation throughout the day and night.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Image Modals -->
+<div id="weather-widget-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-weather-widget-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/weather-widget-dark.png" alt="Weather Widget Demo - Full Size" class="weather-widget-demo-dark" />
+        <img src="/docs/opth/public/assets/images/weather-widget-light.png" alt="Weather Widget Demo - Light Theme - Full Size" class="weather-widget-demo-light" style="display: none;" />
+    </div>
+</div>
+
+<div id="weather-forecast-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-weather-forecast-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/weather-forecast-dark.png" alt="Weather Forecast Demo - Full Size" class="weather-forecast-demo-dark" />
+        <img src="/docs/opth/public/assets/images/weather-forecast-light.png" alt="Weather Forecast Demo - Light Theme - Full Size" class="weather-forecast-demo-light" style="display: none;" />
+    </div>
+</div>

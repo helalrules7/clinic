@@ -1553,11 +1553,12 @@ class ForumController
     private function getDrugsDatabaseConnection()
     {
         // Connect to hclinic_drugs database with specific user
-        $host = $_ENV['DB_HOST'] ?? 'localhost';
-        $username = 'hclinic_drugs';  // Use the correct user for drugs database
-        $password = 'Carmen@1230';  // Use the correct password for drugs database
+        $host = $_ENV['DB_HOST'] ?? 'db';
+        $username = $_ENV['DRUGS_DB_USER'] ?? 'drugs_user';
+        $password = $_ENV['DRUGS_DB_PASS'] ?? 'drugs_password';
+        $dbname = $_ENV['DRUGS_DB_NAME'] ?? 'hclinic_drugs';
         
-        $dsn = "mysql:host={$host};dbname=hclinic_drugs;charset=utf8mb4";
+        $dsn = "mysql:host={$host};dbname={$dbname};charset=utf8mb4";
         
         return new PDO($dsn, $username, $password, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,

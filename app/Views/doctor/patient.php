@@ -153,6 +153,16 @@
                         <span class="d-none d-lg-inline">Edit Patient</span>
                         <span class="d-lg-none">Edit</span>
                     </button>
+                    <button class="btn btn-primary" 
+                            id="patientIOPTrendBtn" 
+                            data-patient-id="<?= htmlspecialchars($patient['id']) ?>"
+                            data-bs-toggle="tooltip" 
+                            data-bs-placement="bottom" 
+                            data-bs-title="Analyze IOP trend for this patient">
+                        <i class="bi bi-graph-up me-2"></i>
+                        <span class="d-none d-lg-inline">IOP Trend Analysis</span>
+                        <span class="d-lg-none">IOP Trend</span>
+                    </button>
                     <button class="btn btn-warning" 
                             onclick="openAlertModal(<?= $patient['id'] ?>, null)"
                             data-bs-toggle="tooltip" 
@@ -162,6 +172,15 @@
                         <span class="d-none d-lg-inline">Set Alert</span>
                         <span class="d-lg-none">Alert</span>
                         </button>
+                    <button class="btn btn-info" 
+                            onclick="showUnifiedClinicalDashboardPopover(<?= $patient['id'] ?>)"
+                            data-bs-toggle="tooltip" 
+                            data-bs-placement="bottom" 
+                            data-bs-title="View unified clinical dashboard for this patient">
+                        <i class="bi bi-clipboard-pulse me-2"></i>
+                        <span class="d-none d-lg-inline">Clinical Dashboard</span>
+                        <span class="d-lg-none">Dashboard</span>
+                    </button>
                     </div>
             </div>
         </div>
@@ -1441,73 +1460,6 @@
 }
 </style>
 
-<!-- Recent Appointments -->
-<div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">
-            <i class="bi bi-calendar-check me-2"></i>
-            Recent Appointments
-        </h5>
-        <span class="badge bg-primary"><?= count($recentAppointments) ?></span>
-    </div>
-    <div class="card-body p-0">
-        <?php if (empty($recentAppointments)): ?>
-            <div class="p-4 text-center">
-                <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
-                <p class="text-muted mt-2 mb-0">No appointments found</p>
-                <button class="btn btn-primary mt-3" 
-                        onclick="bookNewAppointment(<?= $patient['id'] ?>)"
-                        data-bs-toggle="tooltip" 
-                        data-bs-placement="top" 
-                        data-bs-title="Schedule the first appointment for this patient">
-                    <i class="bi bi-calendar-plus me-2"></i>Book First Appointment
-                </button>
-            </div>
-        <?php else: ?>
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Date & Time</th>
-                            <th>Type</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($recentAppointments as $appointment): ?>
-                            <tr>
-                                <td>
-                                    <div>
-                                        <strong><?= date('M j, Y', strtotime($appointment['date'])) ?></strong>
-                                    </div>
-                                    <small class="text-muted">
-                                        <?= date('g:i A', strtotime($appointment['start_time'])) ?> - 
-                                        <?= date('g:i A', strtotime($appointment['end_time'])) ?>
-                                    </small>
-                                </td>
-                                <td>
-                                    <span class="badge bg-info"><?= htmlspecialchars($appointment['visit_type']) ?></span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-<?= $this->getStatusBadgeClass($appointment['status']) ?>">
-                                        <?= htmlspecialchars($appointment['status']) ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="/doctor/appointments/<?= $appointment['id'] ?>" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        <?php endif; ?>
-    </div>
-</div>
-
 <!-- Patient Files & Attachments -->
 <div class="card mb-4">
     <div class="card-header">
@@ -1751,173 +1703,6 @@
     </div>
 </div>
 
-<!-- Glasses Prescriptions -->
-<div class="card mb-4">
-    <div class="card-header">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-                <i class="bi bi-eyeglasses me-2"></i>
-                Glasses Prescriptions
-                <?php if (!empty($glassesPrescriptions)): ?>
-                    <span class="badge bg-primary ms-2"><?= count($glassesPrescriptions) ?></span>
-                <?php endif; ?>
-            </h5>
-            <button class="btn btn-primary btn-sm" 
-                    onclick="showAddGlassesPrescriptionModal(<?= $patient['id'] ?>)"
-                    data-bs-toggle="tooltip" 
-                    data-bs-placement="top" 
-                    data-bs-title="Add a new glasses prescription for this patient">
-                <i class="bi bi-plus me-1"></i>Add Prescription
-            </button>
-        </div>
-    </div>
-    <div class="card-body p-0">
-        <?php if (!empty($glassesPrescriptions)): ?>
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Date</th>
-                            <th>Visit</th>
-                            <th>Lens Type</th>
-                            <th>Distance Vision</th>
-                            <th>Near Vision</th>
-                            <th>PD</th>
-                            <th>Doctor</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($glassesPrescriptions as $prescription): ?>
-                            <tr>
-                                <td>
-                                    <div>
-                                        <strong><?= date('M j, Y', strtotime($prescription['created_at'])) ?></strong>
-                                    </div>
-                                    <small class="text-muted">
-                                        <?= date('g:i A', strtotime($prescription['created_at'])) ?>
-                                    </small>
-                                </td>
-                                <td>
-                                    <div>
-                                        <strong><?= date('M j, Y', strtotime($prescription['appointment_date'])) ?></strong>
-                                    </div>
-                                    <small class="text-muted">
-                                        Visit #<?= $prescription['appointment_id'] ?>
-                                        <?php if (!empty($prescription['appointment_time'])): ?>
-                                            at <?= date('g:i A', strtotime($prescription['appointment_time'])) ?>
-                                        <?php endif; ?>
-                                    </small>
-                                </td>
-                                <td>
-                                    <span class="badge bg-info"><?= htmlspecialchars($prescription['lens_type']) ?></span>
-                                </td>
-                                <td>
-                                    <div class="prescription-values">
-                                        <?php if ($prescription['distance_sphere_r'] !== null || $prescription['distance_sphere_l'] !== null): ?>
-                                            <div><strong>R:</strong> 
-                                                <?= $prescription['distance_sphere_r'] ? sprintf('%+.2f', $prescription['distance_sphere_r']) : '0.00' ?>
-                                                <?= $prescription['distance_cylinder_r'] ? sprintf(' %+.2f', $prescription['distance_cylinder_r']) : '' ?>
-                                                <?= $prescription['distance_axis_r'] ? ' x ' . $prescription['distance_axis_r'] : '' ?>
-                                            </div>
-                                            <div><strong>L:</strong> 
-                                                <?= $prescription['distance_sphere_l'] ? sprintf('%+.2f', $prescription['distance_sphere_l']) : '0.00' ?>
-                                                <?= $prescription['distance_cylinder_l'] ? sprintf(' %+.2f', $prescription['distance_cylinder_l']) : '' ?>
-                                                <?= $prescription['distance_axis_l'] ? ' x ' . $prescription['distance_axis_l'] : '' ?>
-                                            </div>
-                                        <?php else: ?>
-                                            <small class="text-muted">Not specified</small>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="prescription-values">
-                                        <?php if ($prescription['near_sphere_r'] !== null || $prescription['near_sphere_l'] !== null): ?>
-                                            <div><strong>R:</strong> 
-                                                <?= $prescription['near_sphere_r'] ? sprintf('%+.2f', $prescription['near_sphere_r']) : '0.00' ?>
-                                                <?= $prescription['near_cylinder_r'] ? sprintf(' %+.2f', $prescription['near_cylinder_r']) : '' ?>
-                                                <?= $prescription['near_axis_r'] ? ' x ' . $prescription['near_axis_r'] : '' ?>
-                                            </div>
-                                            <div><strong>L:</strong> 
-                                                <?= $prescription['near_sphere_l'] ? sprintf('%+.2f', $prescription['near_sphere_l']) : '0.00' ?>
-                                                <?= $prescription['near_cylinder_l'] ? sprintf(' %+.2f', $prescription['near_cylinder_l']) : '' ?>
-                                                <?= $prescription['near_axis_l'] ? ' x ' . $prescription['near_axis_l'] : '' ?>
-                                            </div>
-                                        <?php else: ?>
-                                            <small class="text-muted">Not specified</small>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
-                                <td>
-                                    <?php if ($prescription['PD_DISTANCE'] || $prescription['PD_NEAR']): ?>
-                                        <div>
-                                            <?php if ($prescription['PD_DISTANCE']): ?>
-                                                <div><strong>Dist:</strong> <?= $prescription['PD_DISTANCE'] ?>mm</div>
-                                            <?php endif; ?>
-                                            <?php if ($prescription['PD_NEAR']): ?>
-                                                <div><strong>Near:</strong> <?= $prescription['PD_NEAR'] ?>mm</div>
-                                            <?php endif; ?>
-                                        </div>
-                                    <?php else: ?>
-                                        <small class="text-muted">Not specified</small>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <small><?= htmlspecialchars($prescription['doctor_name']) ?></small>
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <button class="btn btn-outline-primary" 
-                                                onclick="viewGlassesPrescription(<?= $prescription['id'] ?>)"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-placement="top" 
-                                                data-bs-title="View prescription details">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                        <button class="btn btn-outline-warning" 
-                                                onclick="editGlassesPrescription(<?= $prescription['id'] ?>)"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-placement="top" 
-                                                data-bs-title="Edit this prescription">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <button class="btn btn-outline-success" 
-                                                onclick="printGlassesPrescription(<?= $prescription['id'] ?>)"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-placement="top" 
-                                                data-bs-title="Print this prescription">
-                                            <i class="bi bi-printer"></i>
-                                        </button>
-                                        <button class="btn btn-outline-danger" 
-                                                onclick="deleteGlassesPrescription(<?= $prescription['id'] ?>)"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-placement="top" 
-                                                data-bs-title="Delete this prescription">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        <?php else: ?>
-            <div class="text-center py-5">
-                <i class="bi bi-eyeglasses text-muted" style="font-size: 4rem;"></i>
-                <h6 class="text-muted mt-3 mb-2">No Glasses Prescriptions</h6>
-                <p class="text-muted mb-4">No glasses prescriptions have been recorded for this patient yet.</p>
-                <button class="btn btn-primary" 
-                        onclick="showAddGlassesPrescriptionModal(<?= $patient['id'] ?>)"
-                        data-bs-toggle="tooltip" 
-                        data-bs-placement="top" 
-                        data-bs-title="Add the first glasses prescription for this patient">
-                    <i class="bi bi-plus me-2"></i>Add First Prescription
-                </button>
-            </div>
-        <?php endif; ?>
-    </div>
-</div>
 <!-- Forum Topics Section -->
 <div class="card mt-4">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -1993,3 +1778,33 @@ window.PATIENT_CONFIG = {
 };
 </script>
 <script src="/app/Views/doctor/assets/js/patient.js?v=<?= file_exists(__DIR__ . '/assets/js/patient.js') ? filemtime(__DIR__ . '/assets/js/patient.js') : time() ?>"></script>
+<style>
+    .modal-backdrop.show{
+        display: none !important;
+    }
+    body > div.modal-backdrop.fade.show{
+        display: none !important;
+    }
+    .dark .modal-content{
+    background: rgba(11, 18, 32, 0.8) !important;
+    }
+    .modal-content{
+    background: rgba(248, 250, 252, 0.8) !important;
+    }
+</style>
+<script>
+    // Auto-detect patient ID for IOP Trend Analyzer from URL or page data
+    (function() {
+        // Try to get from PHP variable first
+        const patientIdFromPHP = <?= json_encode($patient['id'] ?? null) ?>;
+        if (patientIdFromPHP) {
+            window.currentPatientId = patientIdFromPHP;
+        } else {
+            // Fallback: extract from URL path /doctor/patients/{id}
+            const pathMatch = window.location.pathname.match(/\/doctor\/patients\/(\d+)/);
+            if (pathMatch && pathMatch[1]) {
+                window.currentPatientId = parseInt(pathMatch[1]);
+            }
+        }
+    })();
+</script>

@@ -1,0 +1,257 @@
+<div class="getting-started-content">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Recent Activities - Admin Dashboard</h1>
+            <p class="hero-subtitle">Audit Log and Activity Tracking for System Events</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">Activities</span>
+                <span class="badge badge-secondary">Admin</span>
+                <span class="badge badge-success">Audit Log</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-history-line"></i> Recent Activities Overview</h2>
+            <p class="section-description">The Recent Activities component displays a chronological list of system activities and user actions tracked in the audit log. It provides administrators with visibility into system usage, user actions, and important events.</p>
+        </div>
+
+        <!-- Recent Activities Demo Image -->
+        <div class="recent-activities-admin-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="recent-activities-admin-demo-thumbnail" id="recent-activities-admin-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/system-health-recent-activities-dark.png" alt="Recent Activities Demo" class="recent-activities-admin-demo-dark" />
+                <img src="/docs/opth/public/assets/images/system-health-recent-activities-light.png" alt="Recent Activities Demo - Light Theme" class="recent-activities-admin-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>Click to view full size</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> Visual demonstration of the Recent Activities interface
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-time-line"></i>
+                </div>
+                <h3>Chronological List</h3>
+                <p>Activities are displayed in reverse chronological order (newest first), making it easy to see the most recent system events.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-line"></i>
+                </div>
+                <h3>User Attribution</h3>
+                <p>Each activity shows the user who performed the action, providing accountability and traceability.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-list-line"></i>
+                </div>
+                <h3>Activity Details</h3>
+                <p>Each entry includes user name, action description, and timestamp for complete activity context.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Component Structure -->
+    <section class="content-section" id="components">
+        <div class="section-header">
+            <h2><i class="ri-layout-grid-line"></i> Component Structure</h2>
+            <p class="section-description">The Recent Activities component consists of a header and a scrollable list of activity items.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-heading"></i>
+                </div>
+                <h3>Header Section</h3>
+                <p>The header includes:</p>
+                <ul>
+                    <li><strong>Title:</strong> "Recent Activities" with history icon</li>
+                    <li><strong>Styling:</strong> Card header with border-bottom separator</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-list-line"></i>
+                </div>
+                <h3>Activity List</h3>
+                <p>Each activity item contains:</p>
+                <ul>
+                    <li><strong>Activity Icon:</strong> Circular icon with gradient background (blue-green gradient)</li>
+                    <li><strong>Icon Type:</strong> Changes based on action_type (sign-in for login, edit for other actions)</li>
+                    <li><strong>User Name:</strong> Name of the user who performed the action</li>
+                    <li><strong>Description:</strong> Description of the activity/action</li>
+                    <li><strong>Timestamp:</strong> Date and time when the activity occurred (YYYY-MM-DD HH:MM format)</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-information-line"></i>
+                </div>
+                <h3>Empty State</h3>
+                <p>When no activities are available:</p>
+                <ul>
+                    <li><strong>Icon:</strong> Inbox icon (large, 3rem)</li>
+                    <li><strong>Message:</strong> "No recent activities"</li>
+                    <li><strong>Styling:</strong> Centered, muted text</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="content-section" id="how-it-works">
+        <div class="section-header">
+            <h2><i class="ri-settings-3-line"></i> How It Works</h2>
+            <p class="section-description">The Recent Activities component fetches audit log entries from the database and displays them in a scrollable list.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-server-line"></i>
+                </div>
+                <h3>Backend Processing</h3>
+                <p><code>AdminController::getRecentActivities()</code> method:</p>
+                <ul>
+                    <li><strong>Query:</strong> SELECT from <code>audit_logs</code> table</li>
+                    <li><strong>Join:</strong> JOIN with <code>users</code> table to get user names</li>
+                    <li><strong>Ordering:</strong> ORDER BY <code>created_at DESC</code> (newest first)</li>
+                    <li><strong>Limit:</strong> LIMIT 20 (shows last 20 activities)</li>
+                    <li><strong>Returns:</strong> Array of activity records with user_name included</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-code-s-slash-line"></i>
+                </div>
+                <h3>Frontend Rendering</h3>
+                <p>The dashboard template renders activities:</p>
+                <ul>
+                    <li><strong>List Container:</strong> Uses <code>activity-list</code> class with max-height and scroll</li>
+                    <li><strong>Activity Items:</strong> Each item uses <code>activity-item</code> class</li>
+                    <li><strong>Icon Display:</strong> Dynamic icon based on <code>action_type</code> field</li>
+                    <li><strong>Date Formatting:</strong> Uses <code>date('Y-m-d H:i', strtotime())</code> for readable timestamps</li>
+                    <li><strong>HTML Escaping:</strong> Uses <code>htmlspecialchars()</code> for security</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-database-line"></i>
+                </div>
+                <h3>Database Structure</h3>
+                <p>The <code>audit_logs</code> table stores:</p>
+                <ul>
+                    <li><strong>user_id:</strong> ID of user who performed the action</li>
+                    <li><strong>action_type:</strong> Type of action (e.g., 'login', 'edit', 'create', 'delete')</li>
+                    <li><strong>description:</strong> Human-readable description of the action</li>
+                    <li><strong>created_at:</strong> Timestamp when the activity occurred</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Activity Types -->
+    <section class="content-section" id="activity-types">
+        <div class="section-header">
+            <h2><i class="ri-list-check"></i> Activity Types</h2>
+            <p class="section-description">Different types of activities are tracked and displayed with appropriate icons.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-login-box-line"></i>
+                </div>
+                <h3>Login Activities</h3>
+                <p>When <code>action_type = 'login'</code>:</p>
+                <ul>
+                    <li><strong>Icon:</strong> Sign-in icon (<code>fas fa-sign-in</code>)</li>
+                    <li><strong>Description:</strong> User login events</li>
+                    <li><strong>Purpose:</strong> Track user access and authentication</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-edit-line"></i>
+                </div>
+                <h3>Edit Activities</h3>
+                <p>For other action types (edit, create, delete, etc.):</p>
+                <ul>
+                    <li><strong>Icon:</strong> Edit icon (<code>fas fa-edit</code>)</li>
+                    <li><strong>Description:</strong> Various system actions and modifications</li>
+                    <li><strong>Purpose:</strong> Track data changes and system operations</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="content-section" id="features">
+        <div class="section-header">
+            <h2><i class="ri-star-line"></i> Key Features</h2>
+            <p class="section-description">The Recent Activities component includes several features for effective activity monitoring.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-scroll-line"></i>
+                </div>
+                <h3>Scrollable List</h3>
+                <p>The activity list has a maximum height (400px) with vertical scrolling, allowing you to view many activities without taking up excessive screen space.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-hover-line"></i>
+                </div>
+                <h3>Hover Effects</h3>
+                <p>Activity items have hover effects that highlight the item with a background color change, making it easier to read individual entries.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>Theme Support</h3>
+                <p>The component automatically adapts to light and dark themes, ensuring optimal readability in all viewing conditions.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-number-20"></i>
+                </div>
+                <h3>Limited Display</h3>
+                <p>Shows the last 20 activities to keep the list manageable while providing recent activity overview.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Image Modal -->
+<div id="recent-activities-admin-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-recent-activities-admin-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/system-health-recent-activities-dark.png" alt="Recent Activities Demo - Full Size" class="recent-activities-admin-demo-dark" />
+        <img src="/docs/opth/public/assets/images/system-health-recent-activities-light.png" alt="Recent Activities Demo - Light Theme - Full Size" class="recent-activities-admin-demo-light" style="display: none;" />
+    </div>
+</div>

@@ -261,7 +261,7 @@
                 <h5 class="modal-title">Add New Appointment</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="addAppointmentForm">
+            <form id="addAppointmentForm" novalidate>
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6">
@@ -495,3 +495,31 @@ window.CALENDAR_CONFIG = {
 };
 </script>
 <script src="/app/Views/doctor/assets/js/calendar.js?v=<?= file_exists(__DIR__ . '/assets/js/calendar.js') ? filemtime(__DIR__ . '/assets/js/calendar.js') : time() ?>"></script>
+<style>
+    .modal-backdrop.show{
+        display: none !important;
+    }
+    body > div.modal-backdrop.fade.show{
+        display: none !important;
+    }
+    .dark .modal-content{
+    background: rgba(11, 18, 32, 0.8) !important;
+    }
+    .modal-content{
+    background: rgba(248, 250, 252, 0.8) !important;
+    }
+</style>
+<style>
+    .modal-backdrop.show{
+        display: none !important;
+    }
+    body > div.modal-backdrop.fade.show{
+        display: none !important;
+    }
+    .dark .modal-content{
+    background: rgba(11, 18, 32, 0.8) !important;
+    }
+    .modal-content{
+    background: rgba(248, 250, 252, 0.8) !important;
+    }
+</style>

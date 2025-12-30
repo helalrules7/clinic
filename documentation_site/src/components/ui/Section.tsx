@@ -1,37 +1,32 @@
-import React from 'react';
+import type { ReactNode } from 'react';
+import { motion } from 'framer-motion';
 
 interface SectionProps {
     title: string;
-    subtitle?: string;
-    id?: string;
-    icon?: React.ReactNode;
+    children: ReactNode;
+    icon?: ReactNode;
     className?: string;
-    children: React.ReactNode;
+    id?: string;
 }
 
-export default function Section({ title, subtitle, id, icon, className = '', children }: SectionProps) {
+export default function Section({ title, children, icon, className = '', id }: SectionProps) {
     return (
-        <section id={id} className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${className}`}>
-            <div className="mb-8">
-                <div className="flex items-center gap-3 mb-2">
-                    {icon && (
-                        <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg text-white flex-shrink-0">
-                            {icon}
-                        </div>
-                    )}
-                    <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
-                        {title}
-                    </h2>
-                </div>
-                {subtitle && (
-                    <p className="text-lg text-gray-600 dark:text-gray-400 mt-2 ml-14">
-                        {subtitle}
-                    </p>
+        <motion.section
+            id={id}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className={`bg-white/80 dark:bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none ${className}`}
+        >
+            <div className="flex items-center gap-3 mb-6">
+                {icon && (
+                    <div className="p-2 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">
+                        {icon}
+                    </div>
                 )}
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h2>
             </div>
-            <div className="prose prose-lg dark:prose-invert max-w-none">
-                {children}
-            </div>
-        </section>
+            {children}
+        </motion.section>
     );
 }

@@ -503,7 +503,7 @@ function updateWeatherCard(weatherData) {
 }
 
 // Fetch weather data from backend (Arabic API)
-async function fetchWeatherData(latitude, longitude) {
+async function fetchWeatherData(latitude, longitude, saveToStorage = true) {
     try {
         // Use Arabic weather API for secretary dashboard
         const response = await fetch(`/api/weather-ar?lat=${latitude}&lon=${longitude}`);
@@ -516,6 +516,17 @@ async function fetchWeatherData(latitude, longitude) {
 
         if (data.success && data.weather) {
             updateWeatherCard(data.weather);
+            
+            // Save to localStorage with timestamp
+            if (saveToStorage) {
+                const weatherData = {
+                    data: data.weather,
+                    latitude: latitude,
+                    longitude: longitude,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('secretary_weather_data', JSON.stringify(weatherData));
+            }
         } else {
             throw new Error(data.error || data.message || 'فشل في جلب بيانات الطقس');
         }
@@ -534,8 +545,34 @@ async function fetchWeatherData(latitude, longitude) {
     }
 }
 
+// Load weather data from localStorage
+function loadWeatherFromStorage() {
+    try {
+        const stored = localStorage.getItem('secretary_weather_data');
+        if (!stored) return null;
+        
+        const weatherData = JSON.parse(stored);
+        const now = Date.now();
+        const age = now - weatherData.timestamp;
+        const maxAge = 15 * 60 * 1000; // 15 minutes
+        
+        // Return data if it's less than 15 minutes old
+        if (age < maxAge && weatherData.data) {
+            return weatherData;
+        }
+        
+        // Data is too old, remove it
+        localStorage.removeItem('secretary_weather_data');
+        return null;
+    } catch (error) {
+        console.error('Error loading weather from storage:', error);
+        localStorage.removeItem('secretary_weather_data');
+        return null;
+    }
+}
+
 // Get user location and load weather
-function initWeatherCard() {
+function initWeatherCard(useCached = true) {
     const iconContainer = document.getElementById('weatherIconContainer');
     if (!iconContainer) return; // Weather card not present
 
@@ -545,6 +582,21 @@ function initWeatherCard() {
     const DEFAULT_LOCATION_NAME = 'كفر الشيخ';
 
     const locationElement = document.getElementById('weatherLocation');
+    
+    // Try to load from localStorage first (if useCached is true)
+    if (useCached) {
+        const cachedData = loadWeatherFromStorage();
+        if (cachedData && cachedData.data) {
+            // Show cached data immediately
+            updateWeatherCard(cachedData.data);
+            if (locationElement) {
+                locationElement.innerHTML = `<i class="bi bi-geo-alt-fill"></i><span>${cachedData.data.location || DEFAULT_LOCATION_NAME}</span>`;
+            }
+            // Update in background (don't wait for it)
+            setTimeout(() => initWeatherCard(false), 100);
+            return;
+        }
+    }
 
     // Show default location immediately
     if (locationElement) {
@@ -565,20 +617,20 @@ function initWeatherCard() {
                 if (locationElement) {
                     locationElement.innerHTML = `<i class="bi bi-geo-alt-fill"></i><span>جاري جلب بيانات الطقس...</span>`;
                 }
-                fetchWeatherData(position.coords.latitude, position.coords.longitude);
+                fetchWeatherData(position.coords.latitude, position.coords.longitude, true);
             },
             (error) => {
                 // Error - use default location immediately (no retry)
                 if (locationElement) {
                     locationElement.innerHTML = `<i class="bi bi-geo-alt-fill"></i><span>${DEFAULT_LOCATION_NAME}</span>`;
                 }
-                fetchWeatherData(DEFAULT_LAT, DEFAULT_LON);
+                fetchWeatherData(DEFAULT_LAT, DEFAULT_LON, true);
             },
             geoOptions
         );
     } else {
         // Geolocation not supported - use default location
-        fetchWeatherData(DEFAULT_LAT, DEFAULT_LON);
+        fetchWeatherData(DEFAULT_LAT, DEFAULT_LON, true);
     }
 }
 
@@ -739,16 +791,25 @@ function renderWeatherForecast(forecast) {
     body.innerHTML = html;
 }
 
-// Initialize weather on page load
+// Initialize weather on page load - load last after all dashboard content
 document.addEventListener('DOMContentLoaded', function() {
-    initWeatherCard();
-    
     // Forecast button handler
     const forecastBtn = document.getElementById('weatherForecastBtn');
     if (forecastBtn) {
         forecastBtn.addEventListener('click', showWeatherForecastPopover);
     }
 
+    // Load weather data from cache first (fast)
+    // Then update in background after all other content loads
+    setTimeout(() => {
+        initWeatherCard(true); // Load cached data first
+    }, 100);
+    
+    // Update weather data after all dashboard content loads (last thing to load)
+    setTimeout(() => {
+        initWeatherCard(false); // Force fresh fetch
+    }, 2000); // Wait 2 seconds for other content to load first
+
     // Refresh weather every 15 minutes
-    setInterval(initWeatherCard, 15 * 60 * 1000);
+    setInterval(() => initWeatherCard(false), 15 * 60 * 1000);
 });

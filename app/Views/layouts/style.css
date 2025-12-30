@@ -2,6 +2,13 @@
    Main Layout Styles (from main.php)
    ============================================ */
 
+/* Timepicker UI requires box-sizing: border-box */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
 :root {
             --bg: #f8fafc;
             --text: #0f172a;
@@ -62,6 +69,7 @@
             will-change: opacity;
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
+            padding-top: 0rem !important;
         }
         
         /* Prevent flash of wrong theme - default to dark */
@@ -402,15 +410,4095 @@
             transition: margin-left 0.3s ease;
         }
         
+        /* Notice Bar Widget - At the top of all actions */
+        .notice-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            /* Glass effect - same as top-bar */
+            background: transparent;
+            transition: all 0.3s ease;
+            transform: translateY(0);
+            opacity: 1;
+            overflow: visible;
+            z-index: 1000;
+            padding-top: 5px;
+        }
+
+        .dark .notice-bar {
+            background: transparent;
+        }
+
+        /* Hide notice bar when scrolling down */
+        .notice-bar.scrolled {
+            transform: translateY(-100%);
+            opacity: 0;
+            pointer-events: none;
+            height: 0;
+        }
+
+        .notice-bar-content {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: nowrap; /* Ensure all elements stay in one row */
+            overflow: visible; /* Allow dropdowns to appear */
+        }
+
+        .notice-bar-column {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: visible;
+            flex-shrink: 0;
+        }
+
+        .notice-bar-column1::before, .notice-bar-column2::before, .notice-bar-column3::before, .notice-bar-column4::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0);
+            backdrop-filter: blur(0px);
+            -webkit-backdrop-filter: blur(0px);
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            z-index: -1;
+        }
+
+        /* Light mode - Cyan glass morphism effect */
+        .notice-bar-column1:hover::before, .notice-bar-column2:hover::before, .notice-bar-column3:hover::before{
+            background: rgba(6, 182, 212, 0.15); /* Cyan with transparency */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px rgba(6, 182, 212, 0.1);
+        }
+
+        /* Dark mode - Subtle white glass effect */
+        .dark .notice-bar-column1:hover::before, .dark .notice-bar-column2:hover::before, .dark .notice-bar-column3:hover::before{
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .notice-bar-column1:hover, .notice-bar-column2:hover, .notice-bar-column3:hover {
+            transform: translateY(-1px);
+        }
+
+        .notice-bar-column-4 {
+            /* Empty column - Takes remaining space */
+            flex: 1;
+            margin-right: auto;
+            display: flex;
+            align-items: center;
+            overflow: visible; /* Allow dropdowns to appear */
+        }
+
+        .notice-bar-column-4-inner {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            overflow: visible; /* Allow dropdowns to appear */
+        }
+
+        .notice-bar-column-4-left {
+            overflow: visible;
+            display: flex;
+            align-items: center;
+            position: relative;
+            z-index: 10002;
+        }
+
+        .notice-bar-column-4-right {
+            flex: 1;
+        }
+
+        /* IOL Button - Same style as notice-bar-column */
+        /* Notice Bar Tools Navigation - Redesigned with Glass Morphism */
+        .notice-bar-tools-nav {
+            display: inline-flex;
+            overflow: visible;
+            background: transparent;
+            padding: 0;
+            border-radius: 0;
+        }
+
+        .dark .notice-bar-tools-nav {
+            background: transparent;
+        }
+
+        .notice-bar-column-4-left {
+            overflow: visible;
+            position: relative;
+            z-index: 10002;
+        }
+
+        .notice-bar-tools-menu {
+            padding: 0;
+            margin: 0;
+            list-style-type: none;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            column-gap: 0.5rem;
+            flex-wrap: nowrap;
+        }
+
+        .notice-bar-tools-menu > li {
+            position: relative;
+            z-index: 10002;
+        }
+
+        .notice-bar-tools-menu > li:has(ul) {
+            position: relative;
+        }
+
+        .notice-bar-tools-menu > li:has(ul):hover > a {
+            text-decoration: none;
+        }
+
+        .notice-bar-iol-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .notice-bar-iol-btn:hover {
+            text-decoration: none;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .dark .notice-bar-iol-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Child Menu (Submenu) - Glass Morphism Style */
+        .notice-bar-tools-child {
+            display: none;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            padding: 15px 20px 10px;
+            text-align: left;
+            position: absolute;
+            top: calc(100% + 2px);
+            left: 0;
+            width: max-content;
+            min-width: 220px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+            transform: translateY(-5px);
+            list-style: none;
+            margin: 0;
+            border-radius: 12px;
+            z-index: 99999;
+            /* Glass Effect - Light Mode */
+            border: 1px solid rgba(226, 232, 240, 0.3);
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(255, 255, 255, 0.2) inset;
+        }
+
+        .dark .notice-bar-tools-child {
+            /* Match top-bar background in dark mode */
+            background: rgba(11, 18, 32, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.4),
+                0 1px 2px rgba(255, 255, 255, 0.05) inset;
+        }
+
+        .notice-bar-tools-menu > li:hover > .notice-bar-tools-child {
+            opacity: 1;
+            visibility: visible;
+            display: block;
+            transform: translateY(0);
+        }
+
+        /* Keep menu visible when hovering over it */
+        .notice-bar-tools-child:hover {
+            opacity: 1;
+            visibility: visible;
+            display: block;
+            transform: translateY(0);
+        }
+
+        .notice-bar-tools-child > li {
+            margin-bottom: 10px;
+        }
+
+        .notice-bar-tools-child > li:last-child {
+            margin-bottom: 0;
+        }
+
+        .notice-bar-tools-child > li > a {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .notice-bar-tools-child > li > a:hover {
+            text-decoration: none;
+            background: rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+        }
+
+        .notice-bar-tools-child > li > a i {
+            font-size: 0.9rem;
+            color: var(--accent);
+            margin-right: 0.5rem;
+        }
+
+        /* IOL Dropdown Menu */
+        .notice-bar-iol-dropdown {
+            position: fixed;
+            min-width: 220px;
+            /* Glass Effect - Light Mode */
+            background: rgba(248, 250, 252, 0.35) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(226, 232, 240, 0.3) !important;
+            border-radius: 12px !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(255, 255, 255, 0.2) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+            z-index: 10000010 !important;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .dark .notice-bar-iol-dropdown {
+            /* Glass Effect - Dark Mode */
+            background: rgba(11, 18, 32, 0.40) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(51, 65, 85, 0.3) !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.4),
+                0 1px 2px rgba(255, 255, 255, 0.05) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .notice-bar-iol-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .iol-dropdown-header {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .iol-dropdown-header h6 {
+            margin: 0;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .iol-dropdown-menu {
+            padding: 0.5rem 0;
+        }
+
+        .iol-dropdown-item {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+        }
+
+        .iol-dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--accent);
+        }
+
+        .dark .iol-dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .notice-bar-column i {
+            color: var(--text);
+            font-size: 0.75rem;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .notice-bar-column:hover i {
+            opacity: 1;
+        }
+
+        .notice-bar-column span {
+            color: var(--text);
+            font-size: 0.675rem;
+            opacity: 0.8;
+            font-weight: 500;
+            transition: opacity 0.3s ease;
+        }
+
+        .notice-bar-column:hover span {
+            opacity: 1;
+        }
+
+        /* Weather column styles */
+        .notice-bar-weather-icon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .notice-bar-weather-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .notice-bar-weather-icon .weather-icon-loading {
+            width: 12px;
+            height: 12px;
+        }
+
+        .notice-bar-weather-icon .spinner-border-sm {
+            width: 12px;
+            height: 12px;
+            border-width: 1.5px;
+        }
+
+        /* Weather Warning Icons */
+        .notice-bar-weather-warning {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            margin-left: 0.25rem;
+            color: #dc3545;
+            font-size: 0.6rem;
+            line-height: 1;
+            vertical-align: super;
+        }
+
+        .notice-bar-weather-warning .warning-triangle-icon {
+            position: relative;
+            display: inline-block;
+            animation: warningBlink 1.5s ease-in-out infinite;
+        }
+
+        .notice-bar-weather-warning .warning-triangle-icon .bi-triangle-fill {
+            font-size: 0.75rem;
+            color: #dc3545;
+        }
+
+        .notice-bar-weather-warning .warning-triangle-icon .warning-exclamation {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.4rem;
+            color: #ffffff;
+            z-index: 1;
+            animation: none;
+        }
+
+        .dark .notice-bar-weather-warning .warning-triangle-icon .bi-triangle-fill {
+            color: #f87171;
+        }
+
+        .notice-bar-weather-warning .warning-icon-label {
+            font-size: 0.45rem;
+            font-weight: 600;
+            margin-left: 0.1rem;
+            color: #dc3545;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.15rem;
+        }
+
+        .notice-bar-weather-warning .warning-icon-label i {
+            font-size: 0.5rem;
+            animation: none;
+        }
+
+        /* Pollen icon - Green */
+        .notice-bar-weather-warning .warning-icon-label #warningPollenIcon {
+            color: #22c55e;
+        }
+
+        .dark .notice-bar-weather-warning .warning-icon-label #warningPollenIcon {
+            color: #4ade80;
+        }
+
+        /* Dry Eye icon - Blue */
+        .notice-bar-weather-warning .warning-icon-label #warningDryEyeIcon {
+            color: #3b82f6;
+        }
+
+        .dark .notice-bar-weather-warning .warning-icon-label #warningDryEyeIcon {
+            color: #60a5fa;
+        }
+
+        .dark .notice-bar-weather-warning {
+            color: #f87171;
+        }
+
+        .dark .notice-bar-weather-warning .warning-icon-label {
+            color: #f87171;
+        }
+
+        @keyframes warningBlink {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .notice-bar-weather-location {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .notice-bar-weather-location i {
+            font-size: 0.65rem;
+        }
+
+        .notice-bar-weather-temp {
+            font-weight: 600;
+            margin-left: 0.25rem;
+            white-space: nowrap;
+        }
+
+        .notice-bar-column-weather {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        /* Appointment column styles */
+        .notice-bar-appointment-label {
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+
+        .notice-bar-appointment-slider {
+            flex: 1;
+            overflow: hidden;
+            height: 1.5rem;
+            line-height: 1.5rem;
+        }
+
+        .appointment-scroller {
+            height: 1.5rem;
+            line-height: 1.5rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .appointment-inner {
+            animation: appointment-scroll var(--animation-duration, 9s) normal infinite running;
+        }
+
+        /* Override with dynamic animation if data-items > 4 */
+        .appointment-inner[data-items]:not([data-items="1"]):not([data-items="2"]):not([data-items="3"]):not([data-items="4"]) {
+            animation: appointment-scroll-dynamic var(--animation-duration, 9s) normal infinite running;
+        }
+
+        .appointment-inner p {
+            margin: 0;
+            padding: 0;
+            font-weight: 500;
+            white-space: nowrap;
+            height: 1.5rem;
+            line-height: 1.5rem;
+        }
+
+        .appointment-inner .appointment-patient-name {
+            font-weight: 600;
+        }
+
+        .appointment-inner .appointment-time {
+            margin-left: 0.25rem;
+            opacity: 0.9;
+        }
+
+        .appointment-inner .no-appointment {
+            color: #dc3545 !important; /* Red color */
+            font-weight: 500; /* Same font weight as notice-bar-appointment-label */
+            font-size: inherit; /* Same font size as parent */
+            opacity: 1; /* Full opacity for better visibility */
+            font-style: normal; /* Remove italic */
+            font-size: 0.85rem !important;
+        }
+
+        .dark .appointment-inner .no-appointment {
+            color: #f87171 !important; /* Lighter red for dark mode */
+        }
+
+        @keyframes appointment-scroll {
+            0% {
+                margin-top: 0;
+            }
+            15% {
+                margin-top: 0;
+            }
+            25% {
+                margin-top: -1.5rem;
+            }
+            40% {
+                margin-top: -1.5rem;
+            }
+            50% {
+                margin-top: -3rem;
+            }
+            65% {
+                margin-top: -3rem;
+            }
+            75% {
+                margin-top: -4.5rem;
+            }
+            90% {
+                margin-top: -4.5rem;
+            }
+            100% {
+                margin-top: 0;
+            }
+        }
+
+        /* Dynamic animation for different number of items */
+        .appointment-inner[data-items="1"] {
+            animation: none;
+        }
+
+        .appointment-inner[data-items="2"] {
+            animation: appointment-scroll-2 6s normal infinite running;
+        }
+
+        .appointment-inner[data-items="3"] {
+            animation: appointment-scroll-3 9s normal infinite running;
+        }
+
+        .appointment-inner[data-items="4"] {
+            animation: appointment-scroll-4 12s normal infinite running;
+        }
+
+        @keyframes appointment-scroll-2 {
+            0%, 50% {
+                margin-top: 0;
+            }
+            25% {
+                margin-top: -1.5rem;
+            }
+            75%, 100% {
+                margin-top: 0;
+            }
+        }
+
+        @keyframes appointment-scroll-3 {
+            0%, 16.66% {
+                margin-top: 0;
+            }
+            25%, 41.66% {
+                margin-top: -1.5rem;
+            }
+            50%, 66.66% {
+                margin-top: -3rem;
+            }
+            75%, 100% {
+                margin-top: 0;
+            }
+        }
+
+        @keyframes appointment-scroll-4 {
+            0%, 12.5% {
+                margin-top: 0;
+            }
+            20%, 32.5% {
+                margin-top: -1.5rem;
+            }
+            40%, 52.5% {
+                margin-top: -3rem;
+            }
+            60%, 72.5% {
+                margin-top: -4.5rem;
+            }
+            80%, 100% {
+                margin-top: 0;
+            }
+        }
+
+        /* Clock and Calendar Popover */
+        .clock-calendar-popover-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 9998;
+        }
+
+        .clock-calendar-popover {
+            position: fixed;
+            z-index: 9999;
+            /* Glass Effect - Light Mode */
+            background: rgba(248, 250, 252, 0.35) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(226, 232, 240, 0.3) !important;
+            border-radius: 16px !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(255, 255, 255, 0.2) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+            padding: 2rem;
+            min-width: 800px;
+            max-width: 900px;
+            animation: popoverFadeIn 0.3s ease;
+        }
+
+        .dark .clock-calendar-popover {
+            /* Glass Effect - Dark Mode */
+            background: rgba(11, 18, 32, 0.40) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(51, 65, 85, 0.3) !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.4),
+                0 1px 2px rgba(255, 255, 255, 0.05) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+        }
+
+        @keyframes popoverFadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .clock-calendar-popover-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        /* Analog Clock Styles */
+        .clock-column {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .clock {
+            height: 320px;
+            width: 320px;
+            background-color: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 50%;
+            position: relative;
+            margin: auto;
+            box-shadow: 30px 30px 35px rgba(0, 0, 0, 0.25);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Light mode - clean white clock face */
+        .clock {
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+        }
+
+        .dark .clock {
+            background-color: rgba(255, 255, 255, 0.06);
+            box-shadow: 30px 30px 35px rgba(0, 0, 0, 0.25);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .clock-face {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 1;
+        }
+
+        /* Ensure dark mode SVG elements are fully visible */
+        .dark .clock-face svg circle,
+        .dark .clock-face svg line {
+            opacity: 1 !important;
+        }
+
+        .hand {
+            position: absolute;
+            margin: auto;
+            left: 0;
+            right: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 5px;
+            transform-origin: bottom;
+            transition: transform 0.1s linear;
+        }
+
+        /* Light mode - darker hands */
+        .hand.hour,
+        .hand.minute {
+            background-color: rgba(30, 41, 59, 0.9);
+        }
+
+        .dark .hand.hour,
+        .dark .hand.minute {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .hour {
+            height: 60px;
+            width: 10px;
+            top: 100px;
+        }
+
+        .minute {
+            height: 80px;
+            width: 5px;
+            top: 80px;
+        }
+
+        .seconds {
+            height: 90px;
+            width: 3px;
+            top: 70px;
+            background-color: rgba(255, 0, 0, 0.8);
+        }
+
+        /* Light mode - center dot color */
+        .clock-face svg circle[fill] {
+            fill: rgba(30, 41, 59, 0.3);
+        }
+
+        .dark .clock-face svg circle[fill] {
+            fill: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Calendar Styles */
+        .calendar-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+            padding: 1.5rem;
+        }
+
+        .dark .calendar-container {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .calendar-container header {
+            display: flex;
+            align-items: center;
+            padding: 0 0 1rem 0;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        header .calendar-navigation {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        header .calendar-navigation span {
+            height: 38px;
+            width: 38px;
+            cursor: pointer;
+            text-align: center;
+            line-height: 38px;
+            border-radius: 50%;
+            user-select: none;
+            color: var(--text);
+            font-size: 1.2rem;
+            opacity: 0.7;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        header .calendar-navigation span:hover {
+            background: rgba(255, 255, 255, 0.1);
+            opacity: 1;
+        }
+
+        header .calendar-current-date {
+            font-weight: 500;
+            font-size: 1.45rem;
+            color: var(--text);
+        }
+
+        .calendar-body {
+            padding: 0;
+        }
+
+        .calendar-body ul {
+            list-style: none;
+            flex-wrap: wrap;
+            display: flex;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        .calendar-body .calendar-dates {
+            margin-bottom: 0;
+        }
+
+        .calendar-body li {
+            width: calc(100% / 7);
+            font-size: 1.07rem;
+            color: var(--text);
+            padding: 0.5rem 0;
+        }
+
+        .calendar-body .calendar-weekdays li {
+            cursor: default;
+            font-weight: 500;
+            opacity: 0.7;
+        }
+
+        .calendar-body .calendar-dates li {
+            margin-top: 0.5rem;
+            position: relative;
+            z-index: 1;
+            cursor: pointer;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .calendar-dates li.inactive {
+            color: var(--muted);
+            opacity: 0.5;
+        }
+
+        .calendar-dates li.active {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .calendar-dates li::before {
+            position: absolute;
+            content: "";
+            z-index: -1;
+            top: 50%;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.2s ease;
+        }
+
+        .calendar-dates li.active::before {
+            background: var(--accent);
+        }
+
+        .calendar-dates li:not(.active):hover::before {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .clock-calendar-popover {
+                min-width: 90vw;
+                max-width: 95vw;
+                padding: 1.5rem;
+            }
+
+            .clock-calendar-popover-content {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .clock {
+                height: 280px;
+                width: 280px;
+            }
+
+            .hour {
+                height: 50px;
+                top: 90px;
+            }
+
+            .minute {
+                height: 70px;
+                top: 70px;
+            }
+
+            .seconds {
+                height: 80px;
+                top: 60px;
+            }
+        }
+
+        /* Weather Popover - Same as Clock/Calendar Popover */
+        .weather-popover-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 9998;
+        }
+
+        .weather-popover {
+            position: fixed;
+            z-index: 9999;
+            /* Glass Effect - Light Mode */
+            background: rgba(248, 250, 252, 0.35) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(226, 232, 240, 0.3) !important;
+            border-radius: 16px !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(255, 255, 255, 0.2) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+            padding: 2rem;
+            width: 500px;
+            max-width: 90vw;
+            max-height: calc(100vh - 40px);
+            animation: popoverFadeIn 0.3s ease;
+        }
+
+        .dark .weather-popover {
+            /* Glass Effect - Dark Mode */
+            background: rgba(11, 18, 32, 0.40) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(51, 65, 85, 0.3) !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.4),
+                0 1px 2px rgba(255, 255, 255, 0.05) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .weather-popover-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .weather-popover-body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Weather Modal */
+        .weather-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .weather-modal-backdrop {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .weather-modal-content {
+            position: relative;
+            z-index: 1;
+            /* Glass Effect - Light Mode */
+            background: rgba(248, 250, 252, 0.35) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(226, 232, 240, 0.3) !important;
+            border-radius: 16px !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(255, 255, 255, 0.2) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+            max-width: 1000px;
+            width: 90%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.3s ease;
+        }
+
+        .dark .weather-modal-content {
+            /* Glass Effect - Dark Mode */
+            background: rgba(11, 18, 32, 0.40) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(51, 65, 85, 0.3) !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.4),
+                0 1px 2px rgba(255, 255, 255, 0.05) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .weather-modal-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .weather-modal-header h5 {
+            margin: 0;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .weather-modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            opacity: 0.7;
+        }
+
+        .weather-modal-close:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+
+        /* Current Weather */
+        .weather-popover-body .weather-card-inner {
+            padding: 1rem;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: var(--text);
+            background: var(--card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .weather-popover-body .weather-main {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .weather-popover-body .weather-icon-container {
+            width: 120px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .weather-popover-body .weather-icon-container svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .weather-popover-body .weather-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .weather-popover-body .weather-temp {
+            font-size: 1.75rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.25rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .weather-popover-body .weather-desc {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            text-transform: capitalize;
+            margin-bottom: 0.25rem;
+        }
+
+        .weather-popover-body .weather-location {
+            font-size: 0.7rem;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .weather-popover-body .health-indices {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .weather-popover-body .health-index {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.4rem 0.5rem;
+        }
+
+        .weather-popover-body .index-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--muted-bg, rgba(0, 0, 0, 0.05));
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+
+        .dark .weather-popover-body .index-icon {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .weather-current-column .index-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .weather-popover-body .index-label {
+            font-size: 0.65rem;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .weather-popover-body .index-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .weather-popover-body .index-bar {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .weather-popover-body .index-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease, background-color 0.3s ease;
+            min-width: 2px; /* Ensure bar is visible even at 0% */
+            display: block;
+            position: relative;
+        }
+
+        .weather-popover-body .index-fill.index-low {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+
+        .weather-popover-body .index-fill.index-moderate {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        }
+
+        .weather-popover-body .index-fill.index-high {
+            background: linear-gradient(90deg, #f97316, #fb923c);
+        }
+
+        .weather-popover-body .index-fill.index-very-high {
+            background: linear-gradient(90deg, #ef4444, #f87171);
+        }
+
+        .weather-popover-body .pollen-index .index-icon {
+            background: rgba(16, 185, 129, 0.3);
+        }
+
+        .weather-popover-body .dry-eye-index .index-icon {
+            background: rgba(59, 130, 246, 0.3);
+        }
+
+        /* Weather Forecast Button */
+        .weather-popover-body .weather-forecast-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text);
+            z-index: 10;
+        }
+
+        .weather-popover-body .weather-forecast-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .weather-popover-body .weather-forecast-btn i {
+            font-size: 14px;
+        }
+
+        .dark .weather-popover-body .weather-forecast-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .dark .weather-popover-body .weather-forecast-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Weather Forecast Popover - Same as Dashboard */
+        .weather-forecast-popover {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .weather-forecast-popover-content {
+            /* Glass Effect - Light Mode */
+            background: rgba(248, 250, 252, 0.35) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(226, 232, 240, 0.3) !important;
+            border-radius: 16px !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(255, 255, 255, 0.2) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+            max-width: 900px;
+            width: 90%;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.3s ease;
+        }
+
+        .dark .weather-forecast-popover-content {
+            /* Glass Effect - Dark Mode */
+            background: rgba(11, 18, 32, 0.40) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(51, 65, 85, 0.3) !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.4),
+                0 1px 2px rgba(255, 255, 255, 0.05) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .weather-forecast-popover-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .weather-forecast-popover-header h5 {
+            margin: 0;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .weather-forecast-close {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            opacity: 0.7;
+        }
+
+        .weather-forecast-close:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .weather-forecast-popover-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .weather-forecast-loading,
+        .weather-forecast-error {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: var(--text);
+            gap: 12px;
+        }
+
+        .weather-forecast-error i {
+            font-size: 32px;
+            color: var(--danger);
+            opacity: 0.7;
+        }
+
+        .weather-forecast-days {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+        }
+
+        .weather-forecast-day {
+            background: rgba(255, 255, 255, 0.55) !important;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .weather-forecast-day:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .dark .weather-forecast-day {
+            background: rgba(166, 139, 139, 0.09) !important;
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .dark .weather-forecast-day:hover {
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .forecast-day-header {
+            text-align: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .forecast-day-name {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .forecast-day-date {
+            font-size: 0.75rem;
+            color: var(--text);
+            opacity: 0.7;
+        }
+
+        .forecast-day-weather {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .forecast-day-icon {
+            margin: 8px 0;
+        }
+
+        .forecast-day-icon .weather-svg-icon {
+            width: 48px;
+            height: 48px;
+        }
+
+        .forecast-day-temp {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin: 8px 0;
+        }
+
+        .forecast-temp-high {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .forecast-temp-low {
+            font-size: 0.9rem;
+            color: var(--text);
+            opacity: 0.6;
+        }
+
+        .forecast-day-condition {
+            font-size: 0.75rem;
+            color: var(--text);
+            opacity: 0.8;
+            text-transform: capitalize;
+        }
+
+        .forecast-day-indices {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .forecast-index-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .forecast-index-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            color: var(--text);
+            opacity: 0.8;
+        }
+
+        .forecast-index-label i {
+            font-size: 0.75rem;
+        }
+
+        .forecast-index-bar {
+            position: relative;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .dark .forecast-index-bar {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .forecast-index-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s ease, background 0.3s ease;
+            min-width: 2px;
+        }
+
+        /* Forecast Index Fill Colors - Same as main weather card */
+        .forecast-index-fill.index-low {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+
+        .forecast-index-fill.index-moderate {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        }
+
+        .forecast-index-fill.index-high {
+            background: linear-gradient(90deg, #f97316, #fb923c);
+        }
+
+        .forecast-index-fill.index-very-high {
+            background: linear-gradient(90deg, #ef4444, #f87171);
+        }
+
+        .forecast-index-value {
+            font-size: 0.7rem;
+            color: var(--text);
+            opacity: 0.9;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .weather-popover-body .index-value {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .weather-popover {
+                width: 90vw;
+                height: 90vw;
+                padding: 1.5rem;
+            }
+        }
+
+        /* Upcoming Appointments Popover - Same as Clock/Calendar Popover */
+        .appointments-popover-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 9998;
+        }
+
+        .appointments-popover {
+            position: fixed;
+            z-index: 9999;
+            /* Glass Effect - Light Mode */
+            background: rgba(248, 250, 252, 0.35) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(226, 232, 240, 0.3) !important;
+            border-radius: 16px !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(255, 255, 255, 0.2) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+            padding: 0;
+            min-width: 800px;
+            max-width: 900px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            animation: popoverFadeIn 0.3s ease;
+            overflow: hidden;
+        }
+
+        .dark .appointments-popover {
+            /* Glass Effect - Dark Mode */
+            background: rgba(11, 18, 32, 0.40) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(51, 65, 85, 0.3) !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.4),
+                0 1px 2px rgba(255, 255, 255, 0.05) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .appointments-popover-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-height: 85vh;
+            overflow: hidden;
+        }
+
+        .appointments-popover-header {
+            padding: 2rem 2rem 1rem 2rem;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .appointments-popover-header h5 {
+            margin: 0;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .appointments-popover-body {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 1rem 2rem 2rem 2rem;
+            min-height: 0;
+        }
+
+        .appointments-loading,
+        .appointments-empty,
+        .appointments-error {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: var(--text);
+            gap: 0.75rem;
+        }
+
+        .appointments-empty i,
+        .appointments-error i {
+            font-size: 2rem;
+            opacity: 0.5;
+        }
+
+        .appointments-error i {
+            color: var(--danger);
+        }
+
+        .appointments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .appointment-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .appointment-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .appointment-item-content {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .appointment-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .appointment-item-patient {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        .appointment-item-time {
+            font-weight: 600;
+            color: var(--accent);
+            font-size: 0.9rem;
+        }
+
+        .appointment-item-date {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .appointment-item-type {
+            font-size: 0.8rem;
+            color: var(--muted);
+            opacity: 0.8;
+        }
+
+        .appointment-item-calendar-btn {
+            background: var(--accent);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .appointment-item-calendar-btn:hover {
+            background: var(--accent-hover, var(--accent));
+            transform: scale(1.1);
+        }
+
+        .appointments-pagination {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .appointments-pagination-info {
+            font-size: 0.85rem;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .appointments-pagination-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .appointments-pagination-page {
+            font-size: 0.9rem;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .appointments-pagination-btn {
+            background: var(--accent);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .appointments-pagination-btn:hover {
+            background: var(--accent-hover, var(--accent));
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .appointments-pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .appointments-pagination-btn:disabled:hover {
+            transform: none;
+        }
+
+        .appointment-item-calendar-btn i {
+            font-size: 1.1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .appointments-popover {
+                min-width: 90vw;
+                max-width: 95vw;
+                padding: 1.5rem;
+            }
+        }
+
+        /* IOL Calculator Popover */
+        .iol-calculator-popover-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 9998;
+        }
+
+        .iol-calculator-popover {
+            position: fixed;
+            z-index: 9999;
+            /* Glass Effect - Light Mode */
+            background: rgba(248, 250, 252, 0.35) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(226, 232, 240, 0.3) !important;
+            border-radius: 16px !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(255, 255, 255, 0.2) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+            padding: 2rem;
+            min-width: 1000px;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: popoverFadeIn 0.3s ease;
+        }
+
+        .dark .iol-calculator-popover {
+            /* Glass Effect - Dark Mode */
+            background: rgba(11, 18, 32, 0.40) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(51, 65, 85, 0.3) !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.4),
+                0 1px 2px rgba(255, 255, 255, 0.05) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .iol-calculator-popover-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .iol-calculator-popover-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .iol-calculator-popover-header h5 {
+            margin: 0;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        .iol-calculator-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        .iol-calculator-close-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            transform: scale(1.1);
+        }
+
+        .dark .iol-calculator-close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .iol-calculator-popover-body {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* IOL Calculator Form */
+        .iol-calculator-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .iol-form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .iol-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .iol-form-group label {
+            font-weight: 500;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .iol-form-group input {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card);
+            color: var(--text);
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .iol-form-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+        }
+
+        .iol-form-group input:invalid {
+            border-color: #ef4444;
+        }
+
+        .iol-form-group small {
+            font-size: 0.75rem;
+            color: var(--muted);
+            opacity: 0.8;
+        }
+
+        .iol-form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .iol-form-actions .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .iol-form-actions .btn-primary {
+            background: var(--accent);
+            color: white;
+            border: none;
+        }
+
+        .iol-form-actions .btn-primary:hover {
+            background: var(--accent-hover, var(--accent));
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .iol-form-actions .btn-secondary {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .iol-form-actions .btn-secondary:hover {
+            background: var(--hover);
+            transform: translateY(-1px);
+        }
+
+        /* IOL Calculator Results */
+        .iol-calculator-results {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .iol-warning-badge {
+            padding: 1rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .iol-warning-badge i {
+            font-size: 1.25rem;
+        }
+
+        .iol-warning-normal {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .iol-warning-short {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .iol-warning-long {
+            background: rgba(249, 115, 22, 0.1);
+            color: #ea580c;
+            border: 1px solid rgba(249, 115, 22, 0.2);
+        }
+
+        .dark .iol-warning-normal {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .dark .iol-warning-short {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .dark .iol-warning-long {
+            background: rgba(249, 115, 22, 0.15);
+            border-color: rgba(249, 115, 22, 0.3);
+        }
+
+        .iol-suggested-power {
+            padding: 1.5rem;
+            background: var(--card);
+            border: 2px solid var(--accent);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .iol-suggested-power-label {
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .iol-suggested-power-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* IOL Comparison Table */
+        .iol-comparison-table-wrapper {
+            overflow-x: auto;
+        }
+
+        .iol-comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .iol-comparison-table thead {
+            background: var(--accent);
+            color: white;
+        }
+
+        .iol-comparison-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .iol-comparison-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .iol-comparison-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .iol-comparison-table tbody tr:nth-child(even) {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .dark .iol-comparison-table tbody tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .iol-comparison-table tbody tr:hover {
+            background: rgba(var(--accent-rgb, 59, 130, 246), 0.05);
+        }
+
+        .iol-comparison-table td strong {
+            color: var(--accent);
+            font-size: 1.1rem;
+        }
+
+        .iol-comparison-table td small {
+            color: var(--muted);
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .iol-calculator-popover {
+                min-width: 90vw;
+                max-width: 95vw;
+            }
+
+            .iol-form-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .iol-calculator-popover {
+                min-width: 95vw;
+                max-width: 95vw;
+                padding: 1.5rem;
+            }
+
+            .iol-form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .iol-comparison-table {
+                font-size: 0.85rem;
+            }
+
+            .iol-comparison-table th,
+            .iol-comparison-table td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+
+        /* IOP Trend Analyzer Popover */
+        .iop-trend-analyzer-popover-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 9998;
+        }
+
+        .iop-trend-analyzer-popover {
+            position: fixed;
+            z-index: 9999;
+            /* Glass Effect - Light Mode */
+            background: rgba(248, 250, 252, 0.35) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(226, 232, 240, 0.3) !important;
+            border-radius: 16px !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(255, 255, 255, 0.2) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+            padding: 2rem;
+            min-width: 1000px;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: popoverFadeIn 0.3s ease;
+        }
+
+        .dark .iop-trend-analyzer-popover {
+            /* Glass Effect - Dark Mode */
+            background: rgba(11, 18, 32, 0.40) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(51, 65, 85, 0.3) !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.4),
+                0 1px 2px rgba(255, 255, 255, 0.05) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .iop-trend-analyzer-popover-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .iop-trend-analyzer-popover-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .iop-trend-analyzer-popover-header h5 {
+            margin: 0;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        .iop-trend-analyzer-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        .iop-trend-analyzer-close-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            transform: scale(1.1);
+        }
+
+        .dark .iop-trend-analyzer-close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .iop-trend-analyzer-popover-body {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* IOP Trend Analyzer Form */
+        .iop-trend-analyzer-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .iop-trend-analyzer-form .iop-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .iop-trend-analyzer-form label {
+            font-weight: 500;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .iop-trend-analyzer-form .form-select {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card);
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .iop-trend-analyzer-form .form-select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+        }
+
+        .iop-trend-analyzer-form .iop-form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .iop-trend-analyzer-form .iop-form-actions .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        /* IOP Trend Analyzer Results */
+        .iop-trend-analyzer-results {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        /* IOP Alerts */
+        .iop-alerts-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .iop-alert {
+            padding: 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .iop-alert i {
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+
+        .iop-alert-success {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .iop-alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .iop-alert-warning {
+            background: rgba(249, 115, 22, 0.1);
+            color: #ea580c;
+            border: 1px solid rgba(249, 115, 22, 0.2);
+        }
+
+        .iop-alert-info {
+            background: rgba(59, 130, 246, 0.1);
+            color: #2563eb;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .dark .iop-alert-success {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .dark .iop-alert-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .dark .iop-alert-warning {
+            background: rgba(249, 115, 22, 0.15);
+            border-color: rgba(249, 115, 22, 0.3);
+        }
+
+        .dark .iop-alert-info {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        /* IOP Summary Cards */
+        .iop-summary-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .iop-summary-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .iop-card-header {
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .iop-card-header h6 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 1.1rem;
+        }
+
+        .iop-card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .iop-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .iop-stat label {
+            font-size: 0.9rem;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .iop-stat span {
+            font-size: 1rem;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .iop-trend-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .iop-trend-stable {
+            background: rgba(234, 179, 8, 0.1);
+            color: #ca8a04;
+            border: 1px solid rgba(234, 179, 8, 0.2);
+        }
+
+        .iop-trend-improving {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .iop-trend-worsening {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .dark .iop-trend-stable {
+            background: rgba(234, 179, 8, 0.15);
+            border-color: rgba(234, 179, 8, 0.3);
+        }
+
+        .dark .iop-trend-improving {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .dark .iop-trend-worsening {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        /* IOP Graph Container */
+        .iop-graph-container {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+        }
+
+        #iopTrendGraph {
+            width: 100%;
+            height: 400px;
+            max-width: 100%;
+        }
+
+        /* Update button opacity to 100% */
+        .notice-bar-iol-btn {
+            opacity: 1 !important;
+        }
+
+        .notice-bar-iol-btn i {
+            font-size: 0.75rem;
+            margin-right: 0.25rem;
+        }
+
+        /* Calculators Dropdown Menu */
+        .calculators-dropdown-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            z-index: 9997;
+            pointer-events: none; /* Allow clicks through when using hover */
+        }
+
+        .calculators-dropdown {
+            position: fixed;
+            z-index: 9998;
+            pointer-events: auto; /* Ensure dropdown is clickable */
+            /* Glass Effect - Light Mode */
+            background: rgba(248, 250, 252, 0.35) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(226, 232, 240, 0.3) !important;
+            border-radius: 12px !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(255, 255, 255, 0.2) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+            padding: 0.5rem;
+            min-width: 220px;
+            animation: popoverFadeIn 0.2s ease;
+        }
+
+        .dark .calculators-dropdown {
+            /* Glass Effect - Dark Mode */
+            background: rgba(11, 18, 32, 0.40) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(51, 65, 85, 0.3) !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.4),
+                0 1px 2px rgba(255, 255, 255, 0.05) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .calculators-dropdown-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .calculators-dropdown-item:hover {
+            background: rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+            transform: translateX(2px);
+        }
+
+        .calculators-dropdown-item i {
+            font-size: 1rem;
+            color: var(--accent);
+        }
+
+        /* IOP Patient Search Autocomplete */
+        .iop-patient-search-wrapper {
+            position: relative;
+        }
+
+        .iop-autocomplete-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 10000;
+            margin-top: 4px;
+        }
+
+        .iop-autocomplete-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: all 0.2s ease;
+        }
+
+        .iop-autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .iop-autocomplete-item:hover,
+        .iop-autocomplete-item.active {
+            background: rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+        }
+
+        .dark .iop-autocomplete-item:hover,
+        .dark .iop-autocomplete-item.active {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .iop-patient-name {
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+
+        .iop-patient-info {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .iop-selected-patient {
+            padding: 0.75rem;
+            background: rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+            border: 1px solid rgba(var(--accent-rgb, 59, 130, 246), 0.2);
+            border-radius: 8px;
+            color: var(--accent);
+            font-weight: 500;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .dark .iop-selected-patient {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .iop-selected-patient button {
+            color: inherit;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        .iop-selected-patient button:hover {
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .iop-trend-analyzer-popover {
+                min-width: 90vw;
+                max-width: 95vw;
+            }
+
+            .iop-summary-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .iop-trend-analyzer-popover {
+                min-width: 95vw;
+                max-width: 95vw;
+                padding: 1.5rem;
+            }
+
+            .iop-summary-cards {
+                grid-template-columns: 1fr;
+            }
+
+            #iopTrendGraph {
+                height: 300px;
+            }
+        }
+
+        /* Pediatric IOL Undercorrection Popover */
+        .pediatric-iol-popover-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 9998;
+        }
+
+        .pediatric-iol-popover {
+            position: fixed;
+            z-index: 9999;
+            background: rgba(248, 250, 252, 0.35) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(226, 232, 240, 0.3) !important;
+            border-radius: 16px !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(255, 255, 255, 0.2) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+            padding: 2rem;
+            min-width: 600px;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: popoverFadeIn 0.3s ease;
+        }
+
+        .dark .pediatric-iol-popover {
+            background: rgba(11, 18, 32, 0.40) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(51, 65, 85, 0.3) !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.4),
+                0 1px 2px rgba(255, 255, 255, 0.05) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .pediatric-iol-popover-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pediatric-iol-popover-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .pediatric-iol-popover-header h5 {
+            margin: 0;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        .pediatric-iol-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        .pediatric-iol-close-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            transform: scale(1.1);
+        }
+
+        .dark .pediatric-iol-close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .pediatric-iol-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .pediatric-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .pediatric-form-group label {
+            font-weight: 500;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .pediatric-age-input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .pediatric-age-input-group input {
+            flex: 1;
+        }
+
+        .pediatric-age-input-group select {
+            width: 120px;
+        }
+
+        .pediatric-form-group input,
+        .pediatric-form-group select {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card);
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .pediatric-form-group input:focus,
+        .pediatric-form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+        }
+
+        .pediatric-form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .pediatric-form-actions .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pediatric-iol-results {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .pediatric-results-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .pediatric-result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pediatric-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .pediatric-result-item.highlight {
+            background: rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            border-bottom: none;
+            margin-top: 0.5rem;
+        }
+
+        .pediatric-result-item label {
+            font-weight: 500;
+            color: var(--muted);
+        }
+
+        .pediatric-result-item span {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 1.1rem;
+        }
+
+        .pediatric-result-item.highlight span {
+            color: var(--accent);
+            font-size: 1.3rem;
+        }
+
+        .pediatric-clinical-note {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .pediatric-clinical-note h6 {
+            margin: 0 0 1rem 0;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .pediatric-clinical-note p {
+            margin: 0;
+            color: var(--text);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        /* Target IOP Calculator Popover */
+        .target-iop-popover-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 9998;
+        }
+
+        .target-iop-popover {
+            position: fixed;
+            z-index: 9999;
+            background: rgba(248, 250, 252, 0.35) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(226, 232, 240, 0.3) !important;
+            border-radius: 16px !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(255, 255, 255, 0.2) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+            padding: 2rem;
+            min-width: 600px;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: popoverFadeIn 0.3s ease;
+        }
+
+        .dark .target-iop-popover {
+            background: rgba(11, 18, 32, 0.40) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(51, 65, 85, 0.3) !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.4),
+                0 1px 2px rgba(255, 255, 255, 0.05) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .target-iop-popover-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .target-iop-popover-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .target-iop-popover-header h5 {
+            margin: 0;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        .target-iop-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        .target-iop-close-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            transform: scale(1.1);
+        }
+
+        .dark .target-iop-close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .target-iop-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .target-iop-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .target-iop-form-group label {
+            font-weight: 500;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .target-iop-form-group input,
+        .target-iop-form-group select {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card);
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .target-iop-form-group input:focus,
+        .target-iop-form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+        }
+
+        .target-iop-form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .target-iop-form-actions .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .target-iop-results {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .target-iop-results-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .target-iop-result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .target-iop-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .target-iop-result-item.highlight {
+            background: rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            border-bottom: none;
+            margin-top: 0.5rem;
+        }
+
+        .target-iop-result-item label {
+            font-weight: 500;
+            color: var(--muted);
+        }
+
+        .target-iop-result-item span {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 1.1rem;
+        }
+
+        .target-iop-result-item.highlight span {
+            color: var(--accent);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .target-iop-clinical-note {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .target-iop-clinical-note h6 {
+            margin: 0 0 1rem 0;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .target-iop-clinical-note p {
+            margin: 0;
+            color: var(--text);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        /* Refraction Consistency Checker Popover */
+        .refraction-consistency-popover-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 9998;
+        }
+
+        .refraction-consistency-popover {
+            position: fixed;
+            z-index: 9999;
+            background: rgba(248, 250, 252, 0.35) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(226, 232, 240, 0.3) !important;
+            border-radius: 16px !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(255, 255, 255, 0.2) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+            padding: 2rem;
+            min-width: 700px;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: popoverFadeIn 0.3s ease;
+        }
+
+        .dark .refraction-consistency-popover {
+            background: rgba(11, 18, 32, 0.40) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(51, 65, 85, 0.3) !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.4),
+                0 1px 2px rgba(255, 255, 255, 0.05) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .refraction-consistency-popover-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .refraction-consistency-popover-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .refraction-consistency-popover-header h5 {
+            margin: 0;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        .refraction-consistency-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        .refraction-consistency-close-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            transform: scale(1.1);
+        }
+
+        .dark .refraction-consistency-close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .refraction-consistency-form {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .refraction-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .refraction-section h6 {
+            margin: 0;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .refraction-form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .refraction-consistency-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .refraction-consistency-form-group label {
+            font-weight: 500;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .refraction-consistency-form-group input,
+        .refraction-consistency-form-group select {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card);
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .refraction-consistency-form-group input:focus,
+        .refraction-consistency-form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+        }
+
+        .refraction-consistency-form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .refraction-consistency-form-actions .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .refraction-consistency-results {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .refraction-consistency-results-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .refraction-consistency-result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .refraction-consistency-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .refraction-consistency-result-item.highlight {
+            background: rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            border-bottom: none;
+            margin-top: 0.5rem;
+        }
+
+        .refraction-consistency-result-item label {
+            font-weight: 500;
+            color: var(--muted);
+        }
+
+        .refraction-consistency-result-item span {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 1.1rem;
+        }
+
+        .consistency-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .consistency-badge.consistent {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .consistency-badge.inconsistent {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .dark .consistency-badge.consistent {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .dark .consistency-badge.inconsistent {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .refraction-consistency-clinical-note {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .refraction-consistency-clinical-note h6 {
+            margin: 0 0 1rem 0;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .refraction-consistency-clinical-note p {
+            margin: 0;
+            color: var(--text);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        /* Visual Acuity Progress Calculator Popover */
+        .visual-acuity-popover-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 9998;
+        }
+
+        .visual-acuity-popover {
+            position: fixed;
+            z-index: 9999;
+            background: rgba(248, 250, 252, 0.35) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(226, 232, 240, 0.3) !important;
+            border-radius: 16px !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(255, 255, 255, 0.2) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+            padding: 2rem;
+            min-width: 900px;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: popoverFadeIn 0.3s ease;
+        }
+
+        .dark .visual-acuity-popover {
+            background: rgba(11, 18, 32, 0.40) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(51, 65, 85, 0.3) !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.4),
+                0 1px 2px rgba(255, 255, 255, 0.05) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .visual-acuity-popover-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .visual-acuity-popover-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .visual-acuity-popover-header h5 {
+            margin: 0;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        .visual-acuity-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        .visual-acuity-close-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            transform: scale(1.1);
+        }
+
+        .dark .visual-acuity-close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .visual-acuity-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .visual-acuity-visits-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .visit-entry {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .visit-entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .visit-entry-header h6 {
+            margin: 0;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .visit-entry-fields {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        .visual-acuity-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .visual-acuity-form-group label {
+            font-weight: 500;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .visual-acuity-form-group input,
+        .visual-acuity-form-group select {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card);
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .visual-acuity-form-group input:focus,
+        .visual-acuity-form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+        }
+
+        .visual-acuity-form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .visual-acuity-form-actions .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .visual-acuity-results {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .visual-acuity-results-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .va-results-per-eye {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .va-results-per-eye h6 {
+            margin: 0 0 1rem 0;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .va-eye-results {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .va-result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+        }
+
+        .va-result-item label {
+            font-weight: 500;
+            color: var(--muted);
+        }
+
+        .va-result-item span {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .va-result-item.highlight {
+            background: rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+        }
+
+        .va-trend-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .va-trend-badge.improving {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .va-trend-badge.worsening {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .va-trend-badge.stable {
+            background: rgba(234, 179, 8, 0.1);
+            color: #ca8a04;
+            border: 1px solid rgba(234, 179, 8, 0.2);
+        }
+
+        .dark .va-trend-badge.improving {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .dark .va-trend-badge.worsening {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .dark .va-trend-badge.stable {
+            background: rgba(234, 179, 8, 0.15);
+            border-color: rgba(234, 179, 8, 0.3);
+        }
+
+        .va-clinical-note {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .va-clinical-note p {
+            margin: 0;
+            color: var(--text);
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+
+        .va-graph-container {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        #vaProgressGraph {
+            width: 100%;
+            height: 400px;
+            max-width: 100%;
+        }
+
+        .visual-acuity-clinical-note {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .visual-acuity-clinical-note h6 {
+            margin: 0 0 1rem 0;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .visual-acuity-clinical-note p {
+            margin: 0;
+            color: var(--text);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        /* Corneal Astigmatism Popover */
+        .corneal-astigmatism-popover-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 9998;
+        }
+
+        .corneal-astigmatism-popover {
+            position: fixed;
+            z-index: 9999;
+            background: rgba(248, 250, 252, 0.35) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(226, 232, 240, 0.3) !important;
+            border-radius: 16px !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(255, 255, 255, 0.2) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+            padding: 2rem;
+            min-width: 800px;
+            max-width: 1000px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: popoverFadeIn 0.3s ease;
+        }
+
+        .dark .corneal-astigmatism-popover {
+            background: rgba(11, 18, 32, 0.40) !important;
+            backdrop-filter: blur(10px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+            border: 1px solid rgba(51, 65, 85, 0.3) !important;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.4),
+                0 1px 2px rgba(255, 255, 255, 0.05) inset,
+                2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .corneal-astigmatism-popover-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .corneal-astigmatism-popover-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .corneal-astigmatism-popover-header h5 {
+            margin: 0;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        .corneal-astigmatism-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        .corneal-astigmatism-close-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            transform: scale(1.1);
+        }
+
+        .dark .corneal-astigmatism-close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .astigmatism-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .astigmatism-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .astigmatism-form-group label {
+            font-weight: 500;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .astigmatism-form-group input {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card);
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .astigmatism-form-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+        }
+
+        .astigmatism-form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1rem;
+        }
+
+        .astigmatism-form-actions .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .astigmatism-results {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .astigmatism-results-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .astigmatism-result-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .astigmatism-result-card h6 {
+            margin: 0 0 1rem 0;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .astigmatism-result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .astigmatism-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .astigmatism-result-item label {
+            font-weight: 500;
+            color: var(--muted);
+        }
+
+        .astigmatism-result-item span {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 1.1rem;
+        }
+
+        .astigmatism-recommendation {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .astigmatism-recommendation h6 {
+            margin: 0 0 1rem 0;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .astigmatism-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .astigmatism-badge-success {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .astigmatism-badge-warning {
+            background: rgba(249, 115, 22, 0.1);
+            color: #ea580c;
+            border: 1px solid rgba(249, 115, 22, 0.2);
+        }
+
+        .astigmatism-badge-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .dark .astigmatism-badge-success {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .dark .astigmatism-badge-warning {
+            background: rgba(249, 115, 22, 0.15);
+            border-color: rgba(249, 115, 22, 0.3);
+        }
+
+        .dark .astigmatism-badge-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .astigmatism-recommendation p {
+            margin: 0;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .astigmatism-clinical-note {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .astigmatism-clinical-note h6 {
+            margin: 0 0 1rem 0;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .astigmatism-clinical-note p {
+            margin: 0;
+            color: var(--text);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .pediatric-iol-popover,
+            .corneal-astigmatism-popover {
+                min-width: 90vw;
+                max-width: 95vw;
+            }
+
+            .astigmatism-form-grid,
+            .astigmatism-results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .pediatric-iol-popover,
+            .corneal-astigmatism-popover,
+            .target-iop-popover,
+            .refraction-consistency-popover,
+            .visual-acuity-popover {
+                min-width: 95vw;
+                max-width: 95vw;
+                padding: 1.5rem;
+            }
+
+            .refraction-form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .visit-entry-fields {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Notice bar is now visible on mobile devices with responsive design */
+        /* Removed the rule that was hiding notice-bar on mobile */
+        /* The notice-bar now shows button + Next Appointment on mobile */
+        
         .top-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: -2rem;
+            margin-top: 0;
             margin-bottom: 2rem;
             margin-left: -2rem;
             margin-right: -2rem;
-            padding-top: 1rem;
+            padding-top: calc(1rem + 20px); /* Space for notice bar */
             padding-left: 2rem;
             padding-right: 2rem;
             padding-bottom: 1rem;
@@ -418,12 +4506,34 @@
             border-bottom: 1px solid var(--border);
             position: sticky;
             top: 0;
-            z-index: 100;
-            /* Glass effect base */
+            z-index: 999;
+            transition: padding-top 0.3s ease;
+        }
+
+        /* Reduce padding when notice-bar is hidden */
+        .top-bar.notice-bar-hidden {
+            padding-top: 1rem;
+        }
+        
+        /* Glass effect base */
+        .top-bar {
             background: rgba(248, 250, 252, 0.85);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            transition: all 0.3s ease;
+        }
+        
+        /* Top actions container - align below notice bar */
+        .top-bar > .top-actions,
+        .top-bar > .sidebar-toggle,
+        .top-bar > .page-title {
+            margin-top: 0px; /* Align with notice bar */
+            transition: margin-top 0.3s ease;
+        }
+        
+        .top-bar.notice-bar-hidden > .top-actions,
+        .top-bar.notice-bar-hidden > .sidebar-toggle,
+        .top-bar.notice-bar-hidden > .page-title {
+            margin-top: 0;
         }
 
         .dark .top-bar {
@@ -507,8 +4617,8 @@
             display: flex !important;
             justify-content: center;
             align-items: flex-start;
-            padding-top: 12vh;
-            perspective: 800px;
+            padding-top: 15vh;
+            perspective: 1000px;
         }
 
         /* Collapsing state - 3D perspective close animation */
@@ -516,17 +4626,40 @@
             pointer-events: none !important;
         }
 
+        .global-search-container.expanded.collapsing .global-search-input-wrapper {
+            opacity: 0 !important;
+            transform: scale(0) rotateX(25deg) translateY(-80px) !important;
+            transform-style: preserve-3d !important;
+            transform-origin: center center !important;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
         .global-search-container.collapsing .global-search-input-wrapper {
-            opacity: 0;
-            transform: scale(0) rotateX(25deg) translateY(-80px);
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0 !important;
+            transform: scale(0) rotateX(25deg) translateY(-80px) !important;
+            transform-style: preserve-3d !important;
+            transform-origin: center center !important;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
 
+        .global-search-container.expanded.collapsing .global-search-backdrop {
+            opacity: 0 !important;
+            backdrop-filter: blur(0px) !important;
+            -webkit-backdrop-filter: blur(0px) !important;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        backdrop-filter 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        -webkit-backdrop-filter 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
         .global-search-container.collapsing .global-search-backdrop {
-            opacity: 0;
-            backdrop-filter: blur(0px);
-            -webkit-backdrop-filter: blur(0px);
-            transition: all 0.4s ease-out;
+            opacity: 0 !important;
+            backdrop-filter: blur(0px) !important;
+            -webkit-backdrop-filter: blur(0px) !important;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        backdrop-filter 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        -webkit-backdrop-filter 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
         
         .global-search-backdrop {
@@ -547,11 +4680,34 @@
         }
 
         .global-search-container.expanded .global-search-backdrop {
-            opacity: 1;
-            pointer-events: all;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 1 !important;
+            pointer-events: all !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            display: block !important;
+            visibility: visible !important;
+            z-index: 999998 !important;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        backdrop-filter 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        -webkit-backdrop-filter 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        /* Ensure backdrop doesn't interfere when not expanded */
+        .global-search-container:not(.expanded) .global-search-backdrop {
+            display: none !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            z-index: -1 !important;
+            visibility: hidden !important;
+        }
+        
+        /* Ensure backdrop doesn't interfere when collapsed (after transition) */
+        .global-search-container.collapsing:not(.expanded) .global-search-backdrop {
+            display: none !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            z-index: -1 !important;
+            visibility: hidden !important;
         }
         
         /* Ensure expanded search is above everything when moved to body */
@@ -565,10 +4721,21 @@
             display: flex;
             flex-direction: column;
             align-items: stretch;
-            /* Default closed state */
+            transform-style: preserve-3d;
+            transform-origin: center center;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* When search container is NOT expanded, show the input wrapper normally (for top bar display) */
+        .global-search-container:not(.expanded):not(.collapsing) .global-search-input-wrapper {
             opacity: 1;
             transform: scale(1) rotateX(0deg) translateY(0);
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Initial hidden state before expansion - only applies when container is moved to body */
+        body > .global-search-container:not(.expanded) .global-search-input-wrapper {
+            opacity: 0;
+            transform: scale(0) rotateX(25deg) translateY(-80px);
         }
 
         /* Expanded input wrapper - open state with 3D perspective */
@@ -587,10 +4754,14 @@
             padding: 1.5rem;
             z-index: 999999 !important;
             position: relative;
-            /* Open state - fully visible */
-            opacity: 1;
-            transform: scale(1) rotateX(0deg) translateY(0);
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            /* Open state - fully visible with 3D animation */
+            opacity: 1 !important;
+            transform: scale(1) rotateX(0deg) translateY(0) !important;
+            transform-style: preserve-3d !important;
+            transform-origin: center center !important;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            margin-top: 7% !important;
         }
 
         .dark .global-search-container.expanded .global-search-input-wrapper {
@@ -600,6 +4771,7 @@
                         0 0 40px rgba(56, 189, 248, 0.15),
                         0 0 80px rgba(56, 189, 248, 0.08),
                         inset 0 1px 1px rgba(255, 255, 255, 0.05);
+            margin-top: 7% !important;
         }
         
         /* Input field wrapper inside input-wrapper */
@@ -696,6 +4868,41 @@
             color: var(--muted);
         }
         
+        /* Search Hint Styles */
+        .global-search-hint {
+            display: none;
+            margin-top: 0.75rem;
+            padding: 0.625rem 1rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            background: rgba(14, 165, 233, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(14, 165, 233, 0.1);
+        }
+        
+        .global-search-hint i {
+            margin-right: 0.5rem;
+            color: var(--accent);
+            font-size: 0.9rem;
+        }
+        
+        .global-search-container.expanded .global-search-hint {
+            display: block;
+            opacity: 0.9;
+        }
+        
+        .dark .global-search-hint {
+            background: rgba(56, 189, 248, 0.08);
+            border-color: rgba(56, 189, 248, 0.15);
+        }
+        
+        .dark .global-search-hint i {
+            color: var(--accent);
+        }
+        
         .global-search-clear {
             position: absolute;
             right: 8px;
@@ -770,6 +4977,61 @@
         .global-search-results.empty {
             padding: 1rem;
             text-align: center;
+            color: var(--muted);
+        }
+        
+        /* Empty Search Results Styles */
+        .global-search-results-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 2rem;
+            text-align: center;
+            min-height: 200px;
+        }
+        
+        .global-search-empty-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            background: rgba(14, 165, 233, 0.1);
+            color: var(--accent);
+            font-size: 2.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .dark .global-search-empty-icon {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent);
+        }
+        
+        .global-search-empty-text {
+            max-width: 400px;
+        }
+        
+        .global-search-empty-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+        
+        .global-search-empty-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+        
+        .dark .global-search-empty-title {
+            color: var(--text);
+        }
+        
+        .dark .global-search-empty-subtitle {
             color: var(--muted);
         }
         
@@ -1268,6 +5530,17 @@
             transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
             overflow: hidden;
             pointer-events: none;
+        }
+        
+        /* Ensure panel is visible on mobile */
+        @media (max-width: 768px) {
+            .notifications-panel {
+                z-index: 1000001 !important;
+            }
+            
+            .notifications-panel-overlay {
+                z-index: 1000000 !important;
+            }
         }
 
         .notifications-panel.show {
@@ -1862,8 +6135,14 @@
         /* Mobile responsive */
         @media (max-width: 768px) {
             .notifications-panel {
-                width: 75%;
-                right: -75%;
+                width: 85%;
+                max-width: 400px;
+                right: 0;
+                transform: translateX(100%);
+            }
+            
+            .notifications-panel.show {
+                transform: translateX(0);
             }
             
             .notifications-panel-body {
@@ -1899,8 +6178,14 @@
         
         @media (max-width: 480px) {
             .notifications-panel {
-                width: 80%;
-                right: -80%;
+                width: 90%;
+                max-width: 350px;
+                right: 0;
+                transform: translateX(100%);
+            }
+            
+            .notifications-panel.show {
+                transform: translateX(0);
             }
             
             .notifications-panel-body {
@@ -2083,15 +6368,19 @@
             }
             
             .top-bar {
-                margin-top: -1rem;
+                margin-top: 0;
                 margin-left: -1rem;
                 margin-right: -1rem;
-                padding-top: 1rem;
+                padding-top: calc(1rem + 20px); /* Space for notice-bar */
                 padding-left: 1rem;
                 padding-right: 1rem;
                 padding-bottom: 1rem;
                 width: calc(100% + 2rem);
+                top: 0;
             }
+            
+            /* Notice-bar is now visible on mobile with responsive design */
+            /* Removed rule that was hiding notice-bar */
             
             .sidebar-toggle {
                 display: flex !important;
@@ -2608,6 +6897,53 @@
             padding: 0.75rem 1rem !important;
         }
         
+        /* Danger Toast - Red Gradient Background */
+        .alert-toast-glass.alert-toast-danger {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.20) 50%, rgba(185, 28, 28, 0.25) 100%) !important;
+            backdrop-filter: blur(15px) saturate(180%);
+            -webkit-backdrop-filter: blur(15px) saturate(180%);
+            border: 2px solid rgba(239, 68, 68, 0.6) !important;
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4), 
+                        0 0 0 1px rgba(239, 68, 68, 0.2),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            animation: alertToastSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, toastGlowDanger 2s ease-in-out infinite;
+        }
+        
+        .dark .alert-toast-glass.alert-toast-danger {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.20) 0%, rgba(220, 38, 38, 0.30) 50%, rgba(185, 28, 28, 0.40) 100%) !important;
+            border: 2px solid rgba(239, 68, 68, 0.7) !important;
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.5), 
+                        0 0 0 1px rgba(239, 68, 68, 0.3),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            animation: alertToastSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, toastGlowDangerDark 2s ease-in-out infinite;
+        }
+        
+        @keyframes toastGlowDanger {
+            0%, 100% {
+                box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4), 
+                            0 0 0 1px rgba(239, 68, 68, 0.2),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            }
+            50% {
+                box-shadow: 0 4px 25px rgba(239, 68, 68, 0.6), 
+                            0 0 0 1px rgba(239, 68, 68, 0.4),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            }
+        }
+        
+        @keyframes toastGlowDangerDark {
+            0%, 100% {
+                box-shadow: 0 4px 20px rgba(239, 68, 68, 0.5), 
+                            0 0 0 1px rgba(239, 68, 68, 0.3),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            }
+            50% {
+                box-shadow: 0 4px 30px rgba(239, 68, 68, 0.7), 
+                            0 0 0 1px rgba(239, 68, 68, 0.5),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            }
+        }
+        
         .alert-toast-glass.hiding {
             animation: alertToastSlideOut 0.4s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards !important;
         }
@@ -2704,6 +7040,63 @@
         .alert-toast-btn:hover {
             transform: translateY(-1px);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* View Patient Button - Light Mode */
+        .alert-toast-glass .view-patient-btn {
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 1px solid rgba(70, 130, 180, 0.3) !important;
+            color: #4682B4 !important;
+            font-weight: 600 !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+            transition: all 0.2s ease;
+        }
+        
+        .alert-toast-glass .view-patient-btn:hover {
+            background: rgba(255, 255, 255, 1) !important;
+            border-color: #4682B4 !important;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+            transform: translateY(-1px);
+        }
+        
+        /* View Patient Button - Dark Mode */
+        .dark .alert-toast-glass .view-patient-btn {
+            background: rgba(255, 255, 255, 0.15) !important;
+            border: 1px solid rgba(56, 189, 248, 0.4) !important;
+            color: #38bdf8 !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+        }
+        
+        .dark .alert-toast-glass .view-patient-btn:hover {
+            background: rgba(255, 255, 255, 0.25) !important;
+            border-color: #38bdf8 !important;
+            box-shadow: 0 4px 8px rgba(56, 189, 248, 0.3), 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+            transform: translateY(-1px);
+        }
+        
+        /* Alert Toast Close Button - Light Mode */
+        .alert-toast-glass .alert-toast-close-btn {
+            filter: none !important;
+            opacity: 0.8 !important;
+            transition: all 0.2s ease;
+            background-color: transparent !important;
+        }
+        
+        .alert-toast-glass .alert-toast-close-btn:hover {
+            opacity: 1 !important;
+            filter: brightness(0.8) !important;
+        }
+        
+        /* Alert Toast Close Button - Dark Mode */
+        .dark .alert-toast-glass .alert-toast-close-btn {
+            filter: invert(1) brightness(2) !important;
+            opacity: 0.9 !important;
+            background-color: transparent !important;
+        }
+        
+        .dark .alert-toast-glass .alert-toast-close-btn:hover {
+            opacity: 1 !important;
+            filter: invert(1) brightness(2.5) !important;
         }
         
         /* Snooze button - Dark/Light mode responsive */
@@ -3129,6 +7522,12 @@
             bottom: 1rem;
             max-width: calc(100% - 2rem);
             width: 100%;
+            z-index: 99999 !important;
+            pointer-events: none;
+        }
+        
+        #toastContainer .toast {
+            pointer-events: auto;
         }
         
         #toastContainer .toast {
@@ -4175,3 +8574,2100 @@
         .quick-access-dock.autohide .dock-container {
             overflow: visible;
         }
+/* Dark mode modal background */
+.dark .tp-ui-modal {
+    background-color: hsl(0deg 2.47% 22.47% / 60%) !important;
+}
+
+/* Diabetic Retinopathy Risk Estimator Popover Styles */
+.diabetic-retinopathy-risk-popover-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+}
+
+.diabetic-retinopathy-risk-popover {
+    position: fixed;
+    z-index: 9999;
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    border-radius: 16px !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.15),
+        0 1px 2px rgba(255, 255, 255, 0.2) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+    padding: 2rem;
+    min-width: 700px;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: popoverFadeIn 0.3s ease;
+}
+
+.dark .diabetic-retinopathy-risk-popover {
+    background: rgba(11, 18, 32, 0.40) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        0 1px 2px rgba(255, 255, 255, 0.05) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.diabetic-retinopathy-risk-popover-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.diabetic-retinopathy-risk-popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+}
+
+.diabetic-retinopathy-risk-popover-header h5 {
+    margin: 0;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+.diabetic-retinopathy-risk-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.diabetic-retinopathy-risk-close-btn:hover {
+    opacity: 1;
+}
+
+.diabetic-retinopathy-risk-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.diabetic-retinopathy-risk-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.diabetic-retinopathy-risk-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.diabetic-retinopathy-risk-form-group input[type="number"],
+.diabetic-retinopathy-risk-form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.diabetic-retinopathy-risk-form-group .form-text {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.diabetic-retinopathy-risk-form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.diabetic-retinopathy-risk-results {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+.diabetic-retinopathy-risk-results-card {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.diabetic-retinopathy-risk-result-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.diabetic-retinopathy-risk-result-item label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.diabetic-retinopathy-risk-result-item span {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.diabetic-retinopathy-risk-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.diabetic-retinopathy-risk-low {
+    background: rgba(34, 197, 94, 0.2);
+    color: rgb(34, 197, 94);
+}
+
+.diabetic-retinopathy-risk-moderate {
+    background: rgba(251, 191, 36, 0.2);
+    color: rgb(251, 191, 36);
+}
+
+.diabetic-retinopathy-risk-high {
+    background: rgba(249, 115, 22, 0.2);
+    color: rgb(249, 115, 22);
+}
+
+.diabetic-retinopathy-risk-very-high {
+    background: rgba(239, 68, 68, 0.2);
+    color: rgb(239, 68, 68);
+}
+
+.diabetic-retinopathy-risk-scoring {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.diabetic-retinopathy-risk-scoring h6 {
+    margin-bottom: 1rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.diabetic-retinopathy-risk-scoring-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.diabetic-retinopathy-risk-scoring-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    text-align: center;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 6px;
+}
+
+.diabetic-retinopathy-risk-scoring-item label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.diabetic-retinopathy-risk-scoring-item span {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.diabetic-retinopathy-contributing-factors {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 8px;
+    border-left: 3px solid rgb(59, 130, 246);
+}
+
+.diabetic-retinopathy-contributing-factors h6 {
+    margin-bottom: 0.75rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.diabetic-retinopathy-contributing-factors ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: var(--text);
+}
+
+.diabetic-retinopathy-contributing-factors li {
+    margin-bottom: 0.5rem;
+}
+
+.diabetic-retinopathy-clinical-summary {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary);
+}
+
+.diabetic-retinopathy-clinical-summary h6 {
+    margin-bottom: 0.75rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.diabetic-retinopathy-clinical-summary p {
+    margin: 0;
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 0.9rem;
+}
+
+/* Macular Thickness Trend Analyzer Popover Styles */
+.macular-thickness-trend-popover-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+}
+
+.macular-thickness-trend-popover {
+    position: fixed;
+    z-index: 9999;
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    border-radius: 16px !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.15),
+        0 1px 2px rgba(255, 255, 255, 0.2) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+    padding: 2rem;
+    min-width: 800px;
+    max-width: 1000px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: popoverFadeIn 0.3s ease;
+}
+
+.dark .macular-thickness-trend-popover {
+    background: rgba(11, 18, 32, 0.40) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        0 1px 2px rgba(255, 255, 255, 0.05) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.macular-thickness-trend-popover-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.macular-thickness-trend-popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+}
+
+.macular-thickness-trend-popover-header h5 {
+    margin: 0;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+.macular-thickness-trend-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.macular-thickness-trend-close-btn:hover {
+    opacity: 1;
+}
+
+.macular-thickness-visits-container {
+    margin-bottom: 1.5rem;
+}
+
+.macular-thickness-visit-entry {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.dark .macular-thickness-visit-entry {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.macular-thickness-visit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.macular-thickness-visit-header h6 {
+    margin: 0;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.macular-thickness-visit-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.macular-thickness-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.macular-thickness-form-group label {
+    font-size: 0.875rem;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.macular-thickness-form-group input[type="number"],
+.macular-thickness-form-group input[type="date"],
+.macular-thickness-form-group select {
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.macular-thickness-form-group .form-text {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.macular-thickness-form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.macular-thickness-trend-results {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+.macular-thickness-alerts {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 8px;
+    border-left: 3px solid rgb(239, 68, 68);
+}
+
+.macular-thickness-alerts h6 {
+    margin-bottom: 0.75rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.macular-thickness-alert {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    color: var(--text);
+}
+
+.macular-thickness-alert-critical {
+    background: rgba(239, 68, 68, 0.2);
+    border-left: 3px solid rgb(239, 68, 68);
+}
+
+.macular-thickness-alert-warning {
+    background: rgba(251, 191, 36, 0.2);
+    border-left: 3px solid rgb(251, 191, 36);
+}
+
+.macular-thickness-trend-results-card {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.macular-thickness-eye-results {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.macular-thickness-eye-results h6 {
+    margin-bottom: 1rem;
+    color: var(--text);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+}
+
+.macular-thickness-result-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.macular-thickness-result-item:last-child {
+    border-bottom: none;
+}
+
+.macular-thickness-result-item label {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.macular-thickness-result-item span {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.macular-thickness-trend-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.macular-thickness-trend-stable {
+    background: rgba(34, 197, 94, 0.2);
+    color: rgb(34, 197, 94);
+}
+
+.macular-thickness-trend-improving {
+    background: rgba(59, 130, 246, 0.2);
+    color: rgb(59, 130, 246);
+}
+
+.macular-thickness-trend-worsening {
+    background: rgba(239, 68, 68, 0.2);
+    color: rgb(239, 68, 68);
+}
+
+.macular-thickness-clinical-summary {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary);
+}
+
+.macular-thickness-clinical-summary h6 {
+    margin-bottom: 0.75rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.macular-thickness-clinical-summary p {
+    margin: 0;
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 0.9rem;
+}
+
+/* Responsive styles for Retina popovers */
+@media (max-width: 768px) {
+    .diabetic-retinopathy-risk-popover,
+    .macular-thickness-trend-popover {
+        min-width: 90vw;
+        max-width: 90vw;
+        padding: 1.5rem;
+    }
+
+    .diabetic-retinopathy-risk-form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .diabetic-retinopathy-risk-scoring-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .macular-thickness-visit-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .macular-thickness-trend-results-card {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Cataract Surgery Readiness Score Popover Styles */
+.cataract-surgery-readiness-popover-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+}
+
+.cataract-surgery-readiness-popover {
+    position: fixed;
+    z-index: 9999;
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    border-radius: 16px !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.15),
+        0 1px 2px rgba(255, 255, 255, 0.2) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+    padding: 2rem;
+    min-width: 700px;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: popoverFadeIn 0.3s ease;
+}
+
+.dark .cataract-surgery-readiness-popover {
+    background: rgba(11, 18, 32, 0.40) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        0 1px 2px rgba(255, 255, 255, 0.05) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.cataract-surgery-readiness-popover-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.cataract-surgery-readiness-popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+}
+
+.cataract-surgery-readiness-popover-header h5 {
+    margin: 0;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+.cataract-surgery-readiness-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.cataract-surgery-readiness-close-btn:hover {
+    opacity: 1;
+}
+
+.cataract-surgery-readiness-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.cataract-surgery-readiness-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.cataract-surgery-readiness-form-group input[type="text"],
+.cataract-surgery-readiness-form-group input[type="number"],
+.cataract-surgery-readiness-form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.cataract-surgery-readiness-form-group .form-text {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.cataract-surgery-readiness-complications {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.cataract-surgery-readiness-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    color: var(--text);
+}
+
+.cataract-surgery-readiness-checkbox-label input[type="checkbox"] {
+    width: auto;
+    cursor: pointer;
+}
+
+.cataract-surgery-readiness-form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.cataract-surgery-readiness-results {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+.cataract-surgery-readiness-results-card {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.cataract-surgery-readiness-result-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.cataract-surgery-readiness-result-item label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.cataract-surgery-readiness-result-item span {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.cataract-surgery-readiness-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.cataract-surgery-readiness-not-ready {
+    background: rgba(34, 197, 94, 0.2);
+    color: rgb(34, 197, 94);
+}
+
+.cataract-surgery-readiness-consider-surgery {
+    background: rgba(251, 191, 36, 0.2);
+    color: rgb(251, 191, 36);
+}
+
+.cataract-surgery-readiness-surgery-recommended {
+    background: rgba(249, 115, 22, 0.2);
+    color: rgb(249, 115, 22);
+}
+
+.cataract-surgery-readiness-urgent-surgery {
+    background: rgba(239, 68, 68, 0.2);
+    color: rgb(239, 68, 68);
+}
+
+.cataract-surgery-readiness-scoring {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.cataract-surgery-readiness-scoring h6 {
+    margin-bottom: 1rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.cataract-surgery-readiness-scoring-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.cataract-surgery-readiness-scoring-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    text-align: center;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 6px;
+}
+
+.cataract-surgery-readiness-scoring-item label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.cataract-surgery-readiness-scoring-item span {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.cataract-surgery-readiness-clinical-summary {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary);
+}
+
+.cataract-surgery-readiness-clinical-summary h6 {
+    margin-bottom: 0.75rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.cataract-surgery-readiness-clinical-summary p {
+    margin: 0;
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 0.9rem;
+}
+
+/* Post-Operative Outcome Analyzer Popover Styles */
+.post-operative-outcome-popover-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+}
+
+.post-operative-outcome-popover {
+    position: fixed;
+    z-index: 9999;
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    border-radius: 16px !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.15),
+        0 1px 2px rgba(255, 255, 255, 0.2) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+    padding: 2rem;
+    min-width: 800px;
+    max-width: 1000px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: popoverFadeIn 0.3s ease;
+}
+
+.dark .post-operative-outcome-popover {
+    background: rgba(11, 18, 32, 0.40) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        0 1px 2px rgba(255, 255, 255, 0.05) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.post-operative-outcome-popover-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.post-operative-outcome-popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+}
+
+.post-operative-outcome-popover-header h5 {
+    margin: 0;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+.post-operative-outcome-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.post-operative-outcome-close-btn:hover {
+    opacity: 1;
+}
+
+.post-operative-outcome-section {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.post-operative-outcome-section h6 {
+    margin-bottom: 1rem;
+    color: var(--text);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+}
+
+.post-operative-outcome-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.post-operative-outcome-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.post-operative-outcome-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.post-operative-outcome-form-group input[type="text"],
+.post-operative-outcome-form-group input[type="number"],
+.post-operative-outcome-form-group input[type="date"],
+.post-operative-outcome-form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.post-operative-outcome-form-group .form-text {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.post-operative-outcome-form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.post-operative-outcome-results {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+.post-operative-outcome-results-card {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.post-operative-outcome-result-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.post-operative-outcome-result-item label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.post-operative-outcome-result-item span {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.post-operative-outcome-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.post-operative-outcome-on-target {
+    background: rgba(34, 197, 94, 0.2);
+    color: rgb(34, 197, 94);
+}
+
+.post-operative-outcome-mild-surprise {
+    background: rgba(251, 191, 36, 0.2);
+    color: rgb(251, 191, 36);
+}
+
+.post-operative-outcome-significant-surprise {
+    background: rgba(239, 68, 68, 0.2);
+    color: rgb(239, 68, 68);
+}
+
+.post-operative-outcome-not-assessed {
+    background: rgba(148, 163, 184, 0.2);
+    color: rgb(148, 163, 184);
+}
+
+.post-operative-outcome-improved {
+    background: rgba(34, 197, 94, 0.2);
+    color: rgb(34, 197, 94);
+}
+
+.post-operative-outcome-unchanged {
+    background: rgba(148, 163, 184, 0.2);
+    color: rgb(148, 163, 184);
+}
+
+.post-operative-outcome-worse {
+    background: rgba(239, 68, 68, 0.2);
+    color: rgb(239, 68, 68);
+}
+
+.post-operative-outcome-summary,
+.post-operative-outcome-surgical-summary {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary);
+}
+
+.post-operative-outcome-summary h6,
+.post-operative-outcome-surgical-summary h6 {
+    margin-bottom: 0.75rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.post-operative-outcome-summary p,
+.post-operative-outcome-surgical-summary p {
+    margin: 0;
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 0.9rem;
+}
+
+/* Responsive styles for Cataract popovers */
+@media (max-width: 768px) {
+    .cataract-surgery-readiness-popover,
+    .post-operative-outcome-popover {
+        min-width: 90vw;
+        max-width: 90vw;
+        padding: 1.5rem;
+    }
+
+    .cataract-surgery-readiness-scoring-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .post-operative-outcome-form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .post-operative-outcome-results-card {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* OSDI Calculator Popover Styles */
+.osdi-popover-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+}
+
+.osdi-popover {
+    position: fixed;
+    z-index: 9999;
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    border-radius: 16px !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.15),
+        0 1px 2px rgba(255, 255, 255, 0.2) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+    padding: 2rem;
+    min-width: 800px;
+    max-width: 1000px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: popoverFadeIn 0.3s ease;
+}
+
+.dark .osdi-popover {
+    background: rgba(11, 18, 32, 0.40) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        0 1px 2px rgba(255, 255, 255, 0.05) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.osdi-popover-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.osdi-popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+}
+
+.osdi-popover-header h5 {
+    margin: 0;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+.osdi-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.osdi-close-btn:hover {
+    opacity: 1;
+}
+
+.osdi-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.osdi-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.osdi-form-group input[type="date"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.osdi-questions-container {
+    margin-bottom: 1.5rem;
+}
+
+.osdi-questions-container h6 {
+    margin-bottom: 1rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.osdi-question-group {
+    margin-bottom: 1.25rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.dark .osdi-question-group {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.osdi-question-label {
+    display: block;
+    margin-bottom: 0.75rem;
+    color: var(--text);
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.osdi-radio-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.osdi-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.osdi-radio-label:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.dark .osdi-radio-label:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.osdi-radio {
+    cursor: pointer;
+}
+
+.osdi-form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.osdi-results {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+.osdi-results-card {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.osdi-result-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.osdi-result-item label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.osdi-result-item span {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.osdi-severity-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.osdi-severity-normal {
+    background: rgba(34, 197, 94, 0.2);
+    color: rgb(34, 197, 94);
+}
+
+.osdi-severity-mild {
+    background: rgba(251, 191, 36, 0.2);
+    color: rgb(251, 191, 36);
+}
+
+.osdi-severity-moderate {
+    background: rgba(249, 115, 22, 0.2);
+    color: rgb(249, 115, 22);
+}
+
+.osdi-severity-severe {
+    background: rgba(239, 68, 68, 0.2);
+    color: rgb(239, 68, 68);
+}
+
+.osdi-followup-comparison {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.osdi-followup-comparison h6 {
+    margin-bottom: 1rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.osdi-comparison-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.osdi-comparison-item:last-child {
+    border-bottom: none;
+}
+
+.osdi-comparison-item label {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.osdi-trend-improving {
+    color: rgb(34, 197, 94);
+}
+
+.osdi-trend-worsening {
+    color: rgb(239, 68, 68);
+}
+
+.osdi-trend-stable {
+    color: var(--text-secondary);
+}
+
+.osdi-comparison-note {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    color: var(--text);
+    line-height: 1.5;
+}
+
+.osdi-clinical-note {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary);
+}
+
+.osdi-clinical-note h6 {
+    margin-bottom: 0.75rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.osdi-clinical-note p {
+    margin: 0;
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 0.9rem;
+}
+
+/* Pachymetry-Adjusted IOP Calculator Popover Styles */
+.pachymetry-adjusted-iop-popover-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+}
+
+.pachymetry-adjusted-iop-popover {
+    position: fixed;
+    z-index: 9999;
+    background: rgba(248, 250, 252, 0.35) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(226, 232, 240, 0.3) !important;
+    border-radius: 16px !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.15),
+        0 1px 2px rgba(255, 255, 255, 0.2) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.08) !important;
+    padding: 2rem;
+    min-width: 600px;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: popoverFadeIn 0.3s ease;
+}
+
+.dark .pachymetry-adjusted-iop-popover {
+    background: rgba(11, 18, 32, 0.40) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        0 1px 2px rgba(255, 255, 255, 0.05) inset,
+        2px 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.pachymetry-adjusted-iop-popover-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.pachymetry-adjusted-iop-popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+}
+
+.pachymetry-adjusted-iop-popover-header h5 {
+    margin: 0;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+.pachymetry-adjusted-iop-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.pachymetry-adjusted-iop-close-btn:hover {
+    opacity: 1;
+}
+
+.pachymetry-adjusted-iop-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.pachymetry-adjusted-iop-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.pachymetry-adjusted-iop-form-group input[type="number"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.pachymetry-adjusted-iop-form-group .form-text {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.pachymetry-adjusted-iop-form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.pachymetry-adjusted-iop-results {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+.pachymetry-adjusted-iop-results-card {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.pachymetry-adjusted-iop-result-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.pachymetry-adjusted-iop-result-item.highlight {
+    background: rgba(59, 130, 246, 0.1);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.pachymetry-adjusted-iop-result-item label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.pachymetry-adjusted-iop-result-item span {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.pachymetry-correction-increase {
+    color: rgb(239, 68, 68);
+}
+
+.pachymetry-correction-decrease {
+    color: rgb(34, 197, 94);
+}
+
+.pachymetry-adjusted-iop-clinical-note {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary);
+}
+
+.pachymetry-adjusted-iop-clinical-note h6 {
+    margin-bottom: 0.75rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.pachymetry-adjusted-iop-clinical-note p {
+    margin: 0;
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 0.9rem;
+}
+
+/* Responsive styles for OSDI and Pachymetry popovers */
+@media (max-width: 768px) {
+    .osdi-popover,
+    .pachymetry-adjusted-iop-popover {
+        min-width: 90vw;
+        max-width: 90vw;
+        padding: 1.5rem;
+    }
+
+    .osdi-radio-group {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .osdi-results-card,
+    .pachymetry-adjusted-iop-results-card {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Ophthalmology Tools Button (Mobile/Tablet) */
+.notice-bar-ophthalmology-tools-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    color: var(--text);
+    background: transparent;
+    border: 1px solid rgba(226, 232, 240, 0.3);
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.notice-bar-ophthalmology-tools-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(226, 232, 240, 0.5);
+}
+
+.dark .notice-bar-ophthalmology-tools-btn {
+    border-color: rgba(51, 65, 85, 0.3);
+}
+
+.dark .notice-bar-ophthalmology-tools-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(51, 65, 85, 0.5);
+}
+
+.notice-bar-ophthalmology-tools-btn i {
+    font-size: 0.75rem;
+}
+
+/* Unified Ophthalmology Tools Dropdown */
+.ophthalmology-tools-dropdown {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000020;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 60px;
+    pointer-events: none;
+}
+
+.ophthalmology-tools-dropdown.show {
+    display: flex;
+    pointer-events: auto;
+}
+
+.ophthalmology-tools-dropdown::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: -1;
+}
+
+.ophthalmology-tools-dropdown-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    /* Glass Effect - Light Mode */
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border: 1px solid rgba(226, 232, 240, 0.3);
+    border-radius: 16px;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.15),
+        0 1px 2px rgba(255, 255, 255, 0.2) inset;
+    padding: 1.5rem;
+    z-index: 1;
+    animation: popoverFadeIn 0.3s ease-out;
+}
+
+.dark .ophthalmology-tools-dropdown-content {
+    /* Glass Effect - Dark Mode */
+    background: rgba(11, 18, 32, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(51, 65, 85, 0.3);
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        0 1px 2px rgba(255, 255, 255, 0.05) inset;
+}
+
+.ophthalmology-tools-section {
+    margin-bottom: 1.5rem;
+}
+
+.ophthalmology-tools-section:last-child {
+    margin-bottom: 0;
+}
+
+.ophthalmology-tools-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.75rem;
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.3);
+}
+
+.dark .ophthalmology-tools-section-header {
+    border-bottom-color: rgba(51, 65, 85, 0.3);
+}
+
+.ophthalmology-tools-section-header i {
+    font-size: 1rem;
+    color: var(--accent);
+}
+
+.ophthalmology-tools-section-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.ophthalmology-tools-section-items li {
+    margin-bottom: 0.5rem;
+}
+
+.ophthalmology-tools-section-items li:last-child {
+    margin-bottom: 0;
+}
+
+.ophthalmology-tools-section-items a {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.ophthalmology-tools-section-items a:hover {
+    background: rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+    text-decoration: none;
+    transform: translateX(5px);
+}
+
+.ophthalmology-tools-section-items a i {
+    font-size: 0.9rem;
+    color: var(--accent);
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+}
+
+/* ============================================
+   NOTICE BAR RESPONSIVE RULES
+   Priority Order:
+   1. Ophthalmology Tools Button (or full menu if space allows)
+   2. Next Appointment (column-3)
+   3. Weather Widget (column-weather)
+   4. Clock/DateTime (column-1)
+   ============================================ */
+
+/* Very Large screens (≥1600px): Show full menu, hide button */
+@media (min-width: 1600px) {
+    /* Show all columns */
+    .notice-bar-column-1,
+    .notice-bar-column-weather,
+    .notice-bar-column-3,
+    .notice-bar-column-4 {
+        display: inline-flex !important;
+    }
+    
+    /* Show full menu when there's enough space */
+    .notice-bar-tools-nav {
+        display: inline-flex !important;
+    }
+    
+    /* Hide button when full menu is visible */
+    .notice-bar-ophthalmology-tools-btn {
+        display: none !important;
+    }
+}
+
+/* Large screens (1400px - 1599px): Show full menu + button (if space allows) */
+@media (min-width: 1400px) and (max-width: 1599px) {
+    /* Priority 2: Next Appointment - Always visible */
+    .notice-bar-column-3 {
+        display: inline-flex !important;
+        flex-shrink: 0;
+    }
+    
+    /* Priority 3: Weather Widget - Always visible */
+    .notice-bar-column-weather {
+        display: inline-flex !important;
+        flex-shrink: 0;
+    }
+    
+    /* Priority 4: Clock - Show if space allows */
+    .notice-bar-column-1 {
+        display: inline-flex !important;
+        flex-shrink: 0;
+    }
+    
+    /* Column 4 container */
+    .notice-bar-column-4 {
+        display: inline-flex !important;
+    }
+    
+    /* Try to show full menu first */
+    .notice-bar-tools-nav {
+        display: inline-flex !important;
+    }
+    
+    /* Hide button if full menu is visible */
+    .notice-bar-ophthalmology-tools-btn {
+        display: none !important;
+    }
+}
+
+/* Medium-Large screens (1200px - 1399px): Show button + Next Appointment + Weather + Clock (if space allows) */
+@media (min-width: 1200px) and (max-width: 1399px) {
+    /* Priority 2: Next Appointment - Always visible */
+    .notice-bar-column-3 {
+        display: inline-flex !important;
+        flex-shrink: 0;
+    }
+    
+    /* Priority 3: Weather Widget - Always visible */
+    .notice-bar-column-weather {
+        display: inline-flex !important;
+        flex-shrink: 0;
+    }
+    
+    /* Priority 4: Clock - Show if space allows */
+    .notice-bar-column-1 {
+        display: inline-flex !important;
+        flex-shrink: 0;
+    }
+    
+    /* Column 4 container */
+    .notice-bar-column-4 {
+        display: inline-flex !important;
+    }
+    
+    /* Hide full menu */
+    .notice-bar-column-4-left {
+        display: none !important;
+    }
+    
+    .notice-bar-tools-nav {
+        display: none !important;
+    }
+    
+    /* Priority 1: Always show button */
+    .notice-bar-ophthalmology-tools-btn {
+        display: flex !important;
+    }
+    
+    /* Hide button text to ensure Next Appointment (Priority 2) has space */
+    .notice-bar-ophthalmology-tools-btn span {
+        display: none !important;
+    }
+}
+
+/* Tablets (769px - 1199px): Show button + Next Appointment + Weather + Clock (if space allows) */
+/* iPad Mini (768x1024) and similar tablets */
+@media (min-width: 769px) and (max-width: 1199px) {
+    /* Priority 1: Always show button - Highest priority */
+    .notice-bar-column-4 {
+        display: inline-flex !important;
+        flex-shrink: 0;
+    }
+    
+    /* Hide full menu */
+    .notice-bar-column-4-left {
+        display: none !important;
+    }
+    
+    .notice-bar-tools-nav {
+        display: none !important;
+    }
+    
+    .notice-bar-ophthalmology-tools-btn {
+        display: flex !important;
+    }
+    
+    /* Hide button text on tablets to ensure Next Appointment has space (Priority 2) */
+    .notice-bar-ophthalmology-tools-btn span {
+        display: none !important;
+    }
+    
+    /* Priority 2: Next Appointment - Always visible */
+    .notice-bar-column-3 {
+        display: inline-flex !important;
+        flex-shrink: 0;
+        min-width: fit-content;
+    }
+    
+    /* Priority 3: Weather Widget - Always visible */
+    .notice-bar-column-weather {
+        display: inline-flex !important;
+        flex-shrink: 0;
+    }
+    
+    /* Priority 4: Clock - Show if space allows */
+    .notice-bar-column-1 {
+        display: inline-flex !important;
+        flex-shrink: 0;
+    }
+}
+
+/* Mobile screens (≤768px): Priority to button + Next Appointment */
+/* Surface Duo (540x720) and similar mobile devices */
+@media (max-width: 768px) {
+    /* Priority 1: Always show button - Highest priority on mobile */
+    .notice-bar-column-4 {
+        display: inline-flex !important;
+        flex-shrink: 0;
+    }
+    
+    /* Hide full menu */
+    .notice-bar-column-4-left {
+        display: none !important;
+    }
+    
+    .notice-bar-tools-nav {
+        display: none !important;
+    }
+    
+    .notice-bar-ophthalmology-tools-btn {
+        display: flex !important;
+    }
+    
+    /* Hide button text on mobile, show only icon */
+    .notice-bar-ophthalmology-tools-btn span {
+        display: none;
+    }
+    
+    /* Priority 2: Next Appointment - Always visible */
+    .notice-bar-column-3 {
+        display: inline-flex !important;
+        flex-shrink: 0;
+        min-width: fit-content;
+    }
+    
+    /* Priority 3: Weather Widget - Hide on mobile to save space */
+    .notice-bar-column-weather {
+        display: none !important;
+    }
+    
+    /* Priority 4: Clock - Always hidden on mobile */
+    .notice-bar-column-1 {
+        display: none !important;
+    }
+}
+
+/* Very small mobile screens (≤600px): Priority to button + Next Appointment */
+/* Surface Duo portrait and very small devices */
+@media (max-width: 600px) {
+    /* Priority 1: Always show button - Highest priority on mobile */
+    .notice-bar-column-4 {
+        display: inline-flex !important;
+        flex-shrink: 0;
+    }
+    
+    /* Hide full menu */
+    .notice-bar-column-4-left {
+        display: none !important;
+    }
+    
+    .notice-bar-tools-nav {
+        display: none !important;
+    }
+    
+    .notice-bar-ophthalmology-tools-btn {
+        display: flex !important;
+    }
+    
+    /* Hide button text on very small screens */
+    .notice-bar-ophthalmology-tools-btn span {
+        display: none;
+    }
+    
+    /* Priority 2: Next Appointment - Always visible */
+    .notice-bar-column-3 {
+        display: inline-flex !important;
+        flex-shrink: 0;
+        min-width: fit-content;
+    }
+    
+    /* Priority 3: Weather Widget - Always hidden */
+    .notice-bar-column-weather {
+        display: none !important;
+    }
+    
+    /* Priority 4: Clock - Always hidden */
+    .notice-bar-column-1 {
+        display: none !important;
+    }
+}
+
+/* Extremely small screens (≤385px): Priority to button only, hide Next Appointment */
+@media (max-width: 385px) {
+    /* Priority 1: Always show button - Highest priority */
+    .notice-bar-column-4 {
+        display: inline-flex !important;
+        flex-shrink: 0;
+    }
+    
+    /* Hide full menu */
+    .notice-bar-column-4-left {
+        display: none !important;
+    }
+    
+    .notice-bar-tools-nav {
+        display: none !important;
+    }
+    
+    .notice-bar-ophthalmology-tools-btn {
+        display: flex !important;
+    }
+    
+    /* Button text can be shown or hidden - doesn't matter, priority is button visibility */
+    .notice-bar-ophthalmology-tools-btn span {
+        display: none; /* Hide by default to save space, but button is priority */
+    }
+    
+    /* Priority 2: Next Appointment - Hide on extremely small screens */
+    .notice-bar-column-3 {
+        display: none !important;
+    }
+    
+    /* Priority 3: Weather Widget - Always hidden */
+    .notice-bar-column-weather {
+        display: none !important;
+    }
+    
+    /* Priority 4: Clock - Always hidden */
+    .notice-bar-column-1 {
+        display: none !important;
+    }
+}
+
+/* Ensure notice-bar-content stays in one row on all screens */
+.notice-bar-content {
+    flex-wrap: nowrap !important;
+    overflow: visible; /* Allow dropdowns to appear */
+    white-space: nowrap;
+}
+
+/* Allow columns to shrink if needed but prevent wrapping */
+.notice-bar-column {
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: visible !important; /* Allow dropdowns to appear */
+}
+
+/* Ensure critical columns don't shrink too much */
+.notice-bar-column-3,
+.notice-bar-column-4 {
+    flex-shrink: 0;
+}
+
+/* Hide button text when sidebar is open and overlapping with notice-bar */
+.sidebar.show ~ .main-content .notice-bar .notice-bar-ophthalmology-tools-btn span {
+    display: none !important;
+}
+
+/* On larger screens, if sidebar overlaps notice-bar, hide button text */
+@media (min-width: 769px) {
+    .sidebar.show ~ .main-content .notice-bar .notice-bar-ophthalmology-tools-btn span {
+        display: none !important;
+    }
+}
+
+/* General rule: Hide button text when there's not enough space for button + Next Appointment */
+/* This ensures Next Appointment (Priority 2) always has space */
+/* Button text is hidden by default on tablets and medium screens to prioritize Next Appointment */
+
+/* Ensure column-4-inner displays button correctly */
+.notice-bar-column-4-inner {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 0.5rem;
+}
+
+/* Make button compact on smaller screens */
+@media (max-width: 1200px) {
+    .notice-bar-ophthalmology-tools-btn {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.7rem;
+        gap: 0.4rem;
+    }
+    
+    .notice-bar-ophthalmology-tools-btn span {
+        display: inline-block;
+    }
+}
+
+@media (max-width: 768px) {
+    .notice-bar-ophthalmology-tools-btn span {
+        display: none; /* Hide text on mobile, show only icon */
+    }
+    
+    .notice-bar-ophthalmology-tools-btn {
+        padding: 0.4rem 0.6rem;
+        min-width: auto;
+    }
+}

@@ -1,4 +1,4 @@
-import React from 'react';
+import { motion } from 'framer-motion';
 
 interface HeroProps {
     title: string;
@@ -8,23 +8,27 @@ interface HeroProps {
 
 export default function Hero({ title, subtitle, badge }: HeroProps) {
     return (
-        <div className="relative overflow-hidden bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-900/20 dark:via-purple-900/20 dark:to-pink-900/20 border-b border-gray-200 dark:border-gray-800">
-            <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24">
-                <div className="text-center">
-                    {badge && (
-                        <span className="inline-block px-4 py-2 mb-4 text-sm font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/30 rounded-full border border-indigo-200 dark:border-indigo-800">
-                            {badge}
-                        </span>
-                    )}
-                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-4 tracking-tight">
-                        {title}
-                    </h1>
-                    <p className="text-xl sm:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                        {subtitle}
-                    </p>
-                </div>
-            </div>
+        <div className="relative mb-16 py-12 px-6 rounded-3xl overflow-hidden bg-gradient-to-br from-primary-900 via-dark-900 to-purple-900 text-white shadow-2xl">
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100"></div>
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/20 blur-[100px] rounded-full translate-x-1/2 -translate-y-1/2"></div>
+
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative z-10 max-w-3xl"
+            >
+                {badge && (
+                    <span className="inline-block px-3 py-1 mb-4 text-xs font-medium tracking-wider uppercase bg-white/10 backdrop-blur-sm rounded-full border border-white/20">
+                        {badge}
+                    </span>
+                )}
+                <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight leading-tight">
+                    {title}
+                </h1>
+                <p className="text-lg md:text-xl text-gray-300 max-w-2xl leading-relaxed">
+                    {subtitle}
+                </p>
+            </motion.div>
         </div>
     );
 }

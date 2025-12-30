@@ -1,0 +1,604 @@
+<div class="getting-started-content">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Login</h1>
+            <p class="hero-subtitle">Secure Authentication System with Theme Persistence</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">Authentication</span>
+                <span class="badge badge-secondary">Security</span>
+                <span class="badge badge-success">Theme</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-login-box-line"></i> Login System Overview</h2>
+            <p class="section-description">The Login system provides secure authentication for users to access the clinic management system. It includes password verification, session management, remember me functionality, login throttling, and theme persistence that syncs between localStorage and the database.</p>
+        </div>
+
+        <!-- Login Demo Image -->
+        <div class="login-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="login-demo-thumbnail" id="login-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/login-dark.png" alt="Login Page Demo" class="login-demo-dark" />
+                <img src="/docs/opth/public/assets/images/login-light.png" alt="Login Page Demo - Light Theme" class="login-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>Click to view full size</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> Visual demonstration of the Login page interface
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-shield-check-line"></i>
+                </div>
+                <h3>Secure Authentication</h3>
+                <p>Uses password hashing with bcrypt, CSRF protection, and login throttling to prevent brute force attacks.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>Theme Persistence</h3>
+                <p>Theme selection on login page is saved to localStorage and automatically synced to database after successful login.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-time-line"></i>
+                </div>
+                <h3>Session Management</h3>
+                <p>Creates secure sessions with inactivity timeout (4 hours) and remember me functionality for extended access.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Login Page Components -->
+    <section class="content-section" id="components">
+        <div class="section-header">
+            <h2><i class="ri-layout-grid-line"></i> Login Page Components</h2>
+            <p class="section-description">The login page consists of several key components for user authentication and theme management.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-eye-line"></i>
+                </div>
+                <h3>Clinic Logo and Branding</h3>
+                <p><strong>Location:</strong> Top of login card</p>
+                <p><strong>Components:</strong></p>
+                <ul>
+                    <li><strong>Eye Icon:</strong> Large blue icon (3rem) representing eye care</li>
+                    <li><strong>Clinic Name:</strong> "Roaya Clinic" in large, bold text</li>
+                    <li><strong>Subtitle:</strong> "Professional Eye Care Management" in muted color</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-line"></i>
+                </div>
+                <h3>Username Field</h3>
+                <p><strong>Type:</strong> Text input with floating label</p>
+                <p><strong>Label:</strong> "Username"</p>
+                <p><strong>Validation:</strong> Required, minimum 3 characters</p>
+                <p><strong>Styling:</strong> Uses Bootstrap form-floating with theme-aware colors</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-lock-password-line"></i>
+                </div>
+                <h3>Password Field</h3>
+                <p><strong>Type:</strong> Password input with toggle visibility</p>
+                <p><strong>Label:</strong> "Password"</p>
+                <p><strong>Toggle Button:</strong> Eye icon button to show/hide password</p>
+                <p><strong>JavaScript:</strong> <code>passwordToggle</code> event listener switches between <code>password</code> and <code>text</code> input types</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-checkbox-line"></i>
+                </div>
+                <h3>Remember Me Checkbox</h3>
+                <p><strong>Function:</strong> Creates persistent login token stored in cookie</p>
+                <p><strong>Duration:</strong> Token expires after configured duration (from AuthConfig)</p>
+                <p><strong>Storage:</strong> Cookie named <code>remember_token</code> with HttpOnly and Secure flags</p>
+                <p><strong>Backend:</strong> Creates entry in <code>user_sessions</code> table</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-login-box-line"></i>
+                </div>
+                <h3>Sign In Button</h3>
+                <p><strong>Type:</strong> Submit button with icon</p>
+                <p><strong>Icon:</strong> Box-arrow-in-right (Bootstrap Icons)</p>
+                <p><strong>Text:</strong> "Sign In"</p>
+                <p><strong>Action:</strong> Submits form to <code>/login</code> POST endpoint</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-moon-line"></i>
+                </div>
+                <h3>Theme Toggle Button</h3>
+                <p><strong>Location:</strong> Fixed position, top-right corner</p>
+                <p><strong>Icon:</strong> Moon (dark mode) / Sun (light mode)</p>
+                <p><strong>Function:</strong> Toggles between dark and light themes</p>
+                <p><strong>Storage:</strong> Saves to <code>localStorage</code> with keys <code>appTheme</code> and <code>theme</code></p>
+                <p><strong>Sync:</strong> Theme is synced to database after successful login</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-shield-check-line"></i>
+                </div>
+                <h3>Security Message</h3>
+                <p><strong>Location:</strong> Bottom of login card</p>
+                <p><strong>Text:</strong> "Secure login system" with shield icon</p>
+                <p><strong>Purpose:</strong> Reassures users about system security</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How Login Works -->
+    <section class="content-section" id="how-it-works">
+        <div class="section-header">
+            <h2><i class="ri-settings-3-line"></i> How Login Works</h2>
+            <p class="section-description">The login process involves multiple steps from form submission to session creation and theme synchronization.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-edit-line"></i>
+                </div>
+                <h3>Step 1: Form Submission</h3>
+                <p><strong>Client-Side:</strong> User fills username and password, optionally checks "Remember me"</p>
+                <p><strong>Validation:</strong> JavaScript validates username (min 3 chars) and password (required)</p>
+                <p><strong>CSRF Protection:</strong> Form includes CSRF token from <code>$this->csrfField()</code></p>
+                <p><strong>Submission:</strong> POST request to <code>/login</code> endpoint</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-server-line"></i>
+                </div>
+                <h3>Step 2: Backend Processing (AuthController)</h3>
+                <p><strong>CSRF Validation:</strong> <code>validateCsrfToken()</code> verifies token</p>
+                <p><strong>Input Validation:</strong> Validator checks username (required, min:3) and password (required)</p>
+                <p><strong>Login Attempt:</strong> Calls <code>$this->auth->login($username, $password)</code></p>
+                <p><strong>File:</strong> <code>app/Controllers/AuthController.php::login()</code></p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-shield-line"></i>
+                </div>
+                <h3>Step 3: Authentication (Auth.php)</h3>
+                <p><strong>Throttling Check:</strong> <code>isThrottled()</code> prevents brute force attacks</p>
+                <p><strong>User Lookup:</strong> Queries <code>users</code> table for active user with matching username</p>
+                <p><strong>Password Verification:</strong> <code>password_verify($password, $user['password_hash'])</code></p>
+                <p><strong>Failed Login Tracking:</strong> Records failed attempts in session if credentials invalid</p>
+                <p><strong>File:</strong> <code>app/Lib/Auth.php::login()</code></p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-settings-line"></i>
+                </div>
+                <h3>Step 4: Session Creation</h3>
+                <p><strong>Session Variables:</strong> <code>createSession($user)</code> sets:</p>
+                <ul>
+                    <li><code>$_SESSION['user_id']</code> - User ID</li>
+                    <li><code>$_SESSION['user']</code> - Full user object</li>
+                    <li><code>$_SESSION['role']</code> - User role</li>
+                    <li><code>$_SESSION['last_activity']</code> - Timestamp for inactivity timeout</li>
+                    <li><code>$_SESSION['login_time']</code> - Login timestamp</li>
+                </ul>
+                <p><strong>Last Login Update:</strong> Updates <code>last_login_at</code> in users table</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-cookie-line"></i>
+                </div>
+                <h3>Step 5: Remember Me (Optional)</h3>
+                <p><strong>Condition:</strong> If "Remember me" checkbox is checked</p>
+                <p><strong>Token Creation:</strong> <code>createRememberToken($userId)</code> generates secure random token</p>
+                <p><strong>Database:</strong> Stores token in <code>user_sessions</code> table with expiration</p>
+                <p><strong>Cookie:</strong> Sets <code>remember_token</code> cookie with HttpOnly and Secure flags</p>
+                <p><strong>Duration:</strong> Configured in <code>AuthConfig::REMEMBER_ME_DURATION</code></p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-arrow-right-line"></i>
+                </div>
+                <h3>Step 6: Role-Based Redirect</h3>
+                <p><strong>Function:</strong> <code>redirectByRole($user['role'])</code></p>
+                <p><strong>Redirects:</strong></p>
+                <ul>
+                    <li><strong>Doctor:</strong> <code>/doctor/dashboard</code></li>
+                    <li><strong>Secretary:</strong> <code>/secretary/dashboard</code></li>
+                    <li><strong>Admin:</strong> <code>/admin/dashboard</code></li>
+                </ul>
+                <p><strong>Session Save:</strong> <code>session_write_close()</code> ensures session is saved before redirect</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Theme Persistence -->
+    <section class="content-section" id="theme-persistence">
+        <div class="section-header">
+            <h2><i class="ri-palette-line"></i> Theme Persistence and Synchronization</h2>
+            <p class="section-description">The login page theme selection is automatically saved to localStorage and synchronized with the database after successful login, ensuring theme consistency across sessions.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-toggle-line"></i>
+                </div>
+                <h3>Theme Toggle on Login Page</h3>
+                <p><strong>Button:</strong> Fixed position toggle button (top-right)</p>
+                <p><strong>JavaScript Function:</strong> <code>updateThemeUI(theme)</code> in <code>login.php</code></p>
+                <p><strong>Action:</strong> Toggles <code>dark</code> class on <code>document.documentElement</code></p>
+                <p><strong>Icon Update:</strong> Changes icon between moon (dark) and sun (light)</p>
+                <p><strong>Storage:</strong> Saves to <code>localStorage.setItem('appTheme', theme)</code> and <code>localStorage.setItem('theme', theme)</code></p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-database-line"></i>
+                </div>
+                <h3>Theme Loading on Page Load</h3>
+                <p><strong>Priority Order:</strong></p>
+                <ol>
+                    <li><code>localStorage.getItem('appTheme')</code></li>
+                    <li><code>localStorage.getItem('theme')</code></li>
+                    <li>System preference: <code>window.matchMedia('(prefers-color-scheme: dark)')</code></li>
+                    <li>Default: <code>'light'</code></li>
+                </ol>
+                <p><strong>Application:</strong> Theme is applied immediately on page load via <code>updateThemeUI(saved)</code></p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-sync-line"></i>
+                </div>
+                <h3>Theme Sync After Login</h3>
+                <p><strong>Location:</strong> Main layout JavaScript (<code>main.js</code> or <code>secretary_main.php</code>)</p>
+                <p><strong>Process:</strong></p>
+                <ol>
+                    <li>Reads theme from <code>localStorage</code> (priority)</li>
+                    <li>Loads theme from database via <code>/api/doctor/settings</code> GET</li>
+                    <li>If localStorage theme differs from database, saves localStorage theme to database</li>
+                    <li>If no theme in database but exists in localStorage, saves it to database</li>
+                </ol>
+                <p><strong>API Endpoint:</strong> <code>PUT /api/doctor/settings</code> with <code>{theme: 'dark'|'light'}</code></p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-database-2-line"></i>
+                </div>
+                <h3>Database Storage</h3>
+                <p><strong>Table:</strong> <code>doctor_settings</code> (or role-specific settings table)</p>
+                <p><strong>Columns:</strong></p>
+                <ul>
+                    <li><code>user_id</code> - User ID</li>
+                    <li><code>setting_key</code> - 'theme'</li>
+                    <li><code>setting_value</code> - 'dark' or 'light'</li>
+                    <li><code>setting_type</code> - 'string'</li>
+                    <li><code>updated_at</code> - Timestamp</li>
+                </ul>
+                <p><strong>Query:</strong> <code>INSERT ... ON DUPLICATE KEY UPDATE</code> for upsert operation</p>
+                <p><strong>Controller:</strong> <code>DoctorController::apiUpdateSettings()</code></p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-refresh-line"></i>
+                </div>
+                <h3>Theme Application in UI</h3>
+                <p><strong>After Login:</strong> When user is redirected to dashboard, theme from localStorage is applied</p>
+                <p><strong>CSS Variables:</strong> Theme changes update CSS custom properties:</p>
+                <ul>
+                    <li><code>--bg</code>, <code>--text</code>, <code>--card</code>, <code>--muted</code>, <code>--accent</code></li>
+                    <li>Light theme: Light backgrounds, dark text</li>
+                    <li>Dark theme: Dark backgrounds, light text</li>
+                </ul>
+                <p><strong>Persistence:</strong> Theme persists across page reloads and browser sessions</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-settings-3-line"></i>
+                </div>
+                <h3>Settings Page Integration</h3>
+                <p><strong>Alternative:</strong> Users can also change theme from Settings page</p>
+                <p><strong>Sync:</strong> Changes from Settings page also update localStorage and database</p>
+                <p><strong>Consistency:</strong> Theme preference is always synced between localStorage and database</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security Features -->
+    <section class="content-section" id="security">
+        <div class="section-header">
+            <h2><i class="ri-shield-line"></i> Security Features</h2>
+            <p class="section-description">The login system includes multiple security measures to protect against common attacks.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-lock-password-line"></i>
+                </div>
+                <h3>Password Hashing</h3>
+                <p><strong>Algorithm:</strong> bcrypt via PHP <code>password_hash()</code></p>
+                <p><strong>Verification:</strong> <code>password_verify($password, $hash)</code></p>
+                <p><strong>Configuration:</strong> Uses <code>AuthConfig::PASSWORD_ALGO</code> and <code>PASSWORD_OPTIONS</code></p>
+                <p><strong>Storage:</strong> Hashed passwords stored in <code>users.password_hash</code> column</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-shield-cross-line"></i>
+                </div>
+                <h3>CSRF Protection</h3>
+                <p><strong>Token Generation:</strong> CSRF token generated and stored in session</p>
+                <p><strong>Form Field:</strong> <code>$this->csrfField()</code> adds hidden input with token</p>
+                <p><strong>Validation:</strong> <code>validateCsrfToken()</code> compares POST token with session token</p>
+                <p><strong>Method:</strong> Uses <code>hash_equals()</code> for timing-safe comparison</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-time-lock-line"></i>
+                </div>
+                <h3>Login Throttling</h3>
+                <p><strong>Purpose:</strong> Prevents brute force attacks</p>
+                <p><strong>Mechanism:</strong> Tracks failed login attempts per IP address in session</p>
+                <p><strong>Threshold:</strong> <code>AuthConfig::MAX_LOGIN_ATTEMPTS</code> (default: 5)</p>
+                <p><strong>Lockout Duration:</strong> <code>AuthConfig::LOCKOUT_DURATION</code> (default: 15 minutes)</p>
+                <p><strong>Reset:</strong> Failed attempts reset on successful login</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-time-line"></i>
+                </div>
+                <h3>Session Timeout</h3>
+                <p><strong>Duration:</strong> 4 hours of inactivity</p>
+                <p><strong>Tracking:</strong> <code>$_SESSION['last_activity']</code> updated on each request</p>
+                <p><strong>Validation:</strong> <code>isSessionValid()</code> checks time since last activity</p>
+                <p><strong>Expiration:</strong> Session destroyed if timeout exceeded, user redirected to login</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-cookie-line"></i>
+                </div>
+                <h3>Secure Remember Me</h3>
+                <p><strong>Token Generation:</strong> Cryptographically secure random bytes via <code>random_bytes()</code></p>
+                <p><strong>Storage:</strong> Token stored in <code>user_sessions</code> table with expiration</p>
+                <p><strong>Cookie Flags:</strong> HttpOnly (prevents JavaScript access) and Secure (HTTPS only)</p>
+                <p><strong>Validation:</strong> Token validated against database on each request</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-settings-line"></i>
+                </div>
+                <h3>Active User Check</h3>
+                <p><strong>Query Filter:</strong> Only active users (<code>is_active = 1</code>) can log in</p>
+                <p><strong>Purpose:</strong> Allows administrators to disable user accounts</p>
+                <p><strong>Location:</strong> User lookup query in <code>Auth::login()</code></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Implementation -->
+    <section class="content-section" id="technical">
+        <div class="section-header">
+            <h2><i class="ri-code-s-slash-line"></i> Technical Implementation</h2>
+            <p class="section-description">Key files, functions, and database structures that power the login system.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-code-line"></i>
+                </div>
+                <h3>Key Files</h3>
+                <ul>
+                    <li><strong>View:</strong> <code>app/Views/auth/login.php</code> - Login page template</li>
+                    <li><strong>Controller:</strong> <code>app/Controllers/AuthController.php</code> - Login logic</li>
+                    <li><strong>Library:</strong> <code>app/Lib/Auth.php</code> - Authentication methods</li>
+                    <li><strong>Config:</strong> <code>app/Config/Auth.php</code> - Authentication configuration</li>
+                    <li><strong>Layout JS:</strong> <code>app/Views/layouts/main.js</code> - Theme sync logic</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-function-line"></i>
+                </div>
+                <h3>Key Functions</h3>
+                <ul>
+                    <li><code>Auth::login($username, $password)</code> - Authenticates user</li>
+                    <li><code>Auth::createSession($user)</code> - Creates PHP session</li>
+                    <code>Auth::setRememberMe($userId)</code> - Creates remember token</li>
+                    <li><code>Auth::check()</code> - Verifies authentication status</li>
+                    <li><code>AuthController::login()</code> - Handles login POST request</li>
+                    <li><code>updateThemeUI(theme)</code> - Updates theme in login page</li>
+                    <li><code>saveThemeToDatabase(theme)</code> - Saves theme to database</li>
+                    <li><code>loadThemeFromDatabase()</code> - Loads theme from database</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-database-line"></i>
+                </div>
+                <h3>Database Tables</h3>
+                <ul>
+                    <li><strong>users:</strong> User accounts with password_hash, is_active, last_login_at</li>
+                    <li><strong>user_sessions:</strong> Remember me tokens with expiration</li>
+                    <li><strong>doctor_settings:</strong> User preferences including theme (setting_key='theme')</li>
+                    <li><strong>doctors:</strong> Doctor-specific data joined with users</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-server-line"></i>
+                </div>
+                <h3>API Endpoints</h3>
+                <ul>
+                    <li><code>GET /login</code> - Shows login page</li>
+                    <li><code>POST /login</code> - Processes login form</li>
+                    <li><code>GET /api/doctor/settings</code> - Retrieves user settings (including theme)</li>
+                    <li><code>PUT /api/doctor/settings</code> - Updates user settings (including theme)</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Theme Flow Diagram -->
+    <section class="content-section" id="theme-flow">
+        <div class="section-header">
+            <h2><i class="ri-flow-chart"></i> Theme Synchronization Flow</h2>
+            <p class="section-description">Complete flow of how theme selection on login page is persisted and synchronized.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-toggle-line"></i>
+                </div>
+                <h3>1. User Changes Theme on Login Page</h3>
+                <p><strong>Action:</strong> User clicks theme toggle button</p>
+                <p><strong>JavaScript:</strong> <code>themeToggleBtn.onclick</code> handler</p>
+                <p><strong>Storage:</strong> <code>localStorage.setItem('appTheme', next)</code></p>
+                <p><strong>UI Update:</strong> <code>updateThemeUI(next)</code> applies theme immediately</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-login-box-line"></i>
+                </div>
+                <h3>2. User Logs In</h3>
+                <p><strong>Process:</strong> Authentication succeeds, session created</p>
+                <p><strong>Redirect:</strong> User redirected to role-specific dashboard</p>
+                <p><strong>Theme State:</strong> Theme preference remains in localStorage</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-download-line"></i>
+                </div>
+                <h3>3. Dashboard Loads Theme</h3>
+                <p><strong>Priority:</strong> Reads from localStorage first (fast, synchronous)</p>
+                <p><strong>Fallback:</strong> If no localStorage theme, loads from database</p>
+                <p><strong>Application:</strong> Theme applied to dashboard UI</p>
+                <p><strong>JavaScript:</strong> <code>loadThemeFromDatabase()</code> in main layout</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-sync-line"></i>
+                </div>
+                <h3>4. Theme Synchronization</h3>
+                <p><strong>Comparison:</strong> Compares localStorage theme with database theme</p>
+                <p><strong>Sync Logic:</strong></p>
+                <ul>
+                    <li>If localStorage differs from database → Save localStorage to database</li>
+                    <li>If no database theme but localStorage exists → Save to database</li>
+                    <li>If no localStorage but database exists → Load to localStorage</li>
+                </ul>
+                <p><strong>API Call:</strong> <code>PUT /api/doctor/settings</code> with theme value</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-database-2-line"></i>
+                </div>
+                <h3>5. Database Update</h3>
+                <p><strong>Table:</strong> <code>doctor_settings</code></p>
+                <p><strong>Operation:</strong> <code>INSERT ... ON DUPLICATE KEY UPDATE</code></p>
+                <p><strong>Columns:</strong> <code>user_id</code>, <code>setting_key='theme'</code>, <code>setting_value='dark'|'light'</code></p>
+                <p><strong>Controller:</strong> <code>DoctorController::apiUpdateSettings()</code></p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-refresh-line"></i>
+                </div>
+                <h3>6. Future Sessions</h3>
+                <p><strong>On Login:</strong> Theme loaded from database if no localStorage</p>
+                <p><strong>On Dashboard:</strong> Theme always synced between localStorage and database</p>
+                <p><strong>Consistency:</strong> Theme preference persists across devices and sessions</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Password Toggle -->
+    <section class="content-section" id="password-toggle">
+        <div class="section-header">
+            <h2><i class="ri-eye-line"></i> Password Visibility Toggle</h2>
+            <p class="section-description">The login page includes a password visibility toggle for user convenience.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-eye-line"></i>
+                </div>
+                <h3>Toggle Button</h3>
+                <p><strong>Location:</strong> Inside password field, right side</p>
+                <p><strong>Icon:</strong> Eye icon (Font Awesome)</p>
+                <p><strong>Function:</strong> Switches password input type between <code>password</code> and <code>text</code></p>
+                <p><strong>Icon Change:</strong> <code>fa-eye</code> (hidden) ↔ <code>fa-eye-slash</code> (visible)</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-code-s-slash-line"></i>
+                </div>
+                <h3>JavaScript Implementation</h3>
+                <p><strong>Event Listener:</strong> <code>passwordToggle.addEventListener('click', ...)</code></p>
+                <p><strong>Logic:</strong></p>
+                <ul>
+                    <li>If <code>passwordInput.type === 'password'</code> → Change to <code>'text'</code></li>
+                    <li>If <code>passwordInput.type === 'text'</code> → Change to <code>'password'</code></li>
+                    <li>Update icon class accordingly</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Image Modal -->
+<div id="login-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-login-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/login-dark.png" alt="Login Page Demo - Full Size" class="login-demo-dark" />
+        <img src="/docs/opth/public/assets/images/login-light.png" alt="Login Page Demo - Light Theme - Full Size" class="login-demo-light" style="display: none;" />
+    </div>
+</div>

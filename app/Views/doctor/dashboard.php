@@ -437,7 +437,7 @@
 </div>
 
 <!-- Upcoming Appointments and Recent Activity - Equal Width Layout -->
-<div class="row mb-4">
+<div class="row mb-4" id="upcomingAppointmentsRow">
     <!-- Upcoming Appointments - 50% width -->
     <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-4">
         <div class="card shadow dashboard-card h-100">
@@ -543,6 +543,176 @@
     </div>
 </div>
 
+<!-- Unified Clinical Dashboard -->
+<div class="row mb-4 dashboard-card-row" data-card-id="unified-clinical-dashboard">
+    <div class="col-12">
+        <div class="card shadow dashboard-card" data-card-id="unified-clinical-dashboard">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-clipboard-pulse me-2"></i>
+                    Unified Clinical Dashboard
+                </h6>
+                <div class="d-flex align-items-center gap-1">
+                    <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardUp('unified-clinical-dashboard')" title="Move up">
+                        <i class="bi bi-arrow-up"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardDown('unified-clinical-dashboard')" title="Move down">
+                        <i class="bi bi-arrow-down"></i>
+                    </button>
+                    <div class="dashboard-card-drag-handle" title="Drag to reorder">
+                        <i class="bi bi-grip-vertical text-muted"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Patient Selection Message (if no patient selected) -->
+                <div id="unifiedClinicalDashboardNoPatient" class="text-center py-4 text-muted" style="display: none;">
+                    <i class="bi bi-person-circle fs-1 mb-3"></i>
+                    <p class="mb-0">Please select a patient to view clinical dashboard</p>
+                    <small>Open a patient profile to see their clinical snapshot</small>
+                </div>
+
+                <!-- Clinical Dashboard Content -->
+                <div id="unifiedClinicalDashboardContent" style="display: none;">
+                    <!-- Clinical Snapshot Section -->
+                    <div class="mb-4">
+                        <h6 class="mb-3"><i class="bi bi-clipboard-data me-2"></i>Clinical Snapshot</h6>
+                        
+                        <!-- Patient Info Notice -->
+                        <div class="patient-info-notice" id="patientInfoNotice" style="display: none;">
+                            <div class="patient-info-notice-content" id="patientInfoNoticeContent">
+                                <div class="patient-info-notice-icon">
+                                    <i class="bi bi-person-circle"></i>
+                                </div>
+                                <div class="patient-info-notice-text">
+                                    <div class="patient-info-notice-main">
+                                        Patient Data: <strong id="patientInfoName" class="patient-info-name-link">--</strong>
+                                    </div>
+                                    <div class="patient-info-notice-sub">
+                                        Last profile or appointment you viewed
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <!-- IOP Status -->
+                            <div class="col-md-6 col-lg-3">
+                                <div class="clinical-indicator-card" id="clinicalIndicatorIOP">
+                                    <div class="clinical-indicator-header">
+                                        <i class="bi bi-eyedropper me-2"></i>
+                                        <span>IOP Status</span>
+                                    </div>
+                                    <div class="clinical-indicator-value" id="iopValue">--</div>
+                                    <div class="clinical-indicator-status" id="iopStatus">
+                                        <span class="badge bg-secondary">Not available</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Visual Acuity -->
+                            <div class="col-md-6 col-lg-3">
+                                <div class="clinical-indicator-card" id="clinicalIndicatorVA">
+                                    <div class="clinical-indicator-header">
+                                        <i class="bi bi-eye me-2"></i>
+                                        <span>Visual Acuity</span>
+                                    </div>
+                                    <div class="clinical-indicator-value" id="vaValue">--</div>
+                                    <div class="clinical-indicator-trend" id="vaTrend">
+                                        <span class="trend-indicator">→</span>
+                                        <span class="trend-text">Stable</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Cataract Status -->
+                            <div class="col-md-6 col-lg-3">
+                                <div class="clinical-indicator-card" id="clinicalIndicatorCataract">
+                                    <div class="clinical-indicator-header">
+                                        <i class="bi bi-scissors me-2"></i>
+                                        <span>Cataract Status</span>
+                                    </div>
+                                    <div class="clinical-indicator-value" id="cataractValue">--</div>
+                                    <div class="clinical-indicator-status" id="cataractStatus">
+                                        <span class="badge bg-secondary">Not available</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dry Eye Status -->
+                            <div class="col-md-6 col-lg-3">
+                                <div class="clinical-indicator-card" id="clinicalIndicatorDryEye">
+                                    <div class="clinical-indicator-header">
+                                        <i class="bi bi-droplet me-2"></i>
+                                        <span>Dry Eye Status</span>
+                                    </div>
+                                    <div class="clinical-indicator-value" id="dryEyeValue">--</div>
+                                    <div class="clinical-indicator-trend" id="dryEyeTrend">
+                                        <span class="trend-indicator">→</span>
+                                        <span class="trend-text">Stable</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Clinical Alerts Section -->
+                    <div class="mb-4">
+                        <h6 class="mb-3"><i class="bi bi-exclamation-triangle me-2"></i>Active Clinical Alerts</h6>
+                        <div id="clinicalAlertsContainer">
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-info-circle me-2"></i>
+                                No active alerts
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mini Trends Overview -->
+                    <div class="mb-4">
+                        <h6 class="mb-3"><i class="bi bi-graph-up me-2"></i>Mini Trends Overview</h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="mini-trend-card">
+                                    <div class="mini-trend-label">IOP Trend</div>
+                                    <div class="mini-trend-chart" id="iopTrendChart">
+                                        <div class="mini-trend-placeholder">No data</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mini-trend-card">
+                                    <div class="mini-trend-label">Visual Acuity Trend</div>
+                                    <div class="mini-trend-chart" id="vaTrendChart">
+                                        <div class="mini-trend-placeholder">No data</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mini-trend-card">
+                                    <div class="mini-trend-label">Macular Thickness Trend</div>
+                                    <div class="mini-trend-chart" id="macularTrendChart">
+                                        <div class="mini-trend-placeholder">No data</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Clinical Summary Section -->
+                    <div class="mb-0">
+                        <h6 class="mb-3"><i class="bi bi-file-text me-2"></i>Clinical Summary</h6>
+                        <div class="clinical-summary-box">
+                            <p id="clinicalSummaryText" class="mb-0">Loading clinical summary...</p>
+                            <button class="btn btn-sm btn-outline-primary mt-2" onclick="copyClinicalSummary()" id="copySummaryBtn">
+                                <i class="bi bi-clipboard me-1"></i>Copy to Clipboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Visual Analytics -->
 <div class="row mb-4 dashboard-card-row" data-card-id="visual-analytics">
@@ -649,15 +819,15 @@
                     <section class="field menu" style="min-width: 150px;">
                         <div class="control">
                             <select class="form-select form-select-sm d-none" id="missedPerPageSelect">
-                                <option value="5">5 per page</option>
-                                <option value="10" selected>10 per page</option>
+                                <option value="5" selected>5 per page</option>
+                                <option value="10">10 per page</option>
                                 <option value="20">20 per page</option>
                                 <option value="50">50 per page</option>
                             </select>
-                            <button type="button" class="custom-select-toggle" aria-expanded="false">10 per page</button>
+                            <button type="button" class="custom-select-toggle" aria-expanded="false">5 per page</button>
                             <menu>
-                                <li data-option="5" tabindex="0" role="button"><h3>5 per page</h3></li>
-                                <li data-option="10" tabindex="0" role="button" class="selected"><h3>10 per page</h3></li>
+                                <li data-option="5" tabindex="0" role="button" class="selected"><h3>5 per page</h3></li>
+                                <li data-option="10" tabindex="0" role="button"><h3>10 per page</h3></li>
                                 <li data-option="20" tabindex="0" role="button"><h3>20 per page</h3></li>
                                 <li data-option="50" tabindex="0" role="button"><h3>50 per page</h3></li>
                             </menu>
@@ -719,14 +889,16 @@
                         <section class="field menu" style="min-width: 150px;">
                             <div class="control">
                                 <select class="form-select d-none" id="modalPerPageSelect">
-                                    <option value="10" selected>10 per page</option>
+                                    <option value="5" selected>5 per page</option>
+                                    <option value="10">10 per page</option>
                                     <option value="20">20 per page</option>
                                     <option value="50">50 per page</option>
                                     <option value="100">100 per page</option>
                                 </select>
-                                <button type="button" class="custom-select-toggle" aria-expanded="false">10 per page</button>
+                                <button type="button" class="custom-select-toggle" aria-expanded="false">5 per page</button>
                                 <menu>
-                                    <li data-option="10" tabindex="0" role="button" class="selected"><h3>10 per page</h3></li>
+                                    <li data-option="5" tabindex="0" role="button" class="selected"><h3>5 per page</h3></li>
+                                    <li data-option="10" tabindex="0" role="button"><h3>10 per page</h3></li>
                                     <li data-option="20" tabindex="0" role="button"><h3>20 per page</h3></li>
                                     <li data-option="50" tabindex="0" role="button"><h3>50 per page</h3></li>
                                     <li data-option="100" tabindex="0" role="button"><h3>100 per page</h3></li>
@@ -755,6 +927,106 @@
         </div>
     </div>
 </div>
+
+<style>
+    .btn-group-sm .btn{
+        border-radius: 0.8rem !important;
+        margin-right: 5px !important;
+    }
+    .btn-outline-primary, .dark .btn-outline-primary{
+        background-color: var(--accent) !important;
+        border-color: var(--accent) !important;
+        color: white !important;
+    }
+
+    .btn-outline-warning, .dark .btn-outline-warning{
+        background-color: #ffc107 !important;
+        border-color: #ffc107 !important;
+        color: white !important;
+    }
+
+    .btn-outline-warning:hover, .dark .btn-outline-warning:hover{
+        background-color:rgb(233, 175, 0) !important;
+        border-color:rgb(233, 175, 0) !important;
+        color: white !important;
+    }
+
+    .btn-outline-warning:hover i, .dark .btn-outline-warning:hover i{
+        color: white !important;
+    }
+
+    .btn-outline-success, .dark .btn-outline-success{
+        background-color:rgb(6, 204, 138) !important;
+        border-color:rgb(6, 204, 138) !important;
+        color: white !important;
+    }
+
+    .btn-outline-success:hover, .dark .btn-outline-success:hover{
+        background-color:rgb(10, 179, 129) !important;
+        border-color:rgb(10, 179, 129) !important;
+        color: white !important;
+    }
+
+    .btn-outline-primary:hover, .dark .btn-outline-primary:hover{
+        background-color: #00a3eb !important;
+    }
+
+    .btn-outline-info, .dark .btn-outline-info{
+        background-color: #36b9cc !important;
+        border-color: #36b9cc !important;
+        color: white !important;
+    }
+
+    .btn-outline-info:hover, .dark .btn-outline-info:hover{
+        background-color:rgb(13, 146, 167) !important;
+        border-color:rgb(13, 146, 167) !important;
+        color: white !important;
+    }
+    
+    .modal-dialog {
+        width: 70% !important;
+        max-height: calc(100vh - 4rem) !important;
+        margin: 2rem auto 0 !important;
+        top: 0 !important;
+        transform: translateX(-50%) !important;
+        left: 50% !important;
+        position: absolute !important;
+    }
+    
+    .modal-content {
+        max-height: calc(100vh - 4rem) !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .modal-body {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        flex: 1 1 auto !important;
+    }
+    
+    @media (max-width: 768px) {
+        .modal-dialog {
+            margin: 1rem auto 0 !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            max-width: 95% !important;
+        }
+    }
+    .modal-backdrop.show{
+        display: none !important;
+    }
+    body > div.modal-backdrop.fade.show{
+        display: none !important;
+    }
+    .dark .modal-content{
+    background: rgba(11, 18, 32, 0.8) !important;
+    }
+    .modal-content{
+    background: rgba(248, 250, 252, 0.8) !important;
+    }
+</style>
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>

@@ -1,4 +1,6 @@
 <link href="/app/Views/doctor/assets/css/alert_modal.css?v=<?= file_exists(__DIR__ . '/assets/css/alert_modal.css') ? filemtime(__DIR__ . '/assets/css/alert_modal.css') : time() ?>" rel="stylesheet">
+<!-- Timepicker CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/timepicker@1.13.18/jquery.timepicker.min.css">
 
 <!-- Alert Modal -->
 <div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
@@ -57,7 +59,11 @@
                             <label for="alertTime" class="form-label">
                                 <i class="bi bi-clock me-1"></i>Time <span class="text-danger">*</span>
                             </label>
-                            <input type="time" class="form-control" id="alertTime" name="alert_time" required>
+                            <input type="text" class="form-control timepicker-ui-input" id="alertTime" name="alert_time" required 
+                                   placeholder="Click to select time" 
+                                   value="12:00 AM">
+                            <input type="hidden" id="alertTimeValue" name="alert_time" required>
+                            <small class="text-muted">Click to select time in 12-hour format</small>
                         </div>
                     </div>
                     
@@ -94,4 +100,19 @@
 
 </style>
 
+<!-- Alert Modal JS -->
 <script src="/app/Views/doctor/assets/js/alert_modal.js?v=<?= file_exists(__DIR__ . '/assets/js/alert_modal.js') ? filemtime(__DIR__ . '/assets/js/alert_modal.js') : time() ?>"></script>
+<style>
+    .modal-backdrop.show{
+        display: none !important;
+    }
+    body > div.modal-backdrop.fade.show{
+        display: none !important;
+    }
+    .dark .modal-content{
+    background: rgba(11, 18, 32, 0.8) !important;
+    }
+    .modal-content{
+    background: rgba(248, 250, 252, 0.8) !important;
+    }
+</style>

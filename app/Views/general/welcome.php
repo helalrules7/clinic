@@ -45,18 +45,27 @@
     
     <style>
         :root {
-            --bg-light: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --bg-dark: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            --card-light: #ffffff;
-            --card-dark: #1e293b;
-            --text-light: #2c3e50;
-            --text-dark: #f8fafc;
-            --subtitle-light: #6c757d;
-            --subtitle-dark: #cbd5e1;
-            --accent-light: #667eea;
-            --accent-dark: #38bdf8;
-            --shadow-light: rgba(0, 0, 0, 0.1);
-            --shadow-dark: rgba(0, 0, 0, 0.5);
+            --bg: #f8fafc;
+            --text: #0f172a;
+            --card: #ffffff;
+            --muted: #475569;
+            --accent: #0ea5e9;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: #e2e8f0;
+            --bg-gradient-light: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+            --bg-gradient-dark: linear-gradient(135deg, #0b1220 0%, #16213e 100%);
+        }
+        
+        .dark {
+            --bg: #0b1220;
+            --text: #f8fafc;
+            --card: #1e293b;
+            --muted: #cbd5e1;
+            --accent: #38bdf8;
+            --success: #4ade80;
+            --danger: #fb7185;
+            --border: #334155;
         }
         
         * {
@@ -64,7 +73,8 @@
         }
         
         body {
-            background: var(--bg-light);
+            background: var(--bg-gradient-light);
+            color: var(--text);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -72,41 +82,55 @@
             font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 1rem;
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            body {
-                background: var(--bg-dark);
-            }
+            transition: background-color 0.3s ease, color 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
         
         body.dark {
-            background: var(--bg-dark);
+            background: var(--bg-gradient-dark);
+        }
+        
+        #waveContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        #waveCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
         
         .welcome-card {
-            background: var(--card-light);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .welcome-card {
+            background: linear-gradient(135deg, rgba(248, 250, 252, 0.15) 0%, rgba(226, 232, 240, 0.15) 50%, rgba(241, 245, 249, 0.35) 100%) !important;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            color: var(--text);
             border-radius: 20px;
             padding: 3rem;
-            box-shadow: 0 20px 40px var(--shadow-light);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             text-align: center;
             max-width: 600px;
             margin: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            .welcome-card {
-                background: var(--card-dark);
-                box-shadow: 0 20px 40px var(--shadow-dark);
-                border-color: rgba(255, 255, 255, 0.1);
-            }
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
         
         body.dark .welcome-card {
-            background: var(--card-dark);
-            box-shadow: 0 20px 40px var(--shadow-dark);
-            border-color: rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, rgba(11, 18, 32, 0.15) 30%, rgba(22, 33, 62, 0.35) 100%) !important;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7) !important;
         }
         
         .logo {
@@ -138,40 +162,24 @@
         }
         
         .clinic-name {
-            font-size: 2.5rem;
+            font-size: 1.5rem !important;
             font-weight: bold;
-            color: var(--text-light);
+            color: var(--text);
             margin-bottom: 0.5rem;
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            .clinic-name {
-                color: var(--text-dark);
-            }
-        }
-        
-        body.dark .clinic-name {
-            color: var(--text-dark);
         }
         
         .clinic-subtitle {
             font-size: 1.2rem;
-            color: var(--subtitle-light);
+            color: var(--muted);
             margin-bottom: 2rem;
         }
         
-        @media (prefers-color-scheme: dark) {
-            .clinic-subtitle {
-                color: var(--subtitle-dark);
-            }
-        }
-        
-        body.dark .clinic-subtitle {
-            color: var(--subtitle-dark);
-        }
-        
         .enter-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, rgba(11, 18, 32, 0.75) 30%, rgba(22, 33, 62, 0.85) 100%) !important;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+            /* background: linear-gradient(to bottom right, #000000, #646773); */
             border: none;
             padding: 1rem 3rem;
             font-size: 1.2rem;
@@ -180,36 +188,27 @@
             text-decoration: none;
             display: inline-block;
             transition: all 0.3s ease;
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            /* box-shadow: 0 10px 20px rgba(14, 165, 233, 0.3); */
             font-weight: 600;
         }
         
         .enter-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 15px 30px rgba(14, 165, 233, 0.4);
             color: white;
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            .enter-btn {
-                background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
-                box-shadow: 0 10px 20px rgba(56, 189, 248, 0.3);
-            }
-            
-            .enter-btn:hover {
-                background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
-                box-shadow: 0 15px 30px rgba(56, 189, 248, 0.4);
-            }
+            background: linear-gradient(135deg, #667eea 0%, var(--accent) 100%);
         }
         
         body.dark .enter-btn {
-            background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
-            box-shadow: 0 10px 20px rgba(56, 189, 248, 0.3);
+            background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(226, 232, 240, 0.45) 50%, rgba(241, 245, 249, 0.85) 100%) !important;
+            backdrop-filter: blur(15px) !important;
+            -webkit-backdrop-filter: blur(15px) !important;
+            box-shadow: 0 10px 25px rgba(255, 255, 255, 0.3) !important;
+            color: black !important;
         }
         
         body.dark .enter-btn:hover {
-            background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+            background: linear-gradient(135deg, #0ea5e9 0%, var(--accent) 100%);
             box-shadow: 0 15px 30px rgba(56, 189, 248, 0.4);
         }
         
@@ -228,13 +227,7 @@
         }
         
         .feature:hover {
-            background: rgba(102, 126, 234, 0.1);
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            .feature:hover {
-                background: rgba(56, 189, 248, 0.1);
-            }
+            background: rgba(14, 165, 233, 0.1);
         }
         
         body.dark .feature:hover {
@@ -243,107 +236,45 @@
         
         .feature-icon {
             font-size: 3rem;
-            color: var(--accent-light);
+            color: var(--accent);
             margin-bottom: 1rem;
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            .feature-icon {
-                color: var(--accent-dark);
-            }
-        }
-        
-        body.dark .feature-icon {
-            color: var(--accent-dark);
         }
         
         .feature-title {
             font-weight: bold;
-            color: var(--text-light);
+            color: var(--text);
             margin-bottom: 0.5rem;
         }
         
-        @media (prefers-color-scheme: dark) {
-            .feature-title {
-                color: var(--text-dark);
-            }
-        }
-        
-        body.dark .feature-title {
-            color: var(--text-dark);
-        }
-        
         .feature-desc {
-            color: var(--subtitle-light);
+            color: var(--muted);
             font-size: 0.9rem;
         }
         
-        @media (prefers-color-scheme: dark) {
-            .feature-desc {
-                color: var(--subtitle-dark);
-            }
-        }
-        
-        body.dark .feature-desc {
-            color: var(--subtitle-dark);
-        }
-        
         .system-info {
-            background: #f8f9fa;
+            background: var(--card);
             border-radius: 10px;
             padding: 1.5rem;
             margin-top: 2rem;
             text-align: right;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            .system-info {
-                background: #1e293b;
-                border-color: rgba(255, 255, 255, 0.1);
-            }
-        }
-        
-        body.dark .system-info {
-            background: #1e293b;
-            border-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border);
         }
         
         .info-title {
             font-weight: bold;
-            color: var(--text-light);
+            color: var(--text);
             margin-bottom: 1rem;
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            .info-title {
-                color: var(--text-dark);
-            }
-        }
-        
-        body.dark .info-title {
-            color: var(--text-dark);
         }
         
         .info-item {
             margin-bottom: 0.5rem;
             font-size: 0.9rem;
-            color: var(--subtitle-light);
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            .info-item {
-                color: var(--subtitle-dark);
-            }
-        }
-        
-        body.dark .info-item {
-            color: var(--subtitle-dark);
+            color: var(--muted);
         }
         
         /* Clinic Version and Author Styles */
         .clinic-version {
-            color: var(--subtitle-light);
+            color: var(--muted);
             font-size: 0.9rem;
             margin-top: 1rem;
             margin-bottom: 0.5rem;
@@ -356,124 +287,308 @@
             display: inline-block;
         }
         
-        @media (prefers-color-scheme: dark) {
-            .clinic-version {
-                color: var(--subtitle-dark);
-            }
-        }
-        
-        body.dark .clinic-version {
-            color: var(--subtitle-dark);
-        }
-        
         .clinic-author {
-            color: var(--subtitle-light);
+            color: var(--muted);
             font-size: 0.85rem;
             margin-bottom: 1rem;
             text-align: center;
             direction: ltr;
         }
         
-        @media (prefers-color-scheme: dark) {
-            .clinic-author {
-                color: var(--subtitle-dark);
-            }
-        }
-        
-        body.dark .clinic-author {
-            color: var(--subtitle-dark);
-        }
-        
         .whats-new-link {
-            color: var(--accent-light) !important;
+            color: var(--accent) !important;
             font-weight: 500;
             text-decoration: underline !important;
             transition: color 0.2s ease;
         }
         
         .whats-new-link:hover {
-            color: var(--accent-light) !important;
+            color: var(--accent) !important;
             opacity: 0.8;
         }
         
-        @media (prefers-color-scheme: dark) {
-            .whats-new-link {
-                color: var(--accent-dark) !important;
-            }
-            
-            .whats-new-link:hover {
-                color: var(--accent-dark) !important;
-            }
-        }
-        
-        body.dark .whats-new-link {
-            color: var(--accent-dark) !important;
-        }
-        
-        body.dark .whats-new-link:hover {
-            color: var(--accent-dark) !important;
-        }
-        
         .sidebar-footer-link {
-            color: var(--accent-light) !important;
+            color: var(--accent) !important;
             transition: color 0.2s ease;
         }
         
         .sidebar-footer-link:hover {
-            color: var(--accent-light) !important;
+            color: var(--accent) !important;
             opacity: 0.8;
         }
         
-        @media (prefers-color-scheme: dark) {
-            .sidebar-footer-link {
-                color: var(--accent-dark) !important;
+        /* Theme Toggle Switch - Same as top-bar */
+        :root {
+            --scale: 1;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: calc(var(--scale) * 60px);
+            height: calc(var(--scale) * 34px);
+        }
+        
+        .switch #themeToggleInput {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background-color: #2196f3;
+            transition: 0.4s;
+            z-index: 0;
+            overflow: hidden;
+        }
+        
+        .sun-moon {
+            position: absolute;
+            content: "";
+            height: calc(var(--scale) * 26px);
+            width: calc(var(--scale) * 26px);
+            left: calc(var(--scale) * 4px);
+            bottom: calc(var(--scale) * 4px);
+            background-color: yellow;
+            transition: 0.4s;
+        }
+        
+        #themeToggleInput:checked + .slider {
+            background-color: black;
+        }
+        
+        #themeToggleInput:focus + .slider {
+            box-shadow: 0 0 calc(var(--scale) * 1px) #2196f3;
+        }
+        
+        #themeToggleInput:checked + .slider .sun-moon {
+            transform: translateX(calc(var(--scale) * 26px));
+            background-color: white;
+            animation: rotate-center 0.6s ease-in-out both;
+        }
+        
+        .moon-dot {
+            opacity: 0;
+            transition: 0.4s;
+            fill: gray;
+        }
+        
+        #themeToggleInput:checked + .slider .sun-moon .moon-dot {
+            opacity: 1;
+        }
+        
+        .slider.round {
+            border-radius: calc(var(--scale) * 34px);
+        }
+        
+        .slider.round .sun-moon {
+            border-radius: 50%;
+        }
+        
+        #moon-dot-1 {
+            left: calc(var(--scale) * 10px);
+            top: calc(var(--scale) * 3px);
+            position: absolute;
+            width: calc(var(--scale) * 6px);
+            height: calc(var(--scale) * 6px);
+            z-index: 4;
+        }
+        
+        #moon-dot-2 {
+            left: calc(var(--scale) * 2px);
+            top: calc(var(--scale) * 10px);
+            position: absolute;
+            width: calc(var(--scale) * 10px);
+            height: calc(var(--scale) * 10px);
+            z-index: 4;
+        }
+        
+        #moon-dot-3 {
+            left: calc(var(--scale) * 16px);
+            top: calc(var(--scale) * 18px);
+            position: absolute;
+            width: calc(var(--scale) * 3px);
+            height: calc(var(--scale) * 3px);
+            z-index: 4;
+        }
+        
+        #light-ray-1,
+        #light-ray-3,
+        #light-ray-2 {
+            position: absolute;
+            z-index: -1;
+            fill: white;
+            opacity: 10%;
+        }
+        
+        #light-ray-1 {
+            left: calc(var(--scale) * -8px);
+            top: calc(var(--scale) * -8px);
+            width: calc(var(--scale) * 43px);
+            height: calc(var(--scale) * 43px);
+        }
+        
+        #light-ray-2 {
+            left: -50%;
+            top: -50%;
+            width: calc(var(--scale) * 55px);
+            height: calc(var(--scale) * 55px);
+        }
+        
+        #light-ray-3 {
+            left: calc(var(--scale) * -18px);
+            top: calc(var(--scale) * -18px);
+            width: calc(var(--scale) * 60px);
+            height: calc(var(--scale) * 60px);
+        }
+        
+        .cloud-light,
+        .cloud-dark {
+            position: absolute;
+            animation-name: cloud-move;
+            animation-duration: 6s;
+            animation-iteration-count: infinite;
+        }
+        
+        .cloud-light {
+            fill: #eee;
+        }
+        
+        .cloud-dark {
+            fill: #ccc;
+            animation-delay: 1s;
+        }
+        
+        #cloud-1 {
+            left: calc(var(--scale) * 30px);
+            top: calc(var(--scale) * 15px);
+            width: calc(var(--scale) * 40px);
+        }
+        
+        #cloud-2 {
+            left: calc(var(--scale) * 44px);
+            top: calc(var(--scale) * 10px);
+            width: calc(var(--scale) * 20px);
+        }
+        
+        #cloud-3 {
+            left: calc(var(--scale) * 18px);
+            top: calc(var(--scale) * 24px);
+            width: calc(var(--scale) * 30px);
+        }
+        
+        #cloud-4 {
+            left: calc(var(--scale) * 36px);
+            top: calc(var(--scale) * 18px);
+            width: calc(var(--scale) * 40px);
+        }
+        
+        #cloud-5 {
+            left: calc(var(--scale) * 48px);
+            top: calc(var(--scale) * 14px);
+            width: calc(var(--scale) * 20px);
+        }
+        
+        #cloud-6 {
+            left: calc(var(--scale) * 22px);
+            top: calc(var(--scale) * 26px);
+            width: calc(var(--scale) * 30px);
+        }
+        
+        @keyframes cloud-move {
+            0% {
+                transform: translateX(0px);
             }
-            
-            .sidebar-footer-link:hover {
-                color: var(--accent-dark) !important;
+            40% {
+                transform: translateX(calc(var(--scale) * 4px));
+            }
+            80% {
+                transform: translateX(calc(var(--scale) * -4px));
+            }
+            100% {
+                transform: translateX(0px);
             }
         }
         
-        body.dark .sidebar-footer-link {
-            color: var(--accent-dark) !important;
+        @keyframes rotate-center {
+            0% {
+                transform: translateX(calc(var(--scale) * 26px)) rotate(0);
+            }
+            100% {
+                transform: translateX(calc(var(--scale) * 26px)) rotate(360deg);
+            }
         }
         
-        body.dark .sidebar-footer-link:hover {
-            color: var(--accent-dark) !important;
+        .stars {
+            transform: translateY(calc(var(--scale) * -32px));
+            opacity: 0;
+            transition: 0.4s;
         }
         
-        /* Dark Mode Toggle Button */
+        .star {
+            fill: white;
+            position: absolute;
+            transition: 0.4s;
+            animation-name: star-twinkle;
+            animation-duration: 2s;
+            animation-iteration-count: infinite;
+        }
+        
+        #themeToggleInput:checked + .slider .stars {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        #star-1 {
+            width: calc(var(--scale) * 20px);
+            top: calc(var(--scale) * 2px);
+            left: calc(var(--scale) * 3px);
+            animation-delay: 0.3s;
+        }
+        
+        #star-2 {
+            width: calc(var(--scale) * 6px);
+            top: calc(var(--scale) * 16px);
+            left: calc(var(--scale) * 3px);
+        }
+        
+        #star-3 {
+            width: calc(var(--scale) * 12px);
+            top: calc(var(--scale) * 20px);
+            left: calc(var(--scale) * 10px);
+            animation-delay: 0.6s;
+        }
+        
+        #star-4 {
+            width: calc(var(--scale) * 18px);
+            top: calc(var(--scale) * 0px);
+            left: calc(var(--scale) * 18px);
+            animation-delay: 1.3s;
+        }
+        
+        @keyframes star-twinkle {
+            0% {
+                transform: scale(1);
+            }
+            40% {
+                transform: scale(1.2);
+            }
+            80% {
+                transform: scale(0.8);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
         .dark-mode-toggle {
             position: fixed;
             top: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50px;
-            padding: 0.75rem 1rem;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
+            right: 20px;
             z-index: 1000;
-            font-size: 1.2rem;
-        }
-        
-        .dark-mode-toggle:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.1);
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            .dark-mode-toggle {
-                background: rgba(0, 0, 0, 0.3);
-                border-color: rgba(255, 255, 255, 0.2);
-            }
-        }
-        
-        body.dark .dark-mode-toggle {
-            background: rgba(0, 0, 0, 0.3);
-            border-color: rgba(255, 255, 255, 0.2);
         }
         
         /* Responsive */
@@ -498,30 +613,88 @@
             
             .dark-mode-toggle {
                 top: 10px;
-                left: 10px;
-                padding: 0.5rem 0.75rem;
-                font-size: 1rem;
+                right: 10px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Dark Mode Toggle -->
-    <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle Dark Mode">
-        <i class="bi bi-moon-fill" id="darkModeIcon"></i>
-    </button>
+    <!-- Wave Animation Canvas -->
+    <div id="waveContainer">
+        <canvas id="waveCanvas"></canvas>
+    </div>
+    
+    <!-- Theme Toggle Switch -->
+    <div class="dark-mode-toggle">
+        <label class="switch" for="themeToggleInput">
+            <input id="themeToggleInput" type="checkbox" />
+            <div class="slider round">
+                <div class="sun-moon">
+                    <svg id="moon-dot-1" class="moon-dot" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="50"></circle>
+                    </svg>
+                    <svg id="moon-dot-2" class="moon-dot" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="50"></circle>
+                    </svg>
+                    <svg id="moon-dot-3" class="moon-dot" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="50"></circle>
+                    </svg>
+                    <svg id="light-ray-1" class="light-ray" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="50"></circle>
+                    </svg>
+                    <svg id="light-ray-2" class="light-ray" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="50"></circle>
+                    </svg>
+                    <svg id="light-ray-3" class="light-ray" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="50"></circle>
+                    </svg>
+                    <svg id="cloud-1" class="cloud-dark" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="50"></circle>
+                    </svg>
+                    <svg id="cloud-2" class="cloud-dark" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="50"></circle>
+                    </svg>
+                    <svg id="cloud-3" class="cloud-dark" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="50"></circle>
+                    </svg>
+                    <svg id="cloud-4" class="cloud-light" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="50"></circle>
+                    </svg>
+                    <svg id="cloud-5" class="cloud-light" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="50"></circle>
+                    </svg>
+                    <svg id="cloud-6" class="cloud-light" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="50"></circle>
+                    </svg>
+                </div>
+                <div class="stars">
+                    <svg id="star-1" class="star" viewBox="0 0 20 20">
+                        <path d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"></path>
+                    </svg>
+                    <svg id="star-2" class="star" viewBox="0 0 20 20">
+                        <path d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"></path>
+                    </svg>
+                    <svg id="star-3" class="star" viewBox="0 0 20 20">
+                        <path d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"></path>
+                    </svg>
+                    <svg id="star-4" class="star" viewBox="0 0 20 20">
+                        <path d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"></path>
+                    </svg>
+                </div>
+            </div>
+        </label>
+    </div>
     
     <div class="welcome-card">
         <div class="logo">
             <img src="/assets/images/Light.png" alt="Roaya Clinic Logo" id="clinicLogo" style="max-width: 120px; height: auto; transition: transform 0.3s ease;">
         </div>
         
-        <h1 class="clinic-name">نظام عيادة طب العيون</h1>
+        <h3 class="clinic-name">نظام إدارة عيادة رؤية لطب وجراحة العيون</h3>
         <p class="clinic-subtitle">Hclinic / Roaya Ophthalmology Clinic Management System</p>
         <p class="clinic-version" dir="ltr" style="text-align: center;">
-            <span dir="rtl">Version</span> v6.1 
-            <a href="/whats-new" class="text-decoration-none whats-new-link" style="margin-right: 0.5rem; margin-left: 0.5rem;">What's New?</a>
-            <a href="/whats-new/full-features" class="text-decoration-none sidebar-footer-link" style="margin-right: 0.5rem;">Full Features</a>
+            <span dir="rtl">Version</span> 7.2.8
+            <a href="https://hclinic.clinic/docs/opth/" class="text-decoration-none whats-new-link" style="margin-right: 0.5rem; margin-left: 0.5rem;" target="_blank" rel="noopener noreferrer">What's New?</a>
         </p>
         <p class="clinic-author" dir="ltr" style="text-align: center;">
             HClinic / Roaya © 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none sidebar-footer-link">Ahmed Helal</a>
@@ -534,61 +707,142 @@
     </div>
     
     <script>
-        // Dark Mode Toggle
-        const darkModeToggle = document.getElementById('darkModeToggle');
-        const darkModeIcon = document.getElementById('darkModeIcon');
-        const body = document.body;
+        // Theme toggle functionality - synced with main layout using appTheme
+        const apply = mode => {
+            const isDark = mode === 'dark';
+            document.documentElement.classList.toggle('dark', isDark);
+            document.body.classList.toggle('dark', isDark);
+        };
         
-        // Check for saved theme preference or default to system preference
-        const savedTheme = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        
-        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-            body.classList.add('dark');
-            darkModeIcon.className = 'bi bi-sun-fill';
+        // Function to update UI elements based on theme
+        function updateThemeUI(theme) {
+            // Update checkbox state
+            const themeToggleInput = document.getElementById('themeToggleInput');
+            if (themeToggleInput) {
+                themeToggleInput.checked = theme === 'dark';
+            }
+            
+            // Update logo
+            const logo = document.getElementById('clinicLogo');
+            if (logo) {
+                logo.src = theme === 'dark' ? '/assets/images/Dark.png' : '/assets/images/Light.png';
+            }
         }
         
-        darkModeToggle.addEventListener('click', function() {
-            body.classList.toggle('dark');
-            
-            if (body.classList.contains('dark')) {
-                localStorage.setItem('theme', 'dark');
-                darkModeIcon.className = 'bi bi-sun-fill';
-            } else {
-                localStorage.setItem('theme', 'light');
-                darkModeIcon.className = 'bi bi-moon-fill';
-            }
-        });
+        // Get saved theme - check both keys for compatibility
+        const saved = localStorage.getItem('appTheme') || localStorage.getItem('theme') || 
+            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        
+        // Apply initial theme
+        apply(saved);
+        updateThemeUI(saved);
+        
+        // Theme toggle checkbox change handler
+        const themeToggleInput = document.getElementById('themeToggleInput');
+        if (themeToggleInput) {
+            themeToggleInput.addEventListener('change', function() {
+                const nextTheme = this.checked ? 'dark' : 'light';
+                
+                // Apply theme immediately
+                apply(nextTheme);
+                
+                // Update UI elements
+                updateThemeUI(nextTheme);
+                
+                // Save to both keys for compatibility
+                localStorage.setItem('appTheme', nextTheme);
+                localStorage.setItem('theme', nextTheme);
+            });
+        }
         
         // Update favicon based on theme
         function updateFavicon() {
             const favicon = document.getElementById('favicon');
             const faviconDark = document.getElementById('favicon-dark');
             
-            if (body.classList.contains('dark')) {
-                favicon.setAttribute('href', '/assets/images/Dark.png');
-            } else {
+            if (document.body.classList.contains('dark')) {
                 favicon.setAttribute('href', '/assets/images/Light.png');
+            } else {
+                favicon.setAttribute('href', '/assets/images/Dark.png');
             }
         }
         
         // Update favicon when theme changes
-        darkModeToggle.addEventListener('click', updateFavicon);
+        if (themeToggleInput) {
+            themeToggleInput.addEventListener('change', updateFavicon);
+        }
         updateFavicon();
         
-        // Update logo based on theme
-        function updateLogo() {
-            const logo = document.getElementById('clinicLogo');
-            if (body.classList.contains('dark')) {
-                logo.src = '/assets/images/Dark.png';
-            } else {
-                logo.src = '/assets/images/Light.png';
+        // Wave Animation
+        (function() {
+            const c = document.getElementById('waveCanvas');
+            if (!c) return;
+            
+            const $ = c.getContext('2d');
+            let w, h;
+            
+            function resizeCanvas() {
+                w = c.width = window.innerWidth;
+                h = c.height = window.innerHeight;
             }
-        }
-        
-        // Update logo when theme changes
-        darkModeToggle.addEventListener('click', updateLogo);
-        updateLogo();
+            
+            resizeCanvas();
+            
+            function getWaveColors() {
+                const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
+                return {
+                    background: isDark ? 'rgba(11, 18, 32, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                    stroke: isDark ? 'hsla(210, 30%, 60%, 0.3)' : 'hsla(210, 15%, 40%, 0.3)'
+                };
+            }
+            
+            function draw(a, b, t) {
+                const colors = getWaveColors();
+                $.fillStyle = colors.background;
+                $.fillRect(0, 0, w, h);
+                
+                for (var i = -60; i < 60; i += 1) {
+                    $.strokeStyle = colors.stroke;
+                    $.lineWidth = 0.3;
+                    $.beginPath();
+                    $.moveTo(0, h / 2);
+                    for (var j = 0; j < w; j += 1) {
+                        $.lineTo(
+                            10 * Math.sin(i / 10) + j + 0.008 * j * j,
+                            Math.floor(
+                                h / 2 +
+                                    (j / 2) * Math.sin(j / 50 - t / 50 - i / 80) +
+                                    i * 0.9 * Math.sin(j / 25 - (i + t) / 95)
+                            )
+                        );
+                    }
+                    $.stroke();
+                }
+            }
+            
+            let t = 0;
+            
+            window.addEventListener('resize', function() {
+                resizeCanvas();
+            }, false);
+            
+            function run() {
+                window.requestAnimationFrame(run);
+                t += 1;
+                draw(33, 52 * Math.sin(t / 2500), t);
+            }
+            
+            run();
+            
+            // Update wave colors when theme changes
+            const themeToggleInput = document.getElementById('themeToggleInput');
+            if (themeToggleInput) {
+                themeToggleInput.addEventListener('change', function() {
+                    // Redraw immediately with new colors
+                    draw(33, 52 * Math.sin(t / 2500), t);
+                });
+            }
+        })();
     </script>
 </body>
 </html>

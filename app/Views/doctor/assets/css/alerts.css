@@ -105,7 +105,19 @@
     color: var(--text) !important;
 }
 
-/* Alerts Modals Glass Effect */
+/* Alerts Modals Glass Effect - Ensure modals are above all elements */
+.alerts-modal-glass {
+    z-index: 1000003 !important;
+}
+
+.alerts-modal-glass .modal-backdrop {
+    z-index: 1000002 !important;
+}
+
+.alerts-modal-glass .modal-dialog {
+    z-index: 1000004 !important;
+}
+
 .alerts-modal-glass .modal-content {
     background: rgba(248, 250, 252, 0.7) !important;
     backdrop-filter: blur(15px);

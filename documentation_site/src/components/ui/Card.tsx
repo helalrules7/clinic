@@ -1,29 +1,31 @@
-import React from 'react';
-import { LucideIcon } from 'lucide-react';
+import { motion } from 'framer-motion';
+import clsx from 'clsx';
+import type { ReactNode } from 'react';
 
 interface CardProps {
-    title: string;
-    icon?: LucideIcon | React.ReactNode;
+    children: ReactNode;
     className?: string;
-    children: React.ReactNode;
+    title?: string;
+    icon?: React.ElementType;
 }
 
-export default function Card({ title, icon: Icon, className = '', children }: CardProps) {
+export default function Card({ children, className, title, icon: Icon }: CardProps) {
     return (
-        <div className={`p-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-sm hover:shadow-md transition-shadow ${className}`}>
-            <div className="flex items-start gap-4 mb-4">
-                {Icon && (
-                    <div className="p-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg text-white flex-shrink-0">
-                        {typeof Icon === 'function' ? <Icon size={24} /> : Icon}
-                    </div>
-                )}
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white flex-1">
-                    {title}
-                </h3>
-            </div>
-            <div className="text-gray-600 dark:text-gray-300 leading-relaxed">
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className={clsx('glass-panel p-6 rounded-xl', className)}
+        >
+            {title && (
+                <div className="flex items-center gap-3 mb-4">
+                    {Icon && <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400"><Icon size={20} /></div>}
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+                </div>
+            )}
+            <div className="text-gray-600 dark:text-gray-300">
                 {children}
             </div>
-        </div>
+        </motion.div>
     );
 }

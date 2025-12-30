@@ -1,4 +1,50 @@
+// Session validation helper function
+async function checkSessionBeforeRequest() {
+    try {
+        const response = await fetch('/api/auth/session-time', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        });
+        
+        if (!response.ok) {
+            return false;
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success || data.remaining <= 0) {
+            // Session expired or not authenticated
+            window.location.href = '/login?expired=1';
+            return false;
+        }
+        
+        return true;
+    } catch (error) {
+        // Network error - allow request to proceed (will be handled by server)
+        return true;
+    }
+}
 
+// Intercept fetch requests to check session
+const originalFetch = window.fetch;
+window.fetch = async function(...args) {
+    // Only intercept API requests to /api/doctor/settings
+    const url = args[0];
+    if (typeof url === 'string' && url.includes('/api/doctor/settings')) {
+        const isSessionValid = await checkSessionBeforeRequest();
+        if (!isSessionValid) {
+            // Return a rejected promise to prevent the request
+            return Promise.reject(new Error('Session expired'));
+        }
+    }
+    
+    // Call original fetch
+    return originalFetch.apply(this, args);
+};
 
 function resetForm() {
     if (confirm('Are you sure you want to reset all settings to their default values?')) {
@@ -220,6 +266,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function loadPersonalPreferences() {
+    // Check session before making request
+    const isSessionValid = await checkSessionBeforeRequest();
+    if (!isSessionValid) {
+        return;
+    }
+    
     try {
         const response = await fetch('/api/doctor/settings', {
             method: 'GET',
@@ -229,7 +281,19 @@ async function loadPersonalPreferences() {
             }
         });
         
+        // Check if response indicates unauthorized access
+        if (response.status === 401 || response.status === 403) {
+            window.location.href = '/login?expired=1';
+            return;
+        }
+        
         const data = await response.json();
+        
+        // Check if response indicates session expired
+        if (!data.success && (data.message && (data.message.includes('Unauthorized') || data.message.includes('expired')))) {
+            window.location.href = '/login?expired=1';
+            return;
+        }
         
         if (data.success && data.settings) {
             personalPreferences = data.settings;
@@ -271,6 +335,12 @@ function updateToggleSwitch(switchId, checked, statusId, isTheme = false) {
 }
 
 async function updatePersonalPreference(key, value) {
+    // Check session before making request
+    const isSessionValid = await checkSessionBeforeRequest();
+    if (!isSessionValid) {
+        return;
+    }
+    
     try {
         const response = await fetch('/api/doctor/settings', {
             method: 'PUT',
@@ -283,7 +353,19 @@ async function updatePersonalPreference(key, value) {
             })
         });
         
+        // Check if response indicates unauthorized access
+        if (response.status === 401 || response.status === 403) {
+            window.location.href = '/login?expired=1';
+            return;
+        }
+        
         const data = await response.json();
+        
+        // Check if response indicates session expired
+        if (!data.success && (data.message && (data.message.includes('Unauthorized') || data.message.includes('expired')))) {
+            window.location.href = '/login?expired=1';
+            return;
+        }
         
         if (data.success) {
             personalPreferences[key] = value;
@@ -342,6 +424,12 @@ async function updatePersonalPreference(key, value) {
                             browser: browserInfo
                         };
                         
+                        // Check session before save request
+                        const isSessionValidForSave = await checkSessionBeforeRequest();
+                        if (!isSessionValidForSave) {
+                            return;
+                        }
+                        
                         // Save subscription
                         const saveResponse = await fetch('/api/doctor/settings', {
                             method: 'GET',
@@ -351,7 +439,19 @@ async function updatePersonalPreference(key, value) {
                             }
                         });
                         
+                        // Check if save response indicates unauthorized access
+                        if (saveResponse.status === 401 || saveResponse.status === 403) {
+                            window.location.href = '/login?expired=1';
+                            return;
+                        }
+                        
                         const saveData = await saveResponse.json();
+                        
+                        // Check if save response indicates session expired
+                        if (!saveData.success && (saveData.message && (saveData.message.includes('Unauthorized') || saveData.message.includes('expired')))) {
+                            window.location.href = '/login?expired=1';
+                            return;
+                        }
                         
                         if (saveData.success && saveData.settings) {
                             let subscriptions = [];
@@ -376,8 +476,14 @@ async function updatePersonalPreference(key, value) {
                                 subscriptions.push(subscriptionObj);
                             }
                             
+                            // Check session before update request
+                            const isSessionValidForPushUpdate = await checkSessionBeforeRequest();
+                            if (!isSessionValidForPushUpdate) {
+                                return;
+                            }
+                            
                             // Update settings with subscription
-                            await fetch('/api/doctor/settings', {
+                            const pushUpdateResponse = await fetch('/api/doctor/settings', {
                                 method: 'PUT',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -387,6 +493,12 @@ async function updatePersonalPreference(key, value) {
                                     push_subscription: JSON.stringify(subscriptions)
                                 })
                             });
+                            
+                            // Check if push update response indicates unauthorized access
+                            if (pushUpdateResponse.status === 401 || pushUpdateResponse.status === 403) {
+                                window.location.href = '/login?expired=1';
+                                return;
+                            }
                         }
                         
                         // Reload page to apply changes
@@ -451,6 +563,12 @@ function applyPersonalPreferences() {
 async function loadPushSubscriptions() {
     const container = document.getElementById('pushSubscriptionsList');
     if (!container) return;
+    
+    // Check session before making request
+    const isSessionValid = await checkSessionBeforeRequest();
+    if (!isSessionValid) {
+        return;
+    }
     
     try {
         const response = await fetch('/api/doctor/settings', {
@@ -523,6 +641,12 @@ async function confirmDeletePushSubscription() {
         return;
     }
     
+    // Check session before making request
+    const isSessionValid = await checkSessionBeforeRequest();
+    if (!isSessionValid) {
+        return;
+    }
+    
     try {
         const response = await fetch('/api/doctor/settings', {
             method: 'GET',
@@ -532,7 +656,19 @@ async function confirmDeletePushSubscription() {
             }
         });
         
+        // Check if response indicates unauthorized access
+        if (response.status === 401 || response.status === 403) {
+            window.location.href = '/login?expired=1';
+            return;
+        }
+        
         const data = await response.json();
+        
+        // Check if response indicates session expired
+        if (!data.success && (data.message && (data.message.includes('Unauthorized') || data.message.includes('expired')))) {
+            window.location.href = '/login?expired=1';
+            return;
+        }
         
         if (data.success && data.settings && data.settings.push_subscription) {
             let subscriptions = [];
@@ -552,6 +688,12 @@ async function confirmDeletePushSubscription() {
             if (index >= 0) {
                 subscriptions.splice(index, 1);
                 
+                // Check session before update request
+                const isSessionValidForUpdate = await checkSessionBeforeRequest();
+                if (!isSessionValidForUpdate) {
+                    return;
+                }
+                
                 // Update settings
                 const updateResponse = await fetch('/api/doctor/settings', {
                     method: 'PUT',
@@ -564,7 +706,19 @@ async function confirmDeletePushSubscription() {
                     })
                 });
                 
+                // Check if update response indicates unauthorized access
+                if (updateResponse.status === 401 || updateResponse.status === 403) {
+                    window.location.href = '/login?expired=1';
+                    return;
+                }
+                
                 const updateData = await updateResponse.json();
+                
+                // Check if update response indicates session expired
+                if (!updateData.success && (updateData.message && (updateData.message.includes('Unauthorized') || updateData.message.includes('expired')))) {
+                    window.location.href = '/login?expired=1';
+                    return;
+                }
                 
                 if (updateData.success) {
                     const modal = bootstrap.Modal.getInstance(document.getElementById('deletePushSubscriptionModal'));
@@ -590,6 +744,12 @@ async function confirmDeletePushSubscription() {
 async function loadSidebarItems() {
     const container = document.getElementById('sidebarItemsList');
     if (!container) return;
+    
+    // Check session before making request
+    const isSessionValid = await checkSessionBeforeRequest();
+    if (!isSessionValid) {
+        return;
+    }
     
     // Define all sidebar items
     const allSidebarItems = [
@@ -621,7 +781,19 @@ async function loadSidebarItems() {
             }
         });
         
+        // Check if response indicates unauthorized access
+        if (response.status === 401 || response.status === 403) {
+            window.location.href = '/login?expired=1';
+            return;
+        }
+        
         const data = await response.json();
+        
+        // Check if response indicates session expired
+        if (!data.success && (data.message && (data.message.includes('Unauthorized') || data.message.includes('expired')))) {
+            window.location.href = '/login?expired=1';
+            return;
+        }
         
         // Get enabled sidebar items from settings (default: all enabled)
         let enabledItems = [];
@@ -667,6 +839,12 @@ async function loadSidebarItems() {
 }
 
 async function updateSidebarItem(itemKey, enabled) {
+    // Check session before making request
+    const isSessionValid = await checkSessionBeforeRequest();
+    if (!isSessionValid) {
+        return;
+    }
+    
     try {
         const response = await fetch('/api/doctor/settings', {
             method: 'GET',
@@ -676,7 +854,19 @@ async function updateSidebarItem(itemKey, enabled) {
             }
         });
         
+        // Check if response indicates unauthorized access
+        if (response.status === 401 || response.status === 403) {
+            window.location.href = '/login?expired=1';
+            return;
+        }
+        
         const data = await response.json();
+        
+        // Check if response indicates session expired
+        if (!data.success && (data.message && (data.message.includes('Unauthorized') || data.message.includes('expired')))) {
+            window.location.href = '/login?expired=1';
+            return;
+        }
         
         // Get current enabled items
         let enabledItems = [];
@@ -705,6 +895,12 @@ async function updateSidebarItem(itemKey, enabled) {
             }
         });
         
+        // Check session before update request
+        const isSessionValidForUpdate = await checkSessionBeforeRequest();
+        if (!isSessionValidForUpdate) {
+            return;
+        }
+        
         // Update settings
         const updateResponse = await fetch('/api/doctor/settings', {
             method: 'PUT',
@@ -717,7 +913,19 @@ async function updateSidebarItem(itemKey, enabled) {
             })
         });
         
+        // Check if update response indicates unauthorized access
+        if (updateResponse.status === 401 || updateResponse.status === 403) {
+            window.location.href = '/login?expired=1';
+            return;
+        }
+        
         const updateData = await updateResponse.json();
+        
+        // Check if update response indicates session expired
+        if (!updateData.success && (updateData.message && (updateData.message.includes('Unauthorized') || updateData.message.includes('expired')))) {
+            window.location.href = '/login?expired=1';
+            return;
+        }
         
         if (updateData.success) {
             personalPreferences.sidebar_items_enabled = enabledItems;

@@ -3098,13 +3098,11 @@ function showPaymentError(message) {
     paymentAmount.parentNode.appendChild(errorDiv);
 }
 
-function handleAddBooking(e) {
+async function handleAddBooking(e) {
     e.preventDefault();
     
     const formData = new FormData(e.target);
     const bookingData = Object.fromEntries(formData);
-    
-    // Debug logging
     
     // Validation
     if (!bookingData.patient_id) {
@@ -3153,6 +3151,23 @@ function handleAddBooking(e) {
     // Add visit cost to booking data
     bookingData.visit_cost = visitCost;
     
+    // Check if date is today - if so, check for existing appointments
+    const today = new Date().toISOString().split('T')[0];
+    if (bookingData.date === today && bookingData.patient_id) {
+        try {
+            const checkResponse = await fetch(`/api/patients/${bookingData.patient_id}/appointments/check-active`);
+            const checkData = await checkResponse.json();
+            
+            if (checkData.has_active) {
+                showNotification('هذا المريض لديه موعد محجوز اليوم بالفعل. يرجى إكمال أو إلغاء الموعد الموجود أولاً.', 'danger');
+                return;
+            }
+        } catch (error) {
+            console.error('Error checking active appointments:', error);
+            // Continue with booking creation if check fails
+        }
+    }
+    
     // Save booking
     fetch('/secretary/bookings', {
         method: 'POST',
@@ -3166,6 +3181,9 @@ function handleAddBooking(e) {
         if (data.ok) {
             // Close modal
             bootstrap.Modal.getInstance(document.getElementById('addBookingModal')).hide();
+            
+            // Dispatch custom event to update carousel
+            window.dispatchEvent(new CustomEvent('appointmentAdded'));
             
             // Show success message
             showNotification('تم إنشاء الحجز بنجاح!', 'success');
@@ -3948,24 +3966,92 @@ function isDateInPast(dateString) {
 }
 
 function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    notification.innerHTML = `
-        <div class="d-flex align-items-center">
-            <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
-            <div class="flex-grow-1 arabic-text">${message}</div>
-            <button type="button" class="btn-close ms-2" data-bs-dismiss="alert"></button>
+    // Ensure Bootstrap is loaded
+    if (typeof bootstrap === 'undefined' || typeof bootstrap.Toast === 'undefined') {
+        // Fallback to alert if Bootstrap Toast is not available
+        alert(message);
+        return;
+    }
+    
+    // Create toast container if it doesn't exist
+    let toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toastContainer';
+        toastContainer.className = 'toast-container position-fixed bottom-0 start-50 translate-middle-x p-3';
+        toastContainer.style.zIndex = '99999';
+        toastContainer.style.pointerEvents = 'none';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Create unique toast ID
+    const toastId = 'toast-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    
+    // Determine icon and classes based on type
+    let iconClass = 'info-circle';
+    let toastClass = 'alert-toast-glass';
+    
+    if (type === 'success') {
+        iconClass = 'check-circle';
+    } else if (type === 'danger') {
+        iconClass = 'exclamation-triangle';
+        toastClass = 'alert-toast-glass alert-toast-danger';
+    } else if (type === 'warning') {
+        iconClass = 'exclamation-triangle';
+        toastClass = 'alert-toast-glass alert-toast-warning';
+    }
+    
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Create toast HTML
+    const toastHtml = `
+        <div id="${toastId}" class="toast ${toastClass} align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000" style="min-width: 350px; max-width: 500px; pointer-events: auto;">
+            <div class="d-flex align-items-center">
+                <div class="toast-body flex-grow-1">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-${iconClass} me-2" style="font-size: 1.25rem;"></i>
+                        <div class="flex-grow-1 arabic-text">${escapeHtml(message)}</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close alert-toast-close-btn me-2" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
         </div>
     `;
     
-    document.body.appendChild(notification);
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    const toastElement = document.getElementById(toastId);
     
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.remove();
+    if (toastElement) {
+        try {
+            const toast = new bootstrap.Toast(toastElement, {
+                autohide: true,
+                delay: 5000
+            });
+            
+            // Add exit animation when toast is being hidden
+            toastElement.addEventListener('hide.bs.toast', function() {
+                if (!toastElement.classList.contains('hiding')) {
+                    toastElement.classList.add('hiding');
+                }
+            });
+            
+            toast.show();
+            
+            toastElement.addEventListener('hidden.bs.toast', function() {
+                toastElement.remove();
+            });
+        } catch (error) {
+            // Fallback to alert if toast fails
+            alert(message);
+            toastElement.remove();
         }
-    }, 5000);
+    }
 }
 
 function debounce(func, wait) {

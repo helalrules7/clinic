@@ -1,0 +1,325 @@
+<div class="getting-started-content" dir="rtl">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">المواعيد القادمة</h1>
+            <p class="hero-subtitle">تتبع وإدارة المواعيد المجدولة</p>
+            <div class="hero-badges">
+                <span class="badge badge-primary">مواعيد</span>
+                <span class="badge badge-secondary">مباشر</span>
+                <span class="badge badge-success">تقدم</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <section class="content-section" id="overview">
+        <div class="section-header">
+            <h2><i class="ri-calendar-event-line"></i> نظرة عامة على المواعيد القادمة</h2>
+            <p class="section-description">مكون المواعيد القادمة يعرض قائمة بالمواعيد المجدولة المحجوزة أو المسجلة، مما يوفر للأطباء نظرة واضحة على جدولهم القادم. كل موعد يظهر معلومات المريض، تفاصيل الوقت، الحالة، ويتضمن شريط تقدم مباشر يشير إلى الوقت المتبقي حتى الموعد.</p>
+        </div>
+
+        <!-- Upcoming Appointments Demo Image -->
+        <div class="upcoming-appointments-demo-container" style="margin: 2rem 0; text-align: center;">
+            <div class="upcoming-appointments-demo-thumbnail" id="upcoming-appointments-demo-thumbnail">
+                <img src="/docs/opth/public/assets/images/upcoming-appointments-dark.png" alt="عرض توضيحي للمواعيد القادمة" class="upcoming-appointments-demo-dark" />
+                <img src="/docs/opth/public/assets/images/upcoming-appointments-light.png" alt="عرض توضيحي للمواعيد القادمة - الوضع الفاتح" class="upcoming-appointments-demo-light" style="display: none;" />
+                <div class="thumbnail-overlay">
+                    <i class="ri-zoom-in-line"></i>
+                    <span>انقر لعرض الحجم الكامل</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <i class="ri-image-line"></i> عرض توضيحي مرئي لواجهة المواعيد القادمة
+            </p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-check-line"></i>
+                </div>
+                <h3>قائمة المواعيد</h3>
+                <p>يعرض المواعيد القادمة مرتبة حسب التاريخ والوقت، مع عرض فقط المواعيد بحالة "محجوز" أو "تم التسجيل".</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-time-line"></i>
+                </div>
+                <h3>تقدم مباشر</h3>
+                <p>كل موعد يتضمن شريط تقدم يتحدث مباشرة، مما يظهر الوقت المتبقي حتى بدء الموعد.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-user-line"></i>
+                </div>
+                <h3>إجراءات سريعة</h3>
+                <p>روابط مباشرة لعرض تفاصيل الموعد أو الوصول لملف المريض بنقرة واحدة.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Components -->
+    <section class="content-section" id="components">
+        <div class="section-header">
+            <h2><i class="ri-layout-grid-line"></i> بنية المكون</h2>
+            <p class="section-description">مكون المواعيد القادمة يتكون من عدة عناصر رئيسية تعمل معاً لتوفير واجهة إدارة مواعيد شاملة.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-heading"></i>
+                </div>
+                <h3>قسم الرأس</h3>
+                <p>الرأس يتضمن:</p>
+                <ul>
+                    <li><strong>العنوان:</strong> "المواعيد القادمة" مع أيقونة تقويم</li>
+                    <li><strong>زر عرض الكل:</strong> يربط بصفحة التقويم الكاملة (<code>/doctor/calendar</code>)</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-list-check"></i>
+                </div>
+                <h3>بطاقة الموعد</h3>
+                <p>كل موعد معروض كبطاقة تحتوي على:</p>
+                <ul>
+                    <li><strong>اسم المريض:</strong> رابط قابل للنقر لملف المريض</li>
+                    <li><strong>نطاق الوقت:</strong> وقت البداية والنهاية (مثلاً "14:00 - 14:15")</li>
+                    <li><strong>التاريخ:</strong> تاريخ الموعد بتنسيق DD/MM/YYYY</li>
+                    <li><strong>شارة الحالة:</strong> مؤشر مرئي (محجوز، تم التسجيل)</li>
+                    <li><strong>نوع الزيارة:</strong> نوع الزيارة (جديد، متابعة، إجراء)</li>
+                    <li><strong>شريط التقدم:</strong> عد تنازلي مباشر للموعد</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-play-circle-line"></i>
+                </div>
+                <h3>أزرار الإجراءات</h3>
+                <p>زران إجراء لكل موعد:</p>
+                <ul>
+                    <li><strong>زر الموعد:</strong> يفتح صفحة تفاصيل الموعد (<code>/doctor/appointments/{id}</code>)</li>
+                    <li><strong>زر المريض:</strong> يفتح صفحة ملف المريض (<code>/doctor/patients/{patient_id}</code>)</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-bar-chart-box-line"></i>
+                </div>
+                <h3>شريط التقدم</h3>
+                <p>مكون شريط التقدم يتضمن:</p>
+                <ul>
+                    <li><strong>تأثير الزجاج:</strong> تصميم glassmorphism حديث مع تأثير ضبابي</li>
+                    <li><strong>تحديثات مباشرة:</strong> يتحدث كل ثانية لإظهار الوقت المتبقي</li>
+                    <li><strong>ملء مرئي:</strong> ملء التقدم يشير إلى الوقت المنقضي/المتبقي</li>
+                    <li><strong>عرض الوقت:</strong> يظهر الوقت المتبقي بتنسيق HH:MM</li>
+                    <li><strong>عرض مشروط:</strong> يظهر فقط للمواعيد غير المكتملة وغير المعاد جدولتها</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-list-3-line"></i>
+                </div>
+                <h3>الترقيم</h3>
+                <p>ضوابط الترقيم للتنقل عبر عدة مواعيد:</p>
+                <ul>
+                    <li><strong>تنقل الصفحات:</strong> أزرار السابق/التالي وأرقام الصفحات</li>
+                    <li><strong>الحد الافتراضي:</strong> 4 مواعيد لكل صفحة</li>
+                    <li><strong>إخفاء تلقائي:</strong> مخفي عندما تكون هناك صفحة واحدة فقط</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="content-section" id="how-it-works">
+        <div class="section-header">
+            <h2><i class="ri-settings-3-line"></i> كيف يعمل</h2>
+            <p class="section-description">مكون المواعيد القادمة يعمل من خلال API Controller ويستخدم JavaScript للعرض الديناميكي والتحديثات المباشرة.</p>
+        </div>
+
+        <div class="info-box" style="margin-bottom: 2rem;">
+            <i class="ri-code-s-slash-line"></i>
+            <div>
+                <strong>نقطة نهاية API:</strong>
+                <p>المكون يستخدم نقطة النهاية <code>/api/upcoming-appointments</code> في <code>ApiController.php</code>، تحديداً طريقة <code>getUpcomingAppointments()</code>.</p>
+            </div>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-database-line"></i>
+                </div>
+                <h3>جلب البيانات</h3>
+                <p>نقطة نهاية API:</p>
+                <ul>
+                    <li><strong>المصادقة:</strong> يتطلب مصادقة المستخدم</li>
+                    <li><strong>معرف الطبيب:</strong> يسترجع تلقائياً معرف الطبيب من المستخدم المصادق عليه</li>
+                    <li><strong>فلتر التاريخ:</strong> يجلب فقط المواعيد من اليوم فصاعداً (<code>date >= today</code>)</li>
+                    <li><strong>فلتر الحالة:</strong> يتضمن فقط المواعيد بحالة "محجوز" أو "تم التسجيل"</li>
+                    <li><strong>الترتيب:</strong> يرتب حسب التاريخ (تصاعدي) ثم وقت البداية (تصاعدي)</li>
+                    <li><strong>الترقيم:</strong> يدعم معاملات <code>page</code> و <code>per_page</code></li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-file-code-line"></i>
+                </div>
+                <h3>عملية العرض</h3>
+                <p>JavaScript يتعامل مع العرض:</p>
+                <ul>
+                    <li><strong>التحميل الأولي:</strong> <code>loadUpcomingAppointments()</code> يجلب البيانات عند تحميل الصفحة</li>
+                    <li><strong>معالجة البيانات:</strong> ينسق التواريخ والأوقات للعرض</li>
+                    <li><strong>إنشاء HTML:</strong> <code>renderUpcomingAppointments()</code> ينشئ بطاقات المواعيد</li>
+                    <li><strong>تهيئة التلميحات:</strong> تلميحات Bootstrap للعناصر التفاعلية</li>
+                    <li><strong>تهيئة شريط التقدم:</strong> يعد شريط التقدم المباشر</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-refresh-line"></i>
+                </div>
+                <h3>تحديثات مباشرة</h3>
+                <p>نظام شريط التقدم:</p>
+                <ul>
+                    <li><strong>التهيئة:</strong> <code>initializeAppointmentProgressBars()</code> يجد جميع حاويات التقدم</li>
+                    <li><strong>دالة التحديث:</strong> <code>updateAppointmentProgressBar()</code> يحسب الوقت المتبقي</li>
+                    <li><strong>الفترة:</strong> يتحدث كل ثانية (1000ms) باستخدام <code>setInterval</code></li>
+                    <li><strong>حساب الوقت:</strong> يحسب الوقت بين الآن ووقت بدء الموعد</li>
+                    <li><strong>ملء التقدم:</strong> يحدث نسبة العرض بناءً على الوقت المنقضي</li>
+                    <li><strong>عرض النص:</strong> يظهر الوقت المتبقي بتنسيق "HH:MM"</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Progress Bar Details -->
+    <section class="content-section" id="progress-bar">
+        <div class="section-header">
+            <h2><i class="ri-bar-chart-box-line"></i> نظام شريط التقدم</h2>
+            <p class="section-description">شريط التقدم هو مكون متطور يوفر ردود فعل مرئية مباشرة حول المواعيد القادمة.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-time-line"></i>
+                </div>
+                <h3>حساب الوقت</h3>
+                <p>النظام يحسب الوقت المتبقي:</p>
+                <ul>
+                    <li><strong>الوقت الحالي:</strong> يحصل على التاريخ والوقت الحالي</li>
+                    <li><strong>بداية الموعد:</strong> يجمع تاريخ الموعد ووقت البداية</li>
+                    <li><strong>فرق الوقت:</strong> يحسب الميلي ثانية بين الآن وبداية الموعد</li>
+                    <li><strong>المدة:</strong> يفترض مدة موعد 15 دقيقة (900 ثانية)</li>
+                    <li><strong>نسبة التقدم:</strong> يحسب كم من الوقت انقضى</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>التصميم المرئي</h3>
+                <p>شريط التقدم يستخدم glassmorphism:</p>
+                <ul>
+                    <li><strong>تأثير الزجاج:</strong> خلفية شبه شفافة مع ضبابية</li>
+                    <li><strong>ملء متدرج:</strong> تدرج متحرك يملأ مع تقدم الوقت</li>
+                    <li><strong>تراكب النص:</strong> الوقت المتبقي معروض فوق شريط التقدم</li>
+                    <li><strong>متجاوب:</strong> يتكيف مع عرض الحاوية</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-eye-line"></i>
+                </div>
+                <h3>منطق العرض</h3>
+                <p>شريط التقدم معروض بشكل مشروط:</p>
+                <ul>
+                    <li><strong>يظهر لـ:</strong> المواعيد بحالة "محجوز" أو "تم التسجيل"</li>
+                    <li><strong>مخفي لـ:</strong> المواعيد المكتملة أو المعاد جدولتها</li>
+                    <li><strong>إخفاء تلقائي:</strong> يخفي عندما يكون وقت الموعد قد مضى</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="info-box" style="margin-top: 2rem;">
+            <i class="ri-information-line"></i>
+            <div>
+                <strong>حالات شريط التقدم:</strong>
+                <p>شريط التقدم يظهر حالات مختلفة بناءً على الوقت:</p>
+                <ul>
+                    <li><strong>قبل الموعد:</strong> يظهر الوقت المتبقي حتى البداية</li>
+                    <li><strong>أثناء الموعد:</strong> يظهر الوقت المتبقي حتى النهاية</li>
+                    <li><strong>بعد الموعد:</strong> يخفي تلقائياً أو يظهر الإكمال</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="content-section" id="features">
+        <div class="section-header">
+            <h2><i class="ri-star-line"></i> الميزات الرئيسية</h2>
+            <p class="section-description">مكون المواعيد القادمة يتضمن عدة ميزات مصممة لمساعدة الأطباء في إدارة جدولهم بفعالية.</p>
+        </div>
+
+        <div class="info-cards-grid">
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-calendar-line"></i>
+                </div>
+                <h3>عرض زمني</h3>
+                <p>المواعيد مرتبة حسب التاريخ والوقت، مما يضمن ظهور المواعيد الأكثر إلحاحاً أولاً.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-link-m"></i>
+                </div>
+                <h3>تنقل سريع</h3>
+                <p>روابط مباشرة لتفاصيل الموعد وملفات المرضى للوصول السريع للمعلومات ذات الصلة.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-palette-line"></i>
+                </div>
+                <h3>دعم الثيم</h3>
+                <p>المكون يتكيف تلقائياً مع الثيمات الفاتحة والداكنة، مما يضمن قابلية قراءة مثلى في جميع ظروف العرض.</p>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-icon">
+                    <i class="ri-smartphone-line"></i>
+                </div>
+                <h3>تصميم متجاوب</h3>
+                <p>تخطيط متجاوب بالكامل يعمل بسلاسة على سطح المكتب، الجهاز اللوحي، والأجهزة المحمولة.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Image Modal -->
+<div id="upcoming-appointments-image-modal" class="image-modal">
+    <div class="image-modal-backdrop"></div>
+    <div class="image-modal-content">
+        <button class="image-modal-close" id="close-upcoming-appointments-image-modal">
+            <i class="ri-close-line"></i>
+        </button>
+        <img src="/docs/opth/public/assets/images/upcoming-appointments-dark.png" alt="عرض توضيحي للمواعيد القادمة - الحجم الكامل" class="upcoming-appointments-demo-dark" />
+        <img src="/docs/opth/public/assets/images/upcoming-appointments-light.png" alt="عرض توضيحي للمواعيد القادمة - الوضع الفاتح - الحجم الكامل" class="upcoming-appointments-demo-light" style="display: none;" />
+    </div>
+</div>
