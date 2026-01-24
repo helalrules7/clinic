@@ -3,32 +3,27 @@ version: '3.8'
 services:
   web:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: --Docker/Dockerfile
     container_name: clinic_web
     ports:
       - "8080:80"
     volumes:
-      - .:/var/www/html
+      - ..:/var/www/html
       - vendor_data:/var/www/html/vendor
-      - ./storage:/var/www/html/storage
-      - ./app/storage:/var/www/html/app/storage
-      - ./public/uploads:/var/www/html/public/uploads
-      - ./uploads:/var/www/html/uploads
+      - ../app/storage:/var/www/html/app/storage
+      - ../public/uploads:/var/www/html/public/uploads
     environment:
-      - DB_HOST=db
-      - DB_NAME=roaya
-      - DB_USER=roaya_user
-      - DB_PASS=roaya_password
-      - DRUGS_DB_HOST=db
+      - DB_HOST=217.76.57.212
+      - DB_NAME=hclinic_roaya
+      - DB_USER=clinic_roaya
+      - DB_PASS=Carmen@1230
+      - DRUGS_DB_HOST=217.76.57.212
       - DRUGS_DB_NAME=hclinic_drugs
-      - DRUGS_DB_USER=drugs_user
-      - DRUGS_DB_PASS=drugs_password
+      - DRUGS_DB_USER=clinic_roaya
+      - DRUGS_DB_PASS=Carmen@1230
       - APP_ENV=local
       - APP_DEBUG=true
-    depends_on:
-      db:
-        condition: service_healthy
     networks:
       - clinic_network
 
@@ -64,12 +59,10 @@ services:
     ports:
       - "8082:80"
     environment:
-      PMA_HOST: db
-      PMA_USER: root
-      PMA_PASSWORD: root_password
+      PMA_HOST: 217.76.57.212
+      PMA_USER: clinic_roaya
+      PMA_PASSWORD: Carmen@1230
       UPLOAD_LIMIT: 300M
-    depends_on:
-      - db
     networks:
       - clinic_network
 
