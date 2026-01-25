@@ -13546,12 +13546,14 @@ class ApiController
 
             // Get sub-folders count for system folders
             foreach ($systemFolders as &$sf) {
-                // Sub-folders for system folders are stored with parent_type = 'system' and parent_id = doctor_id
+                // Sub-folders for system folders are stored with parent_type = 'system' and parent_id = NULL
+                // We match by doctor_id instead
                 $subFoldersStmt = $this->pdo->prepare("
                     SELECT COUNT(*) as sub_count 
                     FROM patient_folders 
                     WHERE parent_type = 'system' 
-                    AND parent_id = ?
+                    AND parent_id IS NULL
+                    AND doctor_id = ?
                 ");
                 $subFoldersStmt->execute([$sf['doctor_id']]);
                 $subFoldersCount = $subFoldersStmt->fetchColumn();
@@ -13614,8 +13616,16 @@ class ApiController
                     if (!is_numeric($systemDoctorId)) {
                         return $this->jsonResponse(['error' => 'Invalid system folder ID'], 400);
                     }
-                    $dbParentId = (int)$systemDoctorId;
+                    // System folders don't exist in DB, so we use NULL for parent_id to avoid FK constraint
+                    // We'll store the doctor_id in the name or use a special format, but actually
+                    // we can query by parent_type='system' and doctor_id match
+                    // Better: store doctor_id in parent_id as NULL and use a separate approach
+                    // Actually, we need to store doctor_id somewhere. Let's use a workaround:
+                    // Store doctor_id in parent_id as NULL, and use parent_type + doctor_id matching
+                    $dbParentId = null; // NULL to avoid FK constraint
                     $dbParentType = 'system';
+                    // Store system doctor_id in doctor_id field of the sub-folder
+                    $folderDoctorId = (int)$systemDoctorId;
                 } else {
                     // For custom folders, verify parent exists and user has permission
                     $parentCheckStmt = $this->pdo->prepare("
@@ -13629,7 +13639,8 @@ class ApiController
                     }
 
                     // Check permission: parent must be global (doctor_id IS NULL) or belong to current doctor
-                    if ($parent['doctor_id'] !== null && $parent['doctor_id'] !== $doctorId) {
+                    // Use loose comparison (==) to handle type differences (string vs int)
+                    if ($parent['doctor_id'] !== null && $parent['doctor_id'] != $doctorId) {
                         return $this->jsonResponse(['error' => 'Unauthorized'], 403);
                     }
                     
@@ -13638,6 +13649,12 @@ class ApiController
                 }
             }
 
+            // For system folders, store the system doctor_id in doctor_id field
+            // and use NULL for parent_id to avoid FK constraint
+            if ($parentType === 'system' && isset($systemDoctorId)) {
+                $folderDoctorId = (int)$systemDoctorId;
+            }
+            
             $stmt = $this->pdo->prepare("
                 INSERT INTO patient_folders (doctor_id, name, created_by_user_id, parent_id, parent_type)
                 VALUES (?, ?, ?, ?, ?)
@@ -13688,17 +13705,19 @@ class ApiController
                 }
 
                 // Get sub-folders for this system folder
+                // parent_id is NULL for system folders, so we match by parent_type='system' and doctor_id
                 $stmt = $this->pdo->prepare("
                     SELECT pf.*,
                            COUNT(DISTINCT pfp.patient_id) as patient_count
                     FROM patient_folders pf
                     LEFT JOIN patient_folder_patients pfp ON pf.id = pfp.folder_id
                     WHERE pf.parent_type = 'system' 
-                    AND pf.parent_id = ?
+                    AND pf.parent_id IS NULL
+                    AND pf.doctor_id = ?
                     GROUP BY pf.id
                     ORDER BY pf.name
                 ");
-                $stmt->execute([$systemDoctorId]);
+                $stmt->execute([(int)$systemDoctorId]);
             } else {
                 // For custom folders, verify parent exists and user has permission
                 $parentCheckStmt = $this->pdo->prepare("
@@ -13711,8 +13730,9 @@ class ApiController
                     return $this->jsonResponse(['error' => 'Parent folder not found'], 404);
                 }
 
-                // Check permission
-                if ($parent['doctor_id'] !== null && $parent['doctor_id'] !== $doctorId) {
+                // Check permission: parent must be global (doctor_id IS NULL) or belong to current doctor
+                // Allow access if doctor_id is NULL (global folder) or matches current doctor
+                if ($parent['doctor_id'] !== null && $parent['doctor_id'] != $doctorId) {
                     return $this->jsonResponse(['error' => 'Unauthorized'], 403);
                 }
 
@@ -13818,7 +13838,8 @@ class ApiController
                     $checkStmt = $this->pdo->prepare("
                         SELECT id FROM patient_folders 
                         WHERE parent_type = 'system' 
-                        AND parent_id = ? 
+                        AND parent_id IS NULL
+                        AND doctor_id = ?
                         AND name = ?
                     ");
                     $checkStmt->execute([$systemDoctorId, $folderName]);
@@ -13830,9 +13851,9 @@ class ApiController
                         // Create new sub-folder
                         $createStmt = $this->pdo->prepare("
                             INSERT INTO patient_folders (name, doctor_id, created_by_user_id, parent_id, parent_type)
-                            VALUES (?, ?, ?, ?, 'system')
+                            VALUES (?, ?, ?, NULL, 'system')
                         ");
-                        $createStmt->execute([$folderName, $doctorId, $user['id'], $systemDoctorId]);
+                        $createStmt->execute([$folderName, $systemDoctorId, $user['id']]);
                         $subFolderId = $this->pdo->lastInsertId();
                     }
 
@@ -13887,7 +13908,8 @@ class ApiController
                     $checkStmt = $this->pdo->prepare("
                         SELECT id FROM patient_folders 
                         WHERE parent_type = 'system' 
-                        AND parent_id = ? 
+                        AND parent_id IS NULL
+                        AND doctor_id = ?
                         AND name = ?
                     ");
                     $checkStmt->execute([$systemDoctorId, $folderName]);
@@ -13898,9 +13920,9 @@ class ApiController
                     } else {
                         $createStmt = $this->pdo->prepare("
                             INSERT INTO patient_folders (name, doctor_id, created_by_user_id, parent_id, parent_type)
-                            VALUES (?, ?, ?, ?, 'system')
+                            VALUES (?, ?, ?, NULL, 'system')
                         ");
-                        $createStmt->execute([$folderName, $doctorId, $user['id'], $systemDoctorId]);
+                        $createStmt->execute([$folderName, $systemDoctorId, $user['id']]);
                         $subFolderId = $this->pdo->lastInsertId();
                     }
 
@@ -13933,7 +13955,8 @@ class ApiController
                     $checkStmt = $this->pdo->prepare("
                         SELECT id FROM patient_folders 
                         WHERE parent_type = 'system' 
-                        AND parent_id = ? 
+                        AND parent_id IS NULL
+                        AND doctor_id = ?
                         AND name = ?
                     ");
                     $checkStmt->execute([$systemDoctorId, $folderName]);
@@ -13944,9 +13967,9 @@ class ApiController
                     } else {
                         $createStmt = $this->pdo->prepare("
                             INSERT INTO patient_folders (name, doctor_id, created_by_user_id, parent_id, parent_type)
-                            VALUES (?, ?, ?, ?, 'system')
+                            VALUES (?, ?, ?, NULL, 'system')
                         ");
-                        $createStmt->execute([$folderName, $doctorId, $user['id'], $systemDoctorId]);
+                        $createStmt->execute([$folderName, $systemDoctorId, $user['id']]);
                         $subFolderId = $this->pdo->lastInsertId();
                     }
 
@@ -14029,7 +14052,8 @@ class ApiController
             }
 
             // Check permission: folder must be global (doctor_id IS NULL) or belong to current doctor
-            if ($folder['doctor_id'] !== null && $folder['doctor_id'] !== $doctorId) {
+            // Use loose comparison (==) to handle type differences (string vs int)
+            if ($folder['doctor_id'] !== null && $folder['doctor_id'] != $doctorId) {
                 return $this->jsonResponse(['error' => 'Unauthorized'], 403);
             }
 
@@ -14102,7 +14126,8 @@ class ApiController
             }
 
             // Check permission: folder must be global (doctor_id IS NULL) or belong to current doctor
-            if ($folder['doctor_id'] !== null && $folder['doctor_id'] !== $doctorId) {
+            // Use loose comparison (==) to handle type differences (string vs int)
+            if ($folder['doctor_id'] !== null && $folder['doctor_id'] != $doctorId) {
                 return $this->jsonResponse(['error' => 'Unauthorized'], 403);
             }
 
@@ -14153,7 +14178,8 @@ class ApiController
             }
 
             // Check permission: folder must be global (doctor_id IS NULL) or belong to current doctor
-            if ($folder['doctor_id'] !== null && $folder['doctor_id'] !== $doctorId) {
+            // Use loose comparison (==) to handle type differences (string vs int)
+            if ($folder['doctor_id'] !== null && $folder['doctor_id'] != $doctorId) {
                 return $this->jsonResponse(['error' => 'Unauthorized'], 403);
             }
 
@@ -14225,7 +14251,8 @@ class ApiController
             }
 
             // Check permission: folder must be global (doctor_id IS NULL) or belong to current doctor
-            if ($folder['doctor_id'] !== null && $folder['doctor_id'] !== $doctorId) {
+            // Use loose comparison (==) to handle type differences (string vs int)
+            if ($folder['doctor_id'] !== null && $folder['doctor_id'] != $doctorId) {
                 return $this->jsonResponse(['error' => 'Unauthorized'], 403);
             }
 
@@ -14337,11 +14364,12 @@ class ApiController
                     FROM patient_folders pf
                     LEFT JOIN patient_folder_patients pfp ON pf.id = pfp.folder_id
                     WHERE pf.parent_type = 'system' 
-                    AND pf.parent_id = ?
+                    AND pf.parent_id IS NULL
+                    AND pf.doctor_id = ?
                     GROUP BY pf.id
                     ORDER BY pf.name
                 ");
-                $subFoldersStmt->execute([$systemDoctorId]);
+                $subFoldersStmt->execute([(int)$systemDoctorId]);
                 $subFolders = $subFoldersStmt->fetchAll(\PDO::FETCH_ASSOC);
                 
                 $formattedSubFolders = [];
@@ -14377,7 +14405,8 @@ class ApiController
             }
 
             // Check permission: folder must be global (doctor_id IS NULL) or belong to current doctor
-            if ($folder['doctor_id'] !== null && $folder['doctor_id'] !== $doctorId) {
+            // Use loose comparison (==) to handle type differences (string vs int)
+            if ($folder['doctor_id'] !== null && $folder['doctor_id'] != $doctorId) {
                 return $this->jsonResponse(['error' => 'Unauthorized'], 403);
             }
 

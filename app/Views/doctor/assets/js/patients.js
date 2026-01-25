@@ -1138,7 +1138,7 @@ document.addEventListener('DOMContentLoaded', function() {
                              e.target.contentEditable === 'true';
         
         // Quick search shortcut (Ctrl+F when not in modal)
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && !isModalOpen) {
+        if ((e.ctrlKey || e.metaKey) && e.key && e.key.toLowerCase() === 'f' && !isModalOpen) {
             e.preventDefault();
             const activeQuickSearch = document.getElementById('quickSearch') || document.getElementById('quickSearchCards');
             if (activeQuickSearch) {
@@ -1215,6 +1215,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Keyboard shortcuts
     document.addEventListener('keydown', function(e) {
+        // Skip if key is undefined
+        if (!e.key) {
+            return;
+        }
+        
         // Open search modal with 'F' key or Arabic 'ب' key (only if no input is focused)
         // Also support Arabic keyboard layout alternatives
         const searchKeys = ['f', 'ب']; // F key and Arabic 'ba' (same position on keyboard)
@@ -1227,8 +1232,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Open add patient modal with 'Ctrl+N' or 'N' key or Arabic 'ى' key
         const addPatientKeys = ['n', 'ى']; // N key and Arabic 'ya' (same position on keyboard)
-        const isAddPatientKey = addPatientKeys.includes(e.key.toLowerCase()) || addPatientKeys.includes(e.key);
-        const isCtrlN = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n';
+        const isAddPatientKey = e.key && (addPatientKeys.includes(e.key.toLowerCase()) || addPatientKeys.includes(e.key));
+        const isCtrlN = (e.ctrlKey || e.metaKey) && e.key && e.key.toLowerCase() === 'n';
         
         if ((isAddPatientKey || isCtrlN) && !isInputFocused() && !document.querySelector('.modal.show')) {
             e.preventDefault();
@@ -1254,14 +1259,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Focus search input with 'Ctrl+F' or 'Cmd+F' when modal is open
         // Also support Arabic layout
-        if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'f' || e.key === 'ب') && searchModal.classList.contains('show')) {
+        if ((e.ctrlKey || e.metaKey) && e.key && (e.key.toLowerCase() === 'f' || e.key === 'ب') && searchModal.classList.contains('show')) {
             e.preventDefault();
             globalSearch.focus();
             globalSearch.select();
         }
         
         // Save patient with 'Ctrl+S' when add patient modal is open
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's' && document.getElementById('addPatientModal').classList.contains('show')) {
+        if ((e.ctrlKey || e.metaKey) && e.key && e.key.toLowerCase() === 's' && document.getElementById('addPatientModal').classList.contains('show')) {
             e.preventDefault();
             const submitButton = document.getElementById('addPatientSubmit');
             if (!submitButton.disabled) {
@@ -4129,19 +4134,6 @@ function openFolder(folderId) {
         </div>
     `;
     
-    // Update header with actions
-    const headerActionsContainer = document.querySelector('#viewModeToggleFoldersHeader');
-    if (headerActionsContainer) {
-        // Find or create container for folder actions
-        let actionsDiv = headerActionsContainer.querySelector('.folder-header-actions');
-        if (!actionsDiv) {
-            actionsDiv = document.createElement('div');
-            actionsDiv.className = 'folder-header-actions';
-            headerActionsContainer.appendChild(actionsDiv);
-        }
-        actionsDiv.innerHTML = headerActions;
-    }
-    
     // Update UI to show folder with sub-folders and patients
     const container = document.getElementById('patientsFoldersContainer');
     
@@ -4154,11 +4146,14 @@ function openFolder(folderId) {
                 <i class="bi bi-folder" style="font-size: 0.9rem; opacity: 0.8;"></i>
                 <span>Back to Folders</span>
             </button>
-            <div class="mt-2">
-                <h5 class="mb-1" style="color: var(--text); font-weight: 600;">
-                    ${escapeHtml(currentFolderName)}
-                </h5>
-                <small class="text-muted">Patients in this folder</small>
+            <div class="mt-2 d-flex justify-content-between align-items-start">
+                <div>
+                    <h5 class="mb-1" style="color: var(--text); font-weight: 600;">
+                        ${escapeHtml(currentFolderName)}
+                    </h5>
+                    <small class="text-muted">Patients in this folder</small>
+                </div>
+                ${headerActions}
             </div>
         </div>
         <div id="subFoldersContainer" class="mb-4">
@@ -4260,15 +4255,44 @@ function renderSubFolders(subFolders, parentId, parentType) {
     
     subFolders.forEach(subFolder => {
         const safeGradient = (subFolder.gradient_color || 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)').replace(/'/g, "\\'");
+        const subFolderIcon = subFolder.icon || 'bi-folder';
         
         html += `
             <div class="col-md-3 col-lg-2">
                 <div class="card sub-folder-card h-100" 
                      style="border: 1px solid var(--border); cursor: pointer; background: ${safeGradient} !important; background-color: transparent !important;" 
                      onclick="openSubFolder(${subFolder.id})">
-                    <div class="card-body p-3 d-flex flex-column align-items-center text-center">
+                    <div class="card-body p-3 d-flex flex-column align-items-center text-center position-relative">
+                        <div class="dropdown position-absolute" style="top: 0.5rem; right: 0.5rem; z-index: 10;" onclick="event.stopPropagation();">
+                            <button class="btn btn-sm btn-link p-0 text-white" 
+                                    type="button" 
+                                    data-bs-toggle="dropdown"
+                                    style="opacity: 0.9; backdrop-filter: blur(4px);">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="#" onclick="event.stopPropagation(); showChangeFolderIconModal(${subFolder.id}, '${escapeHtml(subFolderIcon).replace(/'/g, "\\'")}', '${escapeHtml(subFolder.gradient_color || '').replace(/'/g, "\\'")}');">
+                                        <i class="bi bi-palette me-2"></i>
+                                        Change Icon & Color
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" onclick="event.stopPropagation(); showRenameFolderModal(${subFolder.id}, '${escapeHtml(subFolder.name).replace(/'/g, "\\'")}');">
+                                        <i class="bi bi-pencil me-2"></i>
+                                        Rename
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="#" onclick="event.stopPropagation(); deleteFolder(${subFolder.id});">
+                                        <i class="bi bi-trash me-2"></i>
+                                        Delete
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                         <div class="mb-2">
-                            <i class="bi ${subFolder.icon || 'bi-folder'}" style="font-size: 2rem; color: white; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);"></i>
+                            <i class="bi ${subFolderIcon}" style="font-size: 2rem; color: white; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);"></i>
                         </div>
                         <h6 class="card-title mb-1 text-white" style="font-size: 0.85rem; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
                             ${escapeHtml(subFolder.name)}
@@ -4827,7 +4851,15 @@ document.getElementById('renameFolderForm')?.addEventListener('submit', function
         if (data.ok) {
             const modal = bootstrap.Modal.getInstance(document.getElementById('renameFolderModal'));
             modal.hide();
-            loadFolders();
+            showNotification('Folder renamed successfully', 'success');
+            // If we're in a folder view, reload sub-folders
+            if (currentFolderId) {
+                const isSystem = currentFolderId.toString().startsWith('system_');
+                const parentType = isSystem ? 'system' : 'custom';
+                loadSubFolders(currentFolderId, parentType);
+            } else {
+                loadFolders();
+            }
         } else {
             messageEl.className = 'alert alert-danger';
             messageEl.textContent = data.error || 'Failed to rename folder';
@@ -4858,19 +4890,104 @@ function deleteFolder(folderId) {
     .then(response => response.json())
     .then(data => {
         if (data.ok) {
-            loadFolders();
+            showNotification('Folder deleted successfully', 'success');
+            // If we're in a folder view, reload sub-folders
+            if (currentFolderId) {
+                const isSystem = currentFolderId.toString().startsWith('system_');
+                const parentType = isSystem ? 'system' : 'custom';
+                loadSubFolders(currentFolderId, parentType);
+            } else {
+                loadFolders();
+            }
         } else {
-            alert(data.error || 'Failed to delete folder');
+            showNotification(data.error || 'Failed to delete folder', 'error');
         }
     })
     .catch(error => {
         console.error('Error deleting folder:', error);
-        alert('An error occurred while deleting the folder');
+        showNotification('An error occurred while deleting the folder', 'error');
     });
 }
 
+// Load all folders recursively (including sub-folders) for modals
+async function loadAllFoldersForModal() {
+    const allFolders = [];
+    
+    // Add system folders
+    for (const systemFolder of systemFoldersData) {
+        allFolders.push({
+            id: systemFolder.id,
+            name: systemFolder.name,
+            type: 'system',
+            level: 0
+        });
+        
+        // Load sub-folders for system folder
+        try {
+            const response = await fetch(`/api/patient-folders/${systemFolder.id}/sub-folders/system`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await response.json();
+            if (data.ok && data.sub_folders) {
+                data.sub_folders.forEach(subFolder => {
+                    allFolders.push({
+                        id: subFolder.id,
+                        name: subFolder.name,
+                        type: 'custom',
+                        level: 1,
+                        parentName: systemFolder.name
+                    });
+                });
+            }
+        } catch (error) {
+            console.error('Error loading system sub-folders:', error);
+        }
+    }
+    
+    // Add custom folders
+    for (const customFolder of customFoldersData) {
+        allFolders.push({
+            id: customFolder.id,
+            name: customFolder.name,
+            type: 'custom',
+            level: 0
+        });
+        
+        // Load sub-folders for custom folder
+        try {
+            const response = await fetch(`/api/patient-folders/${customFolder.id}/sub-folders/custom`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await response.json();
+            if (data.ok && data.sub_folders) {
+                data.sub_folders.forEach(subFolder => {
+                    allFolders.push({
+                        id: subFolder.id,
+                        name: subFolder.name,
+                        type: 'custom',
+                        level: 1,
+                        parentName: customFolder.name
+                    });
+                });
+            }
+        } catch (error) {
+            console.error('Error loading custom sub-folders:', error);
+        }
+    }
+    
+    return allFolders;
+}
+
 // Show move patient modal
-function showMovePatientModal(patientId) {
+async function showMovePatientModal(patientId) {
     const modal = new bootstrap.Modal(document.getElementById('movePatientModal'));
     document.getElementById('movePatientId').value = patientId;
     document.getElementById('movePatientMessage').classList.add('d-none');
@@ -4891,13 +5008,17 @@ function showMovePatientModal(patientId) {
     const select = document.getElementById('movePatientFolderSelect');
     select.innerHTML = '<option value="">-- Select Folder --</option>';
     
-    foldersData.forEach(folder => {
-        if (folder.type === 'custom') {
-            const option = document.createElement('option');
-            option.value = folder.id;
-            option.textContent = folder.name;
-            select.appendChild(option);
-        }
+    // Load all folders including sub-folders
+    const allFolders = await loadAllFoldersForModal();
+    
+    allFolders.forEach(folder => {
+        const option = document.createElement('option');
+        option.value = folder.id;
+        const displayName = folder.level === 1 
+            ? `${folder.parentName} > ${folder.name}`
+            : folder.name;
+        option.textContent = displayName;
+        select.appendChild(option);
     });
     
     modal.show();
@@ -5023,8 +5144,15 @@ document.getElementById('changeFolderIconForm')?.addEventListener('submit', func
             if (data.ok) {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('changeFolderIconModal'));
                 modal.hide();
-                loadFolders();
                 showNotification('Folder icon and color updated successfully', 'success');
+                // If we're in a folder view, reload sub-folders
+                if (currentFolderId) {
+                    const isSystem = currentFolderId.toString().startsWith('system_');
+                    const parentType = isSystem ? 'system' : 'custom';
+                    loadSubFolders(currentFolderId, parentType);
+                } else {
+                    loadFolders();
+                }
             } else {
                 messageEl.className = 'alert alert-danger';
                 messageEl.textContent = data.error || 'Failed to update folder';
@@ -5073,7 +5201,7 @@ function removePatientFromFolder(patientId) {
 }
 
 // Show add to folder modal
-function showAddToFolderModal(patientId) {
+async function showAddToFolderModal(patientId) {
     const modal = new bootstrap.Modal(document.getElementById('movePatientModal'));
     document.getElementById('movePatientId').value = patientId;
     document.getElementById('movePatientMessage').classList.add('d-none');
@@ -5094,13 +5222,17 @@ function showAddToFolderModal(patientId) {
     const select = document.getElementById('movePatientFolderSelect');
     select.innerHTML = '<option value="">-- Select Folder --</option>';
     
-    foldersData.forEach(folder => {
-        if (folder.type === 'custom') {
-            const option = document.createElement('option');
-            option.value = folder.id;
-            option.textContent = folder.name;
-            select.appendChild(option);
-        }
+    // Load all folders including sub-folders
+    const allFolders = await loadAllFoldersForModal();
+    
+    allFolders.forEach(folder => {
+        const option = document.createElement('option');
+        option.value = folder.id;
+        const displayName = folder.level === 1 
+            ? `${folder.parentName} > ${folder.name}`
+            : folder.name;
+        option.textContent = displayName;
+        select.appendChild(option);
     });
     
     modal.show();

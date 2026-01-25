@@ -312,15 +312,17 @@ try {
     $router->get('/api/patients/search', 'ApiController@searchPatients');
     $router->get('/api/patients', 'ApiController@getAllPatients');
     // Patient folders routes
+    // More specific routes first to avoid conflicts
+    $router->get('/api/patient-folders/{parentId}/sub-folders/{parentType}', 'ApiController@getSubFolders');
+    $router->post('/api/patient-folders/{systemFolderId}/quick-sort/{sortType}', 'ApiController@quickSortSystemFolder');
+    $router->get('/api/patient-folders/{id}/patients', 'ApiController@getFolderPatients');
+    $router->post('/api/patient-folders/{id}/patients', 'ApiController@addPatientToFolder');
+    $router->delete('/api/patient-folders/{id}/patients/{patient_id}', 'ApiController@removePatientFromFolder');
+    // General folder routes (must come after specific routes)
     $router->get('/api/patient-folders', 'ApiController@getPatientFolders');
     $router->post('/api/patient-folders', 'ApiController@createPatientFolder');
     $router->put('/api/patient-folders/{id}', 'ApiController@updatePatientFolder');
     $router->delete('/api/patient-folders/{id}', 'ApiController@deletePatientFolder');
-    $router->get('/api/patient-folders/{id}/patients', 'ApiController@getFolderPatients');
-    $router->post('/api/patient-folders/{id}/patients', 'ApiController@addPatientToFolder');
-    $router->delete('/api/patient-folders/{id}/patients/{patient_id}', 'ApiController@removePatientFromFolder');
-    $router->get('/api/patient-folders/{parentId}/sub-folders/{parentType}', 'ApiController@getSubFolders');
-    $router->post('/api/patient-folders/{systemFolderId}/quick-sort/{sortType}', 'ApiController@quickSortSystemFolder');
     // More specific routes first - images must come before {id}
     $router->get('/api/patients/images/{id}', 'ApiController@viewPatientImageForCards');
     $router->get('/api/patients/{id}/files', 'ApiController@getPatientFiles');
