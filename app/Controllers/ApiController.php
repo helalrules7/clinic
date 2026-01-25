@@ -978,44 +978,6 @@ class ApiController
             $stmt->execute();
             $patients = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-            // Debug: Check if latest_attachment_id column exists in results
-            if (count($patients) > 0) {
-                $firstPatient = $patients[0];
-                $hasLatestAttachmentId = array_key_exists('latest_attachment_id', $firstPatient);
-                error_log("getAllPatients: First patient keys: " . implode(', ', array_keys($firstPatient)));
-                error_log("getAllPatients: Has 'latest_attachment_id' key: " . ($hasLatestAttachmentId ? 'YES' : 'NO'));
-                
-                // Check patient 435 specifically
-                $patient435 = array_filter($patients, function($p) { return $p['id'] == 435; });
-                if (count($patient435) > 0) {
-                    $p435 = reset($patient435);
-                    error_log("getAllPatients: Patient 435 (عبدالله شليل) - latest_attachment_id: " . ($p435['latest_attachment_id'] ?? 'NULL') . ", has key: " . (array_key_exists('latest_attachment_id', $p435) ? 'YES' : 'NO'));
-                }
-            }
-
-            // Debug: Log patients with attachments
-            $patientsWithAttachments = array_filter($patients, function($p) {
-                return !empty($p['latest_attachment_id']);
-            });
-            error_log("getAllPatients: Total patients: " . count($patients) . ", Patients with latest_attachment_id: " . count($patientsWithAttachments));
-            if (count($patientsWithAttachments) > 0) {
-                $sample = array_slice($patientsWithAttachments, 0, 3);
-                foreach ($sample as $p) {
-                    error_log("getAllPatients: Patient ID {$p['id']} ({$p['first_name']} {$p['last_name']}) has latest_attachment_id: {$p['latest_attachment_id']}");
-                }
-            } else {
-                // Check if any patients have attachments at all
-                $testStmt = $this->pdo->prepare("
-                    SELECT COUNT(*) as cnt 
-                    FROM patient_attachments pa 
-                    WHERE pa.patient_id IN (SELECT id FROM patients LIMIT 10) 
-                    AND pa.mime_type LIKE 'image/%'
-                ");
-                $testStmt->execute();
-                $testResult = $testStmt->fetch();
-                error_log("getAllPatients: Test - Found " . ($testResult['cnt'] ?? 0) . " image attachments for first 10 patients");
-            }
-
             // Normalize latest_attachment_id - ensure NULL values are preserved properly
             foreach ($patients as &$patient) {
                 // Ensure latest_attachment_id is explicitly set (even if NULL)
@@ -3309,13 +3271,9 @@ class ApiController
      */
     public function viewPatientImageForCards($id)
     {
-        // Log that function was called
-        error_log("viewPatientImageForCards: Function called with ID: {$id}");
-        
         try {
             if (!$this->auth->check()) {
                 http_response_code(401);
-                error_log("viewPatientImageForCards: Unauthorized");
                 return;
             }
 
@@ -3325,11 +3283,8 @@ class ApiController
 
             if (!$attachment) {
                 http_response_code(404);
-                error_log("viewPatientImageForCards: Attachment ID {$id} not found in database");
                 return;
             }
-
-            error_log("viewPatientImageForCards: Found attachment ID {$id}, file_path: {$attachment['file_path']}");
 
             // Use same path resolution as viewAttachment
             // file_path is stored as 'storage/uploads/attachments/filename'
@@ -3341,35 +3296,16 @@ class ApiController
             // Build path exactly like viewAttachment does
             $filePath = __DIR__ . '/../../' . $dbPath;
             
-            // Try multiple path variations
-            $possiblePaths = [
-                $filePath,  // app/Controllers/../../storage/uploads/attachments/filename
-                __DIR__ . '/../../app/' . $dbPath,  // app/Controllers/../../app/storage/uploads/attachments/filename
-                realpath($filePath),  // Try realpath
-            ];
-
-            $foundPath = null;
-            foreach ($possiblePaths as $path) {
-                if ($path && file_exists($path)) {
-                    $foundPath = $path;
-                    error_log("viewPatientImageForCards: Found file at: {$foundPath}");
-                    break;
-                }
-            }
-
-            if (!$foundPath) {
-                // Try one more time with direct path check
-                $directPath = __DIR__ . '/../../' . ltrim($attachment['file_path'], '/');
-                if (file_exists($directPath)) {
-                    $foundPath = $directPath;
-                    error_log("viewPatientImageForCards: Found file at direct path: {$foundPath}");
+            // Normalize path
+            $filePath = realpath($filePath);
+            
+            if (!$filePath || !file_exists($filePath)) {
+                // Try alternative path
+                $altPath = realpath(__DIR__ . '/../../storage/uploads/attachments/' . basename($dbPath));
+                if ($altPath && file_exists($altPath)) {
+                    $filePath = $altPath;
                 } else {
                     http_response_code(404);
-                    error_log("viewPatientImageForCards: File not found. ID: {$id}, DB path: {$attachment['file_path']}");
-                    error_log("viewPatientImageForCards: Tried paths: " . implode(' | ', array_filter($possiblePaths)));
-                    error_log("viewPatientImageForCards: Direct path: {$directPath}");
-                    error_log("viewPatientImageForCards: __DIR__ = " . __DIR__);
-                    error_log("viewPatientImageForCards: file_exists check: " . (file_exists($directPath) ? 'YES' : 'NO'));
                     return;
                 }
             }
@@ -3377,24 +3313,28 @@ class ApiController
             // Verify it's an image
             if (strpos($attachment['mime_type'], 'image/') !== 0) {
                 http_response_code(400);
-                error_log("viewPatientImageForCards: Not an image. ID: {$id}, MIME: {$attachment['mime_type']}");
                 return;
+            }
+
+            // Clear any previous output
+            if (ob_get_level()) {
+                ob_clean();
             }
 
             // Set appropriate headers
             header('Content-Type: ' . $attachment['mime_type']);
-            header('Content-Length: ' . filesize($foundPath));
-            header('Content-Disposition: inline; filename="' . $attachment['original_filename'] . '"');
+            header('Content-Length: ' . filesize($filePath));
+            header('Content-Disposition: inline; filename="' . basename($attachment['original_filename']) . '"');
             header('Cache-Control: public, max-age=3600');
+            header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT');
 
             // Output file
-            readfile($foundPath);
+            readfile($filePath);
             exit;
 
         } catch (Exception $e) {
             http_response_code(500);
             error_log("viewPatientImageForCards: Exception for ID {$id}: " . $e->getMessage());
-            error_log("viewPatientImageForCards: Stack trace: " . $e->getTraceAsString());
         }
     }
 
@@ -13597,9 +13537,7 @@ class ApiController
             }
 
             // If doctor_id is provided, ensure it matches current doctor (for private folders)
-            if ($folderDoctorId !== null && $folderDoctorId !== $doctorId) {
-                return $this->jsonResponse(['error' => 'Unauthorized to create folder for another doctor'], 403);
-            }
+            // Allow creating folders for any doctor (no permission check)
 
             // If creating a sub-folder, validate parent
             $dbParentId = null;
@@ -13627,22 +13565,16 @@ class ApiController
                     // Store system doctor_id in doctor_id field of the sub-folder
                     $folderDoctorId = (int)$systemDoctorId;
                 } else {
-                    // For custom folders, verify parent exists and user has permission
-                    $parentCheckStmt = $this->pdo->prepare("
-                        SELECT id, doctor_id FROM patient_folders WHERE id = ?
-                    ");
-                    $parentCheckStmt->execute([$parentId]);
-                    $parent = $parentCheckStmt->fetch();
+                // For custom folders, verify parent exists
+                $parentCheckStmt = $this->pdo->prepare("
+                    SELECT id FROM patient_folders WHERE id = ?
+                ");
+                $parentCheckStmt->execute([$parentId]);
+                $parent = $parentCheckStmt->fetch();
 
-                    if (!$parent) {
-                        return $this->jsonResponse(['error' => 'Parent folder not found'], 404);
-                    }
-
-                    // Check permission: parent must be global (doctor_id IS NULL) or belong to current doctor
-                    // Use loose comparison (==) to handle type differences (string vs int)
-                    if ($parent['doctor_id'] !== null && $parent['doctor_id'] != $doctorId) {
-                        return $this->jsonResponse(['error' => 'Unauthorized'], 403);
-                    }
+                if (!$parent) {
+                    return $this->jsonResponse(['error' => 'Parent folder not found'], 404);
+                }
                     
                     $dbParentId = (int)$parentId;
                     $dbParentType = 'custom';
@@ -13719,21 +13651,15 @@ class ApiController
                 ");
                 $stmt->execute([(int)$systemDoctorId]);
             } else {
-                // For custom folders, verify parent exists and user has permission
+                // For custom folders, verify parent exists
                 $parentCheckStmt = $this->pdo->prepare("
-                    SELECT id, doctor_id FROM patient_folders WHERE id = ?
+                    SELECT id FROM patient_folders WHERE id = ?
                 ");
                 $parentCheckStmt->execute([$parentId]);
                 $parent = $parentCheckStmt->fetch();
 
                 if (!$parent) {
                     return $this->jsonResponse(['error' => 'Parent folder not found'], 404);
-                }
-
-                // Check permission: parent must be global (doctor_id IS NULL) or belong to current doctor
-                // Allow access if doctor_id is NULL (global folder) or matches current doctor
-                if ($parent['doctor_id'] !== null && $parent['doctor_id'] != $doctorId) {
-                    return $this->jsonResponse(['error' => 'Unauthorized'], 403);
                 }
 
                 // Get sub-folders
@@ -13761,7 +13687,9 @@ class ApiController
                     'icon' => $sf['icon'] ?? 'bi-folder',
                     'gradient_color' => $sf['gradient_color'] ?? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
                     'created_at' => $sf['created_at'],
-                    'updated_at' => $sf['updated_at']
+                    'updated_at' => $sf['updated_at'],
+                    'parent_id' => $sf['parent_id'] ?? $id, // Current folder is the parent
+                    'parent_type' => $sf['parent_type'] ?? ($folder['parent_type'] ?? 'custom')
                 ];
             }
 
@@ -14040,21 +13968,15 @@ class ApiController
                 ]);
             }
 
-            // Check if custom folder exists and user has permission
+            // Check if folder exists
             $checkStmt = $this->pdo->prepare("
-                SELECT id, doctor_id FROM patient_folders WHERE id = ?
+                SELECT id FROM patient_folders WHERE id = ?
             ");
             $checkStmt->execute([$id]);
             $folder = $checkStmt->fetch();
 
             if (!$folder) {
                 return $this->jsonResponse(['error' => 'Folder not found'], 404);
-            }
-
-            // Check permission: folder must be global (doctor_id IS NULL) or belong to current doctor
-            // Use loose comparison (==) to handle type differences (string vs int)
-            if ($folder['doctor_id'] !== null && $folder['doctor_id'] != $doctorId) {
-                return $this->jsonResponse(['error' => 'Unauthorized'], 403);
             }
 
             // Build update query dynamically based on provided fields
@@ -14115,8 +14037,9 @@ class ApiController
             $doctorId = $this->getDoctorId($user['id']);
 
             // Check if folder exists and user has permission
+            // For subfolders, we need to check parent folder permissions too
             $checkStmt = $this->pdo->prepare("
-                SELECT id, doctor_id FROM patient_folders WHERE id = ?
+                SELECT id, doctor_id, parent_id, parent_type FROM patient_folders WHERE id = ?
             ");
             $checkStmt->execute([$id]);
             $folder = $checkStmt->fetch();
@@ -14125,11 +14048,7 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Folder not found'], 404);
             }
 
-            // Check permission: folder must be global (doctor_id IS NULL) or belong to current doctor
-            // Use loose comparison (==) to handle type differences (string vs int)
-            if ($folder['doctor_id'] !== null && $folder['doctor_id'] != $doctorId) {
-                return $this->jsonResponse(['error' => 'Unauthorized'], 403);
-            }
+            // No permission check - all doctors can access all folders
 
             // Delete folder (CASCADE will delete patient mappings)
             $stmt = $this->pdo->prepare("DELETE FROM patient_folders WHERE id = ?");
@@ -14138,6 +14057,53 @@ class ApiController
             return $this->jsonResponse([
                 'ok' => true,
                 'message' => 'Folder deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Bulk delete patient folders
+     * DELETE /api/patient-folders/bulk
+     */
+    public function bulkDeletePatientFolders()
+    {
+        error_log("bulkDeletePatientFolders: Function called");
+        try {
+            if (!$this->auth->check()) {
+                error_log("bulkDeletePatientFolders: Unauthorized");
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $input = json_decode(file_get_contents('php://input'), true);
+            $folderIds = $input['folder_ids'] ?? [];
+            
+            error_log("bulkDeletePatientFolders: Received folder_ids: " . json_encode($folderIds));
+
+            if (empty($folderIds) || !is_array($folderIds)) {
+                return $this->jsonResponse(['error' => 'No folder IDs provided'], 400);
+            }
+
+            // Validate all folder IDs exist
+            $placeholders = implode(',', array_fill(0, count($folderIds), '?'));
+            $checkStmt = $this->pdo->prepare("SELECT id FROM patient_folders WHERE id IN ($placeholders)");
+            $checkStmt->execute($folderIds);
+            $existingFolders = $checkStmt->fetchAll(\PDO::FETCH_COLUMN);
+
+            if (count($existingFolders) !== count($folderIds)) {
+                return $this->jsonResponse(['error' => 'Some folders not found'], 404);
+            }
+
+            // Delete all folders (CASCADE will handle patient_folder_patients)
+            $deleteStmt = $this->pdo->prepare("DELETE FROM patient_folders WHERE id IN ($placeholders)");
+            $deleteStmt->execute($folderIds);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'message' => count($folderIds) . ' folder(s) deleted successfully',
+                'deleted_count' => count($folderIds)
             ]);
 
         } catch (\Exception $e) {
@@ -14167,8 +14133,9 @@ class ApiController
             }
 
             // Check if folder exists and user has permission
+            // For subfolders, we need to check parent folder permissions too
             $checkStmt = $this->pdo->prepare("
-                SELECT id, doctor_id FROM patient_folders WHERE id = ?
+                SELECT id, doctor_id, parent_id, parent_type FROM patient_folders WHERE id = ?
             ");
             $checkStmt->execute([$id]);
             $folder = $checkStmt->fetch();
@@ -14177,11 +14144,7 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Folder not found'], 404);
             }
 
-            // Check permission: folder must be global (doctor_id IS NULL) or belong to current doctor
-            // Use loose comparison (==) to handle type differences (string vs int)
-            if ($folder['doctor_id'] !== null && $folder['doctor_id'] != $doctorId) {
-                return $this->jsonResponse(['error' => 'Unauthorized'], 403);
-            }
+            // No permission check - all doctors can access all folders
 
             // Check if patient exists
             $patientStmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
@@ -14190,17 +14153,29 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Patient not found'], 404);
             }
 
-            // Check if already in folder
-            $existsStmt = $this->pdo->prepare("
-                SELECT folder_id FROM patient_folder_patients 
-                WHERE folder_id = ? AND patient_id = ?
-            ");
-            $existsStmt->execute([$id, $patientId]);
-            if ($existsStmt->fetch()) {
-                return $this->jsonResponse([
-                    'ok' => true,
-                    'message' => 'Patient already in folder'
-                ]);
+            // Check if this is a "move" operation (remove from all other folders first)
+            $isMove = $data['move'] ?? false;
+            
+            if ($isMove) {
+                // Remove patient from all folders first
+                $removeStmt = $this->pdo->prepare("
+                    DELETE FROM patient_folder_patients 
+                    WHERE patient_id = ?
+                ");
+                $removeStmt->execute([$patientId]);
+            } else {
+                // Check if already in folder
+                $existsStmt = $this->pdo->prepare("
+                    SELECT folder_id FROM patient_folder_patients 
+                    WHERE folder_id = ? AND patient_id = ?
+                ");
+                $existsStmt->execute([$id, $patientId]);
+                if ($existsStmt->fetch()) {
+                    return $this->jsonResponse([
+                        'ok' => true,
+                        'message' => 'Patient already in folder'
+                    ]);
+                }
             }
 
             // Add patient to folder
@@ -14240,8 +14215,9 @@ class ApiController
             }
 
             // Check if folder exists and user has permission
+            // For subfolders, we need to check parent folder permissions too
             $checkStmt = $this->pdo->prepare("
-                SELECT id, doctor_id FROM patient_folders WHERE id = ?
+                SELECT id, doctor_id, parent_id, parent_type FROM patient_folders WHERE id = ?
             ");
             $checkStmt->execute([$id]);
             $folder = $checkStmt->fetch();
@@ -14250,11 +14226,7 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Folder not found'], 404);
             }
 
-            // Check permission: folder must be global (doctor_id IS NULL) or belong to current doctor
-            // Use loose comparison (==) to handle type differences (string vs int)
-            if ($folder['doctor_id'] !== null && $folder['doctor_id'] != $doctorId) {
-                return $this->jsonResponse(['error' => 'Unauthorized'], 403);
-            }
+            // No permission check - all doctors can access all folders
 
             // Remove patient from folder
             $stmt = $this->pdo->prepare("
@@ -14294,6 +14266,12 @@ class ApiController
                 if ($systemDoctorId <= 0) {
                     return $this->jsonResponse(['error' => 'Invalid system folder ID'], 400);
                 }
+                
+                // Get doctor name for breadcrumb
+                $doctorStmt = $this->pdo->prepare("SELECT display_name FROM doctors WHERE id = ?");
+                $doctorStmt->execute([$systemDoctorId]);
+                $doctor = $doctorStmt->fetch();
+                $doctorName = $doctor ? $doctor['display_name'] : "Doctor #{$systemDoctorId}";
                 
                 // Get patients for this doctor (system folder) with latest_attachment_id and created_by_doctor_name
                 $stmt = $this->pdo->prepare("
@@ -14382,20 +14360,107 @@ class ApiController
                         'icon' => $sf['icon'] ?? 'bi-folder',
                         'gradient_color' => $sf['gradient_color'] ?? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
                         'created_at' => $sf['created_at'],
-                        'updated_at' => $sf['updated_at']
+                        'updated_at' => $sf['updated_at'],
+                        'parent_id' => $sf['parent_id'] ?? null,
+                        'parent_type' => $sf['parent_type'] ?? null
                     ];
                 }
+
+                // Always show patients NOT in any subfolder (Without Folder)
+                // Even if there are no subfolders, show patients without any folder
+                $stmt = $this->pdo->prepare("
+                    SELECT p.*, 
+                           COUNT(DISTINCT a.id) as total_appointments,
+                           MAX(a.date) as last_visit,
+                           MAX(CONCAT(a.date, ' ', a.start_time)) as last_appointment_datetime,
+                           COUNT(DISTINCT pr.id) as prescriptions_count,
+                           COUNT(DISTINCT gp.id) as glasses_count,
+                           (SELECT pa.id 
+                            FROM patient_attachments pa 
+                            LEFT JOIN appointments a ON pa.appointment_id = a.id
+                            WHERE pa.patient_id = p.id 
+                            AND pa.mime_type LIKE 'image/%'
+                            ORDER BY 
+                                CASE 
+                                    WHEN a.id IS NOT NULL 
+                                    THEN 0
+                                    ELSE 1
+                                END ASC,
+                                CASE 
+                                    WHEN a.id IS NOT NULL 
+                                    THEN CONCAT(a.date, ' ', COALESCE(a.start_time, '00:00:00'))
+                                    ELSE '0000-00-00 00:00:00'
+                                END DESC,
+                                pa.created_at DESC 
+                            LIMIT 1) as latest_attachment_id,
+                           (SELECT d.display_name 
+                            FROM timeline_events te2 
+                            LEFT JOIN users u2 ON te2.actor_user_id = u2.id
+                            LEFT JOIN doctors d ON u2.id = d.user_id
+                            WHERE te2.patient_id = p.id 
+                            AND te2.event_type = 'Booking' 
+                            AND te2.event_summary LIKE '%New patient registered%' 
+                            ORDER BY te2.created_at ASC 
+                            LIMIT 1) as created_by_doctor_name
+                    FROM patients p
+                    INNER JOIN timeline_events te ON te.patient_id = p.id
+                    INNER JOIN users u ON te.actor_user_id = u.id
+                    INNER JOIN doctors d ON u.id = d.user_id
+                    LEFT JOIN appointments a ON p.id = a.patient_id
+                    LEFT JOIN prescriptions pr ON a.id = pr.appointment_id
+                    LEFT JOIN glasses_prescriptions gp ON a.id = gp.appointment_id
+                    WHERE d.id = ?
+                    AND te.event_type = 'Booking'
+                    AND te.event_summary LIKE '%New patient registered%'
+                    AND NOT EXISTS (
+                        SELECT 1 FROM patient_folder_patients pfp
+                        INNER JOIN patient_folders pf ON pfp.folder_id = pf.id
+                        WHERE pfp.patient_id = p.id
+                        AND pf.parent_type = 'system'
+                        AND pf.parent_id IS NULL
+                        AND pf.doctor_id = ?
+                    )
+                    GROUP BY p.id
+                    ORDER BY p.first_name, p.last_name
+                ");
+                $stmt->execute([$systemDoctorId, $systemDoctorId]);
+                $patients = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                
+                // Normalize latest_attachment_id
+                foreach ($patients as &$patient) {
+                    if (!isset($patient['latest_attachment_id'])) {
+                        $patient['latest_attachment_id'] = null;
+                    }
+                    if ($patient['latest_attachment_id'] === '') {
+                        $patient['latest_attachment_id'] = null;
+                    }
+                }
+                unset($patient);
+
+                // Build breadcrumb for system folder
+                $breadcrumb = [
+                    [
+                        'id' => $id,
+                        'name' => $doctorName,
+                        'type' => 'system'
+                    ]
+                ];
 
                 return $this->jsonResponse([
                     'ok' => true,
                     'folders' => $formattedSubFolders,
-                    'patients' => $patients
+                    'patients' => $patients,
+                    'breadcrumb' => $breadcrumb
                 ]);
             }
 
-            // Check if custom folder exists and user has permission
+            // Check if custom folder exists and get parent info for breadcrumb
             $checkStmt = $this->pdo->prepare("
-                SELECT id, doctor_id, name FROM patient_folders WHERE id = ?
+                SELECT pf.id, pf.doctor_id, pf.name, pf.parent_id, pf.parent_type,
+                       parent.name as parent_name, parent.id as parent_folder_id
+                FROM patient_folders pf
+                LEFT JOIN patient_folders parent ON pf.parent_id = parent.id
+                WHERE pf.id = ?
             ");
             $checkStmt->execute([$id]);
             $folder = $checkStmt->fetch();
@@ -14404,13 +14469,10 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Folder not found'], 404);
             }
 
-            // Check permission: folder must be global (doctor_id IS NULL) or belong to current doctor
-            // Use loose comparison (==) to handle type differences (string vs int)
-            if ($folder['doctor_id'] !== null && $folder['doctor_id'] != $doctorId) {
-                return $this->jsonResponse(['error' => 'Unauthorized'], 403);
-            }
+            // No permission check - all doctors can access all folders
 
             // Get patients in folder with latest_attachment_id and created_by_doctor_name
+            // For subfolders, only get patients from this specific folder
             $stmt = $this->pdo->prepare("
                 SELECT p.*,
                        COUNT(DISTINCT a.id) as total_appointments,
@@ -14469,16 +14531,18 @@ class ApiController
             unset($patient);
 
             // Get sub-folders for custom folder
+            // Only get sub-folders if user has permission to access parent folder
             $subFoldersStmt = $this->pdo->prepare("
                 SELECT pf.*,
                        COUNT(DISTINCT pfp.patient_id) as patient_count
                 FROM patient_folders pf
                 LEFT JOIN patient_folder_patients pfp ON pf.id = pfp.folder_id
                 WHERE pf.parent_id = ? AND pf.parent_type = 'custom'
+                AND (pf.doctor_id IS NULL OR pf.doctor_id = ? OR ? IS NULL)
                 GROUP BY pf.id
                 ORDER BY pf.name
             ");
-            $subFoldersStmt->execute([$id]);
+            $subFoldersStmt->execute([$id, $doctorId, $doctorId]);
             $subFolders = $subFoldersStmt->fetchAll(\PDO::FETCH_ASSOC);
             
             $formattedSubFolders = [];
@@ -14495,10 +14559,99 @@ class ApiController
                 ];
             }
 
+            // Build breadcrumb path recursively
+            $breadcrumb = [];
+            $currentFolder = $folder;
+            $maxDepth = 10; // Prevent infinite loops
+            $depth = 0;
+            
+            // Build breadcrumb by traversing up the folder hierarchy
+            while ($currentFolder && $depth < $maxDepth) {
+                $depth++;
+                
+                // Add current folder to breadcrumb
+                array_unshift($breadcrumb, [
+                    'id' => $currentFolder['id'],
+                    'name' => $currentFolder['name'],
+                    'type' => 'custom'
+                ]);
+                
+                // Check for parent
+                $parentId = $currentFolder['parent_id'] ?? null;
+                $parentType = $currentFolder['parent_type'] ?? null;
+                $doctorId = $currentFolder['doctor_id'] ?? null;
+                
+                // Special case: If parent_type is 'system' but parent_id is NULL, 
+                // this means the folder is a subfolder of a system folder
+                // Use doctor_id to get the system folder parent
+                if ($parentType === 'system' && (empty($parentId) || $parentId === null) && $doctorId) {
+                    // Parent is a system folder - get doctor name
+                    $parentDoctorStmt = $this->pdo->prepare("SELECT display_name FROM doctors WHERE id = ?");
+                    $parentDoctorStmt->execute([$doctorId]);
+                    $parentDoctor = $parentDoctorStmt->fetch();
+                    $parentDoctorName = $parentDoctor ? $parentDoctor['display_name'] : "Doctor #{$doctorId}";
+                    
+                    // Add system folder to breadcrumb
+                    array_unshift($breadcrumb, [
+                        'id' => 'system_' . $doctorId,
+                        'name' => $parentDoctorName,
+                        'type' => 'system'
+                    ]);
+                    break; // System folders are top-level
+                }
+                // Regular case: parent_id exists
+                else if ($parentId && $parentId !== '0' && $parentId !== 0) {
+                    if ($parentType === 'system') {
+                        // Parent is a system folder - get doctor name
+                        $parentDoctorStmt = $this->pdo->prepare("SELECT display_name FROM doctors WHERE id = ?");
+                        $parentDoctorStmt->execute([$currentFolder['doctor_id']]);
+                        $parentDoctor = $parentDoctorStmt->fetch();
+                        $parentDoctorName = $parentDoctor ? $parentDoctor['display_name'] : "Doctor #{$currentFolder['doctor_id']}";
+                        
+                        // Add system folder to breadcrumb
+                        array_unshift($breadcrumb, [
+                            'id' => 'system_' . $currentFolder['doctor_id'],
+                            'name' => $parentDoctorName,
+                            'type' => 'system'
+                        ]);
+                        break; // System folders are top-level
+                    } else {
+                        // Parent is a custom folder - get parent info directly
+                        $parentStmt = $this->pdo->prepare("
+                            SELECT pf.id, pf.doctor_id, pf.name, pf.parent_id, pf.parent_type
+                            FROM patient_folders pf
+                            WHERE pf.id = ?
+                        ");
+                        $parentStmt->execute([$parentId]);
+                        $parentFolder = $parentStmt->fetch(\PDO::FETCH_ASSOC);
+                        
+                        if ($parentFolder) {
+                            $currentFolder = $parentFolder;
+                        } else {
+                            // Parent not found - stop here
+                            break;
+                        }
+                    }
+                } else {
+                    // No parent - we've reached the top
+                    break;
+                }
+            }
+            
+            // If breadcrumb is empty (shouldn't happen), add current folder
+            if (empty($breadcrumb)) {
+                $breadcrumb[] = [
+                    'id' => $folder['id'],
+                    'name' => $folder['name'],
+                    'type' => 'custom'
+                ];
+            }
+
             return $this->jsonResponse([
                 'ok' => true,
                 'folders' => $formattedSubFolders,
-                'patients' => $patients
+                'patients' => $patients,
+                'breadcrumb' => $breadcrumb
             ]);
 
         } catch (\Exception $e) {

@@ -60,7 +60,14 @@ function initializePagination() {
     
     // Load folders if folders view is active
     if (currentViewMode === 'folders') {
-        loadFolders();
+        loadFolders().then(() => {
+            // After folders are loaded, restore folder state if exists
+            if (currentFolderId) {
+                setTimeout(() => {
+                    openFolder(currentFolderId);
+                }, 100);
+            }
+        });
     }
     
     // Render initial page based on view mode
@@ -1039,8 +1046,39 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 500);
     }
     
+    // Restore folder state from localStorage if in folders view
+    if (currentViewMode === 'folders') {
+        const savedFolderId = localStorage.getItem('currentFolderId');
+        const savedFolderType = localStorage.getItem('currentFolderType');
+        const savedPathStack = localStorage.getItem('folderPathStack');
+        
+        if (savedFolderId) {
+            currentFolderId = savedFolderId;
+            currentFolderType = savedFolderType || (savedFolderId.toString().startsWith('system_') ? 'system' : 'custom');
+        }
+        
+        // Restore folder path stack
+        if (savedPathStack) {
+            try {
+                folderPathStack = JSON.parse(savedPathStack);
+            } catch (e) {
+                folderPathStack = [];
+            }
+        }
+    }
+    
     // Initialize pagination first
     initializePagination();
+    
+    // If we have a saved folder, open it after folders are loaded
+    if (currentViewMode === 'folders' && currentFolderId) {
+        // Wait for folders to load, then open the saved folder
+        setTimeout(() => {
+            if (currentFolderId) {
+                openFolder(currentFolderId);
+            }
+        }, 500);
+    }
     
     // Setup pagination limit selector
     // Handle pagination limit change (now using custom select)
@@ -2372,6 +2410,378 @@ function resetEditPatientForm() {
     clearEditPatientValidationErrors();
 }
 
+// Confirmation Modal Helper
+function showConfirmModal(title, message, onConfirm, confirmButtonText = 'Confirm') {
+    const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+    const titleEl = document.getElementById('confirmModalTitle');
+    const messageEl = document.getElementById('confirmModalMessage');
+    const confirmBtn = document.getElementById('confirmModalButton');
+    
+    if (titleEl) titleEl.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i>${escapeHtml(title)}`;
+    if (messageEl) messageEl.textContent = message;
+    if (confirmBtn) {
+        confirmBtn.innerHTML = `<i class="bi bi-check-lg me-1"></i>${escapeHtml(confirmButtonText)}`;
+        
+        // Remove old event listeners by cloning
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        
+        // Add new event listener
+        newConfirmBtn.addEventListener('click', function() {
+            modal.hide();
+            if (onConfirm && typeof onConfirm === 'function') {
+                onConfirm();
+            }
+        });
+    }
+    
+    modal.show();
+}
+
+// Alert Modal Helper
+function showAlertModal(title, message) {
+    const modal = new bootstrap.Modal(document.getElementById('alertModal'));
+    const titleEl = document.getElementById('alertModalTitle');
+    const messageEl = document.getElementById('alertModalMessage');
+    
+    if (titleEl) titleEl.innerHTML = `<i class="bi bi-info-circle me-2"></i>${escapeHtml(title)}`;
+    if (messageEl) messageEl.textContent = message;
+    
+    modal.show();
+}
+
+// Multi-selection helper functions
+function toggleSelectionMode() {
+    selectionMode = !selectionMode;
+    if (!selectionMode) {
+        // Clear selections when exiting selection mode
+        selectedPatients = [];
+        selectedFolders = [];
+    }
+    updateSelectionUI();
+    updateSelectionModeButton();
+}
+
+function updateSelectionModeButton() {
+    const label = document.getElementById('selectionModeLabel');
+    if (label) {
+        if (selectionMode) {
+            label.innerHTML = '<i class="bi bi-x-lg me-1"></i>Cancel';
+        } else {
+            label.textContent = 'Select';
+        }
+    }
+}
+
+function renderFolderViewWithSelection() {
+    // Re-render current folder view to show/hide checkboxes
+    if (currentFolderId) {
+        openFolder(currentFolderId);
+    }
+}
+
+function togglePatientSelection(patientId) {
+    const index = selectedPatients.indexOf(patientId);
+    if (index > -1) {
+        selectedPatients.splice(index, 1);
+    } else {
+        selectedPatients.push(patientId);
+    }
+    updateSelectionUI();
+}
+
+function toggleFolderSelection(folderId) {
+    const index = selectedFolders.indexOf(folderId);
+    if (index > -1) {
+        selectedFolders.splice(index, 1);
+    } else {
+        selectedFolders.push(folderId);
+    }
+    updateSelectionUI();
+}
+
+function selectAllPatients() {
+    const container = document.getElementById('folderPatientsContainer');
+    if (!container) return;
+    
+    const checkboxes = container.querySelectorAll('input[type="checkbox"][data-patient-id]');
+    selectedPatients = [];
+    checkboxes.forEach(cb => {
+        const patientId = parseInt(cb.getAttribute('data-patient-id'));
+        if (patientId) {
+            selectedPatients.push(patientId);
+            cb.checked = true;
+        }
+    });
+    updateSelectionUI();
+}
+
+function selectAllFolders() {
+    const container = document.getElementById('patientsFoldersContainer');
+    if (!container) return;
+    
+    const checkboxes = container.querySelectorAll('input[type="checkbox"][data-folder-id]');
+    selectedFolders = [];
+    checkboxes.forEach(cb => {
+        const folderId = cb.getAttribute('data-folder-id');
+        if (folderId) {
+            selectedFolders.push(folderId);
+            cb.checked = true;
+        }
+    });
+    updateSelectionUI();
+}
+
+function deselectAll() {
+    selectedPatients = [];
+    selectedFolders = [];
+    
+    // Uncheck all checkboxes
+    document.querySelectorAll('input[type="checkbox"][data-patient-id]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('input[type="checkbox"][data-folder-id]').forEach(cb => cb.checked = false);
+    
+    updateSelectionUI();
+}
+
+function updateSelectionUI() {
+    const totalSelected = selectedPatients.length + selectedFolders.length;
+    
+    // Show/hide bulk actions bar
+    let bulkActionsBar = document.getElementById('bulkActionsBar');
+    if (totalSelected > 0) {
+        if (!bulkActionsBar) {
+            renderBulkActionsBar();
+        } else {
+            updateBulkActionsBar();
+        }
+    } else {
+        if (bulkActionsBar) {
+            bulkActionsBar.remove();
+        }
+    }
+    
+    // Update selection count in bulk actions bar
+    if (bulkActionsBar) {
+        const countEl = bulkActionsBar.querySelector('.selection-count');
+        if (countEl) {
+            countEl.textContent = `${totalSelected} selected`;
+        }
+    }
+}
+
+function renderBulkActionsBar() {
+    const container = document.getElementById('patientsFoldersContainer');
+    if (!container) return;
+    
+    // Remove existing bar if any
+    const existing = document.getElementById('bulkActionsBar');
+    if (existing) existing.remove();
+    
+    const totalSelected = selectedPatients.length + selectedFolders.length;
+    
+    const bulkActionsHtml = `
+        <div id="bulkActionsBar" class="bulk-actions-bar mb-3 p-3" style="background: var(--bg-alt); border: 1px solid var(--border); border-radius: 8px;">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="selection-count fw-bold" style="color: var(--accent);">${totalSelected} selected</span>
+                    ${selectedPatients.length > 0 ? `
+                        <button class="btn btn-sm btn-outline-primary" onclick="selectAllPatients()">
+                            <i class="bi bi-check-all me-1"></i>Select All Patients
+                        </button>
+                    ` : ''}
+                    ${selectedFolders.length > 0 ? `
+                        <button class="btn btn-sm btn-outline-primary" onclick="selectAllFolders()">
+                            <i class="bi bi-check-all me-1"></i>Select All Folders
+                        </button>
+                    ` : ''}
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    ${selectedPatients.length > 0 ? `
+                        <button class="btn btn-sm btn-primary" onclick="bulkMovePatients()">
+                            <i class="bi bi-folder me-1"></i>Move Selected (${selectedPatients.length})
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="bulkRemovePatientsFromFolder()">
+                            <i class="bi bi-folder-minus me-1"></i>Remove (${selectedPatients.length})
+                        </button>
+                    ` : ''}
+                    ${selectedFolders.length > 0 ? `
+                        <button class="btn btn-sm btn-danger" onclick="bulkDeleteFolders()">
+                            <i class="bi bi-trash me-1"></i>Delete Folders (${selectedFolders.length})
+                        </button>
+                    ` : ''}
+                    <button class="btn btn-sm btn-secondary" onclick="deselectAll(); toggleSelectionMode();">
+                        <i class="bi bi-x-lg me-1"></i>Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Insert at the beginning of container
+    container.insertAdjacentHTML('afterbegin', bulkActionsHtml);
+}
+
+function updateBulkActionsBar() {
+    const bulkActionsBar = document.getElementById('bulkActionsBar');
+    if (!bulkActionsBar) return;
+    
+    const totalSelected = selectedPatients.length + selectedFolders.length;
+    const countEl = bulkActionsBar.querySelector('.selection-count');
+    if (countEl) {
+        countEl.textContent = `${totalSelected} selected`;
+    }
+    
+    // Update button counts
+    const moveBtn = bulkActionsBar.querySelector('button[onclick="bulkMovePatients()"]');
+    if (moveBtn && selectedPatients.length > 0) {
+        moveBtn.innerHTML = `<i class="bi bi-folder me-1"></i>Move Selected (${selectedPatients.length})`;
+    }
+    
+    const removeBtn = bulkActionsBar.querySelector('button[onclick="bulkRemovePatientsFromFolder()"]');
+    if (removeBtn && selectedPatients.length > 0) {
+        removeBtn.innerHTML = `<i class="bi bi-folder-minus me-1"></i>Remove (${selectedPatients.length})`;
+    }
+    
+    const deleteBtn = bulkActionsBar.querySelector('button[onclick="bulkDeleteFolders()"]');
+    if (deleteBtn && selectedFolders.length > 0) {
+        deleteBtn.innerHTML = `<i class="bi bi-trash me-1"></i>Delete Folders (${selectedFolders.length})`;
+    }
+}
+
+function bulkMovePatients() {
+    if (selectedPatients.length === 0) return;
+    
+    // Store selected patients for bulk move
+    window.bulkMovePatientIds = [...selectedPatients];
+    
+    // Use first patient to show modal (will move all selected)
+    showMovePatientModal(selectedPatients[0], true);
+}
+
+function bulkRemovePatientsFromFolder() {
+    if (selectedPatients.length === 0 || !currentFolderId) return;
+    
+    showConfirmModal(
+        'Remove Patients',
+        `Are you sure you want to remove ${selectedPatients.length} patient(s) from this folder?`,
+        function() {
+            performBulkRemovePatients();
+        },
+        'Remove'
+    );
+}
+
+function performBulkRemovePatients() {
+    if (selectedPatients.length === 0 || !currentFolderId) return;
+    
+    // Remove patients one by one (or create bulk endpoint)
+    let completed = 0;
+    let failed = 0;
+    
+    selectedPatients.forEach(patientId => {
+        fetch(`/api/patient-folders/${currentFolderId}/patients/${patientId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                completed++;
+            } else {
+                failed++;
+            }
+            
+            if (completed + failed === selectedPatients.length) {
+                selectedPatients = [];
+                updateSelectionUI();
+                openFolder(currentFolderId);
+                // Also refresh patients data for cards/table views
+                refreshPatientsData();
+                showNotification(`${completed} patient(s) removed successfully${failed > 0 ? `, ${failed} failed` : ''}`, completed > 0 ? 'success' : 'error');
+            }
+        })
+        .catch(error => {
+            failed++;
+            if (completed + failed === selectedPatients.length) {
+                selectedPatients = [];
+                updateSelectionUI();
+                openFolder(currentFolderId);
+                // Also refresh patients data for cards/table views
+                refreshPatientsData();
+                showNotification(`Error removing patients. ${completed} succeeded, ${failed} failed.`, 'error');
+            }
+        });
+    });
+}
+
+function bulkDeleteFolders() {
+    if (selectedFolders.length === 0) return;
+    
+    showConfirmModal(
+        'Delete Folders',
+        `Are you sure you want to delete ${selectedFolders.length} folder(s)? Patients will not be deleted, only removed from the folders.`,
+        function() {
+            performBulkDeleteFolders();
+        },
+        'Delete'
+    );
+}
+
+function performBulkDeleteFolders() {
+    if (selectedFolders.length === 0) return;
+    
+    const folderIdsToDelete = selectedFolders.map(id => {
+        // Convert system folder IDs to numeric if needed
+        if (id.toString().startsWith('system_')) {
+            return id; // Keep as is for now, but API won't find it
+        }
+        return parseInt(id);
+    }).filter(id => !id.toString().startsWith('system_')); // Only custom folders can be deleted
+    
+    console.log('Bulk Delete - Selected folders:', selectedFolders);
+    console.log('Bulk Delete - Folder IDs to delete:', folderIdsToDelete);
+    console.log('Bulk Delete - Request URL: /api/patient-folders/bulk');
+    console.log('Bulk Delete - Request body:', JSON.stringify({ folder_ids: folderIdsToDelete }));
+    
+    fetch('/api/patient-folders/bulk', {
+        method: 'DELETE',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            folder_ids: folderIdsToDelete
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            selectedFolders = [];
+            updateSelectionUI();
+
+            // Reload folders via API - refresh entire view
+            if (currentFolderId) {
+                // Inside a folder - refresh the full folder view (sub-folders + patients)
+                openFolder(currentFolderId);
+            } else {
+                // At root folders view - reload all folders
+                loadFolders();
+            }
+
+            showNotification(data.message || `${data.deleted_count || 0} folder(s) deleted successfully`, 'success');
+        } else {
+            showNotification(data.error || 'Failed to delete folders', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting folders:', error);
+        showNotification('An error occurred while deleting folders', 'error');
+    });
+}
+
 // Check if showNotification exists from main layout, otherwise define it
 if (typeof window.showNotification !== 'function') {
     window.showNotification = function(message, type = 'info') {
@@ -2991,7 +3401,7 @@ function initAgeFilterPopover() {
                     
                     // Validate range
                     if (minValue !== null && maxValue !== null && minValue > maxValue) {
-                        alert('Minimum age cannot be greater than maximum age');
+                        showAlertModal('Invalid Age Range', 'Minimum age cannot be greater than maximum age');
                         return;
                     }
                     
@@ -3243,7 +3653,7 @@ function initLastVisitFilterPopover() {
                     
                     // Validate range
                     if (fromValue && toValue && new Date(fromValue) > new Date(toValue)) {
-                        alert('From date cannot be greater than To date');
+                        showAlertModal('Invalid Date Range', 'From date cannot be greater than To date');
                         return;
                     }
                     
@@ -3511,16 +3921,16 @@ function renderPatientsCards() {
                      style="border: 1px solid var(--border); cursor: pointer;" 
                      onclick="viewPatient(${patient.id})">
                     <!-- Patient Image -->
-                    <div class="position-relative" style="height: 200px; overflow: hidden; background: var(--bg-alt);">
+                    <div class="position-relative patient-card-image-container" style="height: 200px; overflow: hidden; background: var(--bg-alt);">
                         ${imageUrl ? `
-                            <img src="${imageUrl}" 
+                            <img data-src="${imageUrl}" 
                                  alt="${escapeHtml(fullName)}" 
-                                 class="w-100 h-100 patient-card-image" 
-                                 style="object-fit: cover;"
+                                 class="w-100 h-100 patient-card-image lazy-load" 
+                                 style="object-fit: cover; opacity: 0; transition: opacity 0.3s ease;"
                                  data-patient-id="${patient.id}"
                                  data-image-url="${imageUrl}"
-                                 onerror="(function(img, url, pid) { console.error('[Cards View] Image load failed:', {patientId: pid, url: url, img: img}); img.style.display='none'; const placeholder = img.nextElementSibling; if (placeholder) { placeholder.style.display='flex'; } })(this, '${imageUrl}', ${patient.id});"
-                                 onload="(function(img) { img.style.display='block'; const placeholder = img.nextElementSibling; if (placeholder) { placeholder.style.display='none'; } })(this);">
+                                 onerror="(function(img, url, pid) { img.style.display='none'; img.style.opacity='0'; const placeholder = img.nextElementSibling; if (placeholder) { placeholder.style.display='flex'; } })(this, '${imageUrl}', ${patient.id});"
+                                 onload="(function(img) { img.style.opacity='1'; img.style.display='block'; const placeholder = img.nextElementSibling; if (placeholder) { placeholder.style.display='none'; } })(this);">
                         ` : ''}
                         <div class="d-flex align-items-center justify-content-center h-100 w-100 patient-card-placeholder" 
                              style="background: linear-gradient(135deg, var(--accent) 0%, var(--bg-alt) 100%); ${imageUrl ? 'display: none;' : 'display: flex;'}">
@@ -3618,24 +4028,17 @@ function renderPatientsCards() {
                                         data-bs-title="Book appointment">
                                     <i class="bi bi-calendar-plus"></i>
                                 </button>
-                                <button class="card-action-btn card-action-edit" 
-                                        onclick="event.stopPropagation(); editPatient(${patient.id})" 
-                                        data-bs-toggle="tooltip" 
-                                        data-bs-placement="top" 
+                                <button class="card-action-btn card-action-edit"
+                                        onclick="event.stopPropagation(); editPatient(${patient.id})"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
                                         data-bs-title="Edit patient">
                                     <i class="bi bi-pencil"></i>
                                 </button>
-                                <button class="card-action-btn card-action-move" 
-                                        onclick="event.stopPropagation(); showMovePatientModal(${patient.id})" 
-                                        data-bs-toggle="tooltip" 
-                                        data-bs-placement="top" 
-                                        data-bs-title="Move to folder">
-                                    <i class="bi bi-folder"></i>
-                                </button>
-                                <button class="card-action-btn card-action-delete" 
-                                        onclick="event.stopPropagation(); deletePatient(${patient.id}, '${escapeHtml(fullName).replace(/'/g, "\\'")}')" 
-                                        data-bs-toggle="tooltip" 
-                                        data-bs-placement="top" 
+                                <button class="card-action-btn card-action-delete"
+                                        onclick="event.stopPropagation(); deletePatient(${patient.id}, '${escapeHtml(fullName).replace(/'/g, "\\'")}')"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
                                         data-bs-title="Delete patient">
                                     <i class="bi bi-trash"></i>
                                 </button>
@@ -3646,9 +4049,12 @@ function renderPatientsCards() {
             </div>
         `;
     });
-    
+
     container.innerHTML = html;
-    
+
+    // Initialize lazy loading for images
+    initLazyLoading();
+
     // Refresh tooltips
     setTimeout(() => {
         refreshTooltips();
@@ -3788,7 +4194,7 @@ let customFoldersData = [];
 
 // Load folders from API
 function loadFolders() {
-    fetch('/api/patient-folders', {
+    return fetch('/api/patient-folders', {
         method: 'GET',
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
@@ -3820,17 +4226,50 @@ function loadFolders() {
             
             renderFoldersView();
         }
+        return data;
     })
     .catch(error => {
         console.error('Error loading folders:', error);
+        throw error;
     });
 }
 
-// Render folders view
-function renderFoldersView() {
-    currentFolderId = null;
-    currentFolderName = null;
-    currentFolderType = null;
+// Render folders view with pagination
+let foldersPage = 1;
+const foldersPerPage = 12; // Show 12 folders per page
+
+function renderFoldersView(page = 1) {
+    foldersPage = page;
+    
+    // Clear folder path stack when returning to main folders view
+    folderPathStack = [];
+    localStorage.removeItem('folderPathStack');
+    
+    // Clear selection mode
+    selectionMode = false;
+    selectedPatients = [];
+    selectedFolders = [];
+    updateSelectionUI();
+    
+    // Clear search
+    const searchInput = document.getElementById('folderSearchInput');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    const clearBtn = document.getElementById('clearFolderSearch');
+    if (clearBtn) {
+        clearBtn.style.display = 'none';
+    }
+    
+    // Only reset if not restoring from localStorage
+    const savedFolderId = localStorage.getItem('currentFolderId');
+    if (!savedFolderId) {
+        currentFolderId = null;
+        currentFolderName = null;
+        currentFolderType = null;
+        localStorage.removeItem('currentFolderId');
+        localStorage.removeItem('currentFolderType');
+    }
     
     // Show the header toggle buttons again
     const headerToggle = document.getElementById('viewModeToggleFoldersHeader');
@@ -3887,7 +4326,12 @@ function renderFoldersView() {
                 <div class="row g-3">
         `;
         
-        systemFoldersData.forEach(folder => {
+        // Paginate system folders
+        const systemStart = (foldersPage - 1) * foldersPerPage;
+        const systemEnd = systemStart + foldersPerPage;
+        const systemPaginated = systemFoldersData.slice(systemStart, systemEnd);
+        
+        systemPaginated.forEach(folder => {
             html += renderFolderCard(folder, true);
         });
         
@@ -3895,6 +4339,12 @@ function renderFoldersView() {
                 </div>
             </div>
         `;
+        
+        // Add pagination for system folders if needed
+        const totalSystemPages = Math.ceil(systemFoldersData.length / foldersPerPage);
+        if (totalSystemPages > 1) {
+            html += renderFoldersPagination(totalSystemPages, foldersPage, 'system');
+        }
     }
     
     // Custom Folders Section
@@ -3908,7 +4358,12 @@ function renderFoldersView() {
                 <div class="row g-3">
         `;
         
-        customFoldersData.forEach(folder => {
+        // Paginate custom folders
+        const customStart = (foldersPage - 1) * foldersPerPage;
+        const customEnd = customStart + foldersPerPage;
+        const customPaginated = customFoldersData.slice(customStart, customEnd);
+        
+        customPaginated.forEach(folder => {
             html += renderFolderCard(folder, false);
         });
         
@@ -3916,9 +4371,69 @@ function renderFoldersView() {
                 </div>
             </div>
         `;
+        
+        // Add pagination for custom folders if needed
+        const totalCustomPages = Math.ceil(customFoldersData.length / foldersPerPage);
+        if (totalCustomPages > 1) {
+            html += renderFoldersPagination(totalCustomPages, foldersPage, 'custom');
+        }
     }
     
     container.innerHTML = html;
+}
+
+// Render pagination for folders
+function renderFoldersPagination(totalPages, currentPage, folderType) {
+    if (totalPages <= 1) return '';
+    
+    let html = `
+        <div class="folders-pagination mt-3 d-flex justify-content-center">
+            <nav aria-label="Folders pagination">
+                <ul class="pagination mb-0">
+    `;
+    
+    // Previous button
+    if (currentPage > 1) {
+        html += `
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="event.preventDefault(); renderFoldersView(${currentPage - 1}); return false;">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+        `;
+    }
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === currentPage) {
+            html += `<li class="page-item active"><span class="page-link">${i}</span></li>`;
+        } else {
+            html += `
+                <li class="page-item">
+                    <a class="page-link" href="#" onclick="event.preventDefault(); renderFoldersView(${i}); return false;">${i}</a>
+                </li>
+            `;
+        }
+    }
+    
+    // Next button
+    if (currentPage < totalPages) {
+        html += `
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="event.preventDefault(); renderFoldersView(${currentPage + 1}); return false;">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        `;
+    }
+    
+    html += `
+                </ul>
+            </nav>
+        </div>
+    `;
+    
+    return html;
 }
 
 // Render a single folder card (helper function)
@@ -4076,6 +4591,14 @@ let currentFolderId = null;
 let currentFolderName = null;
 let currentFolderType = null; // 'system' or 'custom'
 
+// Folder path stack for breadcrumb tracking
+let folderPathStack = []; // [{id, name, type}, ...]
+
+// Multi-selection system
+let selectedPatients = []; // Array of patient IDs
+let selectedFolders = []; // Array of folder IDs
+let selectionMode = false; // Whether selection mode is active
+
 function openFolder(folderId) {
     currentFolderId = folderId;
     
@@ -4097,6 +4620,15 @@ function openFolder(folderId) {
     
     currentFolderName = folder ? folder.name : 'Folder';
     
+    // Note: Path stack will be updated from API breadcrumb response
+    // This ensures consistency with backend data
+    
+    // Save to localStorage for page refresh
+    if (folderId) {
+        localStorage.setItem('currentFolderId', folderId.toString());
+        localStorage.setItem('currentFolderType', currentFolderType);
+    }
+    
     // Hide the header toggle buttons to avoid duplication
     const headerToggle = document.getElementById('viewModeToggleFoldersHeader');
     if (headerToggle) {
@@ -4112,7 +4644,7 @@ function openFolder(folderId) {
     // Create header actions (Create Sub-folder + Group by buttons for system folders)
     const headerActions = isSystem ? `
         <div class="d-flex align-items-center gap-2" style="flex-wrap: wrap;">
-            <button class="btn btn-sm folder-action-btn" onclick="showCreateSubFolderModal('${folderId}', '${currentFolderType}', '${escapeHtml(currentFolderName).replace(/'/g, "\\'")}')" title="Create Sub-folder">
+            <button class="btn btn-sm create-subfolder-btn" onclick="showCreateSubFolderModal('${folderId}', '${currentFolderType}', '${escapeHtml(currentFolderName).replace(/'/g, "\\'")}')" title="Create Sub-folder">
                 <i class="bi bi-folder-plus me-1"></i>
                 Create Sub-folder
             </button>
@@ -4124,12 +4656,20 @@ function openFolder(folderId) {
                 <i class="bi bi-calendar-check me-1"></i>
                 Group by Visits
             </button>
+            <button class="btn btn-sm folder-action-btn" onclick="toggleSelectionMode(); renderFolderViewWithSelection();" title="Multi-select">
+                <i class="bi bi-check-square me-1"></i>
+                <span id="selectionModeLabel">Select</span>
+            </button>
         </div>
     ` : `
         <div class="d-flex align-items-center gap-2">
-            <button class="btn btn-sm folder-action-btn" onclick="showCreateSubFolderModal('${folderId}', '${currentFolderType}', '${escapeHtml(currentFolderName).replace(/'/g, "\\'")}')" title="Create Sub-folder">
+            <button class="btn btn-sm create-subfolder-btn" onclick="showCreateSubFolderModal('${folderId}', '${currentFolderType}', '${escapeHtml(currentFolderName).replace(/'/g, "\\'")}')" title="Create Sub-folder">
                 <i class="bi bi-folder-plus me-1"></i>
                 Create Sub-folder
+            </button>
+            <button class="btn btn-sm folder-action-btn" onclick="toggleSelectionMode(); renderFolderViewWithSelection();" title="Multi-select">
+                <i class="bi bi-check-square me-1"></i>
+                <span id="selectionModeLabel">Select</span>
             </button>
         </div>
     `;
@@ -4137,15 +4677,42 @@ function openFolder(folderId) {
     // Update UI to show folder with sub-folders and patients
     const container = document.getElementById('patientsFoldersContainer');
     
+    // Build breadcrumb HTML (will be updated when data loads)
+    let breadcrumbHtml = `
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb mb-0" style="background: transparent; padding: 0;">
+                <li class="breadcrumb-item">
+                    <a href="#" onclick="event.preventDefault(); renderFoldersView(); return false;" style="color: var(--accent); text-decoration: none;">
+                        <i class="bi bi-folder me-1"></i>Folders
+                    </a>
+                </li>
+            </ol>
+        </nav>
+    `;
+    
     container.innerHTML = `
         <div class="mb-4">
-            <button class="btn btn-link text-decoration-none p-0 mb-2 back-to-folders-btn" 
-                    onclick="renderFoldersView()"
-                    style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--accent); font-weight: 500; transition: all 0.2s ease; padding: 0.5rem 0 !important;">
-                <i class="bi bi-arrow-left" style="font-size: 1.1rem;"></i>
-                <i class="bi bi-folder" style="font-size: 0.9rem; opacity: 0.8;"></i>
-                <span>Back to Folders</span>
-            </button>
+            <div id="folderBreadcrumb">
+                ${breadcrumbHtml}
+            </div>
+            <div class="mb-3 folder-search-container">
+                <label for="folderSearchInput" class="form-label small text-muted mb-2">
+                    <i class="bi bi-search me-1"></i>Quick Search
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text" style="background: var(--bg-alt); border-color: var(--border);">
+                        <i class="bi bi-search" style="color: var(--accent);"></i>
+                    </span>
+                    <input type="text" 
+                           id="folderSearchInput" 
+                           class="form-control folder-search-input" 
+                           placeholder="Search patients and folders by name, phone, or ID..."
+                           autocomplete="off">
+                    <button class="btn btn-outline-secondary" type="button" id="clearFolderSearch" style="display: none; border-color: var(--border);">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
             <div class="mt-2 d-flex justify-content-between align-items-start">
                 <div>
                     <h5 class="mb-1" style="color: var(--text); font-weight: 600;">
@@ -4172,6 +4739,12 @@ function openFolder(folderId) {
         </div>
     `;
     
+    // Setup search functionality
+    setupFolderSearch();
+    
+    // Update selection mode button
+    updateSelectionModeButton();
+    
     // Load sub-folders first
     loadSubFolders(folderId, currentFolderType);
     
@@ -4188,12 +4761,133 @@ function openFolder(folderId) {
     .then(response => response.json())
     .then(data => {
         if (data.ok) {
+            // Build breadcrumb - prioritize API breadcrumb, then use path stack, then build manually
+            let breadcrumb = [];
+            
+            if (data.breadcrumb && Array.isArray(data.breadcrumb) && data.breadcrumb.length > 0) {
+                // Use API breadcrumb and update path stack
+                breadcrumb = data.breadcrumb;
+                // Update path stack from API breadcrumb
+                folderPathStack = breadcrumb.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    type: item.type
+                }));
+                localStorage.setItem('folderPathStack', JSON.stringify(folderPathStack));
+            } else if (folderPathStack.length > 0) {
+                // Use path stack if available
+                breadcrumb = folderPathStack;
+            } else {
+                // Build breadcrumb manually as fallback
+                if (isSystem) {
+                    // System folder: Folders > Doctor Name
+                    breadcrumb = [{
+                        id: folderId,
+                        name: currentFolderName,
+                        type: 'system'
+                    }];
+                } else {
+                    // Custom folder: check if it's a subfolder
+                    let folder = null;
+                    if (data.folders && data.folders.length > 0) {
+                        folder = data.folders.find(f => f.id == folderId);
+                    }
+                    
+                    if (!folder) {
+                        folder = customFoldersData.find(f => f.id == folderId) || 
+                                foldersData.find(f => f.id == folderId);
+                    }
+                    
+                    const parentId = folder?.parent_id || folder?.parentId;
+                    const parentType = folder?.parent_type || folder?.parentType || 'custom';
+                    const parentName = folder?.parentName;
+                    
+                    if (parentId) {
+                        // It's a subfolder
+                        let parentFolder = null;
+                        if (parentType === 'system') {
+                            parentFolder = systemFoldersData.find(f => f.id === parentId);
+                        } else {
+                            parentFolder = customFoldersData.find(f => f.id == parentId) || 
+                                         foldersData.find(f => f.id == parentId);
+                        }
+                        
+                        if (parentFolder) {
+                            breadcrumb = [
+                                {
+                                    id: parentFolder.id,
+                                    name: parentFolder.name || parentName,
+                                    type: parentType
+                                },
+                                {
+                                    id: folderId,
+                                    name: currentFolderName,
+                                    type: 'custom'
+                                }
+                            ];
+                        } else if (parentName) {
+                            breadcrumb = [
+                                {
+                                    id: parentId,
+                                    name: parentName,
+                                    type: parentType
+                                },
+                                {
+                                    id: folderId,
+                                    name: currentFolderName,
+                                    type: 'custom'
+                                }
+                            ];
+                        } else {
+                            breadcrumb = [{
+                                id: folderId,
+                                name: currentFolderName,
+                                type: 'custom'
+                            }];
+                        }
+                    } else {
+                        // Top-level custom folder
+                        breadcrumb = [{
+                            id: folderId,
+                            name: currentFolderName,
+                            type: 'custom'
+                        }];
+                    }
+                }
+                
+                // Update path stack from manually built breadcrumb
+                folderPathStack = breadcrumb.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    type: item.type
+                }));
+                localStorage.setItem('folderPathStack', JSON.stringify(folderPathStack));
+            }
+            
+            // Render breadcrumb
+            if (breadcrumb && breadcrumb.length > 0) {
+                renderFolderBreadcrumb(breadcrumb, folderId, currentFolderType);
+            } else {
+                // Render default breadcrumb with just current folder
+                renderFolderBreadcrumb([{
+                    id: folderId,
+                    name: currentFolderName,
+                    type: currentFolderType
+                }], folderId, currentFolderType);
+            }
+            
+            // Store data for search filtering
+            currentFolderPatients = data.patients || [];
+            currentFolderSubFolders = data.folders || [];
+            
             // If there are sub-folders, render them
+            const subFoldersContainer = document.getElementById('subFoldersContainer');
             if (data.folders && data.folders.length > 0) {
-                renderSubFolders(data.folders, folderId, currentFolderType);
+                if (subFoldersContainer) {
+                    renderSubFolders(data.folders, folderId, currentFolderType);
+                }
             } else {
                 // Clear sub-folders container if no sub-folders
-                const subFoldersContainer = document.getElementById('subFoldersContainer');
                 if (subFoldersContainer) {
                     subFoldersContainer.innerHTML = '';
                 }
@@ -4203,10 +4897,167 @@ function openFolder(folderId) {
             if (data.patients) {
                 renderFolderPatients(data.patients);
             }
+            
+            // Apply current search filter if any
+            const searchInput = document.getElementById('folderSearchInput');
+            if (searchInput && searchInput.value.trim()) {
+                filterFolderContent(searchInput.value.trim());
+            }
         }
     })
     .catch(error => {
         console.error('Error loading folder patients:', error);
+    });
+}
+
+// Setup folder search functionality
+let folderSearchTimeout = null;
+let currentFolderPatients = [];
+let currentFolderSubFolders = [];
+
+function setupFolderSearch() {
+    const searchInput = document.getElementById('folderSearchInput');
+    const clearBtn = document.getElementById('clearFolderSearch');
+    
+    if (!searchInput) return;
+    
+    // Clear previous timeout
+    if (folderSearchTimeout) {
+        clearTimeout(folderSearchTimeout);
+    }
+    
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.trim().toLowerCase();
+        
+        // Show/hide clear button
+        if (clearBtn) {
+            clearBtn.style.display = searchTerm ? 'block' : 'none';
+        }
+        
+        // Debounce search
+        if (folderSearchTimeout) {
+            clearTimeout(folderSearchTimeout);
+        }
+        
+        folderSearchTimeout = setTimeout(() => {
+            filterFolderContent(searchTerm);
+        }, 300);
+    });
+    
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            this.style.display = 'none';
+            filterFolderContent('');
+        });
+    }
+}
+
+function filterFolderContent(searchTerm) {
+    if (!searchTerm) {
+        // Show all - restore original data
+        if (currentFolderPatients.length > 0) {
+            renderFolderPatients(currentFolderPatients);
+        }
+        if (currentFolderSubFolders.length > 0) {
+            const isSystem = currentFolderId && currentFolderId.toString().startsWith('system_');
+            const parentType = isSystem ? 'system' : 'custom';
+            renderSubFolders(currentFolderSubFolders, currentFolderId, parentType);
+        }
+        return;
+    }
+    
+    // Filter patients
+    const patientsContainer = document.getElementById('folderPatientsContainer');
+    if (patientsContainer) {
+        const filteredPatients = currentFolderPatients.filter(patient => {
+            const fullName = `${patient.first_name || ''} ${patient.last_name || ''}`.toLowerCase();
+            const phone = (patient.phone || '').toLowerCase();
+            const nationalId = (patient.national_id || '').toLowerCase();
+            
+            return fullName.includes(searchTerm) || 
+                   phone.includes(searchTerm) || 
+                   nationalId.includes(searchTerm);
+        });
+        
+        renderFolderPatients(filteredPatients);
+    }
+    
+    // Filter subfolders
+    const subFoldersContainer = document.getElementById('subFoldersContainer');
+    if (subFoldersContainer) {
+        const filteredSubFolders = currentFolderSubFolders.filter(subFolder => {
+            const name = (subFolder.name || '').toLowerCase();
+            return name.includes(searchTerm);
+        });
+        
+        if (filteredSubFolders.length > 0) {
+            const isSystem = currentFolderId && currentFolderId.toString().startsWith('system_');
+            const parentType = isSystem ? 'system' : 'custom';
+            renderSubFolders(filteredSubFolders, currentFolderId, parentType);
+        } else {
+            subFoldersContainer.innerHTML = '';
+        }
+    }
+}
+
+// Initialize lazy loading for patient images using Intersection Observer
+let lazyImageObserver = null;
+
+function initLazyLoading() {
+    // Disconnect existing observer if any
+    if (lazyImageObserver) {
+        lazyImageObserver.disconnect();
+    }
+    
+    // First, load images that are already in viewport immediately
+    const lazyImages = document.querySelectorAll('img.lazy-load[data-src]');
+    lazyImages.forEach(img => {
+        // Check if image is in viewport
+        const rect = img.getBoundingClientRect();
+        const isInViewport = rect.top < window.innerHeight + 200 && rect.bottom > -200;
+        
+        if (isInViewport) {
+            // Load immediately if in viewport
+            const dataSrc = img.getAttribute('data-src');
+            if (dataSrc) {
+                img.src = dataSrc;
+                img.removeAttribute('data-src');
+                img.classList.remove('lazy-load');
+                img.style.display = 'block';
+            }
+        }
+    });
+    
+    // Create new Intersection Observer for images not yet in viewport
+    lazyImageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                const dataSrc = img.getAttribute('data-src');
+                
+                if (dataSrc) {
+                    // Load the image
+                    img.src = dataSrc;
+                    img.removeAttribute('data-src');
+                    img.classList.remove('lazy-load');
+                    img.style.display = 'block';
+                    
+                    // Stop observing this image
+                    observer.unobserve(img);
+                }
+            }
+        });
+    }, {
+        // Start loading when image is 200px before entering viewport
+        rootMargin: '200px 0px',
+        threshold: 0.01
+    });
+    
+    // Observe remaining lazy-load images (those not in viewport)
+    const remainingLazyImages = document.querySelectorAll('img.lazy-load[data-src]');
+    remainingLazyImages.forEach(img => {
+        lazyImageObserver.observe(img);
     });
 }
 
@@ -4223,21 +5074,48 @@ function loadSubFolders(parentId, parentType) {
     .then(data => {
         const container = document.getElementById('subFoldersContainer');
         if (data.ok && data.sub_folders && data.sub_folders.length > 0) {
+            // Store parent info in subfolders for breadcrumb
+            data.sub_folders.forEach(subFolder => {
+                subFolder.parentId = parentId;
+                subFolder.parentType = parentType;
+                // Find parent name
+                if (parentType === 'system') {
+                    const parentFolder = systemFoldersData.find(f => f.id === parentId);
+                    if (parentFolder) {
+                        subFolder.parentName = parentFolder.name;
+                    }
+                } else {
+                    const parentFolder = customFoldersData.find(f => f.id == parentId) || foldersData.find(f => f.id == parentId);
+                    if (parentFolder) {
+                        subFolder.parentName = parentFolder.name;
+                    }
+                }
+            });
             renderSubFolders(data.sub_folders, parentId, parentType);
         } else {
-            container.innerHTML = '';
+            if (container) {
+                container.innerHTML = '';
+            }
         }
     })
     .catch(error => {
         console.error('Error loading sub-folders:', error);
         const container = document.getElementById('subFoldersContainer');
-        container.innerHTML = '';
+        if (container) {
+            container.innerHTML = '';
+        }
     });
 }
 
 // Render sub-folders
 function renderSubFolders(subFolders, parentId, parentType) {
     const container = document.getElementById('subFoldersContainer');
+    
+    // Check if container exists
+    if (!container) {
+        console.warn('subFoldersContainer not found in DOM');
+        return;
+    }
     
     if (subFolders.length === 0) {
         container.innerHTML = '';
@@ -4257,11 +5135,28 @@ function renderSubFolders(subFolders, parentId, parentType) {
         const safeGradient = (subFolder.gradient_color || 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)').replace(/'/g, "\\'");
         const subFolderIcon = subFolder.icon || 'bi-folder';
         
+        // Store parent info in subfolder data for breadcrumb
+        if (subFolder.parent_id) {
+            subFolder.parentId = subFolder.parent_id;
+            subFolder.parentType = subFolder.parent_type || 'custom';
+        }
+        
         html += `
             <div class="col-md-3 col-lg-2">
-                <div class="card sub-folder-card h-100" 
-                     style="border: 1px solid var(--border); cursor: pointer; background: ${safeGradient} !important; background-color: transparent !important;" 
-                     onclick="openSubFolder(${subFolder.id})">
+                <div class="card sub-folder-card h-100 ${selectionMode ? 'folder-card-selectable' : ''}" 
+                     style="border: 1px solid var(--border); cursor: pointer; background: ${safeGradient} !important; background-color: transparent !important; position: relative;" 
+                     onclick="if (!selectionMode) openSubFolder(${subFolder.id}, '${parentId}', '${parentType}')">
+                    ${selectionMode ? `
+                        <div class="position-absolute top-0 start-0 m-2" style="z-index: 10;" onclick="event.stopPropagation();">
+                            <input type="checkbox" 
+                                   class="form-check-input folder-select-checkbox" 
+                                   data-folder-id="${subFolder.id}"
+                                   ${selectedFolders.includes(subFolder.id.toString()) ? 'checked' : ''}
+                                   onchange="toggleFolderSelection('${subFolder.id}')"
+                                   onclick="event.stopPropagation();"
+                                   style="width: 1.25rem; height: 1.25rem; cursor: pointer; background-color: white;">
+                        </div>
+                    ` : ''}
                     <div class="card-body p-3 d-flex flex-column align-items-center text-center position-relative">
                         <div class="dropdown position-absolute" style="top: 0.5rem; right: 0.5rem; z-index: 10;" onclick="event.stopPropagation();">
                             <button class="btn btn-sm btn-link p-0 text-white" 
@@ -4315,9 +5210,71 @@ function renderSubFolders(subFolders, parentId, parentType) {
     container.innerHTML = html;
 }
 
+// Render folder breadcrumb
+function renderFolderBreadcrumb(breadcrumb, currentFolderId, currentFolderType) {
+    const breadcrumbContainer = document.getElementById('folderBreadcrumb');
+    if (!breadcrumbContainer) {
+        return;
+    }
+    
+    if (!breadcrumb || !Array.isArray(breadcrumb) || breadcrumb.length === 0) {
+        return;
+    }
+    
+    let html = `
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb mb-0" style="background: transparent; padding: 0;">
+                <li class="breadcrumb-item">
+                    <a href="#" onclick="event.preventDefault(); renderFoldersView(); return false;" style="color: var(--accent); text-decoration: none;">
+                        <i class="bi bi-folder me-1"></i>Folders
+                    </a>
+                </li>
+    `;
+    
+    // Add breadcrumb items
+    breadcrumb.forEach((item, index) => {
+        if (!item || !item.id || !item.name) {
+            return;
+        }
+        
+        const isLast = index === breadcrumb.length - 1;
+        const itemId = item.id ? item.id.toString() : '';
+        const currentId = currentFolderId ? currentFolderId.toString() : '';
+        
+        if (isLast || itemId === currentId) {
+            // Current folder - not clickable
+            html += `
+                <li class="breadcrumb-item active" aria-current="page">
+                    ${escapeHtml(item.name)}
+                </li>
+            `;
+        } else {
+            // Parent folder - clickable
+            const folderIdToOpen = item.type === 'system' ? item.id : item.id;
+            html += `
+                <li class="breadcrumb-item">
+                    <a href="#" onclick="event.preventDefault(); openFolder('${folderIdToOpen}'); return false;" style="color: var(--accent); text-decoration: none;">
+                        ${escapeHtml(item.name)}
+                    </a>
+                </li>
+            `;
+        }
+    });
+    
+    html += `
+            </ol>
+        </nav>
+    `;
+    
+    breadcrumbContainer.innerHTML = html;
+}
+
 // Open sub-folder
-function openSubFolder(subFolderId) {
-    // Treat sub-folder like a regular folder
+function openSubFolder(subFolderId, parentId = null, parentType = null) {
+    // Note: Path stack will be updated from API breadcrumb response
+    // This ensures consistency with backend data
+    
+    // Treat sub-folder like a regular folder (it's already a custom folder in DB)
     openFolder(subFolderId.toString());
 }
 
@@ -4334,10 +5291,17 @@ function showCreateSubFolderModal(parentId, parentType, parentName) {
 
 // Quick sort system folder
 function quickSortSystemFolder(systemFolderId, sortType) {
-    if (!confirm(`Are you sure you want to sort patients by ${sortType === 'by_date_created' ? 'Date Created' : 'Visits'}? This will create sub-folders automatically.`)) {
-        return;
-    }
-    
+    const sortTypeName = sortType === 'by_date_created' ? 'Date Created' : 'Visits';
+    showConfirmModal(
+        'Group Patients',
+        `Are you sure you want to group patients by ${sortTypeName}? This will create sub-folders automatically.`,
+        function() {
+            performQuickSort(systemFolderId, sortType);
+        }
+    );
+}
+
+function performQuickSort(systemFolderId, sortType) {
     // Show loading
     const container = document.getElementById('subFoldersContainer');
     const originalContent = container.innerHTML;
@@ -4378,6 +5342,11 @@ function quickSortSystemFolder(systemFolderId, sortType) {
 // Render patients in a folder (styled like cards view)
 function renderFolderPatients(patients) {
     const container = document.getElementById('folderPatientsContainer');
+    
+    if (!container) {
+        console.warn('folderPatientsContainer not found in DOM');
+        return;
+    }
     
     if (patients.length === 0) {
         container.innerHTML = `
@@ -4423,20 +5392,31 @@ function renderFolderPatients(patients) {
         
         html += `
             <div class="col-md-4 col-lg-3 mb-3">
-                <div class="card patient-card clickable h-100" 
-                     style="border: 1px solid var(--border); cursor: pointer;" 
-                     onclick="viewPatient(${patient.id})">
+                <div class="card patient-card clickable h-100 ${selectionMode ? 'patient-card-selectable' : ''}" 
+                     style="border: 1px solid var(--border); cursor: pointer; position: relative;" 
+                     onclick="if (!selectionMode) viewPatient(${patient.id})">
+                    ${selectionMode ? `
+                        <div class="position-absolute top-0 start-0 m-2" style="z-index: 10;" onclick="event.stopPropagation();">
+                            <input type="checkbox" 
+                                   class="form-check-input patient-select-checkbox" 
+                                   data-patient-id="${patient.id}"
+                                   ${selectedPatients.includes(patient.id) ? 'checked' : ''}
+                                   onchange="togglePatientSelection(${patient.id})"
+                                   onclick="event.stopPropagation();"
+                                   style="width: 1.25rem; height: 1.25rem; cursor: pointer;">
+                        </div>
+                    ` : ''}
                     <!-- Patient Image -->
-                    <div class="position-relative" style="height: 200px; overflow: hidden; background: var(--bg-alt);">
+                    <div class="position-relative patient-card-image-container" style="height: 200px; overflow: hidden; background: var(--bg-alt);">
                         ${imageUrl ? `
-                            <img src="${imageUrl}" 
+                            <img data-src="${imageUrl}" 
                                  alt="${escapeHtml(fullName)}" 
-                                 class="w-100 h-100 patient-card-image" 
-                                 style="object-fit: cover;"
+                                 class="w-100 h-100 patient-card-image lazy-load" 
+                                 style="object-fit: cover; opacity: 0; transition: opacity 0.3s ease;"
                                  data-patient-id="${patient.id}"
                                  data-image-url="${imageUrl}"
-                                 onerror="(function(img, url, pid) { console.error('[Folder View] Image load failed:', {patientId: pid, url: url, img: img}); img.style.display='none'; const placeholder = img.nextElementSibling; if (placeholder) { placeholder.style.display='flex'; } })(this, '${imageUrl}', ${patient.id});"
-                                 onload="(function(img) { img.style.display='block'; const placeholder = img.nextElementSibling; if (placeholder) { placeholder.style.display='none'; } })(this);">
+                                 onerror="(function(img, url, pid) { img.style.display='none'; img.style.opacity='0'; const placeholder = img.nextElementSibling; if (placeholder) { placeholder.style.display='flex'; } })(this, '${imageUrl}', ${patient.id});"
+                                 onload="(function(img) { img.style.opacity='1'; img.style.display='block'; const placeholder = img.nextElementSibling; if (placeholder) { placeholder.style.display='none'; } })(this);">
                         ` : ''}
                         <div class="d-flex align-items-center justify-content-center h-100 w-100 patient-card-placeholder" 
                              style="background: linear-gradient(135deg, var(--accent) 0%, var(--bg-alt) 100%); ${imageUrl ? 'display: none;' : 'display: flex;'}">
@@ -4575,6 +5555,9 @@ function renderFolderPatients(patients) {
     });
     
     container.innerHTML = html;
+    
+    // Initialize lazy loading for images
+    initLazyLoading();
     
     // Refresh tooltips
     setTimeout(() => {
@@ -4876,9 +5859,17 @@ document.getElementById('renameFolderForm')?.addEventListener('submit', function
 
 // Delete folder
 function deleteFolder(folderId) {
-    if (!confirm('Are you sure you want to delete this folder? Patients will not be deleted, only removed from the folder.')) {
-        return;
-    }
+    showConfirmModal(
+        'Delete Folder',
+        'Are you sure you want to delete this folder? Patients will not be deleted, only removed from the folder.',
+        function() {
+            performDeleteFolder(folderId);
+        },
+        'Delete'
+    );
+}
+
+function performDeleteFolder(folderId) {
     
     fetch(`/api/patient-folders/${folderId}`, {
         method: 'DELETE',
@@ -5037,53 +6028,98 @@ function confirmMovePatient() {
         return;
     }
     
-    fetch(`/api/patient-folders/${folderId}/patients`, {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ patient_id: parseInt(patientId) })
-    })
-    .then(response => response.json())
-    .then(data => {
+    // Check if this is a bulk move operation
+    const isBulkMove = window.bulkMovePatientIds && window.bulkMovePatientIds.length > 0;
+    const patientsToMove = isBulkMove ? window.bulkMovePatientIds : [parseInt(patientId)];
+    
+    // Check if this is a "move" operation (from modal title)
+    const modalTitle = document.querySelector('#movePatientModal .modal-title');
+    const isMove = modalTitle && modalTitle.textContent.includes('Move');
+    
+    // Move all patients
+    let completed = 0;
+    let failed = 0;
+    
+    patientsToMove.forEach(pid => {
+        fetch(`/api/patient-folders/${folderId}/patients`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                patient_id: parseInt(pid),
+                move: isMove // true for move, false for add
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
             if (data.ok) {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('movePatientModal'));
-            modal.hide();
-            
-            // Reset modal title and button text
-            const modalTitle = document.querySelector('#movePatientModal .modal-title');
-            if (modalTitle) {
-                modalTitle.innerHTML = '<i class="bi bi-folder me-2"></i>Move Patient to Folder';
-            }
-            const buttonText = document.getElementById('movePatientButtonText');
-            if (buttonText) {
-                buttonText.textContent = 'Move Patient';
-            }
-            
-            if (currentFolderId) {
-                openFolder(currentFolderId);
-                // Update patient count locally
-                updateFolderPatientCount(currentFolderId, 1);
+                completed++;
             } else {
-                // Refresh current view if in folders view
-                if (currentViewMode === 'folders') {
-                    loadFolders();
+                failed++;
+            }
+            
+            // When all requests complete
+            if (completed + failed === patientsToMove.length) {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('movePatientModal'));
+                modal.hide();
+                
+                // Reset modal title and button text
+                const modalTitle = document.querySelector('#movePatientModal .modal-title');
+                if (modalTitle) {
+                    modalTitle.innerHTML = '<i class="bi bi-folder me-2"></i>Move Patient to Folder';
+                }
+                const buttonText = document.getElementById('movePatientButtonText');
+                if (buttonText) {
+                    buttonText.textContent = 'Move Patient';
+                }
+                
+                // Clear bulk move IDs
+                if (isBulkMove) {
+                    window.bulkMovePatientIds = [];
+                    selectedPatients = [];
+                    updateSelectionUI();
+                }
+                
+                // Refresh view via API based on operation type and current view
+                if (isMove) {
+                    // Move operation: open the destination folder to show where patients went
+                    openFolder(folderId);
+                    // Also refresh patients data for cards/table views
+                    refreshPatientsData();
+                    showNotification(`${completed} patient(s) moved successfully${failed > 0 ? `, ${failed} failed` : ''}`, completed > 0 ? 'success' : 'error');
+                } else {
+                    // Add operation: refresh current folder if open, or refresh folders view
+                    if (currentFolderId) {
+                        openFolder(currentFolderId);
+                        // Update patient count locally
+                        updateFolderPatientCount(currentFolderId, completed);
+                    } else {
+                        // Refresh current view based on view mode
+                        if (currentViewMode === 'folders') {
+                            loadFolders();
+                        } else {
+                            // Refresh cards/table view
+                            refreshPatientsData();
+                        }
+                    }
+                    showNotification(`${completed} patient(s) added successfully${failed > 0 ? `, ${failed} failed` : ''}`, completed > 0 ? 'success' : 'error');
                 }
             }
-            showNotification('Patient added to folder successfully', 'success');
-        } else {
-            messageEl.className = 'alert alert-danger';
-            messageEl.textContent = data.error || 'Failed to add patient to folder';
-            messageEl.classList.remove('d-none');
-        }
-    })
-    .catch(error => {
-        console.error('Error adding patient to folder:', error);
-        messageEl.className = 'alert alert-danger';
-        messageEl.textContent = 'An error occurred while adding the patient to folder';
-        messageEl.classList.remove('d-none');
+        })
+        .catch(error => {
+            failed++;
+            if (completed + failed === patientsToMove.length) {
+                messageEl.className = 'alert alert-danger';
+                messageEl.textContent = `Error: ${completed} succeeded, ${failed} failed`;
+                messageEl.classList.remove('d-none');
+            }
+        });
     });
+    
+    // Error handling is done inside the forEach loop above
+    // No need for additional catch block here
 }
 
 // Change folder icon and color
@@ -5172,9 +6208,18 @@ document.getElementById('changeFolderIconForm')?.addEventListener('submit', func
 function removePatientFromFolder(patientId) {
     if (!currentFolderId) return;
     
-    if (!confirm('Remove this patient from the folder?')) {
-        return;
-    }
+    showConfirmModal(
+        'Remove Patient',
+        'Remove this patient from the folder?',
+        function() {
+            performRemovePatientFromFolder(patientId);
+        },
+        'Remove'
+    );
+}
+
+function performRemovePatientFromFolder(patientId) {
+    if (!currentFolderId) return;
     
     fetch(`/api/patient-folders/${currentFolderId}/patients/${patientId}`, {
         method: 'DELETE',
@@ -5189,6 +6234,8 @@ function removePatientFromFolder(patientId) {
             // Update patient count locally before refreshing
             updateFolderPatientCount(currentFolderId, -1);
             openFolder(currentFolderId);
+            // Also refresh patients data for cards/table views
+            refreshPatientsData();
             showNotification('Patient removed from folder successfully', 'success');
         } else {
             showNotification(data.error || 'Failed to remove patient', 'error');

@@ -4528,6 +4528,14 @@ div.card.folder-card[style*="linear-gradient"] {
     text-decoration: none !important;
 }
 
+.breadcrumb-item.active{
+    color: var(--text) !important;
+}
+
+.breadcrumb-item+.breadcrumb-item::before{
+    color: var(--text) !important;
+}
+
 .folder-action-btn::before {
     content: '';
     position: absolute;
@@ -4598,4 +4606,210 @@ div.card.folder-card[style*="linear-gradient"] {
 
 .dark .sub-folder-card:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Create Sub-folder Button - Special Styling */
+.create-subfolder-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) !important;
+    background-size: 200% 200% !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 600 !important;
+    padding: 0.5rem 1.25rem !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3) !important;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.create-subfolder-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.create-subfolder-btn:hover {
+    background-position: 100% 0 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.5) !important;
+}
+
+.create-subfolder-btn:hover::before {
+    left: 100%;
+}
+
+.create-subfolder-btn:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3) !important;
+}
+
+.create-subfolder-btn i {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+/* Dropdown Menu Styles for System Folders and Subfolders */
+.folder-card .dropdown-menu,
+.sub-folder-card .dropdown-menu {
+    background: var(--bg) !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    padding: 0.25rem 0 !important;
+    min-width: 200px;
+}
+
+.folder-card .dropdown-item,
+.sub-folder-card .dropdown-item {
+    color: var(--text) !important;
+    padding: 0.5rem 1rem !important;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.folder-card .dropdown-item:hover,
+.sub-folder-card .dropdown-item:hover {
+    background: var(--bg-alt) !important;
+    color: var(--accent) !important;
+}
+
+.folder-card .dropdown-item.text-danger,
+.sub-folder-card .dropdown-item.text-danger {
+    color: var(--danger, #dc3545) !important;
+}
+
+.folder-card .dropdown-item.text-danger:hover,
+.sub-folder-card .dropdown-item.text-danger:hover {
+    background: rgba(220, 53, 69, 0.1) !important;
+    color: var(--danger, #dc3545) !important;
+}
+
+.folder-card .dropdown-item i,
+.sub-folder-card .dropdown-item i {
+    width: 20px;
+    text-align: center;
+}
+
+/* Dark mode adjustments for dropdowns */
+.dark .folder-card .dropdown-menu,
+.dark .sub-folder-card .dropdown-menu {
+    background: var(--bg) !important;
+    border-color: var(--border) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .folder-card .dropdown-item:hover,
+.dark .sub-folder-card .dropdown-item:hover {
+    background: var(--bg-alt) !important;
+}
+
+/* Multi-selection Styles */
+.patient-card-selectable,
+.folder-card-selectable {
+    transition: all 0.2s ease;
+}
+
+.patient-card-selectable:hover,
+.folder-card-selectable:hover {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 2px rgba(var(--accent-rgb, 66, 153, 225), 0.2) !important;
+}
+
+.patient-card input[type="checkbox"].patient-select-checkbox,
+.folder-card input[type="checkbox"].folder-select-checkbox,
+.sub-folder-card input[type="checkbox"].folder-select-checkbox {
+    border: 2px solid var(--border) !important;
+    background-color: var(--bg) !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.patient-card input[type="checkbox"].patient-select-checkbox:checked,
+.folder-card input[type="checkbox"].folder-select-checkbox:checked,
+.sub-folder-card input[type="checkbox"].folder-select-checkbox:checked {
+    background-color: var(--accent) !important;
+    border-color: var(--accent) !important;
+}
+
+.patient-card input[type="checkbox"].patient-select-checkbox:focus,
+.folder-card input[type="checkbox"].folder-select-checkbox:focus,
+.sub-folder-card input[type="checkbox"].folder-select-checkbox:focus {
+    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb, 66, 153, 225), 0.25) !important;
+    outline: none !important;
+}
+
+/* Bulk Actions Bar */
+.bulk-actions-bar {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.bulk-actions-bar .btn {
+    transition: all 0.2s ease;
+}
+
+.bulk-actions-bar .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Folder Search Input */
+.folder-search-container {
+    margin-bottom: 1.5rem !important;
+}
+
+.folder-search-input,
+#folderSearchInput {
+    border-color: var(--border) !important;
+    background-color: var(--bg) !important;
+    color: var(--text) !important;
+    font-size: 0.95rem !important;
+    padding: 0.6rem 0.75rem !important;
+}
+
+.folder-search-input:focus,
+#folderSearchInput:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb, 66, 153, 225), 0.25) !important;
+    background-color: var(--bg) !important;
+    color: var(--text) !important;
+}
+
+.folder-search-input::placeholder,
+#folderSearchInput::placeholder {
+    color: var(--muted, #6c757d) !important;
+    opacity: 0.7 !important;
+}
+
+.folder-search-container .input-group-text {
+    background-color: var(--bg-alt) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.folder-search-container .input-group:focus-within .input-group-text {
+    border-color: var(--accent) !important;
+    background-color: var(--bg-alt) !important;
+}
+
+/* Dark mode adjustments for selection */
+.dark .patient-card-selectable:hover,
+.dark .folder-card-selectable:hover {
+    box-shadow: 0 0 0 2px rgba(var(--accent-rgb, 66, 153, 225), 0.3) !important;
 }

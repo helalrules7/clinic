@@ -313,6 +313,8 @@ try {
     $router->get('/api/patients', 'ApiController@getAllPatients');
     // Patient folders routes
     // More specific routes first to avoid conflicts
+    // Bulk operations must come BEFORE routes with {id} parameter
+    $router->delete('/api/patient-folders/bulk', 'ApiController@bulkDeletePatientFolders');
     $router->get('/api/patient-folders/{parentId}/sub-folders/{parentType}', 'ApiController@getSubFolders');
     $router->post('/api/patient-folders/{systemFolderId}/quick-sort/{sortType}', 'ApiController@quickSortSystemFolder');
     $router->get('/api/patient-folders/{id}/patients', 'ApiController@getFolderPatients');
