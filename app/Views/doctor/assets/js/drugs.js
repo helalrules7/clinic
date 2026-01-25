@@ -2,7 +2,6 @@
 class DrugSearch {
     constructor() {
         this.searchInput = document.getElementById('drugSearchInput');
-        this.suggestions = document.getElementById('searchSuggestions');
         this.clearBtn = document.getElementById('clearSearchBtn');
         this.searchBtn = document.getElementById('searchBtn');
         this.resultsContainer = document.getElementById('drugResults');
@@ -12,30 +11,28 @@ class DrugSearch {
         this.resultsTitle = document.getElementById('resultsTitle');
         this.loadMoreBtn = document.getElementById('loadMoreBtn');
         this.loadMoreContainer = document.getElementById('loadMoreContainer');
-        
+        this.initialSearchMessage = document.getElementById('initialSearchMessage');
+
         this.categoryFilter = document.getElementById('categoryFilter');
         this.companyFilter = document.getElementById('companyFilter');
         this.routeFilter = document.getElementById('routeFilter');
         this.applyFiltersBtn = document.getElementById('applyFiltersBtn');
         this.clearFiltersBtn = document.getElementById('clearFiltersBtn');
-        
+
         this.currentPage = 1;
         this.currentSearchTerm = '';
         this.isLoading = false;
         this.hasMoreResults = false;
-        this.portal = null;
-        this._portalUpdater = null;
         this.shouldOpenFirstResult = false; // Flag to open first result modal after search
-        
+
         this.init();
     }
     
     init() {
-        this.createPortal();
         this.setupEventListeners();
         this.loadFilterOptions();
         this.updateFilterState(); // Initialize filter button state
-        
+
         // Check if search parameter exists in URL and perform search
         this.checkUrlSearchParam();
     }
@@ -60,7 +57,7 @@ class DrugSearch {
             this.currentPage = 1;
             // Set flag to open first result modal after search completes
             this.shouldOpenFirstResult = true;
-            this.performSearch(searchTerm, false);
+            this.performSearch(searchTerm);
             
             // Update URL without reload (remove search parameter to keep clean URL)
             // But keep it for now so user can see what they searched for
@@ -68,36 +65,15 @@ class DrugSearch {
         }
     }
     
-    createPortal() {
-        this.portal = document.getElementById('searchSuggestions-portal');
-        if (!this.portal) {
-            this.portal = document.createElement('div');
-            this.portal.id = 'searchSuggestions-portal';
-            this.portal.setAttribute('role', 'listbox');
-            document.body.appendChild(this.portal);
-        }
-        this.portal.style.display = 'none';
-        this.portal.classList.add('shadow-sm');
-    }
-    
-    positionPortal() {
-        const rect = this.searchInput.getBoundingClientRect();
-        this.portal.style.minWidth = rect.width + 'px';
-        this.portal.style.left = (window.scrollX + rect.left) + 'px';
-        this.portal.style.top = (window.scrollY + rect.bottom) + 'px';
-    }
-    
     setupEventListeners() {
         // Search input events
         this.searchInput.addEventListener('input', this.debounce(this.handleSearch.bind(this), 300));
-        this.searchInput.addEventListener('focus', this.showSuggestions.bind(this));
-        this.searchInput.addEventListener('blur', this.hideSuggestions.bind(this));
         
         // Search button
         const searchBtn = document.getElementById('searchBtn');
         if (searchBtn) {
             searchBtn.addEventListener('click', () => {
-                this.performSearch(this.searchInput.value.trim(), false);
+                this.performSearch(this.searchInput.value.trim());
             });
         }
         
@@ -159,9 +135,9 @@ class DrugSearch {
         });
     }
     
-    async handleSearch() {
+    handleSearch() {
         const searchTerm = this.searchInput.value.trim();
-        
+
         // Show/hide clear button and adjust button widths
         if (searchTerm.length > 0) {
             this.clearBtn.style.display = 'block';
@@ -178,32 +154,37 @@ class DrugSearch {
                 this.searchBtn.classList.add('w-100');
             }
         }
-        
+
         if (searchTerm.length < 2) {
-            this.hideSuggestions();
             this.clearResults();
             return;
         }
-        
+
         this.currentSearchTerm = searchTerm;
-        this.currentPage = 1;
-        
-        await this.performSearch(searchTerm, true);
     }
     
-    async performSearch(searchTerm, showSuggestions = false) {
+    async performSearch(searchTerm) {
         if (this.isLoading) return;
-        
+
         this.isLoading = true;
-        this.showLoading();
+
+        // Clear previous results and show loading message
+        this.resultsContainer.innerHTML = '';
+        this.resultsCount.textContent = '0 medications found';
+        this.hideLoadMore();
+        this.resultsTitle.textContent = 'Search Results'; // Ensure title is reset if changed
         
+        this.hideInitialMessage();
+        this.hideNoResults();
+        this.showLoading();
+
         try {
             const params = new URLSearchParams({
                 q: searchTerm,
                 limit: 20,
                 page: this.currentPage
             });
-            
+
             // Add filters
             if (this.categoryFilter.value) {
                 params.append('category', this.categoryFilter.value);
@@ -214,30 +195,26 @@ class DrugSearch {
             if (this.routeFilter.value) {
                 params.append('route', this.routeFilter.value);
             }
-            
+
             const response = await fetch(`/api/searchDrugs?${params}`);
             const data = await response.json();
-            
+
             if (data.drugs) {
-                if (showSuggestions) {
-                    this.displaySuggestions(data.drugs);
-                } else {
-                    this.displayResults(data.drugs, this.currentPage === 1);
-                    // If search was triggered from URL and we should open first result
-                    if (this.shouldOpenFirstResult && data.drugs.length > 0 && this.currentPage === 1) {
-                        // Small delay to ensure DOM is updated
-                        setTimeout(() => {
-                            this.showDrugDetails(data.drugs[0].ID);
-                            this.shouldOpenFirstResult = false; // Reset flag
-                        }, 300);
-                    }
+                this.displayResults(data.drugs, this.currentPage === 1);
+                // If search was triggered from URL and we should open first result
+                if (this.shouldOpenFirstResult && data.drugs.length > 0 && this.currentPage === 1) {
+                    // Small delay to ensure DOM is updated
+                    setTimeout(() => {
+                        this.showDrugDetails(data.drugs[0].ID);
+                        this.shouldOpenFirstResult = false; // Reset flag
+                    }, 300);
                 }
                 this.hasMoreResults = data.drugs.length === 20;
             } else {
                 this.showNoResults();
                 this.shouldOpenFirstResult = false; // Reset flag if no results
             }
-            
+
         } catch (error) {
             console.error('Search error:', error);
             this.showError('Failed to search medications');
@@ -245,41 +222,6 @@ class DrugSearch {
             this.isLoading = false;
             this.hideLoading();
         }
-    }
-    
-    displaySuggestions(drugs) {
-        
-        // Clear previous
-        this.portal.innerHTML = '';
-        if (!drugs || drugs.length === 0) {
-            this.portal.style.display = 'none';
-            return;
-        }
-
-        drugs.slice(0, 8).forEach((drug, idx) => {
-            const item = document.createElement('div');
-            item.className = 'suggestion-item';
-            item.setAttribute('role', 'option');
-            item.id = `suggestion-${idx}`;
-            item.innerHTML = `
-                <div class="drug-name">${drug.drug_name}</div>
-                <div class="drug-company">${drug.active_ingredient || ''} ${drug.Company ? '- ' + drug.Company : ''}</div>
-            `;
-            item.addEventListener('click', () => {
-                this.searchInput.value = drug.drug_name;
-                this.hideSuggestions();
-                this.performSearch(drug.drug_name, false);
-            });
-            this.portal.appendChild(item);
-        });
-
-        this.positionPortal();
-        this.portal.style.display = 'block';
-
-        // Register listeners to reposition on scroll/resize
-        this._portalUpdater = () => this.positionPortal();
-        window.addEventListener('scroll', this._portalUpdater, true);
-        window.addEventListener('resize', this._portalUpdater);
     }
     
     displayResults(drugs, clearPrevious = true) {
@@ -344,35 +286,39 @@ class DrugSearch {
         try {
             const response = await fetch(`/api/getDrugDetails?id=${drugId}`);
             const data = await response.json();
-            
+
             if (data.drug) {
-                this.displayDrugModal(data.drug);
+                this.displayDrugModal(
+                    data.drug,
+                    data.exact_alternatives || [],
+                    data.similar_products || []
+                );
             }
         } catch (error) {
             console.error('Error fetching drug details:', error);
         }
     }
-    
-    displayDrugModal(drug) {
+
+    displayDrugModal(drug, exactAlternatives = [], similarProducts = []) {
         const modal = document.getElementById('drugDetailsModal');
         const modalTitle = document.getElementById('modalDrugName');
         const modalBody = document.getElementById('modalDrugDetails');
-        
+
         // Remove any existing backdrops (from global search or other modals)
         const existingBackdrops = document.querySelectorAll('.global-search-backdrop, .modal-backdrop');
         existingBackdrops.forEach(backdrop => backdrop.remove());
-        
+
         // Ensure body overflow is restored
         document.body.style.overflow = '';
-        
+
         modalTitle.textContent = drug.drug_name;
-        
+
         modalBody.innerHTML = `
             <div class="mb-3">
                 <h5 class="text-primary mb-2">Active Ingredient</h5>
                 <p class="text-muted mb-0">${drug.active_ingredient || 'N/A'}</p>
             </div>
-            
+
             <div class="row mb-3">
                 <div class="col-md-6 mb-2">
                     <h6 class="text-primary mb-1">Company</h6>
@@ -391,32 +337,119 @@ class DrugSearch {
                     <p class="text-muted mb-0">${drug.administration_route || 'N/A'}</p>
                 </div>
             </div>
-            
+
             ${drug.GI ? `
                 <div class="mb-3">
                     <h6 class="text-primary mb-2">General Information</h6>
                     <p class="text-muted mb-0" style="line-height: 1.6;">${drug.GI}</p>
                 </div>
             ` : ''}
-            
+
             ${drug.SRDE ? `
-                <div>
-                    <h6 class="text-primary mb-2">Additional Information</h6>
-                    <p class="text-muted mb-0" style="line-height: 1.6;">${drug.SRDE}</p>
+                <div class="mb-3">
+                    <h6 class="text-primary mb-2">SRDE Code</h6>
+                    <p class="text-muted mb-0">${drug.SRDE}</p>
                 </div>
             ` : ''}
+
+            ${this.renderAlternativesSection(exactAlternatives, similarProducts)}
         `;
-        
+
+        // Setup click handlers for alternative drugs
+        this.setupAlternativeClickHandlers();
+
         // Show Bootstrap modal
         const bsModal = new bootstrap.Modal(modal);
         bsModal.show();
+    }
+
+    renderAlternativesSection(exactAlternatives, similarProducts) {
+        if (exactAlternatives.length === 0 && similarProducts.length === 0) {
+            return '';
+        }
+
+        let html = '<hr class="my-4"><div class="alternatives-section">';
+
+        // Exact Alternatives (Now: Alternative Drugs - Same Use, Different Ingredient)
+        if (exactAlternatives.length > 0) {
+            html += `
+                <div class="mb-4">
+                    <h5 class="text-success mb-3">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Alternative Drugs (Same Use)
+                    </h5>
+                    <p class="text-muted small mb-2">
+                        Different active ingredient but same use and route
+                    </p>
+                    <div class="alternatives-list">
+                        ${this.renderAlternativesList(exactAlternatives, 'exact')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Similar Products (Now: Similar Drugs - Same Ingredient/Category & Route)
+        if (similarProducts.length > 0) {
+            html += `
+                <div class="mb-3">
+                    <h5 class="text-info mb-3">
+                        <i class="bi bi-capsule me-2"></i>
+                        Similar Drugs
+                    </h5>
+                    <p class="text-muted small mb-2">
+                        Same active ingredient/category and route
+                    </p>
+                    <div class="alternatives-list">
+                        ${this.renderAlternativesList(similarProducts, 'similar')}
+                    </div>
+                </div>
+            `;
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    renderAlternativesList(drugs, type) {
+        return drugs.map(drug => `
+            <div class="alternative-item" data-drug-id="${drug.ID}" data-type="${type}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="alternative-name">${drug.drug_name}</span>
+                        <span class="alternative-company text-muted ms-2">${drug.Company || ''}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="alternative-price text-success">${drug.price ? 'EGP ' + drug.price : ''}</span>
+                        <i class="bi bi-chevron-right text-muted"></i>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    setupAlternativeClickHandlers() {
+        const alternativeItems = document.querySelectorAll('.alternative-item');
+        alternativeItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const drugId = item.dataset.drugId;
+                // Close current modal and show new drug details
+                const currentModal = bootstrap.Modal.getInstance(document.getElementById('drugDetailsModal'));
+                if (currentModal) {
+                    currentModal.hide();
+                }
+                // Small delay to allow modal to close before opening new one
+                setTimeout(() => {
+                    this.showDrugDetails(parseInt(drugId));
+                }, 300);
+            });
+        });
     }
     
     async loadMoreResults() {
         if (this.isLoading || !this.hasMoreResults) return;
         
         this.currentPage++;
-        await this.performSearch(this.currentSearchTerm, false);
+        await this.performSearch(this.currentSearchTerm);
     }
     
     handleFilterChange() {
@@ -447,10 +480,10 @@ class DrugSearch {
         
         if (this.currentSearchTerm) {
             // If there's a search term, search with filters
-            this.performSearch(this.currentSearchTerm, false);
+            this.performSearch(this.currentSearchTerm);
         } else if (hasFilters) {
             // If no search term but filters are applied, show filtered results
-            this.performSearch('', false);
+            this.performSearch('');
         } else {
             // If no search term and no filters, clear results
             this.clearResults();
@@ -467,7 +500,7 @@ class DrugSearch {
         
         if (this.currentSearchTerm) {
             this.currentPage = 1;
-            this.performSearch(this.currentSearchTerm, false);
+            this.performSearch(this.currentSearchTerm);
         } else {
             this.clearResults();
         }
@@ -481,7 +514,6 @@ class DrugSearch {
             this.searchBtn.classList.remove('flex-grow-1');
             this.searchBtn.classList.add('w-100');
         }
-        this.hideSuggestions();
         this.clearResults();
         this.searchInput.focus();
     }
@@ -491,28 +523,13 @@ class DrugSearch {
         this.resultsCount.textContent = '0 medications found';
         this.hideLoadMore();
         this.hideNoResults();
-    }
-    
-    showSuggestions() {
-        if (this.searchInput.value.trim().length >= 2) {
-            this.portal.style.display = 'block';
-        }
-    }
-    
-    hideSuggestions() {
-        if (this.portal) {
-            this.portal.style.display = 'none';
-        }
-        // Cleanup listeners
-        if (this._portalUpdater) {
-            window.removeEventListener('scroll', this._portalUpdater, true);
-            window.removeEventListener('resize', this._portalUpdater);
-            this._portalUpdater = null;
-        }
+        this.showInitialMessage();
     }
     
     showLoading() {
         this.loadingIndicator.style.display = 'flex';
+        // Hide no results when showing loading
+        this.hideNoResults();
     }
     
     hideLoading() {
@@ -526,6 +543,18 @@ class DrugSearch {
     
     hideNoResults() {
         this.noResults.style.display = 'none';
+    }
+
+    showInitialMessage() {
+        if (this.initialSearchMessage) {
+            this.initialSearchMessage.style.display = 'block';
+        }
+    }
+
+    hideInitialMessage() {
+        if (this.initialSearchMessage) {
+            this.initialSearchMessage.style.display = 'none';
+        }
     }
     
     updateResultsCount(newCount, clearPrevious) {
@@ -568,10 +597,7 @@ class DrugSearch {
     
     // Cleanup method to prevent memory leaks
     destroy() {
-        this.hideSuggestions();
-        if (this.portal && this.portal.parentNode) {
-            this.portal.parentNode.removeChild(this.portal);
-        }
+        // Nothing to clean up after autocomplete removal
     }
 }
 

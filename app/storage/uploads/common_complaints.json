@@ -1,0 +1,180 @@
+{
+    "last_updated": "2025-12-29 11:56:16",
+    "total_count": 29,
+    "complaints": [
+        {
+            "complaint": "Blured vision",
+            "diagnosis": "Glasses",
+            "plan": "Eye drops",
+            "count": 84
+        },
+        {
+            "complaint": "Fu of phaco",
+            "diagnosis": "Stable pseudo",
+            "plan": "Regulate TTT",
+            "count": 22
+        },
+        {
+            "complaint": "↓ Vision",
+            "diagnosis": "Myopia",
+            "plan": "Glasses",
+            "count": 12
+        },
+        {
+            "complaint": "Burning, itching",
+            "diagnosis": "OSD",
+            "plan": "Eye drops",
+            "count": 7
+        },
+        {
+            "complaint": "Fu of OSD",
+            "diagnosis": "Improved",
+            "plan": "Reduce steroid",
+            "count": 6
+        },
+        {
+            "complaint": "Fu of blepharitis",
+            "diagnosis": "Mild improvement",
+            "plan": "Regulate TTT",
+            "count": 4
+        },
+        {
+            "complaint": "Fu of adenoviral conjunctivitis",
+            "diagnosis": "Improved",
+            "plan": "Reduce steroid",
+            "count": 3
+        },
+        {
+            "complaint": "Vision dec",
+            "diagnosis": "Myopia",
+            "plan": "Glasses",
+            "count": 3
+        },
+        {
+            "complaint": "Blured  near vision",
+            "diagnosis": "Near  glasses",
+            "plan": "Lubristeria Ed",
+            "count": 2
+        },
+        {
+            "complaint": "Blured vision \r\nHeadache",
+            "diagnosis": "Glasses",
+            "plan": "Glasses",
+            "count": 2
+        },
+        {
+            "complaint": "Blurred vision \r\nDNV",
+            "diagnosis": "Cat",
+            "plan": "Bromoflam ed\r\nLacritears ed",
+            "count": 2
+        },
+        {
+            "complaint": "Blurring",
+            "diagnosis": "Astigmatism",
+            "plan": "Glasses",
+            "count": 2
+        },
+        {
+            "complaint": "Burning, redness , strain",
+            "diagnosis": "Allergy moderate",
+            "plan": "Cyanaro ed\r\nLoteranol ed\r\nOptiguard ed",
+            "count": 2
+        },
+        {
+            "complaint": "Decreased vision",
+            "diagnosis": "Cat od",
+            "plan": "Phaco od \r\nBlephadoxiline ed\r\nLacritears ed",
+            "count": 2
+        },
+        {
+            "complaint": "Defect of vision",
+            "diagnosis": "Near glasses",
+            "plan": "Lubristeria  ed",
+            "count": 2
+        },
+        {
+            "complaint": "Diplopbia",
+            "diagnosis": "Alternating exotropia",
+            "plan": "Surgical interference",
+            "count": 2
+        },
+        {
+            "complaint": "Eye strain",
+            "diagnosis": "Dryness",
+            "plan": "Eye drops",
+            "count": 2
+        },
+        {
+            "complaint": "FU of rt  vitreous hge",
+            "diagnosis": "Resolved vitreous hge",
+            "plan": "Hydratears ed",
+            "count": 2
+        },
+        {
+            "complaint": "Fu of corneal abscess",
+            "diagnosis": "Mild improvement",
+            "plan": "Same TTT",
+            "count": 2
+        },
+        {
+            "complaint": "Fu of prk",
+            "diagnosis": "Stable prk",
+            "plan": "",
+            "count": 2
+        },
+        {
+            "complaint": "Fu of severe blepharitis",
+            "diagnosis": "Improved",
+            "plan": "Reduce steroid",
+            "count": 2
+        },
+        {
+            "complaint": "Headache",
+            "diagnosis": "Cat + high digital IOP",
+            "plan": "Orchadoxiline ed \r\nAlphanova ed\r\nSolofreash ed",
+            "count": 2
+        },
+        {
+            "complaint": "Headache\r\nBlurred vision",
+            "diagnosis": "Cat",
+            "plan": "Phaco IOL ou \r\nOs first",
+            "count": 2
+        },
+        {
+            "complaint": "Improved ciliary spasm",
+            "diagnosis": "Improved ciliary spasm",
+            "plan": "Follow up",
+            "count": 2
+        },
+        {
+            "complaint": "Lacrimation, discharge",
+            "diagnosis": "physiological NLD",
+            "plan": "Cyanaro Ed \r\nTobrex Ed",
+            "count": 2
+        },
+        {
+            "complaint": "Od\r\nBlurred vision \r\nPeudo ou",
+            "diagnosis": "Pvd",
+            "plan": "Orchadoxiline ed\r\nHydratears ed",
+            "count": 2
+        },
+        {
+            "complaint": "Redness od",
+            "diagnosis": "Subconj hge",
+            "plan": "Eye drops",
+            "count": 2
+        },
+        {
+            "complaint": "Redness,\r\nStrain",
+            "diagnosis": "Conjunctivitis",
+            "plan": "Optidex t Ed\r\nHydratears ed",
+            "count": 2
+        },
+        {
+            "complaint": "Redness, burning",
+            "diagnosis": "Adenoviral conjunctivitis",
+            "plan": "Eye drops",
+            "count": 2
+        }
+    ]
+}

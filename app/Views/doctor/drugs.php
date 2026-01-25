@@ -1,4 +1,6 @@
-<link href="/app/Views/doctor/assets/css/drugs.css?v=<?= file_exists(__DIR__ . '/assets/css/drugs.css') ? filemtime(__DIR__ . '/assets/css/drugs.css') : time() ?>" rel="stylesheet">
+<link
+    href="/app/Views/doctor/assets/css/drugs.css?v=<?= file_exists(__DIR__ . '/assets/css/drugs.css') ? filemtime(__DIR__ . '/assets/css/drugs.css') : time() ?>"
+    rel="stylesheet">
 
 <!-- Drug Search Header -->
 <div class="row mb-4">
@@ -11,7 +13,7 @@
         <div class="mt-2">
             <small class="text-muted">
                 <i class="bi bi-keyboard me-1"></i>
-                Shortcuts: 
+                Shortcuts:
                 • Search <kbd class="me-1">F</kbd> or <kbd class="me-1">ب</kbd>
                 • Clear <kbd class="me-1">Esc</kbd>
             </small>
@@ -41,13 +43,9 @@
                 <div class="row">
                     <div class="col-md-8">
                         <div class="position-relative">
-                            <input 
-                                type="text" 
-                                id="drugSearchInput" 
-                                class="form-control form-control-lg" 
+                            <input type="text" id="drugSearchInput" class="form-control form-control-lg"
                                 placeholder="Search for medications, active ingredients, or companies..."
-                                autocomplete="off"
-                            >
+                                autocomplete="off">
                             <div class="position-absolute top-50 end-0 translate-middle-y pe-3">
                                 <i class="bi bi-search text-muted"></i>
                             </div>
@@ -55,11 +53,12 @@
                     </div>
                     <div class="col-md-4">
                         <div class="d-flex gap-2" id="searchButtonsContainer">
-                        <button class="btn btn-primary btn-lg w-100" id="searchBtn">
-                            <i class="bi bi-search me-2"></i>
-                            Search
-                        </button>
-                            <button class="btn btn-outline-primary flex-grow-1" id="clearSearchBtn" style="display: none;">
+                            <button class="btn btn-primary btn-lg w-100" id="searchBtn">
+                                <i class="bi bi-search me-2"></i>
+                                Search
+                            </button>
+                            <button class="btn btn-outline-primary flex-grow-1" id="clearSearchBtn"
+                                style="display: none;">
                                 <i class="bi bi-x-circle me-2"></i>
                                 Clear Search
                             </button>
@@ -125,7 +124,7 @@
         <div class="card border-success">
             <div class="card-header bg-success bg-opacity-10">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 text-success">
+                    <h6 class="mb-0 text-success" id="resultsTitle">
                         <i class="bi bi-list-ul me-2"></i>
                         Search Results
                     </h6>
@@ -133,26 +132,34 @@
                 </div>
             </div>
             <div class="card-body">
+                <!-- Initial Search Message -->
+                <div id="initialSearchMessage" class="initial-search-message text-center py-5">
+                    <i class="bi bi-search-heart text-primary icon-lg"></i>
+                    <h5 class="mt-3 text-muted">Search to find drugs information</h5>
+                    <p class="text-muted small mb-0">Enter a drug name, active ingredient, or company to start</p>
+                </div>
+
                 <!-- Loading Indicator -->
-                <div id="loadingIndicator" class="text-center py-5" style="display: none;">
+                <div id="loadingIndicator" class="flex-column justify-content-center align-items-center py-5"
+                    style="display: none; min-height: 200px;">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
-                    <p class="mt-2 text-muted">Searching medications...</p>
+                    <p class="mt-3 text-muted mb-0">Searching medications...</p>
                 </div>
-                
+
                 <!-- No Results -->
                 <div id="noResults" class="text-center py-5" style="display: none;">
                     <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
                     <h5 class="mt-3 text-muted">No medications found</h5>
                     <p class="text-muted">Try adjusting your search terms or filters</p>
                 </div>
-                
+
                 <!-- Results Grid -->
                 <div id="drugResults" class="row">
                     <!-- Results will be populated here -->
                 </div>
-                
+
                 <!-- Load More Button -->
                 <div id="loadMoreContainer" class="text-center mt-4" style="display: none;">
                     <button id="loadMoreBtn" class="btn btn-outline-primary">
@@ -167,7 +174,7 @@
 
 <!-- Drug Details Modal -->
 <div class="modal fade" id="drugDetailsModal" tabindex="-1" aria-labelledby="drugDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalDrugName">Drug Details</h5>
@@ -184,7 +191,8 @@
 </div>
 
 <!-- Update Database Modal -->
-<div class="modal fade" id="updateDatabaseModal" tabindex="-1" aria-labelledby="updateDatabaseModalLabel" aria-hidden="true">
+<div class="modal fade" id="updateDatabaseModal" tabindex="-1" aria-labelledby="updateDatabaseModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
@@ -192,46 +200,45 @@
                     <i class="bi bi-arrow-clockwise me-2"></i>
                     Update Drugs Database
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div id="updateProgressContainer">
                     <div class="mb-3">
-                        <p class="text-muted">The drugs database will be downloaded and updated from the official source.</p>
+                        <p class="text-muted">The drugs database will be downloaded and updated from the official
+                            source.</p>
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle me-2"></i>
                             <strong>Note:</strong> This process may take a few minutes depending on the data size.
                         </div>
                     </div>
-                    
+
                     <!-- Progress Bar -->
                     <div class="mb-3">
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <label class="form-label mb-0" id="progressLabel">Preparing...</label>
                             <div id="updateSpinner" style="display: none;">
-                                <div class="spinner-border" role="status" style="width: 1.5rem; height: 1.5rem; border-width: 3px; border-color: #0dcaf0; border-right-color: transparent;">
+                                <div class="spinner-border" role="status"
+                                    style="width: 1.5rem; height: 1.5rem; border-width: 3px; border-color: #0dcaf0; border-right-color: transparent;">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                             </div>
                         </div>
                         <div class="progress" style="height: 30px;">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                                 role="progressbar" 
-                                 id="updateProgressBar" 
-                                 style="width: 0%"
-                                 aria-valuenow="0" 
-                                 aria-valuemin="0" 
-                                 aria-valuemax="100">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                                id="updateProgressBar" style="width: 0%" aria-valuenow="0" aria-valuemin="0"
+                                aria-valuemax="100">
                                 <span id="progressText">0%</span>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Status Messages -->
                     <div id="updateStatusMessages" class="mb-3" style="max-height: 300px; overflow-y: auto;">
                         <!-- Status messages will be added here -->
                     </div>
-                    
+
                     <!-- Statistics -->
                     <div id="updateStatistics" class="row mt-3" style="display: none;">
                         <div class="col-md-4">
@@ -262,7 +269,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="closeUpdateModalBtn">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                    id="closeUpdateModalBtn">Cancel</button>
                 <button type="button" class="btn btn-success" id="startUpdateBtn" onclick="startDatabaseUpdate()">
                     <i class="bi bi-play-circle me-2"></i>
                     Start Update
@@ -272,19 +280,23 @@
     </div>
 </div>
 
-<script src="/app/Views/doctor/assets/js/drugs.js?v=<?= file_exists(__DIR__ . '/assets/js/drugs.js') ? filemtime(__DIR__ . '/assets/js/drugs.js') : time() ?>"></script>
+<script
+    src="/app/Views/doctor/assets/js/drugs.js?v=<?= file_exists(__DIR__ . '/assets/js/drugs.js') ? filemtime(__DIR__ . '/assets/js/drugs.js') : time() ?>"></script>
 
 <style>
-    .modal-backdrop.show{
+    .modal-backdrop.show {
         display: none !important;
     }
-    body > div.modal-backdrop.fade.show{
+
+    body>div.modal-backdrop.fade.show {
         display: none !important;
     }
-    .dark .modal-content{
-    background: rgba(11, 18, 32, 0.8) !important;
+
+    .dark .modal-content {
+        background: rgba(11, 18, 32, 0.8) !important;
     }
-    .modal-content{
-    background: rgba(248, 250, 252, 0.8) !important;
+
+    .modal-content {
+        background: rgba(248, 250, 252, 0.8) !important;
     }
 </style>

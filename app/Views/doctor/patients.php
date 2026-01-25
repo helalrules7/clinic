@@ -191,7 +191,7 @@
 </div>
 
 <!-- Patients Table -->
-<div class="card">
+<div class="card" id="patientsTableCard">
     <div class="card-header">
         <div class="row align-items-center">
             <div class="col-md-6">
@@ -202,6 +202,34 @@
             </div>
             <div class="col-md-6 text-end">
                 <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
+                    <!-- View Mode Toggle -->
+                    <div class="btn-group" role="group" id="viewModeToggle">
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-primary active" 
+                                data-view="table"
+                                onclick="switchViewMode('table')"
+                                title="Table View">
+                            <i class="bi bi-table me-1"></i>
+                            Table
+                        </button>
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-primary" 
+                                data-view="cards"
+                                onclick="switchViewMode('cards')"
+                                title="Cards View">
+                            <i class="bi bi-grid-3x3-gap me-1"></i>
+                            Cards
+                        </button>
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-primary" 
+                                data-view="folders"
+                                onclick="switchViewMode('folders')"
+                                title="Folders View">
+                            <i class="bi bi-folder me-1"></i>
+                            Folders
+                        </button>
+                    </div>
+                    
                     <!-- Clear Filters and Sorting Buttons -->
                     <div class="d-flex gap-2 align-items-center me-3 d-none" id="clearFiltersGroup">
                         <button type="button" class="btn btn-sm btn-outline-danger clear-all-filters-btn" title="Clear all filters">
@@ -394,6 +422,252 @@
                         <!-- Pagination items will be generated here -->
                     </ul>
                 </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Patients Cards View -->
+<div class="card" id="patientsCardsCard" style="display: none;">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h5 class="mb-0">
+                    <i class="bi bi-grid-3x3-gap me-2"></i>
+                    Patient Cards
+                </h5>
+            </div>
+            <div class="col-md-6 text-end">
+                <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
+                    <!-- View Mode Toggle -->
+                    <div class="btn-group" role="group" id="viewModeToggleCards">
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-primary" 
+                                data-view="table"
+                                onclick="switchViewMode('table')"
+                                title="Table View">
+                            <i class="bi bi-table me-1"></i>
+                            Table
+                        </button>
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-primary active" 
+                                data-view="cards"
+                                onclick="switchViewMode('cards')"
+                                title="Cards View">
+                            <i class="bi bi-grid-3x3-gap me-1"></i>
+                            Cards
+                        </button>
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-primary" 
+                                data-view="folders"
+                                onclick="switchViewMode('folders')"
+                                title="Folders View">
+                            <i class="bi bi-folder me-1"></i>
+                            Folders
+                        </button>
+                    </div>
+                    
+                    <!-- Quick Search Group -->
+                    <div class="input-group input-group-sm" style="width: auto; min-width: 220px;">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" 
+                               class="form-control border-start-0 border-end-0" 
+                               id="quickSearchCards" 
+                               placeholder="Quick search..."
+                               autocomplete="off"
+                               style="border-left: none; border-right: none;">
+                        <button class="btn btn-outline-secondary border-start-0" type="button" id="clearQuickSearchCards" style="display: none;">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <!-- Items per page -->
+                    <div class="d-flex align-items-center">
+                        <label for="paginationLimitCards" class="form-label mb-0 me-2 text-muted small">View:</label>
+                        <section class="field menu" style="min-width: 70px; width: auto;">
+                            <div class="control">
+                                <select class="form-select form-select-sm d-none center-select" id="paginationLimitCards" style="width: auto;">
+                                    <option value="12">12</option>
+                                    <option value="24" selected>24</option>
+                                    <option value="36">36</option>
+                                    <option value="48">48</option>
+                                    <option value="all">All</option>
+                                </select>
+                                <button type="button" class="custom-select-toggle" aria-expanded="false" style="font-size: 0.875rem; padding: 0.75rem 2rem 0.75rem 0.75rem;">24</button>
+                                <menu>
+                                    <li data-option="12" tabindex="0" role="button"><h3>12</h3></li>
+                                    <li data-option="24" tabindex="0" role="button" class="selected"><h3>24</h3></li>
+                                    <li data-option="36" tabindex="0" role="button"><h3>36</h3></li>
+                                    <li data-option="48" tabindex="0" role="button"><h3>48</h3></li>
+                                    <li data-option="all" tabindex="0" role="button"><h3>All</h3></li>
+                                </menu>
+                            </div>
+                        </section>
+                    </div>
+                    <div class="text-muted">
+                        <small>Total: <span id="totalPatientsCountCards">0</span> patients</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div id="patientsCardsContainer" class="row g-3">
+            <!-- Cards will be rendered here by JavaScript -->
+        </div>
+    </div>
+    <!-- Pagination Controls for Cards -->
+    <div class="card-footer" id="paginationContainerCards">
+        <div class="row align-items-center justify-content-center">
+            <div class="col-12 text-center">
+                <div class="pagination-info text-muted mb-2">
+                    <small>
+                        View <span id="showingFromCards">1</span> to <span id="showingToCards">24</span> 
+                        of <span id="totalPatientsCards">0</span> patients
+                    </small>
+                </div>
+                <nav aria-label="Patients pagination" class="d-flex justify-content-center">
+                    <ul class="pagination pagination-sm justify-content-center mb-0" id="paginationNavCards">
+                        <!-- Pagination items will be generated here -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Patients Folders View -->
+<div class="card" id="patientsFoldersCard" style="display: none;">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h5 class="mb-0">
+                    <i class="bi bi-folder me-2"></i>
+                    Patient Folders
+                </h5>
+            </div>
+            <div class="col-md-6 text-end">
+                <button type="button" 
+                        class="btn btn-success btn-sm" 
+                        onclick="showCreateFolderModal()"
+                        title="Create New Folder">
+                    <i class="bi bi-folder-plus me-1"></i>
+                    Create Folder
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div id="patientsFoldersContainer">
+            <!-- Folders will be rendered here by JavaScript -->
+        </div>
+    </div>
+</div>
+
+<!-- Create Folder Modal -->
+<div class="modal fade" id="createFolderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-folder-plus me-2"></i>
+                    Create New Folder
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createFolderForm">
+                <div class="modal-body">
+                    <div id="createFolderMessage" class="alert d-none" role="alert"></div>
+                    <div class="mb-3">
+                        <label for="folderName" class="form-label">Folder Name <span class="text-danger">*</span></label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="folderName" 
+                               name="folder_name" 
+                               required 
+                               maxlength="120"
+                               placeholder="Enter folder name">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-folder-plus me-1"></i>
+                        Create Folder
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Rename Folder Modal -->
+<div class="modal fade" id="renameFolderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil me-2"></i>
+                    Rename Folder
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="renameFolderForm">
+                <div class="modal-body">
+                    <div id="renameFolderMessage" class="alert d-none" role="alert"></div>
+                    <input type="hidden" id="renameFolderId" name="folder_id">
+                    <div class="mb-3">
+                        <label for="renameFolderName" class="form-label">Folder Name <span class="text-danger">*</span></label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="renameFolderName" 
+                               name="folder_name" 
+                               required 
+                               maxlength="120"
+                               placeholder="Enter folder name">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Move Patient to Folder Modal -->
+<div class="modal fade" id="movePatientModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-folder me-2"></i>
+                    Move Patient to Folder
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="movePatientMessage" class="alert d-none" role="alert"></div>
+                <input type="hidden" id="movePatientId" name="patient_id">
+                <div class="mb-3">
+                    <label for="movePatientFolderSelect" class="form-label">Select Folder</label>
+                    <select class="form-select" id="movePatientFolderSelect" name="folder_id">
+                        <option value="">-- Select Folder --</option>
+                        <!-- Folders will be populated by JavaScript -->
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="confirmMovePatient()">
+                    <i class="bi bi-check-lg me-1"></i>
+                    Move Patient
+                </button>
             </div>
         </div>
     </div>

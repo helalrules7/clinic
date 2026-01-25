@@ -1471,6 +1471,27 @@ class DoctorController
             SELECT p.*, 
                    COUNT(DISTINCT a.id) as total_appointments,
                    MAX(a.date) as last_visit,
+                   MAX(CONCAT(a.date, ' ', a.start_time)) as last_appointment_datetime,
+                   COUNT(DISTINCT pr.id) as prescriptions_count,
+                   COUNT(DISTINCT gp.id) as glasses_count,
+                   (SELECT pa.id 
+                    FROM patient_attachments pa 
+                    LEFT JOIN appointments a ON pa.appointment_id = a.id
+                    WHERE pa.patient_id = p.id 
+                    AND pa.mime_type LIKE 'image/%'
+                    ORDER BY 
+                        CASE 
+                            WHEN a.id IS NOT NULL 
+                            THEN 0
+                            ELSE 1
+                        END ASC,
+                        CASE 
+                            WHEN a.id IS NOT NULL 
+                            THEN CONCAT(a.date, ' ', COALESCE(a.start_time, '00:00:00'))
+                            ELSE '0000-00-00 00:00:00'
+                        END DESC,
+                        pa.created_at DESC 
+                    LIMIT 1) as latest_attachment_id,
                    (SELECT te.actor_user_id 
                     FROM timeline_events te 
                     WHERE te.patient_id = p.id 
@@ -1506,6 +1527,8 @@ class DoctorController
                     LIMIT 1) as created_by_doctor_name
             FROM patients p
             LEFT JOIN appointments a ON p.id = a.patient_id
+            LEFT JOIN prescriptions pr ON a.id = pr.appointment_id
+            LEFT JOIN glasses_prescriptions gp ON a.id = gp.appointment_id
             GROUP BY p.id
             ORDER BY p.created_at DESC
         ");

@@ -258,13 +258,235 @@ function showPrescriptionModal(appointmentId) {
     });
 }
 
+// Show prescription suggestions modal based on diagnosis
+async function showPrescriptionSuggestions(appointmentId, diagnosis, complaint) {
+    const modalHtml = `
+        <div class="modal fade" id="prescriptionSuggestionsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-lightbulb me-2"></i>Prescription Suggestions
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <p class="mb-1"><strong>Diagnosis:</strong> <span id="suggestionDiagnosis">${escapeHtml(diagnosis)}</span></p>
+                            ${complaint ? `<p class="mb-0 text-muted"><small><strong>Complaint:</strong> ${escapeHtml(complaint)}</small></p>` : ''}
+                        </div>
+                        <div id="prescriptionSuggestionsLoading" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading suggestions...</p>
+                        </div>
+                        <div id="prescriptionSuggestionsContent" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="text-muted">Select prescriptions to add:</span>
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllPrescriptions()">Select All</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAllPrescriptions()">Deselect All</button>
+                                </div>
+                            </div>
+                            <div id="prescriptionSuggestionsList" class="list-group"></div>
+                            <div id="prescriptionSuggestionsEmpty" class="alert alert-info mt-3" style="display: none;">
+                                <i class="bi bi-info-circle me-2"></i>No prescription suggestions found for this diagnosis.
+                            </div>
+                        </div>
+                        <div id="prescriptionSuggestionsError" class="alert alert-danger" style="display: none;">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <span id="suggestionsErrorMessage"></span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="addSelectedPrescriptionsBtn" onclick="addSelectedPrescriptions(${appointmentId})" disabled>
+                            <i class="bi bi-plus-circle me-1"></i>Add Selected (<span id="selectedCount">0</span>)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('prescriptionSuggestionsModal'));
+    modal.show();
+    
+    // Store selected prescriptions
+    window.selectedPrescriptions = [];
+    
+    // Fetch suggestions
+    try {
+        const params = new URLSearchParams({
+            diagnosis: diagnosis,
+            complaint: complaint || ''
+        });
+        const response = await fetch(`/api/prescriptions/suggestions?${params}`);
+        const data = await response.json();
+        
+        document.getElementById('prescriptionSuggestionsLoading').style.display = 'none';
+        
+        if (data.ok && data.data && data.data.length > 0) {
+            displayPrescriptionSuggestions(data.data);
+            document.getElementById('prescriptionSuggestionsContent').style.display = 'block';
+        } else {
+            document.getElementById('prescriptionSuggestionsEmpty').style.display = 'block';
+            document.getElementById('prescriptionSuggestionsContent').style.display = 'block';
+        }
+    } catch (error) {
+        document.getElementById('prescriptionSuggestionsLoading').style.display = 'none';
+        document.getElementById('prescriptionSuggestionsError').style.display = 'block';
+        document.getElementById('suggestionsErrorMessage').textContent = 'Failed to load suggestions: ' + error.message;
+    }
+    
+    // Clean up modal on hide
+    document.getElementById('prescriptionSuggestionsModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+        window.selectedPrescriptions = [];
+    });
+}
+
+// Display prescription suggestions in the modal
+function displayPrescriptionSuggestions(suggestions) {
+    const container = document.getElementById('prescriptionSuggestionsList');
+    container.innerHTML = '';
+    
+    suggestions.forEach((prescription, index) => {
+        const item = document.createElement('div');
+        item.className = 'list-group-item prescription-suggestion-item';
+        item.innerHTML = `
+            <div class="form-check d-flex align-items-start">
+                <input class="form-check-input prescription-checkbox" type="checkbox" 
+                       value="${index}" 
+                       id="prescription_${index}"
+                       data-drug-name="${escapeHtml(prescription.drug_name)}"
+                       data-notes="${escapeHtml(prescription.notes || '')}"
+                       data-route="${escapeHtml(prescription.route || 'Topical')}"
+                       onchange="updateSelectedPrescriptions()">
+                <label class="form-check-label flex-grow-1 ms-2" for="prescription_${index}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">
+                                <i class="bi bi-capsule me-1"></i>${escapeHtml(prescription.drug_name)}
+                            </h6>
+                            ${prescription.notes ? `<p class="mb-1 text-muted small">${escapeHtml(prescription.notes)}</p>` : ''}
+                            <small class="text-muted">
+                                <i class="bi bi-arrow-right-circle me-1"></i>Route: ${escapeHtml(prescription.route)}
+                            </small>
+                        </div>
+                        <span class="badge bg-primary ms-2">Used ${prescription.count} ${prescription.count === 1 ? 'time' : 'times'}</span>
+                    </div>
+                </label>
+            </div>
+        `;
+        container.appendChild(item);
+    });
+}
+
+// Update selected prescriptions array
+function updateSelectedPrescriptions() {
+    const checkboxes = document.querySelectorAll('.prescription-checkbox:checked');
+    window.selectedPrescriptions = Array.from(checkboxes).map(cb => ({
+        drug_name: cb.getAttribute('data-drug-name'),
+        notes: cb.getAttribute('data-notes'),
+        route: cb.getAttribute('data-route')
+    }));
+    
+    const count = window.selectedPrescriptions.length;
+    document.getElementById('selectedCount').textContent = count;
+    document.getElementById('addSelectedPrescriptionsBtn').disabled = count === 0;
+}
+
+// Select all prescriptions
+function selectAllPrescriptions() {
+    document.querySelectorAll('.prescription-checkbox').forEach(cb => {
+        cb.checked = true;
+    });
+    updateSelectedPrescriptions();
+}
+
+// Deselect all prescriptions
+function deselectAllPrescriptions() {
+    document.querySelectorAll('.prescription-checkbox').forEach(cb => {
+        cb.checked = false;
+    });
+    updateSelectedPrescriptions();
+}
+
+// Add selected prescriptions to appointment
+async function addSelectedPrescriptions(appointmentId) {
+    if (!window.selectedPrescriptions || window.selectedPrescriptions.length === 0) {
+        showErrorMessage('No prescriptions selected');
+        return;
+    }
+    
+    const addBtn = document.getElementById('addSelectedPrescriptionsBtn');
+    const originalText = addBtn.innerHTML;
+    addBtn.disabled = true;
+    addBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Adding...';
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    // Add each prescription sequentially
+    for (const prescription of window.selectedPrescriptions) {
+        try {
+            const formData = new FormData();
+            formData.append('appointment_id', appointmentId);
+            formData.append('drug_name', prescription.drug_name);
+            formData.append('notes', prescription.notes || '');
+            formData.append('route', prescription.route || 'Topical');
+            
+            const response = await fetch('/api/prescriptions/meds', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                successCount++;
+            } else {
+                errorCount++;
+                console.error('Failed to add prescription:', prescription.drug_name, data.message);
+            }
+        } catch (error) {
+            errorCount++;
+            console.error('Error adding prescription:', prescription.drug_name, error);
+        }
+    }
+    
+    // Show result message
+    if (successCount > 0) {
+        showSuccessMessage(`Successfully added ${successCount} prescription${successCount > 1 ? 's' : ''}`);
+    }
+    if (errorCount > 0) {
+        showErrorMessage(`Failed to add ${errorCount} prescription${errorCount > 1 ? 's' : ''}`);
+    }
+    
+    // Close modal and reload medications
+    const modal = bootstrap.Modal.getInstance(document.getElementById('prescriptionSuggestionsModal'));
+    modal.hide();
+    
+    setTimeout(() => {
+        reloadMedications();
+    }, 300);
+}
+
 // Load most used drugs and display as clickable badges
-async function loadMostUsedDrugs() {
+async function loadMostUsedDrugs(containerId = 'mostUsedDrugs', targetInputId = 'drugNameInput') {
     try {
         const response = await fetch('/api/getMostUsedDrugs?limit=10');
         const data = await response.json();
         
-        const container = document.getElementById('mostUsedDrugs');
+        const container = document.getElementById(containerId);
+        if (!container) return; // Silent return if container doesn't exist
+        
         if (data.drugs && data.drugs.length > 0) {
             container.innerHTML = '';
             
@@ -290,15 +512,38 @@ async function loadMostUsedDrugs() {
                     ${drug.drug_name}
                     ${priceCircle}
                     <span class="usage-count-badge">${drug.usage_count}</span>
+                    <span class="drug-info-btn ms-2" title="View details">
+                        <i class="bi bi-exclamation"></i>
+                    </span>
                 `;
                 
                 const priceText = displayPrice ? `. Price: EGP ${displayPrice}` : '. Price: unknown';
                 badge.title = `Used ${drug.usage_count} times. Common doses: ${drug.common_doses || 'N/A'}. Common frequencies: ${drug.common_frequencies || 'N/A'}${priceText}`;
                 
-                badge.addEventListener('click', () => {
-                    document.getElementById('drugNameInput').value = drug.drug_name;
-                    // Hide suggestions when drug is selected
-                    document.getElementById('drugSuggestions').style.display = 'none';
+                badge.addEventListener('click', (e) => {
+                    // Check if info button was clicked (bubble up)
+                    const infoBtn = e.target.closest('.drug-info-btn');
+                    if (infoBtn) {
+                        e.stopPropagation();
+                        // Pass the event object e so showDrugPopoverFromName can call preventDefault()
+                        if (typeof showDrugPopoverFromName === 'function') {
+                            showDrugPopoverFromName(drug.drug_name, e, 'modal');
+                        }
+                        return;
+                    }
+
+                    const targetInput = document.getElementById(targetInputId);
+                    if (targetInput) {
+                        targetInput.value = drug.drug_name;
+                        // Trigger input event if needed
+                        targetInput.dispatchEvent(new Event('input'));
+                    }
+                    
+                    // Hide suggestions when drug is selected (only if using main input)
+                    if (targetInputId === 'drugNameInput') {
+                        const suggestions = document.getElementById('drugSuggestions');
+                        if (suggestions) suggestions.style.display = 'none';
+                    }
                 });
                 
                 container.appendChild(badge);
@@ -308,8 +553,10 @@ async function loadMostUsedDrugs() {
         }
     } catch (error) {
         console.error('Error loading most used drugs:', error);
-        const container = document.getElementById('mostUsedDrugs');
-        container.innerHTML = '<div class="text-muted"><i class="bi bi-exclamation-triangle me-1"></i>Failed to load suggestions</div>';
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.innerHTML = '<div class="text-muted"><i class="bi bi-exclamation-triangle me-1"></i>Failed to load suggestions</div>';
+        }
     }
 }
 
@@ -2001,10 +2248,6 @@ function editMedication(medicationId, drugName, notes) {
                     <form id="editMedicationForm">
                         <div class="modal-body">
                             <div class="row">
-                                <div class="col-12 mb-3">
-                                    <label class="form-label">Drug Name <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="drug_name" value="${drugName}" required>
-                                    </div>
                                 <div class="col-md-4 mb-3" style="display: none;">
                                     <label class="form-label">Dose</label>
                                     <input type="text" class="form-control" name="dose" placeholder="e.g., 1 tablet, 2 drops">
@@ -2043,20 +2286,32 @@ function editMedication(medicationId, drugName, notes) {
                                         </div>
                                     </section>
                                 </div>
-                                <div class="col-12 mb-3">
-                                    <label class="form-label">Notes</label>
-                                    <textarea class="form-control" name="notes" rows="3">${notes}</textarea>
-                                </div>
+                                <div class="mb-3">
+                            <label class="form-label">Drug Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="drug_name" id="editDrugName" value="${drugName}" required>
+                        </div>
+                        
+                        <!-- Most Used Drugs Container for Edit Modal -->
+                        <div class="mb-3">
+                            <label class="form-label text-muted small"><i class="bi bi-star me-1"></i>Most Used Suggestions</label>
+                            <div id="editMostUsedDrugs" class="d-flex flex-wrap gap-1">
+                                <!-- Suggestions will be loaded here -->
                             </div>
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Update Medication</button>
+
+                        <div class="mb-3">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" name="notes" rows="3">${notes}</textarea>
                         </div>
-                    </form>
-                </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
             </div>
         </div>
+    </div>
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
@@ -2066,6 +2321,12 @@ function editMedication(medicationId, drugName, notes) {
     // Initialize custom selects
     setTimeout(() => {
         initCustomSelects();
+    }, 100);
+    
+    // Load most used drugs for the edit modal
+    // Pass the container ID and the input ID
+    setTimeout(() => {
+        loadMostUsedDrugs('editMostUsedDrugs', 'editDrugName');
     }, 100);
     
     // Handle form submission
@@ -2595,7 +2856,7 @@ function addLabTest(appointmentId) {
         '<label class="form-label">Test Type</label>' +
         '<section class="field menu" style="min-width: 100%;">' +
         '<div class="control">' +
-        '<select class="form-select d-none" name="test_type" required onchange="updateTestCategories(this.value)">' +
+        '<select class="form-select d-none" name="test_type" required id="testTypeSelect">' +
         '<option value="">Select Test Type</option>' +
         '<option value="laboratory">Laboratory Test</option>' +
         '<option value="radiology">Radiology</option>' +
@@ -2640,9 +2901,9 @@ function addLabTest(appointmentId) {
         '</select>' +
         '<button type="button" class="custom-select-toggle" aria-expanded="false">Normal</button>' +
         '<menu>' +
-        '<li data-option="normal" tabindex="0" role="button" class="selected"><i class="bi-flag fs-5"></i><h3>Normal</h3></li>' +
-        '<li data-option="high" tabindex="0" role="button"><i class="bi-flag fs-5"></i><h3>High</h3></li>' +
-        '<li data-option="urgent" tabindex="0" role="button"><i class="bi-flag fs-5"></i><h3>Urgent</h3></li>' +
+        '<li data-option="normal" tabindex="0" role="button" class="selected"><i class="bi-flag fs-5" style="color: dodgerblue !important;"></i><h3 style="color: dodgerblue !important;">Normal</h3></li>' +
+        '<li data-option="high" tabindex="0" role="button"><i class="bi-flag fs-5" style="color: orange !important;"></i><h3 style="color: orange !important;">High</h3></li>' +
+        '<li data-option="urgent" tabindex="0" role="button"><i class="bi-flag fs-5" style="color: red !important;"></i><h3 style="color: red !important;">Urgent</h3></li>' +
         '</menu>' +
         '</div>' +
         '</section>' +
@@ -2675,7 +2936,7 @@ function addLabTest(appointmentId) {
         '</div>' +
         '<div class="col-md-6 mb-3">' +
         '<label class="form-label">Expected Date</label>' +
-        '<input type="date" class="form-control" name="expected_date">' +
+        '<input type="date" class="form-control" name="expected_date" value="' + (() => { const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); return tomorrow.toISOString().split('T')[0]; })() + '">' +
         '</div>' +
         '</div>' +
         '<div class="mb-3">' +
@@ -2699,23 +2960,77 @@ function addLabTest(appointmentId) {
         '</div>';
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('labTestModal'));
-    modal.show();
+    const modalElement = document.getElementById('labTestModal');
+    const modal = new bootstrap.Modal(modalElement);
     
-    // Initialize custom selects
-    setTimeout(() => {
-        initCustomSelects();
-    }, 100);
+    // Attach status change listener immediately
+    const statusSelect = modalElement.querySelector('select[name="status"]');
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            const resultsSection = document.getElementById('resultsSection');
+            if (this.value === 'completed') {
+                resultsSection.style.display = 'block';
+            } else {
+                resultsSection.style.display = 'none';
+            }
+        });
+    }
     
-    // Handle status change to show/hide results section
-    document.querySelector('#labTestModal select[name="status"]').addEventListener('change', function() {
-        const resultsSection = document.getElementById('resultsSection');
-        if (this.value === 'completed') {
-            resultsSection.style.display = 'block';
-        } else {
-            resultsSection.style.display = 'none';
-        }
+    // Wait for modal to be shown before initializing custom selects
+    modalElement.addEventListener('shown.bs.modal', function() {
+        // Initialize custom selects first
+        setTimeout(() => {
+            initCustomSelects();
+            
+            // Ensure category select is initialized (even if empty)
+            const categorySelect = modalElement.querySelector('#testCategorySelect');
+            if (categorySelect) {
+                const categoryFieldMenu = categorySelect.closest('.field.menu');
+                if (categoryFieldMenu && !categoryFieldMenu.hasAttribute('data-initialized')) {
+                    // Force initialization of category select
+                    const categoryMenu = categoryFieldMenu.querySelector('menu');
+                    if (categoryMenu && categoryMenu.children.length === 0) {
+                        // Add default option to menu if empty
+                        const defaultLi = document.createElement('li');
+                        defaultLi.setAttribute('data-option', '');
+                        defaultLi.setAttribute('tabindex', '0');
+                        defaultLi.setAttribute('role', 'button');
+                        defaultLi.className = 'selected';
+                        const defaultIcon = document.createElement('i');
+                        defaultIcon.className = 'bi-tags fs-5';
+                        defaultLi.appendChild(defaultIcon);
+                        const defaultH3 = document.createElement('h3');
+                        defaultH3.textContent = 'Select Category';
+                        defaultLi.appendChild(defaultH3);
+                        categoryMenu.appendChild(defaultLi);
+                    }
+                    initCustomSelects();
+                }
+            }
+            
+            // Attach test type change listener AFTER custom selects are initialized
+            // This ensures the select element exists and the listener works properly
+            const testTypeSelect = modalElement.querySelector('select[name="test_type"]');
+            if (testTypeSelect) {
+                // Check if listener already attached to avoid duplicates
+                if (!testTypeSelect._testTypeChangeHandler) {
+                    const handleTestTypeChange = function() {
+                        const testType = this.value;
+                        if (testType) {
+                            // Small delay to ensure DOM is ready
+                            setTimeout(() => {
+                                updateTestCategories(testType);
+                            }, 50);
+                        }
+                    };
+                    testTypeSelect.addEventListener('change', handleTestTypeChange);
+                    testTypeSelect._testTypeChangeHandler = handleTestTypeChange;
+                }
+            }
+        }, 100);
     });
+    
+    modal.show();
     
     // Handle form submission
     document.getElementById('labTestForm').addEventListener('submit', function(e) {
@@ -2727,6 +3042,33 @@ function addLabTest(appointmentId) {
         formData.forEach((value, key) => {
             data[key] = value;
         });
+        
+        // Ensure appointment_id is included
+        if (!data.appointment_id) {
+            data.appointment_id = appointmentId;
+        }
+        
+        // Get select values directly from hidden selects (in case FormData doesn't capture them)
+        const testTypeSelect = this.querySelector('select[name="test_type"]');
+        const testCategorySelect = this.querySelector('select[name="test_category"]');
+        
+        if (testTypeSelect) {
+            data.test_type = testTypeSelect.value || data.test_type;
+        }
+        if (testCategorySelect) {
+            data.test_category = testCategorySelect.value || data.test_category;
+        }
+        
+        // Ensure all required fields are present
+        if (!data.appointment_id || !data.test_type || !data.test_category || !data.test_name) {
+            const missingFields = [];
+            if (!data.appointment_id) missingFields.push('Appointment ID');
+            if (!data.test_type) missingFields.push('Test Type');
+            if (!data.test_category) missingFields.push('Test Category');
+            if (!data.test_name) missingFields.push('Test Name');
+            showErrorMessage('Please fill in all required fields: ' + missingFields.join(', '));
+            return;
+        }
         
         fetch('/api/lab-tests', {
             method: 'POST',
@@ -2741,9 +3083,14 @@ function addLabTest(appointmentId) {
             if (!response.ok) {
                 return response.text().then(text => {
                     try {
-                        return JSON.parse(text);
+                        const errorData = JSON.parse(text);
+                        return Promise.reject(new Error(errorData.error || errorData.message || 'Server error'));
                     } catch (e) {
-                        throw new Error(text || `HTTP error! status: ${response.status}`);
+                        // If response is HTML (error page), extract text content
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(text, 'text/html');
+                        const errorText = doc.querySelector('h1, p')?.textContent || text.substring(0, 100);
+                        return Promise.reject(new Error(errorText || `HTTP error! status: ${response.status}`));
                     }
                 });
             }
@@ -2753,7 +3100,9 @@ function addLabTest(appointmentId) {
             if (data.success) {
                 modal.hide();
                 showSuccessMessage('Lab test added successfully');
-                setTimeout(() => location.reload(), 1000);
+                setTimeout(() => {
+                    reloadLabTests();
+                }, 300);
             } else {
                 showErrorMessage('Error: ' + (data.error || data.message || 'Failed to add lab test'));
             }
@@ -2771,15 +3120,45 @@ function addLabTest(appointmentId) {
 }
 
 function updateTestCategories(testType) {
+    if (!testType || testType === '') {
+        return;
+    }
+    
+    // Normalize test type to handle any case variations
+    testType = String(testType).toLowerCase().trim();
+    
     const categorySelect = document.getElementById('testCategorySelect');
+    if (!categorySelect) {
+        return;
+    }
+    
     const fieldMenu = categorySelect.closest('.field.menu');
     const menu = fieldMenu ? fieldMenu.querySelector('menu') : null;
     const button = fieldMenu ? fieldMenu.querySelector('.custom-select-toggle') : null;
     
+    // Clear existing options
     categorySelect.innerHTML = '<option value="">Select Category</option>';
     
+    // Clear menu
     if (menu) {
-        menu.innerHTML = '<li data-option="" tabindex="0" role="button" class="selected"><i class="bi-tags fs-5"></i><h3>Select Category</h3></li>';
+        menu.innerHTML = '';
+        
+        // Add default "Select Category" option to menu
+        const defaultLi = document.createElement('li');
+        defaultLi.setAttribute('data-option', '');
+        defaultLi.setAttribute('tabindex', '0');
+        defaultLi.setAttribute('role', 'button');
+        defaultLi.className = 'selected';
+        
+        const defaultIcon = document.createElement('i');
+        defaultIcon.className = 'bi-tags fs-5';
+        defaultLi.appendChild(defaultIcon);
+        
+        const defaultH3 = document.createElement('h3');
+        defaultH3.textContent = 'Select Category';
+        defaultLi.appendChild(defaultH3);
+        
+        menu.appendChild(defaultLi);
     }
     
     let categories = [];
@@ -2808,43 +3187,201 @@ function updateTestCategories(testType) {
             'PET Scan',
             'Angiography'
         ];
+    } else {
+        // Invalid test type
+        return;
     }
     
+    // Add categories to select and menu
     categories.forEach(category => {
+        const optionValue = category.toLowerCase().replace(/\s+/g, '_');
+        
+        // Add to select
         const option = document.createElement('option');
-        option.value = category.toLowerCase().replace(/\s+/g, '_');
+        option.value = optionValue;
         option.textContent = category;
         categorySelect.appendChild(option);
         
+        // Add to menu
         if (menu) {
             const li = document.createElement('li');
-            li.setAttribute('data-option', option.value);
+            li.setAttribute('data-option', optionValue);
             li.setAttribute('tabindex', '0');
             li.setAttribute('role', 'button');
+            
             const icon = document.createElement('i');
             icon.className = 'bi-tags fs-5';
             li.appendChild(icon);
+            
             const h3 = document.createElement('h3');
             h3.textContent = category;
             li.appendChild(h3);
+            
             menu.appendChild(li);
         }
     });
     
+    // Update button text
     if (button) {
         button.textContent = 'Select Category';
     }
     
-    // Remove initialization flag to allow re-initialization
-    if (fieldMenu) {
-        fieldMenu.removeAttribute('data-initialized');
-    }
+    // Reset select value
+    categorySelect.value = '';
     
-    // Re-initialize custom select if menu exists
-    if (fieldMenu) {
-        setTimeout(() => {
-            initCustomSelects();
-        }, 50);
+    // Manually re-initialize this specific custom select field
+    if (fieldMenu && menu && button && categorySelect) {
+        const menuItems = menu.querySelectorAll('li');
+        
+        // Remove initialization flag
+        fieldMenu.removeAttribute('data-initialized');
+        
+        // Remove existing event listeners from button
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
+        const newButtonRef = fieldMenu.querySelector('.custom-select-toggle');
+        
+        // Remove existing event listeners from menu items by cloning
+        const newMenuItems = [];
+        menuItems.forEach(item => {
+            const cloned = item.cloneNode(true);
+            newMenuItems.push(cloned);
+        });
+        menu.innerHTML = '';
+        newMenuItems.forEach(item => menu.appendChild(item));
+        
+        // Get fresh references after cloning
+        const finalMenuItems = menu.querySelectorAll('li');
+        const finalSelect = fieldMenu.querySelector('select');
+        const finalButton = fieldMenu.querySelector('.custom-select-toggle');
+        
+        // Now manually attach all event listeners like initCustomSelects does
+        function openMenu() {
+            // Close any other open menus first
+            document.querySelectorAll('.field.menu.open').forEach(openField => {
+                if (openField !== fieldMenu) {
+                    const openButton = openField.querySelector('.custom-select-toggle');
+                    openField.classList.remove('open');
+                    if (openButton) openButton.setAttribute('aria-expanded', 'false');
+                }
+            });
+            
+            fieldMenu.classList.add('open');
+            finalButton.setAttribute('aria-expanded', 'true');
+        }
+        
+        function closeMenu() {
+            fieldMenu.classList.remove('open');
+            finalButton.setAttribute('aria-expanded', 'false');
+        }
+        
+        function setOption(optionEl) {
+            const value = optionEl.dataset.option;
+            const text = optionEl.querySelector('h3')?.textContent || optionEl.textContent;
+            
+            finalSelect.value = value;
+            finalSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            
+            finalButton.textContent = text;
+            
+            finalMenuItems.forEach(el => el.classList.remove('selected'));
+            optionEl.classList.add('selected');
+            
+            closeMenu();
+        }
+        
+        // Attach button click handler
+        finalButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (fieldMenu.classList.contains('open')) {
+                closeMenu();
+            } else {
+                openMenu();
+            }
+        });
+        
+        // Attach button keyboard handler
+        finalButton.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openMenu();
+            }
+        });
+        
+        // Attach menu item click handlers
+        finalMenuItems.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setOption(option);
+            });
+            
+            option.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setOption(option);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const next = option.nextElementSibling;
+                    if (next) next.focus();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prev = option.previousElementSibling;
+                    if (prev) prev.focus();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeMenu();
+                }
+            });
+        });
+        
+        // Prevent clicks on menu from closing modal
+        menu.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+        
+        // Set up outside click handler
+        const handleOutsideClick = (e) => {
+            const target = e.target;
+            const isInteractiveElement = target.tagName === 'INPUT' || 
+                                        target.tagName === 'TEXTAREA' || 
+                                        target.tagName === 'SELECT' ||
+                                        target.isContentEditable ||
+                                        target.closest('input, textarea, select, [contenteditable]');
+            
+            if (isInteractiveElement) {
+                return;
+            }
+            
+            if (fieldMenu.classList.contains('open') && !fieldMenu.contains(target)) {
+                const modal = fieldMenu.closest('.modal');
+                if (modal && target === modal) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    return;
+                }
+                closeMenu();
+            }
+        };
+        
+        // Remove old handler if exists
+        if (fieldMenu._outsideClickHandler) {
+            document.removeEventListener('click', fieldMenu._outsideClickHandler);
+        }
+        
+        // Store and attach new handler
+        fieldMenu._outsideClickHandler = handleOutsideClick;
+        document.addEventListener('click', handleOutsideClick, false);
+        
+        // Mark as initialized
+        fieldMenu.setAttribute('data-initialized', 'true');
+        
+        // Update button text
+        const selectedOption = finalSelect.options[finalSelect.selectedIndex];
+        if (selectedOption && selectedOption.value === '') {
+            finalButton.textContent = 'Select Category';
+        }
     }
 }
 
@@ -2929,7 +3466,7 @@ function editLabTest(testId, testData) {
         '<label class="form-label">Test Type</label>' +
         '<section class="field menu" style="min-width: 100%;">' +
         '<div class="control">' +
-        '<select class="form-select d-none" name="test_type" required onchange="updateEditTestCategories(this.value)">' +
+        '<select class="form-select d-none" name="test_type" required id="editTestTypeSelect">' +
         '<option value="laboratory"' + (testData.test_type === 'laboratory' ? ' selected' : '') + '>Laboratory Test</option>' +
         '<option value="radiology"' + (testData.test_type === 'radiology' ? ' selected' : '') + '>Radiology</option>' +
         '</select>' +
@@ -2972,9 +3509,9 @@ function editLabTest(testId, testData) {
         '</select>' +
         '<button type="button" class="custom-select-toggle" aria-expanded="false">' + (testData.priority === 'normal' ? 'Normal' : (testData.priority === 'high' ? 'High' : (testData.priority === 'urgent' ? 'Urgent' : 'Normal'))) + '</button>' +
         '<menu>' +
-        '<li data-option="normal" tabindex="0" role="button" ' + (testData.priority === 'normal' ? 'class="selected"' : '') + '><i class="bi-flag fs-5"></i><h3>Normal</h3></li>' +
-        '<li data-option="high" tabindex="0" role="button" ' + (testData.priority === 'high' ? 'class="selected"' : '') + '><i class="bi-flag fs-5"></i><h3>High</h3></li>' +
-        '<li data-option="urgent" tabindex="0" role="button" ' + (testData.priority === 'urgent' ? 'class="selected"' : '') + '><i class="bi-flag fs-5"></i><h3>Urgent</h3></li>' +
+        '<li data-option="normal" tabindex="0" role="button" ' + (testData.priority === 'normal' ? 'class="selected"' : '') + '><i class="bi-flag fs-5" style="color: dodgerblue !important;"></i><h3 style="color: dodgerblue !important;">Normal</h3></li>' +
+        '<li data-option="high" tabindex="0" role="button" ' + (testData.priority === 'high' ? 'class="selected"' : '') + '><i class="bi-flag fs-5" style="color: orange !important;"></i><h3 style="color: orange !important;">High</h3></li>' +
+        '<li data-option="urgent" tabindex="0" role="button" ' + (testData.priority === 'urgent' ? 'class="selected"' : '') + '><i class="bi-flag fs-5" style="color: red !important;"></i><h3 style="color: red !important;">Urgent</h3></li>' +
         '</menu>' +
         '</div>' +
         '</section>' +
@@ -3031,15 +3568,54 @@ function editLabTest(testId, testData) {
         '</div>';
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('editLabTestModal'));
-    modal.show();
+    const editModalElement = document.getElementById('editLabTestModal');
+    const modal = new bootstrap.Modal(editModalElement);
     
-    // Initialize custom selects
-    setTimeout(() => {
-        initCustomSelects();
-        // Initialize categories for the current test type
-        updateEditTestCategories(testData.test_type);
-    }, 100);
+    // Attach status change listener immediately
+    const statusSelect = editModalElement.querySelector('select[name="status"]');
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            const resultsSection = document.getElementById('editResultsSection');
+            if (this.value === 'completed') {
+                resultsSection.style.display = 'block';
+            } else {
+                resultsSection.style.display = 'none';
+            }
+        });
+    }
+    
+    // Wait for modal to be shown before initializing custom selects
+    editModalElement.addEventListener('shown.bs.modal', function() {
+        setTimeout(() => {
+            // First, populate categories for the current test type BEFORE initializing custom selects
+            if (testData.test_type) {
+                updateEditTestCategories(testData.test_type);
+            }
+            
+            // Then initialize custom selects
+            setTimeout(() => {
+                initCustomSelects();
+                
+                // Attach test type change listener AFTER custom selects are initialized
+                const testTypeSelect = editModalElement.querySelector('select[name="test_type"]');
+                if (testTypeSelect) {
+                    // Check if listener already attached to avoid duplicates
+                    if (!testTypeSelect._testTypeChangeHandler) {
+                        const handleEditTestTypeChange = function() {
+                            const testType = this.value;
+                            if (testType) {
+                                updateEditTestCategories(testType);
+                            }
+                        };
+                        testTypeSelect.addEventListener('change', handleEditTestTypeChange);
+                        testTypeSelect._testTypeChangeHandler = handleEditTestTypeChange;
+                    }
+                }
+            }, 50);
+        }, 100);
+    });
+    
+    modal.show();
     
     // Handle form submission
     document.getElementById('editLabTestForm').addEventListener('submit', function(e) {
@@ -3066,10 +3642,9 @@ function editLabTest(testId, testData) {
             if (data.success) {
                 modal.hide();
                 showSuccessMessage('Lab test updated successfully');
-                // Add a longer timeout and force reload without cache
                 setTimeout(() => {
-                    window.location.href = window.location.href + '?t=' + Date.now();
-                }, 1500);
+                    reloadLabTests();
+                }, 300);
             } else {
                 showErrorMessage('Error: ' + (data.message || 'Failed to update lab test'));
             }
@@ -3087,16 +3662,42 @@ function editLabTest(testId, testData) {
 }
 
 function updateEditTestCategories(testType) {
+    if (!testType || testType === '') {
+        return;
+    }
+    
     const categorySelect = document.getElementById('editTestCategorySelect');
+    if (!categorySelect) {
+        return;
+    }
+    
     const fieldMenu = categorySelect.closest('.field.menu');
     const menu = fieldMenu ? fieldMenu.querySelector('menu') : null;
     const button = fieldMenu ? fieldMenu.querySelector('.custom-select-toggle') : null;
-    const currentValue = categorySelect.querySelector('option') ? categorySelect.querySelector('option').value : '';
     
-    categorySelect.innerHTML = '<option value="' + currentValue + '">' + (currentValue || 'Select Category') + '</option>';
+    // Get current value from the select (preserve existing selection)
+    const currentValue = categorySelect.value || '';
     
+    // Clear existing options
+    categorySelect.innerHTML = '<option value="">Select Category</option>';
+    
+    // Clear menu and add default option
     if (menu) {
-        menu.innerHTML = '<li data-option="' + currentValue + '" tabindex="0" role="button" class="selected"><i class="bi-tags fs-5"></i><h3>' + (currentValue || 'Select Category') + '</h3></li>';
+        menu.innerHTML = '';
+        const defaultLi = document.createElement('li');
+        defaultLi.setAttribute('data-option', '');
+        defaultLi.setAttribute('tabindex', '0');
+        defaultLi.setAttribute('role', 'button');
+        if (!currentValue) {
+            defaultLi.className = 'selected';
+        }
+        const defaultIcon = document.createElement('i');
+        defaultIcon.className = 'bi-tags fs-5';
+        defaultLi.appendChild(defaultIcon);
+        const defaultH3 = document.createElement('h3');
+        defaultH3.textContent = 'Select Category';
+        defaultLi.appendChild(defaultH3);
+        menu.appendChild(defaultLi);
     }
     
     let categories = [];
@@ -3111,31 +3712,52 @@ function updateEditTestCategories(testType) {
             'X-Ray', 'CT Scan', 'MRI', 'Ultrasound', 'Mammography',
             'Fluoroscopy', 'Nuclear Medicine', 'PET Scan', 'Angiography'
         ];
+    } else {
+        return;
     }
     
+    // Add ALL categories, including the current one
     categories.forEach(category => {
         const categoryValue = category.toLowerCase().replace(/\s+/g, '_');
-        if (categoryValue !== currentValue) {
-            const option = document.createElement('option');
-            option.value = categoryValue;
-            option.textContent = category;
-            categorySelect.appendChild(option);
-            
-            if (menu) {
-                const li = document.createElement('li');
-                li.setAttribute('data-option', categoryValue);
-                li.setAttribute('tabindex', '0');
-                li.setAttribute('role', 'button');
-                const icon = document.createElement('i');
-                icon.className = 'bi-tags fs-5';
-                li.appendChild(icon);
-                const h3 = document.createElement('h3');
-                h3.textContent = category;
-                li.appendChild(h3);
-                menu.appendChild(li);
+        const option = document.createElement('option');
+        option.value = categoryValue;
+        option.textContent = category;
+        if (categoryValue === currentValue) {
+            option.selected = true;
+        }
+        categorySelect.appendChild(option);
+        
+        if (menu) {
+            const li = document.createElement('li');
+            li.setAttribute('data-option', categoryValue);
+            li.setAttribute('tabindex', '0');
+            li.setAttribute('role', 'button');
+            if (categoryValue === currentValue) {
+                li.className = 'selected';
+                const defaultLi = menu.querySelector('li[data-option=""]');
+                if (defaultLi) {
+                    defaultLi.classList.remove('selected');
+                }
             }
+            const icon = document.createElement('i');
+            icon.className = 'bi-tags fs-5';
+            li.appendChild(icon);
+            const h3 = document.createElement('h3');
+            h3.textContent = category;
+            li.appendChild(h3);
+            menu.appendChild(li);
         }
     });
+    
+    // Update button text to show current selection
+    if (button && currentValue) {
+        const selectedCategory = categories.find(cat => cat.toLowerCase().replace(/\s+/g, '_') === currentValue);
+        if (selectedCategory) {
+            button.textContent = selectedCategory;
+        }
+    } else if (button) {
+        button.textContent = 'Select Category';
+    }
     
     // Remove initialization flag to allow re-initialization
     if (fieldMenu) {
@@ -3176,7 +3798,9 @@ function deleteLabTest(testId) {
             .then(data => {
                 if (data.success) {
                     showSuccessMessage('Lab test deleted successfully');
-                    setTimeout(() => location.reload(), 1000);
+                    setTimeout(() => {
+                        reloadLabTests();
+                    }, 300);
                 } else {
                     showErrorMessage('Error: ' + (data.message || 'Failed to delete lab test'));
                 }
@@ -4239,12 +4863,15 @@ function reloadMedications() {
                             <div class="prescription-card p-3 mb-3" data-medication-id="${med.id}" data-drug-name="${escapeHtml(med.drug_name)}">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                                    <h6 class="text-primary mb-0" onclick="showDrugPopoverFromName('${escapeHtml(med.drug_name).replace(/'/g, "\\'")}', event)" style="cursor: pointer;">${escapeHtml(med.drug_name)}</h6>
+                                    <h6 class="text-primary mb-0" onclick="showDrugPopoverFromName('${escapeHtml(med.drug_name).replace(/'/g, "\\'")}', event, 'card', ${med.id})" style="cursor: pointer;">${escapeHtml(med.drug_name)}</h6>
                                         ${priceBadge}
                                     </div>
                                     <div class="btn-group btn-group-sm" role="group">
                                         <button class="btn btn-outline-primary" onclick="event.stopPropagation(); editMedication(${med.id}, '${escapeHtml(med.drug_name).replace(/'/g, "\\'")}', '${escapeHtml(med.notes || '').replace(/'/g, "\\'")}')" title="Edit Medication">
                                             <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-outline-warning" onclick="event.stopPropagation(); showDrugPopoverFromName('${escapeHtml(med.drug_name).replace(/'/g, "\\'")}', event, 'card', ${med.id})" title="Replace/Alternative">
+                                            <i class="bi bi-arrow-repeat"></i>
                                         </button>
                                         <button class="btn btn-outline-danger" onclick="event.stopPropagation(); deleteMedication(${med.id})" title="Delete Medication">
                                             <i class="bi bi-trash"></i>
@@ -4286,6 +4913,146 @@ function reloadMedications() {
         });
 }
 
+function reloadLabTests() {
+    const appointmentId = window.APPOINTMENT_CONFIG.appointmentId;
+    if (!appointmentId) {
+        console.error('No appointment ID found');
+        return;
+    }
+    
+    fetch(`/api/lab-tests/appointment/${appointmentId}`, {
+        credentials: 'same-origin',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.lab_tests !== undefined) {
+                const container = document.getElementById('labTestsContainer');
+                if (!container) {
+                    console.error('labTestsContainer not found');
+                    return;
+                }
+    
+                if (data.lab_tests.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center">
+                            <i class="bi bi-clipboard-data text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2 mb-0">No lab tests or radiology ordered</p>
+                        </div>
+                    `;
+                } else {
+                    let html = '';
+                    data.lab_tests.forEach(test => {
+                        const statusBadgeClass = test.status === 'completed' ? 'success' : (test.status === 'pending' ? 'warning' : 'secondary');
+                        const priorityBadgeClass = test.priority === 'urgent' ? 'danger' : (test.priority === 'high' ? 'warning' : 'primary');
+                        const testIcon = test.test_type === 'radiology' ? 'camera-reels' : 'clipboard-data';
+                        const testTypeCapitalized = test.test_type.charAt(0).toUpperCase() + test.test_type.slice(1);
+                        const statusCapitalized = test.status.charAt(0).toUpperCase() + test.status.slice(1);
+                        const priorityCapitalized = test.priority ? test.priority.charAt(0).toUpperCase() + test.priority.slice(1) : '';
+                        
+                        const orderedDate = test.ordered_date ? formatDate(test.ordered_date) : '';
+                        const expectedDate = test.expected_date ? formatDate(test.expected_date) : '';
+                        
+                        const testDataJson = JSON.stringify(test).replace(/"/g, '&quot;');
+                        html += `
+                            <div class="prescription-card p-3 mb-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="text-primary mb-0">
+                                        <i class="bi bi-${testIcon} me-1"></i>
+                                        ${escapeHtml(test.test_name)}
+                                    </h6>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button class="btn btn-outline-primary edit-lab-test-btn" data-test-id="${test.id}" data-test-data="${testDataJson}" title="Edit Test">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-outline-success" onclick="printLabTest(${test.id})" title="Print Test">
+                                            <i class="bi bi-printer"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger" onclick="deleteLabTest(${test.id})" title="Delete Test">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <p class="mb-1">
+                                    <strong>Type:</strong> ${escapeHtml(testTypeCapitalized)}<br>
+                                    <strong>Status:</strong> 
+                                    <span class="badge bg-${statusBadgeClass}">
+                                        ${escapeHtml(statusCapitalized)}
+                                    </span><br>
+                                    ${test.priority ? `
+                                        <strong>Priority:</strong> 
+                                        <span class="badge bg-${priorityBadgeClass}">
+                                            ${escapeHtml(priorityCapitalized)}
+                                        </span><br>
+                                    ` : ''}
+                                    ${orderedDate ? `
+                                        <strong>Ordered Date:</strong> ${orderedDate}<br>
+                                    ` : ''}
+                                    ${expectedDate ? `
+                                        <strong>Expected Date:</strong> ${expectedDate}
+                                    ` : ''}
+                                </p>
+                                ${test.notes ? `
+                                    <p class="text-muted mb-1">
+                                        <small><strong>Notes:</strong> ${escapeHtml(test.notes)}</small>
+                                    </p>
+                                ` : ''}
+                                ${test.results ? `
+                                    <p class="text-success mb-0">
+                                        <small><strong>Results:</strong> ${escapeHtml(test.results)}</small>
+                                    </p>
+                                ` : ''}
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                    
+                    // Attach event listeners for edit buttons
+                    container.querySelectorAll('.edit-lab-test-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const testId = this.getAttribute('data-test-id');
+                            const testDataJson = this.getAttribute('data-test-data');
+                            try {
+                                const testData = JSON.parse(testDataJson);
+                                editLabTest(testId, testData);
+                            } catch (e) {
+                                console.error('Error parsing test data:', e);
+                                showErrorMessage('Error loading test data');
+                            }
+                        });
+                    });
+                }
+                
+                // Update print button visibility
+                const printBtn = document.querySelector('[onclick*="printLabTests"]');
+                if (printBtn) {
+                    printBtn.style.display = data.lab_tests.length > 0 ? '' : 'none';
+                }
+            } else {
+                console.error('Invalid response format:', data);
+            }
+        })
+        .catch(error => {
+            console.error('Error reloading lab tests:', error);
+            showErrorMessage('Error loading lab tests');
+        });
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+}
 
 function reloadGlasses() {
     const appointmentId = window.APPOINTMENT_CONFIG.appointmentId;
@@ -5194,9 +5961,262 @@ document.addEventListener('DOMContentLoaded', function() {
 let currentDrugPopover = null;
 let currentDrugPopoverOverlay = null;
 
-async function showDrugPopoverFromName(drugName, event) {
-    event.preventDefault();
-    event.stopPropagation();
+
+// Helper to render alternatives/similar drugs
+function renderPopoverAlternativesList(drugs, type, context, currentPrescriptionId) {
+    if (!drugs || drugs.length === 0) return '';
+    
+    return drugs.map(drug => {
+        let actionButtons = '';
+        const drugNameEscaped = escapeHtml(drug.drug_name).replace(/'/g, "\\'");
+        
+        if (context === 'modal') {
+            actionButtons = `
+                <button class="btn btn-sm btn-primary" onclick="selectDrugFromPopover('${drugNameEscaped}')">
+                    <i class="bi bi-check-lg me-1"></i>Select
+                </button>
+            `;
+        } else if (context === 'card') {
+            actionButtons = `
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-warning" onclick="replaceDrugFromPopover(${currentPrescriptionId}, '${drugNameEscaped}')" title="Replace current drug with this one">
+                        <i class="bi bi-arrow-repeat me-1"></i>Replace
+                    </button>
+                    <button class="btn btn-sm btn-success" onclick="addDrugFromPopover('${drugNameEscaped}')" title="Add this drug as a new prescription">
+                        <i class="bi bi-plus-lg me-1"></i>Add
+                    </button>
+                </div>
+            `;
+        }
+        
+        return `
+            <div class="forum-drug-popover-item" style="display: block; margin-bottom: 0.5rem; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <div class="fw-bold">${escapeHtml(drug.drug_name)}</div>
+                        <small class="text-muted d-block">${escapeHtml(drug.Company || '')}</small>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-success small fw-medium">
+                        ${drug.price ? 'EGP ' + escapeHtml(drug.price) : ''}
+                    </div>
+                    ${actionButtons}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Action Handlers
+function selectDrugFromPopover(drugName) {
+    const input = document.getElementById('drugNameInput');
+    const suggestions = document.getElementById('drugSuggestions');
+    
+    if (input) {
+        input.value = drugName;
+        // Trigger input event to update label float if needed
+        input.dispatchEvent(new Event('input'));
+    } else {
+        console.error('drugNameInput not found');
+        // If we are in this state, try to open the modal first? 
+        // Or show error message
+        showErrorMessage('Error: Could not select drug (input not found)');
+    }
+    
+    if (suggestions) {
+        suggestions.style.display = 'none';
+    }
+    
+    closeDrugPopover();
+}
+
+/**
+ * Show a custom confirmation modal
+ * @param {string} title - Modal title
+ * @param {string} message - Modal message (HTML supported)
+ * @param {Function} onConfirm - Callback function when confirmed
+ */
+/**
+ * Show a custom confirmation modal
+ * @param {string} title - Modal title
+ * @param {string} message - Modal message (HTML supported)
+ * @param {Function} onConfirm - Callback function when confirmed
+ * @param {Function} [onCancel] - Optional callback function when cancelled
+ */
+function showConfirmationModal(title, message, onConfirm, onCancel) {
+    // Check if modal container exists
+    let modalEl = document.getElementById('customConfirmationModal');
+    
+    // Create modal if it doesn't exist
+    if (!modalEl) {
+        const modalHtml = `
+            <div class="modal fade" id="customConfirmationModal" tabindex="-1" aria-hidden="true" style="z-index: 10600;">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="customConfirmationModalLabel">Confirmation</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p id="customConfirmationModalMessage"></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="customConfirmationModalCancelBtn" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="customConfirmationModalConfirmBtn">Confirm</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        modalEl = document.getElementById('customConfirmationModal');
+    }
+    
+    // Set content
+    document.getElementById('customConfirmationModalLabel').textContent = title;
+    document.getElementById('customConfirmationModalMessage').innerHTML = message;
+    
+    // Setup confirm button
+    const confirmBtn = document.getElementById('customConfirmationModalConfirmBtn');
+    
+    // Clean up old listeners by cloning
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    
+    // Setup cancel button/cleanup listeners
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+    
+    // Helper to handle close/cancel
+    const handleCancel = () => {
+        if (typeof onCancel === 'function') {
+            onCancel();
+        }
+    };
+
+    // We can't easily replace listeners on the X button or Cancel button if they are just data-bs-dismiss
+    // But we can listen for the modal hidden event.
+    // However, the hidden event fires on confirm too.
+    // So we'll use a flag.
+    let confirmed = false;
+
+    newConfirmBtn.addEventListener('click', () => {
+        confirmed = true;
+        modalInstance.hide();
+        if (typeof onConfirm === 'function') {
+            onConfirm();
+        }
+    });
+
+    // Listen for hidden event *once* to trigger onCancel if not confirmed
+    const hiddenHandler = () => {
+        if (!confirmed) {
+            handleCancel();
+        }
+        modalEl.removeEventListener('hidden.bs.modal', hiddenHandler);
+    };
+    modalEl.addEventListener('hidden.bs.modal', hiddenHandler);
+    
+    // Show modal
+    modalInstance.show();
+}
+
+function replaceDrugFromPopover(oldPrescriptionId, newDrugName) {
+    // Hide the popover temporarily
+    if (currentDrugPopoverOverlay) {
+        currentDrugPopoverOverlay.style.display = 'none';
+        if (currentDrugPopover) currentDrugPopover.style.display = 'none';
+    }
+
+    showConfirmationModal(
+        'Replace Medication',
+        'Are you sure you want to replace this medication? This action cannot be undone.',
+        () => {
+            // CONFIRMED: Proceed with replacement
+            
+            // First delete the old one
+            fetch(`/api/prescriptions/meds/${oldPrescriptionId}`, {
+                method: 'DELETE',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // Then add the new one
+                    const formData = new FormData();
+                    formData.append('appointment_id', window.APPOINTMENT_CONFIG.appointmentId);
+                    formData.append('drug_name', newDrugName);
+                    
+                    return fetch('/api/prescriptions/meds', {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        body: formData
+                    });
+                }
+                throw new Error(data.message || 'Failed to delete old prescription');
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // Success: Close popover deeply (cleanup)
+                    closeDrugPopover();
+                    reloadMedications();
+                    showSuccessMessage('Medication replaced successfully');
+                } else {
+                    throw new Error(data.message || 'Failed to add new prescription');
+                }
+            })
+            .catch(err => {
+                // Error: Restore popover
+                if (currentDrugPopoverOverlay) {
+                    currentDrugPopoverOverlay.style.display = 'block';
+                    if (currentDrugPopover) currentDrugPopover.style.display = 'block';
+                }
+                console.error('Replace error:', err);
+                showErrorMessage('Error replacing medication: ' + err.message);
+            });
+        },
+        () => {
+            // CANCELLED: Restore popover
+            if (currentDrugPopoverOverlay) {
+                currentDrugPopoverOverlay.style.display = 'block';
+                if (currentDrugPopover) currentDrugPopover.style.display = 'block';
+            }
+        }
+    );
+}
+
+function addDrugFromPopover(newDrugName) {
+    const formData = new FormData();
+    formData.append('appointment_id', window.APPOINTMENT_CONFIG.appointmentId);
+    formData.append('drug_name', newDrugName);
+    
+    fetch('/api/prescriptions/meds', {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            closeDrugPopover();
+            reloadMedications();
+            showSuccessMessage('Medication added successfully');
+        } else {
+            showErrorMessage('Error adding medication: ' + data.message);
+        }
+    })
+    .catch(err => {
+        console.error('Add error:', err);
+        showErrorMessage('Error adding medication');
+    });
+}
+
+async function showDrugPopoverFromName(drugName, event, context = 'modal', currentPrescriptionId = null) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
     
     // Close existing popover if any
     closeDrugPopover();
@@ -5225,12 +6245,14 @@ async function showDrugPopoverFromName(drugName, event) {
         </div>
     `;
     
-    // Position popover in center of viewport
+    // Position popover
     popover.style.position = 'fixed';
     popover.style.left = '50%';
     popover.style.top = '50%';
     popover.style.transform = 'translate(-50%, -50%)';
     popover.style.zIndex = '10000000';
+    popover.style.maxHeight = '80vh';
+    popover.style.overflowY = 'auto';
     
     document.body.appendChild(popover);
     currentDrugPopover = popover;
@@ -5241,22 +6263,36 @@ async function showDrugPopoverFromName(drugName, event) {
         const searchData = await searchResponse.json();
         
         if (searchData.drugs && searchData.drugs.length > 0) {
-            // Find exact match or first match
             const drug = searchData.drugs.find(d => d.drug_name === drugName) || searchData.drugs[0];
             const drugId = drug.ID;
             
-            // Fetch drug details using drug ID
+            // Fetch drug details
             const response = await fetch(`/api/getDrugDetails?id=${drugId}`);
             const data = await response.json();
             
             if (data.drug) {
                 const drugDetails = data.drug;
+                const exactAlternatives = data.exact_alternatives || [];
+                const similarProducts = data.similar_products || [];
+                
+                // Add Context Badge
+                let contextBadge = '';
+                if (context === 'modal') {
+                    contextBadge = '<span class="badge bg-primary ms-2" style="font-size: 0.7em;">New Prescription</span>';
+                } else if (context === 'card') {
+                    contextBadge = '<span class="badge bg-info text-dark ms-2" style="font-size: 0.7em;">Current Prescription</span>';
+                }
+
                 popover.innerHTML = `
                     <div class="forum-drug-popover-header">
-                        <h3 class="forum-drug-popover-title">${escapeHtml(drugDetails.drug_name || drugName)}</h3>
+                        <div class="d-flex align-items-center">
+                            <h3 class="forum-drug-popover-title">${escapeHtml(drugDetails.drug_name || drugName)}</h3>
+                            ${contextBadge}
+                        </div>
                         <button class="forum-drug-popover-close" onclick="closeDrugPopover()">&times;</button>
                     </div>
                     <div class="forum-drug-popover-body">
+                        <!-- Main Details -->
                         ${drugDetails.Company ? `
                             <div class="forum-drug-popover-item">
                                 <div class="forum-drug-popover-label">Company</div>
@@ -5287,49 +6323,61 @@ async function showDrugPopoverFromName(drugName, event) {
                                 <div class="forum-drug-popover-value">${escapeHtml(drugDetails.SRDE)}</div>
                             </div>
                         ` : ''}
+                        
+                        <!-- Alternatives Section -->
+                        ${(exactAlternatives.length > 0 || similarProducts.length > 0) ? '<hr class="my-3">' : ''}
+                        
+                        ${exactAlternatives.length > 0 ? `
+                            <div class="mb-3">
+                                <h6 class="text-success mb-2">
+                                    <i class="bi bi-check-circle me-1"></i>Alternative Drugs
+                                    <small class="text-muted d-block fw-normal" style="font-size: 0.75em;">Same use & route, different ingredient</small>
+                                </h6>
+                                ${renderPopoverAlternativesList(exactAlternatives, 'exact', context, currentPrescriptionId)}
+                            </div>
+                        ` : ''}
+                        
+                        ${similarProducts.length > 0 ? `
+                            <div>
+                                <h6 class="text-info mb-2">
+                                    <i class="bi bi-capsule me-1"></i>Similar Drugs
+                                    <small class="text-muted d-block fw-normal" style="font-size: 0.75em;">Same ingredient & route</small>
+                                </h6>
+                                ${renderPopoverAlternativesList(similarProducts, 'similar', context, currentPrescriptionId)}
+                            </div>
+                        ` : ''}
+                        
+                        ${(exactAlternatives.length === 0 && similarProducts.length === 0) ? `
+                            <div class="text-center text-muted py-2">
+                                <small>No alternatives found</small>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             } else {
-                popover.innerHTML = `
-                    <div class="forum-drug-popover-header">
-                        <h3 class="forum-drug-popover-title">${escapeHtml(drugName)}</h3>
-                        <button class="forum-drug-popover-close" onclick="closeDrugPopover()">&times;</button>
-                    </div>
-                    <div class="forum-drug-popover-body">
-                        <div class="forum-drug-popover-item">
-                            <div class="forum-drug-popover-value" style="color: var(--muted);">Drug information not available</div>
-                        </div>
-                    </div>
-                `;
+                popover.innerHTML = getErrorPopoverContent(drugName, 'Drug information not available');
             }
         } else {
-            // Drug not found in database
-            popover.innerHTML = `
-                <div class="forum-drug-popover-header">
-                    <h3 class="forum-drug-popover-title">${escapeHtml(drugName)}</h3>
-                    <button class="forum-drug-popover-close" onclick="closeDrugPopover()">&times;</button>
-                </div>
-                <div class="forum-drug-popover-body">
-                    <div class="forum-drug-popover-item">
-                        <div class="forum-drug-popover-value" style="color: var(--muted);">Drug not found in database</div>
-                    </div>
-                </div>
-            `;
+            popover.innerHTML = getErrorPopoverContent(drugName, 'Drug not found in database');
         }
     } catch (error) {
-        console.error('Error fetching drug details:', error);
-        popover.innerHTML = `
-            <div class="forum-drug-popover-header">
-                <h3 class="forum-drug-popover-title">${escapeHtml(drugName)}</h3>
-                <button class="forum-drug-popover-close" onclick="closeDrugPopover()">&times;</button>
-            </div>
-            <div class="forum-drug-popover-body">
-                <div class="forum-drug-popover-item">
-                    <div class="forum-drug-popover-value" style="color: var(--danger);">Error loading drug information</div>
-                </div>
-            </div>
-        `;
+        console.error('Error in popover:', error);
+        popover.innerHTML = getErrorPopoverContent(drugName, 'Error loading details');
     }
+}
+
+function getErrorPopoverContent(drugName, message) {
+    return `
+        <div class="forum-drug-popover-header">
+            <h3 class="forum-drug-popover-title">${escapeHtml(drugName)}</h3>
+            <button class="forum-drug-popover-close" onclick="closeDrugPopover()">&times;</button>
+        </div>
+        <div class="forum-drug-popover-body">
+            <div class="forum-drug-popover-item">
+                <div class="forum-drug-popover-value" style="color: var(--muted);">${message}</div>
+            </div>
+        </div>
+    `;
 }
 
 function closeDrugPopover() {
@@ -5915,7 +6963,8 @@ function initCustomSelects() {
             const text = optionEl.querySelector('h3')?.textContent || optionEl.textContent;
 
             select.value = value;
-            select.dispatchEvent(new Event('change'));
+            // Dispatch change event with bubbles: true to ensure it propagates
+            select.dispatchEvent(new Event('change', { bubbles: true }));
 
             button.textContent = text;
 
@@ -6381,3 +7430,46 @@ function updateTimeSelectCustomMenu(selectElement, text) {
         }, 50);
     }
 }
+
+// Fix modal z-index issues by moving them to body
+function fixAppointmentModalPlacement() {
+    // Look for any existing modals (though most are dynamic)
+    document.querySelectorAll('.modal').forEach(modal => {
+        if (modal.parentElement !== document.body) {
+            document.body.appendChild(modal);
+        }
+    });
+
+    // Validating dynamic modals are added to body is already handled in the codebase,
+    // but we can add a listener just in case other scripts add them incorrectly.
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length) {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType === 1 && node.classList && node.classList.contains('modal')) {
+                        if (node.parentElement !== document.body) {
+                            document.body.appendChild(node);
+                        }
+                    }
+                });
+            }
+        });
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// Call the fix on load
+document.addEventListener('DOMContentLoaded', fixAppointmentModalPlacement);
+
+// Initialize AI Chat Widget
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.APPOINTMENT_CONFIG && window.APPOINTMENT_CONFIG.appointmentId) {
+        if (typeof initAIChatWidget === 'function') {
+            initAIChatWidget(
+                window.APPOINTMENT_CONFIG.patientId, 
+                window.APPOINTMENT_CONFIG.appointmentId
+            );
+        }
+    }
+});

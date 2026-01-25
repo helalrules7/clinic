@@ -3910,3 +3910,242 @@ kbd[lang="ar"] {
     border-color: var(--warning);
     color: white !important;
 }
+
+/* ============================================
+   Cards View Styles
+   ============================================ */
+
+.patient-card {
+    transition: all 0.3s ease;
+    background: var(--bg);
+    border-color: var(--border) !important;
+}
+
+.patient-card.clickable {
+    cursor: pointer;
+}
+
+.patient-card.clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: var(--accent) !important;
+}
+
+.dark .patient-card.clickable:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.patient-card .card-body {
+    background: var(--bg);
+}
+
+.patient-card img {
+    transition: transform 0.3s ease;
+}
+
+.patient-card:hover img {
+    transform: scale(1.05);
+}
+
+.patient-card .badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    font-weight: 500;
+}
+
+/* Card Action Buttons - Icon Only */
+.card-action-btn {
+    background: none !important;
+    border: none !important;
+    padding: 0.5rem;
+    color: var(--text);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.card-action-btn:hover {
+    transform: scale(1.1);
+    opacity: 0.8;
+}
+
+.card-action-btn:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+/* View Action - Blue */
+.card-action-view {
+    color: #62B8F6 !important;
+}
+
+.card-action-view:hover {
+    color: #4A9FD9 !important;
+}
+
+.dark .card-action-view {
+    color: #62B8F6 !important;
+}
+
+.dark .card-action-view:hover {
+    color: #7BC5F8 !important;
+}
+
+/* Book Action - Green */
+.card-action-book {
+    color: #38D397 !important;
+}
+
+.card-action-book:hover {
+    color: #2BB87A !important;
+}
+
+.dark .card-action-book {
+    color: #38D397 !important;
+}
+
+.dark .card-action-book:hover {
+    color: #4FE0A8 !important;
+}
+
+/* Edit Action - Purple */
+.card-action-edit {
+    color: #8D80F3 !important;
+}
+
+.card-action-edit:hover {
+    color: #6B5DD9 !important;
+}
+
+.dark .card-action-edit {
+    color: #8D80F3 !important;
+}
+
+.dark .card-action-edit:hover {
+    color: #A99FF5 !important;
+}
+
+/* Move Action - Teal/Green */
+.card-action-move {
+    color: #38D397 !important;
+}
+
+.card-action-move:hover {
+    color: #2BB87A !important;
+}
+
+.dark .card-action-move {
+    color: #38D397 !important;
+}
+
+.dark .card-action-move:hover {
+    color: #4FE0A8 !important;
+}
+
+/* Delete Action - Red */
+.card-action-delete {
+    color: #EF4444 !important;
+}
+
+.card-action-delete:hover {
+    color: #DC2626 !important;
+}
+
+.dark .card-action-delete {
+    color: #EF4444 !important;
+}
+
+.dark .card-action-delete:hover {
+    color: #F87171 !important;
+}
+
+/* ============================================
+   Folders View Styles
+   ============================================ */
+
+.folder-card {
+    transition: all 0.3s ease;
+    background: var(--bg);
+    border-color: var(--border) !important;
+}
+
+.folder-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    border-color: var(--accent) !important;
+    background: var(--bg-alt);
+}
+
+.dark .folder-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.folder-card .card-body {
+    background: transparent;
+}
+
+.folder-card .dropdown-menu {
+    background: var(--bg);
+    border-color: var(--border);
+}
+
+.folder-card .dropdown-item {
+    color: var(--text);
+}
+
+.folder-card .dropdown-item:hover {
+    background-color: var(--bg-alt);
+    color: var(--accent);
+}
+
+/* View Mode Toggle Styles */
+#viewModeToggle,
+#viewModeToggleCards {
+    margin-right: 0.5rem;
+}
+
+#viewModeToggle .btn,
+#viewModeToggleCards .btn {
+    transition: all 0.3s ease;
+}
+
+#viewModeToggle .btn.active,
+#viewModeToggleCards .btn.active {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+#viewModeToggle .btn:not(.active):hover,
+#viewModeToggleCards .btn:not(.active):hover {
+    background-color: var(--bg-alt);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* Responsive View Mode Toggle */
+@media (max-width: 768px) {
+    #viewModeToggle,
+    #viewModeToggleCards {
+        order: -1;
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+        justify-content: center;
+    }
+    
+    #viewModeToggle .btn-group,
+    #viewModeToggleCards .btn-group {
+        width: 100%;
+        display: flex;
+    }
+    
+    #viewModeToggle .btn,
+    #viewModeToggleCards .btn {
+        flex: 1;
+    }
+}

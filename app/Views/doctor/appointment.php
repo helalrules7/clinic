@@ -175,33 +175,33 @@ if ($status === 'completed') {
 <div class="row mb-4">
     <div class="col-12">
         <div class="action-buttons-group" role="group">
-            <button type="button" class="btn btn-primary hide-on-mobile" onclick="editConsultation(<?= $appointment['id'] ?>)">
+            <button type="button" class="btn btn-action-edit hide-on-mobile" onclick="editConsultation(<?= $appointment['id'] ?>)">
                 <i class="bi bi-pencil me-1"></i>Edit Consultation
             </button>
-            <button type="button" class="btn btn-info hide-on-mobile" onclick="printReport(<?= $appointment['id'] ?>)">
+            <button type="button" class="btn btn-action-report hide-on-mobile" onclick="printReport(<?= $appointment['id'] ?>)">
                 <i class="bi bi-printer me-1"></i>Print Report
             </button>
-            <button type="button" class="btn btn-success hide-on-mobile" 
+            <button type="button" class="btn btn-action-followup hide-on-mobile" 
                     id="rescheduleFollowupBtn"
                     onclick="rescheduleFollowupAppointment(<?= $appointment['id'] ?>)"
                     <?= !empty($followupAppointment) ? 'disabled title="Follow-up appointment already scheduled"' : '' ?>>
                 <i class="bi bi-calendar-check me-1"></i>Schedule Followup
             </button>
-            <button type="button" class="btn btn-danger hide-on-mobile" 
+            <button type="button" class="btn btn-action-reschedule hide-on-mobile" 
                     onclick="rescheduleAppointment(<?= $appointment['id'] ?>)"
                     <?= $appointment['status'] === 'Completed' ? 'disabled title="Cannot reschedule completed appointments"' : '' ?>>
                 <i class="bi bi-calendar-plus me-1"></i>Reschedule
             </button>
-            <button type="button" class="btn btn-warning hide-on-mobile" onclick="openAlertModal(<?= $appointment['patient_id'] ?? 'null' ?>, <?= $appointment['id'] ?>)">
+            <button type="button" class="btn btn-action-alert hide-on-mobile" onclick="openAlertModal(<?= $appointment['patient_id'] ?? 'null' ?>, <?= $appointment['id'] ?>)">
                 <i class="bi bi-bell me-1"></i>Set Alert
             </button>
-            <button type="button" class="btn btn-outline-info hide-on-mobile" 
+            <button type="button" class="btn btn-action-history hide-on-mobile" 
                     id="appointmentHistoryBtn" 
                     data-patient-id="<?= $appointment['patient_id'] ?? 'null' ?>"
                     data-appointment-id="<?= $appointment['id'] ?>">
                 <i class="bi bi-clock-history me-1"></i>Appointment History
             </button>
-            <button type="button" class="btn btn-info hide-on-mobile" 
+            <button type="button" class="btn btn-action-dashboard hide-on-mobile" 
                     onclick="showUnifiedClinicalDashboardPopover(<?= $patient['id'] ?>)"
                     data-bs-toggle="tooltip" 
                     data-bs-placement="bottom" 
@@ -209,17 +209,17 @@ if ($status === 'completed') {
                 <i class="bi bi-clipboard-pulse me-1"></i>Clinical Dashboard
             </button>
             <?php if (!empty($medications)): ?>
-            <button type="button" class="btn btn-outline-warning hide-on-mobile" onclick="printPrescription(<?= $appointment['id'] ?>)">
+            <button type="button" class="btn btn-action-prescription hide-on-mobile" onclick="printPrescription(<?= $appointment['id'] ?>)">
                 <i class="bi bi-printer me-1"></i>Print Prescription
             </button>
             <?php endif; ?>
             <?php if (!empty($glasses)): ?>
-            <button type="button" class="btn btn-outline-info hide-on-mobile" onclick="printGlassesPrescription(<?= $appointment['id'] ?>)">
+            <button type="button" class="btn btn-action-glasses hide-on-mobile" onclick="printGlassesPrescription(<?= $appointment['id'] ?>)">
                 <i class="bi bi-eyeglasses me-1"></i>Print Glasses
             </button>
             <?php endif; ?>
             <?php if (!empty($labTests)): ?>
-            <button type="button" class="btn btn-outline-secondary hide-on-mobile" onclick="printLabTests(<?= $appointment['id'] ?>)">
+            <button type="button" class="btn btn-action-lab hide-on-mobile" onclick="printLabTests(<?= $appointment['id'] ?>)">
                 <i class="bi bi-clipboard-data me-1"></i>Print Lab Tests
             </button>
             <?php endif; ?>
@@ -781,10 +781,19 @@ if ($status === 'completed') {
                         <i class="bi bi-capsule me-2"></i>
                         Medications
                     </h5>
+                    <?php 
+                    $latestNote = !empty($consultationNotes) ? $consultationNotes[0] : null;
+                    $hasDiagnosis = !empty($latestNote['diagnosis']);
+                    ?>
                     <div class="btn-group btn-group-sm" role="group">
                         <?php if (!empty($medications)): ?>
                         <button class="btn btn-sm btn-outline-warning" onclick="printPrescription(<?= $appointment['id'] ?>)" title="Print Prescription">
                             <i class="bi bi-printer"></i>
+                        </button>
+                        <?php endif; ?>
+                        <?php if ($hasDiagnosis): ?>
+                        <button class="btn btn-sm btn-info" onclick="showPrescriptionSuggestions(<?= $appointment['id'] ?>, '<?= addslashes($latestNote['diagnosis']) ?>', '<?= addslashes($latestNote['chief_complaint'] ?? '') ?>')" title="Get prescription suggestions based on diagnosis">
+                            <i class="bi bi-lightbulb me-1"></i>Suggest
                         </button>
                         <?php endif; ?>
                         <button class="btn btn-sm btn-primary" onclick="addPrescription(<?= $appointment['id'] ?>)">
@@ -830,86 +839,6 @@ if ($status === 'completed') {
             </div>
         </div>
 
-        <!-- Lab Tests & Radiology -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="bi bi-clipboard-data me-2"></i>
-                        Lab Tests & Radiology
-                    </h5>
-                    <div class="btn-group btn-group-sm" role="group">
-                        <?php if (!empty($labTests)): ?>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="printLabTests(<?= $appointment['id'] ?>)" title="Print Lab Tests">
-                            <i class="bi bi-printer"></i>
-                        </button>
-                        <?php endif; ?>
-                        <button class="btn btn-sm btn-primary" onclick="addLabTest(<?= $appointment['id'] ?>)">
-                            <i class="bi bi-plus me-1"></i>Add Lab/Radiology
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <?php if (!empty($labTests)): ?>
-                    <?php foreach ($labTests as $test): ?>
-                    <div class="prescription-card p-3 mb-3">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h6 class="text-primary mb-0">
-                                <i class="bi bi-<?= $test['test_type'] === 'radiology' ? 'camera-reels' : 'clipboard-data' ?> me-1"></i>
-                                <?= htmlspecialchars($test['test_name']) ?>
-                            </h6>
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button class="btn btn-outline-primary" onclick="editLabTest(<?= $test['id'] ?>, <?= htmlspecialchars(json_encode($test), ENT_QUOTES) ?>)" title="Edit Test">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-outline-success" onclick="printLabTest(<?= $test['id'] ?>)" title="Print Test">
-                                    <i class="bi bi-printer"></i>
-                                </button>
-                                <button class="btn btn-outline-danger" onclick="deleteLabTest(<?= $test['id'] ?>)" title="Delete Test">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <p class="mb-1">
-                            <strong>Type:</strong> <?= ucfirst($test['test_type']) ?><br>
-                            <strong>Status:</strong> 
-                            <span class="badge bg-<?= $test['status'] === 'completed' ? 'success' : ($test['status'] === 'pending' ? 'warning' : 'secondary') ?>">
-                                <?= ucfirst($test['status']) ?>
-                            </span><br>
-                            <?php if (!empty($test['priority'])): ?>
-                                <strong>Priority:</strong> 
-                                <span class="badge bg-<?= $test['priority'] === 'urgent' ? 'danger' : ($test['priority'] === 'high' ? 'warning' : 'primary') ?>">
-                                    <?= ucfirst($test['priority']) ?>
-                                </span><br>
-                            <?php endif; ?>
-                            <?php if (!empty($test['ordered_date'])): ?>
-                                <strong>Ordered Date:</strong> <?= date('d/m/Y', strtotime($test['ordered_date'])) ?><br>
-                            <?php endif; ?>
-                            <?php if (!empty($test['expected_date'])): ?>
-                                <strong>Expected Date:</strong> <?= date('d/m/Y', strtotime($test['expected_date'])) ?>
-                            <?php endif; ?>
-                        </p>
-                        <?php if (!empty($test['notes'])): ?>
-                            <p class="text-muted mb-1">
-                                <small><strong>Notes:</strong> <?= htmlspecialchars($test['notes']) ?></small>
-                            </p>
-                        <?php endif; ?>
-                        <?php if (!empty($test['results'])): ?>
-                            <p class="text-success mb-0">
-                                <small><strong>Results:</strong> <?= htmlspecialchars($test['results']) ?></small>
-                            </p>
-                        <?php endif; ?>
-                    </div>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <div class="text-center">
-                        <i class="bi bi-clipboard-data text-muted" style="font-size: 2rem;"></i>
-                        <p class="text-muted mt-2 mb-0">No lab tests or radiology ordered</p>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </div>
 
         <!-- Glasses Prescriptions -->
         <div class="card mb-4">
@@ -1022,6 +951,7 @@ if ($status === 'completed') {
                 <?php endif; ?>
             </div>
         </div>
+
 
         <!-- Medical Attachments -->
         <div class="card mb-4">
@@ -1239,6 +1169,88 @@ if ($status === 'completed') {
             </div>
         </div>
 
+
+        <!-- Lab Tests & Radiology -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-data me-2"></i>
+                        Lab Tests & Radiology
+                    </h5>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <?php if (!empty($labTests)): ?>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="printLabTests(<?= $appointment['id'] ?>)" title="Print Lab Tests">
+                            <i class="bi bi-printer"></i>
+                        </button>
+                        <?php endif; ?>
+                        <button class="btn btn-sm btn-primary" onclick="addLabTest(<?= $appointment['id'] ?>)">
+                            <i class="bi bi-plus me-1"></i>Add Lab/Radiology
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body" id="labTestsContainer">
+                <?php if (!empty($labTests)): ?>
+                    <?php foreach ($labTests as $test): ?>
+                    <div class="prescription-card p-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="text-primary mb-0">
+                                <i class="bi bi-<?= $test['test_type'] === 'radiology' ? 'camera-reels' : 'clipboard-data' ?> me-1"></i>
+                                <?= htmlspecialchars($test['test_name']) ?>
+                            </h6>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-primary" onclick="editLabTest(<?= $test['id'] ?>, <?= htmlspecialchars(json_encode($test), ENT_QUOTES) ?>)" title="Edit Test">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-outline-success" onclick="printLabTest(<?= $test['id'] ?>)" title="Print Test">
+                                    <i class="bi bi-printer"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteLabTest(<?= $test['id'] ?>)" title="Delete Test">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="mb-1">
+                            <strong>Type:</strong> <?= ucfirst($test['test_type']) ?><br>
+                            <strong>Status:</strong> 
+                            <span class="badge bg-<?= $test['status'] === 'completed' ? 'success' : ($test['status'] === 'pending' ? 'warning' : 'secondary') ?>">
+                                <?= ucfirst($test['status']) ?>
+                            </span><br>
+                            <?php if (!empty($test['priority'])): ?>
+                                <strong>Priority:</strong> 
+                                <span class="badge bg-<?= $test['priority'] === 'urgent' ? 'danger' : ($test['priority'] === 'high' ? 'warning' : 'primary') ?>">
+                                    <?= ucfirst($test['priority']) ?>
+                                </span><br>
+                            <?php endif; ?>
+                            <?php if (!empty($test['ordered_date'])): ?>
+                                <strong>Ordered Date:</strong> <?= date('d/m/Y', strtotime($test['ordered_date'])) ?><br>
+                            <?php endif; ?>
+                            <?php if (!empty($test['expected_date'])): ?>
+                                <strong>Expected Date:</strong> <?= date('d/m/Y', strtotime($test['expected_date'])) ?>
+                            <?php endif; ?>
+                        </p>
+                        <?php if (!empty($test['notes'])): ?>
+                            <p class="text-muted mb-1">
+                                <small><strong>Notes:</strong> <?= htmlspecialchars($test['notes']) ?></small>
+                            </p>
+                        <?php endif; ?>
+                        <?php if (!empty($test['results'])): ?>
+                            <p class="text-success mb-0">
+                                <small><strong>Results:</strong> <?= htmlspecialchars($test['results']) ?></small>
+                            </p>
+                        <?php endif; ?>
+                    </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="text-center">
+                        <i class="bi bi-clipboard-data text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted mt-2 mb-0">No lab tests or radiology ordered</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -1373,17 +1385,13 @@ window.APPOINTMENT_CONFIG = {
     followupAppointmentTime: <?= !empty($followupAppointment) && isset($followupAppointment['start_time']) ? "'" . date('H:i:s', strtotime($followupAppointment['start_time'])) . "'" : 'null' ?>
 };
 </script>
+<link rel="stylesheet" href="/app/Views/doctor/assets/css/ai-chat-widget.css?v=<?= file_exists(__DIR__ . '/assets/css/ai-chat-widget.css') ? filemtime(__DIR__ . '/assets/css/ai-chat-widget.css') : time() ?>">
 <script src="/app/Views/doctor/assets/js/appointment.js?v=<?= file_exists(__DIR__ . '/assets/js/appointment.js') ? filemtime(__DIR__ . '/assets/js/appointment.js') : time() ?>"></script>
+<script src="/app/Views/doctor/assets/js/ai-chat-widget.js?v=<?= file_exists(__DIR__ . '/assets/js/ai-chat-widget.js') ? filemtime(__DIR__ . '/assets/js/ai-chat-widget.js') : time() ?>"></script>
 <script>
     // Medications are loaded with prices from API via reloadMedications() when needed
 </script>
 <style>
-    .modal-backdrop.show{
-        display: none !important;
-    }
-    body > div.modal-backdrop.fade.show{
-        display: none !important;
-    }
     .dark .modal-content{
     background: rgba(11, 18, 32, 0.8) !important;
     }

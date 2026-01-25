@@ -335,25 +335,8 @@ class AlertController
         
         $date = $_GET['date'] ?? date('Y-m-d');
         $time = $_GET['time'] ?? date('H:i:s');
-            
-            // Log for debugging
-            error_log("getActiveAlerts - userId: " . $user['id'] . ", doctorId: $doctorId, date: $date, time: $time");
         
         $alerts = $this->alertModel->getActiveAlertsForTime($doctorId, $date, $time);
-            
-            // Log results with more details
-            error_log("getActiveAlerts - Found " . count($alerts) . " alerts for doctorId: $doctorId");
-            if (count($alerts) == 0) {
-                // Check if there are alerts for this doctor on this date
-                $db = Database::getInstance()->getConnection();
-                $checkStmt = $db->prepare("SELECT COUNT(*) as count FROM alerts WHERE doctor_id = ? AND alert_date = ? AND is_active = 1 AND is_dismissed = 0");
-                $checkStmt->execute([$doctorId, $date]);
-                $checkResult = $checkStmt->fetch(\PDO::FETCH_ASSOC);
-                error_log("getActiveAlerts - Total active alerts for doctorId $doctorId on $date: " . ($checkResult['count'] ?? 0));
-            }
-            
-            // Log results
-            error_log("getActiveAlerts - Found " . count($alerts) . " alerts");
         
         // Send push notifications for new alerts
         if (!empty($alerts)) {
@@ -366,7 +349,6 @@ class AlertController
                     $_SESSION[$alertKey] = true;
                         } catch (\Exception $e) {
                             // Continue even if push notification fails
-                            error_log('Push notification error: ' . $e->getMessage());
                         }
                 }
             }
@@ -378,7 +360,6 @@ class AlertController
         ]);
         } catch (\Exception $e) {
             http_response_code(500);
-            error_log('Error in getActiveAlerts: ' . $e->getMessage());
             echo json_encode([
                 'success' => false,
                 'message' => 'System error. Please try again.',
@@ -734,11 +715,9 @@ class AlertController
             $stmt->execute([':user_id' => $userId]);
             $doctor = $stmt->fetch();
             $doctorId = $doctor ? $doctor['id'] : $userId;
-            error_log("getDoctorId - userId: $userId, doctorId: $doctorId");
             return $doctorId;
         } catch (\Exception $e) {
             // If doctors table doesn't exist or query fails, use user_id directly
-            error_log("getDoctorId - Exception: " . $e->getMessage() . ", using userId: $userId");
             return $userId;
         }
     }

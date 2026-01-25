@@ -207,17 +207,12 @@ class AlertModel
             // Extract HH:mm from normalized time for comparison (avoid PDO parameter binding issues)
             $timeParts = explode(':', $normalizedTime);
             if (count($timeParts) < 2) {
-                error_log("getActiveAlertsForTime - Invalid time format: $normalizedTime");
                 return [];
             }
             $timeHHmm = $timeParts[0] . ':' . $timeParts[1]; // Get HH:mm part
             if (empty($timeHHmm)) {
-                error_log("getActiveAlertsForTime - timeHHmm is empty!");
                 return [];
             }
-            
-            // Log query parameters for debugging
-            error_log("getActiveAlertsForTime - doctorId: $doctorId, date: $date, time: $normalizedTime, timeHHmm: $timeHHmm");
             
             // Use TIME() function for proper time comparison
             // Handle both HH:mm and HH:mm:ss formats in database
@@ -254,46 +249,10 @@ class AlertModel
             ]);
             
             $results = $stmt->fetchAll();
-            error_log("getActiveAlertsForTime - Query returned " . count($results) . " alerts");
-            
-            // Debug: Check if there are alerts for this doctor but different date/time
-            if (count($results) == 0) {
-                // Use direct string interpolation for debug query to avoid PDO parameter binding issues
-                $debugSql = "SELECT a.id, a.alert_time, a.alert_date, a.is_active, a.is_dismissed, a.doctor_id,
-                                    TIME_FORMAT(a.alert_time, '%H:%i') as alert_time_formatted,
-                                    '" . $this->db->quote($timeHHmm) . "' as current_time_formatted,
-                                    TIME_FORMAT(a.alert_time, '%H:%i') <= '" . $this->db->quote($timeHHmm) . "' as time_comparison_result
-                             FROM alerts a
-                             WHERE a.doctor_id = :doctor_id
-                             AND a.alert_date = :date
-                             AND a.is_active = 1
-                             AND a.is_dismissed = 0";
-                $debugStmt = $this->db->prepare($debugSql);
-                $debugStmt->execute([
-                    ':doctor_id' => $doctorId,
-                    ':date' => $date
-                ]);
-                $debugResults = $debugStmt->fetchAll(\PDO::FETCH_ASSOC);
-                error_log("getActiveAlertsForTime - Debug Results: " . json_encode($debugResults, JSON_UNESCAPED_UNICODE));
-                
-                // Also get all alerts for this doctor to see what's available
-                $allAlertsSql = "SELECT a.id, a.alert_time, a.alert_date, a.is_active, a.is_dismissed, a.doctor_id
-                                 FROM alerts a
-                                 WHERE a.doctor_id = :doctor_id
-                                 ORDER BY a.alert_date DESC, a.alert_time DESC
-                                 LIMIT 10";
-                $allAlertsStmt = $this->db->prepare($allAlertsSql);
-                $allAlertsStmt->execute([':doctor_id' => $doctorId]);
-                $allAlerts = $allAlertsStmt->fetchAll(\PDO::FETCH_ASSOC);
-                error_log("getActiveAlertsForTime - All alerts for doctor: " . json_encode($allAlerts, JSON_UNESCAPED_UNICODE));
-            }
             
             return $results;
         } catch (\Exception $e) {
-            // Log error with full details and return empty array
-            error_log('Error in getActiveAlertsForTime: ' . $e->getMessage());
-            error_log('Error details - doctorId: ' . ($doctorId ?? 'NULL') . ', date: ' . ($date ?? 'NULL') . ', time: ' . ($time ?? 'NULL') . ', timeHHmm: ' . (isset($timeHHmm) ? $timeHHmm : 'NOT SET'));
-            error_log('Error trace: ' . $e->getTraceAsString());
+            // Return empty array on error
             return [];
         }
     }

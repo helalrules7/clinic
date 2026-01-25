@@ -45,7 +45,7 @@ class ApiController
             $this->validator = new Validator();
             $this->pdo = Database::getInstance()->getConnection();
             $this->alertModel = new AlertModel();
-            
+
             // Suppress PHP errors for API responses
             ini_set('display_errors', 0);
             error_reporting(E_ERROR | E_PARSE);
@@ -58,7 +58,7 @@ class ApiController
     {
         try {
             // Enable debug logging to custom file
-            
+
             // Check authentication
             if (!$this->auth->check()) {
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
@@ -92,10 +92,10 @@ class ApiController
 
             // Get ALL appointments for the date (any doctor)
             $appointments = $this->getAllAppointmentsForDate($date);
-            
+
             // Get available time slots (based on working hours only)
             $availableSlots = $this->getAvailableTimeSlotsGlobal($date);
-            
+
             // Get unavailable slots (outside working hours only)
             $unavailableSlots = $this->getUnavailableSlotsGlobal($date);
 
@@ -195,7 +195,7 @@ class ApiController
                 try {
                     // Check if user has disabled notifications for appointments
                     $dontCreateNotification = $this->shouldSkipNotification($user['id']);
-                    
+
                     if (!$dontCreateNotification) {
                         $patientName = trim($appointment['first_name'] . ' ' . $appointment['last_name']);
                         \App\Controllers\NotificationController::create(
@@ -245,7 +245,7 @@ class ApiController
             }
 
             $appointment = $this->getAppointmentDetails($id);
-            
+
             if (!$appointment) {
                 return $this->jsonResponse(['error' => 'Appointment not found'], 404);
             }
@@ -268,7 +268,7 @@ class ApiController
             }
 
             $followup = $this->getFollowupAppointmentData($id);
-            
+
             if (!$followup) {
                 return $this->jsonResponse([
                     'ok' => true,
@@ -295,7 +295,7 @@ class ApiController
             }
 
             $original = $this->getOriginalAppointmentData($id);
-            
+
             if (!$original) {
                 return $this->jsonResponse([
                     'ok' => true,
@@ -334,11 +334,11 @@ class ApiController
             // Get JSON input
             $input = file_get_contents('php://input');
             $data = json_decode($input, true);
-            
+
             if (!$data) {
                 return $this->jsonResponse(['error' => 'Invalid JSON input'], 400);
             }
-            
+
             if (!$this->validator->validate($data, $rules)) {
                 return $this->jsonResponse([
                     'error' => 'Validation failed',
@@ -358,7 +358,7 @@ class ApiController
                 ");
                 $checkStmt->execute([$data['patient_id']]);
                 $checkResult = $checkStmt->fetch(\PDO::FETCH_ASSOC);
-                
+
                 if ($checkResult['count'] > 0) {
                     return $this->jsonResponse([
                         'error' => 'Patient already has an appointment scheduled for today',
@@ -368,33 +368,35 @@ class ApiController
             }
 
             // Check if time slot is available globally (any doctor can book any available slot)
-            if (!Helpers::isTimeSlotAvailableGlobal(
-                $data['date'], 
-                $data['start_time'], 
-                $this->calculateEndTime($data['start_time'])
-            )) {
+            if (
+                !Helpers::isTimeSlotAvailableGlobal(
+                    $data['date'],
+                    $data['start_time'],
+                    $this->calculateEndTime($data['start_time'])
+                )
+            ) {
                 return $this->jsonResponse(['error' => 'Time slot is not available'], 400);
             }
 
             // Create appointment
             $appointmentId = $this->createAppointmentRecord($data);
-            
+
             if ($appointmentId) {
                 // Create timeline event
                 $this->createTimelineEvent($data['patient_id'], $appointmentId, 'Booking', 'Appointment booked');
-                
+
                 // Create notification (check user preference first)
                 try {
                     $user = $this->auth->user();
                     if ($user) {
                         // Check if user has disabled notifications for appointments
                         $dontCreateNotification = $this->shouldSkipNotification($user['id']);
-                        
+
                         if (!$dontCreateNotification) {
                             $patientStmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
                             $patientStmt->execute([$data['patient_id']]);
                             $patient = $patientStmt->fetch(\PDO::FETCH_ASSOC);
-                            
+
                             if ($patient) {
                                 $patientName = trim($patient['first_name'] . ' ' . $patient['last_name']);
                                 \App\Controllers\NotificationController::create(
@@ -412,13 +414,13 @@ class ApiController
                 } catch (\Exception $e) {
                     // Continue even if notification creation fails
                 }
-                
+
                 // Create alert for appointment (check user preference first)
                 try {
                     // Get user settings to check if alerts should be created
                     $user = $this->auth->user();
                     $dontCreateAlert = false;
-                    
+
                     if ($user) {
                         $settingsStmt = $this->pdo->prepare("
                             SELECT setting_value 
@@ -427,32 +429,32 @@ class ApiController
                         ");
                         $settingsStmt->execute([$user['id']]);
                         $setting = $settingsStmt->fetch(\PDO::FETCH_ASSOC);
-                        
+
                         if ($setting && $setting['setting_value'] == '1') {
                             $dontCreateAlert = true;
                         }
                     }
-                    
+
                     // Only create alert if user hasn't disabled it
                     if (!$dontCreateAlert) {
                         // Get patient name
                         $patientStmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
                         $patientStmt->execute([$data['patient_id']]);
                         $patient = $patientStmt->fetch(\PDO::FETCH_ASSOC);
-                        
+
                         if ($patient) {
                             $patientName = trim($patient['first_name'] . ' ' . $patient['last_name']);
                             $alertMessage = "Appointment for patient ({$patientName})";
-                            
+
                             // Get doctor_id from appointment data
                             $doctorId = $data['doctor_id'];
-                            
+
                             // Set alert date/time to be 1 hour before appointment
                             $alertDateTime = new \DateTime($data['date'] . ' ' . $data['start_time']);
                             $alertDateTime->sub(new \DateInterval('PT1H'));
                             $alertDate = $alertDateTime->format('Y-m-d');
                             $alertTime = $alertDateTime->format('H:i:s');
-                            
+
                             $alertData = [
                                 'doctor_id' => $doctorId,
                                 'patient_id' => $data['patient_id'],
@@ -463,14 +465,14 @@ class ApiController
                                 'repeat_count' => 1,
                                 'repeat_interval' => 0
                             ];
-                            
+
                             $this->alertModel->create($alertData);
                         }
                     }
                 } catch (\Exception $e) {
                     // Continue even if alert creation fails
                 }
-                
+
                 return $this->jsonResponse([
                     'ok' => true,
                     'data' => ['id' => $appointmentId],
@@ -491,20 +493,20 @@ class ApiController
         if (ob_get_level() > 0) {
             ob_clean();
         }
-        
+
         try {
             if (!$this->auth->check()) {
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
 
             $user = $this->auth->user();
-            
+
             if (!$user) {
                 return $this->jsonResponse(['error' => 'User not found'], 401);
             }
-            
+
             $appointment = $this->getAppointmentDetails($id);
-            
+
             if (!$appointment) {
                 return $this->jsonResponse(['error' => 'Appointment not found'], 404);
             }
@@ -518,10 +520,10 @@ class ApiController
             $input = file_get_contents('php://input');
             $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
             $data = [];
-            
+
             // Remove charset if present (e.g., "application/json; charset=utf-8")
             $contentType = trim(explode(';', $contentType)[0]);
-            
+
             if ($contentType === 'application/json') {
                 $data = json_decode($input, true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
@@ -537,40 +539,40 @@ class ApiController
                     $data = $_POST;
                 }
             }
-            
+
             // Validate data is not empty
             if (empty($data)) {
                 return $this->jsonResponse(['error' => 'No data provided'], 400);
             }
-            
+
             // Log received data for debugging (remove in production)
-            
-            
+
+
             if (isset($data['status'])) {
                 $newStatus = $data['status'];
                 $reason = $data['reason'] ?? null;
-                
+
                 // Validate status
                 $validStatuses = ['Booked', 'CheckedIn', 'InProgress', 'Completed', 'Cancelled', 'NoShow', 'Rescheduled', 'Closed'];
                 if (!in_array($newStatus, $validStatuses)) {
                     return $this->jsonResponse(['error' => 'Invalid appointment status'], 400);
                 }
-                
+
                 $result = $this->updateAppointmentStatus($id, $newStatus, $reason);
 
-        if ($result) {
+                if ($result) {
                     $this->createTimelineEvent(
-                        $appointment['patient_id'], 
-                        $id, 
-                        'StatusChange', 
+                        $appointment['patient_id'],
+                        $id,
+                        'StatusChange',
                         "Status changed from {$appointment['status']} to {$newStatus}" . ($reason ? " - Reason: {$reason}" : '')
                     );
-                    
+
                     // Create notification for appointment status update (check user preference first)
                     try {
                         // Check if user has disabled notifications for appointments
                         $dontCreateNotification = $this->shouldSkipNotification($user['id']);
-                        
+
                         if (!$dontCreateNotification) {
                             $patientName = trim($appointment['first_name'] . ' ' . $appointment['last_name']);
                             $statusMessages = [
@@ -584,7 +586,7 @@ class ApiController
                                 'Closed' => 'Appointment closed'
                             ];
                             $statusMessage = $statusMessages[$newStatus] ?? "Status changed to {$newStatus}";
-                            
+
                             \App\Controllers\NotificationController::create(
                                 $user['id'],
                                 'appointment',
@@ -598,14 +600,14 @@ class ApiController
                     } catch (\Exception $e) {
                         // Continue even if notification creation fails
                     }
-                    
+
                     return $this->jsonResponse([
                         'ok' => true,
-                'success' => true,
+                        'success' => true,
                         'message' => 'Appointment status updated successfully',
                         'status' => $newStatus
-            ]);
-        } else {
+                    ]);
+                } else {
                     return $this->jsonResponse(['error' => 'Failed to update appointment status'], 500);
                 }
             }
@@ -627,7 +629,7 @@ class ApiController
             }
 
             $user = $this->auth->user();
-            
+
             // Validate input
             $rules = [
                 'patient_id' => 'required|integer',
@@ -655,15 +657,15 @@ class ApiController
 
             // Create payment
             $paymentId = $this->createPaymentRecord($data, $user['id'], $requiresApproval);
-            
+
             if ($paymentId) {
                 $this->createTimelineEvent(
-                    $data['patient_id'], 
-                    $data['appointment_id'] ?? null, 
-                    'Payment', 
+                    $data['patient_id'],
+                    $data['appointment_id'] ?? null,
+                    'Payment',
                     "Payment received: {$data['amount']} EGP"
                 );
-                
+
                 return $this->jsonResponse([
                     'ok' => true,
                     'data' => ['id' => $paymentId],
@@ -692,7 +694,7 @@ class ApiController
             }
 
             $patients = $this->searchPatientsByQuery($query);
-            
+
             return $this->jsonResponse([
                 'ok' => true,
                 'data' => $patients
@@ -702,7 +704,7 @@ class ApiController
             return $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
     }
-    
+
     /**
      * Search appointments for autocomplete (used in notes)
      * Searches by appointment ID or patient name
@@ -715,11 +717,11 @@ class ApiController
             }
 
             $query = trim($_GET['q'] ?? '');
-            $limit = min((int)($_GET['limit'] ?? 10), 20);
-            
+            $limit = min((int) ($_GET['limit'] ?? 10), 20);
+
             // If query is empty, return recent appointments instead of empty array - show all appointments
             if (strlen($query) < 1) {
-                        $stmt = $this->pdo->prepare("
+                $stmt = $this->pdo->prepare("
                             SELECT 
                                 a.id,
                                 a.date,
@@ -734,7 +736,7 @@ class ApiController
                             LIMIT ?
                         ");
                 $stmt->execute([$limit]);
-                
+
                 $appointments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
                 return $this->jsonResponse([
                     'ok' => true,
@@ -743,11 +745,11 @@ class ApiController
             }
 
             // Removed doctor_id filter - show all results regardless of doctor
-            
+
             // Check if query is a date (DD-MM-YYYY, YYYY-MM-DD, DD/MM/YYYY, YYYY/MM/DD)
             $isDate = false;
             $dateValue = null;
-            
+
             // Try to parse date in various formats
             $dateFormats = [
                 'd-m-Y' => 'DD-MM-YYYY',      // DD-MM-YYYY
@@ -757,13 +759,13 @@ class ApiController
                 'd-m-y' => 'DD-MM-YY',        // DD-MM-YY
                 'y-m-d' => 'YY-MM-DD',        // YY-MM-DD
             ];
-            
+
             foreach ($dateFormats as $format => $formatName) {
                 $date = \DateTime::createFromFormat($format, $query);
                 if ($date !== false) {
                     // Check if the formatted date matches the original query
                     $formatted = $date->format($format);
-                    
+
                     if ($formatted === $query) {
                         $isDate = true;
                         $dateValue = $date->format('Y-m-d'); // Convert to database format
@@ -771,20 +773,20 @@ class ApiController
                     }
                 }
             }
-            
+
             // If no format matched, try a more flexible approach
             if (!$isDate) {
                 // Try to detect date pattern manually
                 if (preg_match('/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/', $query, $matches)) {
-                    $day = (int)$matches[1];
-                    $month = (int)$matches[2];
-                    $year = (int)$matches[3];
-                    
+                    $day = (int) $matches[1];
+                    $month = (int) $matches[2];
+                    $year = (int) $matches[3];
+
                     // Normalize year (if 2 digits, assume 20xx)
                     if ($year < 100) {
                         $year += 2000;
                     }
-                    
+
                     // Validate date
                     if (checkdate($month, $day, $year)) {
                         $isDate = true;
@@ -792,11 +794,11 @@ class ApiController
                     }
                 }
             }
-            
+
             // Search priority: 1. Date, 2. Appointment ID (if numeric), 3. Patient name
             if ($isDate && $dateValue) {
                 // Search by date - show all appointments on this date regardless of doctor
-                        $stmt = $this->pdo->prepare("
+                $stmt = $this->pdo->prepare("
                             SELECT 
                                 a.id,
                                 a.date,
@@ -812,11 +814,11 @@ class ApiController
                             LIMIT ?
                         ");
                 $stmt->execute([$dateValue, $limit]);
-                
+
                 $appointments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             } else if (is_numeric($query)) {
                 // Search by appointment ID - show all appointments regardless of doctor
-                        $stmt = $this->pdo->prepare("
+                $stmt = $this->pdo->prepare("
                             SELECT 
                                 a.id,
                                 a.date,
@@ -833,10 +835,10 @@ class ApiController
                         ");
                 $stmt->execute([$query, $limit]);
                 $appointments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-                    } else {
+            } else {
                 // Search by patient name - show all appointments regardless of doctor
                 $searchTerm = '%' . $query . '%';
-                        $stmt = $this->pdo->prepare("
+                $stmt = $this->pdo->prepare("
                             SELECT 
                                 a.id,
                                 a.date,
@@ -852,9 +854,9 @@ class ApiController
                             LIMIT ?
                         ");
                 $stmt->execute([$searchTerm, $searchTerm, $searchTerm, $limit]);
-            $appointments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                $appointments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             }
-            
+
             return $this->jsonResponse([
                 'ok' => true,
                 'data' => $appointments
@@ -864,7 +866,7 @@ class ApiController
             return $this->jsonResponse(['error' => 'Failed to search appointments: ' . $e->getMessage()], 500);
         }
     }
-    
+
     public function getAllPatients()
     {
         try {
@@ -875,12 +877,12 @@ class ApiController
             // Get sort parameters
             $sortBy = $_GET['sort_by'] ?? 'created_at';
             $sortOrder = strtoupper($_GET['sort_order'] ?? 'DESC');
-            
+
             // Validate sort parameters
             $allowedSortFields = ['total_appointments', 'last_visit', 'created_at', 'first_name', 'last_name', 'age', 'gender', 'created_by_doctor_name'];
             $sortBy = in_array($sortBy, $allowedSortFields) ? $sortBy : 'created_at';
             $sortOrder = in_array($sortOrder, ['ASC', 'DESC']) ? $sortOrder : 'DESC';
-            
+
             // Build ORDER BY clause
             $orderBy = '';
             if ($sortBy === 'total_appointments') {
@@ -907,11 +909,32 @@ class ApiController
             } else {
                 $orderBy = "ORDER BY p.created_at DESC";
             }
-            
+
             $stmt = $this->pdo->prepare("
                 SELECT p.*, 
                        COUNT(DISTINCT a.id) as total_appointments,
                        MAX(a.date) as last_visit,
+                       MAX(CONCAT(a.date, ' ', a.start_time)) as last_appointment_datetime,
+                       COUNT(DISTINCT pr.id) as prescriptions_count,
+                       COUNT(DISTINCT gp.id) as glasses_count,
+                       (SELECT pa.id 
+                        FROM patient_attachments pa 
+                        LEFT JOIN appointments a ON pa.appointment_id = a.id
+                        WHERE pa.patient_id = p.id 
+                        AND pa.mime_type LIKE 'image/%'
+                        ORDER BY 
+                            CASE 
+                                WHEN a.id IS NOT NULL 
+                                THEN 0
+                                ELSE 1
+                            END ASC,
+                            CASE 
+                                WHEN a.id IS NOT NULL 
+                                THEN CONCAT(a.date, ' ', COALESCE(a.start_time, '00:00:00'))
+                                ELSE '0000-00-00 00:00:00'
+                            END DESC,
+                            pa.created_at DESC 
+                        LIMIT 1) as latest_attachment_id,
                        (SELECT te.actor_user_id 
                         FROM timeline_events te 
                         WHERE te.patient_id = p.id 
@@ -947,11 +970,51 @@ class ApiController
                         LIMIT 1) as created_by_doctor_name
                 FROM patients p
                 LEFT JOIN appointments a ON p.id = a.patient_id
+                LEFT JOIN prescriptions pr ON a.id = pr.appointment_id
+                LEFT JOIN glasses_prescriptions gp ON a.id = gp.appointment_id
                 GROUP BY p.id
                 $orderBy
             ");
             $stmt->execute();
             $patients = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Debug: Check if latest_attachment_id column exists in results
+            if (count($patients) > 0) {
+                $firstPatient = $patients[0];
+                $hasLatestAttachmentId = array_key_exists('latest_attachment_id', $firstPatient);
+                error_log("getAllPatients: First patient keys: " . implode(', ', array_keys($firstPatient)));
+                error_log("getAllPatients: Has 'latest_attachment_id' key: " . ($hasLatestAttachmentId ? 'YES' : 'NO'));
+                
+                // Check patient 435 specifically
+                $patient435 = array_filter($patients, function($p) { return $p['id'] == 435; });
+                if (count($patient435) > 0) {
+                    $p435 = reset($patient435);
+                    error_log("getAllPatients: Patient 435 (عبدالله شليل) - latest_attachment_id: " . ($p435['latest_attachment_id'] ?? 'NULL') . ", has key: " . (array_key_exists('latest_attachment_id', $p435) ? 'YES' : 'NO'));
+                }
+            }
+
+            // Debug: Log patients with attachments
+            $patientsWithAttachments = array_filter($patients, function($p) {
+                return !empty($p['latest_attachment_id']);
+            });
+            error_log("getAllPatients: Total patients: " . count($patients) . ", Patients with latest_attachment_id: " . count($patientsWithAttachments));
+            if (count($patientsWithAttachments) > 0) {
+                $sample = array_slice($patientsWithAttachments, 0, 3);
+                foreach ($sample as $p) {
+                    error_log("getAllPatients: Patient ID {$p['id']} ({$p['first_name']} {$p['last_name']}) has latest_attachment_id: {$p['latest_attachment_id']}");
+                }
+            } else {
+                // Check if any patients have attachments at all
+                $testStmt = $this->pdo->prepare("
+                    SELECT COUNT(*) as cnt 
+                    FROM patient_attachments pa 
+                    WHERE pa.patient_id IN (SELECT id FROM patients LIMIT 10) 
+                    AND pa.mime_type LIKE 'image/%'
+                ");
+                $testStmt->execute();
+                $testResult = $testStmt->fetch();
+                error_log("getAllPatients: Test - Found " . ($testResult['cnt'] ?? 0) . " image attachments for first 10 patients");
+            }
 
             // Get all doctors for filter
             $doctorsStmt = $this->pdo->prepare("
@@ -1062,7 +1125,7 @@ class ApiController
                     'error' => 'Gender is required and must be either Male or Female'
                 ], 400);
             }
-            
+
             // Process age and date of birth
             if (!empty($data['age']) && is_numeric($data['age'])) {
                 // Convert age to date of birth
@@ -1072,18 +1135,18 @@ class ApiController
                     $data['dob'] = date('Y-m-d', mktime(0, 0, 0, date('m'), date('d'), $birthYear));
                 }
             }
-            
+
             // Process date of birth - use today's date if still empty
             if (empty($data['dob']) || $data['dob'] === '') {
                 $data['dob'] = date('Y-m-d'); // Use today's date as default
             }
-            
+
             // Create patient
             $patientId = $this->createPatientRecord($data);
-            
+
             if ($patientId) {
                 $this->createTimelineEvent($patientId, null, 'Booking', 'New patient registered');
-                
+
                 return $this->jsonResponse([
                     'ok' => true,
                     'data' => ['id' => $patientId],
@@ -1119,7 +1182,7 @@ class ApiController
             $stmt = $this->pdo->prepare("SELECT id, first_name, last_name FROM patients WHERE id = ?");
             $stmt->execute([$id]);
             $patient = $stmt->fetch();
-            
+
             if (!$patient) {
                 return $this->jsonResponse(['error' => 'Patient not found'], 404);
             }
@@ -1129,38 +1192,38 @@ class ApiController
 
             try {
                 // Delete all patient-related data in the correct order (respecting foreign key constraints)
-                
+
                 // 1. Delete timeline events
                 $stmt = $this->pdo->prepare("DELETE FROM timeline_events WHERE patient_id = ?");
                 $stmt->execute([$id]);
-                
+
                 // 2. Delete patient attachments (and their files)
                 $stmt = $this->pdo->prepare("SELECT file_path FROM patient_attachments WHERE patient_id = ?");
                 $stmt->execute([$id]);
                 $attachments = $stmt->fetchAll();
-                
+
                 foreach ($attachments as $attachment) {
                     $filePath = __DIR__ . '/../../storage/uploads/' . $attachment['file_path'];
                     if (file_exists($filePath)) {
                         unlink($filePath);
                     }
                 }
-                
+
                 $stmt = $this->pdo->prepare("DELETE FROM patient_attachments WHERE patient_id = ?");
                 $stmt->execute([$id]);
-                
+
                 // 3. Delete medication prescriptions
                 $stmt = $this->pdo->prepare("DELETE FROM prescriptions WHERE appointment_id IN (SELECT id FROM appointments WHERE patient_id = ?)");
                 $stmt->execute([$id]);
-                
+
                 // 4. Delete glasses prescriptions
                 $stmt = $this->pdo->prepare("DELETE FROM glasses_prescriptions WHERE appointment_id IN (SELECT id FROM appointments WHERE patient_id = ?)");
                 $stmt->execute([$id]);
-                
+
                 // 5. Delete lab tests
                 $stmt = $this->pdo->prepare("DELETE FROM lab_tests WHERE appointment_id IN (SELECT id FROM appointments WHERE patient_id = ?)");
                 $stmt->execute([$id]);
-                
+
                 // 6. Delete radiology tests (if table exists)
                 try {
                     $stmt = $this->pdo->prepare("DELETE FROM radiology_tests WHERE appointment_id IN (SELECT id FROM appointments WHERE patient_id = ?)");
@@ -1168,49 +1231,49 @@ class ApiController
                 } catch (\PDOException $e) {
                     // Ignore if table doesn't exist
                 }
-                
+
                 // 7. Delete consultation notes
                 $stmt = $this->pdo->prepare("DELETE FROM consultation_notes WHERE appointment_id IN (SELECT id FROM appointments WHERE patient_id = ?)");
                 $stmt->execute([$id]);
-                
+
                 // 8. Delete payments
                 $stmt = $this->pdo->prepare("DELETE FROM payments WHERE appointment_id IN (SELECT id FROM appointments WHERE patient_id = ?)");
                 $stmt->execute([$id]);
-                
+
                 // 9. Delete patient files (and their physical files)
                 $stmt = $this->pdo->prepare("SELECT file_path FROM patient_files WHERE patient_id = ?");
                 $stmt->execute([$id]);
                 $patientFiles = $stmt->fetchAll();
-                
+
                 foreach ($patientFiles as $file) {
                     $filePath = __DIR__ . '/../../storage/uploads/' . $file['file_path'];
                     if (file_exists($filePath)) {
                         unlink($filePath);
                     }
                 }
-                
+
                 $stmt = $this->pdo->prepare("DELETE FROM patient_files WHERE patient_id = ?");
                 $stmt->execute([$id]);
-                
+
                 // 10. Delete patient notes
                 $stmt = $this->pdo->prepare("DELETE FROM patient_notes WHERE patient_id = ?");
                 $stmt->execute([$id]);
-                
+
                 // 11. Delete medical history
                 $stmt = $this->pdo->prepare("DELETE FROM medical_history_entries WHERE patient_id = ?");
                 $stmt->execute([$id]);
-                
+
                 // 12. Delete appointments
                 $stmt = $this->pdo->prepare("DELETE FROM appointments WHERE patient_id = ?");
                 $stmt->execute([$id]);
-                
+
                 // 13. Finally, delete the patient record
                 $stmt = $this->pdo->prepare("DELETE FROM patients WHERE id = ?");
                 $stmt->execute([$id]);
-                
+
                 // Commit transaction
                 $this->pdo->commit();
-                
+
                 // Log the deletion with details
                 $deletionSummary = [
                     'patient_id' => $id,
@@ -1220,10 +1283,10 @@ class ApiController
                     'patient_files_deleted' => count($patientFiles),
                     'timestamp' => date('Y-m-d H:i:s')
                 ];
-                
-                
+
+
                 return $this->jsonResponse([
-                'ok' => true,
+                    'ok' => true,
                     'message' => 'Patient and all related data deleted successfully',
                     'data' => [
                         'patient_name' => "{$patient['first_name']} {$patient['last_name']}",
@@ -1231,8 +1294,8 @@ class ApiController
                         'files_deleted' => count($patientFiles)
                     ]
                 ]);
-            
-        } catch (\Exception $e) {
+
+            } catch (\Exception $e) {
                 // Rollback transaction on error
                 $this->pdo->rollback();
                 throw $e;
@@ -1251,7 +1314,7 @@ class ApiController
             }
 
             $timeline = $this->getPatientTimelineEvents($patientId);
-            
+
             return $this->jsonResponse([
                 'ok' => true,
                 'data' => $timeline
@@ -1265,7 +1328,7 @@ class ApiController
     public function updateEmergencyContact($id)
     {
         try {
-            
+
             if (!$this->auth->check()) {
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
@@ -1283,9 +1346,9 @@ class ApiController
 
             // Get JSON input
             $rawInput = file_get_contents('php://input');
-            
+
             $input = json_decode($rawInput, true);
-            
+
             if (!$input) {
                 return $this->jsonResponse(['error' => 'Invalid JSON input'], 400);
             }
@@ -1310,7 +1373,7 @@ class ApiController
                 SET emergency_contact = ?, emergency_phone = ?
                 WHERE id = ?
             ");
-            
+
             $success = $stmt->execute([
                 $input['emergency_contact'],
                 $input['emergency_phone'],
@@ -1322,15 +1385,15 @@ class ApiController
                 // Create timeline event
                 try {
                     $this->createTimelineEvent(
-                        $id, 
+                        $id,
                         null,
-                        'Update', 
+                        'Update',
                         'Emergency contact information updated'
                     );
                 } catch (\Exception $e) {
                     // Continue even if timeline fails
                 }
-                
+
                 return $this->jsonResponse([
                     'ok' => true,
                     'message' => 'Emergency contact updated successfully'
@@ -1373,30 +1436,30 @@ class ApiController
 
             // Create consultation
             $consultationId = $this->createConsultationRecord($data, $user['id']);
-            
+
             if ($consultationId) {
                 $appointment = $this->getAppointmentDetails($data['appointment_id']);
                 $this->createTimelineEvent(
-                    $appointment['patient_id'], 
-                    $data['appointment_id'], 
-                    'Consultation', 
+                    $appointment['patient_id'],
+                    $data['appointment_id'],
+                    'Consultation',
                     'Consultation completed'
                 );
-                
+
                 // Automatically create medical history entry from consultation
                 if (!empty($data['diagnosis']) && !empty($appointment['patient_id'])) {
                     $this->createMedicalHistoryFromConsultation($appointment['patient_id'], $data, $appointment, $user['id']);
                 }
-                
+
                 return $this->jsonResponse([
-                'ok' => true,
+                    'ok' => true,
                     'data' => ['id' => $consultationId],
                     'message' => 'Consultation created successfully'
                 ]);
             } else {
                 return $this->jsonResponse(['error' => 'Failed to create consultation'], 500);
             }
-            
+
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
@@ -1435,16 +1498,16 @@ class ApiController
 
             // Create prescription
             $prescriptionId = $this->createMedicationPrescriptionRecord($data);
-            
+
             if ($prescriptionId) {
                 $appointment = $this->getAppointmentDetails($data['appointment_id']);
                 $this->createTimelineEvent(
-                    $appointment['patient_id'], 
-                    $data['appointment_id'], 
-                    'Rx', 
+                    $appointment['patient_id'],
+                    $data['appointment_id'],
+                    'Rx',
                     'Medication prescription issued'
                 );
-                
+
                 return $this->jsonResponse([
                     'success' => true,
                     'data' => ['id' => $prescriptionId],
@@ -1487,25 +1550,25 @@ class ApiController
 
             // Create glasses prescription - Same pattern as medications
             $prescriptionId = $this->createGlassesPrescriptionRecord($data);
-            
+
             if ($prescriptionId) {
                 $appointment = $this->getAppointmentDetails($data['appointment_id']);
                 $this->createTimelineEvent(
-                    $appointment['patient_id'], 
-                    $data['appointment_id'], 
-                    'GlassesRx', 
+                    $appointment['patient_id'],
+                    $data['appointment_id'],
+                    'GlassesRx',
                     'Glasses prescription issued'
                 );
-                
+
                 return $this->jsonResponse([
-                'success' => true,
+                    'success' => true,
                     'data' => ['id' => $prescriptionId],
                     'message' => 'Glasses prescription created successfully'
                 ]);
             } else {
-                            return $this->jsonResponse(['error' => 'Failed to create glasses prescription'], 500);
-        }
-            
+                return $this->jsonResponse(['error' => 'Failed to create glasses prescription'], 500);
+            }
+
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
@@ -1524,7 +1587,7 @@ class ApiController
             }
 
             $date = $_POST['date'] ?? date('Y-m-d');
-            
+
             // Check if already closed
             if ($this->isDateClosed($date)) {
                 return $this->jsonResponse(['error' => 'Date is already closed'], 400);
@@ -1532,10 +1595,10 @@ class ApiController
 
             // Create daily closure
             $closureId = $this->createDailyClosure($date, $user['id']);
-            
+
             if ($closureId) {
                 $this->createTimelineEvent(null, null, 'DailyClosure', 'Daily closure locked');
-                
+
                 return $this->jsonResponse([
                     'ok' => true,
                     'data' => ['id' => $closureId],
@@ -1558,9 +1621,9 @@ class ApiController
             }
 
             $user = $this->auth->user();
-            
+
             $data = json_decode(file_get_contents('php://input'), true);
-            
+
             if (!$data) {
                 return $this->jsonResponse(['error' => 'Invalid JSON data'], 400);
             }
@@ -1579,7 +1642,7 @@ class ApiController
 
             // Change password
             $this->auth->changePassword($user['id'], $currentPassword, $newPassword);
-            
+
             return $this->jsonResponse([
                 'ok' => true,
                 'message' => 'Password changed successfully'
@@ -1597,23 +1660,23 @@ class ApiController
         while (ob_get_level() > 0) {
             ob_end_clean();
         }
-        
+
         // Set headers
         header('Content-Type: application/json; charset=utf-8');
         http_response_code($statusCode);
-        
+
         // Encode to JSON
         $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         if ($json === false) {
             $data = ['error' => 'JSON encoding failed: ' . json_last_error_msg()];
             $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
-        
+
         // Output JSON and exit
         echo $json;
         exit;
     }
-    
+
     private function getRouterParam($name, $default = null)
     {
         $router = \App\Lib\Router::getInstance();
@@ -1630,7 +1693,7 @@ class ApiController
     private function getAppointmentsForDate($doctorId, $date)
     {
         // Set debug log file
-        
+
         $stmt = $this->pdo->prepare("
             SELECT a.*, p.first_name, p.last_name, p.phone, p.dob, p.gender,
                    CONCAT(p.first_name, ' ', p.last_name) as patient_name,
@@ -1643,23 +1706,23 @@ class ApiController
         ");
         $stmt->execute([$doctorId, $date]);
         $appointments = $stmt->fetchAll();
-        
+
         // Format the time fields to match frontend expectations
         foreach ($appointments as &$appointment) {
             $appointment['start_time'] = $appointment['start_time_formatted'];
             $appointment['end_time'] = $appointment['end_time_formatted'];
         }
-        
+
         foreach ($appointments as $apt) {
         }
-        
+
         return $appointments;
     }
 
     private function getAllAppointmentsForDate($date)
     {
         // Set debug log file
-        
+
         $stmt = $this->pdo->prepare("
             SELECT a.*, p.first_name, p.last_name, p.phone, p.dob, p.gender,
                    CONCAT(p.first_name, ' ', p.last_name) as patient_name,
@@ -1675,17 +1738,17 @@ class ApiController
         ");
         $stmt->execute([$date]);
         $appointments = $stmt->fetchAll();
-        
+
         // Check if rescheduled_from column exists
         $columnStmt = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'rescheduled_from'");
         $hasRescheduledFrom = $columnStmt->fetch(\PDO::FETCH_ASSOC);
-        
+
         // Format the time fields to match frontend expectations and add followup/rescheduled info
         foreach ($appointments as &$appointment) {
             $appointment['start_time'] = $appointment['start_time_formatted'];
             $appointment['end_time'] = $appointment['end_time_formatted'];
             $appointment['doctor_display_name'] = $appointment['user_name'] ?? $appointment['doctor_name'];
-            
+
             // Check if appointment has a follow-up
             $appointment['has_followup'] = false;
             $appointment['followup_id'] = null;
@@ -1702,7 +1765,7 @@ class ApiController
                     $appointment['followup_id'] = $followup['id'];
                 }
             }
-            
+
             // Check if appointment is a follow-up (has original appointment)
             $appointment['is_followup'] = false;
             $appointment['original_appointment_id'] = null;
@@ -1711,17 +1774,17 @@ class ApiController
                 $appointment['original_appointment_id'] = $appointment['rescheduled_from'];
             }
         }
-        
+
         foreach ($appointments as $apt) {
         }
-        
+
         return $appointments;
     }
 
     private function getAvailableTimeSlots($doctorId, $date)
     {
         // Set debug log file
-        
+
         // Get working hours for the doctor on this day
         $weekday = (new \DateTime($date))->format('w');
         $stmt = $this->pdo->prepare("
@@ -1730,8 +1793,8 @@ class ApiController
         ");
         $stmt->execute([$doctorId, $weekday]);
         $schedule = $stmt->fetch();
-        
-        
+
+
         if (!$schedule) {
             return [];
         }
@@ -1741,48 +1804,48 @@ class ApiController
         $start = new \DateTime($schedule['work_start']);
         $end = new \DateTime($schedule['work_end']);
         $interval = new \DateInterval('PT15M');
-        
+
         $current = clone $start;
         while ($current < $end) {
             $timeStr = $current->format('H:i');
-            
+
             // Check if slot is available
             $isAvailable = $this->isTimeSlotAvailable($doctorId, $date, $timeStr);
-            
+
             if ($isAvailable) {
                 $slots[] = $timeStr;
             }
-            
+
             $current->add($interval);
         }
-        
+
         return $slots;
     }
 
     private function getAvailableTimeSlotsGlobal($date)
     {
         // Set debug log file
-        
+
         // Use default working hours (2 PM to 11 PM) for all doctors
         $slots = [];
         $start = new \DateTime('14:00');
         $end = new \DateTime('23:00');
         $interval = new \DateInterval('PT15M');
-        
+
         $current = clone $start;
         while ($current < $end) {
             $timeStr = $current->format('H:i');
-            
+
             // Check if slot is available (no appointments at this time)
             $isAvailable = $this->isTimeSlotAvailableGlobal($date, $timeStr);
-            
+
             if ($isAvailable) {
                 $slots[] = $timeStr;
             }
-            
+
             $current->add($interval);
         }
-        
+
         return $slots;
     }
 
@@ -1795,8 +1858,8 @@ class ApiController
         ");
         $stmt->execute([$doctorId, $date, $startTime]);
         $count = $stmt->fetchColumn();
-        
-        
+
+
         return $count == 0;
     }
 
@@ -1809,22 +1872,22 @@ class ApiController
         ");
         $stmt->execute([$date, $startTime]);
         $count = $stmt->fetchColumn();
-        
-        
+
+
         return $count == 0;
     }
 
     private function getUnavailableSlots($doctorId, $date)
     {
         // Set debug log file
-        
+
         // Get all time slots that are unavailable for this doctor
         $allSlots = $this->getAllTimeSlots($date);
         $availableSlots = $this->getAvailableTimeSlots($doctorId, $date);
         $unavailableSlots = [];
-        
+
         // Debug logging
-        
+
         foreach ($allSlots as $time) {
             if (!in_array($time, $availableSlots)) {
                 // Check if there's ANY appointment at this time (any doctor)
@@ -1840,11 +1903,11 @@ class ApiController
                 ");
                 $stmt->execute([$date, $time]);
                 $appointment = $stmt->fetch();
-                
+
                 // Debug logging for each slot
                 if ($appointment) {
                 }
-                
+
                 if ($appointment) {
                     // If it's the current doctor's appointment, it will show in appointments section
                     // If it's another doctor's appointment, show as reserved
@@ -1853,8 +1916,8 @@ class ApiController
                         $patientName = $appointment['first_name'] . ' ' . $appointment['last_name'];
                         $visitType = $appointment['visit_type'];
                         $status = $appointment['status'];
-                        
-                        
+
+
                         $unavailableSlots[] = [
                             'time' => $time,
                             'doctor_name' => $doctorDisplayName,
@@ -1867,7 +1930,7 @@ class ApiController
                 } else {
                     // Check if it's outside working hours for this doctor
                     $isOutside = $this->isOutsideWorkingHours($doctorId, $date, $time);
-                    
+
                     if ($isOutside) {
                         $unavailableSlots[] = [
                             'time' => $time,
@@ -1877,7 +1940,7 @@ class ApiController
                     } else {
                         // This shouldn't happen - slot is unavailable but no appointment and not outside hours
                         // Let's investigate why this slot is considered unavailable
-                        
+
                         // Check doctor schedule
                         $weekday = (new \DateTime($date))->format('w');
                         $scheduleStmt = $this->pdo->prepare("
@@ -1887,7 +1950,7 @@ class ApiController
                         ");
                         $scheduleStmt->execute([$doctorId, $weekday]);
                         $schedule = $scheduleStmt->fetch();
-                        
+
                         // Check if there are any appointments for this doctor at this time
                         $ownAppointmentStmt = $this->pdo->prepare("
                             SELECT COUNT(*) as count
@@ -1897,13 +1960,13 @@ class ApiController
                         ");
                         $ownAppointmentStmt->execute([$doctorId, $date, $time]);
                         $ownAppointmentCount = $ownAppointmentStmt->fetchColumn();
-                        
+
                         $debugInfo = "Time: $time | ";
                         $debugInfo .= "Doctor Schedule: " . ($schedule ? "Start: {$schedule['work_start']}, End: {$schedule['work_end']}, Working: {$schedule['is_working']}" : "No schedule found") . " | ";
                         $debugInfo .= "Own appointments: $ownAppointmentCount | ";
                         $debugInfo .= "Weekday: $weekday";
-                        
-                        
+
+
                         $unavailableSlots[] = [
                             'time' => $time,
                             'doctor_name' => null,
@@ -1914,21 +1977,21 @@ class ApiController
                 }
             }
         }
-        
+
         return $unavailableSlots;
     }
 
     private function getUnavailableSlotsGlobal($date)
     {
         // Set debug log file
-        
+
         // Get all time slots that are unavailable globally
         $allSlots = $this->getAllTimeSlots($date);
         $availableSlots = $this->getAvailableTimeSlotsGlobal($date);
         $unavailableSlots = [];
-        
+
         // Debug logging
-        
+
         foreach ($allSlots as $time) {
             if (!in_array($time, $availableSlots)) {
                 // Check if there's ANY appointment at this time
@@ -1944,14 +2007,14 @@ class ApiController
                 ");
                 $stmt->execute([$date, $time]);
                 $appointment = $stmt->fetch();
-                
+
                 if ($appointment) {
                     $doctorDisplayName = $appointment['user_name'] ?? $appointment['doctor_name'];
                     $patientName = $appointment['first_name'] . ' ' . $appointment['last_name'];
                     $visitType = $appointment['visit_type'];
                     $status = $appointment['status'];
-                    
-                    
+
+
                     $unavailableSlots[] = [
                         'time' => $time,
                         'doctor_name' => $doctorDisplayName,
@@ -1960,14 +2023,14 @@ class ApiController
                         'status' => $status,
                         'reason' => 'Reserved for ' . $doctorDisplayName . ' - Patient: ' . $patientName . ' - Type: (' . $visitType . ')'
                     ];
-            } else {
+                } else {
                     // Check if it's outside working hours (before 2 PM or after 11 PM)
                     $timeObj = new \DateTime($time);
                     $workStart = new \DateTime('14:00');
                     $workEnd = new \DateTime('23:00');
-                    
+
                     $isOutside = $timeObj < $workStart || $timeObj >= $workEnd;
-                    
+
                     if ($isOutside) {
                         $unavailableSlots[] = [
                             'time' => $time,
@@ -1978,7 +2041,7 @@ class ApiController
                 }
             }
         }
-        
+
         return $unavailableSlots;
     }
 
@@ -1989,13 +2052,13 @@ class ApiController
         $start = new \DateTime('14:00');
         $end = new \DateTime('23:00');
         $interval = new \DateInterval('PT15M');
-        
+
         $current = clone $start;
         while ($current < $end) {
             $slots[] = $current->format('H:i');
             $current->add($interval);
         }
-        
+
         return $slots;
     }
 
@@ -2009,7 +2072,7 @@ class ApiController
         ");
         $stmt->execute([$doctorId, $weekday]);
         $schedule = $stmt->fetch();
-        
+
         if (!$schedule) {
             return true; // No working schedule = outside working hours
         }
@@ -2017,7 +2080,7 @@ class ApiController
         $timeObj = new \DateTime($time);
         $workStart = new \DateTime($schedule['work_start']);
         $workEnd = new \DateTime($schedule['work_end']);
-        
+
         return $timeObj < $workStart || $timeObj >= $workEnd;
     }
 
@@ -2043,7 +2106,7 @@ class ApiController
             // Check if rescheduled_from column exists
             $columnStmt = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'rescheduled_from'");
             $hasRescheduledFrom = $columnStmt->fetch(\PDO::FETCH_ASSOC);
-            
+
             if ($hasRescheduledFrom) {
                 // Check if there's a follow-up appointment with rescheduled_from pointing to this appointment
                 $stmt = $this->pdo->prepare("
@@ -2056,12 +2119,12 @@ class ApiController
                 ");
                 $stmt->execute([$appointmentId]);
                 $followup = $stmt->fetch(\PDO::FETCH_ASSOC);
-                
+
                 if ($followup) {
                     return $followup;
                 }
             }
-            
+
             // Fallback: Check for follow-up appointments with same patient_id created after this appointment
             $stmt = $this->pdo->prepare("
                 SELECT id, date, start_time, visit_type, status
@@ -2078,9 +2141,9 @@ class ApiController
             ");
             $stmt->execute([$appointmentId, $appointmentId, $appointmentId, $appointmentId]);
             $followup = $stmt->fetch(\PDO::FETCH_ASSOC);
-            
+
             return $followup ?: null;
-                } catch (\Exception $e) {
+        } catch (\Exception $e) {
             // Return null on error
             return null;
         }
@@ -2092,7 +2155,7 @@ class ApiController
             // Check if rescheduled_from column exists
             $columnStmt = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'rescheduled_from'");
             $hasRescheduledFrom = $columnStmt->fetch(\PDO::FETCH_ASSOC);
-            
+
             if ($hasRescheduledFrom) {
                 // Get the rescheduled_from value for this follow-up appointment
                 $stmt = $this->pdo->prepare("
@@ -2102,7 +2165,7 @@ class ApiController
                 ");
                 $stmt->execute([$followupAppointmentId]);
                 $result = $stmt->fetch(\PDO::FETCH_ASSOC);
-                
+
                 if ($result && $result['rescheduled_from']) {
                     // Get the original appointment details
                     $originalStmt = $this->pdo->prepare("
@@ -2112,13 +2175,13 @@ class ApiController
                     ");
                     $originalStmt->execute([$result['rescheduled_from']]);
                     $original = $originalStmt->fetch(\PDO::FETCH_ASSOC);
-                    
+
                     if ($original) {
                         return $original;
                     }
                 }
             }
-            
+
             // Fallback: Find the most recent appointment before this follow-up for the same patient
             $stmt = $this->pdo->prepare("
                 SELECT id, date, start_time, visit_type, status
@@ -2135,9 +2198,9 @@ class ApiController
             ");
             $stmt->execute([$followupAppointmentId, $followupAppointmentId, $followupAppointmentId, $followupAppointmentId, $followupAppointmentId]);
             $original = $stmt->fetch(\PDO::FETCH_ASSOC);
-            
+
             return $original ?: null;
-                } catch (\Exception $e) {
+        } catch (\Exception $e) {
             // Return null on error
             return null;
         }
@@ -2157,16 +2220,16 @@ class ApiController
                 INSERT INTO appointments (patient_id, doctor_id, booked_by, source, date, start_time, end_time, visit_type, notes)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
-            
+
             $endTime = $this->calculateEndTime($data['start_time']);
-            
+
             // Use booked_by from data if provided, otherwise use current user
             $bookedBy = $data['booked_by'] ?? ($this->auth->user()['id'] ?? null);
-            
+
             if (!$bookedBy) {
                 throw new \Exception('booked_by is required');
             }
-            
+
             $result = $stmt->execute([
                 $data['patient_id'],
                 $data['doctor_id'],
@@ -2178,20 +2241,20 @@ class ApiController
                 $data['visit_type'],
                 $data['notes'] ?? null
             ]);
-            
+
             if (!$result) {
                 $errorInfo = $stmt->errorInfo();
                 throw new \Exception('Failed to create appointment: ' . ($errorInfo[2] ?? 'Unknown error'));
             }
-            
+
             $appointmentId = $this->pdo->lastInsertId();
-            
+
             if (!$appointmentId) {
                 throw new \Exception('Failed to get appointment ID after insert');
             }
-            
+
             return $appointmentId;
-            
+
         } catch (\PDOException $e) {
             throw new \Exception('Database error creating appointment: ' . $e->getMessage());
         } catch (\Exception $e) {
@@ -2206,10 +2269,10 @@ class ApiController
         if (!in_array($status, $validStatuses)) {
             throw new \Exception('Invalid appointment status');
         }
-        
+
         // Ensure reason is never null (use empty string if null)
         $reasonText = $reason ?? '';
-        
+
         $stmt = $this->pdo->prepare("
             UPDATE appointments SET status = ?, cancellation_reason = ?, updated_at = NOW()
             WHERE id = ?
@@ -2223,7 +2286,7 @@ class ApiController
         while (ob_get_level() > 0) {
             ob_end_clean();
         }
-        
+
         try {
             if (!$this->auth->check()) {
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
@@ -2233,22 +2296,22 @@ class ApiController
             if (!$user) {
                 return $this->jsonResponse(['error' => 'User not found'], 401);
             }
-            
+
             $appointment = $this->getAppointmentDetails($id);
             if (!$appointment) {
                 return $this->jsonResponse(['error' => 'Appointment not found'], 404);
             }
-            
+
             // Check if appointment is completed
             if ($appointment['status'] === 'Completed') {
                 return $this->jsonResponse(['error' => 'Cannot reschedule a completed appointment'], 400);
             }
-            
+
             // Get JSON or form data
             $input = file_get_contents('php://input');
             $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
             $contentType = trim(explode(';', $contentType)[0]);
-            
+
             if ($contentType === 'application/json') {
                 $data = json_decode($input, true);
             } else {
@@ -2258,29 +2321,29 @@ class ApiController
                     $data = $_POST;
                 }
             }
-            
+
             if (empty($data) || !isset($data['new_date']) || !isset($data['new_time'])) {
                 return $this->jsonResponse(['error' => 'new_date and new_time are required'], 400);
             }
-            
+
             $newDate = trim($data['new_date']);
             $newTime = trim($data['new_time']);
-            
+
             // Validate date format (YYYY-MM-DD)
             if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $newDate)) {
                 return $this->jsonResponse(['error' => 'Invalid date format. Expected YYYY-MM-DD'], 400);
             }
-            
+
             // Validate time format (HH:MM or HH:MM:SS)
             if (!preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $newTime)) {
                 return $this->jsonResponse(['error' => 'Invalid time format. Expected HH:MM'], 400);
             }
-            
+
             // Normalize time to HH:MM format (remove seconds if present)
             if (strlen($newTime) > 5) {
                 $newTime = substr($newTime, 0, 5);
             }
-            
+
             // Validate that new date/time is in the future
             try {
                 $currentDateTime = new \DateTime();
@@ -2289,21 +2352,21 @@ class ApiController
             } catch (\Exception $e) {
                 return $this->jsonResponse(['error' => 'Invalid date or time format'], 400);
             }
-            
+
             if ($newDateTime <= $currentDateTime) {
                 return $this->jsonResponse(['error' => 'New appointment date and time must be in the future'], 400);
             }
-            
+
             if ($newDateTime <= $appointmentDateTime) {
                 return $this->jsonResponse(['error' => 'New appointment date and time must be later than the current appointment'], 400);
             }
-            
+
             // Check if time slot is available (use private method instead of Helpers)
             $endTime = $this->calculateEndTime($newTime);
             if (!$this->isTimeSlotAvailableGlobal($newDate, $newTime)) {
                 return $this->jsonResponse(['error' => 'Time slot is not available'], 400);
             }
-            
+
             // 1. Create new appointment
             $newAppointmentData = [
                 'patient_id' => $appointment['patient_id'],
@@ -2315,13 +2378,13 @@ class ApiController
                 'visit_type' => $appointment['visit_type'] ?? 'FollowUp',
                 'notes' => $appointment['notes'] ?? null
             ];
-            
+
             $newAppointmentId = $this->createAppointmentRecord($newAppointmentData);
-            
+
             if (!$newAppointmentId) {
                 return $this->jsonResponse(['error' => 'Failed to create new appointment'], 500);
             }
-            
+
             // 2. Link new appointment to old one (if column exists)
             try {
                 $columnStmt = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'rescheduled_from'");
@@ -2332,28 +2395,28 @@ class ApiController
             } catch (\Exception $e) {
                 // Column doesn't exist, ignore
             }
-            
+
             // 3. Update old appointment status to 'Rescheduled' instead of deleting
             $stmt = $this->pdo->prepare("UPDATE appointments SET status = 'Rescheduled', cancellation_reason = ?, updated_at = NOW() WHERE id = ?");
             $reason = "Rescheduled to {$newDate} {$newTime}";
             $result = $stmt->execute([$reason, $id]);
-            
+
             if (!$result) {
                 throw new \Exception('Failed to update old appointment status');
             }
-            
+
             // 4. Create timeline event for the NEW appointment (same as createAppointment)
             try {
                 $this->createTimelineEvent(
-                    $appointment['patient_id'], 
-                    $newAppointmentId, 
-                    'Booking', 
+                    $appointment['patient_id'],
+                    $newAppointmentId,
+                    'Booking',
                     "Appointment rescheduled from {$appointment['date']} {$appointment['start_time']} to {$newDate} {$newTime}"
                 );
             } catch (\Exception $e) {
                 // Continue even if timeline event fails
             }
-            
+
             // Create notification for reschedule
             try {
                 $patientName = trim($appointment['first_name'] . ' ' . $appointment['last_name']);
@@ -2369,11 +2432,11 @@ class ApiController
             } catch (\Exception $e) {
                 // Continue even if notification creation fails
             }
-            
+
             // Format date/time for display
             $formattedDate = date('M j, Y', strtotime($newDate));
             $formattedTime = date('g:i A', strtotime($newTime));
-            
+
             return $this->jsonResponse([
                 'ok' => true,
                 'success' => true,
@@ -2387,7 +2450,7 @@ class ApiController
                     'old_appointment_id' => $id
                 ]
             ]);
-            
+
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Error rescheduling appointment: ' . $e->getMessage()], 500);
         }
@@ -2399,7 +2462,7 @@ class ApiController
         while (ob_get_level() > 0) {
             ob_end_clean();
         }
-        
+
         try {
             if (!$this->auth->check()) {
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
@@ -2409,19 +2472,19 @@ class ApiController
             if (!$user) {
                 return $this->jsonResponse(['error' => 'User not found'], 401);
             }
-            
+
             $appointment = $this->getAppointmentDetails($id);
             if (!$appointment) {
                 return $this->jsonResponse(['error' => 'Appointment not found'], 404);
             }
-            
+
             // Note: rescheduleFollowup can be done even for completed appointments
-            
+
             // Get JSON or form data
             $input = file_get_contents('php://input');
             $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
             $contentType = trim(explode(';', $contentType)[0]);
-            
+
             if ($contentType === 'application/json') {
                 $data = json_decode($input, true);
             } else {
@@ -2431,29 +2494,29 @@ class ApiController
                     $data = $_POST;
                 }
             }
-            
+
             if (empty($data) || !isset($data['new_date']) || !isset($data['new_time'])) {
                 return $this->jsonResponse(['error' => 'new_date and new_time are required'], 400);
             }
-            
+
             $newDate = trim($data['new_date']);
             $newTime = trim($data['new_time']);
-            
+
             // Validate date format (YYYY-MM-DD)
             if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $newDate)) {
                 return $this->jsonResponse(['error' => 'Invalid date format. Expected YYYY-MM-DD'], 400);
             }
-            
+
             // Validate time format (HH:MM or HH:MM:SS)
             if (!preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $newTime)) {
                 return $this->jsonResponse(['error' => 'Invalid time format. Expected HH:MM'], 400);
             }
-            
+
             // Normalize time to HH:MM format (remove seconds if present)
             if (strlen($newTime) > 5) {
                 $newTime = substr($newTime, 0, 5);
             }
-            
+
             // Validate that new date/time is in the future
             try {
                 $currentDateTime = new \DateTime();
@@ -2461,17 +2524,17 @@ class ApiController
             } catch (\Exception $e) {
                 return $this->jsonResponse(['error' => 'Invalid date or time format'], 400);
             }
-            
+
             if ($newDateTime <= $currentDateTime) {
                 return $this->jsonResponse(['error' => 'New appointment date and time must be in the future'], 400);
             }
-            
+
             // Check if time slot is available (use private method instead of Helpers)
             $endTime = $this->calculateEndTime($newTime);
             if (!$this->isTimeSlotAvailableGlobal($newDate, $newTime)) {
                 return $this->jsonResponse(['error' => 'Time slot is not available'], 400);
             }
-            
+
             // Create new appointment with visit_type = 'FollowUp'
             $newAppointmentData = [
                 'patient_id' => $appointment['patient_id'],
@@ -2483,13 +2546,13 @@ class ApiController
                 'visit_type' => 'FollowUp',
                 'notes' => $appointment['notes'] ?? null
             ];
-            
+
             $newAppointmentId = $this->createAppointmentRecord($newAppointmentData);
-            
+
             if (!$newAppointmentId) {
                 return $this->jsonResponse(['error' => 'Failed to create new appointment'], 500);
             }
-            
+
             // Link new appointment to old one (if column exists)
             try {
                 $columnStmt = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'rescheduled_from'");
@@ -2500,33 +2563,33 @@ class ApiController
             } catch (\Exception $e) {
                 // Column doesn't exist, ignore
             }
-            
+
             // Create timeline event for the NEW appointment (same as createAppointment)
             try {
                 $this->createTimelineEvent(
-                    $appointment['patient_id'], 
-                    $newAppointmentId, 
-                    'Booking', 
+                    $appointment['patient_id'],
+                    $newAppointmentId,
+                    'Booking',
                     "Follow-up appointment scheduled for {$newDate} {$newTime}"
                 );
             } catch (\Exception $e) {
                 // Continue even if timeline event fails
             }
-            
+
             // Create alert for follow-up appointment (always create alert regardless of old appointment status or date)
             try {
                 $patientName = trim($appointment['first_name'] . ' ' . $appointment['last_name']);
                 $alertMessage = "Follow-up appointment for patient ({$patientName})";
-                
+
                 // Get doctor_id from appointment
                 $doctorId = $appointment['doctor_id'];
-                
+
                 // Set alert date/time to be 1 hour before appointment
                 $alertDateTime = new \DateTime($newDate . ' ' . $newTime);
                 $alertDateTime->sub(new \DateInterval('PT1H'));
                 $alertDate = $alertDateTime->format('Y-m-d');
                 $alertTime = $alertDateTime->format('H:i:s');
-                
+
                 $alertData = [
                     'doctor_id' => $doctorId,
                     'patient_id' => $appointment['patient_id'],
@@ -2537,12 +2600,12 @@ class ApiController
                     'repeat_count' => 1,
                     'repeat_interval' => 0
                 ];
-                
+
                 $this->alertModel->create($alertData);
             } catch (\Exception $e) {
                 // Continue even if alert creation fails
             }
-            
+
             // Create notification for follow-up reschedule
             try {
                 $patientName = trim($appointment['first_name'] . ' ' . $appointment['last_name']);
@@ -2558,20 +2621,20 @@ class ApiController
             } catch (\Exception $e) {
                 // Continue even if notification creation fails
             }
-            
+
             return $this->jsonResponse([
-                    'ok' => true,
-                    'success' => true,
+                'ok' => true,
+                'success' => true,
                 'message' => 'Follow-up appointment scheduled successfully',
-                    'data' => [
+                'data' => [
                     'new_appointment_id' => $newAppointmentId,
                     'date' => $newDate,
                     'start_time' => $newTime,
                     'visit_type' => 'FollowUp'
                 ]
             ]);
-                
-            } catch (\Exception $e) {
+
+        } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Error scheduling follow-up appointment: ' . $e->getMessage()], 500);
         }
     }
@@ -2583,7 +2646,7 @@ class ApiController
                                 discount_amount, discount_reason, is_exempt, exempt_reason)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
-        
+
         $stmt->execute([
             $data['appointment_id'] ?? null,
             $data['patient_id'],
@@ -2596,7 +2659,7 @@ class ApiController
             $data['is_exempt'] ?? false,
             $data['exempt_reason'] ?? null
         ]);
-        
+
         return $this->pdo->lastInsertId();
     }
 
@@ -2609,7 +2672,7 @@ class ApiController
     {
         // Check if query looks like a phone number
         $isPhoneSearch = $this->isPhoneNumberSearch($query);
-        
+
         if ($isPhoneSearch) {
             // Use enhanced phone search for better phone number matching
             return $this->searchPatientsByPhone($query);
@@ -2628,7 +2691,7 @@ class ApiController
                 ORDER BY p.last_name, p.first_name
                 LIMIT 20
             ");
-            
+
             $searchTerm = "%{$query}%";
             $stmt->execute([$searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm]);
             return $stmt->fetchAll();
@@ -2647,7 +2710,7 @@ class ApiController
         // Remove common phone prefixes and check if it's mostly digits
         $cleanQuery = preg_replace('/^(\+20|0)/', '', $query);
         $cleanQuery = preg_replace('/[^0-9]/', '', $cleanQuery);
-        
+
         // If it's 9-11 digits, it's likely a phone number
         // Also check if it starts with 1 (Egyptian mobile numbers)
         return strlen($cleanQuery) >= 9 && strlen($cleanQuery) <= 11 && substr($cleanQuery, 0, 1) === '1';
@@ -2661,13 +2724,13 @@ class ApiController
     {
         // Clean the search query (remove +20, 0, etc.)
         $cleanQuery = $this->normalizePhoneNumber($query);
-        
+
         // Create multiple search patterns for different phone formats
         $searchPatterns = $this->generatePhoneSearchPatterns($cleanQuery);
-        
+
         // Build the complete parameter array for execution
         $executionParams = $this->buildExecutionParams($searchPatterns, $query);
-        
+
         $stmt = $this->pdo->prepare("
             SELECT p.id, p.first_name, p.last_name, p.phone, p.alt_phone, p.dob, p.gender, p.national_id,
                    CONCAT(p.first_name, ' ', p.last_name) as full_name,
@@ -2680,7 +2743,7 @@ class ApiController
             ORDER BY p.last_name, p.first_name
             LIMIT 20
         ");
-        
+
         $stmt->execute($executionParams);
         return $stmt->fetchAll();
     }
@@ -2711,19 +2774,19 @@ class ApiController
     private function generatePhoneSearchPatterns($cleanQuery)
     {
         $patterns = [];
-        
+
         // Add the clean query as is
         $patterns[] = "%{$cleanQuery}%";
-        
+
         // Add with +20 prefix
         $patterns[] = "%+20{$cleanQuery}%";
-        
+
         // Add with 0 prefix
         $patterns[] = "%0{$cleanQuery}%";
-        
+
         // Add with 20 prefix (without +)
         $patterns[] = "%20{$cleanQuery}%";
-        
+
         // If query starts with 1, also search for it without the 1
         // This allows searching with '01' to find '+201234567890'
         if (substr($cleanQuery, 0, 1) === '1' && strlen($cleanQuery) > 9) {
@@ -2732,7 +2795,7 @@ class ApiController
             $patterns[] = "%0" . substr($cleanQuery, 1) . "%";
             $patterns[] = "%20" . substr($cleanQuery, 1) . "%";
         }
-        
+
         return $patterns;
     }
 
@@ -2746,15 +2809,15 @@ class ApiController
     private function buildPhoneSearchWhereClause($searchPatterns)
     {
         $conditions = [];
-        
+
         foreach ($searchPatterns as $index => $pattern) {
             $conditions[] = "p.phone LIKE ? OR p.alt_phone LIKE ?";
         }
-        
+
         // Also search in names and national ID for comprehensive results
         // This ensures we don't miss patients if phone search fails
         $conditions[] = "p.first_name LIKE ? OR p.last_name LIKE ? OR p.national_id LIKE ?";
-        
+
         return implode(' OR ', $conditions);
     }
 
@@ -2765,20 +2828,20 @@ class ApiController
     private function buildExecutionParams($searchPatterns, $originalQuery)
     {
         $params = [];
-        
+
         // Add phone search parameters (each pattern needs 2 parameters for phone and alt_phone)
         foreach ($searchPatterns as $pattern) {
             $params[] = $pattern; // for p.phone
             $params[] = $pattern; // for p.alt_phone
         }
-        
+
         // Add name and national ID search parameters
         // These provide fallback search capabilities
         $nameSearchTerm = "%{$originalQuery}%";
         $params[] = $nameSearchTerm; // for first_name
         $params[] = $nameSearchTerm; // for last_name
         $params[] = $nameSearchTerm; // for national_id
-        
+
         return $params;
     }
 
@@ -2788,7 +2851,7 @@ class ApiController
             INSERT INTO patients (first_name, last_name, dob, gender, phone, alt_phone, address, national_id, emergency_contact, emergency_phone)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
-        
+
         $stmt->execute([
             $data['first_name'],
             $data['last_name'],
@@ -2801,7 +2864,7 @@ class ApiController
             $data['emergency_contact'] ?? null,
             $data['emergency_phone'] ?? null
         ]);
-        
+
         return $this->pdo->lastInsertId();
     }
 
@@ -2829,7 +2892,7 @@ class ApiController
                                          diagnosis, diagnosis_code, systemic_disease, medication, plan, followup_days, created_by)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
-        
+
         $stmt->execute([
             $data['appointment_id'],
             $data['chief_complaint'] ?? null,
@@ -2856,7 +2919,7 @@ class ApiController
             $data['followup_days'] ?? null,
             $userId
         ]);
-        
+
         return $this->pdo->lastInsertId();
     }
 
@@ -2873,32 +2936,32 @@ class ApiController
 
             // Build notes from consultation data
             $notesParts = [];
-            
+
             if (!empty($consultationData['chief_complaint'])) {
                 $notesParts[] = "Chief Complaint: " . $consultationData['chief_complaint'];
             }
-            
+
             if (!empty($consultationData['hx_present_illness'])) {
                 $notesParts[] = "History of Present Illness: " . $consultationData['hx_present_illness'];
             }
-            
+
             if (!empty($consultationData['plan'])) {
                 $notesParts[] = "Plan: " . $consultationData['plan'];
             }
-            
+
             if (!empty($consultationData['systemic_disease'])) {
                 $notesParts[] = "Systemic Disease: " . $consultationData['systemic_disease'];
             }
-            
+
             if (!empty($consultationData['medication'])) {
                 $notesParts[] = "Medication: " . $consultationData['medication'];
             }
 
             $notes = implode("\n\n", $notesParts);
-            
+
             // Use appointment date as diagnosis date
             $diagnosisDate = $appointmentData['date'] ?? date('Y-m-d');
-            
+
             // Determine category based on diagnosis content
             $category = 'general';
             $diagnosisLower = strtolower($consultationData['diagnosis']);
@@ -2926,7 +2989,7 @@ class ApiController
                 $diagnosisDate,
                 '%' . substr($notes, 0, 50) . '%'
             ]);
-            
+
             if ($stmt->fetch()) {
                 // Entry already exists, skip creation
                 return false;
@@ -2961,7 +3024,7 @@ class ApiController
             INSERT INTO prescriptions (appointment_id, drug_name, dose, frequency, duration, route, notes)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
-        
+
         $stmt->execute([
             $data['appointment_id'],
             $data['drug_name'],
@@ -2971,7 +3034,7 @@ class ApiController
             $data['route'] ?? 'Topical',
             $data['notes'] ?? null
         ]);
-        
+
         return $this->pdo->lastInsertId();
     }
 
@@ -2985,7 +3048,7 @@ class ApiController
                                              PD_NEAR, PD_DISTANCE, lens_type, comments)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
-        
+
         $stmt->execute([
             $data['appointment_id'],
             (!empty($data['distance_sphere_r']) ? $data['distance_sphere_r'] : null),
@@ -3005,7 +3068,7 @@ class ApiController
             $data['lens_type'],
             (!empty($data['comments']) ? $data['comments'] : null)
         ]);
-        
+
         return $this->pdo->lastInsertId();
     }
 
@@ -3025,18 +3088,18 @@ class ApiController
         ");
         $stmt->execute([$date]);
         $appointmentStats = $stmt->fetch();
-        
+
         $stmt = $this->pdo->prepare("
             SELECT SUM(amount) as total_payments FROM payments WHERE DATE(created_at) = ?
         ");
         $stmt->execute([$date]);
         $paymentStats = $stmt->fetch();
-        
+
         $stmt = $this->pdo->prepare("
             INSERT INTO daily_closures (date, closed_by, total_appointments, completed_appointments, total_payments, note)
             VALUES (?, ?, ?, ?, ?, ?)
         ");
-        
+
         $stmt->execute([
             $date,
             $userId,
@@ -3045,7 +3108,7 @@ class ApiController
             $paymentStats['total_payments'] ?? 0,
             'Daily closure locked'
         ]);
-        
+
         return $this->pdo->lastInsertId();
     }
 
@@ -3056,12 +3119,12 @@ class ApiController
             if (!$user || !isset($user['id'])) {
                 return false;
             }
-            
+
             $stmt = $this->pdo->prepare("
                 INSERT INTO timeline_events (patient_id, appointment_id, actor_user_id, event_type, event_summary)
                 VALUES (?, ?, ?, ?, ?)
             ");
-            
+
             return $stmt->execute([
                 $patientId,
                 $appointmentId,
@@ -3081,7 +3144,7 @@ class ApiController
         if (ob_get_level()) {
             ob_clean();
         }
-        
+
         try {
             if (!$this->auth->check()) {
                 return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
@@ -3107,7 +3170,7 @@ class ApiController
             }
 
             $file = $_FILES['attachment_file'];
-            
+
             // Validate file size (2MB limit)
             if ($file['size'] > 2 * 1024 * 1024) {
                 return $this->jsonResponse(['success' => false, 'message' => 'File size exceeds 2MB limit']);
@@ -3115,7 +3178,10 @@ class ApiController
 
             // Validate file type
             $allowedMimes = [
-                'image/jpeg', 'image/jpg', 'image/png', 'image/gif',
+                'image/jpeg',
+                'image/jpg',
+                'image/png',
+                'image/gif',
                 'application/pdf',
                 'application/msword',
                 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -3174,7 +3240,7 @@ class ApiController
             if ($result) {
                 // Create timeline event
                 $this->createTimelineEvent($patientId, $appointmentId, 'Attachment', 'Uploaded: ' . $file['name']);
-                
+
                 return $this->jsonResponse(['success' => true, 'message' => 'File uploaded successfully']);
             } else {
                 // Delete file if database insert failed
@@ -3205,7 +3271,7 @@ class ApiController
             }
 
             $filePath = __DIR__ . '/../../' . $attachment['file_path'];
-            
+
             if (!file_exists($filePath)) {
                 http_response_code(404);
                 return;
@@ -3221,6 +3287,101 @@ class ApiController
 
         } catch (Exception $e) {
             http_response_code(500);
+        }
+    }
+
+    /**
+     * View patient image for Cards and Folders views
+     * Handles file path resolution correctly for patient card images
+     */
+    public function viewPatientImageForCards($id)
+    {
+        // Log that function was called
+        error_log("viewPatientImageForCards: Function called with ID: {$id}");
+        
+        try {
+            if (!$this->auth->check()) {
+                http_response_code(401);
+                error_log("viewPatientImageForCards: Unauthorized");
+                return;
+            }
+
+            $stmt = $this->pdo->prepare("SELECT * FROM patient_attachments WHERE id = ?");
+            $stmt->execute([$id]);
+            $attachment = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            if (!$attachment) {
+                http_response_code(404);
+                error_log("viewPatientImageForCards: Attachment ID {$id} not found in database");
+                return;
+            }
+
+            error_log("viewPatientImageForCards: Found attachment ID {$id}, file_path: {$attachment['file_path']}");
+
+            // Use same path resolution as viewAttachment
+            // file_path is stored as 'storage/uploads/attachments/filename'
+            $dbPath = $attachment['file_path'];
+            
+            // Remove leading slash if present
+            $dbPath = ltrim($dbPath, '/');
+            
+            // Build path exactly like viewAttachment does
+            $filePath = __DIR__ . '/../../' . $dbPath;
+            
+            // Try multiple path variations
+            $possiblePaths = [
+                $filePath,  // app/Controllers/../../storage/uploads/attachments/filename
+                __DIR__ . '/../../app/' . $dbPath,  // app/Controllers/../../app/storage/uploads/attachments/filename
+                realpath($filePath),  // Try realpath
+            ];
+
+            $foundPath = null;
+            foreach ($possiblePaths as $path) {
+                if ($path && file_exists($path)) {
+                    $foundPath = $path;
+                    error_log("viewPatientImageForCards: Found file at: {$foundPath}");
+                    break;
+                }
+            }
+
+            if (!$foundPath) {
+                // Try one more time with direct path check
+                $directPath = __DIR__ . '/../../' . ltrim($attachment['file_path'], '/');
+                if (file_exists($directPath)) {
+                    $foundPath = $directPath;
+                    error_log("viewPatientImageForCards: Found file at direct path: {$foundPath}");
+                } else {
+                    http_response_code(404);
+                    error_log("viewPatientImageForCards: File not found. ID: {$id}, DB path: {$attachment['file_path']}");
+                    error_log("viewPatientImageForCards: Tried paths: " . implode(' | ', array_filter($possiblePaths)));
+                    error_log("viewPatientImageForCards: Direct path: {$directPath}");
+                    error_log("viewPatientImageForCards: __DIR__ = " . __DIR__);
+                    error_log("viewPatientImageForCards: file_exists check: " . (file_exists($directPath) ? 'YES' : 'NO'));
+                    return;
+                }
+            }
+
+            // Verify it's an image
+            if (strpos($attachment['mime_type'], 'image/') !== 0) {
+                http_response_code(400);
+                error_log("viewPatientImageForCards: Not an image. ID: {$id}, MIME: {$attachment['mime_type']}");
+                return;
+            }
+
+            // Set appropriate headers
+            header('Content-Type: ' . $attachment['mime_type']);
+            header('Content-Length: ' . filesize($foundPath));
+            header('Content-Disposition: inline; filename="' . $attachment['original_filename'] . '"');
+            header('Cache-Control: public, max-age=3600');
+
+            // Output file
+            readfile($foundPath);
+            exit;
+
+        } catch (Exception $e) {
+            http_response_code(500);
+            error_log("viewPatientImageForCards: Exception for ID {$id}: " . $e->getMessage());
+            error_log("viewPatientImageForCards: Stack trace: " . $e->getTraceAsString());
         }
     }
 
@@ -3242,7 +3403,7 @@ class ApiController
             }
 
             $filePath = __DIR__ . '/../../' . $attachment['file_path'];
-            
+
             if (!file_exists($filePath)) {
                 http_response_code(404);
                 return;
@@ -3293,9 +3454,9 @@ class ApiController
 
                 // Create timeline event
                 $this->createTimelineEvent(
-                    $attachment['patient_id'], 
-                    $attachment['appointment_id'], 
-                    'Attachment', 
+                    $attachment['patient_id'],
+                    $attachment['appointment_id'],
+                    'Attachment',
                     'Deleted: ' . $attachment['original_filename']
                 );
 
@@ -3328,7 +3489,7 @@ class ApiController
                 'success' => true,
                 'attachments' => $attachments
             ]);
-            
+
         } catch (\Exception $e) {
             return $this->jsonResponse(['success' => false, 'message' => 'Server error'], 500);
         }
@@ -3351,9 +3512,9 @@ class ApiController
 
             // Connect to drugs database to get prices
             $drugsPdo = $this->getDrugsDatabaseConnection();
-            
+
             // Add price to each medication
-            $medicationsWithPrices = array_map(function($medication) use ($drugsPdo) {
+            $medicationsWithPrices = array_map(function ($medication) use ($drugsPdo) {
                 $price = null;
                 if (!empty($medication['drug_name'])) {
                     try {
@@ -3447,9 +3608,9 @@ class ApiController
             if ($result) {
                 // Create timeline event
                 $this->createTimelineEvent(
-                    $medication['patient_id'], 
-                    $medication['appointment_id'], 
-                    'Rx', 
+                    $medication['patient_id'],
+                    $medication['appointment_id'],
+                    'Rx',
                     'Deleted medication: ' . $medication['drug_name']
                 );
 
@@ -3509,14 +3670,14 @@ class ApiController
                 if (empty($data) && !empty($_POST)) {
                     $data = $_POST;
                 }
-                    } else {
+            } else {
                 $data = $_POST;
             }
-            
-            
+
+
             if (!$this->validator->validate($data, $rules)) {
                 $errors = $this->validator->getAllErrors();
-                
+
                 return $this->jsonResponse([
                     'success' => false,
                     'message' => 'Validation failed: ' . $this->validator->getFirstError(),
@@ -3544,9 +3705,9 @@ class ApiController
             if ($result) {
                 // Create timeline event
                 $this->createTimelineEvent(
-                    $medication['patient_id'], 
-                    $medication['appointment_id'], 
-                    'Rx', 
+                    $medication['patient_id'],
+                    $medication['appointment_id'],
+                    'Rx',
                     'Updated medication: ' . $data['drug_name']
                 );
 
@@ -3641,9 +3802,9 @@ class ApiController
             if ($result) {
                 // Create timeline event
                 $this->createTimelineEvent(
-                    $glasses['patient_id'], 
-                    $glasses['appointment_id'], 
-                    'GlassesRx', 
+                    $glasses['patient_id'],
+                    $glasses['appointment_id'],
+                    'GlassesRx',
                     'Updated glasses prescription: ' . $data['lens_type']
                 );
 
@@ -3692,9 +3853,9 @@ class ApiController
             if ($result) {
                 // Create timeline event
                 $this->createTimelineEvent(
-                    $glasses['patient_id'], 
-                    $glasses['appointment_id'], 
-                    'GlassesRx', 
+                    $glasses['patient_id'],
+                    $glasses['appointment_id'],
+                    'GlassesRx',
                     'Deleted glasses prescription: ' . $glasses['lens_type']
                 );
 
@@ -3715,7 +3876,7 @@ class ApiController
             // Get data from request - support both JSON and form data
             $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
             $input = [];
-            
+
             if (strpos($contentType, 'application/json') !== false) {
                 // JSON request
                 $input = json_decode(file_get_contents('php://input'), true);
@@ -3726,7 +3887,7 @@ class ApiController
                 // Form data or URL-encoded
                 $input = $_POST;
             }
-            
+
             $appointmentId = $input['appointment_id'] ?? null;
             $testType = $input['test_type'] ?? null;
             $testCategory = $input['test_category'] ?? null;
@@ -3774,10 +3935,19 @@ class ApiController
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([
-                $data['appointment_id'], $data['patient_id'], $data['test_type'], 
-                $data['test_category'], $data['test_name'], $data['priority'], 
-                $data['status'], $data['ordered_date'], $data['expected_date'], 
-                $data['notes'], $data['results'], $data['created_at'], $data['updated_at']
+                $data['appointment_id'],
+                $data['patient_id'],
+                $data['test_type'],
+                $data['test_category'],
+                $data['test_name'],
+                $data['priority'],
+                $data['status'],
+                $data['ordered_date'],
+                $data['expected_date'],
+                $data['notes'],
+                $data['results'],
+                $data['created_at'],
+                $data['updated_at']
             ]);
             $labTestId = $this->pdo->lastInsertId();
 
@@ -3797,7 +3967,7 @@ class ApiController
         try {
             // Get JSON data from request body
             $input = json_decode(file_get_contents('php://input'), true);
-            
+
             $testType = $input['test_type'] ?? $_POST['test_type'] ?? null;
             $testCategory = $input['test_category'] ?? $_POST['test_category'] ?? null;
             $testName = $input['test_name'] ?? $_POST['test_name'] ?? null;
@@ -3819,7 +3989,7 @@ class ApiController
             // Build update query dynamically for non-null values
             $updateFields = [];
             $updateValues = [];
-            
+
             if ($testType !== null) {
                 $updateFields[] = "test_type = ?";
                 $updateValues[] = $testType;
@@ -3856,12 +4026,12 @@ class ApiController
                 $updateFields[] = "results = ?";
                 $updateValues[] = $results;
             }
-            
+
             // Always update updated_at
             $updateFields[] = "updated_at = ?";
             $updateValues[] = date('Y-m-d H:i:s');
             $updateValues[] = $testId; // for WHERE clause
-            
+
             if (!empty($updateFields)) {
                 $sql = "UPDATE lab_tests SET " . implode(', ', $updateFields) . " WHERE id = ?";
                 $stmt = $this->pdo->prepare($sql);
@@ -3947,7 +4117,7 @@ class ApiController
 
             $file = $_FILES['patient_file'];
             $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
-            
+
             if (!in_array($file['type'], $allowedTypes)) {
                 return $this->jsonResponse(['error' => 'File type not allowed'], 400);
             }
@@ -3962,12 +4132,12 @@ class ApiController
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0755, true);
             }
-            
+
             // Generate unique filename
             $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
             $filename = 'patient_' . $patientId . '_' . time() . '_' . uniqid() . '.' . $extension;
             $filePath = $uploadDir . $filename;
-            
+
             // Move uploaded file
             if (!move_uploaded_file($file['tmp_name'], $filePath)) {
                 return $this->jsonResponse(['error' => 'Failed to save file'], 500);
@@ -3978,7 +4148,7 @@ class ApiController
                 INSERT INTO patient_files (patient_id, original_filename, file_path, file_type, file_size, description, uploaded_by, created_at) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
             ");
-            
+
             $stmt->execute([
                 $patientId,
                 $file['name'],
@@ -3988,7 +4158,7 @@ class ApiController
                 $description,
                 $this->auth->user()['id']
             ]);
-            
+
             return $this->jsonResponse([
                 'success' => true,
                 'message' => 'File uploaded successfully',
@@ -4017,7 +4187,7 @@ class ApiController
             }
 
             $filePath = __DIR__ . '/../../' . $file['file_path'];
-            
+
             if (!file_exists($filePath)) {
                 return $this->jsonResponse(['error' => 'File not found on disk'], 404);
             }
@@ -4027,10 +4197,10 @@ class ApiController
             header('Content-Type: ' . $mimeType);
             header('Content-Length: ' . filesize($filePath));
             header('Cache-Control: private, max-age=3600');
-            
+
             // Output file
             readfile($filePath);
-                exit;
+            exit;
 
         } catch (Exception $e) {
             return $this->jsonResponse(['error' => $e->getMessage()], 500);
@@ -4054,7 +4224,7 @@ class ApiController
             }
 
             $filePath = __DIR__ . '/../../' . $file['file_path'];
-            
+
             if (!file_exists($filePath)) {
                 return $this->jsonResponse(['error' => 'File not found on disk'], 404);
             }
@@ -4064,10 +4234,10 @@ class ApiController
             header('Content-Disposition: attachment; filename="' . $file['original_filename'] . '"');
             header('Content-Length: ' . filesize($filePath));
             header('Cache-Control: private');
-            
+
             // Output file
             readfile($filePath);
-                exit;
+            exit;
 
         } catch (Exception $e) {
             return $this->jsonResponse(['error' => $e->getMessage()], 500);
@@ -4156,7 +4326,7 @@ class ApiController
                 INSERT INTO patient_notes (patient_id, title, content, doctor_id, created_at) 
                 VALUES (?, ?, ?, ?, NOW())
             ");
-            
+
             $stmt->execute([
                 $patientId,
                 $title,
@@ -4221,7 +4391,7 @@ class ApiController
                 SET title = ?, content = ?, updated_at = NOW() 
                 WHERE id = ?
             ");
-            
+
             $stmt->execute([$title, $content, $noteId]);
 
             return $this->jsonResponse([
@@ -4281,7 +4451,7 @@ class ApiController
 
             // Get input data
             $input = json_decode(file_get_contents('php://input'), true);
-            
+
             $condition = trim($input['condition'] ?? '');
             $diagnosis_date = trim($input['diagnosis_date'] ?? '');
             $status = trim($input['status'] ?? 'active');
@@ -4328,7 +4498,7 @@ class ApiController
 
             if ($result) {
                 $historyId = $this->pdo->lastInsertId();
-                
+
                 // Get the created record
                 $stmt = $this->pdo->prepare("
                     SELECT mh.*, u.name as created_by_name 
@@ -4348,7 +4518,7 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Failed to create medical history'], 500);
             }
 
-            } catch (\Exception $e) {
+        } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Internal server error: ' . $e->getMessage()], 500);
         }
     }
@@ -4375,7 +4545,7 @@ class ApiController
 
             // Get input data
             $input = json_decode(file_get_contents('php://input'), true);
-            
+
             $condition = trim($input['condition'] ?? '');
             $diagnosis_date = trim($input['diagnosis_date'] ?? '');
             $status = trim($input['status'] ?? 'active');
@@ -4546,7 +4716,7 @@ class ApiController
             ");
             $stmt->execute([$patientId]);
             $oldHistory = $stmt->fetchAll();
-            
+
             // Get medical history entries from the new table
             $stmt = $this->pdo->prepare("
                 SELECT mhe.*, u.name as doctor_name, 'new_format' as entry_type
@@ -4557,7 +4727,7 @@ class ApiController
             ");
             $stmt->execute([$patientId]);
             $newEntries = $stmt->fetchAll();
-            
+
             // Convert new format entries to match old format structure
             $convertedEntries = [];
             foreach ($newEntries as $entry) {
@@ -4582,12 +4752,12 @@ class ApiController
                 ];
                 $convertedEntries[] = $converted;
             }
-            
+
             // Merge all entries
             $allEntries = array_merge($oldHistory, $convertedEntries);
-            
+
             // Sort by created_at descending
-            usort($allEntries, function($a, $b) {
+            usort($allEntries, function ($a, $b) {
                 return strtotime($b['created_at']) - strtotime($a['created_at']);
             });
 
@@ -4611,12 +4781,14 @@ class ApiController
 
             $cacheFile = __DIR__ . '/../../storage/ophthalmology_news_cache.json';
             $cacheDuration = 20 * 60; // 20 minutes cache
-            
+
             // Check cache
             if (file_exists($cacheFile)) {
                 $cacheData = json_decode(file_get_contents($cacheFile), true);
-                if ($cacheData && isset($cacheData['timestamp']) && 
-                    (time() - $cacheData['timestamp']) < $cacheDuration) {
+                if (
+                    $cacheData && isset($cacheData['timestamp']) &&
+                    (time() - $cacheData['timestamp']) < $cacheDuration
+                ) {
                     return $this->jsonResponse([
                         'success' => true,
                         'articles' => $cacheData['articles'],
@@ -4690,14 +4862,14 @@ class ApiController
                     libxml_use_internal_errors(true);
                     $xml = simplexml_load_string($xmlContent);
                     libxml_clear_errors();
-                    
+
                     if (!$xml) {
                         continue;
                     }
 
                     // Handle different RSS formats (RSS 1.0, RSS 2.0, Atom)
                     $items = [];
-                    
+
                     // Register common namespaces for xpath queries
                     $namespaces = $xml->getNamespaces(true);
                     // Register RSS 1.0 namespace explicitly
@@ -4710,7 +4882,7 @@ class ApiController
                             $xml->registerXPathNamespace($prefix, $ns);
                         }
                     }
-                    
+
                     // Try RSS 2.0 format first (direct access)
                     if (isset($xml->channel->item)) {
                         $items = $xml->channel->item;
@@ -4731,12 +4903,13 @@ class ApiController
                                 // Try with other namespaces
                                 foreach ($namespaces as $prefix => $ns) {
                                     $items = $xml->xpath("//{$prefix}:item | //item");
-                                    if (!empty($items)) break;
+                                    if (!empty($items))
+                                        break;
                                 }
                             }
                         }
                     }
-                    
+
                     if (empty($items)) {
                         continue;
                     }
@@ -4757,78 +4930,78 @@ class ApiController
                         $link = '';
                         $description = '';
                         $pubDate = '';
-                        
+
                         // Get title - handle RSS 1.0 RDF
                         if (isset($item->title)) {
-                            $title = trim((string)$item->title);
+                            $title = trim((string) $item->title);
                         } else {
                             // Try xpath for RSS 1.0
                             $titleNodes = $item->xpath('.//title | .//dc:title');
                             if (!empty($titleNodes)) {
-                                $title = trim((string)$titleNodes[0]);
+                                $title = trim((string) $titleNodes[0]);
                             }
                         }
-                        
+
                         // Get link - handle RSS 1.0 RDF (rdf:about attribute)
                         if (isset($item->link)) {
                             // RSS 2.0: link is text, Atom: link can be href attribute
-                            $link = trim((string)$item->link);
+                            $link = trim((string) $item->link);
                             if (isset($item->link['href'])) {
-                                $link = trim((string)$item->link['href']);
+                                $link = trim((string) $item->link['href']);
                             }
                         } else {
                             // Try rdf:about attribute (RSS 1.0)
                             // Get attributes from RDF namespace
                             $rdfAttrs = $item->attributes('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
                             if (!empty($rdfAttrs) && isset($rdfAttrs['about'])) {
-                                $link = trim((string)$rdfAttrs['about']);
+                                $link = trim((string) $rdfAttrs['about']);
                             } else {
                                 // Try regular attributes
                                 $attributes = $item->attributes();
                                 if (isset($attributes['rdf:about'])) {
-                                    $link = trim((string)$attributes['rdf:about']);
+                                    $link = trim((string) $attributes['rdf:about']);
                                 } elseif (isset($attributes['about'])) {
-                                    $link = trim((string)$attributes['about']);
+                                    $link = trim((string) $attributes['about']);
                                 } else {
                                     // Try xpath
                                     $linkNodes = $item->xpath('.//link | .//dc:identifier');
                                     if (!empty($linkNodes)) {
-                                        $link = trim((string)$linkNodes[0]);
+                                        $link = trim((string) $linkNodes[0]);
                                     }
                                 }
                             }
                         }
-                        
+
                         // Get description
                         if (isset($item->description)) {
-                            $description = (string)$item->description;
+                            $description = (string) $item->description;
                         } elseif (isset($item->summary)) {
-                            $description = (string)$item->summary;
+                            $description = (string) $item->summary;
                         } elseif (isset($item->content)) {
-                            $description = (string)$item->content;
+                            $description = (string) $item->content;
                         } else {
                             // Try xpath for RSS 1.0
                             $descNodes = $item->xpath('.//description | .//dc:description | .//content:encoded');
                             if (!empty($descNodes)) {
-                                $description = (string)$descNodes[0];
+                                $description = (string) $descNodes[0];
                             }
                         }
-                        
+
                         if (isset($item->pubDate)) {
-                            $pubDate = (string)$item->pubDate;
+                            $pubDate = (string) $item->pubDate;
                         } elseif (isset($item->date)) {
-                            $pubDate = (string)$item->date;
+                            $pubDate = (string) $item->date;
                         } elseif (isset($item->published)) {
-                            $pubDate = (string)$item->published;
+                            $pubDate = (string) $item->published;
                         } elseif (isset($item->{'dc:date'})) {
-                            $pubDate = (string)$item->{'dc:date'};
+                            $pubDate = (string) $item->{'dc:date'};
                         } else {
                             // Try to get date from namespaces (RSS 1.0 RDF)
                             $namespaces = $item->getNamespaces(true);
                             foreach ($namespaces as $prefix => $ns) {
                                 $dcDate = $item->xpath(".//{$prefix}:date");
                                 if (!empty($dcDate)) {
-                                    $pubDate = (string)$dcDate[0];
+                                    $pubDate = (string) $dcDate[0];
                                     break;
                                 }
                             }
@@ -4837,15 +5010,15 @@ class ApiController
                                 $pubDate = date('r');
                             }
                         }
-                        
+
                         // Skip if no title or link
                         if (empty($title) || empty($link)) {
                             continue;
                         }
-                        
+
                         // Check for breaking news keywords
                         $isBreaking = $this->isBreakingNews($title, $description);
-                        
+
                         $articles[] = [
                             'title' => mb_convert_encoding($title, 'UTF-8', 'UTF-8'),
                             'link' => $link,
@@ -4867,45 +5040,49 @@ class ApiController
             $threeMonthsAgo = time() - (90 * 24 * 60 * 60);
             $filteredArticles = [];
             $allArticles = [];
-            
+
             foreach ($articles as $article) {
                 $allArticles[] = $article;
-                
+
                 // Try to parse date
                 $articleTime = 0;
                 if (!empty($article['pubDate'])) {
                     $articleTime = strtotime($article['pubDate']);
                 }
-                
+
                 // Include if date is within last 3 months OR if date parsing failed (include anyway)
                 if ($articleTime === false || $articleTime === 0 || $articleTime >= $threeMonthsAgo) {
                     $filteredArticles[] = $article;
                 }
             }
-            
+
             // If no recent articles, use all articles (no time filter)
             if (empty($filteredArticles) && !empty($allArticles)) {
                 $filteredArticles = $allArticles;
             }
-            
+
             // Sort by breaking news first, then by date (newest first)
-            usort($filteredArticles, function($a, $b) {
-                if ($a['is_breaking'] && !$b['is_breaking']) return -1;
-                if (!$a['is_breaking'] && $b['is_breaking']) return 1;
-                
+            usort($filteredArticles, function ($a, $b) {
+                if ($a['is_breaking'] && !$b['is_breaking'])
+                    return -1;
+                if (!$a['is_breaking'] && $b['is_breaking'])
+                    return 1;
+
                 $timeA = 0;
                 $timeB = 0;
-                
+
                 if (!empty($a['pubDate'])) {
                     $timeA = strtotime($a['pubDate']);
-                    if ($timeA === false) $timeA = 0;
+                    if ($timeA === false)
+                        $timeA = 0;
                 }
-                
+
                 if (!empty($b['pubDate'])) {
                     $timeB = strtotime($b['pubDate']);
-                    if ($timeB === false) $timeB = 0;
+                    if ($timeB === false)
+                        $timeB = 0;
                 }
-                
+
                 return $timeB - $timeA;
             });
 
@@ -4920,7 +5097,7 @@ class ApiController
                         $articles = array_slice($oldCache['articles'], 0, 15);
                     }
                 }
-                
+
                 if (empty($articles)) {
                     return $this->jsonResponse([
                         'success' => false,
@@ -4970,34 +5147,42 @@ class ApiController
             'Accept: application/rss+xml, application/xml, text/xml, */*',
             'Accept-Language: en-US,en;q=0.9'
         ]);
-        
+
         $content = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlError = curl_error($ch);
         curl_close($ch);
-        
+
         if ($httpCode === 200 && $content && strlen($content) > 100) {
             return $content;
         }
-        
+
         return false;
     }
 
     private function isBreakingNews($title, $description)
     {
         $breakingKeywords = [
-            'breaking', 'urgent', 'alert', 'critical', 'emergency',
-            'important', 'warning', 'recall', 'withdrawal', 'adverse'
+            'breaking',
+            'urgent',
+            'alert',
+            'critical',
+            'emergency',
+            'important',
+            'warning',
+            'recall',
+            'withdrawal',
+            'adverse'
         ];
-        
+
         $text = strtolower($title . ' ' . $description);
-        
+
         foreach ($breakingKeywords as $keyword) {
             if (strpos($text, $keyword) !== false) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -5027,7 +5212,7 @@ class ApiController
                 'success' => true,
                 'data' => $appointments
             ]);
-            
+
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Internal server error'], 500);
         }
@@ -5050,13 +5235,13 @@ class ApiController
             ");
             $stmt->execute([$patientId]);
             $result = $stmt->fetch(\PDO::FETCH_ASSOC);
-            $count = (int)$result['count'];
+            $count = (int) $result['count'];
 
             return $this->jsonResponse([
                 'has_active' => $count > 0,
                 'count' => $count
             ]);
-            
+
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Internal server error'], 500);
         }
@@ -5077,7 +5262,7 @@ class ApiController
             // Check if rescheduled_from column exists
             $columnStmt = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'rescheduled_from'");
             $hasRescheduledFrom = $columnStmt->rowCount() > 0;
-            
+
             // Build query with optional exclusion
             $sql = "
                 SELECT a.*, 
@@ -5088,48 +5273,48 @@ class ApiController
                 LEFT JOIN users u ON d.user_id = u.id
                 WHERE a.patient_id = ?
             ";
-            
+
             $params = [$patientId];
-            
+
             // Get excludeAppointmentId from query string
             $excludeAppointmentId = $_GET['exclude'] ?? null;
             if ($excludeAppointmentId) {
                 $sql .= " AND a.id != ?";
                 $params[] = $excludeAppointmentId;
             }
-            
+
             $sql .= " ORDER BY a.date DESC, a.start_time DESC";
-            
+
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute($params);
             $appointments = $stmt->fetchAll();
-            
+
             // For each appointment, get prescriptions, glasses, consultation notes, and follow-up info
             foreach ($appointments as &$appointment) {
                 // Determine if this is a follow-up appointment
                 $appointment['is_followup'] = false;
                 $appointment['original_appointment_id'] = null;
-                
+
                 if ($hasRescheduledFrom && $appointment['visit_type'] === 'FollowUp' && !empty($appointment['rescheduled_from'])) {
                     $appointment['is_followup'] = true;
                     $appointment['original_appointment_id'] = $appointment['rescheduled_from'];
                 }
-                
+
                 // Get medication prescriptions
                 $medStmt = $this->pdo->prepare("SELECT * FROM prescriptions WHERE appointment_id = ?");
                 $medStmt->execute([$appointment['id']]);
                 $appointment['medications'] = $medStmt->fetchAll();
-                
+
                 // Get glasses prescriptions
                 $glassesStmt = $this->pdo->prepare("SELECT * FROM glasses_prescriptions WHERE appointment_id = ?");
                 $glassesStmt->execute([$appointment['id']]);
                 $appointment['glasses'] = $glassesStmt->fetchAll();
-                
+
                 // Get consultation notes
                 $notesStmt = $this->pdo->prepare("SELECT * FROM consultation_notes WHERE appointment_id = ? ORDER BY created_at DESC LIMIT 1");
                 $notesStmt->execute([$appointment['id']]);
                 $appointment['consultation_note'] = $notesStmt->fetch();
-                
+
                 // Get attachments
                 $attachmentsStmt = $this->pdo->prepare("SELECT id, filename, original_filename, file_path, mime_type, description FROM patient_attachments WHERE appointment_id = ? ORDER BY created_at DESC");
                 $attachmentsStmt->execute([$appointment['id']]);
@@ -5155,33 +5340,33 @@ class ApiController
                 http_response_code(401);
                 exit;
             }
-            
+
             $user = $this->auth->user();
             if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
                 http_response_code(403);
                 exit;
             }
-            
+
             // Check if patient exists
             $stmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
             $stmt->execute([$patientId]);
             $patient = $stmt->fetch();
-            
+
             if (!$patient) {
                 http_response_code(404);
                 exit;
             }
-            
+
             // If we reach here, access is allowed
             http_response_code(200);
             exit;
-            
+
         } catch (\Exception $e) {
             http_response_code(500);
             exit;
         }
     }
-    
+
     public function exportPatientData($patientId)
     {
         try {
@@ -5196,27 +5381,27 @@ class ApiController
 
             // Get patient data
             $patientData = $this->getPatientDataForExport($patientId);
-            
+
             if (!$patientData) {
                 return $this->jsonResponse(['error' => 'Patient not found'], 404);
             }
 
             // Generate Word document
             $filename = $this->generatePatientWordDocument($patientData);
-            
+
             // Set headers for file download
             header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
             header('Content-Disposition: attachment; filename="Patient_' . $patientData['patient']['id'] . '_' . date('Y-m-d') . '.docx"');
             header('Content-Length: ' . filesize($filename));
-            
+
             // Output the file
             readfile($filename);
-            
+
             // Clean up temporary files
             unlink($filename);
             $this->cleanupTempImages();
-            
-                exit;
+
+            exit;
 
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Internal server error: ' . $e->getMessage()], 500);
@@ -5252,7 +5437,7 @@ class ApiController
                 'success' => true,
                 'data' => $prescription
             ]);
-            
+
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Internal server error'], 500);
         }
@@ -5265,7 +5450,7 @@ class ApiController
             $stmt = $this->pdo->prepare("SELECT * FROM patients WHERE id = ?");
             $stmt->execute([$patientId]);
             $patient = $stmt->fetch();
-            
+
             if (!$patient) {
                 return null;
             }
@@ -5339,7 +5524,7 @@ class ApiController
                 'glasses_prescriptions' => $glassesPrescriptions,
                 'attachments' => $attachments
             ];
-            
+
         } catch (\Exception $e) {
             return null;
         }
@@ -5348,7 +5533,7 @@ class ApiController
     private function generatePatientWordDocument($data)
     {
         require_once __DIR__ . '/../../vendor/autoload.php';
-        
+
         $phpWord = new \PhpOffice\PhpWord\PhpWord();
         $phpWord->setDefaultFontName('Arial');
         $phpWord->setDefaultFontSize(12);
@@ -5394,31 +5579,31 @@ class ApiController
         $fullName = trim(($data['patient']['first_name'] ?? '') . ' ' . ($data['patient']['last_name'] ?? ''));
         $this->addTableRow($patientTable, 'Full Name', $fullName, $tableHeaderStyle);
         $this->addTableRow($patientTable, 'Date of Birth', $data['patient']['dob'] ? date('F j, Y', strtotime($data['patient']['dob'])) : 'Not specified', $tableHeaderStyle);
-        
+
         if ($data['patient']['dob']) {
             $age = date_diff(date_create($data['patient']['dob']), date_create('now'))->y;
             $this->addTableRow($patientTable, 'Age', $age . ' years old', $tableHeaderStyle);
         }
-        
+
         $this->addTableRow($patientTable, 'Gender', ucfirst($data['patient']['gender'] ?? 'Not specified'), $tableHeaderStyle);
         $this->addTableRow($patientTable, 'Phone', $data['patient']['phone'] ?? 'Not specified', $tableHeaderStyle);
-        
+
         if ($data['patient']['alt_phone']) {
             $this->addTableRow($patientTable, 'Alternative Phone', $data['patient']['alt_phone'], $tableHeaderStyle);
         }
-        
+
         if ($data['patient']['address']) {
             $this->addTableRow($patientTable, 'Address', $data['patient']['address'], $tableHeaderStyle);
         }
-        
+
         if ($data['patient']['national_id']) {
             $this->addTableRow($patientTable, 'National ID', $data['patient']['national_id'], $tableHeaderStyle);
         }
-        
+
         if ($data['patient']['emergency_contact']) {
             $this->addTableRow($patientTable, 'Emergency Contact', $data['patient']['emergency_contact'], $tableHeaderStyle);
         }
-        
+
         if ($data['patient']['emergency_phone']) {
             $this->addTableRow($patientTable, 'Emergency Phone', $data['patient']['emergency_phone'], $tableHeaderStyle);
         }
@@ -5442,21 +5627,21 @@ class ApiController
                     $this->addTableRow($historyTable, 'Condition', $history['condition_name'] ?? 'Not specified', $tableHeaderStyle);
                     $this->addTableRow($historyTable, 'Category', ucfirst(str_replace('_', ' ', $history['category'] ?? 'general')), $tableHeaderStyle);
                     $this->addTableRow($historyTable, 'Status', ucfirst($history['status'] ?? 'active'), $tableHeaderStyle);
-                    
+
                     if ($history['diagnosis_date']) {
                         $this->addTableRow($historyTable, 'Diagnosis Date', date('F j, Y', strtotime($history['diagnosis_date'])), $tableHeaderStyle);
                     }
-                    
+
                     if ($history['notes']) {
                         $this->addTableRow($historyTable, 'Notes', $history['notes'], $tableHeaderStyle);
                     }
-                    
+
                     if ($history['doctor_name']) {
                         $this->addTableRow($historyTable, 'Added By', 'Dr. ' . $history['doctor_name'], $tableHeaderStyle);
                     }
-                    
+
                     $this->addTableRow($historyTable, 'Date Added', date('F j, Y', strtotime($history['created_at'])), $tableHeaderStyle);
-                    
+
                     $section->addTextBreak();
                 }
             }
@@ -5488,9 +5673,9 @@ class ApiController
                     if ($history['family_history']) {
                         $this->addTableRow($historyTable, 'Family History', $history['family_history'], $tableHeaderStyle);
                     }
-                    
+
                     $this->addTableRow($historyTable, 'Date Added', date('F j, Y', strtotime($history['created_at'])), $tableHeaderStyle);
-                    
+
                     $section->addTextBreak();
                 }
             }
@@ -5512,11 +5697,11 @@ class ApiController
                 $this->addTableRow($appointmentTable, 'Time', date('g:i A', strtotime($appointment['start_time'])) . ' - ' . date('g:i A', strtotime($appointment['end_time'])), $tableHeaderStyle);
                 $this->addTableRow($appointmentTable, 'Visit Type', $appointment['visit_type'] ?? 'Not specified', $tableHeaderStyle);
                 $this->addTableRow($appointmentTable, 'Status', ucfirst($appointment['status'] ?? 'unknown'), $tableHeaderStyle);
-                
+
                 if ($appointment['doctor_name']) {
                     $this->addTableRow($appointmentTable, 'Doctor', 'Dr. ' . $appointment['doctor_name'], $tableHeaderStyle);
                 }
-                
+
                 $section->addTextBreak();
             }
         }
@@ -5535,13 +5720,13 @@ class ApiController
 
                 $this->addTableRow($noteTable, 'Title', $note['title'], $tableHeaderStyle);
                 $this->addTableRow($noteTable, 'Content', $note['content'], $tableHeaderStyle);
-                
+
                 if ($note['doctor_name']) {
                     $this->addTableRow($noteTable, 'Added By', 'Dr. ' . $note['doctor_name'], $tableHeaderStyle);
                 }
-                
+
                 $this->addTableRow($noteTable, 'Date Added', date('F j, Y g:i A', strtotime($note['created_at'])), $tableHeaderStyle);
-                
+
                 $section->addTextBreak();
             }
         }
@@ -5619,11 +5804,11 @@ class ApiController
                 if ($prescription['comments']) {
                     $this->addTableRow($prescriptionTable, 'Comments', $prescription['comments'], $tableHeaderStyle);
                 }
-                
+
                 if ($prescription['doctor_name']) {
                     $this->addTableRow($prescriptionTable, 'Prescribed By', 'Dr. ' . $prescription['doctor_name'], $tableHeaderStyle);
                 }
-                
+
                 $section->addTextBreak();
             }
         }
@@ -5643,66 +5828,66 @@ class ApiController
                 $this->addTableRow($attachmentTable, 'File Name', $attachment['original_filename'], $tableHeaderStyle);
                 $this->addTableRow($attachmentTable, 'File Type', ucfirst(str_replace('_', ' ', $attachment['file_type'] ?? 'document')), $tableHeaderStyle);
                 $this->addTableRow($attachmentTable, 'File Size', number_format($attachment['file_size'] / 1024, 1) . ' KB', $tableHeaderStyle);
-                
+
                 if ($attachment['description']) {
                     $this->addTableRow($attachmentTable, 'Description', $attachment['description'], $tableHeaderStyle);
                 }
-                
+
                 $this->addTableRow($attachmentTable, 'Upload Date', date('F j, Y g:i A', strtotime($attachment['created_at'])), $tableHeaderStyle);
 
                 // Add image if it's an image file and not too large
                 $fileExt = strtolower(pathinfo($attachment['original_filename'], PATHINFO_EXTENSION));
-                $isImageFile = in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif', 'bmp']) || 
-                              (isset($attachment['mime_type']) && strpos($attachment['mime_type'], 'image/') === 0);
-                
+                $isImageFile = in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif', 'bmp']) ||
+                    (isset($attachment['mime_type']) && strpos($attachment['mime_type'], 'image/') === 0);
+
                 if ($isImageFile && $attachment['file_size'] < 5000000) { // Less than 5MB
                     // Build correct path to the image file
                     $imagePath = __DIR__ . '/../../' . $attachment['file_path'];
                     if (file_exists($imagePath) && is_readable($imagePath)) {
                         try {
-                            
+
                             // Get image info
                             $imageInfo = getimagesize($imagePath);
                             if (!$imageInfo) {
                                 throw new \Exception("Cannot get image information");
                             }
-                            
+
                             $originalWidth = $imageInfo[0];
                             $originalHeight = $imageInfo[1];
                             $mimeType = $imageInfo['mime'];
-                            
-                            
+
+
                             // Create a copy in temp directory with proper permissions
                             $tempImagePath = sys_get_temp_dir() . '/export_image_' . time() . '_' . mt_rand(1000, 9999) . '.jpg';
-                            
+
                             // Always convert to JPEG for maximum Word compatibility
                             $this->convertImageToJpeg($imagePath, $tempImagePath, 400, 400);
-                            
+
                             if (file_exists($tempImagePath)) {
-                                
+
                                 $section->addTextBreak();
-                                
+
                                 // Add image label
                                 $section->addText('Image Preview:', ['bold' => true, 'size' => 11]);
                                 $section->addTextBreak();
-                                
+
                                 // Calculate display size while maintaining aspect ratio
                                 $ratio = min(200 / $originalWidth, 200 / $originalHeight);
                                 $displayWidth = intval($originalWidth * $ratio);
                                 $displayHeight = intval($originalHeight * $ratio);
-                                
+
                                 // Add the image using the most basic method
                                 $section->addImage($tempImagePath, [
                                     'width' => $displayWidth,
                                     'height' => $displayHeight
                                 ]);
-                                
+
                                 $section->addTextBreak();
-                                
+
                                 // Don't delete the temp image yet - PHPWord may need it during save
                                 // We'll clean it up after the document is generated
                                 $this->tempImagesToCleanup[] = $tempImagePath;
-                                
+
                             } else {
                                 throw new \Exception("Failed to create temporary image file");
                             }
@@ -5715,7 +5900,7 @@ class ApiController
                     } else {
                     }
                 }
-                
+
                 $section->addTextBreak();
             }
         }
@@ -5787,7 +5972,7 @@ class ApiController
 
         // Create new image
         $newImage = imagecreatetruecolor($newWidth, $newHeight);
-        
+
         // Preserve transparency for PNG and GIF
         if ($imageType == IMAGETYPE_PNG || $imageType == IMAGETYPE_GIF) {
             imagealphablending($newImage, false);
@@ -5801,7 +5986,7 @@ class ApiController
 
         // Save to temporary file - always save as JPEG for consistency in Word
         $tempPath = sys_get_temp_dir() . '/resized_' . basename($sourcePath, '.' . pathinfo($sourcePath, PATHINFO_EXTENSION)) . '_' . time() . '.jpg';
-        
+
         // Always save as JPEG for better Word compatibility
         $saved = imagejpeg($newImage, $tempPath, 85);
 
@@ -5874,7 +6059,7 @@ class ApiController
             return false;
         }
     }
-    
+
     private function cleanupTempImages()
     {
         foreach ($this->tempImagesToCleanup as $tempPath) {
@@ -5930,25 +6115,25 @@ class ApiController
             if (!$this->auth->check()) {
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
-            
+
             $searchTerm = $_GET['q'] ?? '';
-            $limit = min((int)($_GET['limit'] ?? 20), 50); // Max 50 results
+            $limit = min((int) ($_GET['limit'] ?? 20), 50); // Max 50 results
             $category = $_GET['category'] ?? '';
             $company = $_GET['company'] ?? '';
             $route = $_GET['route'] ?? '';
-            
+
             // If no search term and no filters, return empty
             if (strlen($searchTerm) < 2 && empty($category) && empty($company) && empty($route)) {
                 return $this->jsonResponse(['drugs' => []]);
             }
-            
+
             // Connect to drugs database
             $drugsPdo = $this->getDrugsDatabaseConnection();
-            
+
             // Build WHERE clause with filters
             $whereConditions = [];
             $params = [];
-            
+
             // Add search conditions only if search term exists
             if (strlen($searchTerm) >= 2) {
                 $searchTerm = '%' . $searchTerm . '%';
@@ -5966,29 +6151,26 @@ class ApiController
                 // If no search term, just get all records (will be filtered by category/company/route)
                 $whereConditions = ['1=1'];
             }
-            
+
             if (!empty($category)) {
                 $whereConditions[] = 'AND Pharmacology = ?';
                 $params[] = $category;
             }
-            
+
             if (!empty($company)) {
                 $whereConditions[] = 'AND Company = ?';
                 $params[] = $company;
             }
-            
+
             if (!empty($route)) {
                 $whereConditions[] = 'AND Route = ?';
                 $params[] = $route;
             }
-            
+
             $whereClause = implode(' ', $whereConditions);
-            
+
             // Debug logging
-            
-            // Also log the full SQL query for debugging
-            $fullQuery = "SELECT ID, FirstName as drug_name, LastName as active_ingredient, price, Company, Pharmacology as category, Route as administration_route, SRDE, GI FROM drugs WHERE {$whereClause} {$orderBy} LIMIT ?";
-            
+
             // Build ORDER BY clause
             $orderBy = '';
             if (strlen($searchTerm) >= 2) {
@@ -6009,7 +6191,10 @@ class ApiController
             } else {
                 $orderBy = "ORDER BY FirstName";
             }
-            
+
+            // Also log the full SQL query for debugging
+            $fullQuery = "SELECT ID, FirstName as drug_name, LastName as active_ingredient, price, Company, Pharmacology as category, Route as administration_route, SRDE, GI FROM drugs WHERE {$whereClause} {$orderBy} LIMIT ?";
+
             $stmt = $drugsPdo->prepare("
                 SELECT 
                     ID,
@@ -6026,16 +6211,16 @@ class ApiController
                 {$orderBy}
                 LIMIT ?
             ");
-            
+
             $params[] = $limit;
-            
+
             $stmt->execute($params);
-            
+
             $drugs = $stmt->fetchAll();
-            
+
             if (count($drugs) > 0) {
             }
-            
+
             return $this->jsonResponse(['drugs' => $drugs]);
 
         } catch (Exception $e) {
@@ -6050,18 +6235,18 @@ class ApiController
             if (!$this->auth->check()) {
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
-            
+
             $drugId = $_GET['id'] ?? null;
-            
+
             if (!$drugId) {
                 return $this->jsonResponse(['error' => 'Drug ID is required'], 400);
             }
 
             // Connect to drugs database
             $drugsPdo = $this->getDrugsDatabaseConnection();
-            
+
             $stmt = $drugsPdo->prepare("
-                SELECT 
+                SELECT
                     ID,
                     FirstName as drug_name,
                     LastName as active_ingredient,
@@ -6073,18 +6258,72 @@ class ApiController
                     SRDE,
                     GI,
                     imageid
-                FROM drugs 
+                FROM drugs
                 WHERE ID = ?
             ");
-            
+
             $stmt->execute([$drugId]);
             $drug = $stmt->fetch();
-            
+
             if (!$drug) {
                 return $this->jsonResponse(['error' => 'Drug not found'], 404);
             }
-            
-            return $this->jsonResponse(['drug' => $drug]);
+
+            // Get exact alternatives (same SRDE)
+            $exactAlternatives = [];
+            if (!empty($drug['SRDE']) && trim($drug['SRDE']) !== '') {
+                $stmt = $drugsPdo->prepare("
+                    SELECT
+                        ID,
+                        FirstName as drug_name,
+                        LastName as active_ingredient,
+                        price,
+                        Company,
+                        Route as administration_route
+                    FROM drugs
+                    WHERE SRDE = ?
+                    AND Route = ?
+                    AND ID != ?
+                    ORDER BY FirstName
+                    LIMIT 20
+                ");
+                $stmt->execute([$drug['SRDE'], $drug['administration_route'], $drugId]);
+                $exactAlternatives = $stmt->fetchAll();
+            }
+
+            // Get similar products (same active ingredient, exclude exact alternatives)
+            $similarProducts = [];
+            if (!empty($drug['active_ingredient']) && trim($drug['active_ingredient']) !== '') {
+                $stmt = $drugsPdo->prepare("
+                    SELECT
+                        ID,
+                        FirstName as drug_name,
+                        LastName as active_ingredient,
+                        price,
+                        Company,
+                        Route as administration_route
+                    FROM drugs
+                    WHERE LastName = ?
+                    AND Route = ?
+                    AND ID != ?
+                    AND (SRDE != ? OR SRDE IS NULL OR SRDE = '')
+                    ORDER BY FirstName
+                    LIMIT 20
+                ");
+                $stmt->execute([
+                    $drug['active_ingredient'],
+                    $drug['administration_route'],
+                    $drugId,
+                    $drug['SRDE'] ?? ''
+                ]);
+                $similarProducts = $stmt->fetchAll();
+            }
+
+            return $this->jsonResponse([
+                'drug' => $drug,
+                'exact_alternatives' => $exactAlternatives,
+                'similar_products' => $similarProducts
+            ]);
 
         } catch (Exception $e) {
             return $this->jsonResponse(['error' => 'Failed to get drug details'], 500);
@@ -6101,22 +6340,22 @@ class ApiController
 
             // Connect to drugs database
             $drugsPdo = $this->getDrugsDatabaseConnection();
-            
+
             // Get unique categories
             $stmt = $drugsPdo->prepare("SELECT DISTINCT Pharmacology as category FROM drugs WHERE Pharmacology IS NOT NULL AND Pharmacology != '' ORDER BY Pharmacology");
             $stmt->execute();
             $categories = $stmt->fetchAll();
-            
+
             // Get unique companies
             $stmt = $drugsPdo->prepare("SELECT DISTINCT Company FROM drugs WHERE Company IS NOT NULL AND Company != '' ORDER BY Company");
             $stmt->execute();
             $companies = $stmt->fetchAll();
-            
+
             // Get unique routes
             $stmt = $drugsPdo->prepare("SELECT DISTINCT Route as route FROM drugs WHERE Route IS NOT NULL AND Route != '' ORDER BY Route");
             $stmt->execute();
             $routes = $stmt->fetchAll();
-            
+
             return $this->jsonResponse([
                 'categories' => array_column($categories, 'category'),
                 'companies' => array_column($companies, 'Company'),
@@ -6132,12 +6371,12 @@ class ApiController
     {
         // Connect to hclinic_drugs database with specific user
         $host = $_ENV['DB_HOST'] ?? 'db';
-        $username = $_ENV['DRUGS_DB_USER'] ?? 'drugs_user';
-        $password = $_ENV['DRUGS_DB_PASS'] ?? 'drugs_password';
+        $username = $_ENV['DRUGS_DB_USER'] ?? 'hclinic_drugs';
+        $password = $_ENV['DRUGS_DB_PASS'] ?? 'Carmen@1230';
         $dbname = $_ENV['DRUGS_DB_NAME'] ?? 'hclinic_drugs';
-        
+
         $dsn = "mysql:host={$host};dbname={$dbname};charset=utf8mb4";
-        
+
         return new \PDO($dsn, $username, $password, [
             \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
             \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
@@ -6154,13 +6393,13 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
 
-            $limit = min((int)($_GET['limit'] ?? 10), 20); // Max 20 results, default 10
+            $limit = min((int) ($_GET['limit'] ?? 10), 20); // Max 20 results, default 10
 
             // Check if prescriptions table exists and has data
             $checkStmt = $this->pdo->prepare("SELECT COUNT(*) as count FROM prescriptions WHERE drug_name IS NOT NULL AND drug_name != ''");
             $checkStmt->execute();
             $count = $checkStmt->fetch()['count'];
-            
+
             if ($count == 0) {
                 return $this->jsonResponse(['drugs' => []]);
             }
@@ -6179,15 +6418,15 @@ class ApiController
                 ORDER BY usage_count DESC 
                 LIMIT ?
             ");
-            
+
             $stmt->execute([$limit]);
             $drugs = $stmt->fetchAll();
 
             // Connect to drugs database to get prices
             $drugsPdo = $this->getDrugsDatabaseConnection();
-            
+
             // Format the response and fetch prices
-            $formattedDrugs = array_map(function($drug) use ($drugsPdo) {
+            $formattedDrugs = array_map(function ($drug) use ($drugsPdo) {
                 $price = null;
                 try {
                     // Try to find drug by name in drugs database
@@ -6205,10 +6444,10 @@ class ApiController
                 } catch (\Exception $e) {
                     // If error, price remains null
                 }
-                
+
                 return [
                     'drug_name' => $drug['drug_name'],
-                    'usage_count' => (int)$drug['usage_count'],
+                    'usage_count' => (int) $drug['usage_count'],
                     'common_frequencies' => $drug['common_frequencies'] ?: 'N/A',
                     'common_doses' => $drug['common_doses'] ?: 'N/A',
                     'price' => $price
@@ -6216,7 +6455,7 @@ class ApiController
             }, $drugs);
 
             return $this->jsonResponse(['drugs' => $formattedDrugs]);
-            
+
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Failed to get most used drugs: ' . $e->getMessage()], 500);
         }
@@ -6231,17 +6470,17 @@ class ApiController
             }
 
             $searchTerm = $_GET['q'] ?? '';
-            $limit = min((int)($_GET['limit'] ?? 10), 20); // Max 20 results, default 10
-            
+            $limit = min((int) ($_GET['limit'] ?? 10), 20); // Max 20 results, default 10
+
             if (strlen($searchTerm) < 2) {
                 return $this->jsonResponse(['drugs' => []]);
             }
 
             // Connect to drugs database
             $drugsPdo = $this->getDrugsDatabaseConnection();
-            
+
             $searchTerm = '%' . $searchTerm . '%';
-            
+
             $stmt = $drugsPdo->prepare("
                 SELECT 
                     ID,
@@ -6263,14 +6502,14 @@ class ApiController
                     FirstName
                 LIMIT ?
             ");
-            
+
             $exactMatch = '%' . trim($_GET['q'] ?? '') . '%';
             $stmt->execute([$searchTerm, $exactMatch, $exactMatch, $exactMatch, $limit]);
-            
+
             $drugs = $stmt->fetchAll();
-            
+
             return $this->jsonResponse(['drugs' => $drugs]);
-            
+
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Failed to search drugs: ' . $e->getMessage()], 500);
         }
@@ -6292,8 +6531,8 @@ class ApiController
             }
 
             $query = trim($_GET['q'] ?? '');
-            $limit = min((int)($_GET['limit'] ?? 10), 20); // Max 20 results per category
-            
+            $limit = min((int) ($_GET['limit'] ?? 10), 20); // Max 20 results per category
+
             if (strlen($query) < 2) {
                 return $this->jsonResponse([
                     'results' => [],
@@ -6306,14 +6545,14 @@ class ApiController
             $baseQuery = $query;
             $refinement = null;
             $refineByDate = null;
-            
+
             // Check for & refinement (patient ID/name)
             if (strpos($query, '&') !== false) {
                 $parts = explode('&', $query, 2);
                 $baseQuery = trim($parts[0]);
                 $refinement = isset($parts[1]) ? trim($parts[1]) : null;
             }
-            
+
             // Check for # date refinement (overrides & if both present)
             if (strpos($baseQuery, '#') !== false) {
                 $dateParts = explode('#', $baseQuery, 2);
@@ -6333,13 +6572,13 @@ class ApiController
 
             if ($refinement) {
                 if (is_numeric($refinement)) {
-                    $refineByPatientId = (int)$refinement;
-                    $refineByAppointmentId = (int)$refinement;
+                    $refineByPatientId = (int) $refinement;
+                    $refineByAppointmentId = (int) $refinement;
                 } else {
                     $refineByPatientName = '%' . $refinement . '%';
                 }
             }
-            
+
             // Parse date refinement (supports YYYY-MM-DD, YYYY-MM, YYYY formats)
             $refineByDateStart = null;
             $refineByDateEnd = null;
@@ -6414,8 +6653,8 @@ class ApiController
                     $results[] = [
                         'id' => $appointment['id'],
                         'title' => 'Appointment #' . $appointment['id'] . ($patientName ? ' - ' . trim($patientName) : ''),
-                        'subtitle' => ($appointment['date'] ? date('M d, Y', strtotime($appointment['date'])) : '') . 
-                                     ($appointment['start_time'] ? ' at ' . date('H:i', strtotime($appointment['start_time'])) : ''),
+                        'subtitle' => ($appointment['date'] ? date('M d, Y', strtotime($appointment['date'])) : '') .
+                            ($appointment['start_time'] ? ' at ' . date('H:i', strtotime($appointment['start_time'])) : ''),
                         'type' => 'appointment',
                         'icon' => 'bi-calendar3',
                         'url' => '/doctor/appointments/' . $appointment['id']
@@ -6448,8 +6687,8 @@ class ApiController
                     $results[] = [
                         'id' => $drug['ID'],
                         'title' => $drug['drug_name'],
-                        'subtitle' => ($drug['active_ingredient'] ? $drug['active_ingredient'] : '') . 
-                                     ($drug['Company'] ? ' • ' . $drug['Company'] : ''),
+                        'subtitle' => ($drug['active_ingredient'] ? $drug['active_ingredient'] : '') .
+                            ($drug['Company'] ? ' • ' . $drug['Company'] : ''),
                         'type' => 'drug',
                         'icon' => 'bi-capsule',
                         'url' => '/doctor/drugs?search=' . urlencode($drug['drug_name']) . '&drugId=' . $drug['ID']
@@ -6504,8 +6743,8 @@ class ApiController
                     $results[] = [
                         'id' => $prescription['id'],
                         'title' => $prescription['drug_name'],
-                        'subtitle' => ($prescription['dosage'] ? $prescription['dosage'] . ' • ' : '') . 
-                                     ($patientName ? trim($patientName) : ''),
+                        'subtitle' => ($prescription['dosage'] ? $prescription['dosage'] . ' • ' : '') .
+                            ($patientName ? trim($patientName) : ''),
                         'type' => 'prescription',
                         'icon' => 'bi-capsule',
                         'url' => $prescription['appointment_id'] ? '/doctor/appointments/' . $prescription['appointment_id'] : '/doctor/medications'
@@ -6533,9 +6772,9 @@ class ApiController
                     $results[] = [
                         'id' => $glass['id'],
                         'title' => 'Glasses Prescription',
-                        'subtitle' => ($glass['right_sphere'] || $glass['left_sphere'] ? 
-                                     'R: ' . ($glass['right_sphere'] ?? 'N/A') . ' L: ' . ($glass['left_sphere'] ?? 'N/A') . ' • ' : '') . 
-                                     ($patientName ? trim($patientName) : ''),
+                        'subtitle' => ($glass['right_sphere'] || $glass['left_sphere'] ?
+                            'R: ' . ($glass['right_sphere'] ?? 'N/A') . ' L: ' . ($glass['left_sphere'] ?? 'N/A') . ' • ' : '') .
+                            ($patientName ? trim($patientName) : ''),
                         'type' => 'glasses',
                         'icon' => 'bi-eyeglasses',
                         'url' => $glass['appointment_id'] ? '/doctor/appointments/' . $glass['appointment_id'] : '/doctor/glasses'
@@ -6563,9 +6802,9 @@ class ApiController
                     $results[] = [
                         'id' => $note['id'],
                         'title' => $note['title'] ?: 'Untitled Note',
-                        'subtitle' => ($note['category'] ? ucfirst($note['category']) . ' • ' : '') . 
-                                     ($contentPreview ? $contentPreview . '...' : '') .
-                                     ($patientName ? ' • ' . trim($patientName) : ''),
+                        'subtitle' => ($note['category'] ? ucfirst($note['category']) . ' • ' : '') .
+                            ($contentPreview ? $contentPreview . '...' : '') .
+                            ($patientName ? ' • ' . trim($patientName) : ''),
                         'type' => 'note',
                         'icon' => 'bi-sticky',
                         'url' => '/doctor/notes?search=' . urlencode($query)
@@ -6592,9 +6831,9 @@ class ApiController
                     $results[] = [
                         'id' => $alert['id'],
                         'title' => $alert['title'],
-                        'subtitle' => ($alert['priority'] ? ucfirst($alert['priority']) . ' • ' : '') . 
-                                     mb_substr(strip_tags($alert['message'] ?? ''), 0, 50) .
-                                     ($patientName ? ' • ' . trim($patientName) : ''),
+                        'subtitle' => ($alert['priority'] ? ucfirst($alert['priority']) . ' • ' : '') .
+                            mb_substr(strip_tags($alert['message'] ?? ''), 0, 50) .
+                            ($patientName ? ' • ' . trim($patientName) : ''),
                         'type' => 'alert',
                         'icon' => 'bi-bell',
                         'url' => '/doctor/alerts?search=' . urlencode($query)
@@ -6621,9 +6860,9 @@ class ApiController
                     $results[] = [
                         'id' => $topic['id'],
                         'title' => $topic['title'],
-                        'subtitle' => ($topic['category'] ? ucfirst($topic['category']) . ' • ' : '') . 
-                                     ($contentPreview ? $contentPreview . '...' : '') .
-                                     ($topic['author_name'] ? ' • by ' . $topic['author_name'] : ''),
+                        'subtitle' => ($topic['category'] ? ucfirst($topic['category']) . ' • ' : '') .
+                            ($contentPreview ? $contentPreview . '...' : '') .
+                            ($topic['author_name'] ? ' • by ' . $topic['author_name'] : ''),
                         'type' => 'forum',
                         'icon' => 'bi-chat-dots',
                         'url' => '/doctor/forum/topic/' . $topic['id']
@@ -6637,14 +6876,14 @@ class ApiController
             try {
                 $whereConditions = [];
                 $params = [];
-                
+
                 // Base search conditions
                 $whereConditions[] = "(mh.diagnosis LIKE ? OR mh.medications LIKE ? OR mh.allergies LIKE ? OR mh.notes LIKE ?)";
                 $params[] = $searchTerm;
                 $params[] = $searchTerm;
                 $params[] = $searchTerm;
                 $params[] = $searchTerm;
-                
+
                 // Add refinement if specified
                 if ($refineByPatientId !== null) {
                     $whereConditions[] = "AND (p.id = ? OR mh.patient_id = ?)";
@@ -6655,9 +6894,9 @@ class ApiController
                     $params[] = $refineByPatientName;
                     $params[] = $refineByPatientName;
                 }
-                
+
                 $params[] = $limit;
-                
+
                 $stmt = $this->pdo->prepare("
                     SELECT mh.id, mh.diagnosis, mh.medications, mh.allergies, mh.notes, 
                            p.first_name, p.last_name, p.id as patient_id
@@ -6674,8 +6913,8 @@ class ApiController
                     $results[] = [
                         'id' => $item['id'],
                         'title' => $item['diagnosis'] ?: 'Medical History',
-                        'subtitle' => ($item['medications'] ? 'Medications: ' . mb_substr($item['medications'], 0, 30) . '... • ' : '') . 
-                                     ($patientName ? trim($patientName) : ''),
+                        'subtitle' => ($item['medications'] ? 'Medications: ' . mb_substr($item['medications'], 0, 30) . '... • ' : '') .
+                            ($patientName ? trim($patientName) : ''),
                         'type' => 'medical_history',
                         'icon' => 'bi-file-medical',
                         'url' => $item['patient_id'] ? '/doctor/patients/' . $item['patient_id'] : '/doctor/patients'
@@ -6689,7 +6928,7 @@ class ApiController
             try {
                 $whereConditions = [];
                 $params = [];
-                
+
                 // Base search conditions in consultation_notes fields (including slit_lamp fields)
                 $whereConditions[] = "(cn.chief_complaint LIKE ? OR cn.hx_present_illness LIKE ? OR cn.diagnosis LIKE ? 
                                       OR cn.medication LIKE ? OR cn.plan LIKE ? OR cn.systemic_disease LIKE ?
@@ -6702,7 +6941,7 @@ class ApiController
                 $params[] = $searchTerm;
                 $params[] = $searchTerm;
                 $params[] = $searchTerm;
-                
+
                 // Add refinement if specified
                 if ($refineByPatientId !== null) {
                     $whereConditions[] = "AND (p.id = ? OR a.id = ? OR cn.appointment_id = ?)";
@@ -6714,7 +6953,7 @@ class ApiController
                     $params[] = $refineByPatientName;
                     $params[] = $refineByPatientName;
                 }
-                
+
                 // Add date refinement if specified (search in created_at or updated_at)
                 if ($refineByDateStart !== null && $refineByDateEnd !== null) {
                     $whereConditions[] = "AND ((cn.created_at >= ? AND cn.created_at <= ?) OR (cn.updated_at >= ? AND cn.updated_at <= ?))";
@@ -6723,9 +6962,9 @@ class ApiController
                     $params[] = $refineByDateStart;
                     $params[] = $refineByDateEnd;
                 }
-                
+
                 $params[] = $limit;
-                
+
                 $stmt = $this->pdo->prepare("
                     SELECT cn.id, cn.appointment_id, cn.diagnosis, cn.chief_complaint, 
                            cn.hx_present_illness, cn.medication, cn.plan, cn.slit_lamp_right, cn.slit_lamp_left,
@@ -6753,10 +6992,10 @@ class ApiController
                     $results[] = [
                         'id' => $consultation['id'],
                         'title' => $consultation['diagnosis'] ?: 'Consultation Note',
-                        'subtitle' => ($preview ? $preview . ' • ' : '') . 
-                                     ($patientName ? trim($patientName) : '') .
-                                     ($consultation['appointment_id'] ? ' • Appt #' . $consultation['appointment_id'] : '') .
-                                     ($consultation['created_at'] ? ' • ' . date('M d, Y', strtotime($consultation['created_at'])) : ''),
+                        'subtitle' => ($preview ? $preview . ' • ' : '') .
+                            ($patientName ? trim($patientName) : '') .
+                            ($consultation['appointment_id'] ? ' • Appt #' . $consultation['appointment_id'] : '') .
+                            ($consultation['created_at'] ? ' • ' . date('M d, Y', strtotime($consultation['created_at'])) : ''),
                         'type' => 'consultation',
                         'icon' => 'bi-file-earmark-medical',
                         'url' => $consultation['appointment_id'] ? '/doctor/appointments/' . $consultation['appointment_id'] : '/doctor/appointments'
@@ -6788,7 +7027,7 @@ class ApiController
             }
 
             $user = $this->auth->user();
-            
+
             // Validate input
             $rules = [
                 'amount' => 'required|decimal',
@@ -6810,9 +7049,9 @@ class ApiController
                 INSERT INTO daily_balances (amount, balance_type, description, created_by, created_at)
                 VALUES (?, ?, ?, ?, ?)
             ");
-            
+
             $createdAt = !empty($data['balance_date']) ? $data['balance_date'] : date('Y-m-d H:i:s');
-            
+
             $stmt->execute([
                 $data['amount'],
                 $data['balance_type'],
@@ -6820,15 +7059,15 @@ class ApiController
                 $user['id'],
                 $createdAt
             ]);
-            
+
             $balanceId = $this->pdo->lastInsertId();
-            
+
             return $this->jsonResponse([
                 'ok' => true,
                 'data' => ['id' => $balanceId],
                 'message' => 'تم تسجيل الرصيد بنجاح'
             ]);
-            
+
         } catch (Exception $e) {
             return $this->jsonResponse(['error' => 'فشل في تسجيل الرصيد'], 500);
         }
@@ -6845,33 +7084,33 @@ class ApiController
             }
 
             $user = $this->auth->user();
-            
+
             // Check if user is doctor
             if ($user['role'] !== 'doctor') {
                 return $this->jsonResponse(['error' => 'غير مصرح بالوصول - الطبيب فقط'], 403);
             }
-            
+
             $today = date('Y-m-d');
-            
+
             // Check if today is already closed
             if ($this->isDateClosed($today)) {
                 return $this->jsonResponse(['error' => 'تم إغلاق اليوم مسبقاً'], 400);
             }
-            
+
             // Create closure using existing method
             $closureId = $this->createDailyClosure($today, $user['id']);
-            
+
             return $this->jsonResponse([
                 'ok' => true,
                 'message' => 'تم إغلاق اليوم بنجاح',
                 'data' => ['id' => $closureId]
             ]);
-            
+
         } catch (Exception $e) {
             return $this->jsonResponse(['error' => 'فشل في إغلاق اليوم'], 500);
         }
     }
-    
+
     /**
      * Create expense entry
      */
@@ -6883,7 +7122,7 @@ class ApiController
             }
 
             $user = $this->auth->user();
-            
+
             // Validate input
             $rules = [
                 'amount' => 'required|decimal',
@@ -6896,7 +7135,7 @@ class ApiController
             // Parse JSON data from request
             $input = file_get_contents("php://input");
             $data = json_decode($input, true);
-            
+
             if (!$this->validator->validate($data, $rules)) {
                 return $this->jsonResponse([
                     'error' => 'Validation failed',
@@ -6909,9 +7148,9 @@ class ApiController
                 INSERT INTO expenses (amount, expense_name, category, notes, created_by, created_at)
                 VALUES (?, ?, ?, ?, ?, ?)
             ");
-            
+
             $createdAt = !empty($data['expense_date']) ? $data['expense_date'] : date('Y-m-d H:i:s');
-            
+
             $stmt->execute([
                 $data['amount'],
                 $data['expense_name'],
@@ -6920,15 +7159,15 @@ class ApiController
                 $user['id'],
                 $createdAt
             ]);
-            
+
             $expenseId = $this->pdo->lastInsertId();
-            
+
             return $this->jsonResponse([
                 'ok' => true,
                 'data' => ['id' => $expenseId],
                 'message' => 'تم تسجيل المصروف بنجاح'
             ]);
-            
+
         } catch (Exception $e) {
             return $this->jsonResponse(['error' => 'فشل في تسجيل المصروف'], 500);
         }
@@ -6945,7 +7184,7 @@ class ApiController
             }
 
             $user = $this->auth->user();
-            
+
             // Validate input
             $rules = [
                 'amount' => 'required|decimal',
@@ -6962,7 +7201,7 @@ class ApiController
             } else {
                 $data = $_POST;
             }
-            
+
             if (!$this->validator->validate($data, $rules)) {
                 return $this->jsonResponse([
                     'error' => 'Validation failed',
@@ -6974,7 +7213,7 @@ class ApiController
             $stmt = $this->pdo->prepare("SELECT * FROM expenses WHERE id = ?");
             $stmt->execute([$id]);
             $expense = $stmt->fetch(\PDO::FETCH_ASSOC);
-            
+
             if (!$expense) {
                 return $this->jsonResponse(['error' => 'Expense not found'], 404);
             }
@@ -6985,7 +7224,7 @@ class ApiController
                 SET amount = ?, expense_name = ?, category = ?, notes = ?
                 WHERE id = ?
             ");
-            
+
             $result = $stmt->execute([
                 $data['amount'],
                 $data['expense_name'],
@@ -6993,7 +7232,7 @@ class ApiController
                 $data['notes'] ?? null,
                 $id
             ]);
-            
+
             if ($result) {
                 return $this->jsonResponse([
                     'ok' => true,
@@ -7002,12 +7241,12 @@ class ApiController
             } else {
                 return $this->jsonResponse(['error' => 'Failed to update expense'], 500);
             }
-            
+
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Failed to update expense'], 500);
         }
     }
-    
+
     /**
      * Delete expense entry
      */
@@ -7022,7 +7261,7 @@ class ApiController
             $stmt = $this->pdo->prepare("SELECT * FROM expenses WHERE id = ?");
             $stmt->execute([$id]);
             $expense = $stmt->fetch();
-            
+
             if (!$expense) {
                 return $this->jsonResponse(['error' => 'Expense not found'], 404);
             }
@@ -7030,12 +7269,12 @@ class ApiController
             // Delete expense record
             $stmt = $this->pdo->prepare("DELETE FROM expenses WHERE id = ?");
             $stmt->execute([$id]);
-            
+
             return $this->jsonResponse([
                 'ok' => true,
                 'message' => 'Expense deleted successfully'
             ]);
-            
+
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Failed to delete expense'], 500);
         }
@@ -7052,7 +7291,7 @@ class ApiController
             }
 
             $user = $this->auth->user();
-            
+
             // Validate input
             $rules = [
                 'amount' => 'required|decimal',
@@ -7068,7 +7307,7 @@ class ApiController
             } else {
                 $data = $_POST;
             }
-            
+
             if (!$this->validator->validate($data, $rules)) {
                 return $this->jsonResponse([
                     'error' => 'Validation failed',
@@ -7080,7 +7319,7 @@ class ApiController
             $stmt = $this->pdo->prepare("SELECT * FROM payments WHERE id = ?");
             $stmt->execute([$id]);
             $payment = $stmt->fetch(\PDO::FETCH_ASSOC);
-            
+
             if (!$payment) {
                 return $this->jsonResponse(['error' => 'Payment not found'], 404);
             }
@@ -7091,7 +7330,7 @@ class ApiController
                 SET amount = ?, type = ?, method = ?, description = ?
                 WHERE id = ?
             ");
-            
+
             $result = $stmt->execute([
                 $data['amount'],
                 $data['type'],
@@ -7099,7 +7338,7 @@ class ApiController
                 $data['description'] ?? null,
                 $id
             ]);
-            
+
             if ($result) {
                 return $this->jsonResponse([
                     'ok' => true,
@@ -7108,7 +7347,7 @@ class ApiController
             } else {
                 return $this->jsonResponse(['error' => 'Failed to update payment'], 500);
             }
-            
+
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Failed to update payment'], 500);
         }
@@ -7128,7 +7367,7 @@ class ApiController
             $stmt = $this->pdo->prepare("SELECT * FROM payments WHERE id = ?");
             $stmt->execute([$id]);
             $payment = $stmt->fetch();
-            
+
             if (!$payment) {
                 return $this->jsonResponse(['error' => 'Payment not found'], 404);
             }
@@ -7136,12 +7375,12 @@ class ApiController
             // Delete payment record
             $stmt = $this->pdo->prepare("DELETE FROM payments WHERE id = ?");
             $stmt->execute([$id]);
-            
+
             return $this->jsonResponse([
                 'ok' => true,
                 'message' => 'Payment deleted successfully'
             ]);
-            
+
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Failed to delete payment'], 500);
         }
@@ -7167,16 +7406,16 @@ class ApiController
             ");
             $stmt->execute([$id]);
             $payment = $stmt->fetch(\PDO::FETCH_ASSOC);
-            
+
             if (!$payment) {
                 return $this->jsonResponse(['error' => 'Payment not found'], 404);
             }
-            
+
             return $this->jsonResponse([
                 'ok' => true,
                 'data' => $payment
             ]);
-            
+
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Failed to get payment'], 500);
         }
@@ -7201,16 +7440,16 @@ class ApiController
             ");
             $stmt->execute([$id]);
             $expense = $stmt->fetch(\PDO::FETCH_ASSOC);
-            
+
             if (!$expense) {
                 return $this->jsonResponse(['error' => 'Expense not found'], 404);
             }
-            
+
             return $this->jsonResponse([
                 'ok' => true,
                 'data' => $expense
             ]);
-            
+
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Failed to get expense'], 500);
         }
@@ -7226,25 +7465,25 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
 
-            $page = (int)($_GET['page'] ?? 1);
-            $limit = (int)($_GET['limit'] ?? 10);
+            $page = (int) ($_GET['page'] ?? 1);
+            $limit = (int) ($_GET['limit'] ?? 10);
             $date = $_GET['date'] ?? null;
             $type = $_GET['type'] ?? 'all';
-            
+
             $offset = ($page - 1) * $limit;
-            
+
             // Build WHERE conditions
             $whereConditions = [];
             $params = [];
-            
+
             if ($date) {
                 $whereConditions[] = "DATE(created_at) = ?";
                 $params[] = $date;
             }
-            
+
             // Get transactions from different sources
             $transactions = [];
-            
+
             // Get payments
             if ($type === 'all' || $type === 'payment') {
                 $paymentQuery = "
@@ -7259,22 +7498,22 @@ class ApiController
                     LEFT JOIN patients pat ON p.patient_id = pat.id
                     LEFT JOIN users u ON p.received_by = u.id
                 ";
-                
+
                 if (!empty($whereConditions)) {
                     $paymentQuery .= " WHERE " . implode(' AND ', $whereConditions);
                 }
-                
+
                 $paymentQuery .= " ORDER BY p.created_at DESC";
-                
+
                 $stmt = $this->pdo->prepare($paymentQuery);
                 $stmt->execute($params);
                 $payments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-                
+
                 foreach ($payments as $payment) {
                     $transactions[] = $payment;
                 }
             }
-            
+
             // Get expenses
             if ($type === 'all' || $type === 'expense') {
                 $expenseQuery = "
@@ -7288,22 +7527,22 @@ class ApiController
                     FROM expenses e
                     LEFT JOIN users u ON e.created_by = u.id
                 ";
-                
+
                 if (!empty($whereConditions)) {
                     $expenseQuery .= " WHERE " . implode(' AND ', $whereConditions);
                 }
-                
+
                 $expenseQuery .= " ORDER BY e.created_at DESC";
-                
+
                 $stmt = $this->pdo->prepare($expenseQuery);
                 $stmt->execute($params);
                 $expenses = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-                
+
                 foreach ($expenses as $expense) {
                     $transactions[] = $expense;
                 }
             }
-            
+
             // Get daily balances
             if ($type === 'all' || $type === 'balance') {
                 $balanceQuery = "
@@ -7317,27 +7556,27 @@ class ApiController
                     FROM daily_balances db
                     LEFT JOIN users u ON db.created_by = u.id
                 ";
-                
+
                 if (!empty($whereConditions)) {
                     $balanceQuery .= " WHERE " . implode(' AND ', $whereConditions);
                 }
-                
+
                 $balanceQuery .= " ORDER BY db.created_at DESC";
-                
+
                 $stmt = $this->pdo->prepare($balanceQuery);
                 $stmt->execute($params);
                 $balances = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-                
+
                 foreach ($balances as $balance) {
                     $transactions[] = $balance;
                 }
             }
-            
+
             // Sort all transactions by date
-            usort($transactions, function($a, $b) {
+            usort($transactions, function ($a, $b) {
                 return strtotime($b['created_at']) - strtotime($a['created_at']);
             });
-            
+
             // Calculate running balance
             $runningBalance = 0;
             foreach ($transactions as &$transaction) {
@@ -7348,11 +7587,11 @@ class ApiController
                 }
                 $transaction['balance'] = $runningBalance;
             }
-            
+
             // Apply pagination
             $total = count($transactions);
             $paginatedTransactions = array_slice($transactions, $offset, $limit);
-            
+
             $pagination = [
                 'current_page' => $page,
                 'last_page' => ceil($total / $limit),
@@ -7361,7 +7600,7 @@ class ApiController
                 'from' => $offset + 1,
                 'to' => min($offset + $limit, $total)
             ];
-            
+
             return $this->jsonResponse([
                 'ok' => true,
                 'data' => [
@@ -7369,7 +7608,7 @@ class ApiController
                     'pagination' => $pagination
                 ]
             ]);
-            
+
         } catch (Exception $e) {
             return $this->jsonResponse(['error' => 'فشل في تحميل المعاملات المالية'], 500);
         }
@@ -7382,47 +7621,47 @@ class ApiController
             while (ob_get_level()) {
                 ob_end_clean();
             }
-            
+
             // Set memory and time limits
             ini_set('memory_limit', '512M');
             ini_set('max_execution_time', 300);
-            
-            
+
+
             if (!$this->auth->check()) {
                 http_response_code(401);
                 echo "Unauthorized - Please login first";
                 exit;
             }
-            
+
             // Get parameters
             $date = $_GET['date'] ?? '';
             $type = $_GET['type'] ?? 'all';
-            
-            
+
+
             // Get all transactions
             $transactions = $this->getAllFinancialTransactions($date, $type);
-            
-            
+
+
             // Try Excel first, fallback to CSV
             if ($this->tryExcelExport($transactions)) {
                 return; // Excel export successful
             }
-            
+
             // Fallback to CSV
             $this->exportAsCSV($transactions);
-            
+
         } catch (Exception $e) {
-            
+
             // Clear any previous output
             while (ob_get_level()) {
                 ob_end_clean();
             }
-            
+
             // Return error as CSV
             $this->exportAsCSV([]);
         }
     }
-    
+
     private function tryExcelExport($transactions)
     {
         try {
@@ -7430,15 +7669,15 @@ class ApiController
             if (!class_exists('PhpOffice\PhpSpreadsheet\Spreadsheet')) {
                 return false;
             }
-            
-            
+
+
             // Create spreadsheet
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
-            
+
             // Set RTL for Arabic
             $sheet->setRightToLeft(true);
-            
+
             // Headers with numbering
             $headers = ['م', 'التاريخ', 'النوع', 'الوصف', 'المبلغ', 'الرصيد'];
             $column = 'A';
@@ -7446,7 +7685,7 @@ class ApiController
                 $sheet->setCellValue($column . '1', $header);
                 $column++;
             }
-            
+
             // Data with numbering and translation
             $row = 2;
             if (empty($transactions)) {
@@ -7457,36 +7696,36 @@ class ApiController
                 foreach ($transactions as $transaction) {
                     // ترقيم
                     $sheet->setCellValue('A' . $row, $counter);
-                    
+
                     // التاريخ
                     $sheet->setCellValue('B' . $row, $transaction['created_at']);
-                    
+
                     // ترجمة النوع
                     $translatedType = $this->translateTransactionType($transaction['type']);
                     $sheet->setCellValue('C' . $row, $translatedType);
-                    
+
                     // الوصف
                     $sheet->setCellValue('D' . $row, $transaction['description']);
-                    
+
                     // المبلغ
                     $sheet->setCellValue('E' . $row, $transaction['amount']);
-                    
+
                     // الرصيد
                     $sheet->setCellValue('F' . $row, $transaction['balance']);
-                    
+
                     // تطبيق الألوان حسب نوع العملية
                     $this->applyTransactionColors($sheet, $row, $transaction['type']);
-                    
+
                     $row++;
                     $counter++;
                 }
             }
-            
+
             // Auto-size columns
             foreach (range('A', 'F') as $col) {
                 $sheet->getColumnDimension($col)->setAutoSize(true);
             }
-            
+
             // Style headers
             $headerStyle = [
                 'font' => [
@@ -7510,20 +7749,20 @@ class ApiController
                 ],
             ];
             $sheet->getStyle('A1:F1')->applyFromArray($headerStyle);
-            
+
             // تطبيق تنسيق الصفوف المتناوبة
             $this->applyAlternatingRowColors($sheet, $row);
-            
+
             // تعيين ارتفاع الصفوف
             $sheet->getRowDimension(1)->setRowHeight(25); // صف العناوين
             for ($i = 2; $i < $row; $i++) {
                 $sheet->getRowDimension($i)->setRowHeight(20); // صفوف البيانات
             }
-            
+
             // إضافة معلومات إضافية في عمود منفصل بعد البيانات
             $infoColumn = 'H'; // العمود H بعد آخر عمود بيانات (F)
             $infoRow = 1; // بداية من الصف الأول
-            
+
             $sheet->setCellValue($infoColumn . $infoRow, 'معلومات التصدير:');
             $sheet->setCellValue($infoColumn . ($infoRow + 1), 'تاريخ التصدير:');
             $sheet->setCellValue($infoColumn . ($infoRow + 2), date('Y/m/d H:i:s'));
@@ -7531,7 +7770,7 @@ class ApiController
             $sheet->setCellValue($infoColumn . ($infoRow + 4), count($transactions));
             $sheet->setCellValue($infoColumn . ($infoRow + 5), 'نوع التصدير:');
             $sheet->setCellValue($infoColumn . ($infoRow + 6), 'Excel مع تنسيق');
-            
+
             // تنسيق معلومات التصدير
             $infoStyle = [
                 'font' => [
@@ -7554,10 +7793,10 @@ class ApiController
                     ],
                 ],
             ];
-            
+
             // تطبيق التنسيق على العنوان
             $sheet->getStyle($infoColumn . $infoRow)->applyFromArray($infoStyle);
-            
+
             // تنسيق البيانات
             $dataStyle = [
                 'font' => [
@@ -7579,32 +7818,32 @@ class ApiController
                     ],
                 ],
             ];
-            
+
             // تطبيق التنسيق على البيانات
             for ($i = 1; $i <= 6; $i++) {
                 $sheet->getStyle($infoColumn . ($infoRow + $i))->applyFromArray($dataStyle);
             }
-            
+
             // تعيين عرض عمود المعلومات
             $sheet->getColumnDimension($infoColumn)->setWidth(20);
-            
+
             // Save file
             $filename = 'المعاملات_المالية_' . date('Y-m-d') . '.xlsx';
-            
+
             header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             header('Content-Disposition: attachment; filename="' . $filename . '"');
             header('Cache-Control: max-age=0');
-            
+
             $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
             $writer->save('php://output');
-            
-                exit;
-            
+
+            exit;
+
         } catch (Exception $e) {
             return false;
         }
     }
-    
+
     private function translateTransactionType($type)
     {
         $translations = [
@@ -7617,10 +7856,10 @@ class ApiController
             'refund' => 'استرداد',
             'balance' => 'رصيد'
         ];
-        
+
         return $translations[$type] ?? $type;
     }
-    
+
     private function applyTransactionColors($sheet, $row, $type)
     {
         $baseStyle = [
@@ -7639,7 +7878,7 @@ class ApiController
                 ],
             ],
         ];
-        
+
         switch ($type) {
             case 'opening_balance':
             case 'additional_balance':
@@ -7652,7 +7891,7 @@ class ApiController
                     ],
                 ]);
                 break;
-                
+
             case 'withdrawal':
             case 'expense':
                 // أحمر للسحب والمصروفات
@@ -7663,7 +7902,7 @@ class ApiController
                     ],
                 ]);
                 break;
-                
+
             case 'payment':
             case 'booking':
             case 'refund':
@@ -7675,7 +7914,7 @@ class ApiController
                     ],
                 ]);
                 break;
-                
+
             default:
                 // رمادي للأنواع الأخرى
                 $style = array_merge($baseStyle, [
@@ -7686,16 +7925,16 @@ class ApiController
                 ]);
                 break;
         }
-        
+
         // تطبيق التنسيق على عمود النوع فقط
         $sheet->getStyle('C' . $row)->applyFromArray($style);
     }
-    
+
     private function applyAlternatingRowColors($sheet, $lastRow)
     {
         for ($row = 2; $row < $lastRow; $row++) {
             $isEvenRow = ($row % 2 == 0);
-            
+
             $alternatingStyle = [
                 'fill' => [
                     'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
@@ -7712,13 +7951,13 @@ class ApiController
                     ],
                 ],
             ];
-            
+
             // تطبيق التنسيق على جميع الأعمدة عدا عمود النوع (C) الذي له ألوان خاصة
             $sheet->getStyle('A' . $row . ':B' . $row)->applyFromArray($alternatingStyle);
             $sheet->getStyle('D' . $row . ':F' . $row)->applyFromArray($alternatingStyle);
         }
     }
-    
+
     private function exportAsCSV($transactions)
     {
         // Set CSV headers
@@ -7727,41 +7966,41 @@ class ApiController
         header('Cache-Control: no-cache, must-revalidate');
         header('Pragma: no-cache');
         header('Expires: 0');
-        
+
         // Add UTF-8 BOM
         echo "\xEF\xBB\xBF";
-        
+
         // CSV content
         echo "التاريخ,النوع,الوصف,المبلغ,الرصيد\n";
-        
+
         if (empty($transactions)) {
             echo '"لا توجد معاملات للتصدير","","","",""' . "\n";
-            } else {
+        } else {
             foreach ($transactions as $transaction) {
                 echo '"' . $transaction['created_at'] . '",' .
-                     '"' . $transaction['type'] . '",' .
-                     '"' . $transaction['description'] . '",' .
-                     '"' . $transaction['amount'] . '",' .
-                     '"' . $transaction['balance'] . '"' . "\n";
+                    '"' . $transaction['type'] . '",' .
+                    '"' . $transaction['description'] . '",' .
+                    '"' . $transaction['amount'] . '",' .
+                    '"' . $transaction['balance'] . '"' . "\n";
             }
         }
-        
-                        exit;
-                    }
+
+        exit;
+    }
 
     private function getAllFinancialTransactions($date = null, $type = 'all')
     {
         try {
-            
+
             $whereConditions = [];
             $params = [];
-            
+
             // Date filter
             if ($date) {
                 $whereConditions[] = "DATE(created_at) = ?";
                 $params[] = $date;
             }
-            
+
             // Type filter
             if ($type !== 'all') {
                 if ($type === 'payment') {
@@ -7772,24 +8011,24 @@ class ApiController
                     $whereConditions[] = "type = 'balance'";
                 }
             }
-            
+
             $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
-            
+
             // Prepare parameters for each subquery
             $paymentParams = [];
             $expenseParams = [];
             $balanceParams = [];
-            
+
             if ($date) {
                 $paymentParams[] = $date;
                 $expenseParams[] = $date;
                 $balanceParams[] = $date;
             }
-            
-            
+
+
             // Get all transactions with simplified query
             $allTransactions = [];
-            
+
             // Get payments
             try {
                 $paymentQuery = "
@@ -7802,15 +8041,15 @@ class ApiController
                     FROM payments p
                     LEFT JOIN patients pat ON p.patient_id = pat.id
                     " . ($date ? "WHERE DATE(p.created_at) = ?" : "");
-                
-                
+
+
                 $stmt = $this->pdo->prepare($paymentQuery);
                 $stmt->execute($paymentParams);
                 $payments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
                 $allTransactions = array_merge($allTransactions, $payments);
             } catch (Exception $e) {
             }
-            
+
             // Get expenses
             try {
                 $expenseQuery = "
@@ -7822,15 +8061,15 @@ class ApiController
                         0 as balance
                     FROM expenses e
                     " . ($date ? "WHERE DATE(e.created_at) = ?" : "");
-                
-                
+
+
                 $stmt = $this->pdo->prepare($expenseQuery);
                 $stmt->execute($expenseParams);
                 $expenses = $stmt->fetchAll(\PDO::FETCH_ASSOC);
                 $allTransactions = array_merge($allTransactions, $expenses);
             } catch (Exception $e) {
             }
-            
+
             // Get daily balances
             try {
                 $balanceQuery = "
@@ -7850,35 +8089,35 @@ class ApiController
                         0 as balance
                     FROM daily_balances db
                     " . ($date ? "WHERE DATE(db.created_at) = ?" : "");
-                
-                
+
+
                 $stmt = $this->pdo->prepare($balanceQuery);
                 $stmt->execute($balanceParams);
                 $balances = $stmt->fetchAll(\PDO::FETCH_ASSOC);
                 $allTransactions = array_merge($allTransactions, $balances);
             } catch (Exception $e) {
             }
-            
+
             // Sort by created_at
-            usort($allTransactions, function($a, $b) {
+            usort($allTransactions, function ($a, $b) {
                 return strtotime($a['created_at']) - strtotime($b['created_at']);
             });
-            
+
             // Filter by type if needed
             if ($type !== 'all') {
-                $allTransactions = array_filter($allTransactions, function($transaction) use ($type) {
+                $allTransactions = array_filter($allTransactions, function ($transaction) use ($type) {
                     return $transaction['type'] === $type;
                 });
             }
-            
+
             $results = $allTransactions;
-            
+
             // Log for debugging
-            
+
             return $results;
-            
+
         } catch (Exception $e) {
-        return [];
+            return [];
         }
     }
 
@@ -7886,24 +8125,24 @@ class ApiController
     {
         // Create Excel content with proper UTF-8 BOM for Arabic support
         $excel = "\xEF\xBB\xBF"; // UTF-8 BOM for Arabic support
-        
+
         // Add headers with Arabic text
         $excel .= "التاريخ,النوع,الوصف,المبلغ,الرصيد\n";
-        
+
         foreach ($transactions as $transaction) {
             // Format date in Arabic format
             $formattedDate = $this->getArabicDate($transaction['created_at']);
-            
+
             // Format type in Arabic
             $typeText = $this->getTransactionTypeText($transaction['type']);
-            
+
             // Clean description for CSV - handle Arabic text properly
             $description = $this->cleanForCSV($transaction['description']);
-            
+
             // Format amounts with proper Arabic number formatting
             $amount = $this->formatArabicNumber($transaction['amount']);
             $balance = $this->formatArabicNumber($transaction['balance']);
-            
+
             $excel .= sprintf(
                 "%s,%s,\"%s\",%s,%s\n",
                 $formattedDate,
@@ -7913,218 +8152,227 @@ class ApiController
                 $balance
             );
         }
-        
+
         return $excel;
     }
 
     private function generateFormattedExcelContent($transactions)
     {
         try {
-            
+
             require_once 'vendor/autoload.php';
-            
+
             // Create new Spreadsheet object
             $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        
-        // Set sheet title
-        $sheet->setTitle('المعاملات المالية');
-        
-        // Set headers
-        $headers = ['التاريخ', 'النوع', 'الوصف', 'المبلغ', 'الرصيد'];
-        $col = 'A';
-        foreach ($headers as $header) {
-            $sheet->setCellValue($col . '1', $header);
-            $col++;
-        }
-        
-        // Style headers
-        $headerStyle = [
-            'font' => [
-                'bold' => true,
-                'size' => 16,
-                'color' => ['rgb' => 'FFFFFF']
-            ],
-            'fill' => [
-                'fillType' => Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '4CAF50']
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER
-            ],
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color' => ['rgb' => '000000']
-                ]
-            ]
-        ];
-        
-        $sheet->getStyle('A1:E1')->applyFromArray($headerStyle);
-        
-        // Set row height for headers
-        $sheet->getRowDimension(1)->setRowHeight(25);
-        
-        // Add data rows
-        $row = 2;
-        if (empty($transactions)) {
-            // Add empty row with message
-            $sheet->setCellValue('A' . $row, 'لا توجد معاملات للتصدير');
-            $sheet->setCellValue('B' . $row, 'لا توجد معاملات للتصدير');
-            $sheet->setCellValue('C' . $row, 'لا توجد معاملات للتصدير');
-            $sheet->setCellValue('D' . $row, '0.00');
-            $sheet->setCellValue('E' . $row, '0.00');
-            
-            // Style empty row
-            $emptyStyle = [
+            $sheet = $spreadsheet->getActiveSheet();
+
+            // Set sheet title
+            $sheet->setTitle('المعاملات المالية');
+
+            // Set headers
+            $headers = ['التاريخ', 'النوع', 'الوصف', 'المبلغ', 'الرصيد'];
+            $col = 'A';
+            foreach ($headers as $header) {
+                $sheet->setCellValue($col . '1', $header);
+                $col++;
+            }
+
+            // Style headers
+            $headerStyle = [
                 'font' => [
-                    'size' => 14,
-                    'color' => ['rgb' => '666666']
+                    'bold' => true,
+                    'size' => 16,
+                    'color' => ['rgb' => 'FFFFFF']
                 ],
-                'borders' => [
-                    'allBorders' => [
-                        'borderStyle' => Border::BORDER_THIN,
-                        'color' => ['rgb' => '000000']
-                    ]
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => '4CAF50']
                 ],
                 'alignment' => [
-                    'vertical' => Alignment::VERTICAL_CENTER,
-                    'horizontal' => Alignment::HORIZONTAL_CENTER
-                ]
-            ];
-            $sheet->getStyle('A' . $row . ':E' . $row)->applyFromArray($emptyStyle);
-            $sheet->getRowDimension($row)->setRowHeight(20);
-            $row++;
-        } else {
-            foreach ($transactions as $transaction) {
-            $date = $this->getArabicDate($transaction['created_at']);
-            $type = $transaction['type'];
-            $description = $transaction['description'];
-            $amount = $this->formatArabicNumber($transaction['amount']);
-            $balance = $this->formatArabicNumber($transaction['balance']);
-            
-            // Set cell values
-            $sheet->setCellValue('A' . $row, $date);
-            $sheet->setCellValue('B' . $row, $type);
-            $sheet->setCellValue('C' . $row, $description);
-            $sheet->setCellValue('D' . $row, $amount);
-            $sheet->setCellValue('E' . $row, $balance);
-            
-            // Determine row style based on transaction type
-            $rowStyle = [
-                'font' => [
-                    'size' => 14
-                ],
-                'borders' => [
-                    'allBorders' => [
-                        'borderStyle' => Border::BORDER_THIN,
-                        'color' => ['rgb' => '000000']
-                    ]
-                ],
-                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
                     'vertical' => Alignment::VERTICAL_CENTER
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => '000000']
+                    ]
                 ]
             ];
-            
-            if ($type === 'payment') {
-                $rowStyle['fill'] = [
-                    'fillType' => Fill::FILL_SOLID,
-                    'startColor' => ['rgb' => 'E8F5E8']
+
+            $sheet->getStyle('A1:E1')->applyFromArray($headerStyle);
+
+            // Set row height for headers
+            $sheet->getRowDimension(1)->setRowHeight(25);
+
+            // Add data rows
+            $row = 2;
+            if (empty($transactions)) {
+                // Add empty row with message
+                $sheet->setCellValue('A' . $row, 'لا توجد معاملات للتصدير');
+                $sheet->setCellValue('B' . $row, 'لا توجد معاملات للتصدير');
+                $sheet->setCellValue('C' . $row, 'لا توجد معاملات للتصدير');
+                $sheet->setCellValue('D' . $row, '0.00');
+                $sheet->setCellValue('E' . $row, '0.00');
+
+                // Style empty row
+                $emptyStyle = [
+                    'font' => [
+                        'size' => 14,
+                        'color' => ['rgb' => '666666']
+                    ],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => '000000']
+                        ]
+                    ],
+                    'alignment' => [
+                        'vertical' => Alignment::VERTICAL_CENTER,
+                        'horizontal' => Alignment::HORIZONTAL_CENTER
+                    ]
                 ];
-                $rowStyle['font']['color'] = ['rgb' => '2E7D32'];
-            } elseif ($type === 'expense') {
-                $rowStyle['fill'] = [
-                    'fillType' => Fill::FILL_SOLID,
-                    'startColor' => ['rgb' => 'FFEBEE']
-                ];
-                $rowStyle['font']['color'] = ['rgb' => 'C62828'];
-            } elseif ($type === 'balance') {
-                if (strpos($description, 'سحب') !== false) {
-                    // Withdrawal - Red
-                    $rowStyle['fill'] = [
-                        'fillType' => Fill::FILL_SOLID,
-                        'startColor' => ['rgb' => 'FFEBEE']
+                $sheet->getStyle('A' . $row . ':E' . $row)->applyFromArray($emptyStyle);
+                $sheet->getRowDimension($row)->setRowHeight(20);
+                $row++;
+            } else {
+                foreach ($transactions as $transaction) {
+                    $date = $this->getArabicDate($transaction['created_at']);
+                    $type = $transaction['type'];
+                    $description = $transaction['description'];
+                    $amount = $this->formatArabicNumber($transaction['amount']);
+                    $balance = $this->formatArabicNumber($transaction['balance']);
+
+                    // Set cell values
+                    $sheet->setCellValue('A' . $row, $date);
+                    $sheet->setCellValue('B' . $row, $type);
+                    $sheet->setCellValue('C' . $row, $description);
+                    $sheet->setCellValue('D' . $row, $amount);
+                    $sheet->setCellValue('E' . $row, $balance);
+
+                    // Determine row style based on transaction type
+                    $rowStyle = [
+                        'font' => [
+                            'size' => 14
+                        ],
+                        'borders' => [
+                            'allBorders' => [
+                                'borderStyle' => Border::BORDER_THIN,
+                                'color' => ['rgb' => '000000']
+                            ]
+                        ],
+                        'alignment' => [
+                            'vertical' => Alignment::VERTICAL_CENTER
+                        ]
                     ];
-                    $rowStyle['font']['color'] = ['rgb' => 'C62828'];
-                } elseif (strpos($description, 'إضافة') !== false) {
-                    // Additional balance - Green
-                    $rowStyle['fill'] = [
-                        'fillType' => Fill::FILL_SOLID,
-                        'startColor' => ['rgb' => 'E8F5E8']
-                    ];
-                    $rowStyle['font']['color'] = ['rgb' => '2E7D32'];
-                } elseif (strpos($description, 'افتتاحي') !== false) {
-                    // Opening balance - Blue
-                    $rowStyle['fill'] = [
-                        'fillType' => Fill::FILL_SOLID,
-                        'startColor' => ['rgb' => 'E3F2FD']
-                    ];
-                    $rowStyle['font']['color'] = ['rgb' => '1565C0'];
+
+                    if ($type === 'payment') {
+                        $rowStyle['fill'] = [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => 'E8F5E8']
+                        ];
+                        $rowStyle['font']['color'] = ['rgb' => '2E7D32'];
+                    } elseif ($type === 'expense') {
+                        $rowStyle['fill'] = [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => 'FFEBEE']
+                        ];
+                        $rowStyle['font']['color'] = ['rgb' => 'C62828'];
+                    } elseif ($type === 'balance') {
+                        if (strpos($description, 'سحب') !== false) {
+                            // Withdrawal - Red
+                            $rowStyle['fill'] = [
+                                'fillType' => Fill::FILL_SOLID,
+                                'startColor' => ['rgb' => 'FFEBEE']
+                            ];
+                            $rowStyle['font']['color'] = ['rgb' => 'C62828'];
+                        } elseif (strpos($description, 'إضافة') !== false) {
+                            // Additional balance - Green
+                            $rowStyle['fill'] = [
+                                'fillType' => Fill::FILL_SOLID,
+                                'startColor' => ['rgb' => 'E8F5E8']
+                            ];
+                            $rowStyle['font']['color'] = ['rgb' => '2E7D32'];
+                        } elseif (strpos($description, 'افتتاحي') !== false) {
+                            // Opening balance - Blue
+                            $rowStyle['fill'] = [
+                                'fillType' => Fill::FILL_SOLID,
+                                'startColor' => ['rgb' => 'E3F2FD']
+                            ];
+                            $rowStyle['font']['color'] = ['rgb' => '1565C0'];
+                        }
+                    }
+
+                    // Apply row style
+                    $sheet->getStyle('A' . $row . ':E' . $row)->applyFromArray($rowStyle);
+
+                    // Set row height
+                    $sheet->getRowDimension($row)->setRowHeight(20);
+
+                    $row++;
                 }
             }
-            
-            // Apply row style
-            $sheet->getStyle('A' . $row . ':E' . $row)->applyFromArray($rowStyle);
-            
-            // Set row height
-            $sheet->getRowDimension($row)->setRowHeight(20);
-            
-            $row++;
+
+            // Auto-size columns
+            foreach (range('A', 'E') as $column) {
+                $sheet->getColumnDimension($column)->setAutoSize(true);
             }
-        }
-        
-        // Auto-size columns
-        foreach (range('A', 'E') as $column) {
-            $sheet->getColumnDimension($column)->setAutoSize(true);
-        }
-        
-        // Create writer and save to string
-        $writer = new Xlsx($spreadsheet);
-        
-        ob_start();
-        $writer->save('php://output');
-        $excelContent = ob_get_contents();
-        ob_end_clean();
-        
-        return $excelContent;
-        
+
+            // Create writer and save to string
+            $writer = new Xlsx($spreadsheet);
+
+            ob_start();
+            $writer->save('php://output');
+            $excelContent = ob_get_contents();
+            ob_end_clean();
+
+            return $excelContent;
+
         } catch (Exception $e) {
             throw $e;
         }
     }
-    
+
     private function cleanForCSV($text)
     {
         // Clean text for CSV format while preserving Arabic characters
         $text = str_replace([',', '"', "\n", "\r"], ['،', '""', ' ', ' '], $text);
         return trim($text);
     }
-    
+
     private function formatArabicNumber($number)
     {
         // Format number with Arabic locale
         return number_format($number, 2, '.', ',');
     }
-    
+
     private function getArabicDate($date)
     {
         // Convert date to Arabic format
         $arabicMonths = [
-            '01' => 'يناير', '02' => 'فبراير', '03' => 'مارس', '04' => 'أبريل',
-            '05' => 'مايو', '06' => 'يونيو', '07' => 'يوليو', '08' => 'أغسطس',
-            '09' => 'سبتمبر', '10' => 'أكتوبر', '11' => 'نوفمبر', '12' => 'ديسمبر'
+            '01' => 'يناير',
+            '02' => 'فبراير',
+            '03' => 'مارس',
+            '04' => 'أبريل',
+            '05' => 'مايو',
+            '06' => 'يونيو',
+            '07' => 'يوليو',
+            '08' => 'أغسطس',
+            '09' => 'سبتمبر',
+            '10' => 'أكتوبر',
+            '11' => 'نوفمبر',
+            '12' => 'ديسمبر'
         ];
-        
+
         $dateObj = new \DateTime($date);
         $month = $dateObj->format('m');
         $day = $dateObj->format('d');
         $year = $dateObj->format('Y');
         $time = $dateObj->format('H:i');
-        
+
         return $day . ' ' . $arabicMonths[$month] . ' ' . $year . ' ' . $time;
     }
-    
+
     private function getTransactionTypeText($type)
     {
         $types = [
@@ -8132,7 +8380,7 @@ class ApiController
             'expense' => 'مصروف',
             'balance' => 'رصيد'
         ];
-        
+
         return $types[$type] ?? 'غير محدد';
     }
 
@@ -8147,13 +8395,13 @@ class ApiController
             }
 
             $user = $this->auth->user();
-            
+
             // Get daily balance
             $dailyBalance = $this->getDailyBalance();
-            
+
             // Get payment types summary
             $paymentTypes = $this->getPaymentTypesSummary();
-            
+
             return $this->jsonResponse([
                 'ok' => true,
                 'data' => [
@@ -8161,7 +8409,7 @@ class ApiController
                     'paymentTypes' => $paymentTypes
                 ]
             ]);
-            
+
         } catch (Exception $e) {
             return $this->jsonResponse(['error' => 'فشل في تحميل ملخص لوحة التحكم'], 500);
         }
@@ -8171,7 +8419,7 @@ class ApiController
     {
         try {
             $today = date('Y-m-d');
-            
+
             // Get opening balance
             $stmt = $this->pdo->prepare("
                 SELECT COALESCE(SUM(amount), 0) as opening_balance
@@ -8180,7 +8428,7 @@ class ApiController
             ");
             $stmt->execute([$today]);
             $openingBalance = $stmt->fetchColumn();
-            
+
             // Get additional balance (positive amounts)
             $stmt = $this->pdo->prepare("
                 SELECT COALESCE(SUM(amount), 0) as additional_balance
@@ -8189,7 +8437,7 @@ class ApiController
             ");
             $stmt->execute([$today]);
             $additionalBalance = $stmt->fetchColumn();
-            
+
             // Get total withdrawals (negative amounts)
             $stmt = $this->pdo->prepare("
                 SELECT COALESCE(SUM(amount), 0) as total_withdrawals
@@ -8198,7 +8446,7 @@ class ApiController
             ");
             $stmt->execute([$today]);
             $totalWithdrawals = $stmt->fetchColumn();
-            
+
             // Get total received today
             $stmt = $this->pdo->prepare("
                 SELECT COALESCE(SUM(amount), 0) as total_received
@@ -8207,7 +8455,7 @@ class ApiController
             ");
             $stmt->execute([$today]);
             $totalReceived = $stmt->fetchColumn();
-            
+
             // Get total expenses today
             $stmt = $this->pdo->prepare("
                 SELECT COALESCE(SUM(amount), 0) as total_expenses
@@ -8216,10 +8464,10 @@ class ApiController
             ");
             $stmt->execute([$today]);
             $totalExpenses = $stmt->fetchColumn();
-            
+
             // Calculate current balance: opening + additional + payments - withdrawals - expenses
             $currentBalance = $openingBalance + $additionalBalance + $totalReceived - $totalWithdrawals - $totalExpenses;
-            
+
             // Get transactions count
             $stmt = $this->pdo->prepare("
                 SELECT COUNT(*) as transactions_count
@@ -8233,7 +8481,7 @@ class ApiController
             ");
             $stmt->execute([$today, $today, $today]);
             $transactionsCount = $stmt->fetchColumn();
-            
+
             return [
                 'opening_balance' => $openingBalance,
                 'total_received' => $totalReceived,
@@ -8241,7 +8489,7 @@ class ApiController
                 'current_balance' => $currentBalance,
                 'transactions_count' => $transactionsCount
             ];
-            
+
         } catch (Exception $e) {
             return [
                 'opening_balance' => 0,
@@ -8267,15 +8515,15 @@ class ApiController
             $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
             $perPage = isset($_GET['per_page']) ? max(1, min(100, intval($_GET['per_page']))) : 10;
             $offset = ($page - 1) * $perPage;
-            
+
             // Get search parameter
             $search = isset($_GET['search']) ? trim($_GET['search']) : '';
-            
+
             // Build WHERE clause with search
             $whereClause = "WHERE 1=1";
             $params = [];
             $countParams = [];
-            
+
             if (!empty($search)) {
                 $searchTerm = '%' . $search . '%';
                 $whereClause .= " AND (
@@ -8331,7 +8579,7 @@ class ApiController
                     ]
                 ]
             ]);
-            
+
         } catch (\Exception $e) {
             return $this->jsonResponse(['ok' => false, 'error' => 'Failed to load recent activity'], 500);
         }
@@ -8380,11 +8628,11 @@ class ApiController
             ");
             $statusStmt->execute([$startDate, $endDate]);
             $statusData = $statusStmt->fetch();
-            
+
             // Calculate completion ratio
-            $total = (int)($statusData['total_appointments'] ?? 0);
-            $completed = (int)($statusData['completed'] ?? 0);
-            $missed = (int)($statusData['missed'] ?? 0);
+            $total = (int) ($statusData['total_appointments'] ?? 0);
+            $completed = (int) ($statusData['completed'] ?? 0);
+            $missed = (int) ($statusData['missed'] ?? 0);
             $completionRatio = $total > 0 ? round(($completed / $total) * 100, 2) : 0;
             $missedRatio = $total > 0 ? round(($missed / $total) * 100, 2) : 0;
 
@@ -8459,8 +8707,8 @@ class ApiController
                     'patients' => $patientsData,
                     'prescriptions' => $prescriptionsData,
                     'gender' => [
-                        'total_male' => (int)($genderData['total_male'] ?? 0),
-                        'total_female' => (int)($genderData['total_female'] ?? 0)
+                        'total_male' => (int) ($genderData['total_male'] ?? 0),
+                        'total_female' => (int) ($genderData['total_female'] ?? 0)
                     ]
                 ]
             ]);
@@ -8480,7 +8728,7 @@ class ApiController
 
             $user = $this->auth->user();
             $doctorId = $this->getDoctorId($user['id']);
-            
+
             if (!$doctorId) {
                 return $this->jsonResponse(['ok' => false, 'error' => 'Doctor not found'], 404);
             }
@@ -8546,7 +8794,7 @@ class ApiController
 
             $user = $this->auth->user();
             $doctorId = $this->getDoctorId($user['id']);
-            
+
             if (!$doctorId) {
                 return $this->jsonResponse(['ok' => false, 'error' => 'Doctor not found'], 404);
             }
@@ -8598,7 +8846,7 @@ class ApiController
                     ]
                 ]
             ]);
-            
+
         } catch (\Exception $e) {
             return $this->jsonResponse(['ok' => false, 'error' => 'Failed to load missed appointments'], 500);
         }
@@ -8611,7 +8859,7 @@ class ApiController
         $result = $stmt->fetch();
         return $result ? $result['id'] : null;
     }
-    
+
     /**
      * Check if notifications should be skipped for appointments based on user settings
      * @param int $userId
@@ -8627,7 +8875,7 @@ class ApiController
             ");
             $settingsStmt->execute([$userId]);
             $setting = $settingsStmt->fetch(\PDO::FETCH_ASSOC);
-            
+
             return $setting && $setting['setting_value'] == '1';
         } catch (\Exception $e) {
             // If there's an error, default to creating notifications
@@ -8644,14 +8892,14 @@ class ApiController
 
             $user = $this->auth->user();
 
-            $year = (int)($_GET['year'] ?? date('Y'));
-            $month = (int)($_GET['month'] ?? date('m'));
-            
+            $year = (int) ($_GET['year'] ?? date('Y'));
+            $month = (int) ($_GET['month'] ?? date('m'));
+
             // Validate month and year
             if ($month < 1 || $month > 12) {
                 return $this->jsonResponse(['error' => 'Invalid month'], 400);
             }
-            
+
             if ($year < 2020 || $year > 2100) {
                 return $this->jsonResponse(['error' => 'Invalid year'], 400);
             }
@@ -8659,7 +8907,7 @@ class ApiController
             // Get first and last day of the month
             $firstDay = sprintf('%04d-%02d-01', $year, $month);
             $lastDay = date('Y-m-t', strtotime($firstDay));
-            
+
             // Get appointments for the month
             $appointmentsStmt = $this->pdo->prepare("
                 SELECT 
@@ -8680,7 +8928,7 @@ class ApiController
             ");
             $appointmentsStmt->execute([$firstDay, $lastDay]);
             $appointments = $appointmentsStmt->fetchAll(\PDO::FETCH_ASSOC);
-            
+
             // Get notes for the month (from notes table)
             $notesStmt = $this->pdo->prepare("
                 SELECT 
@@ -8694,7 +8942,7 @@ class ApiController
             ");
             $notesStmt->execute([$user['id'], $firstDay, $lastDay]);
             $notes = $notesStmt->fetchAll(\PDO::FETCH_ASSOC);
-            
+
             // Get alerts for the month
             $alertsStmt = $this->pdo->prepare("
                 SELECT 
@@ -8711,10 +8959,10 @@ class ApiController
             ");
             $alertsStmt->execute([$firstDay, $lastDay]);
             $alerts = $alertsStmt->fetchAll(\PDO::FETCH_ASSOC);
-            
+
             // Organize data by date
             $dataByDate = [];
-            
+
             // Process appointments
             foreach ($appointments as $appointment) {
                 $date = $appointment['date'];
@@ -8727,7 +8975,7 @@ class ApiController
                 }
                 $dataByDate[$date]['appointments'][] = $appointment;
             }
-            
+
             // Process notes
             foreach ($notes as $note) {
                 $date = $note['note_date'];
@@ -8740,7 +8988,7 @@ class ApiController
                 }
                 $dataByDate[$date]['notes'][] = $note;
             }
-            
+
             // Process alerts
             foreach ($alerts as $alert) {
                 $date = $alert['alert_date'];
@@ -8753,7 +9001,7 @@ class ApiController
                 }
                 $dataByDate[$date]['alerts'][] = $alert;
             }
-            
+
             return $this->jsonResponse([
                 'ok' => true,
                 'data' => [
@@ -8774,7 +9022,7 @@ class ApiController
     {
         try {
             $today = date('Y-m-d');
-            
+
             $stmt = $this->pdo->prepare("
                 SELECT 
                     type,
@@ -8786,7 +9034,7 @@ class ApiController
             ");
             $stmt->execute([$today]);
             $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            
+
             $summary = [];
             foreach ($results as $result) {
                 $summary[$result['type']] = [
@@ -8794,9 +9042,9 @@ class ApiController
                     'total' => $result['total']
                 ];
             }
-            
+
             return $summary;
-            
+
         } catch (Exception $e) {
             return [];
         }
@@ -8811,29 +9059,29 @@ class ApiController
         ob_start();
         try {
             header('Content-Type: application/json; charset=utf-8');
-            
+
             if (session_status() === PHP_SESSION_NONE) {
                 session_start();
             }
-            
+
             if (!isset($this->auth)) {
                 $this->auth = new \App\Lib\Auth();
             }
-            
+
             if (!$this->auth->check()) {
                 ob_clean();
                 http_response_code(401);
                 echo json_encode(['success' => false, 'error' => 'Unauthorized'], JSON_UNESCAPED_UNICODE);
                 exit;
             }
-            
+
             $excelUrl = 'http://www.drugeye.pharorg.com/drugeyeapp/inner-update-files/drugs.xlsx';
             $tempFile = sys_get_temp_dir() . '/drugs_' . time() . '_' . uniqid() . '.db';
-            
+
             // Download file (SQLite database)
             $ch = curl_init($excelUrl);
             $fp = fopen($tempFile, 'wb');
-            
+
             if (!$fp) {
                 ob_clean();
                 http_response_code(500);
@@ -8844,7 +9092,7 @@ class ApiController
                 ], JSON_UNESCAPED_UNICODE);
                 exit;
             }
-            
+
             curl_setopt($ch, CURLOPT_FILE, $fp);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($ch, CURLOPT_TIMEOUT, 300); // 5 minutes timeout
@@ -8852,42 +9100,42 @@ class ApiController
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
             curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-            
+
             $curlResult = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $curlError = curl_error($ch);
             curl_close($ch);
             fclose($fp);
-            
+
             // Check if download was successful
             if ($curlResult === false || !empty($curlError)) {
                 if (file_exists($tempFile)) {
                     unlink($tempFile);
                 }
-            ob_clean();
+                ob_clean();
                 http_response_code(500);
-            echo json_encode([
+                echo json_encode([
                     'success' => false,
                     'error' => 'Failed to download file',
                     'message' => 'cURL Error: ' . $curlError
-            ], JSON_UNESCAPED_UNICODE);
-            exit;
+                ], JSON_UNESCAPED_UNICODE);
+                exit;
             }
-            
+
             if ($httpCode !== 200) {
                 if (file_exists($tempFile)) {
                     unlink($tempFile);
                 }
-            ob_clean();
-            http_response_code(500);
-            echo json_encode([
-                'success' => false,
+                ob_clean();
+                http_response_code(500);
+                echo json_encode([
+                    'success' => false,
                     'error' => 'Failed to download file',
                     'message' => 'HTTP Code: ' . $httpCode
-            ], JSON_UNESCAPED_UNICODE);
-            exit;
-        }
-            
+                ], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+
             // Verify file exists and has content
             if (!file_exists($tempFile) || filesize($tempFile) === 0) {
                 if (file_exists($tempFile)) {
@@ -8902,10 +9150,10 @@ class ApiController
                 ], JSON_UNESCAPED_UNICODE);
                 exit;
             }
-            
+
             // Try to read as SQLite database using sqlite3 command line tool
             $rows = [];
-            
+
             // Check if sqlite3 command line tool is available
             $sqlite3Cmd = '/usr/bin/sqlite3'; // Use direct path since which is disabled
             if (!file_exists($sqlite3Cmd) || !is_executable($sqlite3Cmd)) {
@@ -8918,22 +9166,22 @@ class ApiController
                         break;
                     }
                 }
-                
+
                 if (empty($sqlite3Cmd)) {
                     if (file_exists($tempFile)) {
                         unlink($tempFile);
                     }
-                ob_clean();
+                    ob_clean();
                     http_response_code(500);
                     echo json_encode([
                         'success' => false,
                         'error' => 'SQLite3 command line tool is not available',
                         'message' => 'Please install sqlite3: sudo apt-get install sqlite3'
                     ], JSON_UNESCAPED_UNICODE);
-                exit;
+                    exit;
                 }
             }
-            
+
             try {
                 // Get table name using sqlite3 command with exec
                 $tableQuery = escapeshellarg("SELECT name FROM sqlite_master WHERE type='table' LIMIT 1;");
@@ -8941,18 +9189,18 @@ class ApiController
                 $returnVar = 0;
                 exec("{$sqlite3Cmd} " . escapeshellarg($tempFile) . " {$tableQuery} 2>&1", $tableOutput, $returnVar);
                 $tableName = trim(implode("\n", $tableOutput));
-                
+
                 if (empty($tableName) || $returnVar !== 0) {
                     throw new \Exception('No tables found in SQLite database. Error: ' . implode("\n", $tableOutput));
                 }
-                
+
                 // Get column names using sqlite3 command with exec
                 // PRAGMA table_info returns: cid, name, type, notnull, dflt_value, pk
                 // We need to extract only the 'name' column (second column in output)
                 $columnQuery = escapeshellarg("PRAGMA table_info(`{$tableName}`);");
                 $columnOutput = [];
                 exec("{$sqlite3Cmd} " . escapeshellarg($tempFile) . " {$columnQuery} 2>&1", $columnOutput, $returnVar);
-                
+
                 $columnNames = [];
                 if ($returnVar === 0 && !empty($columnOutput)) {
                     // PRAGMA table_info returns: cid|name|type|notnull|dflt_value|pk
@@ -8964,13 +9212,13 @@ class ApiController
                         }
                     }
                 }
-                
+
                 // Fallback: try to get all columns using SELECT * LIMIT 1 with header
                 if (empty($columnNames)) {
                     $testQuery = escapeshellarg("SELECT * FROM `{$tableName}` LIMIT 1;");
                     $testOutput = [];
                     exec("{$sqlite3Cmd} " . escapeshellarg($tempFile) . " -header -csv {$testQuery} 2>&1", $testOutput, $testReturnVar);
-                    
+
                     if ($testReturnVar === 0 && !empty($testOutput)) {
                         $testLine = $testOutput[0];
                         $columnNames = str_getcsv($testLine);
@@ -8978,7 +9226,7 @@ class ApiController
                         throw new \Exception('Failed to read column information from SQLite database. Error: ' . implode("\n", $columnOutput));
                     }
                 }
-                
+
                 // Map SQLite columns to database columns
                 $columnMap = [];
                 foreach ($columnNames as $index => $colName) {
@@ -9007,7 +9255,7 @@ class ApiController
                         $columnMap['Route'] = $colName;
                     }
                 }
-                
+
                 // Build SELECT query with column mapping
                 $selectColumns = [];
                 $selectColumns[] = isset($columnMap['ID']) ? $columnMap['ID'] . ' as ID' : 'NULL as ID';
@@ -9021,39 +9269,39 @@ class ApiController
                 $selectColumns[] = isset($columnMap['SRDE']) ? $columnMap['SRDE'] . ' as SRDE' : 'NULL as SRDE';
                 $selectColumns[] = isset($columnMap['GI']) ? $columnMap['GI'] . ' as GI' : 'NULL as GI';
                 $selectColumns[] = isset($columnMap['Route']) ? $columnMap['Route'] . ' as Route' : 'NULL as Route';
-                
+
                 $selectQuery = "SELECT " . implode(', ', $selectColumns) . " FROM `{$tableName}`;";
-                
+
                 // Export data to CSV using sqlite3 command with exec
                 $csvFile = sys_get_temp_dir() . '/drugs_export_' . time() . '_' . uniqid() . '.csv';
                 $exportQuery = escapeshellarg($selectQuery);
                 $exportOutput = [];
                 $returnVar = 0;
-                
+
                 // Use exec to get output directly, then write to file
                 exec("{$sqlite3Cmd} " . escapeshellarg($tempFile) . " -header -csv {$exportQuery} 2>&1", $exportOutput, $returnVar);
-                
+
                 if ($returnVar !== 0 || empty($exportOutput)) {
                     $errorMsg = !empty($exportOutput) ? implode("\n", $exportOutput) : 'Unknown error';
                     throw new \Exception('Failed to export data from SQLite database. Return code: ' . $returnVar . '. Error: ' . $errorMsg);
                 }
-                
+
                 // Write output to CSV file
                 $csvContent = implode("\n", $exportOutput);
                 if (file_put_contents($csvFile, $csvContent) === false) {
                     throw new \Exception('Failed to write CSV file');
                 }
-                
+
                 if (!file_exists($csvFile) || filesize($csvFile) === 0) {
                     throw new \Exception('CSV file is empty or missing after export');
                 }
-                
+
                 // Read CSV file
                 $csvHandle = fopen($csvFile, 'r');
                 if (!$csvHandle) {
                     throw new \Exception('Failed to open exported CSV file');
                 }
-                
+
                 // Read header row
                 $header = fgetcsv($csvHandle);
                 if ($header === false) {
@@ -9061,13 +9309,13 @@ class ApiController
                     unlink($csvFile);
                     throw new \Exception('Failed to read CSV header');
                 }
-                
+
                 // Map header columns to indices
                 $headerMap = [];
                 foreach ($header as $index => $colName) {
                     $headerMap[trim($colName)] = $index;
                 }
-                
+
                 // Read data rows
                 $mappedRows = [];
                 while (($csvRow = fgetcsv($csvHandle)) !== false) {
@@ -9086,16 +9334,16 @@ class ApiController
                     ];
                     $mappedRows[] = $mappedRow;
                 }
-                
+
                 fclose($csvHandle);
-                
+
                 // Clean up CSV file
                 if (file_exists($csvFile)) {
                     unlink($csvFile);
                 }
-                
+
                 $rows = $mappedRows;
-                
+
             } catch (\Exception $e) {
                 $fileSize = file_exists($tempFile) ? filesize($tempFile) : 0;
                 if (file_exists($tempFile)) {
@@ -9105,7 +9353,7 @@ class ApiController
                     unlink($csvFile);
                 }
                 ob_clean();
-                
+
                 http_response_code(500);
                 echo json_encode([
                     'success' => false,
@@ -9114,70 +9362,72 @@ class ApiController
                 ], JSON_UNESCAPED_UNICODE);
                 exit;
             }
-            
+
             // Remove header row if exists
             if (!empty($rows) && isset($rows[0])) {
                 $firstRow = $rows[0];
-                if (is_array($firstRow) && (
-                    (isset($firstRow[0]) && strtoupper(trim((string)$firstRow[0])) === 'ID') ||
-                    (isset($firstRow[1]) && strtoupper(trim((string)$firstRow[1])) === 'FIRSTNAME')
-                )) {
+                if (
+                    is_array($firstRow) && (
+                        (isset($firstRow[0]) && strtoupper(trim((string) $firstRow[0])) === 'ID') ||
+                        (isset($firstRow[1]) && strtoupper(trim((string) $firstRow[1])) === 'FIRSTNAME')
+                    )
+                ) {
                     array_shift($rows);
                 }
             }
-            
+
             // Connect to drug database using existing method
             $pdo = $this->getDrugsDatabaseConnection();
-            
+
             // Start transaction
             $pdo->beginTransaction();
-            
+
             $inserted = 0;
             $updated = 0;
             $total = count($rows);
-            
+
             try {
                 // Clear existing data
                 $pdo->exec("DELETE FROM drugs");
-                
+
                 // Prepare insert statement
                 $stmt = $pdo->prepare("
                     INSERT INTO drugs 
                     (ID, FirstName, LastName, price, priceold, imageid, Company, Pharmacology, SRDE, GI, Route)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
-                
+
                 // Process each row
                 foreach ($rows as $rowIndex => $row) {
                     // Skip empty rows
                     if (empty($row) || (!isset($row[0]) && !isset($row[1]) && !isset($row[2]))) {
                         continue;
                     }
-                    
+
                     // Map CSV columns to database columns
-                    $id = isset($row[0]) ? trim((string)$row[0]) : null;
-                    $firstName = isset($row[1]) ? trim((string)$row[1]) : '';
-                    $lastName = isset($row[2]) ? trim((string)$row[2]) : '';
-                    $price = isset($row[3]) ? trim((string)$row[3]) : '';
-                    $priceold = isset($row[4]) ? trim((string)$row[4]) : '';
-                    $imageid = isset($row[5]) ? trim((string)$row[5]) : '';
-                    $company = isset($row[6]) ? trim((string)$row[6]) : '';
-                    $pharmacology = isset($row[7]) ? trim((string)$row[7]) : '';
-                    $srde = isset($row[8]) ? trim((string)$row[8]) : '';
-                    $gi = isset($row[9]) ? trim((string)$row[9]) : '';
-                    $route = isset($row[10]) ? trim((string)$row[10]) : '';
-                    
+                    $id = isset($row[0]) ? trim((string) $row[0]) : null;
+                    $firstName = isset($row[1]) ? trim((string) $row[1]) : '';
+                    $lastName = isset($row[2]) ? trim((string) $row[2]) : '';
+                    $price = isset($row[3]) ? trim((string) $row[3]) : '';
+                    $priceold = isset($row[4]) ? trim((string) $row[4]) : '';
+                    $imageid = isset($row[5]) ? trim((string) $row[5]) : '';
+                    $company = isset($row[6]) ? trim((string) $row[6]) : '';
+                    $pharmacology = isset($row[7]) ? trim((string) $row[7]) : '';
+                    $srde = isset($row[8]) ? trim((string) $row[8]) : '';
+                    $gi = isset($row[9]) ? trim((string) $row[9]) : '';
+                    $route = isset($row[10]) ? trim((string) $row[10]) : '';
+
                     // Skip if no ID or drug name
                     if (empty($id) && empty($firstName) && empty($lastName)) {
                         continue;
                     }
-                    
+
                     // Convert ID to integer if possible, otherwise skip
                     if (!is_numeric($id) || empty($id)) {
                         continue;
                     }
-                    $id = (int)$id;
-                    
+                    $id = (int) $id;
+
                     // Limit string lengths to match database schema
                     $firstName = mb_substr($firstName, 0, 86);
                     $lastName = mb_substr($lastName, 0, 100);
@@ -9189,7 +9439,7 @@ class ApiController
                     $srde = mb_substr($srde, 0, 60);
                     $gi = mb_substr($gi, 0, 1000);
                     $route = mb_substr($route, 0, 100);
-                    
+
                     try {
                         $stmt->execute([
                             $id,
@@ -9209,7 +9459,7 @@ class ApiController
                         // Continue with next row
                     }
                 }
-                
+
                 // Commit transaction
                 $pdo->commit();
             } catch (\Exception $e) {
@@ -9219,12 +9469,12 @@ class ApiController
                 }
                 throw $e;
             }
-            
+
             // Clean up temp file
             if (file_exists($tempFile)) {
                 unlink($tempFile);
             }
-            
+
             ob_clean();
             echo json_encode([
                 'success' => true,
@@ -9236,18 +9486,18 @@ class ApiController
                 ]
             ], JSON_UNESCAPED_UNICODE);
             exit;
-            
+
         } catch (\Exception $e) {
             // Rollback transaction if started
             if (isset($pdo) && $pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-            
+
             // Clean up temp file
             if (isset($tempFile) && file_exists($tempFile)) {
                 unlink($tempFile);
             }
-            
+
             ob_clean();
             http_response_code(500);
             echo json_encode([
@@ -9307,7 +9557,7 @@ class ApiController
 
             // Use OpenWeatherMap ONLY (for testing, no fallbacks)
             $weatherData = $this->fetchWeatherFromOpenWeatherMap($lat, $lon, $apiKey);
-            
+
             // If OpenWeatherMap fails, return error (no fallback)
             if (!$weatherData) {
                 return $this->jsonResponse([
@@ -9357,7 +9607,7 @@ class ApiController
 
             // Fetch 5-day forecast from OpenWeatherMap
             $forecastUrl = "https://api.openweathermap.org/data/2.5/forecast?lat={$lat}&lon={$lon}&units=metric&cnt=40&appid={$apiKey}";
-            
+
             $ch = curl_init();
             curl_setopt_array($ch, [
                 CURLOPT_URL => $forecastUrl,
@@ -9366,35 +9616,35 @@ class ApiController
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_SSL_VERIFYPEER => false
             ]);
-            
+
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
-            
+
             if ($httpCode !== 200 || !$response) {
                 return $this->jsonResponse([
                     'success' => false,
                     'error' => 'Failed to fetch weather forecast'
                 ], 500);
             }
-            
+
             $data = json_decode($response, true);
-            
+
             if (!$data || !isset($data['list'])) {
                 return $this->jsonResponse([
                     'success' => false,
                     'error' => 'Invalid forecast data'
                 ], 500);
             }
-            
+
             // Group forecasts by day and get daily averages/max/min
             $dailyForecasts = [];
             $currentDate = null;
             $dayData = [];
-            
+
             foreach ($data['list'] as $item) {
                 $date = date('Y-m-d', $item['dt']);
-                
+
                 if ($currentDate !== $date) {
                     if ($currentDate !== null && !empty($dayData)) {
                         // Calculate daily averages
@@ -9414,7 +9664,7 @@ class ApiController
                     $currentDate = $date;
                     $dayData = [];
                 }
-                
+
                 $dayData[] = [
                     'temp' => $item['main']['temp'],
                     'humidity' => $item['main']['humidity'],
@@ -9425,7 +9675,7 @@ class ApiController
                     'clouds' => $item['clouds']['all'] ?? 0
                 ];
             }
-            
+
             // Add last day
             if ($currentDate !== null && !empty($dayData)) {
                 $dailyForecasts[] = [
@@ -9441,10 +9691,10 @@ class ApiController
                     'clouds' => round(array_sum(array_column($dayData, 'clouds')) / count($dayData))
                 ];
             }
-            
+
             // Limit to 4 days
             $dailyForecasts = array_slice($dailyForecasts, 0, 4);
-            
+
             return $this->jsonResponse([
                 'success' => true,
                 'forecast' => $dailyForecasts
@@ -9751,7 +10001,7 @@ class ApiController
         try {
             // Open-Meteo API endpoint - no API key required
             $weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude={$lat}&longitude={$lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,uv_index,is_day&timezone=auto";
-            
+
             $ch = curl_init();
             curl_setopt_array($ch, [
                 CURLOPT_URL => $weatherUrl,
@@ -9761,35 +10011,35 @@ class ApiController
                 CURLOPT_SSL_VERIFYPEER => false,
                 CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; WeatherApp)'
             ]);
-            
+
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $curlError = curl_error($ch);
             curl_close($ch);
-            
+
             if ($httpCode !== 200 || !$response || $curlError) {
                 return null;
             }
-            
+
             $data = json_decode($response, true);
-            
+
             if (!$data || !isset($data['current'])) {
                 return null;
             }
-            
+
             $current = $data['current'];
-            
+
             // Map weather code to condition description
             $weatherCode = $current['weather_code'] ?? 0;
             $condition = $this->mapWeatherCodeToCondition($weatherCode);
-            
+
             // Get location name using reverse geocoding
             $locationName = $this->getLocationNameFromCoordinates($lat, $lon);
-            
+
             // Open-Meteo returns wind_speed_10m in km/h already (check units in response)
             // But based on API docs, it's in km/h, so no conversion needed
             $windSpeed = round($current['wind_speed_10m'] ?? 0);
-            
+
             $weatherData = [
                 'temperature' => round($current['temperature_2m'] ?? 20),
                 'humidity' => round($current['relative_humidity_2m'] ?? 50),
@@ -9805,14 +10055,14 @@ class ApiController
                 'clouds' => $this->estimateCloudsFromWeatherCode($weatherCode),
                 'timestamp' => time()
             ];
-            
+
             return $weatherData;
-            
+
         } catch (\Exception $e) {
             return null;
         }
     }
-    
+
     /**
      * Fetch weather from OpenWeatherMap API (fallback)
      */
@@ -9820,7 +10070,7 @@ class ApiController
     {
         try {
             $weatherUrl = "https://api.openweathermap.org/data/2.5/weather?lat={$lat}&lon={$lon}&units=metric&appid={$apiKey}";
-            
+
             $ch = curl_init();
             curl_setopt_array($ch, [
                 CURLOPT_URL => $weatherUrl,
@@ -9829,21 +10079,21 @@ class ApiController
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_SSL_VERIFYPEER => false
             ]);
-            
+
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
-            
+
             if ($httpCode !== 200 || !$response) {
                 return null;
             }
-            
+
             $data = json_decode($response, true);
-            
+
             if (!$data || !isset($data['main'])) {
                 return null;
             }
-            
+
             $weatherData = [
                 'temperature' => round($data['main']['temp'] ?? 20),
                 'humidity' => $data['main']['humidity'] ?? 50,
@@ -9859,14 +10109,14 @@ class ApiController
                 'clouds' => $data['clouds']['all'] ?? 0,
                 'timestamp' => time()
             ];
-            
+
             return $weatherData;
-            
+
         } catch (\Exception $e) {
             return null;
         }
     }
-    
+
     /**
      * Map WMO weather code to condition description
      */
@@ -9903,45 +10153,63 @@ class ApiController
             96 => 'Thunderstorm with Hail',
             99 => 'Thunderstorm with Heavy Hail'
         ];
-        
+
         return $codes[$code] ?? 'Clear';
     }
-    
+
     /**
      * Get weather icon from WMO code
      */
     private function getWeatherIconFromCode($code, $isDay = 1)
     {
         // Map to OpenWeatherMap icon format for compatibility
-        if ($code == 0) return $isDay ? '01d' : '01n';
-        if ($code <= 2) return $isDay ? '02d' : '02n';
-        if ($code == 3) return '04d';
-        if ($code >= 45 && $code <= 48) return '50d';
-        if ($code >= 51 && $code <= 67) return '09d';
-        if ($code >= 71 && $code <= 77) return '13d';
-        if ($code >= 80 && $code <= 82) return '09d';
-        if ($code >= 85 && $code <= 86) return '13d';
-        if ($code >= 95) return '11d';
+        if ($code == 0)
+            return $isDay ? '01d' : '01n';
+        if ($code <= 2)
+            return $isDay ? '02d' : '02n';
+        if ($code == 3)
+            return '04d';
+        if ($code >= 45 && $code <= 48)
+            return '50d';
+        if ($code >= 51 && $code <= 67)
+            return '09d';
+        if ($code >= 71 && $code <= 77)
+            return '13d';
+        if ($code >= 80 && $code <= 82)
+            return '09d';
+        if ($code >= 85 && $code <= 86)
+            return '13d';
+        if ($code >= 95)
+            return '11d';
         return '01d';
     }
-    
+
     /**
      * Estimate cloud cover from weather code
      */
     private function estimateCloudsFromWeatherCode($code)
     {
-        if ($code == 0) return 0;
-        if ($code <= 2) return 25;
-        if ($code == 3) return 100;
-        if ($code >= 45 && $code <= 48) return 50;
-        if ($code >= 51 && $code <= 67) return 80;
-        if ($code >= 71 && $code <= 77) return 90;
-        if ($code >= 80 && $code <= 82) return 85;
-        if ($code >= 85 && $code <= 86) return 95;
-        if ($code >= 95) return 100;
+        if ($code == 0)
+            return 0;
+        if ($code <= 2)
+            return 25;
+        if ($code == 3)
+            return 100;
+        if ($code >= 45 && $code <= 48)
+            return 50;
+        if ($code >= 51 && $code <= 67)
+            return 80;
+        if ($code >= 71 && $code <= 77)
+            return 90;
+        if ($code >= 80 && $code <= 82)
+            return 85;
+        if ($code >= 85 && $code <= 86)
+            return 95;
+        if ($code >= 95)
+            return 100;
         return 50;
     }
-    
+
     /**
      * Get location name from coordinates using reverse geocoding
      */
@@ -9959,17 +10227,17 @@ class ApiController
                 CURLOPT_SSL_VERIFYPEER => false,
                 CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; WeatherApp)'
             ]);
-            
+
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
-            
+
             if ($httpCode === 200 && $response) {
                 $data = json_decode($response, true);
                 if (isset($data['address'])) {
                     $address = $data['address'];
                     $locationParts = [];
-                    
+
                     // Try to get city/town/village name
                     if (isset($address['city'])) {
                         $locationParts[] = $address['city'];
@@ -9980,12 +10248,12 @@ class ApiController
                     } elseif (isset($address['municipality'])) {
                         $locationParts[] = $address['municipality'];
                     }
-                    
+
                     // Add country if available
                     if (isset($address['country'])) {
                         $locationParts[] = $address['country'];
                     }
-                    
+
                     if (!empty($locationParts)) {
                         return implode(', ', $locationParts);
                     }
@@ -9993,18 +10261,18 @@ class ApiController
             }
         } catch (\Exception $e) {
         }
-        
+
         // No fallback - return coordinates only if geocoding fails
         return sprintf('Location (%.2f, %.2f)', $lat, $lon);
     }
-    
+
     /**
      * Estimate UV index based on weather conditions
      */
     private function estimateUVIndex($weatherData)
     {
         $clouds = $weatherData['clouds']['all'] ?? 0;
-        $hour = (int)date('H');
+        $hour = (int) date('H');
 
         // Base UV index (midday, clear sky)
         $baseUV = 8;
@@ -10210,7 +10478,7 @@ class ApiController
     private function parseIOPValue($value): ?float
     {
         if (is_numeric($value)) {
-            return (float)$value;
+            return (float) $value;
         }
 
         if (is_string($value)) {
@@ -10221,10 +10489,10 @@ class ApiController
                 // Relative value - cannot use for trend analysis
                 return null;
             }
-            
+
             // Try to parse as numeric
             if (is_numeric($value)) {
-                return (float)$value;
+                return (float) $value;
             }
         }
 
@@ -10468,7 +10736,7 @@ class ApiController
         while (ob_get_level() > 0) {
             ob_end_clean();
         }
-        
+
         try {
             // Check authentication
             if (!$this->auth->check()) {
@@ -10477,11 +10745,11 @@ class ApiController
 
             // Get visits data
             $visits = null;
-            
+
             // Handle POST data (can be JSON or form data)
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-                
+
                 // Check if Content-Type contains 'application/json'
                 if (strpos($contentType, 'application/json') !== false) {
                     $json = file_get_contents('php://input');
@@ -10549,39 +10817,39 @@ class ApiController
                     error_log("Visual Acuity Progress - Visit at index $index is not an array: " . print_r($visit, true));
                     continue;
                 }
-                
+
                 // Check required fields
                 $eye = isset($visit['eye']) ? trim($visit['eye']) : '';
                 $vaFormat = isset($visit['va_format']) ? trim($visit['va_format']) : '';
                 $vaValue = isset($visit['va_value']) ? trim($visit['va_value']) : '';
                 $date = isset($visit['date']) ? trim($visit['date']) : '';
-                
+
                 if (empty($eye) || empty($vaFormat) || empty($vaValue) || empty($date)) {
                     error_log("Visual Acuity Progress - Visit at index $index is missing required fields. Eye: '$eye', Format: '$vaFormat', Value: '$vaValue', Date: '$date'");
                     continue;
                 }
-                
+
                 // Validate eye value
                 $eyeUpper = strtoupper($eye);
                 if (!in_array($eyeUpper, ['OD', 'OS'])) {
                     error_log("Visual Acuity Progress - Visit at index $index has invalid eye value: '$eye'");
                     continue;
                 }
-                
+
                 // Validate format
                 $vaFormatLower = strtolower($vaFormat);
                 if (!in_array($vaFormatLower, ['snellen', 'logmar'])) {
                     error_log("Visual Acuity Progress - Visit at index $index has invalid format: '$vaFormat'");
                     continue;
                 }
-                
+
                 // Validate date format
                 $dateTimestamp = strtotime($date);
                 if ($dateTimestamp === false) {
                     error_log("Visual Acuity Progress - Visit at index $index has invalid date format: '$date'");
                     continue;
                 }
-                
+
                 $normalizedVisits[] = [
                     'eye' => $eyeUpper,
                     'va_format' => $vaFormatLower,
@@ -10596,7 +10864,7 @@ class ApiController
                     'error' => 'No valid visits found. Each visit must have eye (OD/OS), va_format (snellen/logmar), va_value, and date (Y-m-d format) fields.'
                 ], 400);
             }
-            
+
             if (count($normalizedVisits) < 2) {
                 return $this->jsonResponse([
                     'success' => false,
@@ -10632,7 +10900,7 @@ class ApiController
             $errorTrace = $e->getTraceAsString();
             error_log("Visual Acuity Progress Calculator Error: " . $errorMessage);
             error_log("Stack trace: " . $errorTrace);
-            
+
             // Log request data for debugging
             error_log("Request data: " . json_encode([
                 'method' => $_SERVER['REQUEST_METHOD'] ?? 'unknown',
@@ -10640,7 +10908,7 @@ class ApiController
                 'post_data' => $_POST,
                 'input_data' => file_get_contents('php://input')
             ]));
-            
+
             return $this->jsonResponse([
                 'success' => false,
                 'error' => 'Calculation failed: ' . $errorMessage,
@@ -10675,7 +10943,7 @@ class ApiController
             // Handle POST data (can be JSON or form data)
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-                
+
                 if (strpos($contentType, 'application/json') !== false) {
                     $json = file_get_contents('php://input');
                     if ($json) {
@@ -10692,7 +10960,7 @@ class ApiController
                     for ($i = 1; $i <= 12; $i++) {
                         $key = "question_{$i}";
                         if (isset($_POST[$key]) && $_POST[$key] !== '') {
-                            $questions[$i] = (int)$_POST[$key];
+                            $questions[$i] = (int) $_POST[$key];
                         }
                     }
                 }
@@ -10701,7 +10969,7 @@ class ApiController
                 for ($i = 1; $i <= 12; $i++) {
                     $key = "question_{$i}";
                     if (isset($_GET[$key]) && $_GET[$key] !== '') {
-                        $questions[$i] = (int)$_GET[$key];
+                        $questions[$i] = (int) $_GET[$key];
                     }
                 }
             }
@@ -10720,7 +10988,7 @@ class ApiController
                 $prevStmt->execute([$patientId]);
                 $previous = $prevStmt->fetch();
                 if ($previous) {
-                    $previousScore = (float)$previous['osdi_score'];
+                    $previousScore = (float) $previous['osdi_score'];
                     $previousDate = $previous['measurement_date'];
                 }
             }
@@ -10746,7 +11014,7 @@ class ApiController
                         created_by
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
-                
+
                 $stmt->execute([
                     $patientId,
                     $appointmentId ?: null,
@@ -10842,7 +11110,7 @@ class ApiController
             // Handle POST data (can be JSON or form data)
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-                
+
                 if (strpos($contentType, 'application/json') !== false) {
                     $json = file_get_contents('php://input');
                     if ($json) {
@@ -10948,7 +11216,7 @@ class ApiController
             // Handle POST data (can be JSON or form data)
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-                
+
                 if (strpos($contentType, 'application/json') !== false) {
                     $json = file_get_contents('php://input');
                     if ($json) {
@@ -11019,7 +11287,7 @@ class ApiController
             // Handle POST data (can be JSON or form data)
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-                
+
                 if (strpos($contentType, 'application/json') !== false) {
                     $json = file_get_contents('php://input');
                     if ($json) {
@@ -11116,7 +11384,7 @@ class ApiController
                             central_macular_thickness = VALUES(central_macular_thickness),
                             updated_at = CURRENT_TIMESTAMP
                     ");
-                    
+
                     $stmt->execute([
                         $patientId,
                         $appointmentId ?: null,
@@ -11249,7 +11517,7 @@ class ApiController
             // Handle POST data (can be JSON or form data)
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-                
+
                 if (strpos($contentType, 'application/json') !== false) {
                     $json = file_get_contents('php://input');
                     if ($json) {
@@ -11301,7 +11569,7 @@ class ApiController
                 // Convert BCVA to decimal for storage
                 $bcvaOdDecimal = $bcvaOd ? $this->convertBcvaToDecimal($bcvaOd) : null;
                 $bcvaOsDecimal = $bcvaOs ? $this->convertBcvaToDecimal($bcvaOs) : null;
-                
+
                 $stmt = $this->pdo->prepare("
                     INSERT INTO cataract_surgery_readiness_results (
                         patient_id, appointment_id, bcva_od, bcva_os,
@@ -11309,7 +11577,7 @@ class ApiController
                         readiness_score, readiness_classification, clinical_summary, created_by
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
-                
+
                 $stmt->execute([
                     $patientId,
                     $appointmentId ?: null,
@@ -11369,7 +11637,7 @@ class ApiController
             // Handle POST data (can be JSON or form data)
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-                
+
                 if (strpos($contentType, 'application/json') !== false) {
                     $json = file_get_contents('php://input');
                     if ($json) {
@@ -11421,7 +11689,7 @@ class ApiController
                 // Convert BCVA to decimal for storage
                 $preopBcvaDecimal = $preopBcva ? $this->convertBcvaToDecimal($preopBcva) : null;
                 $postopBcvaDecimal = $postopBcva ? $this->convertBcvaToDecimal($postopBcva) : null;
-                
+
                 $stmt = $this->pdo->prepare("
                     INSERT INTO post_operative_outcomes (
                         patient_id, appointment_id, surgery_date, eye,
@@ -11432,7 +11700,7 @@ class ApiController
                         outcome_summary, surgical_summary, surgeon_id, created_by
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
-                
+
                 $stmt->execute([
                     $patientId,
                     $appointmentId ?: null,
@@ -11552,14 +11820,14 @@ class ApiController
 
             return $this->jsonResponse([
                 'success' => true,
-                'total_cases' => (int)$totalCases,
+                'total_cases' => (int) $totalCases,
                 'refractive_outcome_distribution' => $refractiveDistribution,
                 'visual_outcome_distribution' => $visualDistribution,
                 'average_refractive_errors' => [
-                    'avg_sphere_error' => $avgErrors['avg_sphere_error'] ? round((float)$avgErrors['avg_sphere_error'], 2) : null,
-                    'avg_cylinder_error' => $avgErrors['avg_cylinder_error'] ? round((float)$avgErrors['avg_cylinder_error'], 2) : null,
-                    'avg_abs_sphere_error' => $avgErrors['avg_abs_sphere_error'] ? round((float)$avgErrors['avg_abs_sphere_error'], 2) : null,
-                    'avg_abs_cylinder_error' => $avgErrors['avg_abs_cylinder_error'] ? round((float)$avgErrors['avg_abs_cylinder_error'], 2) : null
+                    'avg_sphere_error' => $avgErrors['avg_sphere_error'] ? round((float) $avgErrors['avg_sphere_error'], 2) : null,
+                    'avg_cylinder_error' => $avgErrors['avg_cylinder_error'] ? round((float) $avgErrors['avg_cylinder_error'], 2) : null,
+                    'avg_abs_sphere_error' => $avgErrors['avg_abs_sphere_error'] ? round((float) $avgErrors['avg_abs_sphere_error'], 2) : null,
+                    'avg_abs_cylinder_error' => $avgErrors['avg_abs_cylinder_error'] ? round((float) $avgErrors['avg_abs_cylinder_error'], 2) : null
                 ],
                 'filters' => [
                     'surgeon_id' => $surgeonId,
@@ -11586,10 +11854,10 @@ class ApiController
     private function convertBcvaToDecimal(string $bcva): ?float
     {
         $bcva = trim($bcva);
-        
+
         // If already LogMAR format (numeric)
         if (is_numeric($bcva)) {
-            $logmar = (float)$bcva;
+            $logmar = (float) $bcva;
             if ($logmar >= -0.3 && $logmar <= 3.0) {
                 return $logmar;
             }
@@ -11597,11 +11865,11 @@ class ApiController
 
         // Try Snellen format
         $bcva = str_replace(' ', '', $bcva);
-        
+
         if (preg_match('/^(\d+(?:\.\d+)?)[\/\-](\d+(?:\.\d+)?)$/i', $bcva, $matches)) {
-            $numerator = (float)$matches[1];
-            $denominator = (float)$matches[2];
-            
+            $numerator = (float) $matches[1];
+            $denominator = (float) $matches[2];
+
             if ($denominator > 0) {
                 $snellenDecimal = $numerator / $denominator;
                 if ($snellenDecimal > 0) {
@@ -11714,7 +11982,7 @@ class ApiController
 
             // Get patient_id from query parameter
             $patientId = $_GET['patient_id'] ?? null;
-            
+
             if (!$patientId || !is_numeric($patientId)) {
                 return $this->jsonResponse([
                     'ok' => false,
@@ -11727,7 +11995,7 @@ class ApiController
                 ]);
             }
 
-            $patientId = (int)$patientId;
+            $patientId = (int) $patientId;
 
             // Verify patient exists and get patient name
             $stmt = $this->pdo->prepare("SELECT id, first_name, last_name FROM patients WHERE id = ?");
@@ -11748,7 +12016,7 @@ class ApiController
             // Get clinical snapshot using parser service
             $parserService = new ClinicalDataParserService();
             $snapshot = $parserService->getClinicalSnapshot($patientId);
-            
+
             // Generate clinical summary
             $summary = $parserService->generateClinicalSummary($snapshot);
 
@@ -11777,6 +12045,1822 @@ class ApiController
                     'summary' => 'Error loading clinical data.'
                 ]
             ], 500);
+        }
+    }
+
+    public function getCommonComplaints()
+    {
+        try {
+            $seedFile = __DIR__ . '/../Data/common_complaints.json';
+            $cachedFile = __DIR__ . '/../storage/common_complaints.json';
+
+            $seedData = [];
+            $cachedData = [];
+
+            // Load seed data (initial/common complaints)
+            if (file_exists($seedFile)) {
+                $seedContent = file_get_contents($seedFile);
+                $seedData = json_decode($seedContent, true);
+                if ($seedData === null || !is_array($seedData)) {
+                    $seedData = [];
+                }
+            }
+
+            // Load cached data from database (generated by update script)
+            if (file_exists($cachedFile)) {
+                $cachedContent = file_get_contents($cachedFile);
+                $cachedData = json_decode($cachedContent, true);
+                if ($cachedData === null || !is_array($cachedData)) {
+                    $cachedData = [];
+                }
+            }
+
+            // Merge seed data with cached data
+            $mergedComplaints = [];
+            $seenComplaints = []; // Track normalized complaints to avoid duplicates
+
+            // Helper function to normalize text for comparison
+            $normalizeText = function ($text) {
+                return mb_strtolower(trim(preg_replace('/\s+/', ' ', $text)));
+            };
+
+            // Helper function to calculate similarity
+            $calculateSimilarity = function ($text1, $text2) use ($normalizeText) {
+                $norm1 = $normalizeText($text1);
+                $norm2 = $normalizeText($text2);
+                if ($norm1 === $norm2)
+                    return 100;
+                similar_text($norm1, $norm2, $percent);
+                return $percent;
+            };
+
+            // Add cached complaints first (they have count data)
+            if (isset($cachedData['complaints']) && is_array($cachedData['complaints'])) {
+                foreach ($cachedData['complaints'] as $complaint) {
+                    $normalized = $normalizeText($complaint['complaint'] ?? '');
+                    if (!empty($normalized) && !isset($seenComplaints[$normalized])) {
+                        $mergedComplaints[] = [
+                            'complaint' => $complaint['complaint'] ?? '',
+                            'diagnosis' => $complaint['diagnosis'] ?? '',
+                            'plan' => $complaint['plan'] ?? '',
+                            'count' => isset($complaint['count']) ? (int) $complaint['count'] : 1
+                        ];
+                        $seenComplaints[$normalized] = true;
+                    }
+                }
+            }
+
+            // Add seed data, checking for duplicates
+            foreach ($seedData as $seedComplaint) {
+                if (!isset($seedComplaint['complaint']))
+                    continue;
+
+                $normalized = $normalizeText($seedComplaint['complaint']);
+                $isDuplicate = false;
+
+                // Check if similar complaint already exists (>90% similarity)
+                foreach ($mergedComplaints as $existing) {
+                    $similarity = $calculateSimilarity($seedComplaint['complaint'], $existing['complaint']);
+                    if ($similarity > 90) {
+                        $isDuplicate = true;
+                        // Update existing if seed has more complete data
+                        if (!empty($seedComplaint['diagnosis']) && empty($existing['diagnosis'])) {
+                            $existing['diagnosis'] = $seedComplaint['diagnosis'];
+                        }
+                        if (!empty($seedComplaint['plan']) && empty($existing['plan'])) {
+                            $existing['plan'] = $seedComplaint['plan'];
+                        }
+                        break;
+                    }
+                }
+
+                if (!$isDuplicate && !isset($seenComplaints[$normalized])) {
+                    $mergedComplaints[] = [
+                        'complaint' => $seedComplaint['complaint'],
+                        'diagnosis' => $seedComplaint['diagnosis'] ?? '',
+                        'plan' => $seedComplaint['plan'] ?? '',
+                        'count' => isset($seedComplaint['count']) ? (int) $seedComplaint['count'] : 0
+                    ];
+                    $seenComplaints[$normalized] = true;
+                }
+            }
+
+            // Sort by count descending, then by complaint text
+            usort($mergedComplaints, function ($a, $b) {
+                if ($b['count'] === $a['count']) {
+                    return strcmp($a['complaint'], $b['complaint']);
+                }
+                return $b['count'] - $a['count'];
+            });
+
+            // Limit to top 30
+            $mergedComplaints = array_slice($mergedComplaints, 0, 30);
+
+            // Determine last updated time
+            $lastUpdated = null;
+            if (isset($cachedData['last_updated'])) {
+                $lastUpdated = $cachedData['last_updated'];
+            }
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => [
+                    'last_updated' => $lastUpdated,
+                    'total_count' => count($mergedComplaints),
+                    'complaints' => $mergedComplaints
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            error_log("Error getting common complaints: " . $e->getMessage());
+            return $this->jsonResponse([
+                'ok' => false,
+                'error' => 'Failed to load common complaints',
+                'data' => [
+                    'last_updated' => null,
+                    'total_count' => 0,
+                    'complaints' => []
+                ]
+            ], 500);
+        }
+    }
+
+    /**
+     * Get consultation suggestions based on field and query
+     * Route: GET /api/consultation/suggestions?field={field}&query={query}
+     */
+    public function getConsultationSuggestions()
+    {
+        try {
+            $field = $_GET['field'] ?? '';
+            $query = trim($_GET['query'] ?? '');
+
+            // Validate field
+            $allowedFields = ['chief_complaint', 'diagnosis', 'plan'];
+            if (!in_array($field, $allowedFields)) {
+                return $this->jsonResponse([
+                    'ok' => false,
+                    'error' => 'Invalid field. Allowed fields: ' . implode(', ', $allowedFields)
+                ], 400);
+            }
+
+            // Validate query length (minimum 3 characters)
+            if (mb_strlen($query) < 3) {
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'data' => []
+                ]);
+            }
+
+            // Search in consultation_notes
+            $searchQuery = '%' . $query . '%';
+            $stmt = $this->pdo->prepare("
+                SELECT
+                    {$field} as suggestion,
+                    COUNT(*) as count
+                FROM consultation_notes
+                WHERE {$field} IS NOT NULL
+                  AND {$field} != ''
+                  AND {$field} LIKE ?
+                GROUP BY {$field}
+                ORDER BY COUNT(*) DESC, {$field} ASC
+                LIMIT 15
+            ");
+
+            $stmt->execute([$searchQuery]);
+            $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Format results
+            $suggestions = array_map(function ($row) {
+                return [
+                    'text' => $row['suggestion'],
+                    'count' => (int) $row['count']
+                ];
+            }, $results);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => $suggestions
+            ]);
+
+        } catch (\Exception $e) {
+            error_log("Error getting consultation suggestions: " . $e->getMessage());
+            return $this->jsonResponse([
+                'ok' => false,
+                'error' => 'Failed to load suggestions',
+                'data' => []
+            ], 500);
+        }
+    }
+
+    /**
+     * Get prescription suggestions based on diagnosis
+     * Route: GET /api/prescriptions/suggestions?diagnosis={diagnosis}&complaint={complaint}
+     */
+    public function getPrescriptionSuggestions()
+    {
+        try {
+            $diagnosis = trim($_GET['diagnosis'] ?? '');
+            $complaint = trim($_GET['complaint'] ?? '');
+
+            // Validate diagnosis is provided
+            if (empty($diagnosis)) {
+                return $this->jsonResponse([
+                    'ok' => false,
+                    'error' => 'Diagnosis parameter is required'
+                ], 400);
+            }
+
+            // Normalize text for comparison
+            $normalizeText = function ($text) {
+                return mb_strtolower(trim(preg_replace('/\s+/', ' ', $text)));
+            };
+
+            // Calculate similarity between two texts
+            $calculateSimilarity = function ($text1, $text2) use ($normalizeText) {
+                $norm1 = $normalizeText($text1);
+                $norm2 = $normalizeText($text2);
+                if ($norm1 === $norm2)
+                    return 100;
+                similar_text($norm1, $norm2, $percent);
+                return $percent;
+            };
+
+            // Get all consultation notes with diagnoses
+            $stmt = $this->pdo->query("
+                SELECT DISTINCT cn.appointment_id, cn.diagnosis, cn.chief_complaint
+                FROM consultation_notes cn
+                WHERE cn.diagnosis IS NOT NULL
+                  AND cn.diagnosis != ''
+                  AND TRIM(cn.diagnosis) != ''
+            ");
+            $allConsultations = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Find appointments with similar diagnoses (>90% similarity)
+            $matchingAppointmentIds = [];
+            foreach ($allConsultations as $consultation) {
+                $similarity = $calculateSimilarity($diagnosis, $consultation['diagnosis']);
+                if ($similarity > 90) {
+                    $matchingAppointmentIds[] = $consultation['appointment_id'];
+                }
+            }
+
+            if (empty($matchingAppointmentIds)) {
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'data' => [],
+                    'message' => 'No similar diagnoses found'
+                ]);
+            }
+
+            // Get prescriptions from matching appointments
+            $placeholders = implode(',', array_fill(0, count($matchingAppointmentIds), '?'));
+            $stmt = $this->pdo->prepare("
+                SELECT
+                    p.drug_name,
+                    p.notes,
+                    p.route,
+                    COUNT(*) as count
+                FROM prescriptions p
+                WHERE p.appointment_id IN ($placeholders)
+                  AND p.drug_name IS NOT NULL
+                  AND p.drug_name != ''
+                  AND TRIM(p.drug_name) != ''
+                GROUP BY p.drug_name, p.notes, p.route
+                ORDER BY COUNT(*) DESC
+                LIMIT 15
+            ");
+
+            $stmt->execute($matchingAppointmentIds);
+            $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Format results
+            $suggestions = array_map(function ($row) {
+                return [
+                    'drug_name' => $row['drug_name'],
+                    'notes' => $row['notes'] ?? '',
+                    'route' => $row['route'] ?? 'Topical',
+                    'count' => (int) $row['count']
+                ];
+            }, $results);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => $suggestions
+            ]);
+
+        } catch (\Exception $e) {
+            error_log("Error getting prescription suggestions: " . $e->getMessage());
+            return $this->jsonResponse([
+                'ok' => false,
+                'error' => 'Failed to load prescription suggestions',
+                'data' => []
+            ], 500);
+        }
+    }
+
+    /**
+     * Chat with AI using Groq API
+     *
+     * @return \Psr\Http\Message\ResponseInterface JSON response
+     */
+    public function chatWithAI()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Permission denied'], 403);
+            }
+
+            $userId = $user['id'];
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            $message = trim($input['message'] ?? '');
+            $patientId = isset($input['patient_id']) && $input['patient_id'] ? (int) $input['patient_id'] : null;
+            $appointmentId = isset($input['appointment_id']) && $input['appointment_id'] ? (int) $input['appointment_id'] : null;
+            $contextType = $input['context_type'] ?? 'general';
+
+            error_log("=== chatWithAI Request Debug ===");
+            error_log("Raw input patient_id: " . ($input['patient_id'] ?? 'not set'));
+            error_log("Parsed patientId: " . ($patientId ?? 'null'));
+            error_log("Raw input appointment_id: " . ($input['appointment_id'] ?? 'not set'));
+            error_log("Parsed appointmentId: " . ($appointmentId ?? 'null'));
+            error_log("Context Type: " . $contextType);
+            error_log("Message: " . substr($message, 0, 100));
+
+            if (empty($message)) {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Message is required'], 400);
+            }
+
+            // Validate patient/appointment access
+            if ($patientId) {
+                $stmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
+                $stmt->execute([$patientId]);
+                if (!$stmt->fetch()) {
+                    return $this->jsonResponse(['ok' => false, 'error' => 'Patient not found'], 404);
+                }
+            }
+
+            if ($appointmentId) {
+                $stmt = $this->pdo->prepare("SELECT id FROM appointments WHERE id = ?");
+                $stmt->execute([$appointmentId]);
+                if (!$stmt->fetch()) {
+                    return $this->jsonResponse(['ok' => false, 'error' => 'Appointment not found'], 404);
+                }
+            }
+
+            // Ensure table exists (don't fail if table creation has issues)
+            try {
+                $this->ensureAIChatHistoryTableExists();
+            } catch (\Exception $tableError) {
+                error_log("Warning: Could not ensure AI chat history table exists: " . $tableError->getMessage());
+                // Continue anyway - table might already exist or will be created later
+            }
+
+            // Build context based on context_type
+            // IMPORTANT: For follow-up messages, check chat history to determine if we should include context
+            $context = '';
+            $systemPrompt = 'You are a helpful medical AI assistant for healthcare professionals. You are assisting a licensed medical doctor who is reviewing patient information. Provide evidence-based medical guidance, clinical insights, and suggestions based on the provided medical information. Your responses should be professional, accurate, and clinically relevant. Always remind users that your responses are for guidance and clinical decision support only and should not replace professional medical judgment.';
+
+            // Check chat history to see if previous messages had patient context
+            $chatHistory = $this->getChatHistoryMessages($userId, $patientId, null);
+            $hasPatientHistoryContext = false;
+            $hasConsultationContext = false;
+
+            if (!empty($chatHistory)) {
+                // Check if any previous message had patient_history or consultation_summary context
+                foreach ($chatHistory as $msg) {
+                    if (isset($msg['context_type'])) {
+                        if ($msg['context_type'] === 'patient_history') {
+                            $hasPatientHistoryContext = true;
+                        } elseif ($msg['context_type'] === 'consultation_summary') {
+                            $hasConsultationContext = true;
+                        }
+                    }
+                }
+            }
+
+            // Build context based on current request or previous context
+            if ($contextType === 'patient_history' && $patientId) {
+                // Build complete patient history context based on patient_id only
+                // This retrieves ALL data from database for the patient, ignoring appointment_id
+                $context = $this->buildPatientHistoryContext($patientId);
+
+                // Ensure context is not empty
+                if (empty($context) || trim($context) === '') {
+                    error_log("WARNING: buildPatientHistoryContext returned empty context for patient ID: " . $patientId);
+                    $context = "PATIENT INFORMATION:\nPatient ID: {$patientId}\n\nNOTE: No patient data was found in the database for this patient ID. Please verify the patient ID is correct.";
+                }
+
+                $systemPrompt = 'You are a helpful medical AI assistant for healthcare professionals. You are assisting a licensed medical doctor who is reviewing a patient\'s complete medical history. CRITICAL: You MUST base your analysis ONLY on the patient data provided below in the "PATIENT MEDICAL HISTORY DATA" section. Do NOT invent, assume, or add any information that is not explicitly stated in the provided data. If information is missing, state that it is not available rather than making assumptions. Provide evidence-based clinical insights, identify patterns, and suggest considerations based STRICTLY on the actual data provided. Your responses should be professional, clinically relevant, and appropriate for a medical professional. Always remind users that your responses are for guidance and clinical decision support only and should not replace professional medical judgment.';
+            } elseif ($contextType === 'consultation_summary' && $appointmentId) {
+                $context = $this->buildConsultationSummaryContext($appointmentId, $patientId);
+                $systemPrompt = 'You are a helpful medical AI assistant for healthcare professionals. You are assisting a licensed medical doctor who is reviewing a consultation. CRITICAL: You MUST base your summary ONLY on the consultation and patient data provided below. Do NOT invent, assume, or add any information that is not explicitly stated in the provided data. If information is missing, state that it is not available rather than making assumptions. Provide a clear, clinically relevant summary and context based STRICTLY on the actual data provided. Your responses should be professional and appropriate for a medical professional. Always remind users that your responses are for guidance and clinical decision support only and should not replace professional medical judgment.';
+            } elseif ($hasPatientHistoryContext && $patientId) {
+                // Follow-up message but previous messages had patient history context
+                // Rebuild the context so the AI remembers the patient data
+                $context = $this->buildPatientHistoryContext($patientId);
+
+                if (empty($context) || trim($context) === '') {
+                    error_log("WARNING: buildPatientHistoryContext returned empty context for patient ID: " . $patientId);
+                    $context = "PATIENT INFORMATION:\nPatient ID: {$patientId}\n\nNOTE: No patient data was found in the database for this patient ID. Please verify the patient ID is correct.";
+                }
+
+                $systemPrompt = 'You are a helpful medical AI assistant for healthcare professionals. You are assisting a licensed medical doctor who is reviewing a patient\'s complete medical history. The patient data has been provided in previous messages and is included again below for reference. CRITICAL: You MUST base your responses ONLY on the patient data provided below in the "PATIENT MEDICAL HISTORY DATA" section. Do NOT invent, assume, or add any information that is not explicitly stated in the provided data. Provide evidence-based clinical insights and suggestions appropriate for a medical professional. Always remind users that your responses are for guidance and clinical decision support only and should not replace professional medical judgment.';
+            } elseif ($hasConsultationContext && $appointmentId) {
+                // Follow-up message but previous messages had consultation context
+                // Rebuild the context so the AI remembers the consultation data
+                $context = $this->buildConsultationSummaryContext($appointmentId, $patientId);
+                $systemPrompt = 'You are a helpful medical AI assistant for healthcare professionals. You are assisting a licensed medical doctor who is reviewing a consultation. The consultation data has been provided in previous messages and is included again below for reference. CRITICAL: You MUST base your responses ONLY on the consultation and patient data provided below. Do NOT invent, assume, or add any information that is not explicitly stated in the provided data. Provide clinically relevant insights appropriate for a medical professional. Always remind users that your responses are for guidance and clinical decision support only and should not replace professional medical judgment.';
+            } elseif ($patientId && !empty($chatHistory)) {
+                // Follow-up message with patient ID - include patient context for continuity
+                // This ensures the AI always has access to patient data in follow-up conversations
+                $context = $this->buildPatientHistoryContext($patientId);
+
+                if (empty($context) || trim($context) === '') {
+                    error_log("WARNING: buildPatientHistoryContext returned empty context for patient ID: " . $patientId);
+                    $context = "PATIENT INFORMATION:\nPatient ID: {$patientId}\n\nNOTE: No patient data was found in the database for this patient ID. Please verify the patient ID is correct.";
+                }
+
+                $systemPrompt = 'You are a helpful medical AI assistant for healthcare professionals. You are assisting a licensed medical doctor who is reviewing patient information. The patient data is provided below for reference and has been discussed in previous messages. CRITICAL: You MUST base your responses ONLY on the patient data provided below in the "PATIENT MEDICAL HISTORY DATA" section. Do NOT invent, assume, or add any information that is not explicitly stated in the provided data. Provide evidence-based clinical insights and suggestions appropriate for a medical professional. Always remind users that your responses are for guidance and clinical decision support only and should not replace professional medical judgment.';
+            } elseif ($patientId && $contextType === 'general') {
+                // General message but we have a patient ID - include patient context for continuity
+                $context = $this->buildPatientHistoryContext($patientId);
+
+                if (empty($context) || trim($context) === '') {
+                    error_log("WARNING: buildPatientHistoryContext returned empty context for patient ID: " . $patientId);
+                    $context = "PATIENT INFORMATION:\nPatient ID: {$patientId}\n\nNOTE: No patient data was found in the database for this patient ID. Please verify the patient ID is correct.";
+                }
+
+                $systemPrompt = 'You are a helpful medical AI assistant for healthcare professionals. You are assisting a licensed medical doctor who is reviewing patient information. The patient data is provided below for reference. CRITICAL: You MUST base your responses ONLY on the patient data provided below in the "PATIENT MEDICAL HISTORY DATA" section. Do NOT invent, assume, or add any information that is not explicitly stated in the provided data. Provide evidence-based clinical insights and suggestions appropriate for a medical professional. Always remind users that your responses are for guidance and clinical decision support only and should not replace professional medical judgment.';
+            }
+
+            // Note: chatHistory was already retrieved above for context type detection
+            // Build messages array for Groq API
+            $messages = [];
+
+            // Add system message with context
+            // Always include context if it exists, even if empty (for debugging)
+            $systemMessageContent = $systemPrompt;
+            if ($context && !empty(trim($context))) {
+                $systemMessageContent .= "\n\n=== PATIENT MEDICAL HISTORY DATA ===\n\n" . $context . "\n\n=== END PATIENT MEDICAL HISTORY DATA ===";
+            } else {
+                error_log("WARNING: No context to include in system message!");
+                $systemMessageContent .= "\n\n=== PATIENT MEDICAL HISTORY DATA ===\n\nNo patient data was found or provided.\n\n=== END PATIENT MEDICAL HISTORY DATA ===";
+            }
+
+            $messages[] = [
+                'role' => 'system',
+                'content' => $systemMessageContent
+            ];
+
+            error_log("System message length: " . strlen($systemMessageContent) . " characters");
+
+            // Add chat history (last 10 messages for context)
+            $recentHistory = array_slice($chatHistory, -10);
+            foreach ($recentHistory as $historyMsg) {
+                $messages[] = [
+                    'role' => $historyMsg['role'],
+                    'content' => $historyMsg['message']
+                ];
+            }
+
+            // Add current user message
+            $messages[] = [
+                'role' => 'user',
+                'content' => $message
+            ];
+
+            // Log the context being sent (for debugging - remove in production or make conditional)
+            error_log("=== AI Chat Request Debug ===");
+            error_log("Context Type: " . $contextType);
+            error_log("Patient ID: " . ($patientId ?? 'null'));
+            error_log("Appointment ID: " . ($appointmentId ?? 'null'));
+            error_log("Context exists: " . ($context ? 'YES' : 'NO'));
+            if ($context) {
+                error_log("Context Length: " . strlen($context) . " characters");
+                error_log("Context Preview (first 1000 chars): " . substr($context, 0, 1000));
+                error_log("Context Preview (last 500 chars): " . substr($context, -500));
+            } else {
+                error_log("WARNING: Context is empty!");
+            }
+            error_log("=== End AI Chat Request Debug ===");
+
+            // Save user message to database
+            $this->saveChatMessage($userId, $patientId, $appointmentId, 'user', $message, $contextType);
+
+            // Call Groq API
+            $groqApiKey = $_ENV['GROQ_API_KEY'] ?? getenv('GROQ_API_KEY');
+            if (!$groqApiKey || empty(trim($groqApiKey))) {
+                error_log("GROQ_API_KEY not found in environment. Available keys: " . implode(', ', array_keys($_ENV)));
+                return $this->jsonResponse(['ok' => false, 'error' => 'AI service not configured. Please check GROQ_API_KEY in .env file.'], 500);
+            }
+
+            $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type: application/json',
+                    'Authorization: Bearer ' . $groqApiKey
+                ],
+                CURLOPT_POSTFIELDS => json_encode([
+                    'model' => 'llama-3.3-70b-versatile',
+                    'messages' => $messages,
+                    'temperature' => 0.7,
+                    'max_tokens' => 4000
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                CURLOPT_TIMEOUT => 30,
+                CURLOPT_CONNECTTIMEOUT => 10
+            ]);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+
+            if ($curlError) {
+                error_log("Groq API cURL error: " . $curlError);
+                return $this->jsonResponse(['ok' => false, 'error' => 'AI service connection error: ' . $curlError], 500);
+            }
+
+            if ($httpCode !== 200) {
+                error_log("Groq API HTTP error: " . $httpCode . " - " . substr($response, 0, 500));
+                $errorMsg = 'AI service error';
+                if ($httpCode === 401) {
+                    $errorMsg = 'AI service authentication failed. Please check API key.';
+                } elseif ($httpCode === 429) {
+                    $errorMsg = 'AI service rate limit exceeded. Please try again later.';
+                }
+                return $this->jsonResponse(['ok' => false, 'error' => $errorMsg], 500);
+            }
+
+            $aiResponse = json_decode($response, true);
+
+            if (!isset($aiResponse['choices'][0]['message']['content'])) {
+                error_log("Groq API unexpected response: " . substr($response, 0, 500));
+                return $this->jsonResponse(['ok' => false, 'error' => 'AI service returned invalid response'], 500);
+            }
+
+            $aiMessage = $aiResponse['choices'][0]['message']['content'];
+
+            // Save AI response to database
+            $this->saveChatMessage($userId, $patientId, $appointmentId, 'assistant', $aiMessage, $contextType);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => [
+                    'message' => $aiMessage,
+                    'role' => 'assistant'
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            error_log("Error in chatWithAI: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return $this->jsonResponse([
+                'ok' => false,
+                'error' => 'Failed to process chat request: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get chat history
+     *
+     * @return \Psr\Http\Message\ResponseInterface JSON response
+     */
+    public function getChatHistory()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Permission denied'], 403);
+            }
+
+            $userId = $user['id'];
+            $patientId = isset($_GET['patient_id']) && $_GET['patient_id'] ? (int) $_GET['patient_id'] : null;
+            $appointmentId = isset($_GET['appointment_id']) && $_GET['appointment_id'] ? (int) $_GET['appointment_id'] : null;
+
+            // Ensure table exists (don't fail if table creation has issues)
+            try {
+                $this->ensureAIChatHistoryTableExists();
+            } catch (\Exception $tableError) {
+                error_log("Warning: Could not ensure AI chat history table exists: " . $tableError->getMessage());
+                // Continue anyway - return empty array if table doesn't exist
+            }
+
+            // Chat history is shared by patient_id only (appointment_id is ignored)
+            $messages = $this->getChatHistoryMessages($userId, $patientId, null);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => $messages
+            ]);
+
+        } catch (\Exception $e) {
+            error_log("Error getting chat history: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return $this->jsonResponse([
+                'ok' => false,
+                'error' => 'Failed to load chat history: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Clear chat history
+     *
+     * @return \Psr\Http\Message\ResponseInterface JSON response
+     */
+    public function clearChatHistory()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Permission denied'], 403);
+            }
+
+            $userId = $user['id'];
+            $input = json_decode(file_get_contents('php://input'), true);
+            $patientId = isset($input['patient_id']) && $input['patient_id'] ? (int) $input['patient_id'] : null;
+            $appointmentId = isset($input['appointment_id']) && $input['appointment_id'] ? (int) $input['appointment_id'] : null;
+
+            // Ensure table exists (don't fail if table creation has issues)
+            try {
+                $this->ensureAIChatHistoryTableExists();
+            } catch (\Exception $tableError) {
+                error_log("Warning: Could not ensure AI chat history table exists: " . $tableError->getMessage());
+                // Continue anyway - table might already exist
+            }
+
+            // Build query - clear all chat history for patient (appointment_id is ignored)
+            $query = "DELETE FROM ai_chat_history WHERE user_id = ?";
+            $params = [$userId];
+
+            if ($patientId) {
+                $query .= " AND patient_id = ?";
+                $params[] = $patientId;
+            } else {
+                $query .= " AND patient_id IS NULL";
+            }
+
+            // Note: appointment_id is NOT used for clearing history
+            // This ensures all chat history for the patient is cleared, regardless of appointment
+
+            $stmt = $this->pdo->prepare($query);
+            $stmt->execute($params);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'message' => 'Chat history cleared successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            error_log("Error clearing chat history: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return $this->jsonResponse([
+                'ok' => false,
+                'error' => 'Failed to clear chat history: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Ensure AI chat history table exists
+     */
+    private function ensureAIChatHistoryTableExists()
+    {
+        try {
+            $stmt = $this->pdo->query("SHOW TABLES LIKE 'ai_chat_history'");
+            if ($stmt->rowCount() > 0) {
+                return;
+            }
+
+            // Try to create table with foreign keys first
+            try {
+                $this->pdo->exec("
+                    CREATE TABLE IF NOT EXISTS ai_chat_history (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        user_id INT NOT NULL,
+                        patient_id INT NULL,
+                        appointment_id INT NULL,
+                        role ENUM('user', 'assistant', 'system') NOT NULL DEFAULT 'user',
+                        message TEXT NOT NULL,
+                        context_type VARCHAR(50) NULL DEFAULT 'general',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        INDEX idx_user_id (user_id),
+                        INDEX idx_patient_id (patient_id),
+                        INDEX idx_appointment_id (appointment_id),
+                        INDEX idx_created_at (created_at),
+                        INDEX idx_user_patient (user_id, patient_id),
+                        INDEX idx_user_appointment (user_id, appointment_id),
+                        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                        FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+                        FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE CASCADE
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                ");
+            } catch (\Exception $fkError) {
+                // If foreign keys fail, create without them
+                error_log("Foreign key constraint failed, creating table without foreign keys: " . $fkError->getMessage());
+                $this->pdo->exec("
+                    CREATE TABLE IF NOT EXISTS ai_chat_history (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        user_id INT NOT NULL,
+                        patient_id INT NULL,
+                        appointment_id INT NULL,
+                        role ENUM('user', 'assistant', 'system') NOT NULL DEFAULT 'user',
+                        message TEXT NOT NULL,
+                        context_type VARCHAR(50) NULL DEFAULT 'general',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        INDEX idx_user_id (user_id),
+                        INDEX idx_patient_id (patient_id),
+                        INDEX idx_appointment_id (appointment_id),
+                        INDEX idx_created_at (created_at),
+                        INDEX idx_user_patient (user_id, patient_id),
+                        INDEX idx_user_appointment (user_id, appointment_id)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                ");
+            }
+        } catch (\Exception $e) {
+            error_log("Error creating AI chat history table: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            throw $e; // Re-throw to be caught by calling method
+        }
+    }
+
+    /**
+     * Get chat history messages
+     * Chat history is shared by patient_id only (appointment_id parameter is ignored)
+     */
+    private function getChatHistoryMessages($userId, $patientId = null, $appointmentId = null)
+    {
+        try {
+            $query = "SELECT role, message, context_type, created_at
+                      FROM ai_chat_history
+                      WHERE user_id = ?";
+            $params = [$userId];
+
+            // Chat history is shared by patient_id only, not by appointment_id
+            if ($patientId) {
+                $query .= " AND patient_id = ?";
+                $params[] = $patientId;
+            } else {
+                $query .= " AND patient_id IS NULL";
+            }
+
+            // Note: appointment_id is NOT used for filtering chat history
+            // This ensures chat history is shared across all appointments for the same patient
+
+            $query .= " ORDER BY created_at ASC";
+
+            $stmt = $this->pdo->prepare($query);
+            $stmt->execute($params);
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (\Exception $e) {
+            error_log("Error in getChatHistoryMessages: " . $e->getMessage());
+            return []; // Return empty array on error
+        }
+    }
+
+    /**
+     * Save chat message to database
+     */
+    private function saveChatMessage($userId, $patientId, $appointmentId, $role, $message, $contextType = 'general')
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                INSERT INTO ai_chat_history (user_id, patient_id, appointment_id, role, message, context_type)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ");
+            $stmt->execute([
+                $userId,
+                $patientId,
+                $appointmentId,
+                $role,
+                $message,
+                $contextType
+            ]);
+        } catch (\Exception $e) {
+            error_log("Error saving chat message: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Build complete patient history context for AI
+     *
+     * This function builds the complete medical history for a patient based on ALL database records
+     * associated with the patient_id. It ignores appointment_id completely and retrieves:
+     * - All appointments and consultation notes
+     * - All medication prescriptions
+     * - All glasses prescriptions
+     * - All lab tests and radiology
+     * - All medical history entries
+     * - All patient notes
+     *
+     * @param int $patientId The patient ID (appointment_id is ignored)
+     * @return string Complete patient history context string
+     */
+    private function buildPatientHistoryContext($patientId)
+    {
+        try {
+            error_log("buildPatientHistoryContext called with patientId: " . $patientId);
+
+            // Get patient basic info from database
+            $stmt = $this->pdo->prepare("
+                SELECT id, first_name, last_name, dob, gender, phone, address, national_id
+                FROM patients WHERE id = ?
+            ");
+            $stmt->execute([$patientId]);
+            $patient = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            if (!$patient) {
+                error_log("buildPatientHistoryContext: Patient not found for ID: " . $patientId);
+                error_log("buildPatientHistoryContext: Query executed - checking if patient exists...");
+                // Try to see if patient exists with different query
+                $checkStmt = $this->pdo->prepare("SELECT COUNT(*) as count FROM patients WHERE id = ?");
+                $checkStmt->execute([$patientId]);
+                $checkResult = $checkStmt->fetch(\PDO::FETCH_ASSOC);
+                error_log("buildPatientHistoryContext: Patient count check: " . $checkResult['count']);
+                return '';
+            }
+
+            error_log("buildPatientHistoryContext: Patient found - ID: " . $patient['id'] . ", Name: " . $patient['first_name'] . " " . $patient['last_name']);
+
+            $context = "PATIENT INFORMATION:\n";
+            $context .= "Name: {$patient['first_name']} {$patient['last_name']}\n";
+            if ($patient['dob']) {
+                $age = date_diff(date_create($patient['dob']), date_create('now'))->y;
+                $context .= "Age: {$age} years\n";
+                $context .= "Date of Birth: {$patient['dob']}\n";
+            }
+            if ($patient['gender']) {
+                $context .= "Gender: {$patient['gender']}\n";
+            }
+            if ($patient['phone']) {
+                $context .= "Phone: {$patient['phone']}\n";
+            }
+            $context .= "\n";
+
+            // Get ALL appointments with consultation notes for this patient (appointment_id is ignored)
+            // Query includes ALL fields from consultation_notes table based on database structure
+            // Note: consultation_notes table does NOT have a 'notes' column
+            $stmt = $this->pdo->prepare("
+                SELECT a.id, a.date, a.start_time, a.status, a.visit_type,
+                       cn.chief_complaint, cn.diagnosis, cn.diagnosis_code, cn.plan, cn.hx_present_illness,
+                       cn.visual_acuity_right, cn.visual_acuity_left, cn.refraction_right, cn.refraction_left,
+                       cn.IOP_right, cn.IOP_left, cn.slit_lamp_right, cn.slit_lamp_left,
+                       cn.fundus_right, cn.fundus_left, cn.external_appearance_right, cn.external_appearance_left,
+                       cn.eyelid_right, cn.eyelid_left, cn.systemic_disease, cn.medication, cn.followup_days
+                FROM appointments a
+                LEFT JOIN consultation_notes cn ON a.id = cn.appointment_id
+                WHERE a.patient_id = ?
+                ORDER BY a.date DESC, a.start_time DESC
+            ");
+            $stmt->execute([$patientId]);
+            $appointments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            error_log("buildPatientHistoryContext: Found " . count($appointments) . " appointments for patient ID: " . $patientId);
+
+            if ($appointments) {
+                $context .= "CONSULTATION NOTES & APPOINTMENT HISTORY:\n";
+                foreach ($appointments as $apt) {
+                    $context .= "\n=== Appointment #{$apt['id']} - {$apt['date']} {$apt['start_time']} ===\n";
+                    $context .= "Status: {$apt['status']}, Type: {$apt['visit_type']}\n";
+                    if ($apt['chief_complaint']) {
+                        $context .= "Chief Complaint: {$apt['chief_complaint']}\n";
+                    }
+                    if ($apt['hx_present_illness']) {
+                        $context .= "History of Present Illness: {$apt['hx_present_illness']}\n";
+                    }
+                    if ($apt['visual_acuity_right'] || $apt['visual_acuity_left']) {
+                        $context .= "Visual Acuity: OD {$apt['visual_acuity_right']} OS {$apt['visual_acuity_left']}\n";
+                    }
+                    if ($apt['refraction_right'] || $apt['refraction_left']) {
+                        $context .= "Refraction: OD {$apt['refraction_right']} OS {$apt['refraction_left']}\n";
+                    }
+                    if ($apt['IOP_right'] || $apt['IOP_left']) {
+                        $context .= "IOP: OD {$apt['IOP_right']} OS {$apt['IOP_left']}\n";
+                    }
+                    if ($apt['slit_lamp_right'] || $apt['slit_lamp_left']) {
+                        $context .= "Slit Lamp: OD {$apt['slit_lamp_right']} OS {$apt['slit_lamp_left']}\n";
+                    }
+                    if ($apt['fundus_right'] || $apt['fundus_left']) {
+                        $context .= "Fundus: OD {$apt['fundus_right']} OS {$apt['fundus_left']}\n";
+                    }
+                    if ($apt['external_appearance_right'] || $apt['external_appearance_left']) {
+                        $context .= "External Appearance: OD {$apt['external_appearance_right']} OS {$apt['external_appearance_left']}\n";
+                    }
+                    if ($apt['eyelid_right'] || $apt['eyelid_left']) {
+                        $context .= "Eyelid: OD {$apt['eyelid_right']} OS {$apt['eyelid_left']}\n";
+                    }
+                    if ($apt['diagnosis']) {
+                        $context .= "Diagnosis: {$apt['diagnosis']}\n";
+                    }
+                    if ($apt['diagnosis_code']) {
+                        $context .= "Diagnosis Code: {$apt['diagnosis_code']}\n";
+                    }
+                    if ($apt['systemic_disease']) {
+                        $context .= "Systemic Disease: {$apt['systemic_disease']}\n";
+                    }
+                    if ($apt['medication']) {
+                        $context .= "Current Medications: {$apt['medication']}\n";
+                    }
+                    if ($apt['plan']) {
+                        $context .= "Treatment Plan: {$apt['plan']}\n";
+                    }
+                    if ($apt['followup_days']) {
+                        $context .= "Follow-up Days: {$apt['followup_days']}\n";
+                    }
+                }
+                $context .= "\n";
+            }
+
+            // Get ALL prescriptions (medications) for this patient (appointment_id is ignored)
+            // Query includes ALL fields from prescriptions table: drug_name, dose, frequency, duration, route, notes
+            $stmt = $this->pdo->prepare("
+                SELECT p.id, p.drug_name, p.dose, p.frequency, p.duration, p.route, p.notes, p.created_at, a.date as appointment_date
+                FROM prescriptions p
+                JOIN appointments a ON p.appointment_id = a.id
+                WHERE a.patient_id = ?
+                ORDER BY p.created_at DESC
+            ");
+            $stmt->execute([$patientId]);
+            $medications = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            error_log("buildPatientHistoryContext: Found " . count($medications) . " medications for patient ID: " . $patientId);
+
+            if ($medications) {
+                $context .= "MEDICATION PRESCRIPTIONS:\n";
+                foreach ($medications as $med) {
+                    $context .= "\n- {$med['drug_name']}";
+                    if ($med['dose']) {
+                        $context .= " - Dose: {$med['dose']}";
+                    }
+                    if ($med['frequency']) {
+                        $context .= " - Frequency: {$med['frequency']}";
+                    }
+                    if ($med['duration']) {
+                        $context .= " - Duration: {$med['duration']}";
+                    }
+                    if ($med['route']) {
+                        $context .= " - Route: {$med['route']}";
+                    }
+                    if ($med['notes']) {
+                        $context .= " - Notes: {$med['notes']}";
+                    }
+                    $context .= " - Prescribed Date: {$med['appointment_date']}\n";
+                }
+                $context .= "\n";
+            }
+
+            // Get ALL glasses prescriptions for this patient (appointment_id is ignored)
+            // Query includes ALL fields from glasses_prescriptions table
+            $stmt = $this->pdo->prepare("
+                SELECT gp.id, gp.lens_type,
+                       gp.distance_sphere_r, gp.distance_cylinder_r, gp.distance_axis_r,
+                       gp.distance_sphere_l, gp.distance_cylinder_l, gp.distance_axis_l,
+                       gp.near_sphere_r, gp.near_cylinder_r, gp.near_axis_r,
+                       gp.near_sphere_l, gp.near_cylinder_l, gp.near_axis_l,
+                       gp.PD_DISTANCE, gp.PD_NEAR, gp.comments, gp.created_at, a.date as appointment_date
+                FROM glasses_prescriptions gp
+                JOIN appointments a ON gp.appointment_id = a.id
+                WHERE a.patient_id = ?
+                ORDER BY gp.created_at DESC
+            ");
+            $stmt->execute([$patientId]);
+            $glasses = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            error_log("buildPatientHistoryContext: Found " . count($glasses) . " glasses prescriptions for patient ID: " . $patientId);
+
+            if ($glasses) {
+                $context .= "GLASSES PRESCRIPTIONS:\n";
+                foreach ($glasses as $glass) {
+                    $context .= "\nLens Type: {$glass['lens_type']} - Date: {$glass['appointment_date']}\n";
+                    if ($glass['distance_sphere_r'] || $glass['distance_sphere_l'] || $glass['distance_cylinder_r'] || $glass['distance_cylinder_l']) {
+                        $context .= "Distance Vision:\n";
+                        $context .= "  OD: SPH {$glass['distance_sphere_r']} CYL {$glass['distance_cylinder_r']} AXIS {$glass['distance_axis_r']}\n";
+                        $context .= "  OS: SPH {$glass['distance_sphere_l']} CYL {$glass['distance_cylinder_l']} AXIS {$glass['distance_axis_l']}\n";
+                    }
+                    if ($glass['near_sphere_r'] || $glass['near_sphere_l'] || $glass['near_cylinder_r'] || $glass['near_cylinder_l']) {
+                        $context .= "Near Vision:\n";
+                        $context .= "  OD: SPH {$glass['near_sphere_r']} CYL {$glass['near_cylinder_r']} AXIS {$glass['near_axis_r']}\n";
+                        $context .= "  OS: SPH {$glass['near_sphere_l']} CYL {$glass['near_cylinder_l']} AXIS {$glass['near_axis_l']}\n";
+                    }
+                    if ($glass['PD_DISTANCE']) {
+                        $context .= "PD Distance: {$glass['PD_DISTANCE']} mm\n";
+                    }
+                    if ($glass['PD_NEAR']) {
+                        $context .= "PD Near: {$glass['PD_NEAR']} mm\n";
+                    }
+                    if ($glass['comments']) {
+                        $context .= "Comments: {$glass['comments']}\n";
+                    }
+                }
+                $context .= "\n";
+            }
+
+            // Get ALL lab tests for this patient (appointment_id is ignored)
+            // Query includes ALL fields from lab_tests table: test_type, test_category, test_name, priority, status, ordered_date, expected_date, notes, results
+            $stmt = $this->pdo->prepare("
+                SELECT lt.id, lt.test_type, lt.test_category, lt.test_name, lt.priority, lt.status,
+                       lt.ordered_date, lt.expected_date, lt.notes, lt.results, lt.created_at, a.date as appointment_date
+                FROM lab_tests lt
+                JOIN appointments a ON lt.appointment_id = a.id
+                WHERE a.patient_id = ?
+                ORDER BY lt.created_at DESC
+            ");
+            $stmt->execute([$patientId]);
+            $labTests = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            if ($labTests) {
+                $context .= "LAB TESTS & RADIOLOGY:\n";
+                foreach ($labTests as $test) {
+                    $context .= "\n{$test['test_name']} ({$test['test_type']} - {$test['test_category']})\n";
+                    if ($test['priority']) {
+                        $context .= "Priority: {$test['priority']}\n";
+                    }
+                    $context .= "Status: {$test['status']}";
+                    if ($test['ordered_date']) {
+                        $context .= ", Ordered Date: {$test['ordered_date']}";
+                    }
+                    if ($test['expected_date']) {
+                        $context .= ", Expected Date: {$test['expected_date']}";
+                    }
+                    $context .= "\n";
+                    if ($test['notes']) {
+                        $context .= "Notes: {$test['notes']}\n";
+                    }
+                    if ($test['results']) {
+                        $context .= "Results: {$test['results']}\n";
+                    }
+                }
+                $context .= "\n";
+            }
+
+            // Get ALL medical history entries for this patient (ignoring appointment_id)
+            // This retrieves complete medical history from database
+            $stmt = $this->pdo->prepare("
+                SELECT condition_name, diagnosis_date, category, status, notes, created_at
+                FROM medical_history_entries
+                WHERE patient_id = ?
+                ORDER BY created_at DESC
+            ");
+            $stmt->execute([$patientId]);
+            $medicalHistory = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            if ($medicalHistory) {
+                $context .= "MEDICAL HISTORY ENTRIES:\n";
+                foreach ($medicalHistory as $history) {
+                    $context .= "\n- {$history['condition_name']}";
+                    if ($history['category']) {
+                        $context .= " (Category: {$history['category']})";
+                    }
+                    $context .= "\n";
+                    $context .= "Status: {$history['status']}";
+                    if ($history['diagnosis_date']) {
+                        $context .= ", Diagnosis Date: {$history['diagnosis_date']}";
+                    }
+                    if ($history['notes']) {
+                        $context .= "\nNotes: {$history['notes']}";
+                    }
+                    $context .= "\n";
+                }
+                $context .= "\n";
+            }
+
+            // Get ALL patient notes for this patient (ignoring appointment_id)
+            // This retrieves complete patient notes history from database
+            $stmt = $this->pdo->prepare("
+                SELECT title, content, created_at
+                FROM patient_notes
+                WHERE patient_id = ?
+                ORDER BY created_at DESC
+            ");
+            $stmt->execute([$patientId]);
+            $notes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            if ($notes) {
+                $context .= "PATIENT NOTES:\n";
+                foreach ($notes as $note) {
+                    $context .= "\n{$note['title']} ({$note['created_at']})\n";
+                    $context .= "{$note['content']}\n";
+                }
+            }
+
+            error_log("buildPatientHistoryContext: Final context length: " . strlen($context) . " characters");
+            error_log("buildPatientHistoryContext: Context preview: " . substr($context, 0, 1000));
+
+            return $context;
+
+        } catch (\Exception $e) {
+            error_log("Error building patient history context: " . $e->getMessage());
+            error_log("Error stack trace: " . $e->getTraceAsString());
+            return '';
+        }
+    }
+
+    /**
+     * Build consultation summary context for AI
+     */
+    private function buildConsultationSummaryContext($appointmentId, $patientId = null)
+    {
+        try {
+            error_log("buildConsultationSummaryContext called with appointmentId: " . $appointmentId . ", patientId: " . ($patientId ?? 'null'));
+
+            // Get current appointment details with ALL consultation note fields
+            // Note: consultation_notes table does NOT have a 'notes' column
+            $stmt = $this->pdo->prepare("
+                SELECT a.id, a.date, a.start_time, a.status, a.visit_type, a.patient_id,
+                       p.first_name, p.last_name, p.dob, p.gender,
+                       cn.chief_complaint, cn.diagnosis, cn.diagnosis_code, cn.plan, cn.hx_present_illness,
+                       cn.visual_acuity_right, cn.visual_acuity_left, cn.refraction_right, cn.refraction_left,
+                       cn.IOP_right, cn.IOP_left, cn.slit_lamp_right, cn.slit_lamp_left,
+                       cn.fundus_right, cn.fundus_left, cn.external_appearance_right, cn.external_appearance_left,
+                       cn.eyelid_right, cn.eyelid_left, cn.systemic_disease, cn.medication, cn.followup_days
+                FROM appointments a
+                JOIN patients p ON a.patient_id = p.id
+                LEFT JOIN consultation_notes cn ON a.id = cn.appointment_id
+                WHERE a.id = ?
+            ");
+            $stmt->execute([$appointmentId]);
+            $appointment = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            if (!$appointment) {
+                error_log("buildConsultationSummaryContext: Appointment not found for ID: " . $appointmentId);
+                return '';
+            }
+
+            $patientId = $patientId ?: ($appointment['patient_id'] ?? null);
+            error_log("buildConsultationSummaryContext: Appointment found - Patient: " . $appointment['first_name'] . " " . $appointment['last_name'] . ", Patient ID: " . $patientId);
+
+            $context = "CURRENT CONSULTATION:\n";
+            $context .= "Appointment ID: {$appointment['id']}\n";
+            $context .= "Patient: {$appointment['first_name']} {$appointment['last_name']}\n";
+            if ($appointment['dob']) {
+                $age = date_diff(date_create($appointment['dob']), date_create('now'))->y;
+                $context .= "Age: {$age} years\n";
+            }
+            $context .= "Appointment Date: {$appointment['date']} {$appointment['start_time']}\n";
+            $context .= "Visit Type: {$appointment['visit_type']}\n";
+            $context .= "Status: {$appointment['status']}\n\n";
+
+            if ($appointment['chief_complaint']) {
+                $context .= "Chief Complaint: {$appointment['chief_complaint']}\n";
+            }
+            if ($appointment['hx_present_illness']) {
+                $context .= "History of Present Illness: {$appointment['hx_present_illness']}\n";
+            }
+            if ($appointment['visual_acuity_right'] || $appointment['visual_acuity_left']) {
+                $context .= "Visual Acuity: OD {$appointment['visual_acuity_right']} OS {$appointment['visual_acuity_left']}\n";
+            }
+            if ($appointment['refraction_right'] || $appointment['refraction_left']) {
+                $context .= "Refraction: OD {$appointment['refraction_right']} OS {$appointment['refraction_left']}\n";
+            }
+            if ($appointment['IOP_right'] || $appointment['IOP_left']) {
+                $context .= "IOP: OD {$appointment['IOP_right']} OS {$appointment['IOP_left']}\n";
+            }
+            if ($appointment['slit_lamp_right'] || $appointment['slit_lamp_left']) {
+                $context .= "Slit Lamp: OD {$appointment['slit_lamp_right']} OS {$appointment['slit_lamp_left']}\n";
+            }
+            if ($appointment['fundus_right'] || $appointment['fundus_left']) {
+                $context .= "Fundus: OD {$appointment['fundus_right']} OS {$appointment['fundus_left']}\n";
+            }
+            if ($appointment['external_appearance_right'] || $appointment['external_appearance_left']) {
+                $context .= "External Appearance: OD {$appointment['external_appearance_right']} OS {$appointment['external_appearance_left']}\n";
+            }
+            if ($appointment['eyelid_right'] || $appointment['eyelid_left']) {
+                $context .= "Eyelid: OD {$appointment['eyelid_right']} OS {$appointment['eyelid_left']}\n";
+            }
+            if ($appointment['diagnosis']) {
+                $context .= "Diagnosis: {$appointment['diagnosis']}\n";
+            }
+            if ($appointment['diagnosis_code']) {
+                $context .= "Diagnosis Code: {$appointment['diagnosis_code']}\n";
+            }
+            if ($appointment['systemic_disease']) {
+                $context .= "Systemic Disease: {$appointment['systemic_disease']}\n";
+            }
+            if ($appointment['medication']) {
+                $context .= "Current Medications: {$appointment['medication']}\n";
+            }
+            if ($appointment['plan']) {
+                $context .= "Treatment Plan: {$appointment['plan']}\n";
+            }
+            if ($appointment['followup_days']) {
+                $context .= "Follow-up Days: {$appointment['followup_days']}\n";
+            }
+            $context .= "\n";
+
+            // Get prescriptions for THIS appointment
+            $stmt = $this->pdo->prepare("
+                SELECT p.id, p.drug_name, p.dose, p.frequency, p.duration, p.route, p.notes, p.created_at
+                FROM prescriptions p
+                WHERE p.appointment_id = ?
+                ORDER BY p.created_at DESC
+            ");
+            $stmt->execute([$appointmentId]);
+            $prescriptions = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            error_log("buildConsultationSummaryContext: Found " . count($prescriptions) . " prescriptions for appointment ID: " . $appointmentId);
+
+            if ($prescriptions) {
+                $context .= "PRESCRIPTIONS FOR THIS APPOINTMENT:\n";
+                foreach ($prescriptions as $med) {
+                    $context .= "\n- {$med['drug_name']}";
+                    if ($med['dose']) {
+                        $context .= " - Dose: {$med['dose']}";
+                    }
+                    if ($med['frequency']) {
+                        $context .= " - Frequency: {$med['frequency']}";
+                    }
+                    if ($med['duration']) {
+                        $context .= " - Duration: {$med['duration']}";
+                    }
+                    if ($med['route']) {
+                        $context .= " - Route: {$med['route']}";
+                    }
+                    if ($med['notes']) {
+                        $context .= " - Notes: {$med['notes']}";
+                    }
+                    $context .= "\n";
+                }
+                $context .= "\n";
+            }
+
+            // Get lab tests for THIS appointment
+            $stmt = $this->pdo->prepare("
+                SELECT lt.id, lt.test_type, lt.test_category, lt.test_name, lt.priority, lt.status,
+                       lt.ordered_date, lt.expected_date, lt.notes, lt.results, lt.created_at
+                FROM lab_tests lt
+                WHERE lt.appointment_id = ?
+                ORDER BY lt.created_at DESC
+            ");
+            $stmt->execute([$appointmentId]);
+            $labTests = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            error_log("buildConsultationSummaryContext: Found " . count($labTests) . " lab tests for appointment ID: " . $appointmentId);
+
+            if ($labTests) {
+                $context .= "LAB TESTS & RADIOLOGY FOR THIS APPOINTMENT:\n";
+                foreach ($labTests as $test) {
+                    $context .= "\n{$test['test_name']} ({$test['test_type']} - {$test['test_category']})\n";
+                    if ($test['priority']) {
+                        $context .= "Priority: {$test['priority']}\n";
+                    }
+                    $context .= "Status: {$test['status']}";
+                    if ($test['ordered_date']) {
+                        $context .= ", Ordered Date: {$test['ordered_date']}";
+                    }
+                    if ($test['expected_date']) {
+                        $context .= ", Expected Date: {$test['expected_date']}";
+                    }
+                    $context .= "\n";
+                    if ($test['notes']) {
+                        $context .= "Notes: {$test['notes']}\n";
+                    }
+                    if ($test['results']) {
+                        $context .= "Results: {$test['results']}\n";
+                    }
+                }
+                $context .= "\n";
+            }
+
+            // Get glasses prescriptions for THIS appointment
+            $stmt = $this->pdo->prepare("
+                SELECT gp.id, gp.lens_type,
+                       gp.distance_sphere_r, gp.distance_cylinder_r, gp.distance_axis_r,
+                       gp.distance_sphere_l, gp.distance_cylinder_l, gp.distance_axis_l,
+                       gp.near_sphere_r, gp.near_cylinder_r, gp.near_axis_r,
+                       gp.near_sphere_l, gp.near_cylinder_l, gp.near_axis_l,
+                       gp.PD_DISTANCE, gp.PD_NEAR, gp.comments, gp.created_at
+                FROM glasses_prescriptions gp
+                WHERE gp.appointment_id = ?
+                ORDER BY gp.created_at DESC
+            ");
+            $stmt->execute([$appointmentId]);
+            $glasses = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            error_log("buildConsultationSummaryContext: Found " . count($glasses) . " glasses prescriptions for appointment ID: " . $appointmentId);
+
+            if ($glasses) {
+                $context .= "GLASSES PRESCRIPTIONS FOR THIS APPOINTMENT:\n";
+                foreach ($glasses as $glass) {
+                    $context .= "\nLens Type: {$glass['lens_type']}\n";
+                    if ($glass['distance_sphere_r'] || $glass['distance_sphere_l'] || $glass['distance_cylinder_r'] || $glass['distance_cylinder_l']) {
+                        $context .= "Distance Vision:\n";
+                        $context .= "  OD: SPH {$glass['distance_sphere_r']} CYL {$glass['distance_cylinder_r']} AXIS {$glass['distance_axis_r']}\n";
+                        $context .= "  OS: SPH {$glass['distance_sphere_l']} CYL {$glass['distance_cylinder_l']} AXIS {$glass['distance_axis_l']}\n";
+                    }
+                    if ($glass['near_sphere_r'] || $glass['near_sphere_l'] || $glass['near_cylinder_r'] || $glass['near_cylinder_l']) {
+                        $context .= "Near Vision:\n";
+                        $context .= "  OD: SPH {$glass['near_sphere_r']} CYL {$glass['near_cylinder_r']} AXIS {$glass['near_axis_r']}\n";
+                        $context .= "  OS: SPH {$glass['near_sphere_l']} CYL {$glass['near_cylinder_l']} AXIS {$glass['near_axis_l']}\n";
+                    }
+                    if ($glass['PD_DISTANCE']) {
+                        $context .= "PD Distance: {$glass['PD_DISTANCE']} mm\n";
+                    }
+                    if ($glass['PD_NEAR']) {
+                        $context .= "PD Near: {$glass['PD_NEAR']} mm\n";
+                    }
+                    if ($glass['comments']) {
+                        $context .= "Comments: {$glass['comments']}\n";
+                    }
+                }
+                $context .= "\n";
+            }
+
+            if ($patientId) {
+                // Get recent appointments (last 6 months) for context
+                $sixMonthsAgo = date('Y-m-d', strtotime('-6 months'));
+                $stmt = $this->pdo->prepare("
+                    SELECT a.id, a.date, a.start_time, a.status,
+                           cn.chief_complaint, cn.diagnosis
+                    FROM appointments a
+                    LEFT JOIN consultation_notes cn ON a.id = cn.appointment_id
+                    WHERE a.patient_id = ? AND a.id != ? AND a.date >= ?
+                    ORDER BY a.date DESC
+                    LIMIT 5
+                ");
+                $stmt->execute([$patientId, $appointmentId, $sixMonthsAgo]);
+                $recentAppointments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                if ($recentAppointments) {
+                    $context .= "RECENT APPOINTMENTS (Last 6 months) - For Context:\n";
+                    foreach ($recentAppointments as $apt) {
+                        $context .= "\n{$apt['date']} - ";
+                        if ($apt['chief_complaint']) {
+                            $context .= "Complaint: {$apt['chief_complaint']}";
+                        }
+                        if ($apt['diagnosis']) {
+                            $context .= ", Diagnosis: {$apt['diagnosis']}";
+                        }
+                        $context .= "\n";
+                    }
+                    $context .= "\n";
+                }
+            }
+
+            error_log("buildConsultationSummaryContext: Final context length: " . strlen($context) . " characters");
+            error_log("buildConsultationSummaryContext: Context preview: " . substr($context, 0, 1000));
+
+            return $context;
+
+        } catch (\Exception $e) {
+            error_log("Error building consultation summary context: " . $e->getMessage());
+            return '';
+        }
+    }
+
+    // ============================================
+    // Patient Folders API Endpoints
+    // ============================================
+
+    /**
+     * GET /api/patient-folders
+     * Get all folders (custom + system folders by doctor)
+     */
+    public function getPatientFolders()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            $doctorId = $this->getDoctorId($user['id']);
+
+            // Get custom folders
+            $customFoldersStmt = $this->pdo->prepare("
+                SELECT pf.*, 
+                       COUNT(DISTINCT pfp.patient_id) as patient_count
+                FROM patient_folders pf
+                LEFT JOIN patient_folder_patients pfp ON pf.id = pfp.folder_id
+                WHERE pf.doctor_id IS NULL OR pf.doctor_id = ?
+                GROUP BY pf.id
+                ORDER BY pf.created_at DESC
+            ");
+            $customFoldersStmt->execute([$doctorId]);
+            $customFolders = $customFoldersStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Get system folders (grouped by treating doctor)
+            // System folders are computed dynamically
+            $systemFoldersStmt = $this->pdo->prepare("
+                SELECT d.id as doctor_id,
+                       d.display_name as doctor_name,
+                       COUNT(DISTINCT p.id) as patient_count
+                FROM doctors d
+                LEFT JOIN timeline_events te ON te.actor_user_id = d.user_id 
+                    AND te.event_type = 'Booking' 
+                    AND te.event_summary LIKE '%New patient registered%'
+                LEFT JOIN patients p ON te.patient_id = p.id
+                WHERE d.id IS NOT NULL
+                GROUP BY d.id, d.display_name
+                HAVING patient_count > 0
+                ORDER BY d.display_name
+            ");
+            $systemFoldersStmt->execute();
+            $systemFoldersData = $systemFoldersStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Format system folders
+            $systemFolders = [];
+            foreach ($systemFoldersData as $sf) {
+                $systemFolders[] = [
+                    'id' => 'system_' . $sf['doctor_id'],
+                    'doctor_id' => $sf['doctor_id'],
+                    'name' => $sf['doctor_name'] . ' Patients',
+                    'type' => 'system',
+                    'patient_count' => (int)$sf['patient_count'],
+                    'created_at' => null,
+                    'updated_at' => null
+                ];
+            }
+
+            // Format custom folders
+            $formattedCustomFolders = [];
+            foreach ($customFolders as $cf) {
+                $formattedCustomFolders[] = [
+                    'id' => $cf['id'],
+                    'doctor_id' => $cf['doctor_id'],
+                    'name' => $cf['name'],
+                    'type' => 'custom',
+                    'patient_count' => (int)$cf['patient_count'],
+                    'created_at' => $cf['created_at'],
+                    'updated_at' => $cf['updated_at']
+                ];
+            }
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'folders' => array_merge($systemFolders, $formattedCustomFolders)
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * POST /api/patient-folders
+     * Create a new custom folder
+     */
+    public function createPatientFolder()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            $doctorId = $this->getDoctorId($user['id']);
+            $data = json_decode(file_get_contents('php://input'), true);
+
+            $name = trim($data['name'] ?? '');
+            $folderDoctorId = isset($data['doctor_id']) ? (int)$data['doctor_id'] : null;
+
+            if (empty($name)) {
+                return $this->jsonResponse(['error' => 'Folder name is required'], 400);
+            }
+
+            // If doctor_id is provided, ensure it matches current doctor (for private folders)
+            if ($folderDoctorId !== null && $folderDoctorId !== $doctorId) {
+                return $this->jsonResponse(['error' => 'Unauthorized to create folder for another doctor'], 403);
+            }
+
+            $stmt = $this->pdo->prepare("
+                INSERT INTO patient_folders (doctor_id, name, created_by_user_id)
+                VALUES (?, ?, ?)
+            ");
+            $stmt->execute([$folderDoctorId, $name, $user['id']]);
+            $folderId = $this->pdo->lastInsertId();
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'folder' => [
+                    'id' => $folderId,
+                    'doctor_id' => $folderDoctorId,
+                    'name' => $name,
+                    'type' => 'custom',
+                    'patient_count' => 0,
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => null
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * PUT /api/patient-folders/{id}
+     * Rename a custom folder
+     */
+    public function updatePatientFolder($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            $doctorId = $this->getDoctorId($user['id']);
+            $data = json_decode(file_get_contents('php://input'), true);
+
+            $name = trim($data['name'] ?? '');
+
+            if (empty($name)) {
+                return $this->jsonResponse(['error' => 'Folder name is required'], 400);
+            }
+
+            // Check if folder exists and user has permission
+            $checkStmt = $this->pdo->prepare("
+                SELECT id, doctor_id FROM patient_folders WHERE id = ?
+            ");
+            $checkStmt->execute([$id]);
+            $folder = $checkStmt->fetch();
+
+            if (!$folder) {
+                return $this->jsonResponse(['error' => 'Folder not found'], 404);
+            }
+
+            // Check permission: folder must be global (doctor_id IS NULL) or belong to current doctor
+            if ($folder['doctor_id'] !== null && $folder['doctor_id'] !== $doctorId) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 403);
+            }
+
+            $stmt = $this->pdo->prepare("
+                UPDATE patient_folders 
+                SET name = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ");
+            $stmt->execute([$name, $id]);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'message' => 'Folder updated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * DELETE /api/patient-folders/{id}
+     * Delete a custom folder
+     */
+    public function deletePatientFolder($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            $doctorId = $this->getDoctorId($user['id']);
+
+            // Check if folder exists and user has permission
+            $checkStmt = $this->pdo->prepare("
+                SELECT id, doctor_id FROM patient_folders WHERE id = ?
+            ");
+            $checkStmt->execute([$id]);
+            $folder = $checkStmt->fetch();
+
+            if (!$folder) {
+                return $this->jsonResponse(['error' => 'Folder not found'], 404);
+            }
+
+            // Check permission: folder must be global (doctor_id IS NULL) or belong to current doctor
+            if ($folder['doctor_id'] !== null && $folder['doctor_id'] !== $doctorId) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 403);
+            }
+
+            // Delete folder (CASCADE will delete patient mappings)
+            $stmt = $this->pdo->prepare("DELETE FROM patient_folders WHERE id = ?");
+            $stmt->execute([$id]);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'message' => 'Folder deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * POST /api/patient-folders/{id}/patients
+     * Add a patient to a folder
+     */
+    public function addPatientToFolder($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            $doctorId = $this->getDoctorId($user['id']);
+            $data = json_decode(file_get_contents('php://input'), true);
+
+            $patientId = (int)($data['patient_id'] ?? 0);
+
+            if ($patientId <= 0) {
+                return $this->jsonResponse(['error' => 'Invalid patient ID'], 400);
+            }
+
+            // Check if folder exists and user has permission
+            $checkStmt = $this->pdo->prepare("
+                SELECT id, doctor_id FROM patient_folders WHERE id = ?
+            ");
+            $checkStmt->execute([$id]);
+            $folder = $checkStmt->fetch();
+
+            if (!$folder) {
+                return $this->jsonResponse(['error' => 'Folder not found'], 404);
+            }
+
+            // Check permission: folder must be global (doctor_id IS NULL) or belong to current doctor
+            if ($folder['doctor_id'] !== null && $folder['doctor_id'] !== $doctorId) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 403);
+            }
+
+            // Check if patient exists
+            $patientStmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
+            $patientStmt->execute([$patientId]);
+            if (!$patientStmt->fetch()) {
+                return $this->jsonResponse(['error' => 'Patient not found'], 404);
+            }
+
+            // Check if already in folder
+            $existsStmt = $this->pdo->prepare("
+                SELECT folder_id FROM patient_folder_patients 
+                WHERE folder_id = ? AND patient_id = ?
+            ");
+            $existsStmt->execute([$id, $patientId]);
+            if ($existsStmt->fetch()) {
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'message' => 'Patient already in folder'
+                ]);
+            }
+
+            // Add patient to folder
+            $stmt = $this->pdo->prepare("
+                INSERT INTO patient_folder_patients (folder_id, patient_id)
+                VALUES (?, ?)
+            ");
+            $stmt->execute([$id, $patientId]);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'message' => 'Patient added to folder successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * DELETE /api/patient-folders/{id}/patients/{patient_id}
+     * Remove a patient from a folder
+     */
+    public function removePatientFromFolder($id, $patientId)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            $doctorId = $this->getDoctorId($user['id']);
+            $patientId = (int)$patientId;
+
+            if ($patientId <= 0) {
+                return $this->jsonResponse(['error' => 'Invalid patient ID'], 400);
+            }
+
+            // Check if folder exists and user has permission
+            $checkStmt = $this->pdo->prepare("
+                SELECT id, doctor_id FROM patient_folders WHERE id = ?
+            ");
+            $checkStmt->execute([$id]);
+            $folder = $checkStmt->fetch();
+
+            if (!$folder) {
+                return $this->jsonResponse(['error' => 'Folder not found'], 404);
+            }
+
+            // Check permission: folder must be global (doctor_id IS NULL) or belong to current doctor
+            if ($folder['doctor_id'] !== null && $folder['doctor_id'] !== $doctorId) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 403);
+            }
+
+            // Remove patient from folder
+            $stmt = $this->pdo->prepare("
+                DELETE FROM patient_folder_patients 
+                WHERE folder_id = ? AND patient_id = ?
+            ");
+            $stmt->execute([$id, $patientId]);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'message' => 'Patient removed from folder successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * GET /api/patient-folders/{id}/patients
+     * Get patients in a folder
+     */
+    public function getFolderPatients($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            $doctorId = $this->getDoctorId($user['id']);
+
+            // Check if folder exists and user has permission
+            $checkStmt = $this->pdo->prepare("
+                SELECT id, doctor_id, name, type FROM patient_folders WHERE id = ?
+            ");
+            $checkStmt->execute([$id]);
+            $folder = $checkStmt->fetch();
+
+            // Handle system folders
+            if (!$folder && strpos($id, 'system_') === 0) {
+                $systemDoctorId = (int)str_replace('system_', '', $id);
+                
+                // Get patients for this doctor (system folder)
+                $stmt = $this->pdo->prepare("
+                    SELECT DISTINCT p.*
+                    FROM patients p
+                    INNER JOIN timeline_events te ON te.patient_id = p.id
+                    INNER JOIN users u ON te.actor_user_id = u.id
+                    INNER JOIN doctors d ON u.id = d.user_id
+                    WHERE d.id = ?
+                    AND te.event_type = 'Booking'
+                    AND te.event_summary LIKE '%New patient registered%'
+                    ORDER BY p.first_name, p.last_name
+                ");
+                $stmt->execute([$systemDoctorId]);
+                $patients = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'patients' => $patients
+                ]);
+            }
+
+            if (!$folder) {
+                return $this->jsonResponse(['error' => 'Folder not found'], 404);
+            }
+
+            // Check permission: folder must be global (doctor_id IS NULL) or belong to current doctor
+            if ($folder['doctor_id'] !== null && $folder['doctor_id'] !== $doctorId) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 403);
+            }
+
+            // Get patients in folder
+            $stmt = $this->pdo->prepare("
+                SELECT p.*
+                FROM patients p
+                INNER JOIN patient_folder_patients pfp ON p.id = pfp.patient_id
+                WHERE pfp.folder_id = ?
+                ORDER BY p.first_name, p.last_name
+            ");
+            $stmt->execute([$id]);
+            $patients = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'patients' => $patients
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
     }
 }

@@ -1,0 +1,27 @@
+# حماية مجلد الرفع
+# Protect upload directory
+
+# منع تنفيذ ملفات PHP
+# Prevent PHP execution
+<Files "*.php">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# منع الوصول المباشر للملفات
+# Prevent direct access to files
+Options -Indexes
+
+# السماح بملفات الصور و PDF و Word
+# Allow image files, PDF and Word documents
+<FilesMatch "\.(jpg|jpeg|png|gif|svg|pdf|doc|docx)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# منع الوصول لملفات أخرى
+# Deny access to other files
+<FilesMatch "^(?!.*\.(jpg|jpeg|png|gif|svg|pdf|doc|docx)$).*$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>

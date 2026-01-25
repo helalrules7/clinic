@@ -40,6 +40,10 @@ function viewPatient(patientId) {
     window.location.href = `/doctor/patients/${patientId}`;
 }
 
+// View mode state
+let currentViewMode = localStorage.getItem('patientsViewMode') || 'table';
+let foldersData = [];
+
 // Initialize pagination with PHP data
 function initializePagination() {
     // Get patients data from PHP
@@ -54,10 +58,13 @@ function initializePagination() {
     // Apply initial doctor filter
     applyDoctorFilter();
     
-    // Render initial page
-    renderPatientsTable();
-    updatePaginationInfo();
-    renderPaginationNav();
+    // Load folders if folders view is active
+    if (currentViewMode === 'folders') {
+        loadFolders();
+    }
+    
+    // Render initial page based on view mode
+    switchViewMode(currentViewMode, false);
     
     // Initialize sort button states if sort is active
     if (paginationState.sortBy && paginationState.sortOrder) {
@@ -65,6 +72,52 @@ function initializePagination() {
         if (activeBtn) {
             activeBtn.classList.add('active');
         }
+    }
+}
+
+// Switch view mode
+function switchViewMode(mode, saveToStorage = true) {
+    currentViewMode = mode;
+    
+    if (saveToStorage) {
+        localStorage.setItem('patientsViewMode', mode);
+    }
+    
+    // Update toggle buttons (both toggles)
+    document.querySelectorAll('#viewModeToggle button, #viewModeToggleCards button').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.view === mode) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Hide all views
+    document.getElementById('patientsTableCard').style.display = 'none';
+    document.getElementById('patientsCardsCard').style.display = 'none';
+    document.getElementById('patientsFoldersCard').style.display = 'none';
+    
+    // Show selected view
+    switch(mode) {
+        case 'table':
+            document.getElementById('patientsTableCard').style.display = 'block';
+            renderPatientsTable();
+            updatePaginationInfo();
+            renderPaginationNav();
+            break;
+        case 'cards':
+            document.getElementById('patientsCardsCard').style.display = 'block';
+            renderPatientsCards();
+            updatePaginationInfoCards();
+            renderPaginationNavCards();
+            break;
+        case 'folders':
+            document.getElementById('patientsFoldersCard').style.display = 'block';
+            if (foldersData.length === 0) {
+                loadFolders();
+            } else {
+                renderFoldersView();
+            }
+            break;
     }
 }
 
@@ -701,6 +754,28 @@ function clearSorting() {
     .then(response => response.json())
     .then(data => {
         if (data.ok && data.patients) {
+            // Debug: Check if latest_attachment_id exists in response
+            const samplePatients = data.patients.slice(0, 5);
+            console.log('[loadPatients] Sample patients from API:', samplePatients.map(p => ({
+                id: p.id,
+                name: `${p.first_name} ${p.last_name}`,
+                has_latest_attachment_id: 'latest_attachment_id' in p,
+                latest_attachment_id: p.latest_attachment_id,
+                allKeys: Object.keys(p)
+            })));
+            
+            // Check for patient 435 specifically
+            const patient435 = data.patients.find(p => p.id === 435);
+            if (patient435) {
+                console.log('[loadPatients] Patient 435 (عبدالله شليل):', {
+                    id: patient435.id,
+                    name: `${patient435.first_name} ${patient435.last_name}`,
+                    has_latest_attachment_id: 'latest_attachment_id' in patient435,
+                    latest_attachment_id: patient435.latest_attachment_id,
+                    allKeys: Object.keys(patient435)
+                });
+            }
+            
             paginationState.allPatients = data.patients;
             
             // Reapply current filters
@@ -760,10 +835,16 @@ function filterPatientsLocally(query) {
     // Reset to first page after filtering
     paginationState.currentPage = 1;
     
-    // Update display
-    renderPatientsTable();
-    updatePaginationInfo();
-    renderPaginationNav();
+    // Update display based on current view mode
+    if (currentViewMode === 'table') {
+        renderPatientsTable();
+        updatePaginationInfo();
+        renderPaginationNav();
+    } else if (currentViewMode === 'cards') {
+        renderPatientsCards();
+        updatePaginationInfoCards();
+        renderPaginationNavCards();
+    }
 }
 
 // Search patients function (for modal)
@@ -1018,49 +1099,90 @@ document.addEventListener('DOMContentLoaded', function() {
                 quickSearch.focus();
             });
         }
+    }
+    
+    // Quick search for cards view
+    const quickSearchCards = document.getElementById('quickSearchCards');
+    const clearQuickSearchCards = document.getElementById('clearQuickSearchCards');
+    
+    if (quickSearchCards) {
+        const debouncedQuickSearchCards = debounce(filterPatientsLocally, 300);
         
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            const isModalOpen = document.querySelector('.modal.show');
-            const isInputFocused = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || 
-                                 e.target.contentEditable === 'true';
-            
-            // Quick search shortcut (Ctrl+F when not in modal)
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && !isModalOpen) {
-                e.preventDefault();
-                quickSearch.focus();
-                quickSearch.select();
-                return;
+        quickSearchCards.addEventListener('input', function() {
+            const hasValue = this.value.trim().length > 0;
+            if (clearQuickSearchCards) {
+                clearQuickSearchCards.style.display = hasValue ? 'block' : 'none';
             }
-            
-            // Pagination shortcuts (only when not typing in inputs and no modal is open)
-            if (!isInputFocused && !isModalOpen && paginationState.itemsPerPage !== 'all') {
-                const totalPages = Math.ceil(paginationState.filteredPatients.length / paginationState.itemsPerPage);
-                
-                switch(e.key) {
-                    case 'ArrowLeft':
-                    case 'ArrowRight':
-                        e.preventDefault();
-                        if (e.key === 'ArrowLeft' && paginationState.currentPage < totalPages) {
-                            changePage(paginationState.currentPage + 1);
-                        } else if (e.key === 'ArrowRight' && paginationState.currentPage > 1) {
-                            changePage(paginationState.currentPage - 1);
-                        }
-                        break;
-                        
-                    case 'Home':
-                        e.preventDefault();
-                        changePage(1);
-                        break;
-                        
-                    case 'End':
-                        e.preventDefault();
-                        changePage(totalPages);
-                        break;
-                }
+            debouncedQuickSearchCards(this.value);
+        });
+        
+        if (clearQuickSearchCards) {
+            clearQuickSearchCards.addEventListener('click', function() {
+                quickSearchCards.value = '';
+                this.style.display = 'none';
+                filterPatientsLocally('');
+                quickSearchCards.focus();
+            });
+        }
+    }
+    
+    // Pagination limit for cards
+    const paginationLimitCards = document.getElementById('paginationLimitCards');
+    if (paginationLimitCards) {
+        paginationLimitCards.addEventListener('change', function() {
+            paginationState.currentPage = 1;
+            if (currentViewMode === 'cards') {
+                renderPatientsCards();
+                updatePaginationInfoCards();
+                renderPaginationNavCards();
             }
         });
     }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        const isModalOpen = document.querySelector('.modal.show');
+        const isInputFocused = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || 
+                             e.target.contentEditable === 'true';
+        
+        // Quick search shortcut (Ctrl+F when not in modal)
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && !isModalOpen) {
+            e.preventDefault();
+            const activeQuickSearch = document.getElementById('quickSearch') || document.getElementById('quickSearchCards');
+            if (activeQuickSearch) {
+                activeQuickSearch.focus();
+                activeQuickSearch.select();
+            }
+            return;
+        }
+        
+        // Pagination shortcuts (only when not typing in inputs and no modal is open)
+        if (!isInputFocused && !isModalOpen && paginationState.itemsPerPage !== 'all') {
+            const totalPages = Math.ceil(paginationState.filteredPatients.length / paginationState.itemsPerPage);
+            
+            switch(e.key) {
+                case 'ArrowLeft':
+                case 'ArrowRight':
+                    e.preventDefault();
+                    if (e.key === 'ArrowLeft' && paginationState.currentPage < totalPages) {
+                        changePage(paginationState.currentPage + 1);
+                    } else if (e.key === 'ArrowRight' && paginationState.currentPage > 1) {
+                        changePage(paginationState.currentPage - 1);
+                    }
+                    break;
+                    
+                case 'Home':
+                    e.preventDefault();
+                    changePage(1);
+                    break;
+                    
+                case 'End':
+                    e.preventDefault();
+                    changePage(totalPages);
+                    break;
+            }
+        }
+    });
     
     const globalSearch = document.getElementById('globalSearch');
     const clearSearch = document.getElementById('clearSearch');
@@ -3316,3 +3438,759 @@ document.addEventListener('shown.bs.modal', function(e) {
         initCustomSelects();
     }, 100);
 });
+
+// ============================================
+// Cards View Functions
+// ============================================
+
+// Render patients as cards
+function renderPatientsCards() {
+    const container = document.getElementById('patientsCardsContainer');
+    const { currentPage, itemsPerPage, filteredPatients } = paginationState;
+    
+    // Calculate pagination
+    let startIndex, endIndex, patientsToShow;
+    
+    // Use different items per page for cards if available
+    const cardsItemsPerPage = document.getElementById('paginationLimitCards') 
+        ? parseInt(document.getElementById('paginationLimitCards').value) || 24 
+        : 24;
+    
+    if (cardsItemsPerPage === 'all' || cardsItemsPerPage === 'All') {
+        startIndex = 0;
+        endIndex = filteredPatients.length;
+        patientsToShow = filteredPatients;
+    } else {
+        startIndex = (currentPage - 1) * cardsItemsPerPage;
+        endIndex = Math.min(startIndex + cardsItemsPerPage, filteredPatients.length);
+        patientsToShow = filteredPatients.slice(startIndex, endIndex);
+    }
+    
+    // Clear container
+    container.innerHTML = '';
+    
+    if (patientsToShow.length === 0) {
+        container.innerHTML = `
+            <div class="col-12 text-center py-5">
+                <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-2 mb-0">No patients to display</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    
+    patientsToShow.forEach(patient => {
+        const age = patient.dob ? calculateAge(patient.dob) : null;
+        const ageText = age !== null ? `${age} years` : 'Not specified';
+        const lastAppointment = patient.last_appointment_datetime 
+            ? formatDate(patient.last_appointment_datetime) 
+            : (patient.last_visit ? formatDate(patient.last_visit) : 'Not visited yet');
+        
+        const firstName = patient.first_name || '';
+        const lastName = patient.last_name || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        
+        // Get patient image URL (using dedicated endpoint for cards/folders views)
+        const imageUrl = patient.latest_attachment_id 
+            ? `/api/patients/images/${patient.latest_attachment_id}`
+            : null;
+        
+        // Debug logging for first few patients
+        if (patientsToShow.indexOf(patient) < 3) {
+            console.log(`[Cards View] Patient ${patient.id} (${fullName}):`, {
+                latest_attachment_id: patient.latest_attachment_id,
+                imageUrl: imageUrl,
+                patientData: patient
+            });
+        }
+        
+        // Gender icon
+        const genderIcon = patient.gender === 'Female' 
+            ? '<i class="bi bi-gender-female"></i>' 
+            : (patient.gender === 'Male' 
+                ? '<i class="bi bi-gender-male"></i>' 
+                : '<i class="bi bi-gender-ambiguous"></i>');
+        
+        const genderBadgeClass = patient.gender === 'Female' 
+            ? 'bg-pink' 
+            : (patient.gender === 'Male' ? 'bg-primary' : 'bg-secondary');
+        
+        html += `
+            <div class="col-md-4 col-lg-3 mb-3">
+                <div class="card patient-card clickable h-100" 
+                     style="border: 1px solid var(--border); cursor: pointer;" 
+                     onclick="viewPatient(${patient.id})">
+                    <!-- Patient Image -->
+                    <div class="position-relative" style="height: 200px; overflow: hidden; background: var(--bg-alt);">
+                        ${imageUrl ? `
+                            <img src="${imageUrl}" 
+                                 alt="${escapeHtml(fullName)}" 
+                                 class="w-100 h-100 patient-card-image" 
+                                 style="object-fit: cover;"
+                                 data-patient-id="${patient.id}"
+                                 data-image-url="${imageUrl}"
+                                 onerror="(function(img, url, pid) { console.error('[Cards View] Image load failed:', {patientId: pid, url: url, img: img}); img.style.display='none'; const placeholder = img.nextElementSibling; if (placeholder) { placeholder.style.display='flex'; } })(this, '${imageUrl}', ${patient.id});"
+                                 onload="(function(img, url, pid) { console.log('[Cards View] Image loaded:', {patientId: pid, url: url}); img.style.display='block'; const placeholder = img.nextElementSibling; if (placeholder) { placeholder.style.display='none'; } })(this, '${imageUrl}', ${patient.id});">
+                        ` : ''}
+                        <div class="d-flex align-items-center justify-content-center h-100 w-100 patient-card-placeholder" 
+                             style="background: linear-gradient(135deg, var(--accent) 0%, var(--bg-alt) 100%); ${imageUrl ? 'display: none;' : 'display: flex;'}">
+                            <i class="bi bi-person-circle text-muted" style="font-size: 4rem;"></i>
+                        </div>
+                        <!-- Badges overlay -->
+                        <div class="position-absolute top-0 start-0 p-2 d-flex gap-2 flex-wrap">
+                            ${age !== null ? `
+                                <span class="badge bg-info">${age} years</span>
+                            ` : ''}
+                            <span class="badge ${genderBadgeClass}">${genderIcon}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Card Body -->
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title mb-2">
+                            <span style="color: var(--accent); font-weight: 600;">
+                                ${escapeHtml(fullName)}
+                            </span>
+                        </h6>
+                        
+                        <div class="mb-2">
+                            ${patient.phone ? `
+                                <small class="text-muted d-block">
+                                    <i class="bi bi-telephone me-1"></i>
+                                    <div class="phone-number-container" style="position: relative; display: inline-block;" onclick="event.stopPropagation();">
+                                        <a href="tel:${escapeHtml(patient.phone)}" 
+                                           class="phone-number-link" 
+                                           style="text-decoration: none; color: var(--accent); font-weight: 500; cursor: pointer; transition: all 0.2s ease;">
+                                            ${escapeHtml(patient.phone)}
+                                        </a>
+                                        <span class="phone-htooltip">
+                                            <div class="phone-actions">
+                                                <a href="tel:${escapeHtml(patient.phone)}" class="phone-action-btn" title="Call" onclick="event.stopPropagation();">
+                                                    <i class="bi bi-telephone-fill"></i>
+                                                    <span>Call</span>
+                                                </a>
+                                                <a href="https://wa.me/+2${escapeHtml(patient.phone).replace(/[^0-9]/g, '')}" target="_blank" class="phone-action-btn whatsapp-btn" title="WhatsApp" onclick="event.stopPropagation();">
+                                                    <i class="bi bi-whatsapp"></i>
+                                                    <span>WhatsApp</span>
+                                                </a>
+                                            </div>
+                                        </span>
+                                    </div>
+                                </small>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="mt-auto pt-2">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar-check me-1"></i>
+                                    ${patient.total_appointments || 0} visits
+                                </small>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock me-1"></i>
+                                    ${lastAppointment}
+                                </small>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <small class="text-muted">
+                                    <i class="bi bi-capsule me-1"></i>
+                                    ${patient.prescriptions_count || 0} prescriptions
+                                </small>
+                                <small class="text-muted">
+                                    <i class="bi bi-eyeglasses me-1"></i>
+                                    ${patient.glasses_count || 0} glasses
+                                </small>
+                            </div>
+                            
+                            <!-- Quick Actions -->
+                            <div class="d-flex gap-1 justify-content-end mt-2 pt-2 border-top" onclick="event.stopPropagation();">
+                                <a href="/doctor/patients/${patient.id}" 
+                                   class="card-action-btn card-action-view" 
+                                   data-bs-toggle="tooltip" 
+                                   data-bs-placement="top" 
+                                   data-bs-title="View patient"
+                                   onclick="event.stopPropagation();">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <button class="card-action-btn card-action-book" 
+                                        onclick="event.stopPropagation(); bookAppointment(${patient.id})" 
+                                        data-bs-toggle="tooltip" 
+                                        data-bs-placement="top" 
+                                        data-bs-title="Book appointment">
+                                    <i class="bi bi-calendar-plus"></i>
+                                </button>
+                                <button class="card-action-btn card-action-edit" 
+                                        onclick="event.stopPropagation(); editPatient(${patient.id})" 
+                                        data-bs-toggle="tooltip" 
+                                        data-bs-placement="top" 
+                                        data-bs-title="Edit patient">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="card-action-btn card-action-move" 
+                                        onclick="event.stopPropagation(); showMovePatientModal(${patient.id})" 
+                                        data-bs-toggle="tooltip" 
+                                        data-bs-placement="top" 
+                                        data-bs-title="Move to folder">
+                                    <i class="bi bi-folder"></i>
+                                </button>
+                                <button class="card-action-btn card-action-delete" 
+                                        onclick="event.stopPropagation(); deletePatient(${patient.id}, '${escapeHtml(fullName).replace(/'/g, "\\'")}')" 
+                                        data-bs-toggle="tooltip" 
+                                        data-bs-placement="top" 
+                                        data-bs-title="Delete patient">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    
+    // Refresh tooltips
+    setTimeout(() => {
+        refreshTooltips();
+    }, 100);
+}
+
+// Update pagination info for cards
+function updatePaginationInfoCards() {
+    const { currentPage, filteredPatients } = paginationState;
+    const cardsItemsPerPage = document.getElementById('paginationLimitCards') 
+        ? parseInt(document.getElementById('paginationLimitCards').value) || 24 
+        : 24;
+    
+    document.getElementById('totalPatientsCountCards').textContent = filteredPatients.length;
+    document.getElementById('totalPatientsCards').textContent = filteredPatients.length;
+    
+    if (cardsItemsPerPage === 'all' || cardsItemsPerPage === 'All') {
+        document.getElementById('showingFromCards').textContent = filteredPatients.length > 0 ? '1' : '0';
+        document.getElementById('showingToCards').textContent = filteredPatients.length;
+        document.getElementById('paginationNavCards').style.display = 'none';
+    } else {
+        const startIndex = (currentPage - 1) * cardsItemsPerPage + 1;
+        const endIndex = Math.min(currentPage * cardsItemsPerPage, filteredPatients.length);
+        
+        document.getElementById('showingFromCards').textContent = filteredPatients.length > 0 ? startIndex : '0';
+        document.getElementById('showingToCards').textContent = endIndex;
+        document.getElementById('paginationNavCards').style.display = 'flex';
+    }
+}
+
+// Render pagination nav for cards
+function renderPaginationNavCards() {
+    const { currentPage, filteredPatients } = paginationState;
+    const cardsItemsPerPage = document.getElementById('paginationLimitCards') 
+        ? parseInt(document.getElementById('paginationLimitCards').value) || 24 
+        : 24;
+    
+    if (cardsItemsPerPage === 'all' || cardsItemsPerPage === 'All') {
+        return;
+    }
+    
+    const totalPages = Math.ceil(filteredPatients.length / cardsItemsPerPage);
+    const nav = document.getElementById('paginationNavCards');
+    
+    if (totalPages <= 1) {
+        nav.innerHTML = '';
+        return;
+    }
+    
+    let html = '';
+    
+    // Previous button
+    html += `
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">Previous</a>
+        </li>
+    `;
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+            html += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+                </li>
+            `;
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+            html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+    }
+    
+    // Next button
+    html += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">Next</a>
+        </li>
+    `;
+    
+    nav.innerHTML = html;
+}
+
+// Change page (works for both table and cards)
+function changePage(page) {
+    paginationState.currentPage = page;
+    
+    if (currentViewMode === 'table') {
+        renderPatientsTable();
+        updatePaginationInfo();
+        renderPaginationNav();
+    } else if (currentViewMode === 'cards') {
+        renderPatientsCards();
+        updatePaginationInfoCards();
+        renderPaginationNavCards();
+    }
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============================================
+// Folders View Functions
+// ============================================
+
+// Load folders from API
+function loadFolders() {
+    fetch('/api/patient-folders', {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok && data.folders) {
+            foldersData = data.folders;
+            renderFoldersView();
+        }
+    })
+    .catch(error => {
+        console.error('Error loading folders:', error);
+    });
+}
+
+// Render folders view
+function renderFoldersView() {
+    const container = document.getElementById('patientsFoldersContainer');
+    
+    if (foldersData.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bi bi-folder-x text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-2 mb-0">No folders available</p>
+                <button class="btn btn-success mt-3" onclick="showCreateFolderModal()">
+                    <i class="bi bi-folder-plus me-1"></i>
+                    Create Your First Folder
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="row g-3">';
+    
+    foldersData.forEach(folder => {
+        const isSystem = folder.type === 'system';
+        const folderId = isSystem ? folder.id : folder.id;
+        
+        html += `
+            <div class="col-md-4 col-lg-3">
+                <div class="card folder-card h-100" style="border: 1px solid var(--border); cursor: pointer;" 
+                     onclick="openFolder('${folderId}')">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between mb-2">
+                            <h6 class="card-title mb-0">
+                                <i class="bi ${isSystem ? 'bi-folder-fill' : 'bi-folder'} me-2"></i>
+                                ${escapeHtml(folder.name)}
+                            </h6>
+                            ${!isSystem ? `
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-link p-0" 
+                                            type="button" 
+                                            data-bs-toggle="dropdown"
+                                            onclick="event.stopPropagation();">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" href="#" onclick="event.stopPropagation(); showRenameFolderModal(${folder.id}, '${escapeHtml(folder.name).replace(/'/g, "\\'")}');">
+                                                <i class="bi bi-pencil me-2"></i>
+                                                Rename
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item text-danger" href="#" onclick="event.stopPropagation(); deleteFolder(${folder.id});">
+                                                <i class="bi bi-trash me-2"></i>
+                                                Delete
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <p class="text-muted mb-0">
+                            <i class="bi bi-people me-1"></i>
+                            ${folder.patient_count || 0} patients
+                        </p>
+                        ${isSystem ? `
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                System folder
+                            </small>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// Open folder and show patients
+let currentFolderId = null;
+function openFolder(folderId) {
+    currentFolderId = folderId;
+    
+    // Update UI to show folder patients
+    const container = document.getElementById('patientsFoldersContainer');
+    container.innerHTML = `
+        <div class="mb-3">
+            <button class="btn btn-sm btn-outline-secondary" onclick="renderFoldersView()">
+                <i class="bi bi-arrow-left me-1"></i>
+                Back to Folders
+            </button>
+        </div>
+        <div id="folderPatientsContainer" class="row g-3">
+            <div class="col-12 text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Load folder patients
+    fetch(`/api/patient-folders/${folderId}/patients`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok && data.patients) {
+            renderFolderPatients(data.patients);
+        }
+    })
+    .catch(error => {
+        console.error('Error loading folder patients:', error);
+    });
+}
+
+// Render patients in a folder
+function renderFolderPatients(patients) {
+    const container = document.getElementById('folderPatientsContainer');
+    
+    if (patients.length === 0) {
+        container.innerHTML = `
+            <div class="col-12 text-center py-5">
+                <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-2 mb-0">No patients in this folder</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    
+    patients.forEach(patient => {
+        const firstName = patient.first_name || '';
+        const lastName = patient.last_name || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        const age = patient.dob ? calculateAge(patient.dob) : null;
+        
+        html += `
+            <div class="col-md-4 col-lg-3">
+                <div class="card patient-card h-100" style="border: 1px solid var(--border);">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <a href="/doctor/patients/${patient.id}" 
+                               class="text-decoration-none" 
+                               style="color: var(--accent); font-weight: 600;">
+                                ${escapeHtml(fullName)}
+                            </a>
+                        </h6>
+                        ${patient.phone ? `
+                            <small class="text-muted d-block mb-2">
+                                <i class="bi bi-telephone me-1"></i>
+                                ${escapeHtml(patient.phone)}
+                            </small>
+                        ` : ''}
+                        ${age !== null ? `
+                            <small class="text-muted d-block mb-2">
+                                <i class="bi bi-calendar me-1"></i>
+                                ${age} years
+                            </small>
+                        ` : ''}
+                        <div class="mt-auto pt-2">
+                            <div class="btn-group w-100" role="group">
+                                <a href="/doctor/patients/${patient.id}" 
+                                   class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-success" 
+                                        onclick="bookAppointment(${patient.id})">
+                                    <i class="bi bi-calendar-plus"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" 
+                                        onclick="removePatientFromFolder(${patient.id})">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+// ============================================
+// Folder Management Functions
+// ============================================
+
+// Show create folder modal
+function showCreateFolderModal() {
+    const modal = new bootstrap.Modal(document.getElementById('createFolderModal'));
+    document.getElementById('folderName').value = '';
+    document.getElementById('createFolderMessage').classList.add('d-none');
+    modal.show();
+}
+
+// Create folder
+document.getElementById('createFolderForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('folderName').value.trim();
+    const messageEl = document.getElementById('createFolderMessage');
+    
+    if (!name) {
+        messageEl.className = 'alert alert-danger';
+        messageEl.textContent = 'Folder name is required';
+        messageEl.classList.remove('d-none');
+        return;
+    }
+    
+    fetch('/api/patient-folders', {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('createFolderModal'));
+            modal.hide();
+            loadFolders();
+        } else {
+            messageEl.className = 'alert alert-danger';
+            messageEl.textContent = data.error || 'Failed to create folder';
+            messageEl.classList.remove('d-none');
+        }
+    })
+    .catch(error => {
+        console.error('Error creating folder:', error);
+        messageEl.className = 'alert alert-danger';
+        messageEl.textContent = 'An error occurred while creating the folder';
+        messageEl.classList.remove('d-none');
+    });
+});
+
+// Show rename folder modal
+function showRenameFolderModal(folderId, currentName) {
+    const modal = new bootstrap.Modal(document.getElementById('renameFolderModal'));
+    document.getElementById('renameFolderId').value = folderId;
+    document.getElementById('renameFolderName').value = currentName;
+    document.getElementById('renameFolderMessage').classList.add('d-none');
+    modal.show();
+}
+
+// Rename folder
+document.getElementById('renameFolderForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const folderId = document.getElementById('renameFolderId').value;
+    const name = document.getElementById('renameFolderName').value.trim();
+    const messageEl = document.getElementById('renameFolderMessage');
+    
+    if (!name) {
+        messageEl.className = 'alert alert-danger';
+        messageEl.textContent = 'Folder name is required';
+        messageEl.classList.remove('d-none');
+        return;
+    }
+    
+    fetch(`/api/patient-folders/${folderId}`, {
+        method: 'PUT',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('renameFolderModal'));
+            modal.hide();
+            loadFolders();
+        } else {
+            messageEl.className = 'alert alert-danger';
+            messageEl.textContent = data.error || 'Failed to rename folder';
+            messageEl.classList.remove('d-none');
+        }
+    })
+    .catch(error => {
+        console.error('Error renaming folder:', error);
+        messageEl.className = 'alert alert-danger';
+        messageEl.textContent = 'An error occurred while renaming the folder';
+        messageEl.classList.remove('d-none');
+    });
+});
+
+// Delete folder
+function deleteFolder(folderId) {
+    if (!confirm('Are you sure you want to delete this folder? Patients will not be deleted, only removed from the folder.')) {
+        return;
+    }
+    
+    fetch(`/api/patient-folders/${folderId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            loadFolders();
+        } else {
+            alert(data.error || 'Failed to delete folder');
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting folder:', error);
+        alert('An error occurred while deleting the folder');
+    });
+}
+
+// Show move patient modal
+function showMovePatientModal(patientId) {
+    const modal = new bootstrap.Modal(document.getElementById('movePatientModal'));
+    document.getElementById('movePatientId').value = patientId;
+    document.getElementById('movePatientMessage').classList.add('d-none');
+    
+    // Populate folder select
+    const select = document.getElementById('movePatientFolderSelect');
+    select.innerHTML = '<option value="">-- Select Folder --</option>';
+    
+    foldersData.forEach(folder => {
+        if (folder.type === 'custom') {
+            const option = document.createElement('option');
+            option.value = folder.id;
+            option.textContent = folder.name;
+            select.appendChild(option);
+        }
+    });
+    
+    modal.show();
+}
+
+// Confirm move patient
+function confirmMovePatient() {
+    const patientId = document.getElementById('movePatientId').value;
+    const folderId = document.getElementById('movePatientFolderSelect').value;
+    const messageEl = document.getElementById('movePatientMessage');
+    
+    if (!folderId) {
+        messageEl.className = 'alert alert-danger';
+        messageEl.textContent = 'Please select a folder';
+        messageEl.classList.remove('d-none');
+        return;
+    }
+    
+    fetch(`/api/patient-folders/${folderId}/patients`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ patient_id: parseInt(patientId) })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('movePatientModal'));
+            modal.hide();
+            if (currentFolderId) {
+                openFolder(currentFolderId);
+            }
+        } else {
+            messageEl.className = 'alert alert-danger';
+            messageEl.textContent = data.error || 'Failed to move patient';
+            messageEl.classList.remove('d-none');
+        }
+    })
+    .catch(error => {
+        console.error('Error moving patient:', error);
+        messageEl.className = 'alert alert-danger';
+        messageEl.textContent = 'An error occurred while moving the patient';
+        messageEl.classList.remove('d-none');
+    });
+}
+
+// Remove patient from folder
+function removePatientFromFolder(patientId) {
+    if (!currentFolderId) return;
+    
+    if (!confirm('Remove this patient from the folder?')) {
+        return;
+    }
+    
+    fetch(`/api/patient-folders/${currentFolderId}/patients/${patientId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            openFolder(currentFolderId);
+        } else {
+            alert(data.error || 'Failed to remove patient');
+        }
+    })
+    .catch(error => {
+        console.error('Error removing patient:', error);
+        alert('An error occurred while removing the patient');
+    });
+}

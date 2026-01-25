@@ -138,71 +138,64 @@
     font-weight: 500;
 }
 
-/* Auto-complete suggestions - Portal approach */
-#searchSuggestions-portal {
-    position: absolute;
-    z-index: 9999;
-    background: var(--card, white);
-    border: 1px solid var(--border, #dee2e6);
-    border-top: none;
-    border-radius: 0 0 0.375rem 0.375rem;
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    max-height: 240px;
+/* Alternatives Section Styles */
+.alternatives-section {
+    background-color: rgba(var(--bg-rgb, 248, 250, 252), 0.5);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.alternatives-list {
+    max-height: 200px;
     overflow-y: auto;
-    display: none;
 }
 
-.suggestion-item {
-    padding: 0.5rem 0.75rem;
+.alternative-item {
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
     cursor: pointer;
-    border-bottom: 1px solid #f8f9fa;
-    transition: background-color 0.15s ease-in-out;
+    transition: all 0.2s ease;
 }
 
-.suggestion-item:hover {
-    background-color: #f8f9fa;
+.alternative-item:hover {
+    background-color: rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+    border-color: var(--accent);
+    transform: translateX(4px);
 }
 
-.suggestion-item:last-child {
-    border-bottom: none;
+.alternative-item:last-child {
+    margin-bottom: 0;
 }
 
-.suggestion-item .drug-name {
+.alternative-name {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.alternative-company {
     font-size: 0.875rem;
-    font-weight: 500;
-    color: #212529;
-    margin-bottom: 0.125rem;
 }
 
-.suggestion-item .drug-company {
-    font-size: 0.75rem;
-    color: #6c757d;
+.alternative-price {
+    font-weight: 600;
+    font-size: 0.875rem;
 }
 
-/* Dark mode support */
-.dark #searchSuggestions-portal {
-    background: var(--card);
+/* Dark mode support for alternatives */
+.dark .alternatives-section {
+    background-color: rgba(30, 41, 59, 0.5);
+}
+
+.dark .alternative-item {
+    background-color: var(--card);
     border-color: var(--border);
-    color: var(--text) !important;
 }
 
-.dark .suggestion-item {
-    border-bottom-color: var(--border);
-    color: var(--text) !important;
-}
-
-.dark .suggestion-item:hover {
-    background-color: var(--bg);
-}
-
-.dark .suggestion-item .drug-name {
-    color: var(--text) !important;
-    font-weight: 700;
-}
-
-.dark .suggestion-item .drug-company {
-    color: var(--muted) !important;
-    font-weight: 500;
+.dark .alternative-item:hover {
+    background-color: rgba(var(--accent-rgb, 59, 130, 246), 0.15);
 }
 
 .dark .modal-content {
@@ -519,4 +512,23 @@
     .drug-price {
         margin-top: 0.5rem;
     }
+}
+
+/* Initial Search Message */
+.initial-search-message .icon-lg {
+    font-size: 4rem;
+    opacity: 0.5;
+}
+
+.dark .initial-search-message .text-primary {
+    color: var(--accent) !important;
+}
+
+.initial-search-message {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }

@@ -311,7 +311,16 @@ try {
     $router->get('/api/upcoming-appointments', 'ApiController@getUpcomingAppointments');
     $router->get('/api/patients/search', 'ApiController@searchPatients');
     $router->get('/api/patients', 'ApiController@getAllPatients');
-    // More specific routes first
+    // Patient folders routes
+    $router->get('/api/patient-folders', 'ApiController@getPatientFolders');
+    $router->post('/api/patient-folders', 'ApiController@createPatientFolder');
+    $router->put('/api/patient-folders/{id}', 'ApiController@updatePatientFolder');
+    $router->delete('/api/patient-folders/{id}', 'ApiController@deletePatientFolder');
+    $router->get('/api/patient-folders/{id}/patients', 'ApiController@getFolderPatients');
+    $router->post('/api/patient-folders/{id}/patients', 'ApiController@addPatientToFolder');
+    $router->delete('/api/patient-folders/{id}/patients/{patient_id}', 'ApiController@removePatientFromFolder');
+    // More specific routes first - images must come before {id}
+    $router->get('/api/patients/images/{id}', 'ApiController@viewPatientImageForCards');
     $router->get('/api/patients/{id}/files', 'ApiController@getPatientFiles');
     $router->get('/api/patients/{id}/timeline', 'ApiController@getPatientTimeline');
     $router->get('/api/patients/{id}/appointments/check-active', 'ApiController@checkPatientActiveAppointments');
