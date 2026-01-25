@@ -304,7 +304,8 @@ try {
     $router->get('/api/dashboard-charts', 'ApiController@getDashboardCharts');
     $router->get('/api/patients/search', 'ApiController@searchPatients');
     $router->get('/api/patients', 'ApiController@getAllPatients');
-    // More specific routes first
+    // More specific routes first - images must come before {id}
+    $router->get('/api/patients/images/{id}', 'ApiController@viewPatientImageForCards');
     $router->get('/api/patients/{id}/files', 'ApiController@getPatientFiles');
     $router->get('/api/patients/{id}/timeline', 'ApiController@getPatientTimeline');
     $router->get('/api/patients/{id}/appointments/check-active', 'ApiController@checkPatientActiveAppointments');

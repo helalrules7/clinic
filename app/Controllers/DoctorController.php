@@ -1533,7 +1533,22 @@ class DoctorController
             ORDER BY p.created_at DESC
         ");
         $stmt->execute();
-        return $stmt->fetchAll();
+        $patients = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        
+        // Normalize latest_attachment_id - ensure NULL values are preserved properly
+        foreach ($patients as &$patient) {
+            // Ensure latest_attachment_id is explicitly set (even if NULL)
+            if (!isset($patient['latest_attachment_id'])) {
+                $patient['latest_attachment_id'] = null;
+            }
+            // Convert empty string to null for consistency
+            if ($patient['latest_attachment_id'] === '') {
+                $patient['latest_attachment_id'] = null;
+            }
+        }
+        unset($patient); // Break reference
+        
+        return $patients;
     }
     
     private function getAllDoctors()

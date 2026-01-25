@@ -548,13 +548,42 @@
                 </h5>
             </div>
             <div class="col-md-6 text-end">
-                <button type="button" 
-                        class="btn btn-success btn-sm" 
-                        onclick="showCreateFolderModal()"
-                        title="Create New Folder">
-                    <i class="bi bi-folder-plus me-1"></i>
-                    Create Folder
-                </button>
+                <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
+                    <!-- View Mode Toggle -->
+                    <div class="btn-group" role="group" id="viewModeToggleFoldersHeader">
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-primary" 
+                                data-view="table"
+                                onclick="switchViewMode('table')"
+                                title="Table View">
+                            <i class="bi bi-table me-1"></i>
+                            Table
+                        </button>
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-primary" 
+                                data-view="cards"
+                                onclick="switchViewMode('cards')"
+                                title="Cards View">
+                            <i class="bi bi-grid-3x3-gap me-1"></i>
+                            Cards
+                        </button>
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-primary active" 
+                                data-view="folders"
+                                onclick="switchViewMode('folders')"
+                                title="Folders View">
+                            <i class="bi bi-folder me-1"></i>
+                            Folders
+                        </button>
+                    </div>
+                    <button type="button" 
+                            class="btn btn-success btn-sm" 
+                            onclick="showCreateFolderModal()"
+                            title="Create New Folder">
+                        <i class="bi bi-folder-plus me-1"></i>
+                        Create Folder
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -640,14 +669,14 @@
     </div>
 </div>
 
-<!-- Move Patient to Folder Modal -->
+<!-- Move/Add Patient to Folder Modal -->
 <div class="modal fade" id="movePatientModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
                     <i class="bi bi-folder me-2"></i>
-                    Move Patient to Folder
+                    <span id="movePatientModalTitle">Move Patient to Folder</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -664,11 +693,113 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="confirmMovePatient()">
+                <button type="button" class="btn btn-primary" id="movePatientButton" onclick="confirmMovePatient()">
                     <i class="bi bi-check-lg me-1"></i>
-                    Move Patient
+                    <span id="movePatientButtonText">Move Patient</span>
                 </button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Sub-folder Modal -->
+<div class="modal fade" id="createSubFolderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-folder-plus me-2"></i>
+                    Create Sub-folder
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createSubFolderForm">
+                <div class="modal-body">
+                    <div id="createSubFolderMessage" class="alert d-none" role="alert"></div>
+                    <input type="hidden" id="subFolderParentId" name="parent_id">
+                    <input type="hidden" id="subFolderParentType" name="parent_type">
+                    <div class="mb-3">
+                        <label class="form-label">Parent Folder</label>
+                        <div class="form-control bg-light" id="subFolderParentName" style="border: 1px solid var(--border);">
+                            <!-- Parent folder name will be displayed here -->
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subFolderName" class="form-label">Sub-folder Name <span class="text-danger">*</span></label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="subFolderName" 
+                               name="sub_folder_name" 
+                               required 
+                               maxlength="120"
+                               placeholder="Enter sub-folder name">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-folder-plus me-1"></i>
+                        Create Sub-folder
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Change Folder Icon & Color Modal -->
+<div class="modal fade" id="changeFolderIconModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-palette me-2"></i>
+                    Change Folder Icon & Color
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="changeFolderIconForm">
+                <div class="modal-body">
+                    <div id="changeFolderIconMessage" class="alert d-none" role="alert"></div>
+                    <input type="hidden" id="changeFolderIconId" name="folder_id">
+                    
+                    <!-- Icon Selection -->
+                    <div class="mb-4">
+                        <label class="form-label">Select Icon</label>
+                        <div class="row g-2" id="iconSelectionGrid">
+                            <!-- Bootstrap Icons will be populated by JavaScript -->
+                        </div>
+                        <input type="hidden" id="selectedIcon" name="icon" value="bi-folder">
+                    </div>
+                    
+                    <!-- Gradient Color Selection -->
+                    <div class="mb-4">
+                        <label class="form-label">Select Gradient Color</label>
+                        <div class="row g-2" id="gradientSelectionGrid">
+                            <!-- Gradient presets will be populated by JavaScript -->
+                        </div>
+                        <input type="hidden" id="selectedGradient" name="gradient_color">
+                    </div>
+                    
+                    <!-- Custom Gradient (Optional) -->
+                    <div class="mb-3">
+                        <label class="form-label">Or Enter Custom Gradient (CSS)</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="customGradient" 
+                               placeholder="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                               onchange="document.getElementById('selectedGradient').value = this.value;">
+                        <div class="form-text">Enter a valid CSS gradient string</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -1032,8 +1163,8 @@
     ?>
 
     window.PATIENTS_CONFIG = {
-        patients: <?= json_encode($patients, JSON_UNESCAPED_UNICODE) ?>,
-        doctors: <?= json_encode($doctors, JSON_UNESCAPED_UNICODE) ?>,
+        patients: <?= json_encode($patients, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR) ?>,
+        doctors: <?= json_encode($doctors, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR) ?>,
     };
 </script>
 <script src="/app/Views/doctor/assets/js/patients.js?v=<?= file_exists(__DIR__ . '/assets/js/patients.js') ? filemtime(__DIR__ . '/assets/js/patients.js') : time() ?>"></script>

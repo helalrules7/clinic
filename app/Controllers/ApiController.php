@@ -1016,6 +1016,19 @@ class ApiController
                 error_log("getAllPatients: Test - Found " . ($testResult['cnt'] ?? 0) . " image attachments for first 10 patients");
             }
 
+            // Normalize latest_attachment_id - ensure NULL values are preserved properly
+            foreach ($patients as &$patient) {
+                // Ensure latest_attachment_id is explicitly set (even if NULL)
+                if (!isset($patient['latest_attachment_id'])) {
+                    $patient['latest_attachment_id'] = null;
+                }
+                // Convert empty string to null for consistency
+                if ($patient['latest_attachment_id'] === '') {
+                    $patient['latest_attachment_id'] = null;
+                }
+            }
+            unset($patient); // Break reference
+
             // Get all doctors for filter
             $doctorsStmt = $this->pdo->prepare("
                 SELECT d.id, d.display_name, d.specialty, u.profile_image
@@ -1665,8 +1678,8 @@ class ApiController
         header('Content-Type: application/json; charset=utf-8');
         http_response_code($statusCode);
 
-        // Encode to JSON
-        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        // Encode to JSON - use JSON_FORCE_OBJECT for arrays to preserve null values
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR);
         if ($json === false) {
             $data = ['error' => 'JSON encoding failed: ' . json_last_error_msg()];
             $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -13442,13 +13455,14 @@ class ApiController
             $user = $this->auth->user();
             $doctorId = $this->getDoctorId($user['id']);
 
-            // Get custom folders
+            // Get custom folders (only top-level, no sub-folders)
             $customFoldersStmt = $this->pdo->prepare("
                 SELECT pf.*, 
                        COUNT(DISTINCT pfp.patient_id) as patient_count
                 FROM patient_folders pf
                 LEFT JOIN patient_folder_patients pfp ON pf.id = pfp.folder_id
-                WHERE pf.doctor_id IS NULL OR pf.doctor_id = ?
+                WHERE (pf.doctor_id IS NULL OR pf.doctor_id = ?)
+                AND pf.parent_id IS NULL
                 GROUP BY pf.id
                 ORDER BY pf.created_at DESC
             ");
@@ -13460,14 +13474,16 @@ class ApiController
             $systemFoldersStmt = $this->pdo->prepare("
                 SELECT d.id as doctor_id,
                        d.display_name as doctor_name,
+                       u.profile_image,
                        COUNT(DISTINCT p.id) as patient_count
                 FROM doctors d
+                LEFT JOIN users u ON d.user_id = u.id
                 LEFT JOIN timeline_events te ON te.actor_user_id = d.user_id 
                     AND te.event_type = 'Booking' 
                     AND te.event_summary LIKE '%New patient registered%'
                 LEFT JOIN patients p ON te.patient_id = p.id
                 WHERE d.id IS NOT NULL
-                GROUP BY d.id, d.display_name
+                GROUP BY d.id, d.display_name, u.profile_image
                 HAVING patient_count > 0
                 ORDER BY d.display_name
             ");
@@ -13477,34 +13493,76 @@ class ApiController
             // Format system folders
             $systemFolders = [];
             foreach ($systemFoldersData as $sf) {
+                // Format profile image path
+                $profileImage = null;
+                if (!empty($sf['profile_image'])) {
+                    $profileImage = strpos($sf['profile_image'], '/public/') === 0 
+                        ? $sf['profile_image'] 
+                        : '/public' . $sf['profile_image'];
+                }
+                
                 $systemFolders[] = [
                     'id' => 'system_' . $sf['doctor_id'],
                     'doctor_id' => $sf['doctor_id'],
                     'name' => $sf['doctor_name'] . ' Patients',
                     'type' => 'system',
                     'patient_count' => (int)$sf['patient_count'],
+                    'profile_image' => $profileImage,
+                    'icon' => 'bi-folder-fill',
+                    'gradient_color' => 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     'created_at' => null,
                     'updated_at' => null
                 ];
             }
 
-            // Format custom folders
+            // Format custom folders (only top-level, no sub-folders)
             $formattedCustomFolders = [];
             foreach ($customFolders as $cf) {
-                $formattedCustomFolders[] = [
-                    'id' => $cf['id'],
-                    'doctor_id' => $cf['doctor_id'],
-                    'name' => $cf['name'],
-                    'type' => 'custom',
-                    'patient_count' => (int)$cf['patient_count'],
-                    'created_at' => $cf['created_at'],
-                    'updated_at' => $cf['updated_at']
-                ];
+                // Only include folders without parent (top-level folders)
+                if (empty($cf['parent_id'])) {
+                    // Get sub-folders count for this folder
+                    $subFoldersStmt = $this->pdo->prepare("
+                        SELECT COUNT(*) as sub_count 
+                        FROM patient_folders 
+                        WHERE parent_id = ? AND parent_type = 'custom'
+                    ");
+                    $subFoldersStmt->execute([$cf['id']]);
+                    $subFoldersCount = $subFoldersStmt->fetchColumn();
+                    
+                    $formattedCustomFolders[] = [
+                        'id' => $cf['id'],
+                        'doctor_id' => $cf['doctor_id'],
+                        'name' => $cf['name'],
+                        'type' => 'custom',
+                        'patient_count' => (int)$cf['patient_count'],
+                        'sub_folders_count' => (int)$subFoldersCount,
+                        'icon' => $cf['icon'] ?? 'bi-folder',
+                        'gradient_color' => $cf['gradient_color'] ?? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                        'created_at' => $cf['created_at'],
+                        'updated_at' => $cf['updated_at']
+                    ];
+                }
             }
+
+            // Get sub-folders count for system folders
+            foreach ($systemFolders as &$sf) {
+                // Sub-folders for system folders are stored with parent_type = 'system' and parent_id = doctor_id
+                $subFoldersStmt = $this->pdo->prepare("
+                    SELECT COUNT(*) as sub_count 
+                    FROM patient_folders 
+                    WHERE parent_type = 'system' 
+                    AND parent_id = ?
+                ");
+                $subFoldersStmt->execute([$sf['doctor_id']]);
+                $subFoldersCount = $subFoldersStmt->fetchColumn();
+                $sf['sub_folders_count'] = (int)$subFoldersCount;
+            }
+            unset($sf);
 
             return $this->jsonResponse([
                 'ok' => true,
-                'folders' => array_merge($systemFolders, $formattedCustomFolders)
+                'system_folders' => $systemFolders,
+                'custom_folders' => $formattedCustomFolders
             ]);
 
         } catch (\Exception $e) {
@@ -13529,6 +13587,8 @@ class ApiController
 
             $name = trim($data['name'] ?? '');
             $folderDoctorId = isset($data['doctor_id']) ? (int)$data['doctor_id'] : null;
+            $parentId = isset($data['parent_id']) ? $data['parent_id'] : null;
+            $parentType = trim($data['parent_type'] ?? '');
 
             if (empty($name)) {
                 return $this->jsonResponse(['error' => 'Folder name is required'], 400);
@@ -13539,11 +13599,50 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Unauthorized to create folder for another doctor'], 403);
             }
 
+            // If creating a sub-folder, validate parent
+            $dbParentId = null;
+            $dbParentType = null;
+            
+            if ($parentId !== null) {
+                if (empty($parentType) || !in_array($parentType, ['system', 'custom'])) {
+                    return $this->jsonResponse(['error' => 'Invalid parent type'], 400);
+                }
+
+                if ($parentType === 'system') {
+                    // For system folders, parent_id is like "system_1", extract doctor_id
+                    $systemDoctorId = str_replace('system_', '', $parentId);
+                    if (!is_numeric($systemDoctorId)) {
+                        return $this->jsonResponse(['error' => 'Invalid system folder ID'], 400);
+                    }
+                    $dbParentId = (int)$systemDoctorId;
+                    $dbParentType = 'system';
+                } else {
+                    // For custom folders, verify parent exists and user has permission
+                    $parentCheckStmt = $this->pdo->prepare("
+                        SELECT id, doctor_id FROM patient_folders WHERE id = ?
+                    ");
+                    $parentCheckStmt->execute([$parentId]);
+                    $parent = $parentCheckStmt->fetch();
+
+                    if (!$parent) {
+                        return $this->jsonResponse(['error' => 'Parent folder not found'], 404);
+                    }
+
+                    // Check permission: parent must be global (doctor_id IS NULL) or belong to current doctor
+                    if ($parent['doctor_id'] !== null && $parent['doctor_id'] !== $doctorId) {
+                        return $this->jsonResponse(['error' => 'Unauthorized'], 403);
+                    }
+                    
+                    $dbParentId = (int)$parentId;
+                    $dbParentType = 'custom';
+                }
+            }
+
             $stmt = $this->pdo->prepare("
-                INSERT INTO patient_folders (doctor_id, name, created_by_user_id)
-                VALUES (?, ?, ?)
+                INSERT INTO patient_folders (doctor_id, name, created_by_user_id, parent_id, parent_type)
+                VALUES (?, ?, ?, ?, ?)
             ");
-            $stmt->execute([$folderDoctorId, $name, $user['id']]);
+            $stmt->execute([$folderDoctorId, $name, $user['id'], $dbParentId, $dbParentType]);
             $folderId = $this->pdo->lastInsertId();
 
             return $this->jsonResponse([
@@ -13553,10 +13652,333 @@ class ApiController
                     'doctor_id' => $folderDoctorId,
                     'name' => $name,
                     'type' => 'custom',
+                    'parent_id' => $parentId,
+                    'parent_type' => $dbParentType,
                     'patient_count' => 0,
+                    'sub_folders_count' => 0,
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => null
                 ]
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * GET /api/patient-folders/{id}/sub-folders
+     * Get sub-folders for a parent folder
+     */
+    public function getSubFolders($parentId, $parentType)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            $doctorId = $this->getDoctorId($user['id']);
+
+            if ($parentType === 'system') {
+                // Extract doctor_id from system folder ID (system_1 -> 1)
+                $systemDoctorId = str_replace('system_', '', $parentId);
+                if (!is_numeric($systemDoctorId)) {
+                    return $this->jsonResponse(['error' => 'Invalid system folder ID'], 400);
+                }
+
+                // Get sub-folders for this system folder
+                $stmt = $this->pdo->prepare("
+                    SELECT pf.*,
+                           COUNT(DISTINCT pfp.patient_id) as patient_count
+                    FROM patient_folders pf
+                    LEFT JOIN patient_folder_patients pfp ON pf.id = pfp.folder_id
+                    WHERE pf.parent_type = 'system' 
+                    AND pf.parent_id = ?
+                    GROUP BY pf.id
+                    ORDER BY pf.name
+                ");
+                $stmt->execute([$systemDoctorId]);
+            } else {
+                // For custom folders, verify parent exists and user has permission
+                $parentCheckStmt = $this->pdo->prepare("
+                    SELECT id, doctor_id FROM patient_folders WHERE id = ?
+                ");
+                $parentCheckStmt->execute([$parentId]);
+                $parent = $parentCheckStmt->fetch();
+
+                if (!$parent) {
+                    return $this->jsonResponse(['error' => 'Parent folder not found'], 404);
+                }
+
+                // Check permission
+                if ($parent['doctor_id'] !== null && $parent['doctor_id'] !== $doctorId) {
+                    return $this->jsonResponse(['error' => 'Unauthorized'], 403);
+                }
+
+                // Get sub-folders
+                $stmt = $this->pdo->prepare("
+                    SELECT pf.*,
+                           COUNT(DISTINCT pfp.patient_id) as patient_count
+                    FROM patient_folders pf
+                    LEFT JOIN patient_folder_patients pfp ON pf.id = pfp.folder_id
+                    WHERE pf.parent_id = ? AND pf.parent_type = 'custom'
+                    GROUP BY pf.id
+                    ORDER BY pf.name
+                ");
+                $stmt->execute([$parentId]);
+            }
+
+            $subFolders = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $formattedSubFolders = [];
+            foreach ($subFolders as $sf) {
+                $formattedSubFolders[] = [
+                    'id' => $sf['id'],
+                    'name' => $sf['name'],
+                    'type' => 'custom',
+                    'patient_count' => (int)$sf['patient_count'],
+                    'icon' => $sf['icon'] ?? 'bi-folder',
+                    'gradient_color' => $sf['gradient_color'] ?? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                    'created_at' => $sf['created_at'],
+                    'updated_at' => $sf['updated_at']
+                ];
+            }
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'sub_folders' => $formattedSubFolders
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * POST /api/patient-folders/{id}/quick-sort
+     * Quick sort system folder patients into sub-folders
+     */
+    public function quickSortSystemFolder($systemFolderId, $sortType)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            $doctorId = $this->getDoctorId($user['id']);
+
+            // Extract doctor_id from system folder ID
+            $systemDoctorId = str_replace('system_', '', $systemFolderId);
+            if (!is_numeric($systemDoctorId)) {
+                return $this->jsonResponse(['error' => 'Invalid system folder ID'], 400);
+            }
+
+            if (!in_array($sortType, ['by_date_created', 'by_visits'])) {
+                return $this->jsonResponse(['error' => 'Invalid sort type'], 400);
+            }
+
+            // Get all patients for this system folder
+            $patientsStmt = $this->pdo->prepare("
+                SELECT DISTINCT p.*
+                FROM patients p
+                INNER JOIN timeline_events te ON te.patient_id = p.id
+                INNER JOIN users u ON te.actor_user_id = u.id
+                INNER JOIN doctors d ON u.id = d.user_id
+                WHERE d.id = ?
+                AND te.event_type = 'Booking'
+                AND te.event_summary LIKE '%New patient registered%'
+                ORDER BY p.first_name, p.last_name
+            ");
+            $patientsStmt->execute([$systemDoctorId]);
+            $patients = $patientsStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $subFoldersCreated = [];
+            $patientsDistributed = 0;
+
+            if ($sortType === 'by_date_created') {
+                // Group by Year - Month
+                $groupedPatients = [];
+                foreach ($patients as $patient) {
+                    $createdDate = new \DateTime($patient['created_at']);
+                    $year = $createdDate->format('Y');
+                    $month = $createdDate->format('F'); // Full month name
+                    $key = $year . ' - ' . $month;
+                    
+                    if (!isset($groupedPatients[$key])) {
+                        $groupedPatients[$key] = [];
+                    }
+                    $groupedPatients[$key][] = $patient;
+                }
+
+                // Create sub-folders and distribute patients
+                foreach ($groupedPatients as $folderName => $folderPatients) {
+                    // Check if sub-folder already exists
+                    $checkStmt = $this->pdo->prepare("
+                        SELECT id FROM patient_folders 
+                        WHERE parent_type = 'system' 
+                        AND parent_id = ? 
+                        AND name = ?
+                    ");
+                    $checkStmt->execute([$systemDoctorId, $folderName]);
+                    $existingFolder = $checkStmt->fetch();
+
+                    if ($existingFolder) {
+                        $subFolderId = $existingFolder['id'];
+                    } else {
+                        // Create new sub-folder
+                        $createStmt = $this->pdo->prepare("
+                            INSERT INTO patient_folders (name, doctor_id, created_by_user_id, parent_id, parent_type)
+                            VALUES (?, ?, ?, ?, 'system')
+                        ");
+                        $createStmt->execute([$folderName, $doctorId, $user['id'], $systemDoctorId]);
+                        $subFolderId = $this->pdo->lastInsertId();
+                    }
+
+                    // Add patients to sub-folder
+                    foreach ($folderPatients as $patient) {
+                        // Check if patient already in folder
+                        $checkPatientStmt = $this->pdo->prepare("
+                            SELECT folder_id FROM patient_folder_patients 
+                            WHERE folder_id = ? AND patient_id = ?
+                        ");
+                        $checkPatientStmt->execute([$subFolderId, $patient['id']]);
+                        if (!$checkPatientStmt->fetch()) {
+                            $insertStmt = $this->pdo->prepare("
+                                INSERT INTO patient_folder_patients (folder_id, patient_id)
+                                VALUES (?, ?)
+                            ");
+                            $insertStmt->execute([$subFolderId, $patient['id']]);
+                            $patientsDistributed++;
+                        }
+                    }
+
+                    $subFoldersCreated[] = [
+                        'name' => $folderName,
+                        'id' => $subFolderId,
+                        'patient_count' => count($folderPatients)
+                    ];
+                }
+
+            } elseif ($sortType === 'by_visits') {
+                // Group by With Visits / Without Visits
+                $withVisits = [];
+                $withoutVisits = [];
+
+                foreach ($patients as $patient) {
+                    // Check if patient has appointments
+                    $visitsStmt = $this->pdo->prepare("
+                        SELECT COUNT(*) FROM appointments WHERE patient_id = ?
+                    ");
+                    $visitsStmt->execute([$patient['id']]);
+                    $visitCount = $visitsStmt->fetchColumn();
+
+                    if ($visitCount > 0) {
+                        $withVisits[] = $patient;
+                    } else {
+                        $withoutVisits[] = $patient;
+                    }
+                }
+
+                // Create "With Visits" sub-folder
+                if (!empty($withVisits)) {
+                    $folderName = 'With Visits';
+                    $checkStmt = $this->pdo->prepare("
+                        SELECT id FROM patient_folders 
+                        WHERE parent_type = 'system' 
+                        AND parent_id = ? 
+                        AND name = ?
+                    ");
+                    $checkStmt->execute([$systemDoctorId, $folderName]);
+                    $existingFolder = $checkStmt->fetch();
+
+                    if ($existingFolder) {
+                        $subFolderId = $existingFolder['id'];
+                    } else {
+                        $createStmt = $this->pdo->prepare("
+                            INSERT INTO patient_folders (name, doctor_id, created_by_user_id, parent_id, parent_type)
+                            VALUES (?, ?, ?, ?, 'system')
+                        ");
+                        $createStmt->execute([$folderName, $doctorId, $user['id'], $systemDoctorId]);
+                        $subFolderId = $this->pdo->lastInsertId();
+                    }
+
+                    foreach ($withVisits as $patient) {
+                        $checkPatientStmt = $this->pdo->prepare("
+                            SELECT folder_id FROM patient_folder_patients 
+                            WHERE folder_id = ? AND patient_id = ?
+                        ");
+                        $checkPatientStmt->execute([$subFolderId, $patient['id']]);
+                        if (!$checkPatientStmt->fetch()) {
+                            $insertStmt = $this->pdo->prepare("
+                                INSERT INTO patient_folder_patients (folder_id, patient_id)
+                                VALUES (?, ?)
+                            ");
+                            $insertStmt->execute([$subFolderId, $patient['id']]);
+                            $patientsDistributed++;
+                        }
+                    }
+
+                    $subFoldersCreated[] = [
+                        'name' => $folderName,
+                        'id' => $subFolderId,
+                        'patient_count' => count($withVisits)
+                    ];
+                }
+
+                // Create "Without Visits" sub-folder
+                if (!empty($withoutVisits)) {
+                    $folderName = 'Without Visits';
+                    $checkStmt = $this->pdo->prepare("
+                        SELECT id FROM patient_folders 
+                        WHERE parent_type = 'system' 
+                        AND parent_id = ? 
+                        AND name = ?
+                    ");
+                    $checkStmt->execute([$systemDoctorId, $folderName]);
+                    $existingFolder = $checkStmt->fetch();
+
+                    if ($existingFolder) {
+                        $subFolderId = $existingFolder['id'];
+                    } else {
+                        $createStmt = $this->pdo->prepare("
+                            INSERT INTO patient_folders (name, doctor_id, created_by_user_id, parent_id, parent_type)
+                            VALUES (?, ?, ?, ?, 'system')
+                        ");
+                        $createStmt->execute([$folderName, $doctorId, $user['id'], $systemDoctorId]);
+                        $subFolderId = $this->pdo->lastInsertId();
+                    }
+
+                    foreach ($withoutVisits as $patient) {
+                        $checkPatientStmt = $this->pdo->prepare("
+                            SELECT folder_id FROM patient_folder_patients 
+                            WHERE folder_id = ? AND patient_id = ?
+                        ");
+                        $checkPatientStmt->execute([$subFolderId, $patient['id']]);
+                        if (!$checkPatientStmt->fetch()) {
+                            $insertStmt = $this->pdo->prepare("
+                                INSERT INTO patient_folder_patients (folder_id, patient_id)
+                                VALUES (?, ?)
+                            ");
+                            $insertStmt->execute([$subFolderId, $patient['id']]);
+                            $patientsDistributed++;
+                        }
+                    }
+
+                    $subFoldersCreated[] = [
+                        'name' => $folderName,
+                        'id' => $subFolderId,
+                        'patient_count' => count($withoutVisits)
+                    ];
+                }
+            }
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'message' => 'Patients sorted successfully',
+                'sub_folders_created' => $subFoldersCreated,
+                'patients_distributed' => $patientsDistributed
             ]);
 
         } catch (\Exception $e) {
@@ -13580,12 +14002,22 @@ class ApiController
             $data = json_decode(file_get_contents('php://input'), true);
 
             $name = trim($data['name'] ?? '');
+            $icon = trim($data['icon'] ?? '');
+            $gradientColor = trim($data['gradient_color'] ?? '');
 
-            if (empty($name)) {
-                return $this->jsonResponse(['error' => 'Folder name is required'], 400);
+            // Handle system folders first (they don't exist in database)
+            if (strpos($id, 'system_') === 0) {
+                // System folders customization should be stored client-side (localStorage)
+                // For now, we'll return success and let the client handle storage
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'message' => 'System folder customization saved (stored client-side)',
+                    'icon' => $icon,
+                    'gradient_color' => $gradientColor
+                ]);
             }
 
-            // Check if folder exists and user has permission
+            // Check if custom folder exists and user has permission
             $checkStmt = $this->pdo->prepare("
                 SELECT id, doctor_id FROM patient_folders WHERE id = ?
             ");
@@ -13601,12 +14033,38 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Unauthorized'], 403);
             }
 
+            // Build update query dynamically based on provided fields
+            $updateFields = [];
+            $updateValues = [];
+            
+            if (!empty($name)) {
+                $updateFields[] = "name = ?";
+                $updateValues[] = $name;
+            }
+            
+            if (!empty($icon)) {
+                $updateFields[] = "icon = ?";
+                $updateValues[] = $icon;
+            }
+            
+            if (!empty($gradientColor)) {
+                $updateFields[] = "gradient_color = ?";
+                $updateValues[] = $gradientColor;
+            }
+            
+            if (empty($updateFields)) {
+                return $this->jsonResponse(['error' => 'No fields to update'], 400);
+            }
+            
+            $updateFields[] = "updated_at = CURRENT_TIMESTAMP";
+            $updateValues[] = $id;
+            
             $stmt = $this->pdo->prepare("
                 UPDATE patient_folders 
-                SET name = ?, updated_at = CURRENT_TIMESTAMP
+                SET " . implode(', ', $updateFields) . "
                 WHERE id = ?
             ");
-            $stmt->execute([$name, $id]);
+            $stmt->execute($updateValues);
 
             return $this->jsonResponse([
                 'ok' => true,
@@ -13802,37 +14260,117 @@ class ApiController
             $user = $this->auth->user();
             $doctorId = $this->getDoctorId($user['id']);
 
-            // Check if folder exists and user has permission
-            $checkStmt = $this->pdo->prepare("
-                SELECT id, doctor_id, name, type FROM patient_folders WHERE id = ?
-            ");
-            $checkStmt->execute([$id]);
-            $folder = $checkStmt->fetch();
-
-            // Handle system folders
-            if (!$folder && strpos($id, 'system_') === 0) {
+            // Handle system folders first (before checking database)
+            if (strpos($id, 'system_') === 0) {
                 $systemDoctorId = (int)str_replace('system_', '', $id);
                 
-                // Get patients for this doctor (system folder)
+                if ($systemDoctorId <= 0) {
+                    return $this->jsonResponse(['error' => 'Invalid system folder ID'], 400);
+                }
+                
+                // Get patients for this doctor (system folder) with latest_attachment_id and created_by_doctor_name
                 $stmt = $this->pdo->prepare("
-                    SELECT DISTINCT p.*
+                    SELECT DISTINCT p.*,
+                           COUNT(DISTINCT a.id) as total_appointments,
+                           MAX(a.date) as last_visit,
+                           MAX(CONCAT(a.date, ' ', a.start_time)) as last_appointment_datetime,
+                           COUNT(DISTINCT pr.id) as prescriptions_count,
+                           COUNT(DISTINCT gp.id) as glasses_count,
+                           (SELECT pa.id 
+                            FROM patient_attachments pa 
+                            LEFT JOIN appointments a ON pa.appointment_id = a.id
+                            WHERE pa.patient_id = p.id 
+                            AND pa.mime_type LIKE 'image/%'
+                            ORDER BY 
+                                CASE 
+                                    WHEN a.id IS NOT NULL 
+                                    THEN 0
+                                    ELSE 1
+                                END ASC,
+                                CASE 
+                                    WHEN a.id IS NOT NULL 
+                                    THEN CONCAT(a.date, ' ', COALESCE(a.start_time, '00:00:00'))
+                                    ELSE '0000-00-00 00:00:00'
+                                END DESC,
+                                pa.created_at DESC 
+                            LIMIT 1) as latest_attachment_id,
+                           (SELECT d.display_name 
+                            FROM timeline_events te2 
+                            LEFT JOIN users u2 ON te2.actor_user_id = u2.id
+                            LEFT JOIN doctors d ON u2.id = d.user_id
+                            WHERE te2.patient_id = p.id 
+                            AND te2.event_type = 'Booking' 
+                            AND te2.event_summary LIKE '%New patient registered%' 
+                            ORDER BY te2.created_at ASC 
+                            LIMIT 1) as created_by_doctor_name
                     FROM patients p
                     INNER JOIN timeline_events te ON te.patient_id = p.id
                     INNER JOIN users u ON te.actor_user_id = u.id
                     INNER JOIN doctors d ON u.id = d.user_id
+                    LEFT JOIN appointments a ON p.id = a.patient_id
+                    LEFT JOIN prescriptions pr ON a.id = pr.appointment_id
+                    LEFT JOIN glasses_prescriptions gp ON a.id = gp.appointment_id
                     WHERE d.id = ?
                     AND te.event_type = 'Booking'
                     AND te.event_summary LIKE '%New patient registered%'
+                    GROUP BY p.id
                     ORDER BY p.first_name, p.last_name
                 ");
                 $stmt->execute([$systemDoctorId]);
                 $patients = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                
+                // Normalize latest_attachment_id
+                foreach ($patients as &$patient) {
+                    if (!isset($patient['latest_attachment_id'])) {
+                        $patient['latest_attachment_id'] = null;
+                    }
+                    if ($patient['latest_attachment_id'] === '') {
+                        $patient['latest_attachment_id'] = null;
+                    }
+                }
+                unset($patient);
+
+                // Get sub-folders for system folder
+                $subFoldersStmt = $this->pdo->prepare("
+                    SELECT pf.*,
+                           COUNT(DISTINCT pfp.patient_id) as patient_count
+                    FROM patient_folders pf
+                    LEFT JOIN patient_folder_patients pfp ON pf.id = pfp.folder_id
+                    WHERE pf.parent_type = 'system' 
+                    AND pf.parent_id = ?
+                    GROUP BY pf.id
+                    ORDER BY pf.name
+                ");
+                $subFoldersStmt->execute([$systemDoctorId]);
+                $subFolders = $subFoldersStmt->fetchAll(\PDO::FETCH_ASSOC);
+                
+                $formattedSubFolders = [];
+                foreach ($subFolders as $sf) {
+                    $formattedSubFolders[] = [
+                        'id' => $sf['id'],
+                        'name' => $sf['name'],
+                        'type' => 'custom',
+                        'patient_count' => (int)$sf['patient_count'],
+                        'icon' => $sf['icon'] ?? 'bi-folder',
+                        'gradient_color' => $sf['gradient_color'] ?? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                        'created_at' => $sf['created_at'],
+                        'updated_at' => $sf['updated_at']
+                    ];
+                }
 
                 return $this->jsonResponse([
                     'ok' => true,
+                    'folders' => $formattedSubFolders,
                     'patients' => $patients
                 ]);
             }
+
+            // Check if custom folder exists and user has permission
+            $checkStmt = $this->pdo->prepare("
+                SELECT id, doctor_id, name FROM patient_folders WHERE id = ?
+            ");
+            $checkStmt->execute([$id]);
+            $folder = $checkStmt->fetch();
 
             if (!$folder) {
                 return $this->jsonResponse(['error' => 'Folder not found'], 404);
@@ -13843,19 +14381,94 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Unauthorized'], 403);
             }
 
-            // Get patients in folder
+            // Get patients in folder with latest_attachment_id and created_by_doctor_name
             $stmt = $this->pdo->prepare("
-                SELECT p.*
+                SELECT p.*,
+                       COUNT(DISTINCT a.id) as total_appointments,
+                       MAX(a.date) as last_visit,
+                       MAX(CONCAT(a.date, ' ', a.start_time)) as last_appointment_datetime,
+                       COUNT(DISTINCT pr.id) as prescriptions_count,
+                       COUNT(DISTINCT gp.id) as glasses_count,
+                       (SELECT pa.id 
+                        FROM patient_attachments pa 
+                        LEFT JOIN appointments a ON pa.appointment_id = a.id
+                        WHERE pa.patient_id = p.id 
+                        AND pa.mime_type LIKE 'image/%'
+                        ORDER BY 
+                            CASE 
+                                WHEN a.id IS NOT NULL 
+                                THEN 0
+                                ELSE 1
+                            END ASC,
+                            CASE 
+                                WHEN a.id IS NOT NULL 
+                                THEN CONCAT(a.date, ' ', COALESCE(a.start_time, '00:00:00'))
+                                ELSE '0000-00-00 00:00:00'
+                            END DESC,
+                            pa.created_at DESC 
+                        LIMIT 1) as latest_attachment_id,
+                       (SELECT d.display_name 
+                        FROM timeline_events te 
+                        LEFT JOIN users u ON te.actor_user_id = u.id
+                        LEFT JOIN doctors d ON u.id = d.user_id
+                        WHERE te.patient_id = p.id 
+                        AND te.event_type = 'Booking' 
+                        AND te.event_summary LIKE '%New patient registered%' 
+                        ORDER BY te.created_at ASC 
+                        LIMIT 1) as created_by_doctor_name
                 FROM patients p
                 INNER JOIN patient_folder_patients pfp ON p.id = pfp.patient_id
+                LEFT JOIN appointments a ON p.id = a.patient_id
+                LEFT JOIN prescriptions pr ON a.id = pr.appointment_id
+                LEFT JOIN glasses_prescriptions gp ON a.id = gp.appointment_id
                 WHERE pfp.folder_id = ?
+                GROUP BY p.id
                 ORDER BY p.first_name, p.last_name
             ");
             $stmt->execute([$id]);
             $patients = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            // Normalize latest_attachment_id
+            foreach ($patients as &$patient) {
+                if (!isset($patient['latest_attachment_id'])) {
+                    $patient['latest_attachment_id'] = null;
+                }
+                if ($patient['latest_attachment_id'] === '') {
+                    $patient['latest_attachment_id'] = null;
+                }
+            }
+            unset($patient);
+
+            // Get sub-folders for custom folder
+            $subFoldersStmt = $this->pdo->prepare("
+                SELECT pf.*,
+                       COUNT(DISTINCT pfp.patient_id) as patient_count
+                FROM patient_folders pf
+                LEFT JOIN patient_folder_patients pfp ON pf.id = pfp.folder_id
+                WHERE pf.parent_id = ? AND pf.parent_type = 'custom'
+                GROUP BY pf.id
+                ORDER BY pf.name
+            ");
+            $subFoldersStmt->execute([$id]);
+            $subFolders = $subFoldersStmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            $formattedSubFolders = [];
+            foreach ($subFolders as $sf) {
+                $formattedSubFolders[] = [
+                    'id' => $sf['id'],
+                    'name' => $sf['name'],
+                    'type' => 'custom',
+                    'patient_count' => (int)$sf['patient_count'],
+                    'icon' => $sf['icon'] ?? 'bi-folder',
+                    'gradient_color' => $sf['gradient_color'] ?? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                    'created_at' => $sf['created_at'],
+                    'updated_at' => $sf['updated_at']
+                ];
+            }
 
             return $this->jsonResponse([
                 'ok' => true,
+                'folders' => $formattedSubFolders,
                 'patients' => $patients
             ]);
 

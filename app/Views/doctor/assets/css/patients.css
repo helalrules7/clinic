@@ -4063,21 +4063,74 @@ kbd[lang="ar"] {
     color: #F87171 !important;
 }
 
+/* Add Action - Green */
+.card-action-add {
+    color: #28a745 !important;
+}
+
+.card-action-add:hover {
+    color: #218838 !important;
+}
+
+.dark .card-action-add {
+    color: #28a745 !important;
+}
+
+.dark .card-action-add:hover {
+    color: #34ce57 !important;
+}
+
+/* Remove Action - Red */
+.card-action-remove {
+    color: #dc3545 !important;
+}
+
+.card-action-remove:hover {
+    color: #c82333 !important;
+}
+
+.dark .card-action-remove {
+    color: #dc3545 !important;
+}
+
+.dark .card-action-remove:hover {
+    color: #e4606d !important;
+}
+
 /* ============================================
    Folders View Styles
    ============================================ */
 
 .folder-card {
     transition: all 0.3s ease;
-    background: var(--bg);
     border-color: var(--border) !important;
+}
+
+/* Only apply default background if no inline style is set */
+.folder-card:not([style*="background"]):not([data-gradient]) {
+    background: var(--bg) !important;
+}
+
+/* Force gradient background for cards with data-gradient */
+.folder-card[data-gradient] {
+    background: var(--folder-gradient, var(--bg)) !important;
 }
 
 .folder-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
     border-color: var(--accent) !important;
-    background: var(--bg-alt);
+}
+
+/* Only change background on hover if no gradient is set */
+.folder-card:not([style*="linear-gradient"]):not([data-gradient]):hover {
+    background: var(--bg-alt) !important;
+}
+
+/* For cards with gradients, just darken slightly on hover */
+.folder-card[style*="linear-gradient"]:hover,
+.folder-card[data-gradient]:hover {
+    filter: brightness(0.95);
 }
 
 .dark .folder-card:hover {
@@ -4085,7 +4138,18 @@ kbd[lang="ar"] {
 }
 
 .folder-card .card-body {
-    background: transparent;
+    background: transparent !important;
+}
+
+/* Override any Bootstrap card background - MUST be after other card rules */
+.card.folder-card {
+    background-color: transparent !important;
+}
+
+/* Force gradient to show - highest specificity */
+div.card.folder-card[style*="linear-gradient"] {
+    background-image: none !important;
+    background: attr(style background) !important;
 }
 
 .folder-card .dropdown-menu {
@@ -4102,50 +4166,436 @@ kbd[lang="ar"] {
     color: var(--accent);
 }
 
-/* View Mode Toggle Styles */
+/* View Mode Toggle Styles - Marvelous Design */
 #viewModeToggle,
-#viewModeToggleCards {
+#viewModeToggleCards,
+#viewModeToggleFoldersHeader,
+#viewModeToggleFolders {
     margin-right: 0.5rem;
+    display: flex;
+    gap: 0.75rem;
 }
 
 #viewModeToggle .btn,
-#viewModeToggleCards .btn {
-    transition: all 0.3s ease;
+#viewModeToggleCards .btn,
+#viewModeToggleFoldersHeader .btn,
+#viewModeToggleFolders .btn {
+    background: transparent !important;
+    border: 2px solid transparent !important;
+    color: var(--text) !important;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: none !important;
+}
+
+#viewModeToggle .btn::before,
+#viewModeToggleCards .btn::before,
+#viewModeToggleFoldersHeader .btn::before,
+#viewModeToggleFolders .btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+#viewModeToggle .btn:hover::before,
+#viewModeToggleCards .btn:hover::before,
+#viewModeToggleFoldersHeader .btn:hover::before,
+#viewModeToggleFolders .btn:hover::before {
+    left: 100%;
 }
 
 #viewModeToggle .btn.active,
-#viewModeToggleCards .btn.active {
-    background-color: var(--accent);
-    border-color: var(--accent);
-    color: white;
+#viewModeToggleCards .btn.active,
+#viewModeToggleFoldersHeader .btn.active,
+#viewModeToggleFolders .btn.active {
+    background: transparent !important;
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2) !important;
 }
 
 #viewModeToggle .btn:not(.active):hover,
-#viewModeToggleCards .btn:not(.active):hover {
-    background-color: var(--bg-alt);
-    border-color: var(--accent);
+#viewModeToggleCards .btn:not(.active):hover,
+#viewModeToggleFoldersHeader .btn:not(.active):hover,
+#viewModeToggleFolders .btn:not(.active):hover {
+    background: transparent !important;
+    border-color: var(--border) !important;
+    color: var(--accent) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+#viewModeToggle .btn i,
+#viewModeToggleCards .btn i,
+#viewModeToggleFoldersHeader .btn i,
+#viewModeToggleFolders .btn i {
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+}
+
+#viewModeToggle .btn:hover i,
+#viewModeToggleCards .btn:hover i,
+#viewModeToggleFoldersHeader .btn:hover i,
+#viewModeToggleFolders .btn:hover i {
+    transform: scale(1.15);
+}
+
+#viewModeToggle .btn.active i,
+#viewModeToggleCards .btn.active i,
+#viewModeToggleFoldersHeader .btn.active i,
+#viewModeToggleFolders .btn.active i {
+    transform: scale(1.1);
     color: var(--accent);
+}
+
+/* Dark mode adjustments */
+.dark #viewModeToggle .btn,
+.dark #viewModeToggleCards .btn,
+.dark #viewModeToggleFoldersHeader .btn,
+.dark #viewModeToggleFolders .btn {
+    color: var(--text) !important;
+}
+
+.dark #viewModeToggle .btn.active,
+.dark #viewModeToggleCards .btn.active,
+.dark #viewModeToggleFoldersHeader .btn.active,
+.dark #viewModeToggleFolders .btn.active {
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3) !important;
+}
+
+.dark #viewModeToggle .btn:not(.active):hover,
+.dark #viewModeToggleCards .btn:not(.active):hover,
+.dark #viewModeToggleFoldersHeader .btn:not(.active):hover,
+.dark #viewModeToggleFolders .btn:not(.active):hover {
+    border-color: var(--border) !important;
+    color: var(--accent) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
 }
 
 /* Responsive View Mode Toggle */
 @media (max-width: 768px) {
     #viewModeToggle,
-    #viewModeToggleCards {
+    #viewModeToggleCards,
+    #viewModeToggleFoldersHeader,
+    #viewModeToggleFolders {
         order: -1;
         width: 100%;
         margin-right: 0;
         margin-bottom: 0.5rem;
         justify-content: center;
+        gap: 0.5rem;
     }
     
     #viewModeToggle .btn-group,
-    #viewModeToggleCards .btn-group {
+    #viewModeToggleCards .btn-group,
+    #viewModeToggleFoldersHeader .btn-group,
+    #viewModeToggleFolders .btn-group {
         width: 100%;
         display: flex;
+        gap: 0.5rem;
     }
     
     #viewModeToggle .btn,
-    #viewModeToggleCards .btn {
+    #viewModeToggleCards .btn,
+    #viewModeToggleFoldersHeader .btn,
+    #viewModeToggleFolders .btn {
         flex: 1;
     }
+}
+
+/* Folder Icon and Gradient Styles */
+.folder-icon-wrapper {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.folder-icon-large {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.folder-card:hover .folder-icon-large {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.folder-doctor-image-container {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.folder-doctor-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.folder-doctor-avatar-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 2rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.folder-card:hover .folder-doctor-image-container {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Icon Selection Modal Styles */
+.icon-option {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.icon-option:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.icon-option.selected {
+    border-color: var(--accent) !important;
+    background: var(--accent) !important;
+}
+
+.gradient-option {
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.gradient-option:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.gradient-option.selected {
+    border-color: var(--accent) !important;
+    border-width: 3px !important;
+}
+
+/* Treatment Doctor Badge */
+.patient-card-image-header .badge.bg-primary {
+    font-size: 0.7rem;
+    backdrop-filter: blur(4px);
+    background: rgba(14, 165, 233, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* CRITICAL: Force gradient background on folder cards - highest priority */
+div.col-md-4.col-lg-3 > div.card.folder-card.h-100[style*="background"] {
+    background: var(--folder-gradient) !important;
+}
+
+/* Apply gradient from inline style */
+div.card.folder-card[style*="linear-gradient"] {
+    background: attr(style background) !important;
+}
+
+/* Force override Bootstrap and any other CSS */
+.card.folder-card[data-gradient] {
+    background: var(--folder-gradient) !important;
+}
+
+/* Back to Folders Button - Marvelous Style */
+.back-to-folders-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.back-to-folders-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.back-to-folders-btn:hover::before {
+    left: 100%;
+}
+
+.back-to-folders-btn:hover {
+    color: var(--accent) !important;
+    transform: translateX(-4px);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.back-to-folders-btn i.bi-arrow-left {
+    transition: transform 0.2s ease;
+}
+
+.back-to-folders-btn:hover i.bi-arrow-left {
+    transform: translateX(-2px);
+}
+
+.back-to-folders-btn i.bi-folder {
+    transition: all 0.2s ease;
+}
+
+.back-to-folders-btn:hover i.bi-folder {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* System and Custom Folders Sections */
+.system-folders-section,
+.custom-folders-section {
+    margin-bottom: 2rem;
+}
+
+.system-folders-section h5,
+.custom-folders-section h5 {
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border);
+}
+
+/* Sub-folders Styles */
+.sub-folders-section {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: var(--bg-alt);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.sub-folder-card {
+    transition: all 0.3s ease;
+    border-color: var(--border) !important;
+}
+
+.sub-folder-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: var(--accent) !important;
+}
+
+.sub-folder-card .card-body {
+    background: transparent !important;
+}
+
+/* Folder Action Buttons (Marvelous style without background) */
+.folder-action-btn {
+    background: transparent !important;
+    border: none !important;
+    color: var(--text) !important;
+    padding: 0.5rem 1rem !important;
+    font-weight: 500 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    border-radius: 8px !important;
+    text-decoration: none !important;
+}
+
+.folder-action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb, 66, 153, 225), 0.15), transparent);
+    transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+}
+
+.folder-action-btn::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) scaleX(0);
+    width: 80%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1;
+}
+
+.folder-action-btn:hover {
+    color: var(--accent) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(var(--accent-rgb, 66, 153, 225), 0.2) !important;
+}
+
+.folder-action-btn:hover::before {
+    left: 100%;
+}
+
+.folder-action-btn:hover::after {
+    transform: translateX(-50%) scaleX(1);
+}
+
+.folder-action-btn:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 6px rgba(var(--accent-rgb, 66, 153, 225), 0.15) !important;
+}
+
+.folder-action-btn i {
+    position: relative;
+    z-index: 2;
+    transition: transform 0.3s ease;
+}
+
+.folder-action-btn:hover i {
+    transform: scale(1.1);
+}
+
+/* Header actions container */
+.folder-header-actions {
+    margin-left: auto;
+}
+
+/* Dark mode adjustments */
+.dark .folder-action-btn {
+    color: var(--text) !important;
+}
+
+.dark .folder-action-btn:hover {
+    color: var(--accent) !important;
+}
+
+.dark .sub-folder-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }

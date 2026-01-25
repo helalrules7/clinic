@@ -319,6 +319,8 @@ try {
     $router->get('/api/patient-folders/{id}/patients', 'ApiController@getFolderPatients');
     $router->post('/api/patient-folders/{id}/patients', 'ApiController@addPatientToFolder');
     $router->delete('/api/patient-folders/{id}/patients/{patient_id}', 'ApiController@removePatientFromFolder');
+    $router->get('/api/patient-folders/{parentId}/sub-folders/{parentType}', 'ApiController@getSubFolders');
+    $router->post('/api/patient-folders/{systemFolderId}/quick-sort/{sortType}', 'ApiController@quickSortSystemFolder');
     // More specific routes first - images must come before {id}
     $router->get('/api/patients/images/{id}', 'ApiController@viewPatientImageForCards');
     $router->get('/api/patients/{id}/files', 'ApiController@getPatientFiles');

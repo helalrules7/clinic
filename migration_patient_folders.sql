@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS patient_folders (
 
 CREATE TABLE IF NOT EXISTS patient_folder_patients (
     folder_id INT NOT NULL,
-    patient_id INT NOT NULL,
+    patient_id BIGINT UNSIGNED NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (folder_id, patient_id),
     INDEX idx_patient_id (patient_id),
@@ -48,6 +48,39 @@ CREATE TABLE IF NOT EXISTS patient_folder_patients (
 --    deleted due to CASCADE constraint.
 -- 4. doctor_id = NULL means the folder is global (accessible to all doctors)
 -- 5. doctor_id != NULL means the folder is private to that specific doctor
+
+-- ============================================
+-- Add icon and gradient_color columns (if not exists)
+-- ============================================
+-- Add icon column for custom folder icons
+ALTER TABLE patient_folders 
+ADD COLUMN IF NOT EXISTS icon VARCHAR(50) NULL DEFAULT 'bi-folder' COMMENT 'Bootstrap icon class or custom icon path';
+
+-- Add gradient_color column for folder card styling
+ALTER TABLE patient_folders 
+ADD COLUMN IF NOT EXISTS gradient_color VARCHAR(200) NULL DEFAULT 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' COMMENT 'CSS gradient for folder card background';
+
+-- ============================================
+-- Add parent_id and parent_type for sub-folders
+-- ============================================
+-- Add parent_id column for sub-folders
+ALTER TABLE patient_folders 
+ADD COLUMN IF NOT EXISTS parent_id INT NULL COMMENT 'Parent folder ID for sub-folders';
+
+-- Add parent_type column to specify if parent is system or custom folder
+ALTER TABLE patient_folders 
+ADD COLUMN IF NOT EXISTS parent_type ENUM('system', 'custom') NULL COMMENT 'Type of parent folder (system or custom)';
+
+-- Add index for performance
+ALTER TABLE patient_folders 
+ADD INDEX IF NOT EXISTS idx_parent_id (parent_id);
+
+-- Add foreign key constraint with CASCADE DELETE
+-- Note: This will fail if there are existing rows with invalid parent_id values
+-- First, ensure all parent_id values are valid or NULL
+ALTER TABLE patient_folders 
+ADD CONSTRAINT fk_parent_folder 
+FOREIGN KEY (parent_id) REFERENCES patient_folders(id) ON DELETE CASCADE;
 
 -- ============================================
 -- Execution Instructions:
