@@ -716,11 +716,6 @@
                 <!-- Treeview Container -->
                 <div class="treeview-container" id="folderTreeview">
                     <!-- Treeview will be rendered here by JavaScript -->
-                    
-                    <!-- Filters Section - moved inside treeview-container -->
-                    <div class="sidebar-filters" id="sidebarFilters">
-                        <!-- Filters will be added by FilterManager -->
-                    </div>
                 </div>
             </aside>
             
@@ -736,6 +731,11 @@
                     <!-- Breadcrumb -->
                     <div id="folderBreadcrumb" class="mb-3"></div>
                     
+                    <!-- Filters Section - moved to top of folder search -->
+                    <div class="sidebar-filters" id="sidebarFilters">
+                        <!-- Filters will be added by FilterManager -->
+                    </div>
+                    
                     <!-- Search -->
                     <div id="folderSearchContainer" class="mb-3"></div>
                     
@@ -744,6 +744,12 @@
                     
                     <!-- Patients -->
                     <div id="folderPatientsContainer" class="row g-3"></div>
+                    
+                    <!-- Pagination for Folders View -->
+                    <div id="folderPaginationContainer" class="mt-3">
+                        <div id="folderPaginationInfo" class="mb-2"></div>
+                        <div id="folderPaginationNav"></div>
+                    </div>
                 </div>
             </main>
         </div>

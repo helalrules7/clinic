@@ -87,6 +87,14 @@ let paginationState = {
     sortOrder: null
 };
 
+// Pagination state for folders view
+let folderPaginationState = {
+    currentPage: 1,
+    itemsPerPage: 36, // Default 36 per page
+    totalItems: 0,
+    filteredPatients: []
+};
+
 // Debounce function
 function debounce(func, wait) {
     return function executedFunction(...args) {
@@ -4906,6 +4914,91 @@ function changePage(page) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// Change page for folders view
+function changeFolderPage(page) {
+    folderPaginationState.currentPage = page;
+    
+    if (currentFolderPatients && currentFolderPatients.length > 0) {
+        renderFolderPatients(folderPaginationState.filteredPatients);
+    }
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Render pagination navigation for folders view
+function renderFolderPaginationNav() {
+    const { currentPage, itemsPerPage, filteredPatients } = folderPaginationState;
+    const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
+    const nav = document.getElementById('folderPaginationNav');
+    
+    if (!nav) return;
+    
+    if (totalPages <= 1) {
+        nav.innerHTML = '';
+        return;
+    }
+    
+    let html = `
+        <nav aria-label="Folder patients pagination">
+            <ul class="pagination justify-content-center mb-0">
+    `;
+    
+    // Previous button
+    html += `
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changeFolderPage(${currentPage - 1}); return false;">Previous</a>
+        </li>
+    `;
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+            html += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="changeFolderPage(${i}); return false;">${i}</a>
+                </li>
+            `;
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+            html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+    }
+    
+    // Next button
+    html += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changeFolderPage(${currentPage + 1}); return false;">Next</a>
+        </li>
+    `;
+    
+    html += `
+            </ul>
+        </nav>
+    `;
+    
+    nav.innerHTML = html;
+}
+
+// Update pagination info for folders view
+function updateFolderPaginationInfo() {
+    const { currentPage, itemsPerPage, filteredPatients } = folderPaginationState;
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, filteredPatients.length);
+    const info = document.getElementById('folderPaginationInfo');
+    
+    if (info) {
+        info.innerHTML = `
+            <div class="text-center text-muted">
+                <small>
+                    Showing <span id="folderShowingFrom">${startIndex + 1}</span> to 
+                    <span id="folderShowingTo">${endIndex}</span> of 
+                    <span id="folderTotalPatients">${filteredPatients.length}</span> patients
+                </small>
+            </div>
+        `;
+    }
+}
+
 // ============================================
 // Folders View Functions
 // ============================================
@@ -5756,6 +5849,8 @@ function openFolder(folderId) {
             
             // Render patients
             if (data.patients) {
+                folderPaginationState.filteredPatients = data.patients;
+                folderPaginationState.currentPage = 1;
                 renderFolderPatients(data.patients);
             }
             
@@ -5867,6 +5962,8 @@ function filterFolderContent(searchTerm) {
                    nationalId.includes(searchTerm);
         });
         
+        folderPaginationState.filteredPatients = filteredPatients;
+        folderPaginationState.currentPage = 1;
         renderFolderPatients(filteredPatients);
     }
     
@@ -6285,6 +6382,10 @@ function renderFolderPatients(patients) {
         return;
     }
     
+    // Update pagination state
+    folderPaginationState.filteredPatients = patients;
+    folderPaginationState.totalItems = patients.length;
+    
     if (patients.length === 0) {
         container.innerHTML = `
             <div class="col-12 text-center py-5">
@@ -6292,8 +6393,19 @@ function renderFolderPatients(patients) {
                 <p class="text-muted mt-2 mb-0">No patients in this folder</p>
             </div>
         `;
+        // Clear pagination
+        const paginationContainer = document.getElementById('folderPaginationContainer');
+        if (paginationContainer) {
+            paginationContainer.innerHTML = '';
+        }
         return;
     }
+    
+    // Calculate pagination
+    const { currentPage, itemsPerPage } = folderPaginationState;
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, patients.length);
+    const patientsToShow = patients.slice(startIndex, endIndex);
     
     // Get card size from localStorage
     const cardSize = localStorage.getItem('folderCardSize') || 'small';
@@ -6305,7 +6417,7 @@ function renderFolderPatients(patients) {
     
     let html = '';
     
-    patients.forEach(patient => {
+    patientsToShow.forEach(patient => {
         const age = patient.dob ? calculateAge(patient.dob) : null;
         const ageText = age !== null ? `${age} years` : 'Not specified';
         const lastAppointment = patient.last_appointment_datetime 
@@ -6536,11 +6648,15 @@ function renderFolderPatients(patients) {
         refreshTooltips();
     }, 100);
     
-    // Fetch color markers for all patients
-    fetchColorMarkersForPatients(patients);
+    // Fetch color markers for all patients (only for current page)
+    fetchColorMarkersForPatients(patientsToShow);
     
-    // Fetch tags for all patients
-    fetchTagsForPatients(patients);
+    // Fetch tags for all patients (only for current page)
+    fetchTagsForPatients(patientsToShow);
+    
+    // Render pagination
+    renderFolderPaginationNav();
+    updateFolderPaginationInfo();
 }
 
 // Fetch color markers for patients
@@ -7105,7 +7221,7 @@ class FilterManager {
             </div>
             <div class="filters-content">
                 <!-- Color Filter -->
-                <div class="filter-section mb-3">
+                <div class="filter-section">
                     <div class="filter-header" onclick="this.parentElement.classList.toggle('expanded')">
                         <span><i class="bi bi-palette me-2"></i>Color Markers</span>
                         <i class="bi bi-chevron-down"></i>
@@ -7118,7 +7234,7 @@ class FilterManager {
                 </div>
                 
                 <!-- Tag Filter -->
-                <div class="filter-section mb-3">
+                <div class="filter-section">
                     <div class="filter-header" onclick="this.parentElement.classList.toggle('expanded')">
                         <span><i class="bi bi-tags me-2"></i>Tags</span>
                         <i class="bi bi-chevron-down"></i>
@@ -7131,7 +7247,7 @@ class FilterManager {
                 </div>
                 
                 <!-- Date Created Filter -->
-                <div class="filter-section mb-3">
+                <div class="filter-section">
                     <div class="filter-header" onclick="this.parentElement.classList.toggle('expanded')">
                         <span><i class="bi bi-calendar me-2"></i>Date Created</span>
                         <i class="bi bi-chevron-down"></i>
@@ -7149,7 +7265,7 @@ class FilterManager {
                 </div>
                 
                 <!-- Gender Filter -->
-                <div class="filter-section mb-3">
+                <div class="filter-section">
                     <div class="filter-header" onclick="this.parentElement.classList.toggle('expanded')">
                         <span><i class="bi bi-gender-ambiguous me-2"></i>Gender</span>
                         <i class="bi bi-chevron-down"></i>
@@ -7164,7 +7280,7 @@ class FilterManager {
                 </div>
                 
                 <!-- Age Filter -->
-                <div class="filter-section mb-3">
+                <div class="filter-section">
                     <div class="filter-header" onclick="this.parentElement.classList.toggle('expanded')">
                         <span><i class="bi bi-person me-2"></i>Age</span>
                         <i class="bi bi-chevron-down"></i>
