@@ -48,83 +48,145 @@
     </div>
 </div>
 
-<!-- Patients Statistics Cards -->
+<!-- Patients Statistics Cards - Compact Design with Mini Charts -->
 <?php
     $totalPatients = count($patients);
     $totalVisits = array_sum(array_column($patients, 'total_appointments'));
     $recentVisits = count(array_filter($patients, fn($p) => $p['last_visit'] && date('Y-m-d', strtotime($p['last_visit'])) >= date('Y-m-d', strtotime('-7 days'))));
     $newThisMonth = count(array_filter($patients, fn($p) => date('Y-m-d', strtotime($p['created_at'])) >= date('Y-m-d', strtotime('-30 days'))));
+    $newThisWeek = count(array_filter($patients, fn($p) => date('Y-m-d', strtotime($p['created_at'])) >= date('Y-m-d', strtotime('-7 days'))));
+    $maleCount = count(array_filter($patients, fn($p) => strtolower($p['gender'] ?? '') === 'male'));
+    $femaleCount = count(array_filter($patients, fn($p) => strtolower($p['gender'] ?? '') === 'female'));
+    $avgVisitsPerPatient = $totalPatients > 0 ? round($totalVisits / $totalPatients, 1) : 0;
+    $activePatients = count(array_filter($patients, fn($p) => $p['last_visit'] && date('Y-m-d', strtotime($p['last_visit'])) >= date('Y-m-d', strtotime('-90 days'))));
+    $inactivePatients = $totalPatients - $activePatients;
 ?>
-<div class="row stats-cards-wrapper mb-4">
-    <!-- Total Patients Card -->
-    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
-        <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-primary">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title">Total Patients</h4>
-                        <h3 class="stats-card-value" id="statsTotalPatients"><?= $totalPatients ?></h3>
-                        <p class="stats-card-change stats-card-change-positive">All Time</p>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-people"></i>
-                    </div>
-                </div>
-            </div>
+<div class="mini-stats-grid mb-4">
+    <!-- Total Patients -->
+    <div class="mini-stat-card mini-stat-primary">
+        <div class="mini-stat-icon">
+            <i class="bi bi-people-fill"></i>
+        </div>
+        <div class="mini-stat-content">
+            <span class="mini-stat-value" id="statsTotalPatients"><?= number_format($totalPatients) ?></span>
+            <span class="mini-stat-label">Total Patients</span>
+        </div>
+        <div class="mini-stat-chart" id="chartTotalPatients"></div>
+        <div class="mini-stat-trend trend-up">
+            <i class="bi bi-graph-up-arrow"></i>
+            <span>All Time</span>
         </div>
     </div>
 
-    <!-- Total Visits Card -->
-    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
-        <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-success">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title">Total Visits</h4>
-                        <h3 class="stats-card-value" id="statsTotalVisits"><?= $totalVisits ?></h3>
-                        <p class="stats-card-change stats-card-change-positive">All Appointments</p>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-calendar-check"></i>
-                    </div>
-                </div>
-            </div>
+    <!-- New This Week -->
+    <div class="mini-stat-card mini-stat-success">
+        <div class="mini-stat-icon">
+            <i class="bi bi-person-plus-fill"></i>
+        </div>
+        <div class="mini-stat-content">
+            <span class="mini-stat-value" id="statsNewThisWeek"><?= number_format($newThisWeek) ?></span>
+            <span class="mini-stat-label">New This Week</span>
+        </div>
+        <div class="mini-stat-chart" id="chartNewWeek"></div>
+        <div class="mini-stat-trend trend-up">
+            <i class="bi bi-calendar-week"></i>
+            <span>Last 7 Days</span>
         </div>
     </div>
 
-    <!-- Recent Visits Card -->
-    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
-        <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-info">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title">Recent Visits</h4>
-                        <h3 class="stats-card-value" id="statsRecentVisits"><?= $recentVisits ?></h3>
-                        <p class="stats-card-change stats-card-change-positive">Last 7 Days</p>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-calendar-week"></i>
-                    </div>
-                </div>
-            </div>
+    <!-- New This Month -->
+    <div class="mini-stat-card mini-stat-info">
+        <div class="mini-stat-icon">
+            <i class="bi bi-calendar-plus-fill"></i>
+        </div>
+        <div class="mini-stat-content">
+            <span class="mini-stat-value" id="statsNewThisMonth"><?= number_format($newThisMonth) ?></span>
+            <span class="mini-stat-label">New This Month</span>
+        </div>
+        <div class="mini-stat-chart" id="chartNewMonth"></div>
+        <div class="mini-stat-trend trend-up">
+            <i class="bi bi-calendar-month"></i>
+            <span>Last 30 Days</span>
         </div>
     </div>
 
-    <!-- New This Month Card -->
-    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
-        <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-warning">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title">New This Month</h4>
-                        <h3 class="stats-card-value" id="statsNewThisMonth"><?= $newThisMonth ?></h3>
-                        <p class="stats-card-change stats-card-change-positive">Last 30 Days</p>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-person-plus"></i>
-                    </div>
-                </div>
-            </div>
+    <!-- Total Visits -->
+    <div class="mini-stat-card mini-stat-warning">
+        <div class="mini-stat-icon">
+            <i class="bi bi-calendar-check-fill"></i>
+        </div>
+        <div class="mini-stat-content">
+            <span class="mini-stat-value" id="statsTotalVisits"><?= number_format($totalVisits) ?></span>
+            <span class="mini-stat-label">Total Visits</span>
+        </div>
+        <div class="mini-stat-chart" id="chartTotalVisits"></div>
+        <div class="mini-stat-trend trend-neutral">
+            <i class="bi bi-clipboard-check"></i>
+            <span>All Appointments</span>
+        </div>
+    </div>
+
+    <!-- Recent Visits -->
+    <div class="mini-stat-card mini-stat-purple">
+        <div class="mini-stat-icon">
+            <i class="bi bi-clock-history"></i>
+        </div>
+        <div class="mini-stat-content">
+            <span class="mini-stat-value" id="statsRecentVisits"><?= number_format($recentVisits) ?></span>
+            <span class="mini-stat-label">Recent Visits</span>
+        </div>
+        <div class="mini-stat-chart" id="chartRecentVisits"></div>
+        <div class="mini-stat-trend trend-up">
+            <i class="bi bi-activity"></i>
+            <span>Last 7 Days</span>
+        </div>
+    </div>
+
+    <!-- Active Patients -->
+    <div class="mini-stat-card mini-stat-teal">
+        <div class="mini-stat-icon">
+            <i class="bi bi-heart-pulse-fill"></i>
+        </div>
+        <div class="mini-stat-content">
+            <span class="mini-stat-value" id="statsActivePatients"><?= number_format($activePatients) ?></span>
+            <span class="mini-stat-label">Active Patients</span>
+        </div>
+        <div class="mini-stat-chart" id="chartActivePatients"></div>
+        <div class="mini-stat-trend trend-up">
+            <i class="bi bi-check-circle"></i>
+            <span>Last 90 Days</span>
+        </div>
+    </div>
+
+    <!-- Male Patients -->
+    <div class="mini-stat-card mini-stat-male">
+        <div class="mini-stat-icon">
+            <i class="bi bi-gender-male"></i>
+        </div>
+        <div class="mini-stat-content">
+            <span class="mini-stat-value"><?= number_format($maleCount) ?></span>
+            <span class="mini-stat-label">Male Patients</span>
+        </div>
+        <div class="mini-stat-chart" id="chartMale"></div>
+        <div class="mini-stat-trend trend-neutral">
+            <i class="bi bi-pie-chart"></i>
+            <span><?= $totalPatients > 0 ? round(($maleCount / $totalPatients) * 100) : 0 ?>%</span>
+        </div>
+    </div>
+
+    <!-- Female Patients -->
+    <div class="mini-stat-card mini-stat-female">
+        <div class="mini-stat-icon">
+            <i class="bi bi-gender-female"></i>
+        </div>
+        <div class="mini-stat-content">
+            <span class="mini-stat-value"><?= number_format($femaleCount) ?></span>
+            <span class="mini-stat-label">Female Patients</span>
+        </div>
+        <div class="mini-stat-chart" id="chartFemale"></div>
+        <div class="mini-stat-trend trend-neutral">
+            <i class="bi bi-pie-chart"></i>
+            <span><?= $totalPatients > 0 ? round(($femaleCount / $totalPatients) * 100) : 0 ?>%</span>
         </div>
     </div>
 </div>

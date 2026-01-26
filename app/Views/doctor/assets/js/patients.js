@@ -2,6 +2,69 @@
 let searchTimeout;
 let currentSearchRequest;
 
+// ============================================
+// Mini Sparkline Charts for Stats Cards
+// ============================================
+
+function generateSparklineSVG(data) {
+    const width = 100;
+    const height = 35;
+    const padding = 2;
+
+    // Normalize data
+    const min = Math.min(...data);
+    const max = Math.max(...data);
+    const range = max - min || 1;
+
+    // Generate points
+    const points = data.map((value, index) => {
+        const x = padding + (index / (data.length - 1)) * (width - padding * 2);
+        const y = height - padding - ((value - min) / range) * (height - padding * 2);
+        return `${x},${y}`;
+    });
+
+    // Create path
+    const linePath = `M ${points.join(' L ')}`;
+
+    // Create area path (closed for fill)
+    const areaPath = `M ${padding},${height} L ${points.join(' L ')} L ${width - padding},${height} Z`;
+
+    return `
+        <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+            <path class="sparkline-area" d="${areaPath}"/>
+            <path class="sparkline-path" d="${linePath}"/>
+        </svg>
+    `;
+}
+
+function initMiniStatsCharts() {
+    // Generate random-ish trend data for visual effect
+    // In production, this would come from actual API data
+    const chartConfigs = [
+        { id: 'chartTotalPatients', trend: [65, 72, 78, 75, 82, 88, 92, 95, 100] },
+        { id: 'chartNewWeek', trend: [3, 5, 2, 8, 4, 6, 7, 9, 5] },
+        { id: 'chartNewMonth', trend: [12, 18, 15, 22, 19, 25, 28, 24, 30] },
+        { id: 'chartTotalVisits', trend: [120, 135, 142, 138, 155, 162, 158, 175, 180] },
+        { id: 'chartRecentVisits', trend: [8, 12, 10, 15, 11, 18, 14, 20, 16] },
+        { id: 'chartActivePatients', trend: [45, 52, 48, 58, 55, 62, 68, 65, 72] },
+        { id: 'chartMale', trend: [30, 32, 35, 33, 38, 40, 42, 45, 48] },
+        { id: 'chartFemale', trend: [28, 30, 32, 35, 33, 38, 36, 40, 42] }
+    ];
+
+    chartConfigs.forEach(config => {
+        const container = document.getElementById(config.id);
+        if (container) {
+            container.innerHTML = generateSparklineSVG(config.trend);
+        }
+    });
+}
+
+// Initialize sparkline charts when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Small delay to ensure CSS is loaded
+    setTimeout(initMiniStatsCharts, 100);
+});
+
 // Pagination state
 let paginationState = {
     currentPage: 1,
@@ -44,6 +107,131 @@ function viewPatient(patientId) {
 let currentViewMode = localStorage.getItem('patientsViewMode') || 'table';
 let foldersData = [];
 
+// ============================================
+// Folder Navigation State Persistence
+// ============================================
+
+// Folder data cache for performance
+const folderCache = {
+    data: new Map(),
+    maxAge: 60000, // 1 minute cache
+
+    set(key, data) {
+        this.data.set(key, {
+            data,
+            timestamp: Date.now()
+        });
+    },
+
+    get(key) {
+        const cached = this.data.get(key);
+        if (cached && (Date.now() - cached.timestamp) < this.maxAge) {
+            return cached.data;
+        }
+        this.data.delete(key);
+        return null;
+    },
+
+    invalidate(key) {
+        if (key) {
+            this.data.delete(key);
+            // Also invalidate parent folder if this is a subfolder
+            const parentKey = key.replace(/^folder_/, 'folder_parent_');
+            this.data.delete(parentKey);
+        } else {
+            this.data.clear();
+        }
+    }
+};
+
+// Save folder navigation state to storage
+function saveFolderNavigationState() {
+    if (!currentFolderId) return;
+
+    const state = {
+        folderId: currentFolderId,
+        folderType: currentFolderType,
+        folderName: currentFolderName,
+        pathStack: folderPathStack,
+        scrollPosition: window.scrollY,
+        timestamp: Date.now()
+    };
+
+    // Save to sessionStorage for navigation (survives page changes)
+    sessionStorage.setItem('folderNavigationState', JSON.stringify(state));
+
+    // Also keep localStorage for persistence across sessions
+    localStorage.setItem('currentFolderId', currentFolderId?.toString() || '');
+    localStorage.setItem('currentFolderType', currentFolderType || '');
+    localStorage.setItem('folderPathStack', JSON.stringify(folderPathStack));
+}
+
+// Restore folder navigation state from storage
+function restoreFolderNavigationState() {
+    // Priority 1: SessionStorage (for recent navigation)
+    const sessionState = sessionStorage.getItem('folderNavigationState');
+    if (sessionState) {
+        try {
+            const state = JSON.parse(sessionState);
+            // Check if state is recent (within 1 hour)
+            if (Date.now() - state.timestamp < 3600000) {
+                return state;
+            }
+        } catch (e) {
+            console.warn('Failed to parse session folder state:', e);
+        }
+    }
+
+    // Priority 2: LocalStorage (for session persistence)
+    const savedFolderId = localStorage.getItem('currentFolderId');
+    const savedFolderType = localStorage.getItem('currentFolderType');
+    const savedPathStack = localStorage.getItem('folderPathStack');
+
+    if (savedFolderId) {
+        let pathStack = [];
+        try {
+            pathStack = JSON.parse(savedPathStack || '[]');
+        } catch (e) {
+            pathStack = [];
+        }
+
+        return {
+            folderId: savedFolderId,
+            folderType: savedFolderType || (savedFolderId.toString().startsWith('system_') ? 'system' : 'custom'),
+            pathStack: pathStack,
+            scrollPosition: 0
+        };
+    }
+
+    return null;
+}
+
+// Clear folder navigation state
+function clearFolderNavigationState() {
+    sessionStorage.removeItem('folderNavigationState');
+    localStorage.removeItem('currentFolderId');
+    localStorage.removeItem('currentFolderType');
+    localStorage.removeItem('folderPathStack');
+}
+
+// Debounced folder open to prevent race conditions
+let folderOpenTimeout = null;
+let pendingFolderId = null;
+
+function openFolderDebounced(folderId) {
+    pendingFolderId = folderId;
+
+    if (folderOpenTimeout) {
+        clearTimeout(folderOpenTimeout);
+    }
+
+    folderOpenTimeout = setTimeout(() => {
+        if (pendingFolderId === folderId) {
+            openFolder(folderId);
+        }
+    }, 100); // 100ms debounce
+}
+
 // Initialize pagination with PHP data
 function initializePagination() {
     // Get patients data from PHP
@@ -60,12 +248,34 @@ function initializePagination() {
     
     // Load folders if folders view is active
     if (currentViewMode === 'folders') {
-        loadFolders().then(() => {
+        // Restore folder navigation state before loading
+        const savedState = restoreFolderNavigationState();
+        if (savedState && savedState.folderId) {
+            // Pre-set state variables
+            currentFolderId = savedState.folderId;
+            currentFolderType = savedState.folderType;
+            folderPathStack = savedState.pathStack || [];
+        }
+
+        // Skip renderFoldersView when we have a folder to restore
+        const hasFolderToRestore = !!currentFolderId;
+        loadFolders(hasFolderToRestore).then(() => {
             // After folders are loaded, restore folder state if exists
             if (currentFolderId) {
-                setTimeout(() => {
-                    openFolder(currentFolderId);
-                }, 100);
+                openFolder(currentFolderId).then(() => {
+                    // Restore scroll position after folder loads
+                    if (savedState && savedState.scrollPosition > 0) {
+                        setTimeout(() => {
+                            window.scrollTo(0, savedState.scrollPosition);
+                        }, 150);
+                    }
+                }).catch(() => {
+                    // If folder open fails, go to root
+                    renderFoldersView(1, true);
+                });
+            } else {
+                // No folder to restore, show the folders view
+                renderFoldersView(1, true);
             }
         });
     }
@@ -1046,40 +1256,26 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 500);
     }
     
-    // Restore folder state from localStorage if in folders view
-    if (currentViewMode === 'folders') {
-        const savedFolderId = localStorage.getItem('currentFolderId');
-        const savedFolderType = localStorage.getItem('currentFolderType');
-        const savedPathStack = localStorage.getItem('folderPathStack');
-        
-        if (savedFolderId) {
-            currentFolderId = savedFolderId;
-            currentFolderType = savedFolderType || (savedFolderId.toString().startsWith('system_') ? 'system' : 'custom');
-        }
-        
-        // Restore folder path stack
-        if (savedPathStack) {
-            try {
-                folderPathStack = JSON.parse(savedPathStack);
-            } catch (e) {
-                folderPathStack = [];
-            }
-        }
-    }
-    
-    // Initialize pagination first
+    // Folder state restoration is now handled in initializePagination()
+    // using the new restoreFolderNavigationState() function
+
+    // Initialize pagination (handles folder state restoration)
     initializePagination();
-    
-    // If we have a saved folder, open it after folders are loaded
-    if (currentViewMode === 'folders' && currentFolderId) {
-        // Wait for folders to load, then open the saved folder
-        setTimeout(() => {
-            if (currentFolderId) {
-                openFolder(currentFolderId);
-            }
-        }, 500);
-    }
-    
+
+    // Save folder navigation state when leaving page
+    window.addEventListener('beforeunload', () => {
+        if (currentViewMode === 'folders' && currentFolderId) {
+            saveFolderNavigationState();
+        }
+    });
+
+    // Save state on visibility change (mobile tab switching, app backgrounding)
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden && currentViewMode === 'folders' && currentFolderId) {
+            saveFolderNavigationState();
+        }
+    });
+
     // Setup pagination limit selector
     // Handle pagination limit change (now using custom select)
     const paginationLimitSelect = document.getElementById('paginationLimit');
@@ -4193,7 +4389,13 @@ let systemFoldersData = [];
 let customFoldersData = [];
 
 // Load folders from API
-function loadFolders() {
+// skipRender: if true, don't call renderFoldersView (used when restoring folder state)
+function loadFolders(skipRender = false) {
+    // Invalidate folder cache when reloading folders (usually after modification)
+    if (!skipRender) {
+        folderCache.invalidate();
+    }
+
     return fetch('/api/patient-folders', {
         method: 'GET',
         headers: {
@@ -4207,7 +4409,7 @@ function loadFolders() {
             // Separate system and custom folders
             systemFoldersData = data.system_folders || [];
             customFoldersData = data.custom_folders || [];
-            
+
             // Apply system folder preferences from localStorage
             const systemFolderPrefs = JSON.parse(localStorage.getItem('systemFolderPreferences') || '{}');
             systemFoldersData.forEach(folder => {
@@ -4220,11 +4422,14 @@ function loadFolders() {
                     }
                 }
             });
-            
+
             // Keep foldersData for backward compatibility (merged)
             foldersData = [...systemFoldersData, ...customFoldersData];
-            
-            renderFoldersView();
+
+            // Only render folders view if not skipping (e.g., when restoring folder state)
+            if (!skipRender) {
+                renderFoldersView();
+            }
         }
         return data;
     })
@@ -4238,19 +4443,26 @@ function loadFolders() {
 let foldersPage = 1;
 const foldersPerPage = 12; // Show 12 folders per page
 
-function renderFoldersView(page = 1) {
+function renderFoldersView(page = 1, clearState = true) {
     foldersPage = page;
-    
-    // Clear folder path stack when returning to main folders view
-    folderPathStack = [];
-    localStorage.removeItem('folderPathStack');
-    
+
+    // Only clear folder state when explicitly requested (user clicked back to root)
+    if (clearState) {
+        // Clear folder path stack and state when returning to main folders view
+        folderPathStack = [];
+        currentFolderId = null;
+        currentFolderName = null;
+        currentFolderType = null;
+        // Clear all storage
+        clearFolderNavigationState();
+    }
+
     // Clear selection mode
     selectionMode = false;
     selectedPatients = [];
     selectedFolders = [];
     updateSelectionUI();
-    
+
     // Clear search
     const searchInput = document.getElementById('folderSearchInput');
     if (searchInput) {
@@ -4259,16 +4471,6 @@ function renderFoldersView(page = 1) {
     const clearBtn = document.getElementById('clearFolderSearch');
     if (clearBtn) {
         clearBtn.style.display = 'none';
-    }
-    
-    // Only reset if not restoring from localStorage
-    const savedFolderId = localStorage.getItem('currentFolderId');
-    if (!savedFolderId) {
-        currentFolderId = null;
-        currentFolderName = null;
-        currentFolderType = null;
-        localStorage.removeItem('currentFolderId');
-        localStorage.removeItem('currentFolderType');
     }
     
     // Show the header toggle buttons again
@@ -4353,7 +4555,7 @@ function renderFoldersView(page = 1) {
             <div class="custom-folders-section">
                 <h5 class="mb-3" style="color: var(--text); font-weight: 600;">
                     <i class="bi bi-folder me-2" style="color: var(--accent);"></i>
-                    Custom Folders
+                    Your Custom Folders
                 </h5>
                 <div class="row g-3">
         `;
@@ -4493,11 +4695,14 @@ function renderFolderCard(folder, isSystem) {
     // Escape gradient for use in style attribute - use single quotes to avoid issues
     const safeGradient = gradientColor.replace(/'/g, "\\'");
     
+    // Use smaller columns for custom folders
+    const columnClass = isSystem ? 'col-md-4 col-lg-3' : 'col-md-3 col-lg-2 col-xl-2';
+    
     return `
-        <div class="col-md-4 col-lg-3">
-            <div class="card folder-card h-100" 
+        <div class="${columnClass}">
+            <div class="card folder-card h-100 ${isSystem ? '' : 'custom-folder-card'}" 
                  style="border: 1px solid var(--border); cursor: pointer; background: ${safeGradient} !important; background-color: transparent !important;" 
-                 onclick="openFolder('${folderId}')"
+                 onclick="openFolderDebounced('${folderId}')"
                  data-gradient="${escapeHtml(gradientColor)}"
                  data-folder-id="${folderId}">
                 <div class="card-body d-flex flex-column">
@@ -4512,7 +4717,7 @@ function renderFolderCard(folder, isSystem) {
                                 </div>
                             ` : `
                                 <div class="folder-icon-large" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.25); border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.4); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);">
-                                    <i class="bi ${folderIcon}" style="font-size: 3rem; color: white; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);"></i>
+                                    <i class="bi ${folderIcon}" style="font-size: ${isSystem ? '3rem' : '2rem'}; color: white; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);"></i>
                                 </div>
                             `}
                         </div>
@@ -4600,34 +4805,33 @@ let selectedFolders = []; // Array of folder IDs
 let selectionMode = false; // Whether selection mode is active
 
 function openFolder(folderId) {
-    currentFolderId = folderId;
-    
-    // Determine folder type and get folder info
-    const isSystem = folderId.toString().startsWith('system_');
-    currentFolderType = isSystem ? 'system' : 'custom';
-    
-    // Get folder name from appropriate data source
-    let folder = null;
-    if (isSystem) {
-        folder = systemFoldersData.find(f => f.id === folderId);
-    } else {
-        folder = customFoldersData.find(f => f.id === folderId);
-    }
-    
-    if (!folder) {
-        folder = foldersData.find(f => f.id === folderId);
-    }
-    
-    currentFolderName = folder ? folder.name : 'Folder';
-    
-    // Note: Path stack will be updated from API breadcrumb response
-    // This ensures consistency with backend data
-    
-    // Save to localStorage for page refresh
-    if (folderId) {
-        localStorage.setItem('currentFolderId', folderId.toString());
-        localStorage.setItem('currentFolderType', currentFolderType);
-    }
+    // Return a Promise for async handling
+    return new Promise((resolve, reject) => {
+        currentFolderId = folderId;
+
+        // Determine folder type and get folder info
+        const isSystem = folderId.toString().startsWith('system_');
+        currentFolderType = isSystem ? 'system' : 'custom';
+
+        // Get folder name from appropriate data source
+        let folder = null;
+        if (isSystem) {
+            folder = systemFoldersData.find(f => f.id === folderId);
+        } else {
+            folder = customFoldersData.find(f => f.id === folderId);
+        }
+
+        if (!folder) {
+            folder = foldersData.find(f => f.id === folderId);
+        }
+
+        currentFolderName = folder ? folder.name : 'Folder';
+
+        // Note: Path stack will be updated from API breadcrumb response
+        // This ensures consistency with backend data
+
+        // Save state immediately for navigation tracking
+        saveFolderNavigationState();
     
     // Hide the header toggle buttons to avoid duplication
     const headerToggle = document.getElementById('viewModeToggleFoldersHeader');
@@ -4741,16 +4945,14 @@ function openFolder(folderId) {
     
     // Setup search functionality
     setupFolderSearch();
-    
+
     // Update selection mode button
     updateSelectionModeButton();
-    
-    // Load sub-folders first
-    loadSubFolders(folderId, currentFolderType);
-    
-    // Then load patients
-    
-    // Load folder patients
+
+    // Cache key for this folder
+    const cacheKey = `folder_${folderId}`;
+
+    // Load folder patients (API returns both patients AND sub-folders)
     fetch(`/api/patient-folders/${folderId}/patients`, {
         method: 'GET',
         headers: {
@@ -4903,11 +5105,24 @@ function openFolder(folderId) {
             if (searchInput && searchInput.value.trim()) {
                 filterFolderContent(searchInput.value.trim());
             }
+
+            // Cache the data for performance
+            folderCache.set(cacheKey, data);
+
+            // Save navigation state after successful load
+            saveFolderNavigationState();
+
+            // Resolve the Promise
+            resolve(data);
+        } else {
+            reject(new Error('Failed to load folder data'));
         }
     })
     .catch(error => {
         console.error('Error loading folder patients:', error);
+        reject(error);
     });
+    }); // End of Promise
 }
 
 // Setup folder search functionality
@@ -5253,7 +5468,7 @@ function renderFolderBreadcrumb(breadcrumb, currentFolderId, currentFolderType) 
             const folderIdToOpen = item.type === 'system' ? item.id : item.id;
             html += `
                 <li class="breadcrumb-item">
-                    <a href="#" onclick="event.preventDefault(); openFolder('${folderIdToOpen}'); return false;" style="color: var(--accent); text-decoration: none;">
+                    <a href="#" onclick="event.preventDefault(); openFolderDebounced('${folderIdToOpen}'); return false;" style="color: var(--accent); text-decoration: none;">
                         ${escapeHtml(item.name)}
                     </a>
                 </li>
@@ -5273,9 +5488,9 @@ function renderFolderBreadcrumb(breadcrumb, currentFolderId, currentFolderType) 
 function openSubFolder(subFolderId, parentId = null, parentType = null) {
     // Note: Path stack will be updated from API breadcrumb response
     // This ensures consistency with backend data
-    
-    // Treat sub-folder like a regular folder (it's already a custom folder in DB)
-    openFolder(subFolderId.toString());
+
+    // Use debounced version to prevent rapid click issues
+    openFolderDebounced(subFolderId.toString());
 }
 
 // Show create sub-folder modal
@@ -5325,8 +5540,10 @@ function performQuickSort(systemFolderId, sortType) {
     .then(data => {
         if (data.ok) {
             showNotification(`Patients sorted successfully! ${data.patients_distributed} patients distributed into ${data.sub_folders_created.length} sub-folders.`, 'success');
-            // Reload sub-folders
-            loadSubFolders(systemFolderId, 'system');
+            // Refresh the full folder view (sub-folders + patients) via API
+            openFolder(systemFolderId);
+            // Also refresh patients data for cards/table views
+            refreshPatientsData();
         } else {
             showNotification(data.error || 'Failed to sort patients', 'error');
             container.innerHTML = originalContent;

@@ -1,3 +1,141 @@
+// ============================================
+// Mini Sparkline Charts for Stats Cards
+// ============================================
+
+function generateSparklineSVG(data) {
+    const width = 100;
+    const height = 35;
+    const padding = 2;
+
+    // Normalize data
+    const min = Math.min(...data);
+    const max = Math.max(...data);
+    const range = max - min || 1;
+
+    // Generate points
+    const points = data.map((value, index) => {
+        const x = padding + (index / (data.length - 1)) * (width - padding * 2);
+        const y = height - padding - ((value - min) / range) * (height - padding * 2);
+        return `${x},${y}`;
+    });
+
+    // Create path
+    const linePath = `M ${points.join(' L ')}`;
+
+    // Create area path (closed for fill)
+    const areaPath = `M ${padding},${height} L ${points.join(' L ')} L ${width - padding},${height} Z`;
+
+    return `
+        <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+            <path class="sparkline-area" d="${areaPath}"/>
+            <path class="sparkline-path" d="${linePath}"/>
+        </svg>
+    `;
+}
+
+function initMiniStatsCharts() {
+    // Generate trend data based on report type
+    const reportType = window.REPORTS_CONFIG?.reportType || 'appointments';
+    const reportData = window.REPORTS_CONFIG?.reportData || [];
+    
+    // Chart configurations based on report type
+    let chartConfigs = [];
+    
+    if (reportType === 'appointments') {
+        // Extract data from reportData for appointments
+        const appointmentsData = reportData.map(r => r.total_appointments || 0);
+        const completedData = reportData.map(r => r.completed || 0);
+        const missedData = reportData.map(r => r.missed || 0);
+        const ratioData = reportData.map(r => {
+            const total = r.total_appointments || 1;
+            return ((r.completed || 0) / total) * 100;
+        });
+        
+        chartConfigs = [
+            { id: 'chartTotalAppointments', trend: appointmentsData.length > 0 ? appointmentsData : [65, 72, 78, 75, 82, 88, 92, 95, 100] },
+            { id: 'chartCompleted', trend: completedData.length > 0 ? completedData : [50, 55, 60, 58, 65, 70, 68, 75, 80] },
+            { id: 'chartMissed', trend: missedData.length > 0 ? missedData : [15, 17, 18, 17, 17, 18, 24, 20, 20] },
+            { id: 'chartCompletionRatio', trend: ratioData.length > 0 ? ratioData : [75, 76, 77, 77, 79, 80, 79, 80, 80] }
+        ];
+    } else if (reportType === 'revenue') {
+        const revenueData = reportData.map(r => (r.daily_revenue || 0) / 1000); // Scale down for visualization
+        const transactionsData = reportData.map(r => r.transactions || 0);
+        const avgData = reportData.map(r => {
+            const trans = r.transactions || 1;
+            return ((r.daily_revenue || 0) / trans) / 100; // Scale down
+        });
+        const discountsData = reportData.map(r => (r.discounts || 0) / 100); // Scale down
+        
+        chartConfigs = [
+            { id: 'chartTotalRevenue', trend: revenueData.length > 0 ? revenueData : [120, 135, 142, 138, 155, 162, 158, 175, 180] },
+            { id: 'chartTotalTransactions', trend: transactionsData.length > 0 ? transactionsData : [25, 28, 30, 29, 32, 35, 33, 38, 40] },
+            { id: 'chartAvgTransaction', trend: avgData.length > 0 ? avgData : [4.8, 4.8, 4.7, 4.8, 4.8, 4.6, 4.8, 4.6, 4.5] },
+            { id: 'chartTotalDiscounts', trend: discountsData.length > 0 ? discountsData : [5, 6, 7, 6, 8, 9, 8, 10, 11] }
+        ];
+    } else if (reportType === 'patients') {
+        const newPatientsData = reportData.map(r => r.new_patients || 0);
+        const maleData = reportData.map(r => r.male || 0);
+        const femaleData = reportData.map(r => r.female || 0);
+        const malePercentData = reportData.map(r => {
+            const total = r.new_patients || 1;
+            return ((r.male || 0) / total) * 100;
+        });
+        
+        chartConfigs = [
+            { id: 'chartTotalNewPatients', trend: newPatientsData.length > 0 ? newPatientsData : [12, 18, 15, 22, 19, 25, 28, 24, 30] },
+            { id: 'chartMalePatients', trend: maleData.length > 0 ? maleData : [6, 9, 8, 11, 10, 13, 14, 12, 15] },
+            { id: 'chartFemalePatients', trend: femaleData.length > 0 ? femaleData : [6, 9, 7, 11, 9, 12, 14, 12, 15] },
+            { id: 'chartMalePercentage', trend: malePercentData.length > 0 ? malePercentData : [50, 50, 53, 50, 53, 52, 50, 50, 50] }
+        ];
+    } else if (reportType === 'medical_prescriptions') {
+        const prescriptionsData = reportData.map(r => r.total_prescriptions || 0);
+        const appointmentsData = reportData.map(r => r.appointments_with_prescriptions || 0);
+        const patientsData = reportData.map(r => r.patients_count || 0);
+        const avgData = reportData.map(r => {
+            const apps = r.appointments_with_prescriptions || 1;
+            return (r.total_prescriptions || 0) / apps;
+        });
+        
+        chartConfigs = [
+            { id: 'chartTotalPrescriptions', trend: prescriptionsData.length > 0 ? prescriptionsData : [20, 25, 22, 28, 26, 30, 32, 29, 35] },
+            { id: 'chartAppointmentsWithRx', trend: appointmentsData.length > 0 ? appointmentsData : [15, 18, 16, 20, 19, 22, 24, 21, 25] },
+            { id: 'chartPatientsCount', trend: patientsData.length > 0 ? patientsData : [12, 15, 14, 18, 16, 20, 22, 19, 23] },
+            { id: 'chartAvgPerAppointment', trend: avgData.length > 0 ? avgData : [1.3, 1.4, 1.4, 1.4, 1.4, 1.4, 1.3, 1.4, 1.4] }
+        ];
+    } else if (reportType === 'glasses_prescriptions') {
+        const prescriptionsData = reportData.map(r => r.total_prescriptions || 0);
+        const appointmentsData = reportData.map(r => r.appointments_with_prescriptions || 0);
+        const patientsData = reportData.map(r => r.patients_count || 0);
+        const lensTypeData = reportData.map(r => r.with_lens_type || 0);
+        
+        chartConfigs = [
+            { id: 'chartGlassesTotalPrescriptions', trend: prescriptionsData.length > 0 ? prescriptionsData : [10, 12, 11, 14, 13, 15, 16, 14, 18] },
+            { id: 'chartGlassesAppointments', trend: appointmentsData.length > 0 ? appointmentsData : [8, 10, 9, 12, 11, 13, 14, 12, 15] },
+            { id: 'chartGlassesPatients', trend: patientsData.length > 0 ? patientsData : [6, 8, 7, 10, 9, 11, 12, 10, 13] },
+            { id: 'chartWithLensType', trend: lensTypeData.length > 0 ? lensTypeData : [5, 6, 6, 7, 7, 8, 8, 7, 9] },
+            // Duplicate IDs for the second glasses section
+            { id: 'chartGlassesTotalPrescriptions2', trend: prescriptionsData.length > 0 ? prescriptionsData : [10, 12, 11, 14, 13, 15, 16, 14, 18] },
+            { id: 'chartGlassesAppointments2', trend: appointmentsData.length > 0 ? appointmentsData : [8, 10, 9, 12, 11, 13, 14, 12, 15] },
+            { id: 'chartGlassesPatients2', trend: patientsData.length > 0 ? patientsData : [6, 8, 7, 10, 9, 11, 12, 10, 13] },
+            { id: 'chartWithLensType2', trend: lensTypeData.length > 0 ? lensTypeData : [5, 6, 6, 7, 7, 8, 8, 7, 9] }
+        ];
+    }
+
+    chartConfigs.forEach(config => {
+        const container = document.getElementById(config.id);
+        if (container) {
+            // Ensure we have at least 2 data points
+            const trendData = config.trend.length >= 2 ? config.trend : [config.trend[0] || 0, config.trend[0] || 1];
+            container.innerHTML = generateSparklineSVG(trendData);
+        }
+    });
+}
+
+// Initialize sparkline charts when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Small delay to ensure CSS is loaded and data is available
+    setTimeout(initMiniStatsCharts, 100);
+});
 
 // Quick Date Range Buttons Handler
 document.querySelectorAll('.quick-date-btn').forEach(btn => {
@@ -146,9 +284,9 @@ document.getElementById('reportForm').addEventListener('submit', function(e) {
     }
 });
 
-// Custom Select Menu Logic
+// Custom Select Menu Logic for Report Type
 document.addEventListener('DOMContentLoaded', function() {
-    const field = document.querySelector('.field.menu');
+    const field = document.querySelector('.field.menu:has(#reportType)');
     if (!field) return;
 
     const select = field.querySelector('select');
@@ -1023,8 +1161,216 @@ const reportTypeStr = window.REPORTS_CONFIG ? (window.REPORTS_CONFIG.reportType 
 let reportCurrentPage = 1;
 let reportPerPage = 20;
 
+// =========================================
+// Custom Select Menu Logic
+// =========================================
+
+function initCustomSelects() {
+    const customSelects = document.querySelectorAll('.field.menu:not([data-initialized])');
+
+    customSelects.forEach(field => {
+        const select = field.querySelector('select');
+        const button = field.querySelector('.custom-select-toggle');
+        const menu = field.querySelector('menu');
+        const options = menu ? menu.querySelectorAll('li') : [];
+
+        if (!select || !button || !menu || options.length === 0) {
+            console.warn('Missing elements for custom select initialization:', field);
+            return;
+        }
+        
+        // Mark as initialized to prevent duplicate event listeners
+        field.setAttribute('data-initialized', 'true');
+
+        // Set initial button text
+        const selectedOption = select.options[select.selectedIndex];
+        if (selectedOption) {
+            const correspondingLi = Array.from(options).find(li => li.dataset.option === selectedOption.value);
+            if (correspondingLi) {
+                button.textContent = correspondingLi.querySelector('h3')?.textContent || selectedOption.textContent;
+                correspondingLi.classList.add('selected');
+            } else {
+                button.textContent = selectedOption.textContent;
+            }
+        } else {
+            button.textContent = 'Select an option';
+        }
+
+        function openMenu() {
+            // Close any other open menus first
+            document.querySelectorAll('.field.menu.open').forEach(openField => {
+                if (openField !== field) {
+                    const openButton = openField.querySelector('.custom-select-toggle');
+                    openField.classList.remove('open');
+                    if (openButton) openButton.setAttribute('aria-expanded', 'false');
+                    const openParent = openField.closest('.mb-3, .modal-body, .d-flex, .card-header, .col-12, .card');
+                    if (openParent && !openParent.classList.contains('modal')) {
+                        openParent.style.zIndex = '';
+                        openParent.style.position = '';
+                    } else {
+                        const openModal = openField.closest('.modal');
+                        if (openModal) {
+                            openModal.style.zIndex = '';
+                        }
+                    }
+                }
+            });
+
+            field.classList.add('open');
+            button.setAttribute('aria-expanded', 'true');
+
+            // Fix z-index issue by elevating parent containers manually
+            const parent = field.closest('.mb-3, .modal-body, .d-flex, .card-header, .col-12, .card');
+            if (parent && !parent.classList.contains('modal')) {
+                parent.style.zIndex = '1000002';
+                parent.style.position = 'relative';
+            } else {
+                const modal = field.closest('.modal');
+                if (modal) {
+                    modal.style.zIndex = '1000002';
+                }
+            }
+
+            const selected = menu.querySelector('.selected') || options[0];
+            if (selected) {
+                selected.focus();
+                
+                // Scroll to selected item if menu has many options
+                setTimeout(() => {
+                    selected.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                        inline: 'nearest'
+                    });
+                }, 150);
+            }
+        }
+
+        function closeMenu() {
+            field.classList.remove('open');
+            button.setAttribute('aria-expanded', 'false');
+            if (document.activeElement === document.body || document.activeElement === null) {
+                button.focus();
+            }
+
+            const parent = field.closest('.mb-3, .modal-body, .d-flex, .card-header, .col-12, .card');
+            if (parent && !parent.classList.contains('modal')) {
+                setTimeout(() => {
+                    if (!field.classList.contains('open')) {
+                        parent.style.zIndex = '';
+                        parent.style.position = '';
+                    }
+                }, 300);
+            } else {
+                const modal = field.closest('.modal');
+                if (modal) {
+                    setTimeout(() => {
+                        if (!field.classList.contains('open')) {
+                            modal.style.zIndex = '';
+                        }
+                    }, 300);
+                }
+            }
+        }
+
+        function setOption(optionEl) {
+            const value = optionEl.dataset.option;
+            const text = optionEl.querySelector('h3')?.textContent || optionEl.textContent;
+
+            select.value = value;
+            select.dispatchEvent(new Event('change'));
+
+            button.textContent = text;
+
+            options.forEach(el => el.classList.remove('selected'));
+            optionEl.classList.add('selected');
+
+            closeMenu();
+        }
+
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (field.classList.contains('open')) {
+                closeMenu();
+            } else {
+                openMenu();
+            }
+        });
+
+        button.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openMenu();
+            }
+        });
+
+        // Prevent clicks on menu from closing modal
+        menu.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        options.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setOption(option);
+            });
+
+            option.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setOption(option);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const next = option.nextElementSibling;
+                    if (next) next.focus();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prev = option.previousElementSibling;
+                    if (prev) prev.focus();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeMenu();
+                }
+            });
+        });
+
+        // Close menu when clicking outside, but prevent modal from closing
+        const handleOutsideClick = (e) => {
+            const target = e.target;
+            const isInteractiveElement = target.tagName === 'INPUT' || 
+                                        target.tagName === 'TEXTAREA' || 
+                                        target.tagName === 'SELECT' ||
+                                        target.isContentEditable ||
+                                        target.closest('input, textarea, select, [contenteditable]');
+            
+            if (isInteractiveElement) {
+                return;
+            }
+            
+            if (field.classList.contains('open') && !field.contains(target)) {
+                const modal = field.closest('.modal');
+                if (modal && target === modal) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    return;
+                }
+                closeMenu();
+            }
+        };
+        
+        // Store handler for cleanup
+        field._outsideClickHandler = handleOutsideClick;
+        document.addEventListener('click', handleOutsideClick, false);
+    });
+}
+
 // Initialize report pagination
 function initializeReportPagination() {
+    // Initialize custom select for reportPerPage
+    initCustomSelects();
+    
     const perPageSelect = document.getElementById('reportPerPage');
     if (perPageSelect) {
         perPageSelect.addEventListener('change', function() {
@@ -1032,6 +1378,16 @@ function initializeReportPagination() {
             reportCurrentPage = 1;
             renderReportTable();
             renderReportPagination();
+            
+            // Update custom select button text
+            const field = perPageSelect.closest('.field.menu');
+            if (field) {
+                const button = field.querySelector('.custom-select-toggle');
+                const selectedLi = field.querySelector(`menu li[data-option="${this.value}"]`);
+                if (button && selectedLi) {
+                    button.textContent = selectedLi.querySelector('h3')?.textContent || this.options[this.selectedIndex].textContent;
+                }
+            }
         });
     }
     

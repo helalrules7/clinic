@@ -3,16 +3,18 @@
     <!-- Statistics Cards -->
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-primary">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title">Total Appointments Today</h4>
-                        <h3 class="stats-card-value"><?= $stats['total'] ?? 0 ?></h3>
-                        <p class="stats-card-change stats-card-change-positive">Today</p>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-calendar3"></i>
-                    </div>
+            <div class="mini-stat-card mini-stat-primary">
+                <div class="mini-stat-icon">
+                    <i class="bi bi-calendar3-fill"></i>
+                </div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value"><?= $stats['total'] ?? 0 ?></span>
+                    <span class="mini-stat-label">Total Appointments Today</span>
+                </div>
+                <div class="mini-stat-chart" id="chartTotalAppointmentsToday"></div>
+                <div class="mini-stat-trend trend-up">
+                    <i class="bi bi-calendar-day"></i>
+                    <span>Today</span>
                 </div>
             </div>
         </div>
@@ -20,16 +22,18 @@
 
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-success">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title">Completed Appointments</h4>
-                        <h3 class="stats-card-value"><?= $stats['completed'] ?? 0 ?></h3>
-                        <p class="stats-card-change stats-card-change-positive" id="completedChange">--</p>
-                    </div>
-                    <div class="stats-card-chart">
-                        <canvas id="statsChart2" height="70"></canvas>
-                    </div>
+            <div class="mini-stat-card mini-stat-success">
+                <div class="mini-stat-icon">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value"><?= $stats['completed'] ?? 0 ?></span>
+                    <span class="mini-stat-label">Completed Appointments</span>
+                </div>
+                <div class="mini-stat-chart" id="chartCompletedAppointments"></div>
+                <div class="mini-stat-trend trend-up" id="completedChange">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    <span>--</span>
                 </div>
             </div>
         </div>
@@ -37,16 +41,18 @@
 
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-danger">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title">Missed Appointments</h4>
-                        <h3 class="stats-card-value"><?= $stats['missed_appointments'] ?? 0 ?></h3>
-                        <p class="stats-card-change stats-card-change-negative" id="missedChange">--</p>
-                    </div>
-                    <div class="stats-card-chart">
-                        <canvas id="statsChart3" height="70"></canvas>
-                    </div>
+            <div class="mini-stat-card mini-stat-warning">
+                <div class="mini-stat-icon">
+                    <i class="bi bi-x-circle-fill"></i>
+                </div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value"><?= $stats['missed_appointments'] ?? 0 ?></span>
+                    <span class="mini-stat-label">Missed Appointments</span>
+                </div>
+                <div class="mini-stat-chart" id="chartMissedAppointments"></div>
+                <div class="mini-stat-trend trend-down" id="missedChange">
+                    <i class="bi bi-graph-down-arrow"></i>
+                    <span>--</span>
                 </div>
             </div>
         </div>
@@ -54,16 +60,18 @@
 
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-warning">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title">New Patients</h4>
-                        <h3 class="stats-card-value" id="newPatientsValue">0</h3>
-                        <p class="stats-card-change stats-card-change-positive" id="newPatientsChange">--</p>
-                    </div>
-                    <div class="stats-card-chart">
-                        <canvas id="statsChart4" height="70"></canvas>
-                    </div>
+            <div class="mini-stat-card mini-stat-info">
+                <div class="mini-stat-icon">
+                    <i class="bi bi-person-plus-fill"></i>
+                </div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value" id="newPatientsValue">0</span>
+                    <span class="mini-stat-label">New Patients</span>
+                </div>
+                <div class="mini-stat-chart" id="chartNewPatients"></div>
+                <div class="mini-stat-trend trend-up" id="newPatientsChange">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    <span>--</span>
                 </div>
             </div>
         </div>
@@ -71,16 +79,18 @@
 
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-info">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title">Prescriptions Described</h4>
-                        <h3 class="stats-card-value" id="totalPrescriptionsValue">0</h3>
-                        <p class="stats-card-change stats-card-change-positive" id="totalPrescriptionsChange">--</p>
-                    </div>
-                    <div class="stats-card-chart">
-                        <canvas id="statsChart5" height="70"></canvas>
-                    </div>
+            <div class="mini-stat-card mini-stat-purple">
+                <div class="mini-stat-icon">
+                    <i class="bi bi-prescription"></i>
+                </div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value" id="totalPrescriptionsValue">0</span>
+                    <span class="mini-stat-label">Prescriptions Described</span>
+                </div>
+                <div class="mini-stat-chart" id="chartTotalPrescriptions"></div>
+                <div class="mini-stat-trend trend-up" id="totalPrescriptionsChange">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    <span>--</span>
                 </div>
             </div>
         </div>

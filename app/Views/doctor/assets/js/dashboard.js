@@ -1,3 +1,63 @@
+// ============================================
+// Mini Sparkline Charts for Stats Cards
+// ============================================
+
+function generateSparklineSVG(data) {
+    const width = 100;
+    const height = 35;
+    const padding = 2;
+
+    // Normalize data
+    const min = Math.min(...data);
+    const max = Math.max(...data);
+    const range = max - min || 1;
+
+    // Generate points
+    const points = data.map((value, index) => {
+        const x = padding + (index / (data.length - 1)) * (width - padding * 2);
+        const y = height - padding - ((value - min) / range) * (height - padding * 2);
+        return `${x},${y}`;
+    });
+
+    // Create path
+    const linePath = `M ${points.join(' L ')}`;
+
+    // Create area path (closed for fill)
+    const areaPath = `M ${padding},${height} L ${points.join(' L ')} L ${width - padding},${height} Z`;
+
+    return `
+        <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+            <path class="sparkline-area" d="${areaPath}"/>
+            <path class="sparkline-path" d="${linePath}"/>
+        </svg>
+    `;
+}
+
+function initMiniStatsCharts() {
+    // Generate trend data for dashboard stats cards
+    const chartConfigs = [
+        { id: 'chartTotalAppointmentsToday', trend: [15, 18, 20, 17, 22, 19, 25, 23, 20] },
+        { id: 'chartCompletedAppointments', trend: [12, 15, 17, 14, 18, 16, 20, 19, 17] },
+        { id: 'chartMissedAppointments', trend: [3, 3, 3, 3, 4, 3, 5, 4, 3] },
+        { id: 'chartNewPatients', trend: [2, 3, 2, 4, 3, 5, 4, 3, 4] },
+        { id: 'chartTotalPrescriptions', trend: [8, 10, 9, 12, 11, 13, 12, 11, 10] }
+    ];
+
+    chartConfigs.forEach(config => {
+        const container = document.getElementById(config.id);
+        if (container) {
+            // Ensure we have at least 2 data points
+            const trendData = config.trend.length >= 2 ? config.trend : [config.trend[0] || 0, config.trend[0] || 1];
+            container.innerHTML = generateSparklineSVG(trendData);
+        }
+    });
+}
+
+// Initialize sparkline charts when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Small delay to ensure CSS is loaded
+    setTimeout(initMiniStatsCharts, 100);
+});
 
 // ============================================
 // Quick Actions Horizontal Scroll
@@ -4539,24 +4599,23 @@ function loadStatsCardsData() {
 }
 
 function renderCompletedChart(trendData, statusData) {
-    const ctx2 = document.getElementById('statsChart2');
-    if (!ctx2) return;
-    
-    // Destroy existing chart
-    if (statsChart2Instance) {
-        statsChart2Instance.destroy();
-    }
-    
-    const isDark = document.documentElement.classList.contains('dark');
+    // Note: Chart.js canvas is replaced with mini sparkline SVG
+    // This function now updates the mini sparkline chart and trend badge
+    const chartContainer = document.getElementById('chartCompletedAppointments');
+    if (!chartContainer) return;
     
     // Extract completed data from trend
     const completedData = trendData.map(item => item.completed || 0);
-    const dates = trendData.map(item => item.date);
+    
+    // Update mini sparkline chart with actual data
+    if (completedData.length > 0) {
+        chartContainer.innerHTML = generateSparklineSVG(completedData);
+    }
     
     // Update completed value from status data
     if (statusData && statusData.completed !== undefined) {
         const completedValue = parseInt(statusData.completed) || 0;
-        const completedValueElement = document.querySelector('.stats-card-success .stats-card-value');
+        const completedValueElement = document.querySelector('.mini-stat-success .mini-stat-value');
         if (completedValueElement) {
             completedValueElement.textContent = completedValue;
         }
@@ -4567,156 +4626,53 @@ function renderCompletedChart(trendData, statusData) {
         const completionRatio = parseFloat(statusData.completion_ratio) || 0;
         const changeElement = document.getElementById('completedChange');
         if (changeElement) {
-            changeElement.textContent = `${completionRatio.toFixed(1)}%`;
-            changeElement.className = 'stats-card-change stats-card-change-positive';
+            const spanElement = changeElement.querySelector('span');
+            if (spanElement) {
+                spanElement.textContent = `${completionRatio.toFixed(1)}%`;
+            }
+            // Update trend class
+            changeElement.className = 'mini-stat-trend trend-up';
         }
     }
-    
-    // Normalize data for chart display (0-10 range)
-    const maxValue = Math.max(...completedData, 1);
-    const normalizedData = completedData.map(val => (val / maxValue) * 10);
-    
-    statsChart2Instance = new Chart(ctx2, {
-        type: "line",
-        data: {
-            labels: dates,
-            datasets: [{
-                backgroundColor: isDark ? "rgba(74, 222, 128, 0.1)" : "rgba(16, 185, 129, 0.1)",
-                borderColor: isDark ? "rgba(74, 222, 128, 0.8)" : "rgba(16, 185, 129, 0.8)",
-                borderWidth: 2,
-                data: normalizedData,
-                tension: 0.4,
-                fill: true
-            }],
-        },
-        options: {
-            maintainAspectRatio: false,
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: false,
-                },
-                tooltip: {
-                    enabled: false,
-                }
-            },
-            elements: {
-                point: {
-                    radius: 0
-                },
-            },
-            scales: {
-                x: {
-                    grid: {
-                        display: false
-                    },
-                    display: false
-                },
-                y: {
-                    grid: {
-                        display: false
-                    },
-                    display: false,
-                    min: 0,
-                    max: 10
-                }
-            }
-        }
-    });
 }
 
 function renderMissedChart(trendData, statusData) {
-    const ctx3 = document.getElementById('statsChart3');
-    if (!ctx3) return;
-    
-    // Destroy existing chart
-    if (statsChart3Instance) {
-        statsChart3Instance.destroy();
-    }
-    
-    const isDark = document.documentElement.classList.contains('dark');
+    // Note: Chart.js canvas is replaced with mini sparkline SVG
+    // This function now updates the mini sparkline chart and trend badge
+    const chartContainer = document.getElementById('chartMissedAppointments');
+    if (!chartContainer) return;
     
     // Extract missed data from trend
     const missedData = trendData.map(item => item.missed || 0);
-    const dates = trendData.map(item => item.date);
+    
+    // Update mini sparkline chart with actual data
+    if (missedData.length > 0) {
+        chartContainer.innerHTML = generateSparklineSVG(missedData);
+    }
     
     // Calculate missed ratio from status data (same as reports.js)
     if (statusData && statusData.missed_ratio !== undefined) {
         const missedRatio = parseFloat(statusData.missed_ratio) || 0;
         const changeElement = document.getElementById('missedChange');
         if (changeElement) {
-            changeElement.textContent = `${missedRatio.toFixed(1)}%`;
-            changeElement.className = 'stats-card-change stats-card-change-negative';
+            const spanElement = changeElement.querySelector('span');
+            if (spanElement) {
+                spanElement.textContent = `${missedRatio.toFixed(1)}%`;
+            }
+            // Update trend class
+            changeElement.className = 'mini-stat-trend trend-down';
         }
     }
-    
-    // Normalize data for chart display (0-10 range)
-    const maxValue = Math.max(...missedData, 1);
-    const normalizedData = missedData.map(val => (val / maxValue) * 10);
-    
-    statsChart3Instance = new Chart(ctx3, {
-        type: "line",
-        data: {
-            labels: dates,
-            datasets: [{
-                backgroundColor: isDark ? "rgba(251, 113, 133, 0.1)" : "rgba(239, 68, 68, 0.1)",
-                borderColor: isDark ? "rgba(251, 113, 133, 0.8)" : "rgba(239, 68, 68, 0.8)",
-                borderWidth: 2,
-                data: normalizedData,
-                tension: 0.4,
-                fill: true
-            }],
-        },
-        options: {
-            maintainAspectRatio: false,
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: false,
-                },
-                tooltip: {
-                    enabled: false,
-                }
-            },
-            elements: {
-                point: {
-                    radius: 0
-                },
-            },
-            scales: {
-                x: {
-                    grid: {
-                        display: false
-                    },
-                    display: false
-                },
-                y: {
-                    grid: {
-                        display: false
-                    },
-                    display: false,
-                    min: 0,
-                    max: 10
-                }
-            }
-        }
-    });
 }
 
 function renderNewPatientsChart(patientsData) {
-    const ctx4 = document.getElementById('statsChart4');
-    if (!ctx4) return;
-    
-    // Destroy existing chart
-    if (statsChart4Instance) {
-        statsChart4Instance.destroy();
-    }
-    
-    const isDark = document.documentElement.classList.contains('dark');
+    // Note: Chart.js canvas is replaced with mini sparkline SVG
+    // This function now updates the mini sparkline chart and trend badge
+    const newPatientsChartContainer = document.getElementById('chartNewPatients');
+    if (!newPatientsChartContainer) return;
     
     // Extract new patients data
     const newPatientsData = patientsData.map(item => parseInt(item.new_patients || 0));
-    const dates = patientsData.map(item => item.date);
     
     // Calculate total and percentage change
     const totalNewPatients = newPatientsData.reduce((a, b) => a + b, 0);
@@ -4739,9 +4695,16 @@ function renderNewPatientsChart(patientsData) {
         }
         const changeElement = document.getElementById('newPatientsChange');
         if (changeElement) {
-            const sign = percentage >= 0 ? '▲' : '▼';
-            changeElement.textContent = `${sign} ${Math.abs(percentage).toFixed(1)}%`;
-            changeElement.className = percentage >= 0 ? 'stats-card-change stats-card-change-positive' : 'stats-card-change stats-card-change-negative';
+            const spanElement = changeElement.querySelector('span');
+            if (spanElement) {
+                spanElement.textContent = `${Math.abs(percentage).toFixed(1)}%`;
+            }
+            // Update trend class and icon
+            changeElement.className = percentage >= 0 ? 'mini-stat-trend trend-up' : 'mini-stat-trend trend-down';
+            const iconElement = changeElement.querySelector('i');
+            if (iconElement) {
+                iconElement.className = percentage >= 0 ? 'bi bi-graph-up-arrow' : 'bi bi-graph-down-arrow';
+            }
         }
     } else if (newPatientsData.length >= 2) {
         // Fallback: compare first vs last
@@ -4755,79 +4718,33 @@ function renderNewPatientsChart(patientsData) {
         }
         const changeElement = document.getElementById('newPatientsChange');
         if (changeElement) {
-            const sign = percentage >= 0 ? '▲' : '▼';
-            changeElement.textContent = `${sign} ${Math.abs(percentage).toFixed(1)}%`;
-            changeElement.className = percentage >= 0 ? 'stats-card-change stats-card-change-positive' : 'stats-card-change stats-card-change-negative';
+            const spanElement = changeElement.querySelector('span');
+            if (spanElement) {
+                spanElement.textContent = `${Math.abs(percentage).toFixed(1)}%`;
+            }
+            // Update trend class and icon
+            changeElement.className = percentage >= 0 ? 'mini-stat-trend trend-up' : 'mini-stat-trend trend-down';
+            const iconElement = changeElement.querySelector('i');
+            if (iconElement) {
+                iconElement.className = percentage >= 0 ? 'bi bi-graph-up-arrow' : 'bi bi-graph-down-arrow';
+            }
         }
     }
     
-    // Normalize data for chart display (0-10 range)
-    const maxValue = Math.max(...newPatientsData, 1);
-    const normalizedData = newPatientsData.map(val => (val / maxValue) * 10);
-    
-    statsChart4Instance = new Chart(ctx4, {
-        type: "line",
-        data: {
-            labels: dates,
-            datasets: [{
-                backgroundColor: isDark ? "rgba(251, 191, 36, 0.1)" : "rgba(245, 158, 11, 0.1)",
-                borderColor: isDark ? "rgba(251, 191, 36, 0.8)" : "rgba(245, 158, 11, 0.8)",
-                borderWidth: 2,
-                data: normalizedData,
-                tension: 0.4,
-                fill: true
-            }],
-        },
-        options: {
-            maintainAspectRatio: false,
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: false,
-                },
-                tooltip: {
-                    enabled: false,
-                }
-            },
-            elements: {
-                point: {
-                    radius: 0
-                },
-            },
-            scales: {
-                x: {
-                    grid: {
-                        display: false
-                    },
-                    display: false
-                },
-                y: {
-                    grid: {
-                        display: false
-                    },
-                    display: false,
-                    min: 0,
-                    max: 10
-                }
-            }
-        }
-    });
+    // Update mini sparkline chart with actual data
+    if (newPatientsData.length > 0) {
+        newPatientsChartContainer.innerHTML = generateSparklineSVG(newPatientsData);
+    }
 }
 
 function renderTotalPrescriptionsChart(prescriptionsData) {
-    const ctx5 = document.getElementById('statsChart5');
-    if (!ctx5) return;
-    
-    // Destroy existing chart
-    if (statsChart5Instance) {
-        statsChart5Instance.destroy();
-    }
-    
-    const isDark = document.documentElement.classList.contains('dark');
+    // Note: Chart.js canvas is replaced with mini sparkline SVG
+    // This function now updates the mini sparkline chart and trend badge
+    const prescriptionsChartContainer = document.getElementById('chartTotalPrescriptions');
+    if (!prescriptionsChartContainer) return;
     
     // Extract total prescriptions data
     const totalPrescriptionsData = prescriptionsData.map(item => parseInt(item.total_prescriptions || 0));
-    const dates = prescriptionsData.map(item => item.date);
     
     // Calculate total and percentage change
     const totalPrescriptions = totalPrescriptionsData.reduce((a, b) => a + b, 0);
@@ -4850,9 +4767,16 @@ function renderTotalPrescriptionsChart(prescriptionsData) {
         }
         const changeElement = document.getElementById('totalPrescriptionsChange');
         if (changeElement) {
-            const sign = percentage >= 0 ? '▲' : '▼';
-            changeElement.textContent = `${sign} ${Math.abs(percentage).toFixed(1)}%`;
-            changeElement.className = percentage >= 0 ? 'stats-card-change stats-card-change-positive' : 'stats-card-change stats-card-change-negative';
+            const spanElement = changeElement.querySelector('span');
+            if (spanElement) {
+                spanElement.textContent = `${Math.abs(percentage).toFixed(1)}%`;
+            }
+            // Update trend class and icon
+            changeElement.className = percentage >= 0 ? 'mini-stat-trend trend-up' : 'mini-stat-trend trend-down';
+            const iconElement = changeElement.querySelector('i');
+            if (iconElement) {
+                iconElement.className = percentage >= 0 ? 'bi bi-graph-up-arrow' : 'bi bi-graph-down-arrow';
+            }
         }
     } else if (totalPrescriptionsData.length >= 2) {
         // Fallback: compare first vs last
@@ -4866,63 +4790,23 @@ function renderTotalPrescriptionsChart(prescriptionsData) {
         }
         const changeElement = document.getElementById('totalPrescriptionsChange');
         if (changeElement) {
-            const sign = percentage >= 0 ? '▲' : '▼';
-            changeElement.textContent = `${sign} ${Math.abs(percentage).toFixed(1)}%`;
-            changeElement.className = percentage >= 0 ? 'stats-card-change stats-card-change-positive' : 'stats-card-change stats-card-change-negative';
+            const spanElement = changeElement.querySelector('span');
+            if (spanElement) {
+                spanElement.textContent = `${Math.abs(percentage).toFixed(1)}%`;
+            }
+            // Update trend class and icon
+            changeElement.className = percentage >= 0 ? 'mini-stat-trend trend-up' : 'mini-stat-trend trend-down';
+            const iconElement = changeElement.querySelector('i');
+            if (iconElement) {
+                iconElement.className = percentage >= 0 ? 'bi bi-graph-up-arrow' : 'bi bi-graph-down-arrow';
+            }
         }
     }
     
-    // Normalize data for chart display (0-10 range)
-    const maxValue = Math.max(...totalPrescriptionsData, 1);
-    const normalizedData = totalPrescriptionsData.map(val => (val / maxValue) * 10);
-    
-    statsChart5Instance = new Chart(ctx5, {
-        type: "line",
-        data: {
-            labels: dates,
-            datasets: [{
-                backgroundColor: isDark ? "rgba(56, 189, 248, 0.1)" : "rgba(54, 185, 204, 0.1)",
-                borderColor: isDark ? "rgba(56, 189, 248, 0.8)" : "rgba(54, 185, 204, 0.8)",
-                borderWidth: 2,
-                data: normalizedData,
-                tension: 0.4,
-                fill: true
-            }],
-        },
-        options: {
-            maintainAspectRatio: false,
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: false,
-                },
-                tooltip: {
-                    enabled: false,
-                }
-            },
-            elements: {
-                point: {
-                    radius: 0
-                },
-            },
-            scales: {
-                x: {
-                    grid: {
-                        display: false
-                    },
-                    display: false
-                },
-                y: {
-                    grid: {
-                        display: false
-                    },
-                    display: false,
-                    min: 0,
-                    max: 10
-                }
-            }
-        }
-    });
+    // Update mini sparkline chart with actual data
+    if (totalPrescriptionsData.length > 0) {
+        prescriptionsChartContainer.innerHTML = generateSparklineSVG(totalPrescriptionsData);
+    }
 }
 
 // Initialize stats cards charts on page load

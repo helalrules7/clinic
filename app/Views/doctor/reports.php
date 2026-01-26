@@ -159,22 +159,62 @@ $reportTypes = [
                 </h5>
             </div>
             <div class="card-body">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value"><?= number_format($totalAppointments) ?></div>
-                        <div class="stat-label">Total Appointments</div>
+                <div class="mini-stats-grid">
+                    <div class="mini-stat-card mini-stat-primary">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-calendar-check-fill"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($totalAppointments) ?></span>
+                            <span class="mini-stat-label">Total Appointments</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartTotalAppointments"></div>
+                        <div class="mini-stat-trend trend-up">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            <span>All Time</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value"><?= number_format($totalCompleted) ?></div>
-                        <div class="stat-label">Completed</div>
+                    <div class="mini-stat-card mini-stat-success">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($totalCompleted) ?></span>
+                            <span class="mini-stat-label">Completed</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartCompleted"></div>
+                        <div class="mini-stat-trend trend-up">
+                            <i class="bi bi-activity"></i>
+                            <span><?= $completionRatio ?>%</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value"><?= number_format($totalMissed) ?></div>
-                        <div class="stat-label">Missed</div>
+                    <div class="mini-stat-card mini-stat-warning">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($totalMissed) ?></span>
+                            <span class="mini-stat-label">Missed</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartMissed"></div>
+                        <div class="mini-stat-trend trend-down">
+                            <i class="bi bi-graph-down-arrow"></i>
+                            <span><?= round((100 - $completionRatio), 1) ?>%</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value"><?= $completionRatio ?>%</div>
-                        <div class="stat-label">Completion Ratio</div>
+                    <div class="mini-stat-card mini-stat-info">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-percent"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= $completionRatio ?>%</span>
+                            <span class="mini-stat-label">Completion Ratio</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartCompletionRatio"></div>
+                        <div class="mini-stat-trend trend-neutral">
+                            <i class="bi bi-pie-chart"></i>
+                            <span>Ratio</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -196,22 +236,62 @@ $reportTypes = [
                 </h5>
             </div>
             <div class="card-body">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value"><?= number_format($totalRevenue, 2) ?> EGP</div>
-                        <div class="stat-label">Total Revenue</div>
+                <div class="mini-stats-grid">
+                    <div class="mini-stat-card mini-stat-success">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-cash-coin"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($totalRevenue, 2) ?></span>
+                            <span class="mini-stat-label">Total Revenue (EGP)</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartTotalRevenue"></div>
+                        <div class="mini-stat-trend trend-up">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            <span>Revenue</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value"><?= number_format($totalTransactions) ?></div>
-                        <div class="stat-label">Total Transactions</div>
+                    <div class="mini-stat-card mini-stat-primary">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-receipt"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($totalTransactions) ?></span>
+                            <span class="mini-stat-label">Total Transactions</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartTotalTransactions"></div>
+                        <div class="mini-stat-trend trend-up">
+                            <i class="bi bi-activity"></i>
+                            <span>Transactions</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value"><?= number_format($avgTransaction, 2) ?> EGP</div>
-                        <div class="stat-label">Average Transaction</div>
+                    <div class="mini-stat-card mini-stat-info">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-calculator"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($avgTransaction, 2) ?></span>
+                            <span class="mini-stat-label">Avg Transaction (EGP)</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartAvgTransaction"></div>
+                        <div class="mini-stat-trend trend-neutral">
+                            <i class="bi bi-pie-chart"></i>
+                            <span>Average</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value"><?= number_format($totalDiscounts, 2) ?> EGP</div>
-                        <div class="stat-label">Total Discounts</div>
+                    <div class="mini-stat-card mini-stat-warning">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-tag"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($totalDiscounts, 2) ?></span>
+                            <span class="mini-stat-label">Total Discounts (EGP)</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartTotalDiscounts"></div>
+                        <div class="mini-stat-trend trend-down">
+                            <i class="bi bi-graph-down-arrow"></i>
+                            <span>Discounts</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -233,22 +313,62 @@ $reportTypes = [
                 </h5>
             </div>
             <div class="card-body">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value"><?= number_format($totalNewPatients) ?></div>
-                        <div class="stat-label">Total New Patients</div>
+                <div class="mini-stats-grid">
+                    <div class="mini-stat-card mini-stat-primary">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-person-plus-fill"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($totalNewPatients) ?></span>
+                            <span class="mini-stat-label">Total New Patients</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartTotalNewPatients"></div>
+                        <div class="mini-stat-trend trend-up">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            <span>New Patients</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value"><?= number_format($totalMale) ?></div>
-                        <div class="stat-label">Male Patients</div>
+                    <div class="mini-stat-card mini-stat-male">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-gender-male"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($totalMale) ?></span>
+                            <span class="mini-stat-label">Male Patients</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartMalePatients"></div>
+                        <div class="mini-stat-trend trend-neutral">
+                            <i class="bi bi-pie-chart"></i>
+                            <span><?= $malePercentage ?>%</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value"><?= number_format($totalFemale) ?></div>
-                        <div class="stat-label">Female Patients</div>
+                    <div class="mini-stat-card mini-stat-female">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-gender-female"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($totalFemale) ?></span>
+                            <span class="mini-stat-label">Female Patients</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartFemalePatients"></div>
+                        <div class="mini-stat-trend trend-neutral">
+                            <i class="bi bi-pie-chart"></i>
+                            <span><?= round((100 - $malePercentage), 1) ?>%</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value"><?= $malePercentage ?>%</div>
-                        <div class="stat-label">Male Percentage</div>
+                    <div class="mini-stat-card mini-stat-info">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-percent"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= $malePercentage ?>%</span>
+                            <span class="mini-stat-label">Male Percentage</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartMalePercentage"></div>
+                        <div class="mini-stat-trend trend-neutral">
+                            <i class="bi bi-pie-chart"></i>
+                            <span>Percentage</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -270,22 +390,62 @@ $reportTypes = [
                 </h5>
             </div>
             <div class="card-body">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value"><?= number_format($totalPrescriptions) ?></div>
-                        <div class="stat-label">Total Prescriptions</div>
+                <div class="mini-stats-grid">
+                    <div class="mini-stat-card mini-stat-warning">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-prescription"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($totalPrescriptions) ?></span>
+                            <span class="mini-stat-label">Total Prescriptions</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartTotalPrescriptions"></div>
+                        <div class="mini-stat-trend trend-up">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            <span>Prescriptions</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value"><?= number_format($totalAppointments) ?></div>
-                        <div class="stat-label">Appointments with Prescriptions</div>
+                    <div class="mini-stat-card mini-stat-primary">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-calendar-check-fill"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($totalAppointments) ?></span>
+                            <span class="mini-stat-label">Appointments with Rx</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartAppointmentsWithRx"></div>
+                        <div class="mini-stat-trend trend-up">
+                            <i class="bi bi-activity"></i>
+                            <span>Appointments</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value"><?= number_format($totalPatients) ?></div>
-                        <div class="stat-label">Patients</div>
+                    <div class="mini-stat-card mini-stat-success">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($totalPatients) ?></span>
+                            <span class="mini-stat-label">Patients</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartPatientsCount"></div>
+                        <div class="mini-stat-trend trend-up">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            <span>Patients</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value"><?= $avgPerAppointment ?></div>
-                        <div class="stat-label">Avg per Appointment</div>
+                    <div class="mini-stat-card mini-stat-info">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-calculator"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= $avgPerAppointment ?></span>
+                            <span class="mini-stat-label">Avg per Appointment</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartAvgPerAppointment"></div>
+                        <div class="mini-stat-trend trend-neutral">
+                            <i class="bi bi-pie-chart"></i>
+                            <span>Average</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -382,22 +542,62 @@ $reportTypes = [
                 </h5>
             </div>
             <div class="card-body">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value"><?= number_format($totalPrescriptions) ?></div>
-                        <div class="stat-label">Total Prescriptions</div>
+                <div class="mini-stats-grid">
+                    <div class="mini-stat-card mini-stat-purple">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-eyeglasses"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($totalPrescriptions) ?></span>
+                            <span class="mini-stat-label">Total Prescriptions</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartGlassesTotalPrescriptions2"></div>
+                        <div class="mini-stat-trend trend-up">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            <span>Prescriptions</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value"><?= number_format($totalAppointments) ?></div>
-                        <div class="stat-label">Appointments with Prescriptions</div>
+                    <div class="mini-stat-card mini-stat-primary">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-calendar-check-fill"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($totalAppointments) ?></span>
+                            <span class="mini-stat-label">Appointments with Rx</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartGlassesAppointments2"></div>
+                        <div class="mini-stat-trend trend-up">
+                            <i class="bi bi-activity"></i>
+                            <span>Appointments</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value"><?= number_format($totalPatients) ?></div>
-                        <div class="stat-label">Patients</div>
+                    <div class="mini-stat-card mini-stat-success">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($totalPatients) ?></span>
+                            <span class="mini-stat-label">Patients</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartGlassesPatients2"></div>
+                        <div class="mini-stat-trend trend-up">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            <span>Patients</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value"><?= number_format($withLensType) ?></div>
-                        <div class="stat-label">With Lens Type</div>
+                    <div class="mini-stat-card mini-stat-info">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-eye"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($withLensType) ?></span>
+                            <span class="mini-stat-label">With Lens Type</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartWithLensType2"></div>
+                        <div class="mini-stat-trend trend-up">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            <span>Lens Type</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -448,14 +648,26 @@ $reportTypes = [
                 Detailed Report Data
             </h5>
             <div class="d-flex align-items-center gap-2">
-                <label for="reportPerPage" class="form-label mb-0 text-muted" style="font-size: 0.875rem;">View:</label>
-                <select class="form-select form-select-sm" id="reportPerPage" style="width: auto;">
-                    <option value="10">10</option>
-                    <option value="20" selected>20</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                    <option value="all">All</option>
-                </select>
+                <label for="reportPerPage" class="form-label mb-0 me-2 text small">View:</label>
+                <section class="field menu" style="min-width: 70px; width: auto;">
+                    <div class="control">
+                        <select class="form-select form-select-sm d-none center-select" id="reportPerPage" style="width: auto;">
+                            <option value="10">10</option>
+                            <option value="20" selected>20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                            <option value="all">All</option>
+                        </select>
+                        <button type="button" class="custom-select-toggle" aria-expanded="false" style="font-size: 0.875rem; padding: 0.75rem 2rem 0.75rem 0.75rem;">20</button>
+                        <menu>
+                            <li data-option="10" tabindex="0" role="button"><h3>10</h3></li>
+                            <li data-option="20" tabindex="0" role="button" class="selected"><h3>20</h3></li>
+                            <li data-option="50" tabindex="0" role="button"><h3>50</h3></li>
+                            <li data-option="100" tabindex="0" role="button"><h3>100</h3></li>
+                            <li data-option="all" tabindex="0" role="button"><h3>All</h3></li>
+                        </menu>
+                    </div>
+                </section>
             </div>
         </div>
         <div class="card-body p-0">
