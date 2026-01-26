@@ -103,9 +103,525 @@ function viewPatient(patientId) {
     window.location.href = `/doctor/patients/${patientId}`;
 }
 
+// Show notification
+function showNotification(message, type = 'info') {
+    // Create notification element if it doesn't exist
+    let notification = document.getElementById('globalNotification');
+    if (!notification) {
+        notification = document.createElement('div');
+        notification.id = 'globalNotification';
+        notification.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000; min-width: 300px; max-width: 500px;';
+        document.body.appendChild(notification);
+    }
+    
+    const alertClass = type === 'error' ? 'danger' : (type === 'success' ? 'success' : 'info');
+    const icon = type === 'error' ? 'bi-exclamation-circle' : (type === 'success' ? 'bi-check-circle' : 'bi-info-circle');
+    
+    notification.innerHTML = `
+        <div class="alert alert-${alertClass} alert-dismissible fade show" role="alert">
+            <i class="bi ${icon} me-2"></i>
+            ${escapeHtml(message)}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Auto dismiss after 3 seconds
+    setTimeout(() => {
+        const alert = notification.querySelector('.alert');
+        if (alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }
+    }, 3000);
+}
+
 // View mode state
 let currentViewMode = localStorage.getItem('patientsViewMode') || 'table';
 let foldersData = [];
+
+// ============================================
+// FolderTreeview Class
+// ============================================
+class FolderTreeview {
+    constructor(containerId, options = {}) {
+        this.container = document.getElementById(containerId);
+        if (!this.container) {
+            console.warn(`FolderTreeview: Container ${containerId} not found`);
+            return;
+        }
+        
+        // Load expanded folders from localStorage
+        const savedState = localStorage.getItem('treeviewExpandedFolders');
+        let expandedFolders = [];
+        if (savedState) {
+            try {
+                const parsed = JSON.parse(savedState);
+                // Support both old format (array) and new format (object with timestamp)
+                if (Array.isArray(parsed)) {
+                    expandedFolders = parsed;
+                } else if (parsed.expandedFolders) {
+                    expandedFolders = parsed.expandedFolders;
+                    // Optional: Clear old state if older than 7 days
+                    const weekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+                    if (parsed.timestamp && parsed.timestamp < weekAgo) {
+                        expandedFolders = [];
+                    }
+                }
+            } catch (e) {
+                console.warn('Error parsing treeview expanded state:', e);
+                expandedFolders = [];
+            }
+        }
+        
+        this.options = {
+            onFolderClick: options.onFolderClick || null,
+            expandedFolders: expandedFolders,
+            ...options
+        };
+        
+        this.treeData = null;
+        this.activeFolderId = null;
+        this.subFoldersCache = {}; // Cache for loaded sub-folders: {folderId: {data, timestamp}}
+        this.cacheTimeout = 60000; // 1 minute cache timeout
+    }
+    
+    buildTree(foldersData) {
+        const { systemFolders, customFolders } = foldersData;
+        
+        const tree = {
+            system: [],
+            custom: []
+        };
+        
+        // Build system folders tree
+        if (systemFolders && systemFolders.length > 0) {
+            systemFolders.forEach(folder => {
+                tree.system.push({
+                    id: folder.id,
+                    name: folder.name,
+                    type: 'system',
+                    patientCount: folder.patient_count || 0,
+                    subFoldersCount: folder.sub_folders_count || 0,
+                    children: []
+                });
+            });
+        }
+        
+        // Build custom folders tree (top-level only, sub-folders loaded on demand)
+        if (customFolders && customFolders.length > 0) {
+            customFolders.forEach(folder => {
+                tree.custom.push({
+                    id: folder.id,
+                    name: folder.name,
+                    type: 'custom',
+                    patientCount: folder.patient_count || 0,
+                    subFoldersCount: folder.sub_folders_count || 0,
+                    children: []
+                });
+            });
+        }
+        
+        this.treeData = tree;
+        return tree;
+    }
+    
+    render() {
+        if (!this.container || !this.treeData) return;
+        
+        let html = '<div class="treeview-list">';
+        
+        // Render system folders
+        if (this.treeData.system.length > 0) {
+            html += '<div class="treeview-section">';
+            html += '<div class="treeview-section-header">';
+            html += '<i class="bi bi-folder-fill me-2"></i>';
+            html += '<span>System Folders</span>';
+            html += '</div>';
+            html += '<div class="treeview-section-content">';
+            this.treeData.system.forEach(folder => {
+                html += this.renderFolderNode(folder, 0);
+            });
+            html += '</div>';
+            html += '</div>';
+        }
+        
+        // Render custom folders
+        if (this.treeData.custom.length > 0) {
+            html += '<div class="treeview-section">';
+            html += '<div class="treeview-section-header">';
+            html += '<i class="bi bi-folder me-2"></i>';
+            html += '<span>Custom Folders</span>';
+            html += '</div>';
+            html += '<div class="treeview-section-content">';
+            this.treeData.custom.forEach(folder => {
+                html += this.renderFolderNode(folder, 0);
+            });
+            html += '</div>';
+            html += '</div>';
+        }
+        
+        html += '</div>';
+        
+        this.container.innerHTML = html;
+        
+        // Attach event listeners
+        this.attachEventListeners();
+    }
+    
+    renderFolderNode(folder, level) {
+        const folderId = folder.type === 'system' ? `system_${folder.id}` : folder.id;
+        const isExpanded = this.options.expandedFolders.includes(folderId);
+        const hasChildren = folder.subFoldersCount > 0;
+        const indent = level * 20;
+        const isActive = this.activeFolderId === folderId;
+        
+        let html = `<div class="treeview-node ${isActive ? 'active' : ''}" data-folder-id="${folderId}" data-folder-type="${folder.type}" style="padding-left: ${indent}px;">`;
+        
+        // Expand/collapse icon (if has children)
+        if (hasChildren) {
+            html += `<span class="treeview-expand" data-folder-id="${folderId}">`;
+            html += `<i class="bi ${isExpanded ? 'bi-chevron-down' : 'bi-chevron-right'}"></i>`;
+            html += `</span>`;
+        } else {
+            html += `<span class="treeview-expand-placeholder"></span>`;
+        }
+        
+        // Folder icon
+        html += `<i class="bi ${folder.type === 'system' ? 'bi-folder-fill' : 'bi-folder'} treeview-icon"></i>`;
+        
+        // Folder name and info
+        html += `<span class="treeview-label" data-folder-id="${folderId}">`;
+        html += `<span class="treeview-name">${this.escapeHtml(folder.name)}</span>`;
+        html += `<span class="treeview-meta">`;
+        if (folder.patientCount > 0) {
+            html += `<span class="treeview-count">${folder.patientCount}</span>`;
+        }
+        html += `</span>`;
+        html += `</span>`;
+        
+        html += `</div>`;
+        
+        // Render children if expanded
+        if (hasChildren && isExpanded && folder.children && folder.children.length > 0) {
+            folder.children.forEach(child => {
+                html += this.renderFolderNode(child, level + 1);
+            });
+        }
+        
+        return html;
+    }
+    
+    attachEventListeners() {
+        if (!this.container) return;
+        
+        // Folder click
+        this.container.querySelectorAll('.treeview-label').forEach(label => {
+            label.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const folderId = label.getAttribute('data-folder-id');
+                if (folderId) {
+                    // Expand folder if not already expanded
+                    if (!this.options.expandedFolders.includes(folderId)) {
+                        this.expandFolder(folderId, false).then(() => {
+                            // After expanding, call onFolderClick
+                            if (this.options.onFolderClick) {
+                                this.options.onFolderClick(folderId);
+                            }
+                        }).catch(error => {
+                            console.error('Error expanding folder on click:', error);
+                            // Still call onFolderClick even if expansion fails
+                            if (this.options.onFolderClick) {
+                                this.options.onFolderClick(folderId);
+                            }
+                        });
+                    } else {
+                        // Already expanded, just call onFolderClick
+                        if (this.options.onFolderClick) {
+                            this.options.onFolderClick(folderId);
+                        }
+                    }
+                }
+            });
+        });
+        
+        // Expand/collapse click
+        this.container.querySelectorAll('.treeview-expand').forEach(expand => {
+            expand.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const folderId = expand.getAttribute('data-folder-id');
+                this.toggleFolder(folderId);
+            });
+        });
+    }
+    
+    toggleFolder(folderId) {
+        const index = this.options.expandedFolders.indexOf(folderId);
+        if (index > -1) {
+            // Collapse
+            this.options.expandedFolders.splice(index, 1);
+            this.saveExpandedState();
+            this.render();
+        } else {
+            // Expand - don't add to expandedFolders yet, let expandFolder do it
+            this.expandFolder(folderId, false).then(() => {
+                // expandFolder will add to expandedFolders and render
+            }).catch(error => {
+                console.error('Error expanding folder:', error);
+            });
+        }
+    }
+    
+    expandFolder(folderId, expandChildren = false) {
+        // Load sub-folders if not already loaded
+        const node = this.container.querySelector(`[data-folder-id="${folderId}"]`);
+        if (!node) return Promise.resolve();
+        
+        const folderType = node.getAttribute('data-folder-type');
+        const isSystem = folderType === 'system';
+        const actualId = isSystem ? folderId.replace('system_', '') : folderId;
+        
+        // Check if already expanded AND has loaded children
+        const folder = this.findFolderInTree(folderId);
+        if (this.options.expandedFolders.includes(folderId) && folder && folder.children && folder.children.length > 0) {
+            // Already expanded with data loaded
+            if (expandChildren) {
+                return this.expandAllChildren(folderId);
+            }
+            return Promise.resolve();
+        }
+        
+        // Add to expanded folders BEFORE loading (for UI state)
+        if (!this.options.expandedFolders.includes(folderId)) {
+            this.options.expandedFolders.push(folderId);
+            this.saveExpandedState();
+            // Render immediately to show expand icon change
+            this.render();
+        }
+        
+        // Check cache first
+        const cached = this.subFoldersCache[folderId];
+        const now = Date.now();
+        if (cached && (now - cached.timestamp) < this.cacheTimeout) {
+            // Use cached data
+            if (folder) {
+                folder.children = cached.data.map(sf => ({
+                    id: sf.id,
+                    name: sf.name,
+                    type: 'custom',
+                    patientCount: sf.patient_count || 0,
+                    subFoldersCount: sf.sub_folders_count || 0,
+                    children: []
+                }));
+                this.render();
+                
+                if (expandChildren) {
+                    return this.expandAllChildren(folderId);
+                }
+            }
+            return Promise.resolve();
+        }
+        
+        // Load sub-folders from API
+        return fetch(`/api/patient-folders/${actualId}/sub-folders/${folderType}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok && data.sub_folders) {
+                // Cache the data
+                this.subFoldersCache[folderId] = {
+                    data: data.sub_folders,
+                    timestamp: Date.now()
+                };
+                
+                // Find folder in tree and add children
+                const folder = this.findFolderInTree(folderId);
+                if (folder) {
+                    folder.children = data.sub_folders.map(sf => ({
+                        id: sf.id,
+                        name: sf.name,
+                        type: 'custom',
+                        patientCount: sf.patient_count || 0,
+                        subFoldersCount: sf.sub_folders_count || 0,
+                        children: []
+                    }));
+                    this.render();
+                    
+                    if (expandChildren) {
+                        return this.expandAllChildren(folderId);
+                    }
+                }
+            }
+            return Promise.resolve();
+        })
+        .catch(error => {
+            console.error('Error loading sub-folders:', error);
+            // Remove from expanded if error
+            const index = this.options.expandedFolders.indexOf(folderId);
+            if (index > -1) {
+                this.options.expandedFolders.splice(index, 1);
+                this.saveExpandedState();
+                this.render();
+            }
+            return Promise.reject(error);
+        });
+    }
+    
+    expandAllChildren(folderId) {
+        const folder = this.findFolderInTree(folderId);
+        if (!folder || !folder.children || folder.children.length === 0) {
+            return Promise.resolve();
+        }
+        
+        // Expand all children recursively
+        const expandPromises = folder.children.map(child => {
+            const childId = child.type === 'system' ? `system_${child.id}` : child.id;
+            return this.expandFolder(childId, true); // Recursively expand children
+        });
+        
+        return Promise.all(expandPromises);
+    }
+    
+    expandFolderPath(folderPath) {
+        // Expand all folders in the path to make the current folder visible
+        if (!folderPath || folderPath.length === 0) return Promise.resolve();
+        
+        const expandPromises = folderPath.map(folder => {
+            const folderId = folder.type === 'system' ? `system_${folder.id}` : folder.id;
+            // Only expand, don't expand children for path folders
+            return this.expandFolder(folderId, false);
+        });
+        
+        return Promise.all(expandPromises);
+    }
+    
+    saveExpandedState() {
+        // Save to localStorage with timestamp for cache management
+        const state = {
+            expandedFolders: this.options.expandedFolders,
+            timestamp: Date.now()
+        };
+        localStorage.setItem('treeviewExpandedFolders', JSON.stringify(state));
+    }
+    
+    collapseFolder(folderId) {
+        // Just re-render, children will be hidden
+        this.render();
+    }
+    
+    findFolderInTree(folderId) {
+        if (!this.treeData) return null;
+        
+        const searchInArray = (arr) => {
+            for (const folder of arr) {
+                const id = folder.type === 'system' ? `system_${folder.id}` : folder.id;
+                if (id === folderId) {
+                    return folder;
+                }
+                if (folder.children && folder.children.length > 0) {
+                    const found = searchInArray(folder.children);
+                    if (found) return found;
+                }
+            }
+            return null;
+        };
+        
+        const found = searchInArray(this.treeData.system);
+        if (found) return found;
+        
+        return searchInArray(this.treeData.custom);
+    }
+    
+    highlightActive(folderId) {
+        this.activeFolderId = folderId;
+        
+        // Re-render to apply active state (this ensures active state persists)
+        if (this.container && this.treeData) {
+            this.render();
+            
+            // Scroll into view after render
+            setTimeout(() => {
+                const activeNode = this.container.querySelector(`[data-folder-id="${folderId}"]`);
+                if (activeNode) {
+                    const nodeElement = activeNode.closest('.treeview-node');
+                    if (nodeElement) {
+                        nodeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }
+            }, 0);
+        }
+    }
+    
+    clearCache() {
+        // Clear sub-folders cache
+        this.subFoldersCache = {};
+    }
+    
+    invalidateCache(folderId = null) {
+        // Invalidate cache for specific folder or all folders
+        if (folderId) {
+            delete this.subFoldersCache[folderId];
+        } else {
+            this.clearCache();
+        }
+    }
+    
+    updateTree(foldersData) {
+        this.buildTree(foldersData);
+        this.render();
+    }
+    
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+}
+
+// Global treeview instance
+let folderTreeview = null;
+
+// Sidebar toggle functionality
+function initSidebarToggle() {
+    const sidebar = document.getElementById('foldersSidebar');
+    const toggleBtn = document.getElementById('sidebarToggle');
+    
+    if (!sidebar || !toggleBtn) return;
+    
+    // Check saved state
+    const isCollapsed = localStorage.getItem('foldersSidebarCollapsed') === 'true';
+    if (isCollapsed) {
+        sidebar.classList.add('collapsed');
+        toggleBtn.querySelector('i').classList.remove('bi-chevron-left');
+        toggleBtn.querySelector('i').classList.add('bi-chevron-right');
+    }
+    
+    toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        const isCollapsed = sidebar.classList.contains('collapsed');
+        localStorage.setItem('foldersSidebarCollapsed', isCollapsed.toString());
+        
+        const icon = toggleBtn.querySelector('i');
+        if (isCollapsed) {
+            icon.classList.remove('bi-chevron-left');
+            icon.classList.add('bi-chevron-right');
+        } else {
+            icon.classList.remove('bi-chevron-right');
+            icon.classList.add('bi-chevron-left');
+        }
+    });
+}
+
+// Initialize sidebar toggle when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSidebarToggle);
+} else {
+    initSidebarToggle();
+}
 
 // ============================================
 // Folder Navigation State Persistence
@@ -290,6 +806,9 @@ function initializePagination() {
             activeBtn.classList.add('active');
         }
     }
+    
+    // Initialize card size
+    initCardSize();
 }
 
 // Switch view mode
@@ -4426,10 +4945,28 @@ function loadFolders(skipRender = false) {
             // Keep foldersData for backward compatibility (merged)
             foldersData = [...systemFoldersData, ...customFoldersData];
 
+            // Initialize or update FolderTreeview
+            if (!folderTreeview) {
+                folderTreeview = new FolderTreeview('folderTreeview', {
+                    onFolderClick: (folderId) => {
+                        openFolder(folderId);
+                    }
+                });
+            }
+            
+            // Update treeview with new data
+            folderTreeview.updateTree({
+                systemFolders: systemFoldersData,
+                customFolders: customFoldersData
+            });
+
             // Only render folders view if not skipping (e.g., when restoring folder state)
             if (!skipRender) {
                 renderFoldersView();
             }
+            
+            // Initialize filter manager
+            initFilterManager();
         }
         return data;
     })
@@ -4491,7 +5028,28 @@ function renderFoldersView(page = 1, clearState = true) {
         headerActionsContainer.innerHTML = '';
     }
     
+    // Hide folderContentArea and show patientsFoldersContainer
+    const folderContentArea = document.getElementById('folderContentArea');
+    const patientsFoldersContainer = document.getElementById('patientsFoldersContainer');
+    
+    if (folderContentArea) {
+        folderContentArea.style.display = 'none';
+    }
+    if (patientsFoldersContainer) {
+        patientsFoldersContainer.style.display = 'block';
+    }
+    
+    // Update treeview active folder
+    if (folderTreeview) {
+        folderTreeview.highlightActive(null);
+    }
+    
     const container = document.getElementById('patientsFoldersContainer');
+    
+    if (!container) {
+        console.warn('patientsFoldersContainer not found');
+        return;
+    }
     
     // Check if both are empty
     if (systemFoldersData.length === 0 && customFoldersData.length === 0) {
@@ -4878,8 +5436,19 @@ function openFolder(folderId) {
         </div>
     `;
     
-    // Update UI to show folder with sub-folders and patients
-    const container = document.getElementById('patientsFoldersContainer');
+    // Hide patientsFoldersContainer and show folderContentArea
+    const patientsFoldersContainer = document.getElementById('patientsFoldersContainer');
+    const folderContentArea = document.getElementById('folderContentArea');
+    
+    if (patientsFoldersContainer) {
+        patientsFoldersContainer.style.display = 'none';
+    }
+    if (folderContentArea) {
+        folderContentArea.style.display = 'block';
+    }
+    
+    // Note: highlightActive will be called after data loads and treeview is expanded
+    // This ensures the folder is visible in treeview before highlighting
     
     // Build breadcrumb HTML (will be updated when data loads)
     let breadcrumbHtml = `
@@ -4894,11 +5463,18 @@ function openFolder(folderId) {
         </nav>
     `;
     
-    container.innerHTML = `
-        <div class="mb-4">
-            <div id="folderBreadcrumb">
-                ${breadcrumbHtml}
-            </div>
+    // Update folderContentArea elements
+    const folderBreadcrumb = document.getElementById('folderBreadcrumb');
+    const folderSearchContainer = document.getElementById('folderSearchContainer');
+    const subFoldersContainer = document.getElementById('subFoldersContainer');
+    const folderPatientsContainer = document.getElementById('folderPatientsContainer');
+    
+    if (folderBreadcrumb) {
+        folderBreadcrumb.innerHTML = breadcrumbHtml;
+    }
+    
+    if (folderSearchContainer) {
+        folderSearchContainer.innerHTML = `
             <div class="mb-3 folder-search-container">
                 <label for="folderSearchInput" class="form-label small text-muted mb-2">
                     <i class="bi bi-search me-1"></i>Quick Search
@@ -4926,22 +5502,28 @@ function openFolder(folderId) {
                 </div>
                 ${headerActions}
             </div>
-        </div>
-        <div id="subFoldersContainer" class="mb-4">
+        `;
+    }
+    
+    if (subFoldersContainer) {
+        subFoldersContainer.innerHTML = `
             <div class="text-center py-3">
                 <div class="spinner-border spinner-border-sm text-primary" role="status">
                     <span class="visually-hidden">Loading sub-folders...</span>
                 </div>
             </div>
-        </div>
-        <div id="folderPatientsContainer" class="row g-3">
+        `;
+    }
+    
+    if (folderPatientsContainer) {
+        folderPatientsContainer.innerHTML = `
             <div class="col-12 text-center py-4">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
-        </div>
-    `;
+        `;
+    }
     
     // Setup search functionality
     setupFolderSearch();
@@ -4976,6 +5558,18 @@ function openFolder(folderId) {
                     type: item.type
                 }));
                 localStorage.setItem('folderPathStack', JSON.stringify(folderPathStack));
+                
+                // Expand folder path in treeview to make current folder visible
+                if (folderTreeview) {
+                    folderTreeview.expandFolderPath(folderPathStack).then(() => {
+                        // After expanding path, expand current folder and all its children
+                        const currentFolderIdForTree = isSystem ? `system_${folderId}` : folderId;
+                        folderTreeview.expandFolder(currentFolderIdForTree, true).then(() => {
+                            folderTreeview.render();
+                            folderTreeview.highlightActive(currentFolderIdForTree);
+                        });
+                    });
+                }
             } else if (folderPathStack.length > 0) {
                 // Use path stack if available
                 breadcrumb = folderPathStack;
@@ -5064,6 +5658,18 @@ function openFolder(folderId) {
                     type: item.type
                 }));
                 localStorage.setItem('folderPathStack', JSON.stringify(folderPathStack));
+                
+                // Expand folder path in treeview to make current folder visible
+                if (folderTreeview && breadcrumb.length > 0) {
+                    folderTreeview.expandFolderPath(folderPathStack).then(() => {
+                        // After expanding path, expand current folder and all its children
+                        const currentFolderIdForTree = isSystem ? `system_${folderId}` : folderId;
+                        folderTreeview.expandFolder(currentFolderIdForTree, true).then(() => {
+                            folderTreeview.render();
+                            folderTreeview.highlightActive(currentFolderIdForTree);
+                        });
+                    });
+                }
             }
             
             // Render breadcrumb
@@ -5095,6 +5701,9 @@ function openFolder(folderId) {
                 }
             }
             
+            // Initialize filter manager if not already initialized
+            initFilterManager();
+            
             // Render patients
             if (data.patients) {
                 renderFolderPatients(data.patients);
@@ -5111,6 +5720,15 @@ function openFolder(folderId) {
 
             // Save navigation state after successful load
             saveFolderNavigationState();
+
+            // Ensure treeview is highlighted after all operations complete
+            if (folderTreeview) {
+                const currentFolderIdForTree = isSystem ? `system_${folderId}` : folderId;
+                // Use setTimeout to ensure this runs after all promises resolve
+                setTimeout(() => {
+                    folderTreeview.highlightActive(currentFolderIdForTree);
+                }, 100);
+            }
 
             // Resolve the Promise
             resolve(data);
@@ -5556,6 +6174,30 @@ function performQuickSort(systemFolderId, sortType) {
     });
 }
 
+// Card size management
+function setCardSize(size) {
+    localStorage.setItem('folderCardSize', size);
+    
+    // Update button states
+    document.querySelectorAll('.card-size-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-size') === size) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Re-render patients if folder is open
+    if (currentFolderPatients && currentFolderPatients.length > 0) {
+        renderFolderPatients(currentFolderPatients);
+    }
+}
+
+// Initialize card size on load
+function initCardSize() {
+    const savedSize = localStorage.getItem('folderCardSize') || 'medium';
+    setCardSize(savedSize);
+}
+
 // Render patients in a folder (styled like cards view)
 function renderFolderPatients(patients) {
     const container = document.getElementById('folderPatientsContainer');
@@ -5574,6 +6216,14 @@ function renderFolderPatients(patients) {
         `;
         return;
     }
+    
+    // Get card size from localStorage
+    const cardSize = localStorage.getItem('folderCardSize') || 'medium';
+    const sizeClass = {
+        small: 'col-md-6 col-lg-4 col-xl-3',
+        medium: 'col-md-4 col-lg-3',
+        large: 'col-md-3 col-lg-2'
+    }[cardSize] || 'col-md-4 col-lg-3';
     
     let html = '';
     
@@ -5607,11 +6257,15 @@ function renderFolderPatients(patients) {
         // Check if patient is in a system folder (cannot remove from system folders)
         const isSystemFolder = currentFolderId && currentFolderId.toString().startsWith('system_');
         
+        // Get color marker (will be fetched and cached)
+        const colorMarker = patient.color_marker || null;
+        
         html += `
-            <div class="col-md-4 col-lg-3 mb-3">
+            <div class="${sizeClass} mb-3">
                 <div class="card patient-card clickable h-100 ${selectionMode ? 'patient-card-selectable' : ''}" 
                      style="border: 1px solid var(--border); cursor: pointer; position: relative;" 
-                     onclick="if (!selectionMode) viewPatient(${patient.id})">
+                     onclick="if (!selectionMode) viewPatient(${patient.id})"
+                     data-patient-id="${patient.id}">
                     ${selectionMode ? `
                         <div class="position-absolute top-0 start-0 m-2" style="z-index: 10;" onclick="event.stopPropagation();">
                             <input type="checkbox" 
@@ -5623,6 +6277,18 @@ function renderFolderPatients(patients) {
                                    style="width: 1.25rem; height: 1.25rem; cursor: pointer;">
                         </div>
                     ` : ''}
+                    ${colorMarker ? `
+                        <div class="patient-color-marker" 
+                             style="position: absolute; top: 8px; right: 8px; width: 12px; height: 12px; border-radius: 50%; background: ${colorMarker}; border: 2px solid white; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"
+                             onclick="event.stopPropagation(); showColorMarkerModal(${patient.id}, '${colorMarker}')"
+                             title="Click to change color marker"></div>
+                    ` : `
+                        <div class="patient-color-marker-add" 
+                             onclick="event.stopPropagation(); showColorMarkerModal(${patient.id}, null)"
+                             title="Click to add color marker">
+                            <i class="bi bi-plus-lg"></i>
+                        </div>
+                    `}
                     <!-- Patient Image -->
                     <div class="position-relative patient-card-image-container" style="height: 200px; overflow: hidden; background: var(--bg-alt);">
                         ${imageUrl ? `
@@ -5780,6 +6446,882 @@ function renderFolderPatients(patients) {
     setTimeout(() => {
         refreshTooltips();
     }, 100);
+    
+    // Fetch color markers for all patients
+    fetchColorMarkersForPatients(patients);
+    
+    // Fetch tags for all patients
+    fetchTagsForPatients(patients);
+}
+
+// Fetch color markers for patients
+async function fetchColorMarkersForPatients(patients) {
+    if (!patients || patients.length === 0) return;
+    
+    // Fetch color markers in parallel
+    const promises = patients.map(patient => 
+        fetch(`/api/patient-color-markers/${patient.id}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok && data.color_code) {
+                // Update patient object
+                patient.color_marker = data.color_code;
+                // Update DOM
+                const card = document.querySelector(`[data-patient-id="${patient.id}"]`);
+                if (card) {
+                    const marker = card.querySelector('.patient-color-marker');
+                    const markerAdd = card.querySelector('.patient-color-marker-add');
+                    if (data.color_code) {
+                        if (markerAdd) markerAdd.remove();
+                        if (!marker) {
+                            const markerDiv = document.createElement('div');
+                            markerDiv.className = 'patient-color-marker';
+                            markerDiv.style.cssText = 'position: absolute; top: 8px; right: 8px; width: 12px; height: 12px; border-radius: 50%; background: ' + data.color_code + '; border: 2px solid white; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.2);';
+                            markerDiv.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patient.id}, '${data.color_code}')`);
+                            markerDiv.setAttribute('title', 'Click to change color marker');
+                            card.appendChild(markerDiv);
+                        } else {
+                            marker.style.background = data.color_code;
+                        }
+                    } else {
+                        if (marker) marker.remove();
+                        if (!markerAdd) {
+                            const markerAddDiv = document.createElement('div');
+                            markerAddDiv.className = 'patient-color-marker-add';
+                            markerAddDiv.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patient.id}, null)`);
+                            markerAddDiv.setAttribute('title', 'Click to add color marker');
+                            markerAddDiv.innerHTML = '<i class="bi bi-plus-lg"></i>';
+                            card.appendChild(markerAddDiv);
+                        }
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            console.error(`Error fetching color marker for patient ${patient.id}:`, error);
+        })
+    );
+    
+    await Promise.all(promises);
+}
+
+// Show color marker modal
+function showColorMarkerModal(patientId, currentColor) {
+    // Create modal HTML if it doesn't exist
+    let modal = document.getElementById('colorMarkerModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'colorMarkerModal';
+        modal.className = 'modal fade';
+        modal.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-palette me-2"></i>
+                            Color Marker
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted mb-3">Select a color marker for this patient</p>
+                        <div class="color-picker-grid" id="colorPickerGrid">
+                            <!-- Colors will be added here -->
+                        </div>
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="removeColorMarkerBtn" style="display: none;">
+                                <i class="bi bi-trash me-1"></i>
+                                Remove Color Marker
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    // Define colors
+    const colors = [
+        { code: '#ef4444', name: 'Red' },
+        { code: '#f59e0b', name: 'Orange' },
+        { code: '#eab308', name: 'Yellow' },
+        { code: '#22c55e', name: 'Green' },
+        { code: '#06b6d4', name: 'Cyan' },
+        { code: '#3b82f6', name: 'Blue' },
+        { code: '#8b5cf6', name: 'Purple' },
+        { code: '#ec4899', name: 'Pink' }
+    ];
+    
+    // Build color grid
+    const grid = modal.querySelector('#colorPickerGrid');
+    grid.innerHTML = '';
+    grid.style.cssText = 'display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;';
+    
+    colors.forEach(color => {
+        const colorBtn = document.createElement('button');
+        colorBtn.type = 'button';
+        colorBtn.className = 'btn color-picker-btn';
+        colorBtn.style.cssText = `width: 100%; height: 60px; background: ${color.code}; border: 3px solid ${currentColor === color.code ? '#000' : 'transparent'}; border-radius: 8px; position: relative;`;
+        colorBtn.setAttribute('data-color', color.code);
+        colorBtn.setAttribute('title', color.name);
+        if (currentColor === color.code) {
+            colorBtn.innerHTML = '<i class="bi bi-check-circle-fill text-white" style="font-size: 1.5rem;"></i>';
+        }
+        colorBtn.addEventListener('click', () => {
+            updatePatientColorMarker(patientId, color.code);
+            bootstrap.Modal.getInstance(modal).hide();
+        });
+        grid.appendChild(colorBtn);
+    });
+    
+    // Show/hide remove button
+    const removeBtn = modal.querySelector('#removeColorMarkerBtn');
+    if (currentColor) {
+        removeBtn.style.display = 'block';
+        removeBtn.onclick = () => {
+            updatePatientColorMarker(patientId, null);
+            bootstrap.Modal.getInstance(modal).hide();
+        };
+    } else {
+        removeBtn.style.display = 'none';
+    }
+    
+    // Show modal
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+}
+
+// Update patient color marker
+function updatePatientColorMarker(patientId, colorCode) {
+    if (colorCode === null) {
+        // Delete color marker
+        fetch(`/api/patient-color-markers/${patientId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                // Update patient object
+                const patient = currentFolderPatients.find(p => p.id === patientId);
+                if (patient) {
+                    patient.color_marker = null;
+                }
+                // Update DOM
+                const card = document.querySelector(`[data-patient-id="${patientId}"]`);
+                if (card) {
+                    const marker = card.querySelector('.patient-color-marker');
+                    if (marker) {
+                        marker.remove();
+                        const markerAddDiv = document.createElement('div');
+                        markerAddDiv.className = 'patient-color-marker-add';
+                        markerAddDiv.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patientId}, null)`);
+                        markerAddDiv.setAttribute('title', 'Click to add color marker');
+                        markerAddDiv.innerHTML = '<i class="bi bi-plus-lg"></i>';
+                        card.appendChild(markerAddDiv);
+                    }
+                }
+                showNotification('Color marker removed', 'success');
+            }
+        })
+        .catch(error => {
+            console.error('Error removing color marker:', error);
+            showNotification('Failed to remove color marker', 'error');
+        });
+    } else {
+        // Update/create color marker
+        fetch(`/api/patient-color-markers/${patientId}`, {
+            method: 'PUT',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ color_code: colorCode })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                // Update patient object
+                const patient = currentFolderPatients.find(p => p.id === patientId);
+                if (patient) {
+                    patient.color_marker = colorCode;
+                }
+                // Update DOM
+                const card = document.querySelector(`[data-patient-id="${patientId}"]`);
+                if (card) {
+                    const marker = card.querySelector('.patient-color-marker');
+                    const markerAdd = card.querySelector('.patient-color-marker-add');
+                    if (markerAdd) markerAdd.remove();
+                    if (marker) {
+                        marker.style.background = colorCode;
+                        marker.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patientId}, '${colorCode}')`);
+                    } else {
+                        const markerDiv = document.createElement('div');
+                        markerDiv.className = 'patient-color-marker';
+                        markerDiv.style.cssText = 'position: absolute; top: 8px; right: 8px; width: 12px; height: 12px; border-radius: 50%; background: ' + colorCode + '; border: 2px solid white; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.2);';
+                        markerDiv.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patientId}, '${colorCode}')`);
+                        markerDiv.setAttribute('title', 'Click to change color marker');
+                        card.appendChild(markerDiv);
+                    }
+                }
+                showNotification('Color marker updated', 'success');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating color marker:', error);
+            showNotification('Failed to update color marker', 'error');
+        });
+    }
+}
+
+// Fetch tags for patients
+async function fetchTagsForPatients(patients) {
+    if (!patients || patients.length === 0) return;
+    
+    // Fetch tags in parallel
+    const promises = patients.map(patient => 
+        fetch(`/api/patients/${patient.id}/tags`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok && data.tags) {
+                // Update patient object
+                patient.tags = data.tags;
+                // Update DOM
+                const tagsContainer = document.getElementById(`patientTags_${patient.id}`);
+                if (tagsContainer) {
+                    let tagsHtml = '';
+                    if (data.tags.length > 0) {
+                        tagsHtml = data.tags.map(tag => `
+                            <span class="badge patient-tag" 
+                                  style="background: ${tag.color || '#6366f1'}; margin-right: 4px; margin-bottom: 4px; cursor: pointer;"
+                                  onclick="event.stopPropagation(); removeTagFromPatient(${patient.id}, ${tag.id})"
+                                  title="Click to remove tag">
+                                ${tag.icon ? `<i class="bi ${tag.icon} me-1"></i>` : ''}
+                                ${escapeHtml(tag.name)}
+                            </span>
+                        `).join('');
+                    }
+                    tagsHtml += `
+                        <button class="btn btn-sm btn-link p-0 add-tag-btn" 
+                                style="font-size: 0.75rem; color: var(--muted);"
+                                onclick="event.stopPropagation(); showTagManagementModal(${patient.id})"
+                                title="Add tag">
+                            <i class="bi bi-plus-circle me-1"></i>Add Tag
+                        </button>
+                    `;
+                    tagsContainer.innerHTML = tagsHtml;
+                }
+            }
+        })
+        .catch(error => {
+            console.error(`Error fetching tags for patient ${patient.id}:`, error);
+        })
+    );
+    
+    await Promise.all(promises);
+}
+
+// Show tag management modal
+async function showTagManagementModal(patientId) {
+    // Fetch available tags
+    const tagsResponse = await fetch('/api/patient-tags', {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    });
+    const tagsData = await tagsResponse.json();
+    
+    // Fetch patient's current tags
+    const patientTagsResponse = await fetch(`/api/patients/${patientId}/tags`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    });
+    const patientTagsData = await patientTagsResponse.json();
+    
+    const availableTags = tagsData.ok ? tagsData.tags : [];
+    const patientTags = patientTagsData.ok ? patientTagsData.tags : [];
+    const patientTagIds = patientTags.map(t => t.id);
+    
+    // Create modal HTML if it doesn't exist
+    let modal = document.getElementById('tagManagementModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'tagManagementModal';
+        modal.className = 'modal fade';
+        modal.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-tags me-2"></i>
+                            Manage Tags
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted mb-3">Select tags to assign to this patient</p>
+                        <div class="tags-list" id="tagsList">
+                            <!-- Tags will be added here -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    // Build tags list
+    const tagsList = modal.querySelector('#tagsList');
+    tagsList.innerHTML = '';
+    
+    if (availableTags.length === 0) {
+        tagsList.innerHTML = '<p class="text-muted text-center">No tags available. Create tags first.</p>';
+    } else {
+        availableTags.forEach(tag => {
+            const isAssigned = patientTagIds.includes(tag.id);
+            const tagItem = document.createElement('div');
+            tagItem.className = 'tag-item mb-2';
+            tagItem.style.cssText = 'display: flex; align-items: center; padding: 8px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer;';
+            if (isAssigned) {
+                tagItem.style.background = 'rgba(var(--accent-rgb), 0.1)';
+            }
+            tagItem.innerHTML = `
+                <input type="checkbox" 
+                       class="form-check-input me-2" 
+                       ${isAssigned ? 'checked' : ''}
+                       onchange="togglePatientTag(${patientId}, ${tag.id}, this.checked)">
+                <span class="badge" style="background: ${tag.color || '#6366f1'};">
+                    ${tag.icon ? `<i class="bi ${tag.icon} me-1"></i>` : ''}
+                    ${escapeHtml(tag.name)}
+                </span>
+            `;
+            tagsList.appendChild(tagItem);
+        });
+    }
+    
+    // Show modal
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+}
+
+// Toggle patient tag
+function togglePatientTag(patientId, tagId, assign) {
+    if (assign) {
+        // Assign tag
+        fetch(`/api/patients/${patientId}/tags/${tagId}`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                // Reload patient tags
+                fetch(`/api/patients/${patientId}/tags`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(tagsData => {
+                    if (tagsData.ok) {
+                        const patient = currentFolderPatients.find(p => p.id === patientId);
+                        if (patient) {
+                            patient.tags = tagsData.tags;
+                        }
+                        const tagsContainer = document.getElementById(`patientTags_${patientId}`);
+                        if (tagsContainer) {
+                            let tagsHtml = '';
+                            if (tagsData.tags.length > 0) {
+                                tagsHtml = tagsData.tags.map(tag => `
+                                    <span class="badge patient-tag" 
+                                          style="background: ${tag.color || '#6366f1'}; margin-right: 4px; margin-bottom: 4px; cursor: pointer;"
+                                          onclick="event.stopPropagation(); removeTagFromPatient(${patientId}, ${tag.id})"
+                                          title="Click to remove tag">
+                                        ${tag.icon ? `<i class="bi ${tag.icon} me-1"></i>` : ''}
+                                        ${escapeHtml(tag.name)}
+                                    </span>
+                                `).join('');
+                            }
+                            tagsHtml += `
+                                <button class="btn btn-sm btn-link p-0 add-tag-btn" 
+                                        style="font-size: 0.75rem; color: var(--muted);"
+                                        onclick="event.stopPropagation(); showTagManagementModal(${patientId})"
+                                        title="Add tag">
+                                    <i class="bi bi-plus-circle me-1"></i>Add Tag
+                                </button>
+                            `;
+                            tagsContainer.innerHTML = tagsHtml;
+                        }
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error assigning tag:', error);
+            showNotification('Failed to assign tag', 'error');
+        });
+    } else {
+        // Remove tag
+        removeTagFromPatient(patientId, tagId);
+    }
+}
+
+// Remove tag from patient
+function removeTagFromPatient(patientId, tagId) {
+    fetch(`/api/patients/${patientId}/tags/${tagId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            // Update patient object
+            const patient = currentFolderPatients.find(p => p.id === patientId);
+            if (patient && patient.tags) {
+                patient.tags = patient.tags.filter(t => t.id !== tagId);
+            }
+            // Update DOM
+            const tagsContainer = document.getElementById(`patientTags_${patientId}`);
+            if (tagsContainer) {
+                let tagsHtml = '';
+                if (patient && patient.tags && patient.tags.length > 0) {
+                    tagsHtml = patient.tags.map(tag => `
+                        <span class="badge patient-tag" 
+                              style="background: ${tag.color || '#6366f1'}; margin-right: 4px; margin-bottom: 4px; cursor: pointer;"
+                              onclick="event.stopPropagation(); removeTagFromPatient(${patientId}, ${tag.id})"
+                              title="Click to remove tag">
+                            ${tag.icon ? `<i class="bi ${tag.icon} me-1"></i>` : ''}
+                            ${escapeHtml(tag.name)}
+                        </span>
+                    `).join('');
+                }
+                tagsHtml += `
+                    <button class="btn btn-sm btn-link p-0 add-tag-btn" 
+                            style="font-size: 0.75rem; color: var(--muted);"
+                            onclick="event.stopPropagation(); showTagManagementModal(${patientId})"
+                            title="Add tag">
+                        <i class="bi bi-plus-circle me-1"></i>Add Tag
+                    </button>
+                `;
+                tagsContainer.innerHTML = tagsHtml;
+            }
+            showNotification('Tag removed', 'success');
+        }
+    })
+    .catch(error => {
+        console.error('Error removing tag:', error);
+        showNotification('Failed to remove tag', 'error');
+    });
+}
+
+// ============================================
+// FilterManager Class
+// ============================================
+class FilterManager {
+    constructor(containerId) {
+        this.container = document.getElementById(containerId);
+        if (!this.container) {
+            console.warn(`FilterManager: Container ${containerId} not found`);
+            return;
+        }
+        
+        this.filters = {
+            colors: [],
+            tags: [],
+            dateCreated: { from: null, to: null },
+            gender: null,
+            age: { min: null, max: null }
+        };
+        
+        this.render();
+    }
+    
+    render() {
+        if (!this.container) return;
+        
+        let html = `
+            <div class="filters-header mb-3">
+                <h6 class="mb-0">
+                    <i class="bi bi-funnel me-2"></i>
+                    Filters
+                </h6>
+                <button class="btn btn-sm btn-link p-0" onclick="filterManager.clearFilters()" title="Clear all filters">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="filters-content">
+                <!-- Color Filter -->
+                <div class="filter-section mb-3">
+                    <div class="filter-header" onclick="this.parentElement.classList.toggle('expanded')">
+                        <span><i class="bi bi-palette me-2"></i>Color Markers</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <div class="filter-body">
+                        <div class="color-filter-grid" id="colorFilterGrid">
+                            <!-- Colors will be added here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tag Filter -->
+                <div class="filter-section mb-3">
+                    <div class="filter-header" onclick="this.parentElement.classList.toggle('expanded')">
+                        <span><i class="bi bi-tags me-2"></i>Tags</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <div class="filter-body">
+                        <div class="tag-filter-list" id="tagFilterList">
+                            <!-- Tags will be added here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Date Created Filter -->
+                <div class="filter-section mb-3">
+                    <div class="filter-header" onclick="this.parentElement.classList.toggle('expanded')">
+                        <span><i class="bi bi-calendar me-2"></i>Date Created</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <div class="filter-body">
+                        <div class="mb-2">
+                            <label class="form-label small">From</label>
+                            <input type="date" class="form-control form-control-sm" id="dateCreatedFrom" onchange="filterManager.setDateCreated('from', this.value)">
+                        </div>
+                        <div>
+                            <label class="form-label small">To</label>
+                            <input type="date" class="form-control form-control-sm" id="dateCreatedTo" onchange="filterManager.setDateCreated('to', this.value)">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gender Filter -->
+                <div class="filter-section mb-3">
+                    <div class="filter-header" onclick="this.parentElement.classList.toggle('expanded')">
+                        <span><i class="bi bi-gender-ambiguous me-2"></i>Gender</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <div class="filter-body">
+                        <select class="form-select form-select-sm" id="genderFilter" onchange="filterManager.setGender(this.value)">
+                            <option value="">All</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Age Filter -->
+                <div class="filter-section mb-3">
+                    <div class="filter-header" onclick="this.parentElement.classList.toggle('expanded')">
+                        <span><i class="bi bi-person me-2"></i>Age</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <div class="filter-body">
+                        <div class="mb-2">
+                            <label class="form-label small">Min</label>
+                            <input type="number" class="form-control form-control-sm" id="ageMin" min="0" max="150" placeholder="Min age" onchange="filterManager.setAge('min', this.value)">
+                        </div>
+                        <div>
+                            <label class="form-label small">Max</label>
+                            <input type="number" class="form-control form-control-sm" id="ageMax" min="0" max="150" placeholder="Max age" onchange="filterManager.setAge('max', this.value)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        this.container.innerHTML = html;
+        
+        // Initialize color filter
+        this.initColorFilter();
+        
+        // Initialize tag filter
+        this.initTagFilter();
+    }
+    
+    initColorFilter() {
+        const grid = document.getElementById('colorFilterGrid');
+        if (!grid) return;
+        
+        const colors = [
+            { code: '#ef4444', name: 'Red' },
+            { code: '#f59e0b', name: 'Orange' },
+            { code: '#eab308', name: 'Yellow' },
+            { code: '#22c55e', name: 'Green' },
+            { code: '#06b6d4', name: 'Cyan' },
+            { code: '#3b82f6', name: 'Blue' },
+            { code: '#8b5cf6', name: 'Purple' },
+            { code: '#ec4899', name: 'Pink' }
+        ];
+        
+        grid.style.cssText = 'display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;';
+        
+        colors.forEach(color => {
+            const colorBtn = document.createElement('button');
+            colorBtn.type = 'button';
+            colorBtn.className = 'btn color-filter-btn';
+            colorBtn.style.cssText = `width: 100%; height: 32px; background: ${color.code}; border: 2px solid transparent; border-radius: 4px;`;
+            colorBtn.setAttribute('data-color', color.code);
+            colorBtn.setAttribute('title', color.name);
+            colorBtn.addEventListener('click', () => {
+                this.toggleColorFilter(color.code);
+            });
+            grid.appendChild(colorBtn);
+        });
+    }
+    
+    async initTagFilter() {
+        const list = document.getElementById('tagFilterList');
+        if (!list) return;
+        
+        try {
+            const response = await fetch('/api/patient-tags', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await response.json();
+            
+            if (data.ok && data.tags) {
+                list.innerHTML = '';
+                if (data.tags.length === 0) {
+                    list.innerHTML = '<p class="text-muted small">No tags available</p>';
+                } else {
+                    data.tags.forEach(tag => {
+                        const tagItem = document.createElement('div');
+                        tagItem.className = 'tag-filter-item mb-2';
+                        tagItem.style.cssText = 'display: flex; align-items: center; padding: 6px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer;';
+                        tagItem.innerHTML = `
+                            <input type="checkbox" 
+                                   class="form-check-input me-2" 
+                                   onchange="filterManager.toggleTagFilter(${tag.id}, this.checked)">
+                            <span class="badge" style="background: ${tag.color || '#6366f1'};">
+                                ${tag.icon ? `<i class="bi ${tag.icon} me-1"></i>` : ''}
+                                ${this.escapeHtml(tag.name)}
+                            </span>
+                        `;
+                        list.appendChild(tagItem);
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error loading tags:', error);
+            list.innerHTML = '<p class="text-danger small">Error loading tags</p>';
+        }
+    }
+    
+    toggleColorFilter(colorCode) {
+        const index = this.filters.colors.indexOf(colorCode);
+        if (index > -1) {
+            this.filters.colors.splice(index, 1);
+        } else {
+            this.filters.colors.push(colorCode);
+        }
+        this.updateColorFilterUI();
+        this.applyFilters();
+    }
+    
+    toggleTagFilter(tagId, checked) {
+        if (checked) {
+            if (!this.filters.tags.includes(tagId)) {
+                this.filters.tags.push(tagId);
+            }
+        } else {
+            const index = this.filters.tags.indexOf(tagId);
+            if (index > -1) {
+                this.filters.tags.splice(index, 1);
+            }
+        }
+        this.applyFilters();
+    }
+    
+    setDateCreated(type, value) {
+        this.filters.dateCreated[type] = value || null;
+        this.applyFilters();
+    }
+    
+    setGender(value) {
+        this.filters.gender = value || null;
+        this.applyFilters();
+    }
+    
+    setAge(type, value) {
+        this.filters.age[type] = value ? parseInt(value) : null;
+        this.applyFilters();
+    }
+    
+    updateColorFilterUI() {
+        document.querySelectorAll('.color-filter-btn').forEach(btn => {
+            const colorCode = btn.getAttribute('data-color');
+            if (this.filters.colors.includes(colorCode)) {
+                btn.style.borderColor = '#000';
+                btn.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.2)';
+            } else {
+                btn.style.borderColor = 'transparent';
+                btn.style.boxShadow = 'none';
+            }
+        });
+    }
+    
+    applyFilters(patients) {
+        if (!patients) {
+            patients = currentFolderPatients || [];
+        }
+        
+        let filtered = [...patients];
+        
+        // Color filter
+        if (this.filters.colors.length > 0) {
+            filtered = filtered.filter(patient => {
+                const colorMarker = patient.color_marker;
+                return colorMarker && this.filters.colors.includes(colorMarker);
+            });
+        }
+        
+        // Tag filter
+        if (this.filters.tags.length > 0) {
+            filtered = filtered.filter(patient => {
+                if (!patient.tags || patient.tags.length === 0) return false;
+                const patientTagIds = patient.tags.map(t => t.id);
+                return this.filters.tags.some(tagId => patientTagIds.includes(tagId));
+            });
+        }
+        
+        // Date created filter
+        if (this.filters.dateCreated.from || this.filters.dateCreated.to) {
+            filtered = filtered.filter(patient => {
+                if (!patient.created_at) return false;
+                const createdDate = new Date(patient.created_at);
+                if (this.filters.dateCreated.from) {
+                    const fromDate = new Date(this.filters.dateCreated.from);
+                    if (createdDate < fromDate) return false;
+                }
+                if (this.filters.dateCreated.to) {
+                    const toDate = new Date(this.filters.dateCreated.to);
+                    toDate.setHours(23, 59, 59, 999);
+                    if (createdDate > toDate) return false;
+                }
+                return true;
+            });
+        }
+        
+        // Gender filter
+        if (this.filters.gender) {
+            filtered = filtered.filter(patient => patient.gender === this.filters.gender);
+        }
+        
+        // Age filter
+        if (this.filters.age.min !== null || this.filters.age.max !== null) {
+            filtered = filtered.filter(patient => {
+                if (!patient.dob) return false;
+                const age = calculateAge(patient.dob);
+                if (this.filters.age.min !== null && age < this.filters.age.min) return false;
+                if (this.filters.age.max !== null && age > this.filters.age.max) return false;
+                return true;
+            });
+        }
+        
+        // Render filtered patients
+        renderFolderPatients(filtered);
+        
+        return filtered;
+    }
+    
+    clearFilters() {
+        this.filters = {
+            colors: [],
+            tags: [],
+            dateCreated: { from: null, to: null },
+            gender: null,
+            age: { min: null, max: null }
+        };
+        
+        // Reset UI
+        document.getElementById('dateCreatedFrom').value = '';
+        document.getElementById('dateCreatedTo').value = '';
+        document.getElementById('genderFilter').value = '';
+        document.getElementById('ageMin').value = '';
+        document.getElementById('ageMax').value = '';
+        document.querySelectorAll('.color-filter-btn').forEach(btn => {
+            btn.style.borderColor = 'transparent';
+            btn.style.boxShadow = 'none';
+        });
+        document.querySelectorAll('#tagFilterList input[type="checkbox"]').forEach(cb => {
+            cb.checked = false;
+        });
+        
+        this.updateColorFilterUI();
+        this.applyFilters();
+    }
+    
+    getActiveFilters() {
+        const active = [];
+        if (this.filters.colors.length > 0) {
+            active.push(`Colors: ${this.filters.colors.length}`);
+        }
+        if (this.filters.tags.length > 0) {
+            active.push(`Tags: ${this.filters.tags.length}`);
+        }
+        if (this.filters.dateCreated.from || this.filters.dateCreated.to) {
+            active.push('Date Created');
+        }
+        if (this.filters.gender) {
+            active.push(`Gender: ${this.filters.gender}`);
+        }
+        if (this.filters.age.min !== null || this.filters.age.max !== null) {
+            active.push('Age');
+        }
+        return active;
+    }
+    
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+}
+
+// Global filter manager instance
+let filterManager = null;
+
+// Initialize filter manager when folders view is active
+function initFilterManager() {
+    if (currentViewMode === 'folders' && !filterManager) {
+        filterManager = new FilterManager('sidebarFilters');
+    }
 }
 
 // ============================================

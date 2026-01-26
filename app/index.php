@@ -325,6 +325,23 @@ try {
     $router->post('/api/patient-folders', 'ApiController@createPatientFolder');
     $router->put('/api/patient-folders/{id}', 'ApiController@updatePatientFolder');
     $router->delete('/api/patient-folders/{id}', 'ApiController@deletePatientFolder');
+    
+    // Patient color markers routes
+    $router->get('/api/patient-color-markers/{patient_id}', 'ApiController@getPatientColorMarker');
+    $router->put('/api/patient-color-markers/{patient_id}', 'ApiController@updatePatientColorMarker');
+    $router->delete('/api/patient-color-markers/{patient_id}', 'ApiController@deletePatientColorMarker');
+    
+    // Patient tags routes
+    $router->get('/api/patient-tags', 'ApiController@getPatientTags');
+    $router->post('/api/patient-tags', 'ApiController@createPatientTag');
+    $router->put('/api/patient-tags/{id}', 'ApiController@updatePatientTag');
+    $router->delete('/api/patient-tags/{id}', 'ApiController@deletePatientTag');
+    
+    // Patient tag assignments routes
+    $router->get('/api/patients/{patient_id}/tags', 'ApiController@getPatientAssignedTags');
+    $router->post('/api/patients/{patient_id}/tags/{tag_id}', 'ApiController@assignTagToPatient');
+    $router->delete('/api/patients/{patient_id}/tags/{tag_id}', 'ApiController@removeTagFromPatient');
+    
     // More specific routes first - images must come before {id}
     $router->get('/api/patients/images/{id}', 'ApiController@viewPatientImageForCards');
     $router->get('/api/patients/{id}/files', 'ApiController@getPatientFiles');

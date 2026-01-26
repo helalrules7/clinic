@@ -645,13 +645,81 @@
                         <i class="bi bi-folder-plus me-1"></i>
                         Create Folder
                     </button>
+                    <!-- Card Size Toggle -->
+                    <div class="btn-group btn-group-sm" role="group" id="cardSizeToggle" title="Card Size">
+                        <button type="button" 
+                                class="btn btn-outline-secondary card-size-btn" 
+                                data-size="small"
+                                onclick="setCardSize('small')"
+                                title="Small Cards">
+                            <i class="bi bi-grid-3x3"></i>
+                        </button>
+                        <button type="button" 
+                                class="btn btn-outline-secondary card-size-btn active" 
+                                data-size="medium"
+                                onclick="setCardSize('medium')"
+                                title="Medium Cards">
+                            <i class="bi bi-grid-3x3-gap"></i>
+                        </button>
+                        <button type="button" 
+                                class="btn btn-outline-secondary card-size-btn" 
+                                data-size="large"
+                                onclick="setCardSize('large')"
+                                title="Large Cards">
+                            <i class="bi bi-grid"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="card-body">
-        <div id="patientsFoldersContainer">
-            <!-- Folders will be rendered here by JavaScript -->
+    <div class="card-body p-0">
+        <div class="folders-view-layout d-flex">
+            <!-- Sidebar - على اليسار -->
+            <aside class="folders-sidebar" id="foldersSidebar">
+                <div class="sidebar-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-diagram-3 me-2"></i>
+                        Navigation
+                    </h6>
+                    <button class="btn btn-sm btn-link sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                </div>
+                
+                <!-- Treeview Container -->
+                <div class="treeview-container" id="folderTreeview">
+                    <!-- Treeview will be rendered here by JavaScript -->
+                </div>
+                
+                <!-- Filters Section -->
+                <div class="sidebar-filters" id="sidebarFilters">
+                    <!-- Filters will be added in Phase 5 -->
+                </div>
+            </aside>
+            
+            <!-- Main Content Area - على اليمين -->
+            <main class="folders-main-content flex-grow-1">
+                <!-- Folders List (عندما لا يكون هناك مجلد مفتوح) -->
+                <div id="patientsFoldersContainer">
+                    <!-- Folders will be rendered here by JavaScript -->
+                </div>
+                
+                <!-- Folder Content Area (عند فتح مجلد) -->
+                <div id="folderContentArea" style="display: none;">
+                    <!-- Breadcrumb -->
+                    <div id="folderBreadcrumb" class="mb-3"></div>
+                    
+                    <!-- Search -->
+                    <div id="folderSearchContainer" class="mb-3"></div>
+                    
+                    <!-- Sub-folders -->
+                    <div id="subFoldersContainer" class="mb-3"></div>
+                    
+                    <!-- Patients -->
+                    <div id="folderPatientsContainer" class="row g-3"></div>
+                </div>
+            </main>
         </div>
     </div>
 </div>

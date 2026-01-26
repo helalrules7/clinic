@@ -14658,4 +14658,591 @@ class ApiController
             return $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
     }
+
+    // ============================================
+    // Patient Color Markers API Endpoints
+    // ============================================
+
+    /**
+     * GET /api/patient-color-markers/{patient_id}
+     * Get color marker for a patient
+     */
+    public function getPatientColorMarker($patientId)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $patientId = (int)$patientId;
+            if ($patientId <= 0) {
+                return $this->jsonResponse(['error' => 'Invalid patient ID'], 400);
+            }
+
+            $stmt = $this->pdo->prepare("
+                SELECT color_code 
+                FROM patient_color_markers 
+                WHERE patient_id = ?
+            ");
+            $stmt->execute([$patientId]);
+            $marker = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            if ($marker) {
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'color_code' => $marker['color_code']
+                ]);
+            } else {
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'color_code' => null
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * PUT /api/patient-color-markers/{patient_id}
+     * Update or create color marker for a patient
+     */
+    public function updatePatientColorMarker($patientId)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $patientId = (int)$patientId;
+            if ($patientId <= 0) {
+                return $this->jsonResponse(['error' => 'Invalid patient ID'], 400);
+            }
+
+            $data = json_decode(file_get_contents('php://input'), true);
+            $colorCode = trim($data['color_code'] ?? '');
+
+            // Validate color code (hex format)
+            if (empty($colorCode) || !preg_match('/^#[0-9A-Fa-f]{6}$/', $colorCode)) {
+                return $this->jsonResponse(['error' => 'Invalid color code. Must be a valid hex color (e.g., #ef4444)'], 400);
+            }
+
+            // Check if patient exists
+            $patientStmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
+            $patientStmt->execute([$patientId]);
+            if (!$patientStmt->fetch()) {
+                return $this->jsonResponse(['error' => 'Patient not found'], 404);
+            }
+
+            // Check if marker exists
+            $checkStmt = $this->pdo->prepare("SELECT patient_id FROM patient_color_markers WHERE patient_id = ?");
+            $checkStmt->execute([$patientId]);
+            $exists = $checkStmt->fetch(\PDO::FETCH_ASSOC);
+
+            if ($exists) {
+                // Update existing marker
+                $stmt = $this->pdo->prepare("
+                    UPDATE patient_color_markers 
+                    SET color_code = ?, updated_at = CURRENT_TIMESTAMP 
+                    WHERE patient_id = ?
+                ");
+                $stmt->execute([$colorCode, $patientId]);
+            } else {
+                // Create new marker
+                $stmt = $this->pdo->prepare("
+                    INSERT INTO patient_color_markers (patient_id, color_code) 
+                    VALUES (?, ?)
+                ");
+                $stmt->execute([$patientId, $colorCode]);
+            }
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'message' => 'Color marker updated successfully',
+                'color_code' => $colorCode
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * DELETE /api/patient-color-markers/{patient_id}
+     * Delete color marker for a patient
+     */
+    public function deletePatientColorMarker($patientId)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $patientId = (int)$patientId;
+            if ($patientId <= 0) {
+                return $this->jsonResponse(['error' => 'Invalid patient ID'], 400);
+            }
+
+            $stmt = $this->pdo->prepare("DELETE FROM patient_color_markers WHERE patient_id = ?");
+            $stmt->execute([$patientId]);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'message' => 'Color marker deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    // ============================================
+    // Patient Tags API Endpoints
+    // ============================================
+
+    /**
+     * GET /api/patient-tags
+     * Get all tags (global + doctor-specific)
+     */
+    public function getPatientTags()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            $doctorId = $this->getDoctorId($user['id']);
+
+            // Get global tags (doctor_id IS NULL) and doctor-specific tags
+            $stmt = $this->pdo->prepare("
+                SELECT id, name, color, icon, doctor_id, sort_order, created_at, updated_at
+                FROM patient_tags
+                WHERE doctor_id IS NULL OR doctor_id = ?
+                ORDER BY sort_order ASC, name ASC
+            ");
+            $stmt->execute([$doctorId]);
+            $tags = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'tags' => $tags
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * POST /api/patient-tags
+     * Create a new tag
+     */
+    public function createPatientTag()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            $doctorId = $this->getDoctorId($user['id']);
+            $data = json_decode(file_get_contents('php://input'), true);
+
+            $name = trim($data['name'] ?? '');
+            $color = trim($data['color'] ?? '#6366f1');
+            $icon = trim($data['icon'] ?? 'bi-tag');
+            $tagDoctorId = isset($data['doctor_id']) ? (int)$data['doctor_id'] : null;
+            $sortOrder = isset($data['sort_order']) ? (int)$data['sort_order'] : 0;
+
+            if (empty($name)) {
+                return $this->jsonResponse(['error' => 'Tag name is required'], 400);
+            }
+
+            // Validate color code
+            if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $color)) {
+                return $this->jsonResponse(['error' => 'Invalid color code. Must be a valid hex color'], 400);
+            }
+
+            // Determine final doctor_id:
+            // - If doctor_id is explicitly set to null in request, it's a global tag
+            // - If doctor_id is not provided, use current doctor's ID (private tag)
+            // - If doctor_id is provided with a value, use that value
+            if (isset($data['doctor_id']) && $data['doctor_id'] === null) {
+                // Explicitly set to null - global tag
+                $finalDoctorId = null;
+            } else if ($tagDoctorId !== null) {
+                // Provided with a value - use it
+                $finalDoctorId = $tagDoctorId;
+            } else {
+                // Not provided - use current doctor's ID (private tag)
+                $finalDoctorId = $doctorId;
+            }
+
+            // Check if tag with same name already exists for this doctor
+            if ($finalDoctorId === null) {
+                // Checking for global tag
+                $checkStmt = $this->pdo->prepare("
+                    SELECT id FROM patient_tags 
+                    WHERE name = ? AND doctor_id IS NULL
+                ");
+                $checkStmt->execute([$name]);
+            } else {
+                // Checking for doctor-specific tag
+                $checkStmt = $this->pdo->prepare("
+                    SELECT id FROM patient_tags 
+                    WHERE name = ? AND doctor_id = ?
+                ");
+                $checkStmt->execute([$name, $finalDoctorId]);
+            }
+            if ($checkStmt->fetch()) {
+                return $this->jsonResponse(['error' => 'Tag with this name already exists'], 400);
+            }
+
+            // Create tag
+            $stmt = $this->pdo->prepare("
+                INSERT INTO patient_tags (name, color, icon, doctor_id, sort_order) 
+                VALUES (?, ?, ?, ?, ?)
+            ");
+            $stmt->execute([$name, $color, $icon, $finalDoctorId, $sortOrder]);
+            $tagId = $this->pdo->lastInsertId();
+
+            // Fetch created tag
+            $fetchStmt = $this->pdo->prepare("
+                SELECT id, name, color, icon, doctor_id, sort_order, created_at, updated_at
+                FROM patient_tags
+                WHERE id = ?
+            ");
+            $fetchStmt->execute([$tagId]);
+            $tag = $fetchStmt->fetch(\PDO::FETCH_ASSOC);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'message' => 'Tag created successfully',
+                'tag' => $tag
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * PUT /api/patient-tags/{id}
+     * Update a tag
+     */
+    public function updatePatientTag($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $id = (int)$id;
+            if ($id <= 0) {
+                return $this->jsonResponse(['error' => 'Invalid tag ID'], 400);
+            }
+
+            $user = $this->auth->user();
+            $doctorId = $this->getDoctorId($user['id']);
+            $data = json_decode(file_get_contents('php://input'), true);
+
+            // Check if tag exists
+            $checkStmt = $this->pdo->prepare("
+                SELECT id, doctor_id FROM patient_tags WHERE id = ?
+            ");
+            $checkStmt->execute([$id]);
+            $tag = $checkStmt->fetch(\PDO::FETCH_ASSOC);
+
+            if (!$tag) {
+                return $this->jsonResponse(['error' => 'Tag not found'], 404);
+            }
+
+            // Check permission: can only update global tags or own doctor tags
+            if ($tag['doctor_id'] !== null && $tag['doctor_id'] != $doctorId) {
+                return $this->jsonResponse(['error' => 'Unauthorized to update this tag'], 403);
+            }
+
+            $name = trim($data['name'] ?? '');
+            $color = trim($data['color'] ?? '');
+            $icon = trim($data['icon'] ?? '');
+            $sortOrder = isset($data['sort_order']) ? (int)$data['sort_order'] : null;
+
+            // Build update query dynamically
+            $updates = [];
+            $params = [];
+
+            if (!empty($name)) {
+                // Check if name already exists
+                if ($tag['doctor_id'] === null) {
+                    // Checking for global tag
+                    $nameCheckStmt = $this->pdo->prepare("
+                        SELECT id FROM patient_tags 
+                        WHERE name = ? AND id != ? AND doctor_id IS NULL
+                    ");
+                    $nameCheckStmt->execute([$name, $id]);
+                } else {
+                    // Checking for doctor-specific tag
+                    $nameCheckStmt = $this->pdo->prepare("
+                        SELECT id FROM patient_tags 
+                        WHERE name = ? AND id != ? AND doctor_id = ?
+                    ");
+                    $nameCheckStmt->execute([$name, $id, $tag['doctor_id']]);
+                }
+                if ($nameCheckStmt->fetch()) {
+                    return $this->jsonResponse(['error' => 'Tag with this name already exists'], 400);
+                }
+                $updates[] = "name = ?";
+                $params[] = $name;
+            }
+
+            if (!empty($color)) {
+                if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $color)) {
+                    return $this->jsonResponse(['error' => 'Invalid color code'], 400);
+                }
+                $updates[] = "color = ?";
+                $params[] = $color;
+            }
+
+            if (!empty($icon)) {
+                $updates[] = "icon = ?";
+                $params[] = $icon;
+            }
+
+            if ($sortOrder !== null) {
+                $updates[] = "sort_order = ?";
+                $params[] = $sortOrder;
+            }
+
+            if (empty($updates)) {
+                return $this->jsonResponse(['error' => 'No fields to update'], 400);
+            }
+
+            $updates[] = "updated_at = CURRENT_TIMESTAMP";
+            $params[] = $id;
+
+            $stmt = $this->pdo->prepare("
+                UPDATE patient_tags 
+                SET " . implode(', ', $updates) . "
+                WHERE id = ?
+            ");
+            $stmt->execute($params);
+
+            // Fetch updated tag
+            $fetchStmt = $this->pdo->prepare("
+                SELECT id, name, color, icon, doctor_id, sort_order, created_at, updated_at
+                FROM patient_tags
+                WHERE id = ?
+            ");
+            $fetchStmt->execute([$id]);
+            $updatedTag = $fetchStmt->fetch(\PDO::FETCH_ASSOC);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'message' => 'Tag updated successfully',
+                'tag' => $updatedTag
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * DELETE /api/patient-tags/{id}
+     * Delete a tag
+     */
+    public function deletePatientTag($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $id = (int)$id;
+            if ($id <= 0) {
+                return $this->jsonResponse(['error' => 'Invalid tag ID'], 400);
+            }
+
+            $user = $this->auth->user();
+            $doctorId = $this->getDoctorId($user['id']);
+
+            // Check if tag exists and permission
+            $checkStmt = $this->pdo->prepare("
+                SELECT id, doctor_id FROM patient_tags WHERE id = ?
+            ");
+            $checkStmt->execute([$id]);
+            $tag = $checkStmt->fetch(\PDO::FETCH_ASSOC);
+
+            if (!$tag) {
+                return $this->jsonResponse(['error' => 'Tag not found'], 404);
+            }
+
+            // Check permission: can only delete global tags or own doctor tags
+            if ($tag['doctor_id'] !== null && $tag['doctor_id'] != $doctorId) {
+                return $this->jsonResponse(['error' => 'Unauthorized to delete this tag'], 403);
+            }
+
+            // Delete tag (CASCADE will delete all assignments)
+            $stmt = $this->pdo->prepare("DELETE FROM patient_tags WHERE id = ?");
+            $stmt->execute([$id]);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'message' => 'Tag deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * GET /api/patients/{patient_id}/tags
+     * Get tags assigned to a patient
+     */
+    public function getPatientAssignedTags($patientId)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $patientId = (int)$patientId;
+            if ($patientId <= 0) {
+                return $this->jsonResponse(['error' => 'Invalid patient ID'], 400);
+            }
+
+            // Check if patient exists
+            $patientStmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
+            $patientStmt->execute([$patientId]);
+            if (!$patientStmt->fetch()) {
+                return $this->jsonResponse(['error' => 'Patient not found'], 404);
+            }
+
+            // Get assigned tags
+            $stmt = $this->pdo->prepare("
+                SELECT pt.id, pt.name, pt.color, pt.icon, pt.doctor_id, pt.sort_order,
+                       pta.assigned_at
+                FROM patient_tag_assignments pta
+                INNER JOIN patient_tags pt ON pta.tag_id = pt.id
+                WHERE pta.patient_id = ?
+                ORDER BY pt.sort_order ASC, pt.name ASC
+            ");
+            $stmt->execute([$patientId]);
+            $tags = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'tags' => $tags
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * POST /api/patients/{patient_id}/tags/{tag_id}
+     * Assign a tag to a patient
+     */
+    public function assignTagToPatient($patientId, $tagId)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $patientId = (int)$patientId;
+            $tagId = (int)$tagId;
+
+            if ($patientId <= 0 || $tagId <= 0) {
+                return $this->jsonResponse(['error' => 'Invalid patient ID or tag ID'], 400);
+            }
+
+            // Check if patient exists
+            $patientStmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
+            $patientStmt->execute([$patientId]);
+            if (!$patientStmt->fetch()) {
+                return $this->jsonResponse(['error' => 'Patient not found'], 404);
+            }
+
+            // Check if tag exists
+            $tagStmt = $this->pdo->prepare("SELECT id FROM patient_tags WHERE id = ?");
+            $tagStmt->execute([$tagId]);
+            if (!$tagStmt->fetch()) {
+                return $this->jsonResponse(['error' => 'Tag not found'], 404);
+            }
+
+            // Check if already assigned
+            $checkStmt = $this->pdo->prepare("
+                SELECT patient_id FROM patient_tag_assignments 
+                WHERE patient_id = ? AND tag_id = ?
+            ");
+            $checkStmt->execute([$patientId, $tagId]);
+            if ($checkStmt->fetch()) {
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'message' => 'Tag already assigned to patient'
+                ]);
+            }
+
+            // Assign tag
+            $stmt = $this->pdo->prepare("
+                INSERT INTO patient_tag_assignments (patient_id, tag_id) 
+                VALUES (?, ?)
+            ");
+            $stmt->execute([$patientId, $tagId]);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'message' => 'Tag assigned to patient successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * DELETE /api/patients/{patient_id}/tags/{tag_id}
+     * Remove a tag from a patient
+     */
+    public function removeTagFromPatient($patientId, $tagId)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $patientId = (int)$patientId;
+            $tagId = (int)$tagId;
+
+            if ($patientId <= 0 || $tagId <= 0) {
+                return $this->jsonResponse(['error' => 'Invalid patient ID or tag ID'], 400);
+            }
+
+            $stmt = $this->pdo->prepare("
+                DELETE FROM patient_tag_assignments 
+                WHERE patient_id = ? AND tag_id = ?
+            ");
+            $stmt->execute([$patientId, $tagId]);
+
+            if ($stmt->rowCount() > 0) {
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'message' => 'Tag removed from patient successfully'
+                ]);
+            } else {
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'message' => 'Tag was not assigned to patient'
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
 }
