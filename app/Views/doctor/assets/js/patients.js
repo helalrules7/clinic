@@ -2,6 +2,13 @@
 let searchTimeout;
 let currentSearchRequest;
 
+// Helper function to convert hex color to RGB string
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) return '0, 0, 0';
+    return `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`;
+}
+
 // ============================================
 // Mini Sparkline Charts for Stats Cards
 // ============================================
@@ -179,8 +186,11 @@ class FolderTreeview {
             ...options
         };
         
+        // Load active folder from localStorage
+        const savedActiveFolder = localStorage.getItem('treeviewActiveFolder');
+        this.activeFolderId = savedActiveFolder || null;
+        
         this.treeData = null;
-        this.activeFolderId = null;
         this.subFoldersCache = {}; // Cache for loaded sub-folders: {folderId: {data, timestamp}}
         this.cacheTimeout = 60000; // 1 minute cache timeout
     }
@@ -320,16 +330,14 @@ class FolderTreeview {
                 e.stopPropagation();
                 const folderId = label.getAttribute('data-folder-id');
                 if (folderId) {
-                    // Expand folder if not already expanded
+                    // Expand folder and all children if not already expanded
                     if (!this.options.expandedFolders.includes(folderId)) {
-                        this.expandFolder(folderId, false).then(() => {
-                            // After expanding, call onFolderClick
+                        this.expandFolder(folderId, true).then(() => { // Changed to true
                             if (this.options.onFolderClick) {
                                 this.options.onFolderClick(folderId);
                             }
                         }).catch(error => {
                             console.error('Error expanding folder on click:', error);
-                            // Still call onFolderClick even if expansion fails
                             if (this.options.onFolderClick) {
                                 this.options.onFolderClick(folderId);
                             }
@@ -360,13 +368,24 @@ class FolderTreeview {
             // Collapse
             this.options.expandedFolders.splice(index, 1);
             this.saveExpandedState();
-            this.render();
+            this.render(); // Render immediately
         } else {
-            // Expand - don't add to expandedFolders yet, let expandFolder do it
+            // Expand - add to expandedFolders immediately for UI feedback
+            this.options.expandedFolders.push(folderId);
+            this.saveExpandedState();
+            this.render(); // Render immediately to show expand icon change
+            
+            // Then load data
             this.expandFolder(folderId, false).then(() => {
-                // expandFolder will add to expandedFolders and render
+                this.render(); // Render again with children
             }).catch(error => {
                 console.error('Error expanding folder:', error);
+                const errorIndex = this.options.expandedFolders.indexOf(folderId);
+                if (errorIndex > -1) {
+                    this.options.expandedFolders.splice(errorIndex, 1);
+                    this.saveExpandedState();
+                    this.render();
+                }
             });
         }
     }
@@ -538,6 +557,13 @@ class FolderTreeview {
     
     highlightActive(folderId) {
         this.activeFolderId = folderId;
+        
+        // Save active folder to localStorage
+        if (folderId) {
+            localStorage.setItem('treeviewActiveFolder', folderId);
+        } else {
+            localStorage.removeItem('treeviewActiveFolder');
+        }
         
         // Re-render to apply active state (this ensures active state persists)
         if (this.container && this.treeData) {
@@ -745,7 +771,7 @@ function openFolderDebounced(folderId) {
         if (pendingFolderId === folderId) {
             openFolder(folderId);
         }
-    }, 100); // 100ms debounce
+    }, 50); // Reduced from 100ms
 }
 
 // Initialize pagination with PHP data
@@ -809,6 +835,7 @@ function initializePagination() {
     
     // Initialize card size
     initCardSize();
+    initCardSizeCards();
 }
 
 // Switch view mode
@@ -1569,6 +1596,7 @@ function filterPatientsLocally(query) {
         updatePaginationInfo();
         renderPaginationNav();
     } else if (currentViewMode === 'cards') {
+        initCardSizeCards(); // Initialize card size for cards view
         renderPatientsCards();
         updatePaginationInfoCards();
         renderPaginationNavCards();
@@ -4630,8 +4658,16 @@ function renderPatientsCards() {
             ? 'bg-pink' 
             : (patient.gender === 'Male' ? 'bg-primary' : 'bg-secondary');
         
+        // Get card size from localStorage for cards view
+        const cardSize = localStorage.getItem('cardsViewCardSize') || 'small';
+        const sizeClass = {
+            small: 'col-md-6 col-lg-4 col-xl-3',
+            medium: 'col-md-4 col-lg-3',
+            large: 'col-md-3 col-lg-2'
+        }[cardSize] || 'col-md-6 col-lg-4 col-xl-3';
+        
         html += `
-            <div class="col-md-4 col-lg-3 mb-3">
+            <div class="${sizeClass} mb-3">
                 <div class="card patient-card clickable h-100" 
                      style="border: 1px solid var(--border); cursor: pointer;" 
                      onclick="viewPatient(${patient.id})">
@@ -4860,6 +4896,7 @@ function changePage(page) {
         updatePaginationInfo();
         renderPaginationNav();
     } else if (currentViewMode === 'cards') {
+        initCardSizeCards(); // Initialize card size for cards view
         renderPatientsCards();
         updatePaginationInfoCards();
         renderPaginationNavCards();
@@ -4965,8 +5002,10 @@ function loadFolders(skipRender = false) {
                 renderFoldersView();
             }
             
-            // Initialize filter manager
-            initFilterManager();
+            // Initialize filter manager (with delay to ensure DOM is ready)
+            setTimeout(() => {
+                initFilterManager();
+            }, 50);
         }
         return data;
     })
@@ -5353,6 +5392,7 @@ function renderFolderCard(folder, isSystem) {
 let currentFolderId = null;
 let currentFolderName = null;
 let currentFolderType = null; // 'system' or 'custom'
+let currentFolderAbortController = null; // For request cancellation
 
 // Folder path stack for breadcrumb tracking
 let folderPathStack = []; // [{id, name, type}, ...]
@@ -5365,6 +5405,13 @@ let selectionMode = false; // Whether selection mode is active
 function openFolder(folderId) {
     // Return a Promise for async handling
     return new Promise((resolve, reject) => {
+        // Cancel previous request
+        if (currentFolderAbortController) {
+            currentFolderAbortController.abort();
+        }
+        
+        currentFolderAbortController = new AbortController();
+        
         currentFolderId = folderId;
 
         // Determine folder type and get folder info
@@ -5540,7 +5587,8 @@ function openFolder(folderId) {
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
             'Content-Type': 'application/json'
-        }
+        },
+        signal: currentFolderAbortController.signal
     })
     .then(response => response.json())
     .then(data => {
@@ -5701,8 +5749,10 @@ function openFolder(folderId) {
                 }
             }
             
-            // Initialize filter manager if not already initialized
-            initFilterManager();
+            // Initialize filter manager if not already initialized (with delay to ensure DOM is ready)
+            setTimeout(() => {
+                initFilterManager();
+            }, 50);
             
             // Render patients
             if (data.patients) {
@@ -5737,6 +5787,10 @@ function openFolder(folderId) {
         }
     })
     .catch(error => {
+        if (error.name === 'AbortError') {
+            console.log('Request aborted');
+            return;
+        }
         console.error('Error loading folder patients:', error);
         reject(error);
     });
@@ -6174,7 +6228,7 @@ function performQuickSort(systemFolderId, sortType) {
     });
 }
 
-// Card size management
+// Card size management for folders view
 function setCardSize(size) {
     localStorage.setItem('folderCardSize', size);
     
@@ -6192,9 +6246,33 @@ function setCardSize(size) {
     }
 }
 
+// Card size management for cards view
+function setCardSizeCards(size) {
+    localStorage.setItem('cardsViewCardSize', size);
+    
+    // Update button states
+    document.querySelectorAll('.card-size-btn-cards').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-size') === size) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Re-render patients cards
+    if (currentViewMode === 'cards') {
+        renderPatientsCards();
+    }
+}
+
+// Initialize card size for cards view on load
+function initCardSizeCards() {
+    const savedSize = localStorage.getItem('cardsViewCardSize') || 'small';
+    setCardSizeCards(savedSize);
+}
+
 // Initialize card size on load
 function initCardSize() {
-    const savedSize = localStorage.getItem('folderCardSize') || 'medium';
+    const savedSize = localStorage.getItem('folderCardSize') || 'small';
     setCardSize(savedSize);
 }
 
@@ -6218,12 +6296,12 @@ function renderFolderPatients(patients) {
     }
     
     // Get card size from localStorage
-    const cardSize = localStorage.getItem('folderCardSize') || 'medium';
+    const cardSize = localStorage.getItem('folderCardSize') || 'small';
     const sizeClass = {
         small: 'col-md-6 col-lg-4 col-xl-3',
         medium: 'col-md-4 col-lg-3',
         large: 'col-md-3 col-lg-2'
-    }[cardSize] || 'col-md-4 col-lg-3';
+    }[cardSize] || 'col-md-6 col-lg-4 col-xl-3';
     
     let html = '';
     
@@ -6262,10 +6340,11 @@ function renderFolderPatients(patients) {
         
         html += `
             <div class="${sizeClass} mb-3">
-                <div class="card patient-card clickable h-100 ${selectionMode ? 'patient-card-selectable' : ''}" 
-                     style="border: 1px solid var(--border); cursor: pointer; position: relative;" 
-                     onclick="if (!selectionMode) viewPatient(${patient.id})"
-                     data-patient-id="${patient.id}">
+                <div class="card patient-card clickable h-100 ${colorMarker ? 'patient-card-has-marker' : ''} ${selectionMode ? 'patient-card-selectable' : ''}" 
+                     data-patient-id="${patient.id}"
+                     data-has-color-marker="${colorMarker ? 'true' : 'false'}"
+                     style="${colorMarker ? `--marker-color: ${colorMarker}; --marker-color-rgb: ${hexToRgb(colorMarker)};` : ''} border: ${colorMarker ? `2px solid ${colorMarker}` : '1px solid var(--border)'}; cursor: pointer; position: relative;" 
+                     onclick="if (!selectionMode) viewPatient(${patient.id})">
                     ${selectionMode ? `
                         <div class="position-absolute top-0 start-0 m-2" style="z-index: 10;" onclick="event.stopPropagation();">
                             <input type="checkbox" 
@@ -6437,7 +6516,17 @@ function renderFolderPatients(patients) {
         `;
     });
     
-    container.innerHTML = html;
+    // Use DocumentFragment for better performance
+    const fragment = document.createDocumentFragment();
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    while (tempDiv.firstChild) {
+        fragment.appendChild(tempDiv.firstChild);
+    }
+    
+    container.innerHTML = '';
+    container.appendChild(fragment);
     
     // Initialize lazy loading for images
     initLazyLoading();
@@ -6477,6 +6566,7 @@ async function fetchColorMarkersForPatients(patients) {
                 if (card) {
                     const marker = card.querySelector('.patient-color-marker');
                     const markerAdd = card.querySelector('.patient-color-marker-add');
+                    
                     if (data.color_code) {
                         if (markerAdd) markerAdd.remove();
                         if (!marker) {
@@ -6489,6 +6579,13 @@ async function fetchColorMarkersForPatients(patients) {
                         } else {
                             marker.style.background = data.color_code;
                         }
+                        
+                        // Update card border and glow
+                        card.setAttribute('data-has-color-marker', 'true');
+                        card.classList.add('patient-card-has-marker');
+                        card.style.setProperty('--marker-color', data.color_code);
+                        card.style.setProperty('--marker-color-rgb', hexToRgb(data.color_code));
+                        card.style.border = `2px solid ${data.color_code}`;
                     } else {
                         if (marker) marker.remove();
                         if (!markerAdd) {
@@ -6499,6 +6596,12 @@ async function fetchColorMarkersForPatients(patients) {
                             markerAddDiv.innerHTML = '<i class="bi bi-plus-lg"></i>';
                             card.appendChild(markerAddDiv);
                         }
+                        // Remove card styling
+                        card.setAttribute('data-has-color-marker', 'false');
+                        card.classList.remove('patient-card-has-marker');
+                        card.style.removeProperty('--marker-color');
+                        card.style.removeProperty('--marker-color-rgb');
+                        card.style.border = '1px solid var(--border)';
                     }
                 }
             }
@@ -6954,6 +7057,8 @@ class FilterManager {
         this.container = document.getElementById(containerId);
         if (!this.container) {
             console.warn(`FilterManager: Container ${containerId} not found`);
+            // Don't return, just set container to null to prevent errors
+            this.container = null;
             return;
         }
         
@@ -7319,8 +7424,19 @@ let filterManager = null;
 
 // Initialize filter manager when folders view is active
 function initFilterManager() {
-    if (currentViewMode === 'folders' && !filterManager) {
+    // Always try to initialize if sidebarFilters exists, regardless of currentViewMode check
+    // The view mode check might not be set correctly at initialization time
+    const sidebarFilters = document.getElementById('sidebarFilters');
+    if (sidebarFilters && !filterManager) {
         filterManager = new FilterManager('sidebarFilters');
+    } else if (!sidebarFilters && !filterManager) {
+        // Retry after a short delay if element is not yet available
+        setTimeout(() => {
+            const retryElement = document.getElementById('sidebarFilters');
+            if (retryElement && !filterManager) {
+                filterManager = new FilterManager('sidebarFilters');
+            }
+        }, 200);
     }
 }
 

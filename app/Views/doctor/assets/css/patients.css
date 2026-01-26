@@ -5390,6 +5390,8 @@ div.card.folder-card[style*="linear-gradient"] {
     flex: 1;
     overflow-y: auto;
     padding: 12px;
+    display: flex;
+    flex-direction: column;
 }
 
 .treeview-list {
@@ -5503,6 +5505,8 @@ div.card.folder-card[style*="linear-gradient"] {
 .sidebar-filters {
     border-top: 1px solid var(--border);
     padding: 12px;
+    margin-top: auto;
+    flex-shrink: 0;
     max-height: 400px;
     overflow-y: auto;
 }
@@ -5734,6 +5738,55 @@ div.card.folder-card[style*="linear-gradient"] {
 .dark-theme .patient-color-marker-add:hover i {
     color: #a78bfa;
     text-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
+}
+
+/* Patient Cards with Color Markers - Border and Glow */
+.patient-card-has-marker,
+.patient-card[data-has-color-marker="true"] {
+    border: 2px solid var(--marker-color, var(--border)) !important;
+    box-shadow: 0 0 0 1px var(--marker-color, transparent),
+                0 2px 8px rgba(0, 0, 0, 0.1),
+                0 0 12px rgba(var(--marker-color-rgb, 0, 0, 0), 0.4) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.patient-card-has-marker::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    padding: 2px;
+    background: var(--marker-color, transparent);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, 
+                   linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.2;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.patient-card-has-marker:hover {
+    box-shadow: 0 0 0 2px var(--marker-color, transparent),
+                0 4px 16px rgba(0, 0, 0, 0.15),
+                0 0 20px rgba(var(--marker-color-rgb, 0, 0, 0), 0.6) !important;
+    transform: translateY(-2px);
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .patient-card-has-marker,
+.dark-theme .patient-card-has-marker {
+    box-shadow: 0 0 0 1px var(--marker-color, transparent),
+                0 2px 8px rgba(0, 0, 0, 0.3),
+                0 0 16px rgba(var(--marker-color-rgb, 0, 0, 0), 0.5) !important;
+}
+
+[data-theme="dark"] .patient-card-has-marker:hover,
+.dark-theme .patient-card-has-marker:hover {
+    box-shadow: 0 0 0 2px var(--marker-color, transparent),
+                0 4px 20px rgba(0, 0, 0, 0.4),
+                0 0 24px rgba(var(--marker-color-rgb, 0, 0, 0), 0.7) !important;
 }
 
 /* Patient Tags */

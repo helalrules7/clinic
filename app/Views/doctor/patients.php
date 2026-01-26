@@ -575,6 +575,32 @@
         </div>
     </div>
     <div class="card-body">
+        <!-- Card Size Toggle for Cards View -->
+        <div class="d-flex justify-content-end mb-3">
+            <div class="btn-group btn-group-sm" role="group" id="cardSizeToggleCards" title="Card Size">
+                <button type="button" 
+                        class="btn btn-outline-secondary card-size-btn-cards" 
+                        data-size="small"
+                        onclick="setCardSizeCards('small')"
+                        title="Large Cards">
+                    <i class="bi bi-grid"></i>
+                </button>
+                <button type="button" 
+                        class="btn btn-outline-secondary card-size-btn-cards" 
+                        data-size="medium"
+                        onclick="setCardSizeCards('medium')"
+                        title="Medium Cards">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                </button>
+                <button type="button" 
+                        class="btn btn-outline-secondary card-size-btn-cards active" 
+                        data-size="large"
+                        onclick="setCardSizeCards('large')"
+                        title="Small Cards">
+                    <i class="bi bi-grid-3x3"></i>
+                </button>
+            </div>
+        </div>
         <div id="patientsCardsContainer" class="row g-3">
             <!-- Cards will be rendered here by JavaScript -->
         </div>
@@ -648,14 +674,14 @@
                     <!-- Card Size Toggle -->
                     <div class="btn-group btn-group-sm" role="group" id="cardSizeToggle" title="Card Size">
                         <button type="button" 
-                                class="btn btn-outline-secondary card-size-btn" 
+                                class="btn btn-outline-secondary card-size-btn active" 
                                 data-size="small"
                                 onclick="setCardSize('small')"
-                                title="Small Cards">
-                            <i class="bi bi-grid-3x3"></i>
+                                title="Large Cards">
+                            <i class="bi bi-grid"></i>
                         </button>
                         <button type="button" 
-                                class="btn btn-outline-secondary card-size-btn active" 
+                                class="btn btn-outline-secondary card-size-btn" 
                                 data-size="medium"
                                 onclick="setCardSize('medium')"
                                 title="Medium Cards">
@@ -665,8 +691,8 @@
                                 class="btn btn-outline-secondary card-size-btn" 
                                 data-size="large"
                                 onclick="setCardSize('large')"
-                                title="Large Cards">
-                            <i class="bi bi-grid"></i>
+                                title="Small Cards">
+                            <i class="bi bi-grid-3x3"></i>
                         </button>
                     </div>
                 </div>
@@ -690,11 +716,11 @@
                 <!-- Treeview Container -->
                 <div class="treeview-container" id="folderTreeview">
                     <!-- Treeview will be rendered here by JavaScript -->
-                </div>
-                
-                <!-- Filters Section -->
-                <div class="sidebar-filters" id="sidebarFilters">
-                    <!-- Filters will be added in Phase 5 -->
+                    
+                    <!-- Filters Section - moved inside treeview-container -->
+                    <div class="sidebar-filters" id="sidebarFilters">
+                        <!-- Filters will be added by FilterManager -->
+                    </div>
                 </div>
             </aside>
             
