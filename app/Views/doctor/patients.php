@@ -742,6 +742,21 @@
                     <!-- Sub-folders -->
                     <div id="subFoldersContainer" class="mb-3"></div>
                     
+                    <!-- Per Page Selector -->
+                    <div class="d-flex justify-content-end align-items-center mb-3" id="folderPerPageSelectorContainer">
+                        <label for="folderItemsPerPageSelector" class="text-muted small me-2 mb-0">Per page:</label>
+                        <select id="folderItemsPerPageSelector" 
+                                class="form-select form-select-sm" 
+                                style="width: auto;"
+                                onchange="changeFolderItemsPerPage(this.value)">
+                            <option value="12">12</option>
+                            <option value="24">24</option>
+                            <option value="36" selected>36</option>
+                            <option value="48">48</option>
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    
                     <!-- Patients -->
                     <div id="folderPatientsContainer" class="row g-3"></div>
                     

@@ -90,7 +90,7 @@ let paginationState = {
 // Pagination state for folders view
 let folderPaginationState = {
     currentPage: 1,
-    itemsPerPage: 36, // Default 36 per page
+    itemsPerPage: parseInt(localStorage.getItem('folderItemsPerPage')) || 36, // Default 36 per page
     totalItems: 0,
     filteredPatients: []
 };
@@ -3492,11 +3492,6 @@ function performBulkDeleteFolders() {
         return parseInt(id);
     }).filter(id => !id.toString().startsWith('system_')); // Only custom folders can be deleted
     
-    console.log('Bulk Delete - Selected folders:', selectedFolders);
-    console.log('Bulk Delete - Folder IDs to delete:', folderIdsToDelete);
-    console.log('Bulk Delete - Request URL: /api/patient-folders/bulk');
-    console.log('Bulk Delete - Request body:', JSON.stringify({ folder_ids: folderIdsToDelete }));
-    
     fetch('/api/patient-folders/bulk', {
         method: 'DELETE',
         headers: {
@@ -4926,13 +4921,35 @@ function changeFolderPage(page) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// Change items per page for folders view
+function changeFolderItemsPerPage(newLimit) {
+    if (newLimit === 'all') {
+        folderPaginationState.itemsPerPage = 'all';
+    } else {
+        folderPaginationState.itemsPerPage = parseInt(newLimit);
+    }
+    folderPaginationState.currentPage = 1;
+    
+    // Save to localStorage
+    localStorage.setItem('folderItemsPerPage', folderPaginationState.itemsPerPage.toString());
+    
+    if (currentFolderPatients && currentFolderPatients.length > 0) {
+        renderFolderPatients(folderPaginationState.filteredPatients);
+    }
+}
+
 // Render pagination navigation for folders view
 function renderFolderPaginationNav() {
     const { currentPage, itemsPerPage, filteredPatients } = folderPaginationState;
-    const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
+    const totalPages = (itemsPerPage === 'all' || itemsPerPage >= filteredPatients.length) ? 1 : Math.ceil(filteredPatients.length / itemsPerPage);
+    
     const nav = document.getElementById('folderPaginationNav');
     
-    if (!nav) return;
+    if (!nav) {
+
+        return;
+    }
+    
     
     if (totalPages <= 1) {
         nav.innerHTML = '';
@@ -4986,16 +5003,32 @@ function updateFolderPaginationInfo() {
     const endIndex = Math.min(startIndex + itemsPerPage, filteredPatients.length);
     const info = document.getElementById('folderPaginationInfo');
     
-    if (info) {
+    if (!info) {
+        console.warn('[Pagination] folderPaginationInfo element not found in DOM');
+        return;
+    }
+    
+    if (filteredPatients.length > 0) {
+        const actualEndIndex = (itemsPerPage === 'all' || itemsPerPage >= filteredPatients.length) ? filteredPatients.length : endIndex;
+        const actualStartIndex = (itemsPerPage === 'all' || itemsPerPage >= filteredPatients.length) ? 1 : startIndex + 1;
+        
         info.innerHTML = `
             <div class="text-center text-muted">
                 <small>
-                    Showing <span id="folderShowingFrom">${startIndex + 1}</span> to 
-                    <span id="folderShowingTo">${endIndex}</span> of 
+                    Showing <span id="folderShowingFrom">${actualStartIndex}</span> to 
+                    <span id="folderShowingTo">${actualEndIndex}</span> of 
                     <span id="folderTotalPatients">${filteredPatients.length}</span> patients
                 </small>
             </div>
         `;
+        
+        // Update per page selector at top
+        const perPageSelector = document.getElementById('folderItemsPerPageSelector');
+        if (perPageSelector) {
+            perPageSelector.value = (itemsPerPage === 'all' || itemsPerPage >= filteredPatients.length) ? 'all' : itemsPerPage.toString();
+        }
+    } else {
+        info.innerHTML = '';
     }
 }
 
@@ -5852,6 +5885,11 @@ function openFolder(folderId) {
                 folderPaginationState.filteredPatients = data.patients;
                 folderPaginationState.currentPage = 1;
                 renderFolderPatients(data.patients);
+                // Ensure pagination is rendered after DOM update
+                setTimeout(() => {
+                    renderFolderPaginationNav();
+                    updateFolderPaginationInfo();
+                }, 100);
             }
             
             // Apply current search filter if any
@@ -5883,7 +5921,6 @@ function openFolder(folderId) {
     })
     .catch(error => {
         if (error.name === 'AbortError') {
-            console.log('Request aborted');
             return;
         }
         console.error('Error loading folder patients:', error);
@@ -5965,6 +6002,11 @@ function filterFolderContent(searchTerm) {
         folderPaginationState.filteredPatients = filteredPatients;
         folderPaginationState.currentPage = 1;
         renderFolderPatients(filteredPatients);
+        // Ensure pagination is rendered after DOM update
+        setTimeout(() => {
+            renderFolderPaginationNav();
+            updateFolderPaginationInfo();
+        }, 100);
     }
     
     // Filter subfolders
@@ -6403,9 +6445,15 @@ function renderFolderPatients(patients) {
     
     // Calculate pagination
     const { currentPage, itemsPerPage } = folderPaginationState;
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = Math.min(startIndex + itemsPerPage, patients.length);
-    const patientsToShow = patients.slice(startIndex, endIndex);
+    let startIndex, endIndex, patientsToShow;
+    
+    if (itemsPerPage === 'all' || itemsPerPage >= patients.length) {
+        patientsToShow = patients;
+    } else {
+        startIndex = (currentPage - 1) * itemsPerPage;
+        endIndex = Math.min(startIndex + itemsPerPage, patients.length);
+        patientsToShow = patients.slice(startIndex, endIndex);
+    }
     
     // Get card size from localStorage
     const cardSize = localStorage.getItem('folderCardSize') || 'small';
@@ -6571,6 +6619,9 @@ function renderFolderPatients(patients) {
                                 </small>
                             </div>
                             
+                            <!-- Patient Tags -->
+                            <div class="mb-2" id="patientTags_${patient.id}"></div>
+                            
                             <!-- Quick Actions -->
                             <div class="d-flex gap-1 justify-content-end mt-2 pt-2 border-top" onclick="event.stopPropagation();">
                                 <a href="/doctor/patients/${patient.id}" 
@@ -6654,9 +6705,18 @@ function renderFolderPatients(patients) {
     // Fetch tags for all patients (only for current page)
     fetchTagsForPatients(patientsToShow);
     
-    // Render pagination
-    renderFolderPaginationNav();
-    updateFolderPaginationInfo();
+    // Update per page selector
+    const perPageSelector = document.getElementById('folderItemsPerPageSelector');
+    if (perPageSelector) {
+        const { itemsPerPage } = folderPaginationState;
+        perPageSelector.value = (itemsPerPage === 'all' || itemsPerPage >= patients.length) ? 'all' : itemsPerPage.toString();
+    }
+    
+    // Render pagination (use setTimeout to ensure DOM is ready)
+    setTimeout(() => {
+        renderFolderPaginationNav();
+        updateFolderPaginationInfo();
+    }, 100);
 }
 
 // Fetch color markers for patients
@@ -6955,7 +7015,7 @@ async function fetchTagsForPatients(patients) {
                     }
                     tagsHtml += `
                         <button class="btn btn-sm btn-link p-0 add-tag-btn" 
-                                style="font-size: 0.75rem; color: var(--muted);"
+                                style="font-size: 0.75rem; color: var(--text);"
                                 onclick="event.stopPropagation(); showTagManagementModal(${patient.id})"
                                 title="Add tag">
                             <i class="bi bi-plus-circle me-1"></i>Add Tag
@@ -7165,7 +7225,7 @@ function removeTagFromPatient(patientId, tagId) {
                 }
                 tagsHtml += `
                     <button class="btn btn-sm btn-link p-0 add-tag-btn" 
-                            style="font-size: 0.75rem; color: var(--muted);"
+                            style="font-size: 0.75rem; color: var(--text);"
                             onclick="event.stopPropagation(); showTagManagementModal(${patientId})"
                             title="Add tag">
                         <i class="bi bi-plus-circle me-1"></i>Add Tag

@@ -5502,9 +5502,9 @@ div.card.folder-card[style*="linear-gradient"] {
 /* Filters */
 .sidebar-filters {
     border-top: 1px solid var(--border);
-    padding: 12px;
+    padding: 8px;
     margin-bottom: 1rem;
-    max-height: 400px;
+    max-height: 250px;
     overflow-y: auto;
 }
 
@@ -5512,7 +5512,7 @@ div.card.folder-card[style*="linear-gradient"] {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
 .filters-header h6 {
@@ -5522,10 +5522,18 @@ div.card.folder-card[style*="linear-gradient"] {
     color: var(--text);
 }
 
-.filters-content {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px;
+.sidebar-filters .filters-content {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+}
+
+.sidebar-filters .filters-content .filter-section {
+    flex: 1 1 calc(20% - 10px) !important;
+    min-width: 180px !important;
+    max-width: 100% !important;
+    margin-bottom: 0 !important;
 }
 
 .filter-section {
@@ -5548,9 +5556,9 @@ div.card.folder-card[style*="linear-gradient"] {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 12px;
+    padding: 8px 10px;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 500;
     color: var(--text);
     transition: background 0.2s ease;
@@ -5570,7 +5578,7 @@ div.card.folder-card[style*="linear-gradient"] {
 }
 
 .filter-body {
-    padding: 12px;
+    padding: 8px 10px;
     background: var(--card);
 }
 
