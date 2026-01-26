@@ -350,7 +350,7 @@
         </div>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive" style="max-height: calc(100vh); overflow-y: auto; overflow-x: auto;">
+        <div class="table-responsive" style="max-height: calc(100vh); overflow-x: auto;">
             <table class="table table-hover mb-0">
                 <thead class="table-dark">
                     <tr>
@@ -575,6 +575,32 @@
         </div>
     </div>
     <div class="card-body">
+        <!-- Filters Section for Cards View -->
+        <div class="sidebar-filters mb-3" id="cardsFilters">
+            <!-- Filters will be added by FilterManager -->
+        </div>
+        
+        <!-- Quick Search for Cards View -->
+        <div class="mb-3 cards-search-container">
+            <label for="cardsSearchInput" class="form-label small text-muted mb-2">
+                <i class="bi bi-search me-1"></i>Quick Search
+            </label>
+            <div class="input-group">
+                <input type="text" 
+                       id="cardsSearchInput" 
+                       class="form-control cards-search-input" 
+                       placeholder="Search patients by name, phone, or ID..."
+                       autocomplete="off">
+                <button class="btn btn-outline-secondary" 
+                        type="button" 
+                        id="clearCardsSearch"
+                        style="display: none;"
+                        title="Clear search">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+        
         <!-- Card Size Toggle for Cards View -->
         <div class="d-flex justify-content-end mb-3">
             <div class="btn-group btn-group-sm" role="group" id="cardSizeToggleCards" title="Card Size">

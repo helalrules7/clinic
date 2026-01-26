@@ -892,6 +892,10 @@ function switchViewMode(mode, saveToStorage = true) {
             updatePaginationInfoCards();
             renderPaginationNavCards();
             stopFoldersAutoRefresh();
+            setTimeout(() => {
+                initCardsFilterManager();
+                initCardsSearch();
+            }, 50);
             break;
         case 'folders':
             document.getElementById('patientsFoldersCard').style.display = 'block';
@@ -4661,6 +4665,9 @@ function renderPatientsCards() {
             ? 'bg-pink' 
             : (patient.gender === 'Male' ? 'bg-primary' : 'bg-secondary');
         
+        // Get color marker (will be fetched and cached)
+        const colorMarker = patient.color_marker || null;
+        
         // Get card size from localStorage for cards view
         const cardSize = localStorage.getItem('cardsViewCardSize') || 'small';
         const sizeClass = {
@@ -4671,9 +4678,23 @@ function renderPatientsCards() {
         
         html += `
             <div class="${sizeClass} mb-3">
-                <div class="card patient-card clickable h-100" 
-                     style="border: 1px solid var(--border); cursor: pointer;" 
+                <div class="card patient-card clickable h-100 ${colorMarker ? 'patient-card-has-marker' : ''}" 
+                     data-patient-id="${patient.id}"
+                     data-has-color-marker="${colorMarker ? 'true' : 'false'}"
+                     style="${colorMarker ? `--marker-color: ${colorMarker}; --marker-color-rgb: ${hexToRgb(colorMarker)};` : ''} border: ${colorMarker ? `2px solid ${colorMarker}` : '1px solid var(--border)'}; cursor: pointer; position: relative;" 
                      onclick="viewPatient(${patient.id})">
+                    ${colorMarker ? `
+                        <div class="patient-color-marker" 
+                             style="position: absolute; top: 8px; right: 8px; width: 12px; height: 12px; border-radius: 50%; background: ${colorMarker}; border: 2px solid white; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"
+                             onclick="event.stopPropagation(); showColorMarkerModal(${patient.id}, '${colorMarker}')"
+                             title="Click to change color marker"></div>
+                    ` : `
+                        <div class="patient-color-marker-add" 
+                             onclick="event.stopPropagation(); showColorMarkerModal(${patient.id}, null)"
+                             title="Click to add color marker">
+                            <i class="bi bi-plus-lg"></i>
+                        </div>
+                    `}
                     <!-- Patient Image -->
                     <div class="position-relative patient-card-image-container" style="height: 200px; overflow: hidden; background: var(--bg-alt);">
                         ${imageUrl ? `
@@ -4765,6 +4786,9 @@ function renderPatientsCards() {
                                 </small>
                             </div>
                             
+                            <!-- Patient Tags -->
+                            <div class="mb-2" id="patientTags_${patient.id}"></div>
+                            
                             <!-- Quick Actions -->
                             <div class="d-flex gap-1 justify-content-end mt-2 pt-2 border-top" onclick="event.stopPropagation();">
                                 <a href="/doctor/patients/${patient.id}" 
@@ -4813,6 +4837,12 @@ function renderPatientsCards() {
     setTimeout(() => {
         refreshTooltips();
     }, 100);
+    
+    // Fetch color markers for all patients (only for current page)
+    fetchColorMarkersForPatients(patientsToShow);
+    
+    // Fetch tags for all patients (only for current page)
+    fetchTagsForPatients(patientsToShow);
 }
 
 // Update pagination info for cards
@@ -5968,6 +5998,82 @@ function setupFolderSearch() {
             searchInput.value = '';
             this.style.display = 'none';
             filterFolderContent('');
+        });
+    }
+}
+
+// Filter cards view content by search term
+function filterCardsContent(searchTerm) {
+    if (!searchTerm) {
+        // Show all - restore original data
+        paginationState.filteredPatients = [...paginationState.allPatients];
+        renderPatientsCards();
+        updatePaginationInfoCards();
+        renderPaginationNavCards();
+        
+        // Apply additional filters if cardsFilterManager exists
+        if (cardsFilterManager) {
+            cardsFilterManager.applyFilters(paginationState.allPatients);
+        }
+        return;
+    }
+    
+    const term = searchTerm.toLowerCase().trim();
+    const filtered = paginationState.allPatients.filter(patient => {
+        const firstName = (patient.first_name || '').toLowerCase();
+        const lastName = (patient.last_name || '').toLowerCase();
+        const fullName = `${firstName} ${lastName}`.trim();
+        const phone = (patient.phone || '').toLowerCase();
+        const id = patient.id ? patient.id.toString() : '';
+        
+        return fullName.includes(term) || 
+               phone.includes(term) || 
+               id.includes(term);
+    });
+    
+    paginationState.filteredPatients = filtered;
+    paginationState.currentPage = 1;
+    
+    // Apply additional filters if cardsFilterManager exists
+    if (cardsFilterManager) {
+        cardsFilterManager.applyFilters(filtered);
+    } else {
+        renderPatientsCards();
+        updatePaginationInfoCards();
+        renderPaginationNavCards();
+    }
+}
+
+// Initialize cards search
+function initCardsSearch() {
+    const searchInput = document.getElementById('cardsSearchInput');
+    const clearBtn = document.getElementById('clearCardsSearch');
+    
+    if (!searchInput) return;
+    
+    let cardsSearchTimeout = null;
+    
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.trim();
+        
+        if (clearBtn) {
+            clearBtn.style.display = searchTerm ? 'block' : 'none';
+        }
+        
+        if (cardsSearchTimeout) {
+            clearTimeout(cardsSearchTimeout);
+        }
+        
+        cardsSearchTimeout = setTimeout(() => {
+            filterCardsContent(searchTerm);
+        }, 300);
+    });
+    
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            this.style.display = 'none';
+            filterCardsContent('');
         });
     }
 }
@@ -7246,7 +7352,7 @@ function removeTagFromPatient(patientId, tagId) {
 // FilterManager Class
 // ============================================
 class FilterManager {
-    constructor(containerId) {
+    constructor(containerId, mode = 'folder') {
         this.container = document.getElementById(containerId);
         if (!this.container) {
             console.warn(`FilterManager: Container ${containerId} not found`);
@@ -7254,6 +7360,8 @@ class FilterManager {
             this.container = null;
             return;
         }
+        
+        this.mode = mode; // 'folder' or 'cards'
         
         this.filters = {
             colors: [],
@@ -7275,7 +7383,7 @@ class FilterManager {
                     <i class="bi bi-funnel me-2"></i>
                     Filters
                 </h6>
-                <button class="btn btn-sm btn-link p-0" onclick="filterManager.clearFilters()" title="Clear all filters">
+                <button class="btn btn-sm btn-link p-0" onclick="${this.mode === 'cards' ? 'cardsFilterManager' : 'filterManager'}.clearFilters()" title="Clear all filters">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
@@ -7287,7 +7395,7 @@ class FilterManager {
                         <i class="bi bi-chevron-down"></i>
                     </div>
                     <div class="filter-body">
-                        <div class="color-filter-grid" id="colorFilterGrid">
+                        <div class="color-filter-grid" id="${this.mode === 'cards' ? 'cards' : 'folder'}ColorFilterGrid">
                             <!-- Colors will be added here -->
                         </div>
                     </div>
@@ -7300,7 +7408,7 @@ class FilterManager {
                         <i class="bi bi-chevron-down"></i>
                     </div>
                     <div class="filter-body">
-                        <div class="tag-filter-list" id="tagFilterList">
+                        <div class="tag-filter-list" id="${this.mode === 'cards' ? 'cards' : 'folder'}TagFilterList">
                             <!-- Tags will be added here -->
                         </div>
                     </div>
@@ -7315,11 +7423,11 @@ class FilterManager {
                     <div class="filter-body">
                         <div class="mb-2">
                             <label class="form-label small">From</label>
-                            <input type="date" class="form-control form-control-sm" id="dateCreatedFrom" onchange="filterManager.setDateCreated('from', this.value)">
+                            <input type="date" class="form-control form-control-sm" id="${this.mode === 'cards' ? 'cards' : 'folder'}DateCreatedFrom" onchange="${this.mode === 'cards' ? 'cardsFilterManager' : 'filterManager'}.setDateCreated('from', this.value)">
                         </div>
                         <div>
                             <label class="form-label small">To</label>
-                            <input type="date" class="form-control form-control-sm" id="dateCreatedTo" onchange="filterManager.setDateCreated('to', this.value)">
+                            <input type="date" class="form-control form-control-sm" id="${this.mode === 'cards' ? 'cards' : 'folder'}DateCreatedTo" onchange="${this.mode === 'cards' ? 'cardsFilterManager' : 'filterManager'}.setDateCreated('to', this.value)">
                         </div>
                     </div>
                 </div>
@@ -7331,7 +7439,7 @@ class FilterManager {
                         <i class="bi bi-chevron-down"></i>
                     </div>
                     <div class="filter-body">
-                        <select class="form-select form-select-sm" id="genderFilter" onchange="filterManager.setGender(this.value)">
+                        <select class="form-select form-select-sm" id="${this.mode === 'cards' ? 'cards' : 'folder'}GenderFilter" onchange="${this.mode === 'cards' ? 'cardsFilterManager' : 'filterManager'}.setGender(this.value)">
                             <option value="">All</option>
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
@@ -7348,11 +7456,11 @@ class FilterManager {
                     <div class="filter-body">
                         <div class="mb-2">
                             <label class="form-label small">Min</label>
-                            <input type="number" class="form-control form-control-sm" id="ageMin" min="0" max="150" placeholder="Min age" onchange="filterManager.setAge('min', this.value)">
+                            <input type="number" class="form-control form-control-sm" id="${this.mode === 'cards' ? 'cards' : 'folder'}AgeMin" min="0" max="150" placeholder="Min age" onchange="${this.mode === 'cards' ? 'cardsFilterManager' : 'filterManager'}.setAge('min', this.value)">
                         </div>
                         <div>
                             <label class="form-label small">Max</label>
-                            <input type="number" class="form-control form-control-sm" id="ageMax" min="0" max="150" placeholder="Max age" onchange="filterManager.setAge('max', this.value)">
+                            <input type="number" class="form-control form-control-sm" id="${this.mode === 'cards' ? 'cards' : 'folder'}AgeMax" min="0" max="150" placeholder="Max age" onchange="${this.mode === 'cards' ? 'cardsFilterManager' : 'filterManager'}.setAge('max', this.value)">
                         </div>
                     </div>
                 </div>
@@ -7369,7 +7477,8 @@ class FilterManager {
     }
     
     initColorFilter() {
-        const grid = document.getElementById('colorFilterGrid');
+        const gridId = this.mode === 'cards' ? 'cardsColorFilterGrid' : 'folderColorFilterGrid';
+        const grid = document.getElementById(gridId);
         if (!grid) return;
         
         const colors = [
@@ -7400,7 +7509,8 @@ class FilterManager {
     }
     
     async initTagFilter() {
-        const list = document.getElementById('tagFilterList');
+        const listId = this.mode === 'cards' ? 'cardsTagFilterList' : 'folderTagFilterList';
+        const list = document.getElementById(listId);
         if (!list) return;
         
         try {
@@ -7425,7 +7535,7 @@ class FilterManager {
                         tagItem.innerHTML = `
                             <input type="checkbox" 
                                    class="form-check-input me-2" 
-                                   onchange="filterManager.toggleTagFilter(${tag.id}, this.checked)">
+                                   onchange="${this.mode === 'cards' ? 'cardsFilterManager' : 'filterManager'}.toggleTagFilter(${tag.id}, this.checked)">
                             <span class="badge" style="background: ${tag.color || '#6366f1'};">
                                 ${tag.icon ? `<i class="bi ${tag.icon} me-1"></i>` : ''}
                                 ${this.escapeHtml(tag.name)}
@@ -7496,7 +7606,11 @@ class FilterManager {
     
     applyFilters(patients) {
         if (!patients) {
-            patients = currentFolderPatients || [];
+            if (this.mode === 'cards') {
+                patients = paginationState.allPatients || [];
+            } else {
+                patients = currentFolderPatients || [];
+            }
         }
         
         let filtered = [...patients];
@@ -7552,8 +7666,16 @@ class FilterManager {
             });
         }
         
-        // Render filtered patients
-        renderFolderPatients(filtered);
+        // Render filtered patients based on mode
+        if (this.mode === 'cards') {
+            paginationState.filteredPatients = filtered;
+            paginationState.currentPage = 1;
+            renderPatientsCards();
+            updatePaginationInfoCards();
+            renderPaginationNavCards();
+        } else {
+            renderFolderPatients(filtered);
+        }
         
         return filtered;
     }
@@ -7567,19 +7689,36 @@ class FilterManager {
             age: { min: null, max: null }
         };
         
-        // Reset UI
-        document.getElementById('dateCreatedFrom').value = '';
-        document.getElementById('dateCreatedTo').value = '';
-        document.getElementById('genderFilter').value = '';
-        document.getElementById('ageMin').value = '';
-        document.getElementById('ageMax').value = '';
-        document.querySelectorAll('.color-filter-btn').forEach(btn => {
-            btn.style.borderColor = 'transparent';
-            btn.style.boxShadow = 'none';
-        });
-        document.querySelectorAll('#tagFilterList input[type="checkbox"]').forEach(cb => {
-            cb.checked = false;
-        });
+        // Reset UI with mode-specific IDs
+        const prefix = this.mode === 'cards' ? 'cards' : 'folder';
+        const dateFromEl = document.getElementById(`${prefix}DateCreatedFrom`);
+        const dateToEl = document.getElementById(`${prefix}DateCreatedTo`);
+        const genderEl = document.getElementById(`${prefix}GenderFilter`);
+        const ageMinEl = document.getElementById(`${prefix}AgeMin`);
+        const ageMaxEl = document.getElementById(`${prefix}AgeMax`);
+        const tagListId = `${prefix}TagFilterList`;
+        
+        if (dateFromEl) dateFromEl.value = '';
+        if (dateToEl) dateToEl.value = '';
+        if (genderEl) genderEl.value = '';
+        if (ageMinEl) ageMinEl.value = '';
+        if (ageMaxEl) ageMaxEl.value = '';
+        
+        // Reset color filter buttons within this container
+        if (this.container) {
+            this.container.querySelectorAll('.color-filter-btn').forEach(btn => {
+                btn.style.borderColor = 'transparent';
+                btn.style.boxShadow = 'none';
+            });
+        }
+        
+        // Reset tag checkboxes within this container
+        const tagList = document.getElementById(tagListId);
+        if (tagList) {
+            tagList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+        }
         
         this.updateColorFilterUI();
         this.applyFilters();
@@ -7615,6 +7754,9 @@ class FilterManager {
 // Global filter manager instance
 let filterManager = null;
 
+// Global filter manager instance for cards view
+let cardsFilterManager = null;
+
 // Initialize filter manager when folders view is active
 function initFilterManager() {
     // Always try to initialize if sidebarFilters exists, regardless of currentViewMode check
@@ -7628,6 +7770,21 @@ function initFilterManager() {
             const retryElement = document.getElementById('sidebarFilters');
             if (retryElement && !filterManager) {
                 filterManager = new FilterManager('sidebarFilters');
+            }
+        }, 200);
+    }
+}
+
+// Initialize filter manager for cards view
+function initCardsFilterManager() {
+    const cardsFilters = document.getElementById('cardsFilters');
+    if (cardsFilters && !cardsFilterManager) {
+        cardsFilterManager = new FilterManager('cardsFilters', 'cards');
+    } else if (!cardsFilters && !cardsFilterManager) {
+        setTimeout(() => {
+            const retryElement = document.getElementById('cardsFilters');
+            if (retryElement && !cardsFilterManager) {
+                cardsFilterManager = new FilterManager('cardsFilters', 'cards');
             }
         }, 200);
     }
