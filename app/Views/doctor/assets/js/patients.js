@@ -6733,6 +6733,13 @@ function updatePatientColorMarker(patientId, colorCode) {
                         markerAddDiv.innerHTML = '<i class="bi bi-plus-lg"></i>';
                         card.appendChild(markerAddDiv);
                     }
+                    
+                    // Remove card border and glow styling
+                    card.setAttribute('data-has-color-marker', 'false');
+                    card.classList.remove('patient-card-has-marker');
+                    card.style.removeProperty('--marker-color');
+                    card.style.removeProperty('--marker-color-rgb');
+                    card.style.border = '1px solid var(--border)';
                 }
                 showNotification('Color marker removed', 'success');
             }
@@ -6764,17 +6771,27 @@ function updatePatientColorMarker(patientId, colorCode) {
                 if (card) {
                     const marker = card.querySelector('.patient-color-marker');
                     const markerAdd = card.querySelector('.patient-color-marker-add');
-                    if (markerAdd) markerAdd.remove();
-                    if (marker) {
-                        marker.style.background = colorCode;
-                        marker.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patientId}, '${colorCode}')`);
-                    } else {
-                        const markerDiv = document.createElement('div');
-                        markerDiv.className = 'patient-color-marker';
-                        markerDiv.style.cssText = 'position: absolute; top: 8px; right: 8px; width: 12px; height: 12px; border-radius: 50%; background: ' + colorCode + '; border: 2px solid white; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.2);';
-                        markerDiv.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patientId}, '${colorCode}')`);
-                        markerDiv.setAttribute('title', 'Click to change color marker');
-                        card.appendChild(markerDiv);
+                    
+                    if (colorCode) {
+                        if (markerAdd) markerAdd.remove();
+                        if (!marker) {
+                            const markerDiv = document.createElement('div');
+                            markerDiv.className = 'patient-color-marker';
+                            markerDiv.style.cssText = 'position: absolute; top: 8px; right: 8px; width: 12px; height: 12px; border-radius: 50%; background: ' + colorCode + '; border: 2px solid white; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.2);';
+                            markerDiv.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patientId}, '${colorCode}')`);
+                            markerDiv.setAttribute('title', 'Click to change color marker');
+                            card.appendChild(markerDiv);
+                        } else {
+                            marker.style.background = colorCode;
+                            marker.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patientId}, '${colorCode}')`);
+                        }
+                        
+                        // Update card border and glow styling immediately
+                        card.setAttribute('data-has-color-marker', 'true');
+                        card.classList.add('patient-card-has-marker');
+                        card.style.setProperty('--marker-color', colorCode);
+                        card.style.setProperty('--marker-color-rgb', hexToRgb(colorCode));
+                        card.style.border = `2px solid ${colorCode}`;
                     }
                 }
                 showNotification('Color marker updated', 'success');
