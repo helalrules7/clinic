@@ -1064,13 +1064,43 @@ class DoctorController
                     AND te.event_type = 'Booking' 
                     AND te.event_summary LIKE '%New patient registered%' 
                     ORDER BY te.created_at ASC 
-                    LIMIT 1) as created_by_doctor_name
+                    LIMIT 1) as created_by_doctor_name,
+                   (SELECT pa.id 
+                    FROM patient_attachments pa 
+                    LEFT JOIN appointments a ON pa.appointment_id = a.id
+                    WHERE pa.patient_id = p.id 
+                    AND pa.mime_type LIKE 'image/%'
+                    ORDER BY 
+                        CASE 
+                            WHEN a.id IS NOT NULL 
+                            THEN 0
+                            ELSE 1
+                        END ASC,
+                        CASE 
+                            WHEN a.id IS NOT NULL 
+                            THEN CONCAT(a.date, ' ', COALESCE(a.start_time, '00:00:00'))
+                            ELSE '0000-00-00 00:00:00'
+                        END DESC,
+                        pa.created_at DESC 
+                    LIMIT 1) as latest_attachment_id
             FROM patients p
             LEFT JOIN medical_history mh ON p.id = mh.patient_id
             WHERE p.id = ?
         ");
         $stmt->execute([$id]);
-        return $stmt->fetch();
+        $patient = $stmt->fetch();
+        
+        // Normalize latest_attachment_id
+        if ($patient) {
+            if (!isset($patient['latest_attachment_id'])) {
+                $patient['latest_attachment_id'] = null;
+            }
+            if ($patient['latest_attachment_id'] === '') {
+                $patient['latest_attachment_id'] = null;
+            }
+        }
+        
+        return $patient;
     }
 
     private function getPatientTimeline($patientId)

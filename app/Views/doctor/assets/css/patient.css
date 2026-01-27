@@ -2318,3 +2318,208 @@ div.form-text {
         margin-right: 0 !important;
     }
 }
+
+/* ============================================
+   New Patient Profile Header Styles
+   ============================================ */
+
+.patient-profile-header-wrapper {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    min-height: 200px;
+    /* No background on wrapper - let image show through */
+    background: transparent;
+}
+
+.dark .patient-profile-header-wrapper {
+    background: transparent;
+}
+
+.patient-profile-header-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    /* Full opacity for image visibility */
+    opacity: 1;
+    z-index: 1;
+}
+
+.patient-profile-header-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Glassmorphism: semi-transparent gradient with backdrop blur */
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.65) 0%, rgba(118, 75, 162, 0.65) 100%);
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    z-index: 2;
+    /* Ensure smooth transitions */
+    transition: background 0.3s ease;
+}
+
+.dark .patient-profile-header-overlay {
+    /* Dark mode: semi-transparent dark gradient */
+    background: linear-gradient(135deg, rgba(26, 31, 53, 0.7) 0%, rgba(45, 55, 72, 0.7) 100%);
+}
+
+.patient-profile-header-content {
+    position: relative;
+    z-index: 3;
+    padding: 2rem;
+    color: white;
+}
+
+.patient-profile-avatar-wrapper {
+    flex-shrink: 0;
+}
+
+.patient-profile-avatar-wrapper .avatar-circle-large {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.patient-profile-name {
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.patient-profile-id {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.patient-profile-dob {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+}
+
+.patient-profile-actions {
+    position: relative;
+}
+
+.patient-profile-actions .btn {
+    border-color: rgba(255, 255, 255, 0.3);
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.patient-profile-actions .btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+.patient-profile-actions .dropdown-menu {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dark .patient-profile-actions .dropdown-menu {
+    background: rgba(26, 31, 53, 0.95);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.patient-profile-actions .dropdown-item {
+    color: var(--text);
+    transition: background-color 0.2s ease;
+}
+
+.patient-profile-actions .dropdown-item:hover {
+    background-color: rgba(var(--accent-rgb), 0.1);
+}
+
+.patient-profile-actions .dropdown-item.text-danger {
+    color: #dc3545;
+}
+
+.patient-profile-actions .dropdown-item.text-danger:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+/* Patient Tags in Header */
+#patientProfileTags {
+    margin-top: 1rem;
+}
+
+#patientTagsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+#patientTagsList .tag-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.75rem;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    color: white;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#patientTagsList .tag-badge:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+}
+
+#patientTagsList .tag-badge .tag-remove {
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+#patientTagsList .tag-badge:hover .tag-remove {
+    opacity: 1;
+}
+
+#patientTagsList .tag-badge .tag-remove:hover {
+    color: #ff6b6b;
+}
+
+/* Dark mode adjustments */
+.dark .patient-profile-header-wrapper {
+    background: transparent;
+}
+
+.dark .patient-profile-header-overlay {
+    background: linear-gradient(135deg, rgba(26, 31, 53, 0.7) 0%, rgba(45, 55, 72, 0.7) 100%);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .patient-profile-header-content {
+        padding: 1.5rem;
+    }
+    
+    .patient-profile-name {
+        font-size: 1.5rem;
+    }
+    
+    .patient-profile-actions {
+        width: 100%;
+        margin-top: 1rem;
+    }
+    
+    .patient-profile-actions .btn {
+        width: 100%;
+    }
+}

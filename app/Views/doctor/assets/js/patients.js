@@ -1030,6 +1030,11 @@ function openFolderDebounced(folderId) {
 
 // Initialize pagination with PHP data
 function initializePagination() {
+    // Check if PATIENTS_CONFIG exists (only available on patients.php page)
+    if (!window.PATIENTS_CONFIG) {
+        return; // Exit early if not on patients page
+    }
+    
     // Get patients data from PHP
     const patientsData = window.PATIENTS_CONFIG.patients;
     const doctorsData = window.PATIENTS_CONFIG.doctors;
@@ -2269,6 +2274,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchModal = document.getElementById('searchModal');
     const searchButton = document.querySelector('[data-bs-target="#searchModal"]');
     
+    // Check if elements exist (only available on patients.php page)
+    if (!globalSearch || !clearSearch) {
+        return; // Exit early if not on patients page
+    }
+    
     // Debounced search
     const debouncedSearch = debounce(searchPatients, 300);
     
@@ -2805,6 +2815,11 @@ function setDeleteButtonLoading(loading) {
 document.addEventListener('DOMContentLoaded', function() {
     const deleteConfirmationText = document.getElementById('deleteConfirmationText');
     const finalDeleteButton = document.getElementById('finalDeleteButton');
+    
+    // Check if elements exist (only available on patients.php page)
+    if (!deleteConfirmationText || !finalDeleteButton) {
+        return; // Exit early if not on patients page
+    }
     
     // Validate confirmation text input
     deleteConfirmationText.addEventListener('input', function() {
@@ -7471,14 +7486,24 @@ function updatePatientColorMarker(patientId, colorCode) {
                     patient.color_marker = null;
                 }
                 // Update DOM - check if it's a card (cards/folders view) or table row
+                // Skip patient profile header (it has its own marker button)
+                const header = document.getElementById('patientProfileHeader');
+                const headerPatientId = header ? header.getAttribute('data-patient-id') : null;
+                
+                // If this is the patient profile header, skip DOM update (handled by patient.js)
+                if (headerPatientId && parseInt(headerPatientId) === parseInt(patientId)) {
+                    // Header is handled by patient.js, just return
+                    return;
+                }
+                
                 const element = document.querySelector(`[data-patient-id="${patientId}"]`);
                 if (element) {
                     // Check if it's a table row (tr) or a card (div)
                     if (element.tagName === 'TR') {
                         // It's a table row - use updateTableRowMarker
                         updateTableRowMarker(patientId, null);
-                    } else {
-                        // It's a card (cards/folders view)
+                    } else if (element.id !== 'patientProfileHeader') {
+                        // It's a card (cards/folders view) - but not the header
                         const marker = element.querySelector('.patient-color-marker');
                         if (marker) {
                             marker.remove();
@@ -7528,14 +7553,24 @@ function updatePatientColorMarker(patientId, colorCode) {
                     patient.color_marker = colorCode;
                 }
                 // Update DOM - check if it's a card (cards/folders view) or table row
+                // Skip patient profile header (it has its own marker button)
+                const header = document.getElementById('patientProfileHeader');
+                const headerPatientId = header ? header.getAttribute('data-patient-id') : null;
+                
+                // If this is the patient profile header, skip DOM update (handled by patient.js)
+                if (headerPatientId && parseInt(headerPatientId) === parseInt(patientId)) {
+                    // Header is handled by patient.js, just return
+                    return;
+                }
+                
                 const element = document.querySelector(`[data-patient-id="${patientId}"]`);
                 if (element) {
                     // Check if it's a table row (tr) or a card (div)
                     if (element.tagName === 'TR') {
                         // It's a table row - use updateTableRowMarker
                         updateTableRowMarker(patientId, colorCode);
-                    } else {
-                        // It's a card (cards/folders view)
+                    } else if (element.id !== 'patientProfileHeader') {
+                        // It's a card (cards/folders view) - but not the header
                         const marker = element.querySelector('.patient-color-marker');
                         const markerAdd = element.querySelector('.patient-color-marker-add');
                         
@@ -7898,6 +7933,12 @@ function removeTagFromPatient(patientId, tagId) {
                     
                     // Update ALL views (table + cards/folders) using helper function
                     updatePatientTagsInDOM(patientId, tagsData.tags);
+                    
+                    // Also update patient profile header if on patient page
+                    if (typeof loadPatientTags === 'function') {
+                        loadPatientTags(patientId);
+                    }
+                    
                     showNotification('Tag removed', 'success');
                 }
             })

@@ -12,57 +12,94 @@
 </div>
 
 <!-- Patient Profile Header -->
-<div class="row mb-4">
-    <div class="col-12 col-md-8">
-        <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center">
-            <div class="avatar-circle-large <?= $patient['gender'] === 'Female' ? 'avatar-large-female' : 'avatar-large-male' ?> me-3 mb-3 mb-sm-0">
-                <?php
-                $firstName = $patient['first_name'];
-                $lastName = $patient['last_name'];
-                
-                // Handle Arabic and English names properly
-                $firstChar = mb_substr($firstName, 0, 1, 'UTF-8');
-                $lastChar = mb_substr($lastName, 0, 1, 'UTF-8');
-                
-                // Convert to uppercase using mb_strtoupper for proper UTF-8 handling
-                echo mb_strtoupper($firstChar . '.' . $lastChar, 'UTF-8');
-                ?>
-            </div>
-            <div class="flex-grow-1">
-                <h2 class="text-primary mb-1 h4 h-md-2"><?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></h2>
-                <p class="text-muted mb-0 small">Patient ID: #<?= $patient['id'] ?></p>
-                <?php if ($patient['dob']): ?>
-                    <small class="text-muted d-block mt-1">
-                        <i class="bi bi-calendar3 me-1"></i>
-                        <?= date('M j, Y', strtotime($patient['dob'])) ?> 
-                        (<?= date_diff(date_create($patient['dob']), date_create('now'))->y ?> years old)
-                    </small>
-                <?php endif; ?>
-                
-                <!-- Current Doctor Badge -->
-                <?php if (isset($currentDoctor) && $currentDoctor): ?>
-                <div class="mt-2 mt-md-3">
-                    <span class="badge doctor-badge fs-6 px-4 py-2 d-inline-flex align-items-center">
-                        <?php if (!empty($currentDoctor['profile_image'])): 
-                            $doctorImagePath = strpos($currentDoctor['profile_image'], '/public/') === 0 ? $currentDoctor['profile_image'] : '/public' . $currentDoctor['profile_image'];
-                        ?>
-                            <img src="<?= htmlspecialchars($doctorImagePath) ?>" 
-                                 alt="<?= htmlspecialchars($currentDoctor['display_name'] ?? $currentDoctor['name']) ?>" 
-                                 class="treating-doctor-avatar me-2"
-                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <div class="treating-doctor-avatar-fallback me-2" style="display: none;">
-                                <?= strtoupper(substr($currentDoctor['display_name'] ?? $currentDoctor['name'] ?? 'D', 0, 1)) ?>
+<div class="patient-profile-header-wrapper mb-4" id="patientProfileHeader" data-patient-id="<?= $patient['id'] ?>">
+    <div class="patient-profile-header-background"></div>
+    <div class="patient-profile-header-overlay"></div>
+    <div class="patient-profile-header-content">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-12">
+                    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
+                        <!-- Avatar -->
+                        <div class="patient-profile-avatar-wrapper">
+                            <div class="avatar-circle-large <?= $patient['gender'] === 'Female' ? 'avatar-large-female' : 'avatar-large-male' ?>">
+                                <?php
+                                $firstName = $patient['first_name'];
+                                $lastName = $patient['last_name'];
+                                
+                                // Handle Arabic and English names properly
+                                $firstChar = mb_substr($firstName, 0, 1, 'UTF-8');
+                                $lastChar = mb_substr($lastName, 0, 1, 'UTF-8');
+                                
+                                // Convert to uppercase using mb_strtoupper for proper UTF-8 handling
+                                echo mb_strtoupper($firstChar . '.' . $lastChar, 'UTF-8');
+                                ?>
                             </div>
-                        <?php else: ?>
-                            <div class="treating-doctor-avatar me-2">
-                                <?= strtoupper(substr($currentDoctor['display_name'] ?? $currentDoctor['name'] ?? 'D', 0, 1)) ?>
+                        </div>
+                        
+                        <!-- Patient Info -->
+                        <div class="flex-grow-1">
+                            <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+                                <div>
+                                    <h2 class="patient-profile-name mb-1"><?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></h2>
+                                    <p class="patient-profile-id mb-1">Patient ID: #<?= $patient['id'] ?></p>
+                                    <?php if ($patient['dob']): ?>
+                                        <small class="patient-profile-dob d-block">
+                                            <i class="bi bi-calendar3 me-1"></i>
+                                            <?= date('M j, Y', strtotime($patient['dob'])) ?> 
+                                            (<?= date_diff(date_create($patient['dob']), date_create('now'))->y ?> years old)
+                                        </small>
+                                    <?php endif; ?>
+                                    
+                                    <!-- Current Doctor Badge -->
+                                    <?php if (isset($currentDoctor) && $currentDoctor): ?>
+                                    <div class="mt-2">
+                                        <span class="badge doctor-badge fs-6 px-3 py-2 d-inline-flex align-items-center">
+                                            <?php if (!empty($currentDoctor['profile_image'])): 
+                                                $doctorImagePath = strpos($currentDoctor['profile_image'], '/public/') === 0 ? $currentDoctor['profile_image'] : '/public' . $currentDoctor['profile_image'];
+                                            ?>
+                                                <img src="<?= htmlspecialchars($doctorImagePath) ?>" 
+                                                     alt="<?= htmlspecialchars($currentDoctor['display_name'] ?? $currentDoctor['name']) ?>" 
+                                                     class="treating-doctor-avatar me-2"
+                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                <div class="treating-doctor-avatar-fallback me-2" style="display: none;">
+                                                    <?= strtoupper(substr($currentDoctor['display_name'] ?? $currentDoctor['name'] ?? 'D', 0, 1)) ?>
+                                                </div>
+                                            <?php else: ?>
+                                                <div class="treating-doctor-avatar me-2">
+                                                    <?= strtoupper(substr($currentDoctor['display_name'] ?? $currentDoctor['name'] ?? 'D', 0, 1)) ?>
+                                                </div>
+                                            <?php endif; ?>
+                                            <strong>Treating Doctor:</strong> 
+                                            <span class="ms-1"><?= htmlspecialchars($currentDoctor['display_name'] ?? $currentDoctor['name']) ?></span>
+                                        </span>
+                                    </div>
+                                    <?php endif; ?>
+                                    
+                                    <!-- Patient Tags -->
+                                    <div class="mt-3" id="patientProfileTags">
+                                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                                            <span class="text-muted small">Tags:</span>
+                                            <div id="patientTagsList" class="d-flex flex-wrap gap-2">
+                                                <!-- Tags will be loaded here via JavaScript -->
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="showTagManagementModal(<?= $patient['id'] ?>)">
+                                                <i class="bi bi-plus-lg me-1"></i>Add Tag
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Marker Button -->
+                                <div class="patient-profile-actions">
+                                    <button class="btn btn-outline-light btn-sm" id="setMarkerBtn" onclick="showColorMarkerModal(<?= $patient['id'] ?>, null)" title="Set Color Marker">
+                                        <i class="bi bi-palette me-1"></i>Set Marker
+                                    </button>
+                                </div>
                             </div>
-                        <?php endif; ?>
-                        <strong>Treating Doctor:</strong> 
-                        <span class="ms-1"><?= htmlspecialchars($currentDoctor['display_name'] ?? $currentDoctor['name']) ?></span>
-                    </span>
+                        </div>
+                    </div>
                 </div>
-                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -1775,8 +1812,10 @@ window.PATIENT_CONFIG = {
     patientPhone: '<?= isset($patient['phone']) ? htmlspecialchars($patient['phone']) : 'null' ?>',
     patientAge: <?= isset($patient['dob']) ? (int)date_diff(date_create($patient['dob']), date_create('now'))->y : 'null' ?>,
     doctorId: <?= isset($appointment['doctor_id']) ? (int)$appointment['doctor_id'] : 'null' ?>,
+    latest_attachment_id: <?= isset($patient['latest_attachment_id']) && $patient['latest_attachment_id'] ? (int)$patient['latest_attachment_id'] : 'null' ?>,
 };
 </script>
+<script src="/app/Views/doctor/assets/js/patients.js?v=<?= file_exists(__DIR__ . '/assets/js/patients.js') ? filemtime(__DIR__ . '/assets/js/patients.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/patient.js?v=<?= file_exists(__DIR__ . '/assets/js/patient.js') ? filemtime(__DIR__ . '/assets/js/patient.js') : time() ?>"></script>
 <style>
     .modal-backdrop.show{

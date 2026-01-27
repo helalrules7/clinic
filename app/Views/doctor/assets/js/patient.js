@@ -2230,45 +2230,65 @@ function showInfoModal(title, message) {
 function initializeTooltips() {
     // Initialize tooltips for elements with data-bs-toggle="tooltip"
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl, {
-        boundary: 'viewport',
-        fallbackPlacements: ['top', 'bottom', 'left', 'right'],
-        sanitize: false,
-        html: false,
-        delay: { show: 500, hide: 100 },
-        trigger: 'hover focus'
-    }));
+    const tooltipList = [...tooltipTriggerList]
+        .filter(el => {
+            // Skip if element has dropdown instance (Bootstrap doesn't allow both)
+            return !bootstrap.Dropdown.getInstance(el);
+        })
+        .map(tooltipTriggerEl => {
+            // Check if tooltip already exists
+            const existingTooltip = bootstrap.Tooltip.getInstance(tooltipTriggerEl);
+            if (existingTooltip) {
+                return existingTooltip;
+            }
+            return new bootstrap.Tooltip(tooltipTriggerEl, {
+                boundary: 'viewport',
+                fallbackPlacements: ['top', 'bottom', 'left', 'right'],
+                sanitize: false,
+                html: false,
+                delay: { show: 500, hide: 100 },
+                trigger: 'hover focus'
+            });
+        });
     
-    // Initialize tooltips for elements with title attribute (including dropdown triggers)
+    // Initialize tooltips for elements with title attribute (excluding dropdown triggers)
     const titleElements = document.querySelectorAll('[title]:not([data-bs-toggle="tooltip"]):not([data-bs-toggle="dropdown"])');
-    const titleTooltipList = [...titleElements].map(titleEl => new bootstrap.Tooltip(titleEl, {
-        boundary: 'viewport',
-        fallbackPlacements: ['top', 'bottom', 'left', 'right'],
-        sanitize: false,
-        html: false,
-        delay: { show: 500, hide: 100 },
-        trigger: 'hover focus'
-    }));
+    const titleTooltipList = [...titleElements]
+        .filter(el => {
+            // Skip if element has dropdown instance
+            return !bootstrap.Dropdown.getInstance(el);
+        })
+        .map(titleEl => {
+            // Check if tooltip already exists
+            const existingTooltip = bootstrap.Tooltip.getInstance(titleEl);
+            if (existingTooltip) {
+                return existingTooltip;
+            }
+            return new bootstrap.Tooltip(titleEl, {
+                boundary: 'viewport',
+                fallbackPlacements: ['top', 'bottom', 'left', 'right'],
+                sanitize: false,
+                html: false,
+                delay: { show: 500, hide: 100 },
+                trigger: 'hover focus'
+            });
+        });
     
-    // Initialize tooltips for dropdown buttons with title
-    const dropdownTitleElements = document.querySelectorAll('[data-bs-toggle="dropdown"][title]');
-    const dropdownTooltipList = [...dropdownTitleElements].map(dropdownEl => new bootstrap.Tooltip(dropdownEl, {
-        boundary: 'viewport',
-        fallbackPlacements: ['top', 'bottom', 'left', 'right'],
-        sanitize: false,
-        html: false,
-        delay: { show: 500, hide: 100 },
-        trigger: 'hover focus'
-    }));
+    // Don't initialize tooltips for dropdown buttons - Bootstrap dropdown handles hover states
+    // Dropdown buttons with title should not have tooltips to avoid conflicts
     
-    return [...tooltipList, ...titleTooltipList, ...dropdownTooltipList];
+    return [...tooltipList, ...titleTooltipList];
 }
 
 // Function to refresh tooltips for dynamically added content
 function refreshTooltips() {
-    // Dispose of existing tooltips
+    // Dispose of existing tooltips (but not on elements with dropdown instances)
     const existingTooltips = document.querySelectorAll('[data-bs-toggle="tooltip"], [title]');
     existingTooltips.forEach(element => {
+        // Skip if element has dropdown instance
+        if (bootstrap.Dropdown.getInstance(element)) {
+            return;
+        }
         const tooltip = bootstrap.Tooltip.getInstance(element);
         if (tooltip) {
             tooltip.dispose();
@@ -4840,3 +4860,525 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// ============================================
+// Patient Profile Header Functions
+// ============================================
+
+// Load patient profile header data (image, marker, tags)
+function loadPatientProfileHeader() {
+    const header = document.getElementById('patientProfileHeader');
+    if (!header) return;
+    
+    const patientId = header.getAttribute('data-patient-id');
+    if (!patientId) return;
+    
+    // Load latest attachment image
+    loadPatientHeaderImage(patientId);
+    
+    // Load color marker
+    loadPatientColorMarker(patientId);
+    
+    // Load patient tags
+    loadPatientTags(patientId);
+}
+
+// Load latest attachment image for header background
+function loadPatientHeaderImage(patientId) {
+    // First try to get from PHP variable if available
+    const patientData = window.PATIENT_CONFIG;
+    if (patientData && patientData.latest_attachment_id) {
+        const imageUrl = `/api/patients/images/${patientData.latest_attachment_id}`;
+        const bgElement = document.querySelector('.patient-profile-header-background');
+        if (bgElement) {
+            bgElement.style.backgroundImage = `url(${imageUrl})`;
+            return;
+        }
+    }
+    
+    // Otherwise fetch from API
+    fetch(`/api/patients/${patientId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok && data.patient && data.patient.latest_attachment_id) {
+                const imageUrl = `/api/patients/images/${data.patient.latest_attachment_id}`;
+                const bgElement = document.querySelector('.patient-profile-header-background');
+                if (bgElement) {
+                    bgElement.style.backgroundImage = `url(${imageUrl})`;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading patient image:', error);
+        });
+}
+
+// Load patient color marker
+function loadPatientColorMarker(patientId) {
+    fetch(`/api/patient-color-markers/${patientId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                const colorCode = data.color_code;
+                updateHeaderGradient(colorCode);
+                updateSetMarkerButton(patientId, colorCode);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading color marker:', error);
+        });
+}
+
+// Update Set Marker button to show current marker and add remove option
+function updateSetMarkerButton(patientId, colorCode) {
+    const setMarkerBtn = document.getElementById('setMarkerBtn');
+    if (!setMarkerBtn) return;
+    
+    // Clean up existing Bootstrap instances to prevent conflicts
+    const existingDropdown = bootstrap.Dropdown.getInstance(setMarkerBtn);
+    if (existingDropdown) {
+        existingDropdown.dispose();
+    }
+    const existingTooltip = bootstrap.Tooltip.getInstance(setMarkerBtn);
+    if (existingTooltip) {
+        existingTooltip.dispose();
+    }
+    
+    if (colorCode) {
+        // Patient has a marker - show marker color and add remove option
+        setMarkerBtn.innerHTML = `
+            <i class="bi bi-palette me-1"></i>
+            <span>Set Marker</span>
+            <span class="ms-2" style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: ${colorCode}; border: 2px solid rgba(255, 255, 255, 0.5);"></span>
+        `;
+        // Remove onclick - button should only open dropdown, not modal
+        setMarkerBtn.removeAttribute('onclick');
+        // Remove title attribute to avoid tooltip conflict with dropdown
+        setMarkerBtn.removeAttribute('title');
+        
+        // Remove any existing patient-color-marker circles from header
+        const header = document.getElementById('patientProfileHeader');
+        if (header) {
+            const existingMarkers = header.querySelectorAll('.patient-color-marker');
+            existingMarkers.forEach(marker => marker.remove());
+        }
+        
+        // Create or update dropdown menu
+        let dropdownMenu = document.getElementById('setMarkerDropdown');
+        if (!dropdownMenu) {
+            dropdownMenu = document.createElement('ul');
+            dropdownMenu.id = 'setMarkerDropdown';
+            dropdownMenu.className = 'dropdown-menu';
+            dropdownMenu.setAttribute('aria-labelledby', 'setMarkerBtn');
+            setMarkerBtn.parentElement.appendChild(dropdownMenu);
+        }
+        
+        dropdownMenu.innerHTML = `
+            <li>
+                <a class="dropdown-item" href="#" onclick="event.preventDefault(); event.stopPropagation(); showColorMarkerModal(${patientId}, '${colorCode}'); return false;">
+                    <i class="bi bi-palette me-2"></i>Change Marker
+                </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); event.stopPropagation(); removeMarkerFromHeader(${patientId}); return false;">
+                    <i class="bi bi-trash me-2"></i>Remove Marker
+                </a>
+            </li>
+        `;
+        
+        // Add dropdown attributes and initialize Bootstrap dropdown
+        setMarkerBtn.setAttribute('data-bs-toggle', 'dropdown');
+        setMarkerBtn.setAttribute('aria-expanded', 'false');
+        setMarkerBtn.classList.add('dropdown-toggle');
+        
+        // Initialize Bootstrap dropdown after a short delay to ensure DOM is ready
+        setTimeout(() => {
+            try {
+                new bootstrap.Dropdown(setMarkerBtn);
+            } catch (e) {
+                console.warn('Dropdown initialization error:', e);
+            }
+        }, 10);
+    } else {
+        // No marker - just show set marker button
+        setMarkerBtn.innerHTML = `
+            <i class="bi bi-palette me-1"></i>Set Marker
+        `;
+        setMarkerBtn.setAttribute('onclick', `showColorMarkerModal(${patientId}, null)`);
+        // Restore title attribute when not a dropdown
+        setMarkerBtn.setAttribute('title', 'Set Color Marker');
+        setMarkerBtn.removeAttribute('data-bs-toggle');
+        setMarkerBtn.removeAttribute('aria-expanded');
+        setMarkerBtn.classList.remove('dropdown-toggle');
+        
+        // Remove dropdown menu if exists
+        const dropdownMenu = document.getElementById('setMarkerDropdown');
+        if (dropdownMenu) {
+            dropdownMenu.remove();
+        }
+    }
+}
+
+// Update header gradient based on marker color
+function updateHeaderGradient(colorCode) {
+    const overlay = document.querySelector('.patient-profile-header-overlay');
+    const wrapper = document.querySelector('.patient-profile-header-wrapper');
+    if (!overlay || !wrapper) return;
+    
+    // Check if dark mode is active
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    
+    if (colorCode) {
+        // Convert hex to RGB
+        const rgb = hexToRgb(colorCode);
+        if (rgb) {
+            // Create glassmorphism gradient with marker color
+            // Use rgba with semi-transparency (0.65-0.7) to allow image visibility
+            // Maintain backdrop-filter for glassmorphism effect
+            const gradient = `linear-gradient(135deg, rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.7) 0%, rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.65) 100%)`;
+            // Remove existing style attribute and set new one
+            overlay.removeAttribute('style');
+            wrapper.removeAttribute('style');
+            // Apply gradient with backdrop-filter for glassmorphism
+            overlay.style.cssText = `background: ${gradient} !important; backdrop-filter: blur(10px) saturate(180%); -webkit-backdrop-filter: blur(10px) saturate(180%);`;
+            // Wrapper stays transparent to show image
+            wrapper.style.cssText = 'background: transparent !important;';
+        }
+    } else {
+        // Default gradient based on mode with glassmorphism
+        // Remove inline styles to let CSS handle defaults
+        overlay.removeAttribute('style');
+        wrapper.removeAttribute('style');
+        // Force re-apply default based on mode with semi-transparency
+        if (isDarkMode) {
+            // Dark mode: semi-transparent dark gradient
+            overlay.style.cssText = 'background: linear-gradient(135deg, rgba(26, 31, 53, 0.7) 0%, rgba(45, 55, 72, 0.7) 100%) !important; backdrop-filter: blur(10px) saturate(180%); -webkit-backdrop-filter: blur(10px) saturate(180%);';
+            wrapper.style.cssText = 'background: transparent !important;';
+        } else {
+            // Light mode: semi-transparent purple gradient
+            overlay.style.cssText = 'background: linear-gradient(135deg, rgba(102, 126, 234, 0.65) 0%, rgba(118, 75, 162, 0.65) 100%) !important; backdrop-filter: blur(10px) saturate(180%); -webkit-backdrop-filter: blur(10px) saturate(180%);';
+            wrapper.style.cssText = 'background: transparent !important;';
+        }
+    }
+}
+
+// Helper function to convert hex to RGB
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}
+
+// Load patient tags
+function loadPatientTags(patientId) {
+    fetch(`/api/patients/${patientId}/tags`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok && data.tags) {
+                renderPatientTags(patientId, data.tags);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading patient tags:', error);
+        });
+}
+
+// Render patient tags in header
+function renderPatientTags(patientId, tags) {
+    const tagsList = document.getElementById('patientTagsList');
+    if (!tagsList) return;
+    
+    tagsList.innerHTML = '';
+    
+    if (tags.length === 0) {
+        return;
+    }
+    
+    tags.forEach(tag => {
+        const tagBadge = document.createElement('span');
+        tagBadge.className = 'tag-badge';
+        tagBadge.style.backgroundColor = tag.color || 'rgba(255, 255, 255, 0.15)';
+        tagBadge.innerHTML = `
+            <span>${escapeHtml(tag.name)}</span>
+            <i class="bi bi-x-circle tag-remove" onclick="removeTagFromPatientProfile(${patientId}, ${tag.id}, event)" title="Remove tag"></i>
+        `;
+        tagsList.appendChild(tagBadge);
+    });
+}
+
+// Remove tag from patient (for profile header)
+// This function will use removeTagFromPatient from patients.js if available
+function removeTagFromPatientProfile(patientId, tagId, event) {
+    if (event) {
+        event.stopPropagation();
+    }
+    
+    // Check if removeTagFromPatient exists in patients.js
+    if (typeof window.removeTagFromPatient === 'function') {
+        // Use the function from patients.js which handles all views
+        window.removeTagFromPatient(patientId, tagId);
+        
+        // Also reload tags in header
+        setTimeout(() => {
+            loadPatientTags(patientId);
+        }, 300);
+    } else {
+        // Fallback: direct API call
+        fetch(`/api/patients/${patientId}/tags/${tagId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                // Reload tags
+                loadPatientTags(patientId);
+                showNotification('Tag removed successfully', 'success');
+            } else {
+                showNotification('Failed to remove tag', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error removing tag:', error);
+            showNotification('Failed to remove tag', 'error');
+        });
+    }
+}
+
+// Show tag management modal wrapper - will use function from patients.js
+// This is defined here to be available immediately, but will use patients.js version when loaded
+function showTagManagementModalWrapper(patientId) {
+    // Check if patients.js function is available
+    if (typeof window.showTagManagementModal === 'function' && window.showTagManagementModal.toString().includes('async function')) {
+        // Use the function from patients.js
+        window.showTagManagementModal(patientId).then(() => {
+            // After modal is shown, set up refresh listener
+            setTimeout(() => {
+                const modal = document.getElementById('tagManagementModal');
+                if (modal) {
+                    const refreshTags = () => {
+                        const header = document.getElementById('patientProfileHeader');
+                        if (header) {
+                            const pid = header.getAttribute('data-patient-id');
+                            if (pid) {
+                                loadPatientTags(pid);
+                            }
+                        }
+                    };
+                    modal.addEventListener('hidden.bs.modal', refreshTags, { once: true });
+                }
+            }, 100);
+        }).catch(err => {
+            console.error('Error showing tag modal:', err);
+        });
+    } else {
+        console.warn('showTagManagementModal from patients.js not yet available, retrying...');
+        setTimeout(() => showTagManagementModalWrapper(patientId), 200);
+    }
+}
+
+// Override window.showTagManagementModal to add header refresh
+// Wait for patients.js to load first
+(function() {
+    function setupTagModalWrapper() {
+        if (typeof window.showTagManagementModal === 'function') {
+            const originalFn = window.showTagManagementModal;
+            window.showTagManagementModal = async function(patientId) {
+                const result = await originalFn(patientId);
+                
+                // Listen for modal close to refresh tags
+                setTimeout(() => {
+                    const modal = document.getElementById('tagManagementModal');
+                    if (modal) {
+                        const refreshTags = () => {
+                            const header = document.getElementById('patientProfileHeader');
+                            if (header) {
+                                const pid = header.getAttribute('data-patient-id');
+                                if (pid) {
+                                    loadPatientTags(pid);
+                                }
+                            }
+                        };
+                        modal.addEventListener('hidden.bs.modal', refreshTags, { once: true });
+                    }
+                }, 100);
+                
+                return result;
+            };
+        } else {
+            // Retry after a short delay
+            setTimeout(setupTagModalWrapper, 100);
+        }
+    }
+    
+    // Start setup
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupTagModalWrapper);
+    } else {
+        setTimeout(setupTagModalWrapper, 200);
+    }
+})();
+
+// Remove marker from header (called from dropdown menu)
+function removeMarkerFromHeader(patientId) {
+    // Close dropdown first
+    const setMarkerBtn = document.getElementById('setMarkerBtn');
+    if (setMarkerBtn) {
+        const dropdown = bootstrap.Dropdown.getInstance(setMarkerBtn);
+        if (dropdown) {
+            dropdown.hide();
+        }
+    }
+    
+    // Update marker
+    updatePatientColorMarkerForHeader(patientId, null);
+}
+
+// Update color marker for profile header
+function updatePatientColorMarkerForHeader(patientId, colorCode) {
+    // Always update header immediately for better UX
+    const method = colorCode === null ? 'DELETE' : 'PUT';
+    const body = colorCode === null ? null : JSON.stringify({ color_code: colorCode });
+    
+    fetch(`/api/patient-color-markers/${patientId}`, {
+        method: method,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        },
+        body: body
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            // Remove any patient-color-marker circles from header
+            const header = document.getElementById('patientProfileHeader');
+            if (header) {
+                const existingMarkers = header.querySelectorAll('.patient-color-marker');
+                existingMarkers.forEach(marker => marker.remove());
+            }
+            
+            // Update header gradient and button
+            updateHeaderGradient(colorCode);
+            updateSetMarkerButton(patientId, colorCode);
+            
+            // Also call the update function from patients.js if available to update other views
+            if (typeof window.updatePatientColorMarker === 'function') {
+                window.updatePatientColorMarker(patientId, colorCode);
+            }
+            
+            showNotification(colorCode ? 'Color marker updated' : 'Color marker removed', 'success');
+        } else {
+            showNotification('Failed to update color marker', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating color marker:', error);
+        showNotification('Failed to update color marker', 'error');
+    });
+}
+
+// Override window.showColorMarkerModal to add header refresh
+// Wait for patients.js to load first
+(function() {
+    function setupColorModalWrapper() {
+        if (typeof window.showColorMarkerModal === 'function') {
+            const originalFn = window.showColorMarkerModal;
+            window.showColorMarkerModal = function(patientId, currentColor) {
+                originalFn(patientId, currentColor);
+                
+                // Listen for modal close to refresh marker
+                setTimeout(() => {
+                    const modal = document.getElementById('colorMarkerModal');
+                    if (modal) {
+                        const refreshMarker = () => {
+                            const header = document.getElementById('patientProfileHeader');
+                            if (header) {
+                                const pid = header.getAttribute('data-patient-id');
+                                if (pid) {
+                                    loadPatientColorMarker(pid);
+                                }
+                            }
+                        };
+                        modal.addEventListener('hidden.bs.modal', refreshMarker, { once: true });
+                    }
+                }, 100);
+            };
+        } else {
+            // Retry after a short delay
+            setTimeout(setupColorModalWrapper, 100);
+        }
+    }
+    
+    // Start setup
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupColorModalWrapper);
+    } else {
+        setTimeout(setupColorModalWrapper, 200);
+    }
+})();
+
+// Override window.updatePatientColorMarker to update button
+(function() {
+    function setupUpdateMarkerWrapper() {
+        if (typeof window.updatePatientColorMarker === 'function') {
+            const originalFn = window.updatePatientColorMarker;
+            window.updatePatientColorMarker = function(patientId, colorCode) {
+                const result = originalFn(patientId, colorCode);
+                
+                // Update header button after marker update
+                setTimeout(() => {
+                    const header = document.getElementById('patientProfileHeader');
+                    if (header) {
+                        const pid = header.getAttribute('data-patient-id');
+                        if (pid) {
+                            updateSetMarkerButton(pid, colorCode);
+                        }
+                    }
+                }, 100);
+                
+                return result;
+            };
+        } else {
+            // Retry after a short delay
+            setTimeout(setupUpdateMarkerWrapper, 100);
+        }
+    }
+    
+    // Start setup
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupUpdateMarkerWrapper);
+    } else {
+        setTimeout(setupUpdateMarkerWrapper, 200);
+    }
+})();
+
+// Clean up Bootstrap instances on page unload
+window.addEventListener('beforeunload', () => {
+    const setMarkerBtn = document.getElementById('setMarkerBtn');
+    if (setMarkerBtn) {
+        const dropdown = bootstrap.Dropdown.getInstance(setMarkerBtn);
+        if (dropdown) {
+            dropdown.dispose();
+        }
+        const tooltip = bootstrap.Tooltip.getInstance(setMarkerBtn);
+        if (tooltip) {
+            tooltip.dispose();
+        }
+    }
+});
+
+// Initialize patient profile header on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait a bit to ensure patients.js is loaded if it's included
+    setTimeout(() => {
+        loadPatientProfileHeader();
+    }, 200);
+});
