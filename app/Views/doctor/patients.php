@@ -460,6 +460,7 @@
                                 <span>Total Visits</span>
                             </div>
                         </th>
+                        <th>Tags</th>
                         <th>Actions</th>
                     </tr>
                 </thead>

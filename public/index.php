@@ -320,17 +320,19 @@ try {
     $router->delete("/api/patient-folders/{id}", "ApiController@deletePatientFolder");
     
     // Patient color markers routes
+    $router->post('/api/patient-color-markers/batch', 'ApiController@getBatchPatientColorMarkers');
     $router->get('/api/patient-color-markers/{patient_id}', 'ApiController@getPatientColorMarker');
     $router->put('/api/patient-color-markers/{patient_id}', 'ApiController@updatePatientColorMarker');
     $router->delete('/api/patient-color-markers/{patient_id}', 'ApiController@deletePatientColorMarker');
-    
+
     // Patient tags routes
     $router->get('/api/patient-tags', 'ApiController@getPatientTags');
     $router->post('/api/patient-tags', 'ApiController@createPatientTag');
     $router->put('/api/patient-tags/{id}', 'ApiController@updatePatientTag');
     $router->delete('/api/patient-tags/{id}', 'ApiController@deletePatientTag');
-    
-    // Patient tag assignments routes
+
+    // Patient tag assignments routes (batch route must come before parameterized routes)
+    $router->post('/api/patients/tags/batch', 'ApiController@getBatchPatientTags');
     $router->get('/api/patients/{patient_id}/tags', 'ApiController@getPatientAssignedTags');
     $router->post('/api/patients/{patient_id}/tags/{tag_id}', 'ApiController@assignTagToPatient');
     $router->delete('/api/patients/{patient_id}/tags/{tag_id}', 'ApiController@removeTagFromPatient');

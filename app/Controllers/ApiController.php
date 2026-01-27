@@ -14797,6 +14797,124 @@ class ApiController
         }
     }
 
+    /**
+     * POST /api/patient-color-markers/batch
+     * Get color markers for multiple patients in a single request
+     * Reduces N API calls to 1 for better performance
+     */
+    public function getBatchPatientColorMarkers()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $data = json_decode(file_get_contents('php://input'), true);
+            $patientIds = $data['patient_ids'] ?? [];
+
+            if (empty($patientIds) || !is_array($patientIds)) {
+                return $this->jsonResponse(['error' => 'patient_ids array is required'], 400);
+            }
+
+            // Sanitize patient IDs
+            $patientIds = array_map('intval', $patientIds);
+            $patientIds = array_filter($patientIds, function($id) { return $id > 0; });
+
+            if (empty($patientIds)) {
+                return $this->jsonResponse(['ok' => true, 'markers' => []]);
+            }
+
+            // Build placeholders for IN clause
+            $placeholders = implode(',', array_fill(0, count($patientIds), '?'));
+
+            $stmt = $this->pdo->prepare("
+                SELECT patient_id, color_code
+                FROM patient_color_markers
+                WHERE patient_id IN ($placeholders)
+            ");
+            $stmt->execute($patientIds);
+            $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Convert to associative array keyed by patient_id
+            $markers = [];
+            foreach ($results as $row) {
+                $markers[$row['patient_id']] = $row['color_code'];
+            }
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'markers' => $markers
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * POST /api/patients/tags/batch
+     * Get tags for multiple patients in a single request
+     * Reduces N API calls to 1 for better performance
+     */
+    public function getBatchPatientTags()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $data = json_decode(file_get_contents('php://input'), true);
+            $patientIds = $data['patient_ids'] ?? [];
+
+            if (empty($patientIds) || !is_array($patientIds)) {
+                return $this->jsonResponse(['error' => 'patient_ids array is required'], 400);
+            }
+
+            // Sanitize patient IDs
+            $patientIds = array_map('intval', $patientIds);
+            $patientIds = array_filter($patientIds, function($id) { return $id > 0; });
+
+            if (empty($patientIds)) {
+                return $this->jsonResponse(['ok' => true, 'tags' => []]);
+            }
+
+            // Build placeholders for IN clause
+            $placeholders = implode(',', array_fill(0, count($patientIds), '?'));
+
+            $stmt = $this->pdo->prepare("
+                SELECT pta.patient_id, pt.id, pt.name, pt.color, pt.icon
+                FROM patient_tag_assignments pta
+                INNER JOIN patient_tags pt ON pta.tag_id = pt.id
+                WHERE pta.patient_id IN ($placeholders)
+                ORDER BY pt.sort_order ASC, pt.name ASC
+            ");
+            $stmt->execute($patientIds);
+            $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Group tags by patient_id
+            $tagsByPatient = [];
+            foreach ($patientIds as $id) {
+                $tagsByPatient[$id] = [];
+            }
+            foreach ($results as $row) {
+                $tagsByPatient[$row['patient_id']][] = [
+                    'id' => $row['id'],
+                    'name' => $row['name'],
+                    'color' => $row['color'],
+                    'icon' => $row['icon']
+                ];
+            }
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'tags' => $tagsByPatient
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
     // ============================================
     // Patient Tags API Endpoints
     // ============================================

@@ -197,10 +197,12 @@ class FolderTreeview {
         // Load active folder from localStorage
         const savedActiveFolder = localStorage.getItem('treeviewActiveFolder');
         this.activeFolderId = savedActiveFolder || null;
-        
+
         this.treeData = null;
         this.subFoldersCache = {}; // Cache for loaded sub-folders: {folderId: {data, timestamp}}
         this.cacheTimeout = 60000; // 1 minute cache timeout
+        this.loadingFolders = new Set(); // Track folders currently loading
+        this.renderPending = false; // Prevent multiple renders in same frame
     }
     
     buildTree(foldersData) {
@@ -243,9 +245,19 @@ class FolderTreeview {
         return tree;
     }
     
+    // Schedule a render (batches multiple render calls into one)
+    scheduleRender() {
+        if (this.renderPending) return;
+        this.renderPending = true;
+        requestAnimationFrame(() => {
+            this.renderPending = false;
+            this.render();
+        });
+    }
+
     render() {
         if (!this.container || !this.treeData) return;
-        
+
         let html = '<div class="treeview-list">';
         
         // Render system folders
@@ -287,16 +299,23 @@ class FolderTreeview {
     }
     
     renderFolderNode(folder, level) {
-        const folderId = folder.type === 'system' ? `system_${folder.id}` : folder.id;
-        const isExpanded = this.options.expandedFolders.includes(folderId);
-        const hasChildren = folder.subFoldersCount > 0;
+        // Always use string for folderId to ensure consistent comparison
+        const folderId = folder.type === 'system' ? `system_${folder.id}` : String(folder.id);
+        const isExpanded = this.options.expandedFolders.includes(folderId) || this.options.expandedFolders.includes(String(folderId));
+        const hasChildren = folder.subFoldersCount > 0 || (folder.children && folder.children.length > 0);
         const indent = level * 20;
-        const isActive = this.activeFolderId === folderId;
-        
-        let html = `<div class="treeview-node ${isActive ? 'active' : ''}" data-folder-id="${folderId}" data-folder-type="${folder.type}" style="padding-left: ${indent}px;">`;
-        
-        // Expand/collapse icon (if has children)
-        if (hasChildren) {
+        // Compare as strings to handle both numeric and string IDs
+        const isActive = String(this.activeFolderId) === String(folderId);
+        const isLoading = this.loadingFolders.has(folderId) || this.loadingFolders.has(String(folderId));
+
+        let html = `<div class="treeview-node ${isActive ? 'active' : ''} ${isLoading ? 'loading' : ''}" data-folder-id="${folderId}" data-folder-type="${folder.type}" style="padding-left: ${indent}px;">`;
+
+        // Expand/collapse icon (if has children) or loading spinner
+        if (isLoading) {
+            html += `<span class="treeview-expand treeview-loading" data-folder-id="${folderId}">`;
+            html += `<i class="bi bi-arrow-repeat spin"></i>`;
+            html += `</span>`;
+        } else if (hasChildren) {
             html += `<span class="treeview-expand" data-folder-id="${folderId}">`;
             html += `<i class="bi ${isExpanded ? 'bi-chevron-down' : 'bi-chevron-right'}"></i>`;
             html += `</span>`;
@@ -331,105 +350,242 @@ class FolderTreeview {
     
     attachEventListeners() {
         if (!this.container) return;
-        
-        // Folder click
-        this.container.querySelectorAll('.treeview-label').forEach(label => {
-            label.addEventListener('click', (e) => {
+
+        // Use event delegation on container for better performance and reliability
+        // Remove old listener first to prevent duplicates
+        if (this._clickHandler) {
+            this.container.removeEventListener('click', this._clickHandler);
+        }
+
+        this._clickHandler = (e) => {
+            // Check if clicked on expand/collapse chevron
+            const expandBtn = e.target.closest('.treeview-expand');
+            if (expandBtn && !expandBtn.classList.contains('treeview-loading')) {
                 e.stopPropagation();
-                const folderId = label.getAttribute('data-folder-id');
+                e.preventDefault();
+                const folderId = expandBtn.getAttribute('data-folder-id');
                 if (folderId) {
-                    // Expand folder and all children if not already expanded
-                    if (!this.options.expandedFolders.includes(folderId)) {
-                        this.expandFolder(folderId, true).then(() => { // Changed to true
-                            if (this.options.onFolderClick) {
-                                this.options.onFolderClick(folderId);
-                            }
-                        }).catch(error => {
-                            console.error('Error expanding folder on click:', error);
-                            if (this.options.onFolderClick) {
-                                this.options.onFolderClick(folderId);
-                            }
-                        });
-                    } else {
-                        // Already expanded, just call onFolderClick
-                        if (this.options.onFolderClick) {
-                            this.options.onFolderClick(folderId);
-                        }
+                    // Only toggle expand/collapse, don't load content
+                    this.handleExpandToggle(String(folderId));
+                }
+                return;
+            }
+
+            // Check if clicked on folder label or node (but not on expand button)
+            const node = e.target.closest('.treeview-node');
+            if (node && !expandBtn) {
+                e.stopPropagation();
+                e.preventDefault();
+                const folderId = node.getAttribute('data-folder-id');
+                if (folderId) {
+                    // Select folder, expand it, and load content
+                    this.handleFolderSelect(String(folderId));
+                }
+                return;
+            }
+        };
+
+        this.container.addEventListener('click', this._clickHandler);
+    }
+
+    // Handle expand/collapse toggle (chevron click) - NO content loading
+    handleExpandToggle(folderId) {
+        const index = this.options.expandedFolders.indexOf(folderId);
+
+        if (index > -1) {
+            // Collapse - just update UI, no API calls
+            this.options.expandedFolders.splice(index, 1);
+            this.loadingFolders.delete(folderId);
+            this.saveExpandedState();
+
+            // Update chevron icon directly without full re-render
+            const expandBtn = this.container.querySelector(`.treeview-expand[data-folder-id="${folderId}"]`);
+            if (expandBtn) {
+                const icon = expandBtn.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('bi-chevron-down');
+                    icon.classList.add('bi-chevron-right');
+                }
+            }
+
+            // Hide children
+            const node = this.container.querySelector(`.treeview-node[data-folder-id="${folderId}"]`);
+            if (node) {
+                let sibling = node.nextElementSibling;
+                const nodeIndent = parseInt(node.style.paddingLeft) || 0;
+                while (sibling && sibling.classList.contains('treeview-node')) {
+                    const siblingIndent = parseInt(sibling.style.paddingLeft) || 0;
+                    if (siblingIndent <= nodeIndent) break;
+                    sibling.style.display = 'none';
+                    sibling = sibling.nextElementSibling;
+                }
+            }
+        } else {
+            // Expand - load children if needed
+            this.options.expandedFolders.push(folderId);
+            this.saveExpandedState();
+
+            // Check if children are already loaded
+            const folder = this.findFolderInTree(folderId);
+            if (folder && folder.children && folder.children.length > 0) {
+                // Children already loaded, just show them
+                const expandBtn = this.container.querySelector(`.treeview-expand[data-folder-id="${folderId}"]`);
+                if (expandBtn) {
+                    const icon = expandBtn.querySelector('i');
+                    if (icon) {
+                        icon.classList.remove('bi-chevron-right');
+                        icon.classList.add('bi-chevron-down');
                     }
                 }
-            });
+
+                // Show children
+                const node = this.container.querySelector(`.treeview-node[data-folder-id="${folderId}"]`);
+                if (node) {
+                    let sibling = node.nextElementSibling;
+                    const nodeIndent = parseInt(node.style.paddingLeft) || 0;
+                    while (sibling && sibling.classList.contains('treeview-node')) {
+                        const siblingIndent = parseInt(sibling.style.paddingLeft) || 0;
+                        if (siblingIndent <= nodeIndent) break;
+                        sibling.style.display = '';
+                        sibling = sibling.nextElementSibling;
+                    }
+                }
+            } else {
+                // Need to load children from API
+                this.loadingFolders.add(folderId);
+                this.render();
+
+                this.expandFolder(folderId, false).then(() => {
+                    this.loadingFolders.delete(folderId);
+                    this.render();
+                }).catch(err => {
+                    console.error('Error expanding:', err);
+                    this.loadingFolders.delete(folderId);
+                    // Remove from expanded if failed
+                    const idx = this.options.expandedFolders.indexOf(folderId);
+                    if (idx > -1) this.options.expandedFolders.splice(idx, 1);
+                    this.saveExpandedState();
+                    this.render();
+                });
+            }
+        }
+    }
+
+    // Handle folder selection (node click) - loads content and expands
+    handleFolderSelect(folderId) {
+        // Set as active
+        this.activeFolderId = folderId;
+        localStorage.setItem('treeviewActiveFolder', folderId);
+
+        // Update active state in DOM immediately
+        this.container.querySelectorAll('.treeview-node').forEach(node => {
+            node.classList.remove('active');
         });
-        
-        // Expand/collapse click
-        this.container.querySelectorAll('.treeview-expand').forEach(expand => {
-            expand.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const folderId = expand.getAttribute('data-folder-id');
-                this.toggleFolder(folderId);
-            });
+        const activeNode = this.container.querySelector(`[data-folder-id="${folderId}"]`);
+        if (activeNode) {
+            activeNode.classList.add('active');
+        }
+
+        // Expand if not already expanded
+        if (!this.options.expandedFolders.includes(folderId)) {
+            this.handleExpandToggle(folderId);
+        }
+
+        // Load folder content
+        if (this.options.onFolderClick) {
+            this.options.onFolderClick(folderId);
+        }
+    }
+
+    // Helper to expand folder and render
+    expandAndRender(folderId) {
+        folderId = String(folderId);
+        if (!this.options.expandedFolders.includes(folderId)) {
+            this.options.expandedFolders.push(folderId);
+        }
+        this.loadingFolders.add(folderId);
+        this.saveExpandedState();
+        this.render();
+
+        // Load children data
+        this.expandFolder(folderId, true).then(() => {
+            this.loadingFolders.delete(folderId);
+            this.render();
+        }).catch(error => {
+            console.error('Error expanding folder:', error);
+            this.loadingFolders.delete(folderId);
+            this.render();
         });
     }
     
     toggleFolder(folderId) {
+        folderId = String(folderId);
         const index = this.options.expandedFolders.indexOf(folderId);
         if (index > -1) {
             // Collapse
             this.options.expandedFolders.splice(index, 1);
+            this.loadingFolders.delete(folderId);
             this.saveExpandedState();
-            this.render(); // Render immediately
+            this.scheduleRender();
         } else {
             // Expand - add to expandedFolders immediately for UI feedback
             this.options.expandedFolders.push(folderId);
+            this.loadingFolders.add(folderId);
             this.saveExpandedState();
-            this.render(); // Render immediately to show expand icon change
-            
+            this.scheduleRender(); // Show loading state
+
             // Then load data
             this.expandFolder(folderId, false).then(() => {
-                this.render(); // Render again with children
+                this.loadingFolders.delete(folderId);
+                this.scheduleRender();
             }).catch(error => {
                 console.error('Error expanding folder:', error);
+                this.loadingFolders.delete(folderId);
                 const errorIndex = this.options.expandedFolders.indexOf(folderId);
                 if (errorIndex > -1) {
                     this.options.expandedFolders.splice(errorIndex, 1);
                     this.saveExpandedState();
-                    this.render();
                 }
+                this.scheduleRender();
             });
         }
     }
     
     expandFolder(folderId, expandChildren = false) {
+        folderId = String(folderId);
         // Load sub-folders if not already loaded
         const node = this.container.querySelector(`[data-folder-id="${folderId}"]`);
         if (!node) return Promise.resolve();
-        
+
         const folderType = node.getAttribute('data-folder-type');
         const isSystem = folderType === 'system';
         const actualId = isSystem ? folderId.replace('system_', '') : folderId;
-        
+
         // Check if already expanded AND has loaded children
-        const folder = this.findFolderInTree(folderId);
+        let folder = this.findFolderInTree(folderId);
         if (this.options.expandedFolders.includes(folderId) && folder && folder.children && folder.children.length > 0) {
             // Already expanded with data loaded
+            this.loadingFolders.delete(folderId);
             if (expandChildren) {
                 return this.expandAllChildren(folderId);
             }
             return Promise.resolve();
         }
-        
+
         // Add to expanded folders BEFORE loading (for UI state)
         if (!this.options.expandedFolders.includes(folderId)) {
             this.options.expandedFolders.push(folderId);
+            this.loadingFolders.add(folderId);
             this.saveExpandedState();
-            // Render immediately to show expand icon change
-            this.render();
+            this.scheduleRender(); // Show loading state
         }
-        
+
         // Check cache first
         const cached = this.subFoldersCache[folderId];
         const now = Date.now();
         if (cached && (now - cached.timestamp) < this.cacheTimeout) {
             // Use cached data
+            folder = this.findFolderInTree(folderId);
             if (folder) {
                 folder.children = cached.data.map(sf => ({
                     id: sf.id,
@@ -439,15 +595,18 @@ class FolderTreeview {
                     subFoldersCount: sf.sub_folders_count || 0,
                     children: []
                 }));
-                this.render();
-                
+                // Update subFoldersCount based on actual children
+                folder.subFoldersCount = folder.children.length;
+                this.loadingFolders.delete(folderId);
+                this.scheduleRender();
+
                 if (expandChildren) {
                     return this.expandAllChildren(folderId);
                 }
             }
             return Promise.resolve();
         }
-        
+
         // Load sub-folders from API
         return fetch(`/api/patient-folders/${actualId}/sub-folders/${folderType}`, {
             method: 'GET',
@@ -464,9 +623,9 @@ class FolderTreeview {
                     data: data.sub_folders,
                     timestamp: Date.now()
                 };
-                
+
                 // Find folder in tree and add children
-                const folder = this.findFolderInTree(folderId);
+                folder = this.findFolderInTree(folderId);
                 if (folder) {
                     folder.children = data.sub_folders.map(sf => ({
                         id: sf.id,
@@ -476,24 +635,31 @@ class FolderTreeview {
                         subFoldersCount: sf.sub_folders_count || 0,
                         children: []
                     }));
-                    this.render();
-                    
+                    // Update subFoldersCount based on actual children (fixes stale expand icon)
+                    folder.subFoldersCount = folder.children.length;
+                    this.loadingFolders.delete(folderId);
+                    this.scheduleRender();
+
                     if (expandChildren) {
                         return this.expandAllChildren(folderId);
                     }
                 }
+            } else {
+                this.loadingFolders.delete(folderId);
+                this.scheduleRender();
             }
             return Promise.resolve();
         })
         .catch(error => {
             console.error('Error loading sub-folders:', error);
+            this.loadingFolders.delete(folderId);
             // Remove from expanded if error
             const index = this.options.expandedFolders.indexOf(folderId);
             if (index > -1) {
                 this.options.expandedFolders.splice(index, 1);
                 this.saveExpandedState();
-                this.render();
             }
+            this.scheduleRender();
             return Promise.reject(error);
         });
     }
@@ -564,29 +730,27 @@ class FolderTreeview {
     }
     
     highlightActive(folderId) {
-        this.activeFolderId = folderId;
-        
+        // Always use string for consistency
+        this.activeFolderId = folderId ? String(folderId) : null;
+
         // Save active folder to localStorage
         if (folderId) {
-            localStorage.setItem('treeviewActiveFolder', folderId);
+            localStorage.setItem('treeviewActiveFolder', String(folderId));
         } else {
             localStorage.removeItem('treeviewActiveFolder');
         }
-        
+
         // Re-render to apply active state (this ensures active state persists)
         if (this.container && this.treeData) {
-            this.render();
-            
-            // Scroll into view after render
-            setTimeout(() => {
+            this.scheduleRender();
+
+            // Scroll into view after render (use requestAnimationFrame for smooth timing)
+            requestAnimationFrame(() => {
                 const activeNode = this.container.querySelector(`[data-folder-id="${folderId}"]`);
                 if (activeNode) {
-                    const nodeElement = activeNode.closest('.treeview-node');
-                    if (nodeElement) {
-                        nodeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }
+                    activeNode.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
-            }, 0);
+            });
         }
     }
     
@@ -939,7 +1103,7 @@ function renderPatientsTable() {
         if (patientsToShow.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="7" class="text-center py-4">
+                    <td colspan="8" class="text-center py-4">
                         <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
                         <p class="text-muted mt-2 mb-0">No patients to display</p>
                     </td>
@@ -973,10 +1137,30 @@ function renderPatientsTable() {
                     doctorInfo = patient.created_by_name;
                 }
                 
+                // Get color marker (will be fetched and cached)
+                const colorMarker = patient.color_marker || null;
+                
                 html += `
-                    <tr>
+                    <tr data-patient-id="${patient.id}">
                         <td>
                             <div class="d-flex align-items-center">
+                                <div class="patient-info-marker-container" style="flex-shrink: 0; width: 12px; height: 12px; margin-right: 8px;">
+                                    ${colorMarker ? `
+                                        <div class="patient-color-marker-table me-2" 
+                                             style="width: 12px; height: 12px; border-radius: 50%; background: ${colorMarker}; cursor: pointer; flex-shrink: 0;"
+                                             onclick="event.stopPropagation(); showColorMarkerModal(${patient.id}, '${colorMarker}')"
+                                             title="Click to change color marker"></div>
+                                    ` : `
+                                        <button class="btn btn-sm btn-link p-0 me-2 patient-color-marker-add-table" 
+                                                style="width: 12px; height: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; opacity: 0; transition: opacity 0.2s ease;"
+                                                onmouseenter="this.style.opacity='1'"
+                                                onmouseleave="this.style.opacity='0'"
+                                                onclick="event.stopPropagation(); showColorMarkerModal(${patient.id}, null)"
+                                                title="Click to add color marker">
+                                            <i class="bi bi-plus-lg" style="font-size: 0.6rem;"></i>
+                                        </button>
+                                    `}
+                                </div>
                                 <div class="${avatarClass}">
                                     ${avatarInitials}
                                 </div>
@@ -1069,6 +1253,11 @@ function renderPatientsTable() {
                             <span class="badge bg-primary">${patient.total_appointments || 0}</span>
                         </td>
                         <td>
+                            <div id="patientTagsTable_${patient.id}" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+                                <!-- Tags will be loaded here -->
+                            </div>
+                        </td>
+                        <td>
                             <div class="btn-group" role="group">
                                 <a href="/doctor/patients/${patient.id}" 
                                    class="btn btn-sm btn-outline-warning" 
@@ -1106,10 +1295,34 @@ function renderPatientsTable() {
             
             tableBody.innerHTML = html;
             
+            // Add hover effects for add marker buttons
+            tableBody.querySelectorAll('tr').forEach(row => {
+                const addBtn = row.querySelector('.patient-color-marker-add-table');
+                if (addBtn) {
+                    row.addEventListener('mouseenter', function() {
+                        const btn = this.querySelector('.patient-color-marker-add-table');
+                        if (btn) {
+                            btn.style.opacity = '1';
+                        }
+                    });
+                    
+                    row.addEventListener('mouseleave', function() {
+                        const btn = this.querySelector('.patient-color-marker-add-table');
+                        if (btn) {
+                            btn.style.opacity = '0';
+                        }
+                    });
+                }
+            });
+            
             // Refresh tooltips for new content
             setTimeout(() => {
                 refreshTooltips();
             }, 100);
+            
+            // Fetch color markers and tags for table patients
+            fetchColorMarkersForTablePatients(patientsToShow);
+            fetchTagsForTablePatients(patientsToShow);
         }
         
         // Remove loading state
@@ -6825,75 +7038,248 @@ function renderFolderPatients(patients) {
     }, 100);
 }
 
-// Fetch color markers for patients
+// Fetch color markers for patients (BATCH API - reduces N calls to 1)
 async function fetchColorMarkersForPatients(patients) {
     if (!patients || patients.length === 0) return;
-    
-    // Fetch color markers in parallel
-    const promises = patients.map(patient => 
-        fetch(`/api/patient-color-markers/${patient.id}`, {
-            method: 'GET',
+
+    try {
+        const patientIds = patients.map(p => p.id);
+
+        const response = await fetch('/api/patient-color-markers/batch', {
+            method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.ok && data.color_code) {
-                // Update patient object
-                patient.color_marker = data.color_code;
+            },
+            body: JSON.stringify({ patient_ids: patientIds })
+        });
+
+        const data = await response.json();
+
+        if (data.ok && data.markers) {
+            // Update all patients from batch response
+            patients.forEach(patient => {
+                const colorCode = data.markers[patient.id] || null;
+                patient.color_marker = colorCode;
+
                 // Update DOM
                 const card = document.querySelector(`[data-patient-id="${patient.id}"]`);
                 if (card) {
-                    const marker = card.querySelector('.patient-color-marker');
-                    const markerAdd = card.querySelector('.patient-color-marker-add');
-                    
-                    if (data.color_code) {
-                        if (markerAdd) markerAdd.remove();
-                        if (!marker) {
-                            const markerDiv = document.createElement('div');
-                            markerDiv.className = 'patient-color-marker';
-                            markerDiv.style.cssText = 'position: absolute; top: 8px; right: 8px; width: 12px; height: 12px; border-radius: 50%; background: ' + data.color_code + '; border: 2px solid white; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.2);';
-                            markerDiv.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patient.id}, '${data.color_code}')`);
-                            markerDiv.setAttribute('title', 'Click to change color marker');
-                            card.appendChild(markerDiv);
-                        } else {
-                            marker.style.background = data.color_code;
-                        }
-                        
-                        // Update card border and glow
-                        card.setAttribute('data-has-color-marker', 'true');
-                        card.classList.add('patient-card-has-marker');
-                        card.style.setProperty('--marker-color', data.color_code);
-                        card.style.setProperty('--marker-color-rgb', hexToRgb(data.color_code));
-                        card.style.border = `2px solid ${data.color_code}`;
-                    } else {
-                        if (marker) marker.remove();
-                        if (!markerAdd) {
-                            const markerAddDiv = document.createElement('div');
-                            markerAddDiv.className = 'patient-color-marker-add';
-                            markerAddDiv.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patient.id}, null)`);
-                            markerAddDiv.setAttribute('title', 'Click to add color marker');
-                            markerAddDiv.innerHTML = '<i class="bi bi-plus-lg"></i>';
-                            card.appendChild(markerAddDiv);
-                        }
-                        // Remove card styling
-                        card.setAttribute('data-has-color-marker', 'false');
-                        card.classList.remove('patient-card-has-marker');
-                        card.style.removeProperty('--marker-color');
-                        card.style.removeProperty('--marker-color-rgb');
-                        card.style.border = '1px solid var(--border)';
-                    }
+                    updateCardColorMarker(card, patient.id, colorCode);
                 }
-            }
-        })
-        .catch(error => {
-            console.error(`Error fetching color marker for patient ${patient.id}:`, error);
-        })
-    );
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching color markers batch:', error);
+    }
+}
+
+// Helper function to update card color marker DOM
+function updateCardColorMarker(card, patientId, colorCode) {
+    const marker = card.querySelector('.patient-color-marker');
+    const markerAdd = card.querySelector('.patient-color-marker-add');
+
+    if (colorCode) {
+        if (markerAdd) markerAdd.remove();
+        if (!marker) {
+            const markerDiv = document.createElement('div');
+            markerDiv.className = 'patient-color-marker';
+            markerDiv.style.cssText = 'position: absolute; top: 8px; right: 8px; width: 12px; height: 12px; border-radius: 50%; background: ' + colorCode + '; border: 2px solid white; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.2);';
+            markerDiv.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patientId}, '${colorCode}')`);
+            markerDiv.setAttribute('title', 'Click to change color marker');
+            card.appendChild(markerDiv);
+        } else {
+            marker.style.background = colorCode;
+            marker.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patientId}, '${colorCode}')`);
+        }
+
+        // Update card border and glow
+        card.setAttribute('data-has-color-marker', 'true');
+        card.classList.add('patient-card-has-marker');
+        card.style.setProperty('--marker-color', colorCode);
+        card.style.setProperty('--marker-color-rgb', hexToRgb(colorCode));
+        card.style.border = `2px solid ${colorCode}`;
+    } else {
+        if (marker) marker.remove();
+        if (!markerAdd) {
+            const markerAddDiv = document.createElement('div');
+            markerAddDiv.className = 'patient-color-marker-add';
+            markerAddDiv.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patientId}, null)`);
+            markerAddDiv.setAttribute('title', 'Click to add color marker');
+            markerAddDiv.innerHTML = '<i class="bi bi-plus-lg"></i>';
+            card.appendChild(markerAddDiv);
+        }
+        // Remove card styling
+        card.setAttribute('data-has-color-marker', 'false');
+        card.classList.remove('patient-card-has-marker');
+        card.style.removeProperty('--marker-color');
+        card.style.removeProperty('--marker-color-rgb');
+        card.style.border = '1px solid var(--border)';
+    }
+}
+
+// Fetch color markers for table view patients (BATCH API - reduces N calls to 1)
+async function fetchColorMarkersForTablePatients(patients) {
+    if (!patients || patients.length === 0) return;
+
+    try {
+        const patientIds = patients.map(p => p.id);
+
+        const response = await fetch('/api/patient-color-markers/batch', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ patient_ids: patientIds })
+        });
+
+        const data = await response.json();
+
+        if (data.ok && data.markers) {
+            // Update all patients from batch response
+            patients.forEach(patient => {
+                const colorCode = data.markers[patient.id] || null;
+                patient.color_marker = colorCode;
+                updateTableRowMarker(patient.id, colorCode);
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching color markers batch for table:', error);
+    }
+}
+
+// Update color marker in table row
+function updateTableRowMarker(patientId, colorMarker) {
+    const row = document.querySelector(`tr[data-patient-id="${patientId}"]`);
+    if (!row) return;
     
-    await Promise.all(promises);
+    // Find the first td (Patient Info column)
+    const firstTd = row.querySelector('td:first-child');
+    if (!firstTd) return;
+    
+    // Find the flex container
+    const flexContainer = firstTd.querySelector('.d-flex.align-items-center');
+    if (!flexContainer) return;
+    
+    // Find the marker container within the first td
+    let markerContainer = firstTd.querySelector('.patient-info-marker-container');
+    
+    // If container doesn't exist, create it at the beginning of the flex container
+    if (!markerContainer) {
+        markerContainer = document.createElement('div');
+        markerContainer.className = 'patient-info-marker-container';
+        markerContainer.style.cssText = 'flex-shrink: 0; width: 12px; height: 12px; margin-right: 8px;';
+        // Insert at the beginning of flex container (before avatar)
+        const avatar = flexContainer.querySelector('.avatar-circle');
+        if (avatar) {
+            flexContainer.insertBefore(markerContainer, avatar);
+        } else {
+            flexContainer.insertBefore(markerContainer, flexContainer.firstChild);
+        }
+    } else {
+        // Ensure container has correct styling
+        markerContainer.style.cssText = 'flex-shrink: 0; width: 12px; height: 12px; margin-right: 8px;';
+    }
+    
+    // Remove any existing markers outside the container (cleanup)
+    // Clean up ALL markers in the entire row that are not inside the markerContainer
+    row.querySelectorAll('.patient-color-marker, .patient-color-marker-table, .patient-color-marker-add-table').forEach(el => {
+        if (!markerContainer.contains(el)) {
+            el.remove();
+        }
+    });
+    
+    if (colorMarker) {
+        markerContainer.innerHTML = `
+            <div class="patient-color-marker-table me-2" 
+                 style="width: 12px; height: 12px; border-radius: 50%; background: ${colorMarker}; cursor: pointer; flex-shrink: 0;"
+                 onclick="event.stopPropagation(); showColorMarkerModal(${patientId}, '${colorMarker}')"
+                 title="Click to change color marker"></div>
+        `;
+    } else {
+        markerContainer.innerHTML = `
+            <button class="btn btn-sm btn-link p-0 me-2 patient-color-marker-add-table" 
+                    style="width: 12px; height: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; opacity: 0; transition: opacity 0.2s ease;"
+                    onmouseenter="this.style.opacity='1'"
+                    onmouseleave="this.style.opacity='0'"
+                    onclick="event.stopPropagation(); showColorMarkerModal(${patientId}, null)"
+                    title="Click to add color marker">
+                <i class="bi bi-plus-lg" style="font-size: 0.6rem;"></i>
+            </button>
+        `;
+        
+        // Add hover effect to show add marker button on row hover
+        row.addEventListener('mouseenter', function() {
+            const addBtn = this.querySelector('.patient-color-marker-add-table');
+            if (addBtn) {
+                addBtn.style.opacity = '1';
+            }
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            const addBtn = this.querySelector('.patient-color-marker-add-table');
+            if (addBtn) {
+                addBtn.style.opacity = '0';
+            }
+        });
+    }
+}
+
+// Fetch tags for table view patients (BATCH API - reduces N calls to 1)
+async function fetchTagsForTablePatients(patients) {
+    if (!patients || patients.length === 0) return;
+
+    try {
+        const patientIds = patients.map(p => p.id);
+
+        const response = await fetch('/api/patients/tags/batch', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ patient_ids: patientIds })
+        });
+
+        const data = await response.json();
+
+        if (data.ok && data.tags) {
+            // Update all patients from batch response
+            patients.forEach(patient => {
+                const tags = data.tags[patient.id] || [];
+                patient.tags = tags;
+
+                // Update tags in table row
+                const tagsContainer = document.getElementById(`patientTagsTable_${patient.id}`);
+                if (tagsContainer) {
+                    let tagsHtml = '';
+                    if (tags.length > 0) {
+                        tagsHtml = tags.map(tag => `
+                            <span class="badge patient-tag"
+                                  style="background: ${tag.color || '#6366f1'}; font-size: 0.7rem; padding: 0.25rem 0.5rem; cursor: pointer;"
+                                  onclick="event.stopPropagation(); removeTagFromPatient(${patient.id}, ${tag.id})"
+                                  title="Click to remove tag">
+                                ${tag.icon ? `<i class="bi ${tag.icon} me-1"></i>` : ''}
+                                ${escapeHtml(tag.name)}
+                            </span>
+                        `).join('');
+                    }
+                    tagsHtml += `
+                        <button class="btn btn-sm btn-link p-0 add-tag-btn-table"
+                                style="font-size: 0.7rem; color: var(--text); padding: 0;"
+                                onclick="event.stopPropagation(); showTagManagementModal(${patient.id})"
+                                title="Add tag">
+                            <i class="bi bi-plus-circle me-1"></i>Add
+                        </button>
+                    `;
+                    tagsContainer.innerHTML = tagsHtml;
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching tags batch for table:', error);
+    }
 }
 
 // Show color marker modal
@@ -7002,27 +7388,38 @@ function updatePatientColorMarker(patientId, colorCode) {
                 if (patient) {
                     patient.color_marker = null;
                 }
-                // Update DOM
-                const card = document.querySelector(`[data-patient-id="${patientId}"]`);
-                if (card) {
-                    const marker = card.querySelector('.patient-color-marker');
-                    if (marker) {
-                        marker.remove();
-                        const markerAddDiv = document.createElement('div');
-                        markerAddDiv.className = 'patient-color-marker-add';
-                        markerAddDiv.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patientId}, null)`);
-                        markerAddDiv.setAttribute('title', 'Click to add color marker');
-                        markerAddDiv.innerHTML = '<i class="bi bi-plus-lg"></i>';
-                        card.appendChild(markerAddDiv);
+                // Update DOM - check if it's a card (cards/folders view) or table row
+                const element = document.querySelector(`[data-patient-id="${patientId}"]`);
+                if (element) {
+                    // Check if it's a table row (tr) or a card (div)
+                    if (element.tagName === 'TR') {
+                        // It's a table row - use updateTableRowMarker
+                        updateTableRowMarker(patientId, null);
+                    } else {
+                        // It's a card (cards/folders view)
+                        const marker = element.querySelector('.patient-color-marker');
+                        if (marker) {
+                            marker.remove();
+                            const markerAddDiv = document.createElement('div');
+                            markerAddDiv.className = 'patient-color-marker-add';
+                            markerAddDiv.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patientId}, null)`);
+                            markerAddDiv.setAttribute('title', 'Click to add color marker');
+                            markerAddDiv.innerHTML = '<i class="bi bi-plus-lg"></i>';
+                            element.appendChild(markerAddDiv);
+                        }
+                        
+                        // Remove card border and glow styling
+                        element.setAttribute('data-has-color-marker', 'false');
+                        element.classList.remove('patient-card-has-marker');
+                        element.style.removeProperty('--marker-color');
+                        element.style.removeProperty('--marker-color-rgb');
+                        element.style.border = '1px solid var(--border)';
                     }
-                    
-                    // Remove card border and glow styling
-                    card.setAttribute('data-has-color-marker', 'false');
-                    card.classList.remove('patient-card-has-marker');
-                    card.style.removeProperty('--marker-color');
-                    card.style.removeProperty('--marker-color-rgb');
-                    card.style.border = '1px solid var(--border)';
+                } else {
+                    // Element not found, try to update table row anyway
+                    updateTableRowMarker(patientId, null);
                 }
+                
                 showNotification('Color marker removed', 'success');
             }
         })
@@ -7048,34 +7445,45 @@ function updatePatientColorMarker(patientId, colorCode) {
                 if (patient) {
                     patient.color_marker = colorCode;
                 }
-                // Update DOM
-                const card = document.querySelector(`[data-patient-id="${patientId}"]`);
-                if (card) {
-                    const marker = card.querySelector('.patient-color-marker');
-                    const markerAdd = card.querySelector('.patient-color-marker-add');
-                    
-                    if (colorCode) {
-                        if (markerAdd) markerAdd.remove();
-                        if (!marker) {
-                            const markerDiv = document.createElement('div');
-                            markerDiv.className = 'patient-color-marker';
-                            markerDiv.style.cssText = 'position: absolute; top: 8px; right: 8px; width: 12px; height: 12px; border-radius: 50%; background: ' + colorCode + '; border: 2px solid white; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.2);';
-                            markerDiv.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patientId}, '${colorCode}')`);
-                            markerDiv.setAttribute('title', 'Click to change color marker');
-                            card.appendChild(markerDiv);
-                        } else {
-                            marker.style.background = colorCode;
-                            marker.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patientId}, '${colorCode}')`);
-                        }
+                // Update DOM - check if it's a card (cards/folders view) or table row
+                const element = document.querySelector(`[data-patient-id="${patientId}"]`);
+                if (element) {
+                    // Check if it's a table row (tr) or a card (div)
+                    if (element.tagName === 'TR') {
+                        // It's a table row - use updateTableRowMarker
+                        updateTableRowMarker(patientId, colorCode);
+                    } else {
+                        // It's a card (cards/folders view)
+                        const marker = element.querySelector('.patient-color-marker');
+                        const markerAdd = element.querySelector('.patient-color-marker-add');
                         
-                        // Update card border and glow styling immediately
-                        card.setAttribute('data-has-color-marker', 'true');
-                        card.classList.add('patient-card-has-marker');
-                        card.style.setProperty('--marker-color', colorCode);
-                        card.style.setProperty('--marker-color-rgb', hexToRgb(colorCode));
-                        card.style.border = `2px solid ${colorCode}`;
+                        if (colorCode) {
+                            if (markerAdd) markerAdd.remove();
+                            if (!marker) {
+                                const markerDiv = document.createElement('div');
+                                markerDiv.className = 'patient-color-marker';
+                                markerDiv.style.cssText = 'position: absolute; top: 8px; right: 8px; width: 12px; height: 12px; border-radius: 50%; background: ' + colorCode + '; border: 2px solid white; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.2);';
+                                markerDiv.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patientId}, '${colorCode}')`);
+                                markerDiv.setAttribute('title', 'Click to change color marker');
+                                element.appendChild(markerDiv);
+                            } else {
+                                marker.style.background = colorCode;
+                                marker.setAttribute('onclick', `event.stopPropagation(); showColorMarkerModal(${patientId}, '${colorCode}')`);
+                            }
+                            
+                            // Update card border and glow styling immediately
+                            element.setAttribute('data-has-color-marker', 'true');
+                            element.classList.add('patient-card-has-marker');
+                            element.style.setProperty('--marker-color', colorCode);
+                            element.style.setProperty('--marker-color-rgb', hexToRgb(colorCode));
+                            element.style.border = `2px solid ${colorCode}`;
+                        }
                     }
+                } else {
+                    // Element not found, try to update table row anyway
+                    updateTableRowMarker(patientId, colorCode);
                 }
+                
                 showNotification('Color marker updated', 'success');
             }
         })
@@ -7086,31 +7494,37 @@ function updatePatientColorMarker(patientId, colorCode) {
     }
 }
 
-// Fetch tags for patients
+// Fetch tags for patients (BATCH API - reduces N calls to 1)
 async function fetchTagsForPatients(patients) {
     if (!patients || patients.length === 0) return;
-    
-    // Fetch tags in parallel
-    const promises = patients.map(patient => 
-        fetch(`/api/patients/${patient.id}/tags`, {
-            method: 'GET',
+
+    try {
+        const patientIds = patients.map(p => p.id);
+
+        const response = await fetch('/api/patients/tags/batch', {
+            method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.ok && data.tags) {
-                // Update patient object
-                patient.tags = data.tags;
+            },
+            body: JSON.stringify({ patient_ids: patientIds })
+        });
+
+        const data = await response.json();
+
+        if (data.ok && data.tags) {
+            // Update all patients from batch response
+            patients.forEach(patient => {
+                const tags = data.tags[patient.id] || [];
+                patient.tags = tags;
+
                 // Update DOM
                 const tagsContainer = document.getElementById(`patientTags_${patient.id}`);
                 if (tagsContainer) {
                     let tagsHtml = '';
-                    if (data.tags.length > 0) {
-                        tagsHtml = data.tags.map(tag => `
-                            <span class="badge patient-tag" 
+                    if (tags.length > 0) {
+                        tagsHtml = tags.map(tag => `
+                            <span class="badge patient-tag"
                                   style="background: ${tag.color || '#6366f1'}; margin-right: 4px; margin-bottom: 4px; cursor: pointer;"
                                   onclick="event.stopPropagation(); removeTagFromPatient(${patient.id}, ${tag.id})"
                                   title="Click to remove tag">
@@ -7120,7 +7534,7 @@ async function fetchTagsForPatients(patients) {
                         `).join('');
                     }
                     tagsHtml += `
-                        <button class="btn btn-sm btn-link p-0 add-tag-btn" 
+                        <button class="btn btn-sm btn-link p-0 add-tag-btn"
                                 style="font-size: 0.75rem; color: var(--text);"
                                 onclick="event.stopPropagation(); showTagManagementModal(${patient.id})"
                                 title="Add tag">
@@ -7129,14 +7543,11 @@ async function fetchTagsForPatients(patients) {
                     `;
                     tagsContainer.innerHTML = tagsHtml;
                 }
-            }
-        })
-        .catch(error => {
-            console.error(`Error fetching tags for patient ${patient.id}:`, error);
-        })
-    );
-    
-    await Promise.all(promises);
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching tags batch:', error);
+    }
 }
 
 // Show tag management modal
@@ -7206,21 +7617,51 @@ async function showTagManagementModal(patientId) {
         availableTags.forEach(tag => {
             const isAssigned = patientTagIds.includes(tag.id);
             const tagItem = document.createElement('div');
+
             tagItem.className = 'tag-item mb-2';
-            tagItem.style.cssText = 'display: flex; align-items: center; padding: 8px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer;';
+            tagItem.style.cssText = 'display: flex; align-items: center; padding: 8px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: background-color 0.2s ease;';
             if (isAssigned) {
                 tagItem.style.background = 'rgba(var(--accent-rgb), 0.1)';
             }
+            
+            const checkboxId = `tagCheckbox_${patientId}_${tag.id}`;
             tagItem.innerHTML = `
                 <input type="checkbox" 
+                       id="${checkboxId}"
                        class="form-check-input me-2" 
                        ${isAssigned ? 'checked' : ''}
-                       onchange="togglePatientTag(${patientId}, ${tag.id}, this.checked)">
+                       onclick="event.stopPropagation(); togglePatientTag(${patientId}, ${tag.id}, this.checked)">
                 <span class="badge" style="background: ${tag.color || '#6366f1'};">
                     ${tag.icon ? `<i class="bi ${tag.icon} me-1"></i>` : ''}
                     ${escapeHtml(tag.name)}
                 </span>
             `;
+            
+            // Make the whole item clickable
+            tagItem.addEventListener('click', function(e) {
+                // Don't trigger if clicking directly on the checkbox (it handles itself)
+                if (e.target.type !== 'checkbox') {
+                    const checkbox = this.querySelector(`#${checkboxId}`);
+                    if (checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                        togglePatientTag(patientId, tag.id, checkbox.checked);
+                    }
+                }
+            });
+            
+            // Add hover effect
+            tagItem.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = isAssigned 
+                    ? 'rgba(var(--accent-rgb), 0.15)' 
+                    : 'rgba(var(--accent-rgb), 0.05)';
+            });
+            
+            tagItem.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = isAssigned 
+                    ? 'rgba(var(--accent-rgb), 0.1)' 
+                    : 'transparent';
+            });
+            
             tagsList.appendChild(tagItem);
         });
     }
@@ -7255,34 +7696,20 @@ function togglePatientTag(patientId, tagId, assign) {
                 .then(response => response.json())
                 .then(tagsData => {
                     if (tagsData.ok) {
+                        // Update patient in memory
                         const patient = currentFolderPatients.find(p => p.id === patientId);
                         if (patient) {
                             patient.tags = tagsData.tags;
                         }
-                        const tagsContainer = document.getElementById(`patientTags_${patientId}`);
-                        if (tagsContainer) {
-                            let tagsHtml = '';
-                            if (tagsData.tags.length > 0) {
-                                tagsHtml = tagsData.tags.map(tag => `
-                                    <span class="badge patient-tag" 
-                                          style="background: ${tag.color || '#6366f1'}; margin-right: 4px; margin-bottom: 4px; cursor: pointer;"
-                                          onclick="event.stopPropagation(); removeTagFromPatient(${patientId}, ${tag.id})"
-                                          title="Click to remove tag">
-                                        ${tag.icon ? `<i class="bi ${tag.icon} me-1"></i>` : ''}
-                                        ${escapeHtml(tag.name)}
-                                    </span>
-                                `).join('');
-                            }
-                            tagsHtml += `
-                                <button class="btn btn-sm btn-link p-0 add-tag-btn" 
-                                        style="font-size: 0.75rem; color: var(--muted);"
-                                        onclick="event.stopPropagation(); showTagManagementModal(${patientId})"
-                                        title="Add tag">
-                                    <i class="bi bi-plus-circle me-1"></i>Add Tag
-                                </button>
-                            `;
-                            tagsContainer.innerHTML = tagsHtml;
+                        // Also update in paginationState
+                        const paginationPatient = paginationState.filteredPatients.find(p => p.id === patientId);
+                        if (paginationPatient) {
+                            paginationPatient.tags = tagsData.tags;
                         }
+
+                        // Update ALL views (cards/folders and table)
+                        updatePatientTagsInDOM(patientId, tagsData.tags);
+                        showNotification('Tag added', 'success');
                     }
                 });
             }
@@ -7294,6 +7721,61 @@ function togglePatientTag(patientId, tagId, assign) {
     } else {
         // Remove tag
         removeTagFromPatient(patientId, tagId);
+    }
+}
+
+// Helper function to update tags in ALL views (table + cards/folders)
+function updatePatientTagsInDOM(patientId, tags) {
+    // Update cards/folders view container
+    const cardsContainer = document.getElementById(`patientTags_${patientId}`);
+    if (cardsContainer) {
+        let tagsHtml = '';
+        if (tags && tags.length > 0) {
+            tagsHtml = tags.map(tag => `
+                <span class="badge patient-tag"
+                      style="background: ${tag.color || '#6366f1'}; margin-right: 4px; margin-bottom: 4px; cursor: pointer;"
+                      onclick="event.stopPropagation(); removeTagFromPatient(${patientId}, ${tag.id})"
+                      title="Click to remove tag">
+                    ${tag.icon ? `<i class="bi ${tag.icon} me-1"></i>` : ''}
+                    ${escapeHtml(tag.name)}
+                </span>
+            `).join('');
+        }
+        tagsHtml += `
+            <button class="btn btn-sm btn-link p-0 add-tag-btn"
+                    style="font-size: 0.75rem; color: var(--muted);"
+                    onclick="event.stopPropagation(); showTagManagementModal(${patientId})"
+                    title="Add tag">
+                <i class="bi bi-plus-circle me-1"></i>Add Tag
+            </button>
+        `;
+        cardsContainer.innerHTML = tagsHtml;
+    }
+
+    // Update table view container
+    const tableContainer = document.getElementById(`patientTagsTable_${patientId}`);
+    if (tableContainer) {
+        let tagsHtml = '';
+        if (tags && tags.length > 0) {
+            tagsHtml = tags.map(tag => `
+                <span class="badge patient-tag"
+                      style="background: ${tag.color || '#6366f1'}; font-size: 0.7rem; padding: 0.25rem 0.5rem; cursor: pointer;"
+                      onclick="event.stopPropagation(); removeTagFromPatient(${patientId}, ${tag.id})"
+                      title="Click to remove tag">
+                    ${tag.icon ? `<i class="bi ${tag.icon} me-1"></i>` : ''}
+                    ${escapeHtml(tag.name)}
+                </span>
+            `).join('');
+        }
+        tagsHtml += `
+            <button class="btn btn-sm btn-link p-0 add-tag-btn-table"
+                    style="font-size: 0.7rem; color: var(--text); padding: 0;"
+                    onclick="event.stopPropagation(); showTagManagementModal(${patientId})"
+                    title="Add tag">
+                <i class="bi bi-plus-circle me-1"></i>Add
+            </button>
+        `;
+        tableContainer.innerHTML = tagsHtml;
     }
 }
 
@@ -7309,37 +7791,38 @@ function removeTagFromPatient(patientId, tagId) {
     .then(response => response.json())
     .then(data => {
         if (data.ok) {
-            // Update patient object
-            const patient = currentFolderPatients.find(p => p.id === patientId);
-            if (patient && patient.tags) {
-                patient.tags = patient.tags.filter(t => t.id !== tagId);
-            }
-            // Update DOM
-            const tagsContainer = document.getElementById(`patientTags_${patientId}`);
-            if (tagsContainer) {
-                let tagsHtml = '';
-                if (patient && patient.tags && patient.tags.length > 0) {
-                    tagsHtml = patient.tags.map(tag => `
-                        <span class="badge patient-tag" 
-                              style="background: ${tag.color || '#6366f1'}; margin-right: 4px; margin-bottom: 4px; cursor: pointer;"
-                              onclick="event.stopPropagation(); removeTagFromPatient(${patientId}, ${tag.id})"
-                              title="Click to remove tag">
-                            ${tag.icon ? `<i class="bi ${tag.icon} me-1"></i>` : ''}
-                            ${escapeHtml(tag.name)}
-                        </span>
-                    `).join('');
+            // Fetch updated tags from API
+            fetch(`/api/patients/${patientId}/tags`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
                 }
-                tagsHtml += `
-                    <button class="btn btn-sm btn-link p-0 add-tag-btn" 
-                            style="font-size: 0.75rem; color: var(--text);"
-                            onclick="event.stopPropagation(); showTagManagementModal(${patientId})"
-                            title="Add tag">
-                        <i class="bi bi-plus-circle me-1"></i>Add Tag
-                    </button>
-                `;
-                tagsContainer.innerHTML = tagsHtml;
-            }
-            showNotification('Tag removed', 'success');
+            })
+            .then(response => response.json())
+            .then(tagsData => {
+                if (tagsData.ok) {
+                    // Update patient in memory (folder view)
+                    const patient = currentFolderPatients.find(p => p.id === patientId);
+                    if (patient) {
+                        patient.tags = tagsData.tags;
+                    }
+                    
+                    // Update patient in paginationState (table/cards view)
+                    const paginationPatient = paginationState.filteredPatients.find(p => p.id === patientId);
+                    if (paginationPatient) {
+                        paginationPatient.tags = tagsData.tags;
+                    }
+                    
+                    // Update ALL views (table + cards/folders) using helper function
+                    updatePatientTagsInDOM(patientId, tagsData.tags);
+                    showNotification('Tag removed', 'success');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching updated tags:', error);
+                showNotification('Tag removed but failed to refresh', 'warning');
+            });
         }
     })
     .catch(error => {
@@ -7360,9 +7843,9 @@ class FilterManager {
             this.container = null;
             return;
         }
-        
+
         this.mode = mode; // 'folder' or 'cards'
-        
+
         this.filters = {
             colors: [],
             tags: [],
@@ -7370,8 +7853,22 @@ class FilterManager {
             gender: null,
             age: { min: null, max: null }
         };
-        
+
+        // Create debounced version of applyFilters for text/number inputs (150ms delay)
+        this.debouncedApplyFilters = this.createDebouncedApply(150);
+
         this.render();
+    }
+
+    // Create a debounced apply function
+    createDebouncedApply(delay) {
+        let timeout = null;
+        return (patients) => {
+            if (timeout) clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                this.applyFilters(patients);
+            }, delay);
+        };
     }
     
     render() {
@@ -7588,7 +8085,8 @@ class FilterManager {
     
     setAge(type, value) {
         this.filters.age[type] = value ? parseInt(value) : null;
-        this.applyFilters();
+        // Use debounced apply for number inputs (may change rapidly while typing)
+        this.debouncedApplyFilters();
     }
     
     updateColorFilterUI() {
