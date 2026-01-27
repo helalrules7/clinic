@@ -304,8 +304,8 @@ class FolderTreeview {
         const isExpanded = this.options.expandedFolders.includes(folderId) || this.options.expandedFolders.includes(String(folderId));
         const hasChildren = folder.subFoldersCount > 0 || (folder.children && folder.children.length > 0);
         const indent = level * 20;
-        // Compare as strings to handle both numeric and string IDs
-        const isActive = String(this.activeFolderId) === String(folderId);
+        // Compare as strings - ensure activeFolderId is also string and handle null
+        const isActive = this.activeFolderId && String(this.activeFolderId) === String(folderId);
         const isLoading = this.loadingFolders.has(folderId) || this.loadingFolders.has(String(folderId));
 
         let html = `<div class="treeview-node ${isActive ? 'active' : ''} ${isLoading ? 'loading' : ''}" data-folder-id="${folderId}" data-folder-type="${folder.type}" style="padding-left: ${indent}px;">`;
@@ -390,6 +390,7 @@ class FolderTreeview {
 
     // Handle expand/collapse toggle (chevron click) - NO content loading
     handleExpandToggle(folderId) {
+        folderId = String(folderId);
         const index = this.options.expandedFolders.indexOf(folderId);
 
         if (index > -1) {
@@ -421,7 +422,10 @@ class FolderTreeview {
                 }
             }
         } else {
-            // Expand - load children if needed
+            // Expand - collapse all others first
+            this.collapseAllFoldersExcept(folderId);
+            
+            // Then expand this folder
             this.options.expandedFolders.push(folderId);
             this.saveExpandedState();
 
@@ -473,10 +477,20 @@ class FolderTreeview {
 
     // Handle folder selection (node click) - loads content and expands
     handleFolderSelect(folderId) {
-        // Set as active
+        folderId = String(folderId);
+        
+        // Set as active FIRST (before collapse/expand operations)
         this.activeFolderId = folderId;
         localStorage.setItem('treeviewActiveFolder', folderId);
-
+        
+        // Collapse all other folders except this one and its parent path
+        this.collapseAllFoldersExcept(folderId);
+        
+        // Expand this folder if not already expanded
+        if (!this.options.expandedFolders.includes(folderId)) {
+            this.handleExpandToggle(folderId);
+        }
+        
         // Update active state in DOM immediately
         this.container.querySelectorAll('.treeview-node').forEach(node => {
             node.classList.remove('active');
@@ -485,16 +499,14 @@ class FolderTreeview {
         if (activeNode) {
             activeNode.classList.add('active');
         }
-
-        // Expand if not already expanded
-        if (!this.options.expandedFolders.includes(folderId)) {
-            this.handleExpandToggle(folderId);
-        }
-
-        // Load folder content
+        
+        // Load folder content (this calls openFolder which is part of folderview - don't modify)
         if (this.options.onFolderClick) {
             this.options.onFolderClick(folderId);
         }
+        
+        // Re-render to apply collapse/expand changes and active state
+        this.scheduleRender();
     }
 
     // Helper to expand folder and render
@@ -706,6 +718,72 @@ class FolderTreeview {
         this.render();
     }
     
+    // Collapse all folders except the specified folder and its parent path
+    collapseAllFoldersExcept(folderIdToKeep) {
+        folderIdToKeep = String(folderIdToKeep);
+        
+        // Get parent path for the folder to keep (so we don't collapse parents)
+        const parentPath = this.getParentPath(folderIdToKeep);
+        const foldersToKeep = new Set([folderIdToKeep, ...parentPath]);
+        
+        // Collapse all folders that are not in the keep list
+        const foldersToCollapse = this.options.expandedFolders.filter(
+            folderId => !foldersToKeep.has(String(folderId))
+        );
+        
+        // Remove from expandedFolders
+        foldersToCollapse.forEach(folderId => {
+            const index = this.options.expandedFolders.indexOf(folderId);
+            if (index > -1) {
+                this.options.expandedFolders.splice(index, 1);
+            }
+            this.loadingFolders.delete(folderId);
+        });
+        
+        this.saveExpandedState();
+    }
+    
+    // Get parent path for a folder (all ancestors)
+    getParentPath(folderId) {
+        const path = [];
+        const folder = this.findFolderInTree(folderId);
+        if (!folder) return path;
+        
+        // Find parent by searching tree recursively
+        const findParent = (targetId, arr, parent = null) => {
+            for (const item of arr) {
+                const itemId = item.type === 'system' ? `system_${item.id}` : String(item.id);
+                if (itemId === targetId) {
+                    return parent;
+                }
+                if (item.children && item.children.length > 0) {
+                    const found = findParent(targetId, item.children, item);
+                    if (found !== null) return found;
+                }
+            }
+            return null;
+        };
+        
+        let current = folder;
+        const allFolders = [...(this.treeData.system || []), ...(this.treeData.custom || [])];
+        
+        // Build parent path by traversing up the tree
+        while (current) {
+            const currentId = current.type === 'system' ? `system_${current.id}` : String(current.id);
+            const parent = findParent(currentId, allFolders);
+            if (parent) {
+                const parentId = parent.type === 'system' ? `system_${parent.id}` : String(parent.id);
+                path.unshift(parentId);
+                current = parent;
+            } else {
+                // Reached root level, no more parents
+                break;
+            }
+        }
+        
+        return path;
+    }
+    
     findFolderInTree(folderId) {
         if (!this.treeData) return null;
         
@@ -730,24 +808,28 @@ class FolderTreeview {
     }
     
     highlightActive(folderId) {
-        // Always use string for consistency
-        this.activeFolderId = folderId ? String(folderId) : null;
+        folderId = folderId ? String(folderId) : null;
+        this.activeFolderId = folderId;
 
         // Save active folder to localStorage
         if (folderId) {
-            localStorage.setItem('treeviewActiveFolder', String(folderId));
+            localStorage.setItem('treeviewActiveFolder', folderId);
         } else {
             localStorage.removeItem('treeviewActiveFolder');
         }
 
-        // Re-render to apply active state (this ensures active state persists)
+        // Re-render to apply active state
         if (this.container && this.treeData) {
             this.scheduleRender();
-
-            // Scroll into view after render (use requestAnimationFrame for smooth timing)
+            
+            // After render, ensure active class is applied
             requestAnimationFrame(() => {
+                this.container.querySelectorAll('.treeview-node').forEach(node => {
+                    node.classList.remove('active');
+                });
                 const activeNode = this.container.querySelector(`[data-folder-id="${folderId}"]`);
                 if (activeNode) {
+                    activeNode.classList.add('active');
                     activeNode.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
             });
