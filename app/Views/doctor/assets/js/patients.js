@@ -153,6 +153,7 @@ function showNotification(message, type = 'info') {
 // View mode state
 let currentViewMode = localStorage.getItem('patientsViewMode') || 'table';
 let foldersData = [];
+let folderRestorationInProgress = false; // Flag to prevent race condition during folder restoration
 
 // ============================================
 // FolderTreeview Class
@@ -203,6 +204,8 @@ class FolderTreeview {
         this.cacheTimeout = 60000; // 1 minute cache timeout
         this.loadingFolders = new Set(); // Track folders currently loading
         this.renderPending = false; // Prevent multiple renders in same frame
+        this.expandInProgress = new Set(); // Track folders currently being expanded (prevents double-clicks)
+        this._isInitialized = false; // Track if event listeners are bound
     }
     
     buildTree(foldersData) {
@@ -351,12 +354,12 @@ class FolderTreeview {
     attachEventListeners() {
         if (!this.container) return;
 
-        // Use event delegation on container for better performance and reliability
-        // Remove old listener first to prevent duplicates
-        if (this._clickHandler) {
-            this.container.removeEventListener('click', this._clickHandler);
-        }
+        // Only bind event listeners once - use flag to prevent rebinding on each render
+        if (this._isInitialized) return;
+        this._isInitialized = true;
 
+        // Use event delegation on container for better performance and reliability
+        // This handler persists across render() calls since we only bind it once
         this._clickHandler = (e) => {
             // Check if clicked on expand/collapse chevron
             const expandBtn = e.target.closest('.treeview-expand');
@@ -365,8 +368,13 @@ class FolderTreeview {
                 e.preventDefault();
                 const folderId = expandBtn.getAttribute('data-folder-id');
                 if (folderId) {
+                    const folderIdStr = String(folderId);
+                    // Prevent double-clicks while expand is in progress
+                    if (this.expandInProgress.has(folderIdStr)) {
+                        return;
+                    }
                     // Only toggle expand/collapse, don't load content
-                    this.handleExpandToggle(String(folderId));
+                    this.handleExpandToggle(folderIdStr);
                 }
                 return;
             }
@@ -391,6 +399,12 @@ class FolderTreeview {
     // Handle expand/collapse toggle (chevron click) - NO content loading
     handleExpandToggle(folderId) {
         folderId = String(folderId);
+
+        // Prevent double-clicks - check if this folder is already being processed
+        if (this.expandInProgress.has(folderId)) {
+            return;
+        }
+
         const index = this.options.expandedFolders.indexOf(folderId);
 
         if (index > -1) {
@@ -422,10 +436,8 @@ class FolderTreeview {
                 }
             }
         } else {
-            // Expand - collapse all others first
-            this.collapseAllFoldersExcept(folderId);
-            
-            // Then expand this folder
+            // Expand - preserve other expanded folders (no auto-collapse)
+            // Just add this folder to the expanded list
             this.options.expandedFolders.push(folderId);
             this.saveExpandedState();
 
@@ -442,34 +454,27 @@ class FolderTreeview {
                     }
                 }
 
-                // Show children
-                const node = this.container.querySelector(`.treeview-node[data-folder-id="${folderId}"]`);
-                if (node) {
-                    let sibling = node.nextElementSibling;
-                    const nodeIndent = parseInt(node.style.paddingLeft) || 0;
-                    while (sibling && sibling.classList.contains('treeview-node')) {
-                        const siblingIndent = parseInt(sibling.style.paddingLeft) || 0;
-                        if (siblingIndent <= nodeIndent) break;
-                        sibling.style.display = '';
-                        sibling = sibling.nextElementSibling;
-                    }
-                }
+                // Show children - need full re-render since children nodes may not exist in DOM
+                this.scheduleRender();
             } else {
-                // Need to load children from API
+                // Need to load children from API - mark as in progress
+                this.expandInProgress.add(folderId);
                 this.loadingFolders.add(folderId);
-                this.render();
+                this.scheduleRender();
 
                 this.expandFolder(folderId, false).then(() => {
                     this.loadingFolders.delete(folderId);
-                    this.render();
+                    this.expandInProgress.delete(folderId);
+                    this.scheduleRender();
                 }).catch(err => {
                     console.error('Error expanding:', err);
                     this.loadingFolders.delete(folderId);
+                    this.expandInProgress.delete(folderId);
                     // Remove from expanded if failed
                     const idx = this.options.expandedFolders.indexOf(folderId);
                     if (idx > -1) this.options.expandedFolders.splice(idx, 1);
                     this.saveExpandedState();
-                    this.render();
+                    this.scheduleRender();
                 });
             }
         }
@@ -478,19 +483,36 @@ class FolderTreeview {
     // Handle folder selection (node click) - loads content and expands
     handleFolderSelect(folderId) {
         folderId = String(folderId);
-        
+
         // Set as active FIRST (before collapse/expand operations)
         this.activeFolderId = folderId;
         localStorage.setItem('treeviewActiveFolder', folderId);
-        
-        // Collapse all other folders except this one and its parent path
-        this.collapseAllFoldersExcept(folderId);
-        
-        // Expand this folder if not already expanded
+
+        // NOTE: We no longer collapse other folders to preserve user's expanded state
+        // The user's expanded folders remain as-is for better UX
+
+        // Expand this folder if not already expanded (without collapsing others)
         if (!this.options.expandedFolders.includes(folderId)) {
-            this.handleExpandToggle(folderId);
+            // Add to expanded folders without triggering full handleExpandToggle
+            this.options.expandedFolders.push(folderId);
+            this.saveExpandedState();
+
+            // Load children if needed
+            const folder = this.findFolderInTree(folderId);
+            if (folder && (!folder.children || folder.children.length === 0) && folder.subFoldersCount > 0) {
+                this.expandInProgress.add(folderId);
+                this.loadingFolders.add(folderId);
+                this.expandFolder(folderId, false).then(() => {
+                    this.loadingFolders.delete(folderId);
+                    this.expandInProgress.delete(folderId);
+                    this.scheduleRender();
+                }).catch(() => {
+                    this.loadingFolders.delete(folderId);
+                    this.expandInProgress.delete(folderId);
+                });
+            }
         }
-        
+
         // Update active state in DOM immediately
         this.container.querySelectorAll('.treeview-node').forEach(node => {
             node.classList.remove('active');
@@ -499,13 +521,13 @@ class FolderTreeview {
         if (activeNode) {
             activeNode.classList.add('active');
         }
-        
+
         // Load folder content (this calls openFolder which is part of folderview - don't modify)
         if (this.options.onFolderClick) {
             this.options.onFolderClick(folderId);
         }
-        
-        // Re-render to apply collapse/expand changes and active state
+
+        // Re-render to apply expand changes and active state
         this.scheduleRender();
     }
 
@@ -517,16 +539,16 @@ class FolderTreeview {
         }
         this.loadingFolders.add(folderId);
         this.saveExpandedState();
-        this.render();
+        this.scheduleRender();
 
         // Load children data
         this.expandFolder(folderId, true).then(() => {
             this.loadingFolders.delete(folderId);
-            this.render();
+            this.scheduleRender();
         }).catch(error => {
             console.error('Error expanding folder:', error);
             this.loadingFolders.delete(folderId);
-            this.render();
+            this.scheduleRender();
         });
     }
     
@@ -821,7 +843,7 @@ class FolderTreeview {
         // Re-render to apply active state
         if (this.container && this.treeData) {
             this.scheduleRender();
-            
+
             // After render, ensure active class is applied
             requestAnimationFrame(() => {
                 this.container.querySelectorAll('.treeview-node').forEach(node => {
@@ -834,6 +856,41 @@ class FolderTreeview {
                 }
             });
         }
+    }
+
+    // Ensure active folder is visible by expanding its parent path
+    ensureActiveFolderVisible() {
+        if (!this.activeFolderId || !this.treeData) return Promise.resolve();
+
+        // Get parent path for active folder
+        const parentPath = this.getParentPath(this.activeFolderId);
+
+        // Expand all parent folders
+        const expandPromises = parentPath.map(parentId => {
+            if (!this.options.expandedFolders.includes(parentId)) {
+                this.options.expandedFolders.push(parentId);
+            }
+            return this.expandFolder(parentId, false);
+        });
+
+        // Also expand the active folder itself
+        if (!this.options.expandedFolders.includes(this.activeFolderId)) {
+            this.options.expandedFolders.push(this.activeFolderId);
+        }
+        expandPromises.push(this.expandFolder(this.activeFolderId, false));
+
+        this.saveExpandedState();
+
+        return Promise.all(expandPromises).then(() => {
+            this.scheduleRender();
+            // Scroll to active folder after render
+            requestAnimationFrame(() => {
+                const activeNode = this.container.querySelector(`[data-folder-id="${this.activeFolderId}"]`);
+                if (activeNode) {
+                    activeNode.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            });
+        });
     }
     
     clearCache() {
@@ -853,6 +910,11 @@ class FolderTreeview {
     updateTree(foldersData) {
         this.buildTree(foldersData);
         this.render();
+
+        // If there's an active folder saved, ensure it's visible in the treeview
+        if (this.activeFolderId) {
+            this.ensureActiveFolderVisible();
+        }
     }
     
     escapeHtml(text) {
@@ -864,6 +926,1002 @@ class FolderTreeview {
 
 // Global treeview instance
 let folderTreeview = null;
+
+// ============================================
+// Unified Filter Manager Class
+// ============================================
+class UnifiedFilterManager {
+    constructor() {
+        this.filters = {
+            doctor: 'all',
+            gender: null,
+            age: { min: null, max: null },
+            colors: [],
+            tags: [],
+            dateCreated: { from: null, to: null },
+            lastVisit: { from: null, to: null }
+        };
+
+        this.currentView = 'table'; // 'table', 'cards', 'folders'
+        this.debounceTimer = null;
+        this.isInitialized = false;
+    }
+
+    init() {
+        if (this.isInitialized) return;
+
+        this.bindEvents();
+        this.loadDoctorOptions();
+        this.loadTagOptions();
+        this.initColorPalette();
+        this.updateViewVisibility();
+
+        this.isInitialized = true;
+    }
+
+    bindEvents() {
+        // Chip click handlers for dropdown toggle
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.addEventListener('click', (e) => this.toggleDropdown(chip, e));
+        });
+
+        // Click outside to close dropdowns
+        document.addEventListener('click', (e) => this.handleOutsideClick(e));
+
+        // Clear all buttons
+        document.getElementById('clearAllFilters')?.addEventListener('click', () => this.clearAll());
+        document.getElementById('mobileClearAll')?.addEventListener('click', () => this.clearAll());
+        document.getElementById('mobileFilterClear')?.addEventListener('click', () => this.clearAll());
+
+        // Mobile apply button
+        document.getElementById('mobileFilterApply')?.addEventListener('click', () => this.applyMobileFilters());
+
+        // Gender options
+        document.querySelectorAll('#genderDropdown .filter-option').forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.setGender(opt.dataset.value);
+            });
+        });
+
+        // Age filter buttons
+        document.getElementById('applyAgeFilter')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.applyAgeFilter();
+        });
+        document.getElementById('clearAgeFilter')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.clearAgeFilter();
+        });
+
+        // Date Created filter buttons
+        document.getElementById('applyDateCreatedFilter')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.applyDateCreatedFilter();
+        });
+        document.getElementById('clearDateCreatedFilter')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.clearDateCreatedFilter();
+        });
+
+        // Last Visit filter buttons
+        document.getElementById('applyLastVisitFilter')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.applyLastVisitFilter();
+        });
+        document.getElementById('clearLastVisitFilter')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.clearLastVisitFilter();
+        });
+
+        // Prevent dropdown close when clicking inside
+        document.querySelectorAll('.filter-dropdown').forEach(dropdown => {
+            dropdown.addEventListener('click', (e) => e.stopPropagation());
+        });
+
+        // Mobile modal event
+        const mobileModal = document.getElementById('mobileFilterModal');
+        if (mobileModal) {
+            mobileModal.addEventListener('show.bs.modal', () => this.renderMobileFilters());
+        }
+    }
+
+    toggleDropdown(chip, event) {
+        // Don't toggle if clicking inside dropdown
+        if (event.target.closest('.filter-dropdown')) return;
+
+        const wasOpen = chip.classList.contains('open');
+
+        // Close all dropdowns
+        document.querySelectorAll('.filter-chip.open').forEach(c => c.classList.remove('open'));
+
+        // Toggle current
+        if (!wasOpen) {
+            chip.classList.add('open');
+        }
+    }
+
+    handleOutsideClick(event) {
+        if (!event.target.closest('.filter-chip')) {
+            document.querySelectorAll('.filter-chip.open').forEach(c => c.classList.remove('open'));
+        }
+    }
+
+    // Doctor Filter
+    loadDoctorOptions() {
+        const dropdown = document.getElementById('doctorDropdown');
+        if (!dropdown) return;
+
+        const content = dropdown.querySelector('.filter-dropdown-content');
+        if (!content) return;
+
+        const doctors = window.PATIENTS_CONFIG?.doctors || [];
+        let html = '<button class="filter-option selected" data-value="all">All Doctors</button>';
+
+        doctors.forEach(doctor => {
+            const imagePath = doctor.profile_image
+                ? (doctor.profile_image.startsWith('/public/') ? doctor.profile_image : '/public' + doctor.profile_image)
+                : null;
+
+            html += `
+                <button class="filter-option" data-value="${doctor.id}">
+                    ${imagePath
+                        ? `<img src="${imagePath}" alt="" class="doctor-avatar-sm me-2" onerror="this.style.display='none'">`
+                        : `<span class="doctor-initial-sm me-2">${(doctor.display_name || 'D').charAt(0).toUpperCase()}</span>`
+                    }
+                    ${this.escapeHtml(doctor.display_name || 'Doctor')}
+                </button>
+            `;
+        });
+
+        content.innerHTML = html;
+
+        // Bind click events
+        content.querySelectorAll('.filter-option').forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.setDoctor(opt.dataset.value);
+            });
+        });
+    }
+
+    setDoctor(doctorId) {
+        this.filters.doctor = doctorId;
+
+        // Update UI
+        const chip = document.getElementById('doctorFilterChip');
+        const valueEl = document.getElementById('doctorChipValue');
+
+        if (doctorId === 'all') {
+            valueEl.textContent = 'All';
+            chip.classList.remove('active');
+        } else {
+            const doctors = window.PATIENTS_CONFIG?.doctors || [];
+            const doctor = doctors.find(d => d.id == doctorId);
+            valueEl.textContent = doctor?.display_name || doctorId;
+            chip.classList.add('active');
+        }
+
+        // Update dropdown selection
+        document.querySelectorAll('#doctorDropdown .filter-option').forEach(opt => {
+            opt.classList.toggle('selected', opt.dataset.value === doctorId);
+        });
+
+        // Close dropdown and apply
+        chip.classList.remove('open');
+        this.applyFilters();
+    }
+
+    // Gender Filter
+    setGender(gender) {
+        this.filters.gender = gender || null;
+
+        // Update UI
+        const chip = document.getElementById('genderFilterChip');
+        const valueEl = document.getElementById('genderChipValue');
+
+        valueEl.textContent = gender || 'All';
+        chip.classList.toggle('active', !!gender);
+
+        // Update dropdown selection
+        document.querySelectorAll('#genderDropdown .filter-option').forEach(opt => {
+            opt.classList.toggle('selected', (opt.dataset.value || '') === (gender || ''));
+        });
+
+        // Close dropdown and apply
+        chip.classList.remove('open');
+        this.applyFilters();
+    }
+
+    // Age Filter
+    applyAgeFilter() {
+        const min = document.getElementById('ageFilterMin')?.value;
+        const max = document.getElementById('ageFilterMax')?.value;
+
+        this.filters.age.min = min ? parseInt(min) : null;
+        this.filters.age.max = max ? parseInt(max) : null;
+
+        // Update UI
+        const chip = document.getElementById('ageFilterChip');
+        const valueEl = document.getElementById('ageChipValue');
+
+        if (this.filters.age.min !== null || this.filters.age.max !== null) {
+            const minText = this.filters.age.min ?? '0';
+            const maxText = this.filters.age.max ?? '∞';
+            valueEl.textContent = `${minText}-${maxText}`;
+            chip.classList.add('active');
+        } else {
+            valueEl.textContent = 'All';
+            chip.classList.remove('active');
+        }
+
+        chip.classList.remove('open');
+        this.applyFilters();
+    }
+
+    clearAgeFilter() {
+        const minInput = document.getElementById('ageFilterMin');
+        const maxInput = document.getElementById('ageFilterMax');
+        if (minInput) minInput.value = '';
+        if (maxInput) maxInput.value = '';
+
+        this.filters.age = { min: null, max: null };
+
+        const chip = document.getElementById('ageFilterChip');
+        const valueEl = document.getElementById('ageChipValue');
+        if (valueEl) valueEl.textContent = 'All';
+        if (chip) chip.classList.remove('active');
+
+        this.applyFilters();
+    }
+
+    // Color Filter
+    initColorPalette() {
+        const palette = document.querySelector('#colorsDropdown .color-palette');
+        if (!palette) return;
+
+        const colors = [
+            { code: '#ef4444', name: 'Red' },
+            { code: '#f59e0b', name: 'Orange' },
+            { code: '#eab308', name: 'Yellow' },
+            { code: '#22c55e', name: 'Green' },
+            { code: '#06b6d4', name: 'Cyan' },
+            { code: '#3b82f6', name: 'Blue' },
+            { code: '#8b5cf6', name: 'Purple' },
+            { code: '#ec4899', name: 'Pink' }
+        ];
+
+        palette.innerHTML = colors.map(c => `
+            <button class="color-btn" data-color="${c.code}"
+                    style="background: ${c.code}" title="${c.name}"></button>
+        `).join('');
+
+        palette.querySelectorAll('.color-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleColor(btn.dataset.color);
+            });
+        });
+    }
+
+    toggleColor(colorCode) {
+        const index = this.filters.colors.indexOf(colorCode);
+        if (index > -1) {
+            this.filters.colors.splice(index, 1);
+        } else {
+            this.filters.colors.push(colorCode);
+        }
+
+        this.updateColorUI();
+        this.applyFilters();
+    }
+
+    updateColorUI() {
+        // Update palette selection
+        document.querySelectorAll('#colorsDropdown .color-btn').forEach(btn => {
+            btn.classList.toggle('selected', this.filters.colors.includes(btn.dataset.color));
+        });
+
+        // Update chip preview
+        const preview = document.getElementById('colorDotsPreview');
+        const chip = document.getElementById('colorsFilterChip');
+
+        if (preview) {
+            if (this.filters.colors.length > 0) {
+                preview.innerHTML = this.filters.colors.slice(0, 4).map(c =>
+                    `<span class="color-dot" style="background: ${c}"></span>`
+                ).join('');
+                if (this.filters.colors.length > 4) {
+                    preview.innerHTML += `<span class="color-dot-more">+${this.filters.colors.length - 4}</span>`;
+                }
+                if (chip) chip.classList.add('active');
+            } else {
+                preview.innerHTML = '';
+                if (chip) chip.classList.remove('active');
+            }
+        }
+    }
+
+    // Tags Filter
+    async loadTagOptions() {
+        const tagsDropdown = document.getElementById('tagsDropdown');
+        if (!tagsDropdown) return;
+
+        const tagsList = tagsDropdown.querySelector('.tags-list');
+        if (!tagsList) return;
+
+        try {
+            const response = await fetch('/api/patient-tags', {
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const data = await response.json();
+
+            if (data.ok && data.tags) {
+                if (data.tags.length === 0) {
+                    tagsList.innerHTML = '<p class="text-muted small p-2 mb-0">No tags available</p>';
+                } else {
+                    tagsList.innerHTML = data.tags.map(tag => `
+                        <label class="tag-option">
+                            <input type="checkbox" value="${tag.id}" class="form-check-input">
+                            <span class="badge" style="background: ${tag.color || '#6366f1'}">
+                                ${tag.icon ? `<i class="bi ${tag.icon} me-1"></i>` : ''}
+                                ${this.escapeHtml(tag.name)}
+                            </span>
+                        </label>
+                    `).join('');
+
+                    tagsList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                        cb.addEventListener('change', () => this.handleTagChange());
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error loading tags:', error);
+            tagsList.innerHTML = '<p class="text-muted small p-2 mb-0">Failed to load tags</p>';
+        }
+    }
+
+    handleTagChange() {
+        const checkboxes = document.querySelectorAll('#tagsDropdown input[type="checkbox"]:checked');
+        this.filters.tags = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+        const chip = document.getElementById('tagsFilterChip');
+        const valueEl = document.getElementById('tagsChipValue');
+
+        if (valueEl) {
+            valueEl.textContent = this.filters.tags.length > 0 ? `${this.filters.tags.length} selected` : 'All';
+        }
+        if (chip) {
+            chip.classList.toggle('active', this.filters.tags.length > 0);
+        }
+
+        this.applyFilters();
+    }
+
+    // Date Created Filter
+    applyDateCreatedFilter() {
+        this.filters.dateCreated.from = document.getElementById('dateCreatedFrom')?.value || null;
+        this.filters.dateCreated.to = document.getElementById('dateCreatedTo')?.value || null;
+
+        const chip = document.getElementById('dateCreatedFilterChip');
+        const valueEl = document.getElementById('dateCreatedChipValue');
+
+        if (this.filters.dateCreated.from || this.filters.dateCreated.to) {
+            if (valueEl) valueEl.textContent = 'Set';
+            if (chip) chip.classList.add('active');
+        } else {
+            if (valueEl) valueEl.textContent = 'All';
+            if (chip) chip.classList.remove('active');
+        }
+
+        if (chip) chip.classList.remove('open');
+        this.applyFilters();
+    }
+
+    clearDateCreatedFilter() {
+        const fromInput = document.getElementById('dateCreatedFrom');
+        const toInput = document.getElementById('dateCreatedTo');
+        if (fromInput) fromInput.value = '';
+        if (toInput) toInput.value = '';
+
+        this.filters.dateCreated = { from: null, to: null };
+
+        const chip = document.getElementById('dateCreatedFilterChip');
+        const valueEl = document.getElementById('dateCreatedChipValue');
+        if (valueEl) valueEl.textContent = 'All';
+        if (chip) chip.classList.remove('active');
+
+        this.applyFilters();
+    }
+
+    // Last Visit Filter
+    applyLastVisitFilter() {
+        this.filters.lastVisit.from = document.getElementById('lastVisitFrom')?.value || null;
+        this.filters.lastVisit.to = document.getElementById('lastVisitTo')?.value || null;
+
+        const chip = document.getElementById('lastVisitFilterChip');
+        const valueEl = document.getElementById('lastVisitChipValue');
+
+        if (this.filters.lastVisit.from || this.filters.lastVisit.to) {
+            if (valueEl) valueEl.textContent = 'Set';
+            if (chip) chip.classList.add('active');
+        } else {
+            if (valueEl) valueEl.textContent = 'All';
+            if (chip) chip.classList.remove('active');
+        }
+
+        if (chip) chip.classList.remove('open');
+        this.applyFilters();
+    }
+
+    clearLastVisitFilter() {
+        const fromInput = document.getElementById('lastVisitFrom');
+        const toInput = document.getElementById('lastVisitTo');
+        if (fromInput) fromInput.value = '';
+        if (toInput) toInput.value = '';
+
+        this.filters.lastVisit = { from: null, to: null };
+
+        const chip = document.getElementById('lastVisitFilterChip');
+        const valueEl = document.getElementById('lastVisitChipValue');
+        if (valueEl) valueEl.textContent = 'All';
+        if (chip) chip.classList.remove('active');
+
+        this.applyFilters();
+    }
+
+    // View Management
+    setView(view) {
+        this.currentView = view;
+        this.updateViewVisibility();
+
+        // Add view class to filter bar for CSS targeting
+        const filterBar = document.getElementById('unifiedFilterBar');
+        if (filterBar) {
+            filterBar.classList.remove('view-table', 'view-cards', 'view-folders');
+            filterBar.classList.add(`view-${view}`);
+        }
+
+        // Reapply filters for the new view
+        this.applyFilters();
+    }
+
+    updateViewVisibility() {
+        // View-specific filters are controlled via CSS using data-views attribute
+        // The CSS handles showing/hiding based on .view-table, .view-cards, .view-folders classes
+    }
+
+    // Apply Filters
+    applyFilters() {
+        // Debounce rapid changes
+        clearTimeout(this.debounceTimer);
+        this.debounceTimer = setTimeout(() => {
+            this._doApplyFilters();
+        }, 50);
+    }
+
+    _doApplyFilters() {
+        // Update active filters badge first
+        this.updateActiveFiltersBadge();
+
+        // Get base patient data based on view
+        let patients;
+        if (this.currentView === 'folders' && typeof currentFolderPatients !== 'undefined') {
+            patients = [...(currentFolderPatients || [])];
+        } else {
+            patients = [...(window.PATIENTS_CONFIG?.patients || paginationState.allPatients || [])];
+        }
+
+        // Doctor filter (all views)
+        if (this.filters.doctor !== 'all') {
+            patients = patients.filter(p =>
+                p.created_by == this.filters.doctor || p.created_by_doctor_id == this.filters.doctor
+            );
+        }
+
+        // Gender filter (all views)
+        if (this.filters.gender) {
+            patients = patients.filter(p => p.gender === this.filters.gender);
+        }
+
+        // Age filter (all views)
+        if (this.filters.age.min !== null || this.filters.age.max !== null) {
+            patients = patients.filter(p => {
+                if (!p.dob) return false;
+                const age = calculateAge(p.dob);
+                if (this.filters.age.min !== null && age < this.filters.age.min) return false;
+                if (this.filters.age.max !== null && age > this.filters.age.max) return false;
+                return true;
+            });
+        }
+
+        // Color filter (All views)
+        if (this.filters.colors.length > 0) {
+            patients = patients.filter(p => p.color_marker && this.filters.colors.includes(p.color_marker));
+        }
+
+        // Tags filter (All views)
+        if (this.filters.tags.length > 0) {
+            patients = patients.filter(p => {
+                if (!p.tags || p.tags.length === 0) return false;
+                const patientTagIds = p.tags.map(t => typeof t === 'object' ? t.id : t);
+                return this.filters.tags.some(tagId => patientTagIds.includes(tagId));
+            });
+        }
+
+        // Date Created filter (Cards/Folders only)
+        if ((this.filters.dateCreated.from || this.filters.dateCreated.to) &&
+            (this.currentView === 'cards' || this.currentView === 'folders')) {
+            patients = patients.filter(p => {
+                if (!p.created_at) return false;
+                const created = new Date(p.created_at);
+                if (this.filters.dateCreated.from && created < new Date(this.filters.dateCreated.from)) return false;
+                if (this.filters.dateCreated.to) {
+                    const toDate = new Date(this.filters.dateCreated.to);
+                    toDate.setHours(23, 59, 59, 999);
+                    if (created > toDate) return false;
+                }
+                return true;
+            });
+        }
+
+        // Last Visit filter (Table only)
+        if ((this.filters.lastVisit.from || this.filters.lastVisit.to) && this.currentView === 'table') {
+            patients = patients.filter(p => {
+                if (!p.last_visit) return false;
+                const lastVisit = new Date(p.last_visit);
+                if (this.filters.lastVisit.from && lastVisit < new Date(this.filters.lastVisit.from)) return false;
+                if (this.filters.lastVisit.to) {
+                    const toDate = new Date(this.filters.lastVisit.to);
+                    toDate.setHours(23, 59, 59, 999);
+                    if (lastVisit > toDate) return false;
+                }
+                return true;
+            });
+        }
+
+        // Render based on current view
+        switch (this.currentView) {
+            case 'table':
+                paginationState.filteredPatients = patients;
+                paginationState.currentPage = 1;
+                if (typeof renderPatientsTable === 'function') renderPatientsTable();
+                if (typeof updatePaginationInfo === 'function') updatePaginationInfo();
+                if (typeof renderPaginationNav === 'function') renderPaginationNav();
+                break;
+            case 'cards':
+                paginationState.filteredPatients = patients;
+                paginationState.currentPage = 1;
+                if (typeof renderPatientsCards === 'function') renderPatientsCards();
+                if (typeof updatePaginationInfoCards === 'function') updatePaginationInfoCards();
+                if (typeof renderPaginationNavCards === 'function') renderPaginationNavCards();
+                break;
+            case 'folders':
+                folderPaginationState.filteredPatients = patients;
+                folderPaginationState.currentPage = 1;
+                if (typeof renderFolderPatients === 'function') renderFolderPatients(patients);
+                if (typeof renderFolderPaginationNav === 'function') renderFolderPaginationNav();
+                if (typeof updateFolderPaginationInfo === 'function') updateFolderPaginationInfo();
+                break;
+        }
+
+        // Sync paginationState for legacy code (e.g. updateClearFiltersVisibility)
+        paginationState.currentDoctorFilter = this.filters.doctor === 'all' ? 'all' : this.filters.doctor;
+        paginationState.currentGenderFilter = this.filters.gender;
+        paginationState.currentAgeFilter = { min: this.filters.age.min, max: this.filters.age.max };
+        paginationState.currentLastVisitFilter = { from: this.filters.lastVisit.from, to: this.filters.lastVisit.to };
+        if (typeof updateClearFiltersVisibility === 'function') updateClearFiltersVisibility();
+    }
+
+    getActiveFiltersCount() {
+        let count = 0;
+        if (this.filters.doctor !== 'all') count++;
+        if (this.filters.gender) count++;
+        if (this.filters.age.min !== null || this.filters.age.max !== null) count++;
+        // Colors and Tags available in all views
+        if (this.filters.colors.length > 0) count++;
+        if (this.filters.tags.length > 0) count++;
+        // View-specific filters
+        if ((this.currentView === 'cards' || this.currentView === 'folders')) {
+            if (this.filters.dateCreated.from || this.filters.dateCreated.to) count++;
+        }
+        if (this.currentView === 'table') {
+            if (this.filters.lastVisit.from || this.filters.lastVisit.to) count++;
+        }
+        return count;
+    }
+
+    updateActiveFiltersBadge() {
+        const count = this.getActiveFiltersCount();
+
+        // Desktop badge
+        const badge = document.getElementById('activeFiltersBadge');
+        const countEl = document.getElementById('activeFiltersCount');
+        const clearBtn = document.getElementById('clearAllFilters');
+
+        if (badge && countEl && clearBtn) {
+            countEl.textContent = count;
+            badge.style.display = count > 0 ? '' : 'none';
+            clearBtn.style.display = count > 0 ? '' : 'none';
+        }
+
+        // Mobile badge
+        const mobileBadge = document.getElementById('mobileActiveBadge');
+        const mobileCount = document.getElementById('mobileActiveCount');
+        const mobileClear = document.getElementById('mobileClearAll');
+
+        if (mobileBadge && mobileCount) {
+            mobileCount.textContent = count;
+            mobileBadge.style.display = count > 0 ? '' : 'none';
+        }
+
+        if (mobileClear) {
+            mobileClear.style.display = count > 0 ? '' : 'none';
+        }
+    }
+
+    clearAll() {
+        // Reset all filters
+        this.filters = {
+            doctor: 'all',
+            gender: null,
+            age: { min: null, max: null },
+            colors: [],
+            tags: [],
+            dateCreated: { from: null, to: null },
+            lastVisit: { from: null, to: null }
+        };
+
+        // Reset chip UI
+        document.querySelectorAll('.filter-chip.active').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.filter-chip-value').forEach(v => {
+            if (v.id !== 'colorDotsPreview') v.textContent = 'All';
+        });
+
+        // Reset dropdown selections
+        document.querySelectorAll('.filter-option.selected').forEach(o => o.classList.remove('selected'));
+        document.querySelectorAll('.filter-option[data-value=""], .filter-option[data-value="all"]')
+            .forEach(o => o.classList.add('selected'));
+
+        // Reset inputs
+        ['ageFilterMin', 'ageFilterMax', 'dateCreatedFrom', 'dateCreatedTo', 'lastVisitFrom', 'lastVisitTo']
+            .forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+
+        // Reset color buttons
+        document.querySelectorAll('.color-btn.selected').forEach(b => b.classList.remove('selected'));
+        const colorPreview = document.getElementById('colorDotsPreview');
+        if (colorPreview) colorPreview.innerHTML = '';
+
+        // Reset tag checkboxes
+        document.querySelectorAll('#tagsDropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+        // Apply
+        this.applyFilters();
+    }
+
+    // Mobile Modal - Get Tags HTML
+    async getMobileTagsHTML() {
+        try {
+            const response = await fetch('/api/patient-tags', {
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const data = await response.json();
+
+            if (data.ok && data.tags && data.tags.length > 0) {
+                return `
+                    <!-- Tags Section -->
+                    <div class="mobile-filter-section">
+                        <div class="mobile-filter-section-title">Tags</div>
+                        <div class="mobile-filter-options" style="max-height: 200px; overflow-y: auto;">
+                            ${data.tags.map(tag => `
+                                <label class="mobile-filter-btn ${this.filters.tags.includes(tag.id) ? 'selected' : ''}"
+                                       style="cursor: pointer; margin-bottom: 0.25rem;">
+                                    <input type="checkbox" value="${tag.id}" 
+                                           ${this.filters.tags.includes(tag.id) ? 'checked' : ''}
+                                           style="display: none;">
+                                    <span class="badge" style="background: ${tag.color || '#6366f1'};">
+                                        ${tag.icon ? `<i class="bi ${tag.icon} me-1"></i>` : ''}
+                                        ${this.escapeHtml(tag.name)}
+                                    </span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            return '';
+        } catch (error) {
+            console.error('Error loading tags for mobile:', error);
+            return '';
+        }
+    }
+
+    // Mobile Modal
+    async renderMobileFilters() {
+        const content = document.getElementById('mobileFilterContent');
+        if (!content) return;
+
+        const doctors = window.PATIENTS_CONFIG?.doctors || [];
+        const colors = [
+            { code: '#ef4444', name: 'Red' },
+            { code: '#f59e0b', name: 'Orange' },
+            { code: '#eab308', name: 'Yellow' },
+            { code: '#22c55e', name: 'Green' },
+            { code: '#06b6d4', name: 'Cyan' },
+            { code: '#3b82f6', name: 'Blue' },
+            { code: '#8b5cf6', name: 'Purple' },
+            { code: '#ec4899', name: 'Pink' }
+        ];
+
+        let html = `
+            <!-- Doctor Section -->
+            <div class="mobile-filter-section">
+                <div class="mobile-filter-section-title">Doctor</div>
+                <div class="mobile-filter-options">
+                    <button class="mobile-filter-btn ${this.filters.doctor === 'all' ? 'selected' : ''}"
+                            data-filter="doctor" data-value="all">All</button>
+                    ${doctors.map(d => `
+                        <button class="mobile-filter-btn ${this.filters.doctor == d.id ? 'selected' : ''}"
+                                data-filter="doctor" data-value="${d.id}">${this.escapeHtml(d.display_name)}</button>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Gender Section -->
+            <div class="mobile-filter-section">
+                <div class="mobile-filter-section-title">Gender</div>
+                <div class="mobile-filter-options">
+                    <button class="mobile-filter-btn ${!this.filters.gender ? 'selected' : ''}"
+                            data-filter="gender" data-value="">All</button>
+                    <button class="mobile-filter-btn ${this.filters.gender === 'Male' ? 'selected' : ''}"
+                            data-filter="gender" data-value="Male">
+                        <i class="bi bi-gender-male me-1"></i>Male
+                    </button>
+                    <button class="mobile-filter-btn ${this.filters.gender === 'Female' ? 'selected' : ''}"
+                            data-filter="gender" data-value="Female">
+                        <i class="bi bi-gender-female me-1"></i>Female
+                    </button>
+                </div>
+            </div>
+
+            <!-- Age Section -->
+            <div class="mobile-filter-section">
+                <div class="mobile-filter-section-title">Age Range</div>
+                <div class="mobile-range-inputs">
+                    <input type="number" id="mobileAgeMin" placeholder="Min" min="0" max="150"
+                           value="${this.filters.age.min || ''}">
+                    <span>to</span>
+                    <input type="number" id="mobileAgeMax" placeholder="Max" min="0" max="150"
+                           value="${this.filters.age.max || ''}">
+                </div>
+            </div>
+        `;
+
+        // Colors Section (All views)
+        html += `
+            <!-- Colors Section -->
+            <div class="mobile-filter-section">
+                <div class="mobile-filter-section-title">Color Markers</div>
+                <div class="mobile-color-palette">
+                    ${colors.map(c => `
+                        <button class="mobile-color-btn ${this.filters.colors.includes(c.code) ? 'selected' : ''}"
+                                data-color="${c.code}" style="background: ${c.code}" title="${c.name}"></button>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        // Tags Section (All views) - Load tags async
+        const tagsHtml = await this.getMobileTagsHTML();
+        html += tagsHtml;
+
+        // View-specific sections
+        if (this.currentView === 'cards' || this.currentView === 'folders') {
+            html += `
+                <!-- Date Created Section -->
+                <div class="mobile-filter-section">
+                    <div class="mobile-filter-section-title">Date Created</div>
+                    <div class="mobile-range-inputs">
+                        <input type="date" id="mobileDateCreatedFrom" value="${this.filters.dateCreated.from || ''}">
+                        <span>to</span>
+                        <input type="date" id="mobileDateCreatedTo" value="${this.filters.dateCreated.to || ''}">
+                    </div>
+                </div>
+            `;
+        }
+
+        if (this.currentView === 'table') {
+            html += `
+                <!-- Last Visit Section -->
+                <div class="mobile-filter-section">
+                    <div class="mobile-filter-section-title">Last Visit</div>
+                    <div class="mobile-range-inputs">
+                        <input type="date" id="mobileLastVisitFrom" value="${this.filters.lastVisit.from || ''}">
+                        <span>to</span>
+                        <input type="date" id="mobileLastVisitTo" value="${this.filters.lastVisit.to || ''}">
+                    </div>
+                </div>
+            `;
+        }
+
+        content.innerHTML = html;
+
+        // Bind mobile filter events
+        content.querySelectorAll('.mobile-filter-btn[data-filter]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filter = btn.dataset.filter;
+                const value = btn.dataset.value;
+
+                // Update selection UI
+                btn.closest('.mobile-filter-options').querySelectorAll('.mobile-filter-btn')
+                    .forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+
+                // Store temporary value (applied on Apply button)
+                btn.closest('.mobile-filter-section').dataset.selectedValue = value;
+            });
+        });
+
+        // Mobile color buttons
+        content.querySelectorAll('.mobile-color-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('selected');
+            });
+        });
+
+        // Mobile tag checkboxes
+        content.querySelectorAll('.mobile-filter-section input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', () => {
+                const label = cb.closest('label');
+                if (label) {
+                    label.classList.toggle('selected', cb.checked);
+                }
+            });
+        });
+    }
+
+    applyMobileFilters() {
+        const content = document.getElementById('mobileFilterContent');
+        if (!content) return;
+
+        // Doctor
+        const doctorBtn = content.querySelector('.mobile-filter-btn[data-filter="doctor"].selected');
+        if (doctorBtn) this.filters.doctor = doctorBtn.dataset.value;
+
+        // Gender
+        const genderBtn = content.querySelector('.mobile-filter-btn[data-filter="gender"].selected');
+        if (genderBtn) this.filters.gender = genderBtn.dataset.value || null;
+
+        // Age
+        const ageMin = document.getElementById('mobileAgeMin');
+        const ageMax = document.getElementById('mobileAgeMax');
+        this.filters.age.min = ageMin?.value ? parseInt(ageMin.value) : null;
+        this.filters.age.max = ageMax?.value ? parseInt(ageMax.value) : null;
+
+        // Colors (All views)
+        this.filters.colors = [];
+        content.querySelectorAll('.mobile-color-btn.selected').forEach(btn => {
+            this.filters.colors.push(btn.dataset.color);
+        });
+
+        // Tags (All views)
+        this.filters.tags = [];
+        content.querySelectorAll('.mobile-filter-section input[type="checkbox"]:checked').forEach(cb => {
+            this.filters.tags.push(parseInt(cb.value));
+        });
+
+        // Date Created (Cards/Folders only)
+        if (this.currentView === 'cards' || this.currentView === 'folders') {
+            const dateFrom = document.getElementById('mobileDateCreatedFrom');
+            const dateTo = document.getElementById('mobileDateCreatedTo');
+            this.filters.dateCreated.from = dateFrom?.value || null;
+            this.filters.dateCreated.to = dateTo?.value || null;
+        }
+
+        // Last Visit (Table)
+        if (this.currentView === 'table') {
+            const visitFrom = document.getElementById('mobileLastVisitFrom');
+            const visitTo = document.getElementById('mobileLastVisitTo');
+            this.filters.lastVisit.from = visitFrom?.value || null;
+            this.filters.lastVisit.to = visitTo?.value || null;
+        }
+
+        // Update desktop UI to match
+        this.syncDesktopUI();
+
+        // Apply filters
+        this.applyFilters();
+    }
+
+    syncDesktopUI() {
+        // Sync doctor chip
+        const doctorChip = document.getElementById('doctorFilterChip');
+        const doctorValue = document.getElementById('doctorChipValue');
+        if (doctorChip && doctorValue) {
+            if (this.filters.doctor === 'all') {
+                doctorValue.textContent = 'All';
+                doctorChip.classList.remove('active');
+            } else {
+                const doctors = window.PATIENTS_CONFIG?.doctors || [];
+                const doctor = doctors.find(d => d.id == this.filters.doctor);
+                doctorValue.textContent = doctor?.display_name || this.filters.doctor;
+                doctorChip.classList.add('active');
+            }
+        }
+
+        // Sync gender chip
+        const genderChip = document.getElementById('genderFilterChip');
+        const genderValue = document.getElementById('genderChipValue');
+        if (genderChip && genderValue) {
+            genderValue.textContent = this.filters.gender || 'All';
+            genderChip.classList.toggle('active', !!this.filters.gender);
+        }
+
+        // Sync age chip
+        const ageChip = document.getElementById('ageFilterChip');
+        const ageValue = document.getElementById('ageChipValue');
+        if (ageChip && ageValue) {
+            if (this.filters.age.min !== null || this.filters.age.max !== null) {
+                ageValue.textContent = `${this.filters.age.min ?? '0'}-${this.filters.age.max ?? '∞'}`;
+                ageChip.classList.add('active');
+            } else {
+                ageValue.textContent = 'All';
+                ageChip.classList.remove('active');
+            }
+        }
+
+        // Sync color chip
+        this.updateColorUI();
+
+        // Sync tags chip
+        const tagsChip = document.getElementById('tagsFilterChip');
+        const tagsValue = document.getElementById('tagsChipValue');
+        if (tagsChip && tagsValue) {
+            tagsValue.textContent = this.filters.tags.length > 0 ? `${this.filters.tags.length} selected` : 'All';
+            tagsChip.classList.toggle('active', this.filters.tags.length > 0);
+        }
+
+        // Sync date created chip
+        const dateChip = document.getElementById('dateCreatedFilterChip');
+        const dateValue = document.getElementById('dateCreatedChipValue');
+        if (dateChip && dateValue) {
+            if (this.filters.dateCreated.from || this.filters.dateCreated.to) {
+                dateValue.textContent = 'Set';
+                dateChip.classList.add('active');
+            } else {
+                dateValue.textContent = 'All';
+                dateChip.classList.remove('active');
+            }
+        }
+
+        // Sync last visit chip
+        const visitChip = document.getElementById('lastVisitFilterChip');
+        const visitValue = document.getElementById('lastVisitChipValue');
+        if (visitChip && visitValue) {
+            if (this.filters.lastVisit.from || this.filters.lastVisit.to) {
+                visitValue.textContent = 'Set';
+                visitChip.classList.add('active');
+            } else {
+                visitValue.textContent = 'All';
+                visitChip.classList.remove('active');
+            }
+        }
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
+    }
+}
+
+// Global filter manager instance
+let unifiedFilterManager = null;
 
 // Sidebar toggle functionality
 function initSidebarToggle() {
@@ -944,13 +2002,20 @@ const folderCache = {
 function saveFolderNavigationState() {
     if (!currentFolderId) return;
 
+    // Determine the treeview-compatible folder ID
+    const isSystem = currentFolderType === 'system' || currentFolderId.toString().startsWith('system_');
+    const treeviewFolderId = isSystem && !currentFolderId.toString().startsWith('system_')
+        ? `system_${currentFolderId}`
+        : currentFolderId.toString();
+
     const state = {
         folderId: currentFolderId,
         folderType: currentFolderType,
         folderName: currentFolderName,
         pathStack: folderPathStack,
         scrollPosition: window.scrollY,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        treeviewFolderId: treeviewFolderId // Store treeview-compatible ID
     };
 
     // Save to sessionStorage for navigation (survives page changes)
@@ -960,6 +2025,9 @@ function saveFolderNavigationState() {
     localStorage.setItem('currentFolderId', currentFolderId?.toString() || '');
     localStorage.setItem('currentFolderType', currentFolderType || '');
     localStorage.setItem('folderPathStack', JSON.stringify(folderPathStack));
+
+    // Sync treeview active folder
+    localStorage.setItem('treeviewActiveFolder', treeviewFolderId);
 }
 
 // Restore folder navigation state from storage
@@ -971,6 +2039,13 @@ function restoreFolderNavigationState() {
             const state = JSON.parse(sessionState);
             // Check if state is recent (within 1 hour)
             if (Date.now() - state.timestamp < 3600000) {
+                // Ensure treeviewFolderId is set
+                if (!state.treeviewFolderId && state.folderId) {
+                    const isSystem = state.folderType === 'system' || state.folderId.toString().startsWith('system_');
+                    state.treeviewFolderId = isSystem && !state.folderId.toString().startsWith('system_')
+                        ? `system_${state.folderId}`
+                        : state.folderId.toString();
+                }
                 return state;
             }
         } catch (e) {
@@ -982,6 +2057,7 @@ function restoreFolderNavigationState() {
     const savedFolderId = localStorage.getItem('currentFolderId');
     const savedFolderType = localStorage.getItem('currentFolderType');
     const savedPathStack = localStorage.getItem('folderPathStack');
+    const savedTreeviewFolderId = localStorage.getItem('treeviewActiveFolder');
 
     if (savedFolderId) {
         let pathStack = [];
@@ -991,11 +2067,17 @@ function restoreFolderNavigationState() {
             pathStack = [];
         }
 
+        const isSystem = savedFolderType === 'system' || savedFolderId.toString().startsWith('system_');
+        const treeviewFolderId = savedTreeviewFolderId || (isSystem && !savedFolderId.toString().startsWith('system_')
+            ? `system_${savedFolderId}`
+            : savedFolderId.toString());
+
         return {
             folderId: savedFolderId,
             folderType: savedFolderType || (savedFolderId.toString().startsWith('system_') ? 'system' : 'custom'),
             pathStack: pathStack,
-            scrollPosition: 0
+            scrollPosition: 0,
+            treeviewFolderId: treeviewFolderId
         };
     }
 
@@ -1008,6 +2090,8 @@ function clearFolderNavigationState() {
     localStorage.removeItem('currentFolderId');
     localStorage.removeItem('currentFolderType');
     localStorage.removeItem('folderPathStack');
+    // Also clear treeview active folder
+    localStorage.removeItem('treeviewActiveFolder');
 }
 
 // Debounced folder open to prevent race conditions
@@ -1043,9 +2127,13 @@ function initializePagination() {
     paginationState.filteredPatients = [...patientsData];
     paginationState.totalItems = patientsData.length;
     paginationState.doctors = doctorsData;
-    
-    // Apply initial doctor filter
-    applyDoctorFilter();
+
+    // Initialize unified filter manager
+    if (!unifiedFilterManager) {
+        unifiedFilterManager = new UnifiedFilterManager();
+        unifiedFilterManager.init();
+        unifiedFilterManager.setView(currentViewMode);
+    }
     
     // Load folders if folders view is active
     if (currentViewMode === 'folders') {
@@ -1056,6 +2144,14 @@ function initializePagination() {
             currentFolderId = savedState.folderId;
             currentFolderType = savedState.folderType;
             folderPathStack = savedState.pathStack || [];
+
+            // Sync treeview active folder in localStorage before treeview initializes
+            if (savedState.treeviewFolderId) {
+                localStorage.setItem('treeviewActiveFolder', savedState.treeviewFolderId);
+            }
+
+            // Set flag to prevent switchViewMode from interfering
+            folderRestorationInProgress = true;
         }
 
         // Skip renderFoldersView when we have a folder to restore
@@ -1064,6 +2160,8 @@ function initializePagination() {
             // After folders are loaded, restore folder state if exists
             if (currentFolderId) {
                 openFolder(currentFolderId).then(() => {
+                    // Clear restoration flag
+                    folderRestorationInProgress = false;
                     // Restore scroll position after folder loads
                     if (savedState && savedState.scrollPosition > 0) {
                         setTimeout(() => {
@@ -1071,10 +2169,14 @@ function initializePagination() {
                         }, 150);
                     }
                 }).catch(() => {
+                    // Clear restoration flag
+                    folderRestorationInProgress = false;
                     // If folder open fails, go to root
                     renderFoldersView(1, true);
                 });
             } else {
+                // Clear restoration flag
+                folderRestorationInProgress = false;
                 // No folder to restore, show the folders view
                 renderFoldersView(1, true);
             }
@@ -1100,34 +2202,29 @@ function initializePagination() {
 // Switch view mode
 function switchViewMode(mode, saveToStorage = true) {
     currentViewMode = mode;
-    
+
     if (saveToStorage) {
         localStorage.setItem('patientsViewMode', mode);
     }
-    
-    // Update toggle buttons (both toggles)
-    document.querySelectorAll('#viewModeToggle button, #viewModeToggleCards button').forEach(btn => {
+
+    // Update unified filter manager view
+    if (unifiedFilterManager) {
+        unifiedFilterManager.setView(mode);
+    }
+
+    // Update toggle buttons (unified filter bar toggle - desktop and mobile)
+    document.querySelectorAll('#viewModeToggleUnified button, #viewModeToggleMobile button').forEach(btn => {
         btn.classList.remove('active');
         if (btn.dataset.view === mode) {
             btn.classList.add('active');
         }
     });
-    
+
     // Hide all views
     document.getElementById('patientsTableCard').style.display = 'none';
     document.getElementById('patientsCardsCard').style.display = 'none';
     document.getElementById('patientsFoldersCard').style.display = 'none';
-    
-    // Show/hide Filter by Doctor div
-    const doctorFilterRow = document.querySelector('.row.mb-3');
-    if (doctorFilterRow && doctorFilterRow.querySelector('#doctorFilterGroup')) {
-        if (mode === 'table') {
-            doctorFilterRow.style.display = 'block';
-        } else {
-            doctorFilterRow.style.display = 'none';
-        }
-    }
-    
+
     // Show selected view
     switch(mode) {
         case 'table':
@@ -1144,16 +2241,19 @@ function switchViewMode(mode, saveToStorage = true) {
             renderPaginationNavCards();
             stopFoldersAutoRefresh();
             setTimeout(() => {
-                initCardsFilterManager();
                 initCardsSearch();
             }, 50);
             break;
         case 'folders':
             document.getElementById('patientsFoldersCard').style.display = 'block';
-            if (foldersData.length === 0) {
-                loadFolders();
-            } else {
-                renderFoldersView();
+            // Skip loading/rendering if folder restoration is in progress
+            // This prevents race condition where switchViewMode would reset to root view
+            if (!folderRestorationInProgress) {
+                if (foldersData.length === 0) {
+                    loadFolders();
+                } else {
+                    renderFoldersView();
+                }
             }
             // Start auto-refresh for folders
             startFoldersAutoRefresh();
@@ -4152,702 +5252,8 @@ function sortPatients(sortBy, sortOrder) {
     });
 }
 
-// Initialize gender filter popover
-function initGenderFilterPopover() {
-    const filterBtn = document.querySelector('.gender-filter-btn');
-    if (!filterBtn) return;
-    
-    // Remove existing popover instance if any
-    const existingPopover = bootstrap.Popover.getInstance(filterBtn);
-    if (existingPopover) {
-        existingPopover.dispose();
-    }
-    
-    // Remove existing tooltip if any (to avoid conflicts)
-    const existingTooltip = bootstrap.Tooltip.getInstance(filterBtn);
-    if (existingTooltip) {
-        existingTooltip.dispose();
-    }
-    
-    // Create popover content function that returns HTML string
-    const getPopoverContent = function() {
-        const currentFilter = paginationState.currentGenderFilter;
-        return `
-            <div class="gender-filter-popover">
-                <div class="mb-3">
-                    <div class="d-flex flex-column gap-2" style="margin-left: 10px !important;">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="genderFilter" id="genderFilterMale" value="Male" ${currentFilter === 'Male' ? 'checked' : ''}>
-                            <label class="form-check-label" for="genderFilterMale" style="color: var(--text); cursor: pointer;">
-                                <i class="bi bi-gender-male me-2" style="color: var(--accent);"></i>Male
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="genderFilter" id="genderFilterFemale" value="Female" ${currentFilter === 'Female' ? 'checked' : ''}>
-                            <label class="form-check-label" for="genderFilterFemale" style="color: var(--text); cursor: pointer;">
-                                <i class="bi bi-gender-female me-2" style="color: rgb(255, 85, 224);"></i>Female
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-outline-secondary w-100 clear-gender-filter-btn" style="font-size: 0.875rem;">
-                        <i class="bi bi-x-circle me-1"></i>Clear Filter
-                    </button>
-                </div>
-            </div>
-        `;
-    };
-    
-    // Create popover title with close button
-    const getPopoverTitle = function() {
-        return `
-            <div class="d-flex justify-content-between align-items-center w-100">
-                <span style=font-weight: 300 !important;">Filter by Gender</span>
-            </div>
-        `;
-    };
-    
-    // Initialize Bootstrap popover using getOrCreateInstance
-    const popover = bootstrap.Popover.getOrCreateInstance(filterBtn, {
-        title: getPopoverTitle,
-        content: getPopoverContent,
-        html: true,
-        sanitize: false,
-        placement: 'bottom',
-        trigger: 'click',
-        container: 'body',
-        customClass: 'gender-filter-popover-glass'
-    });
-    
-    // Handle popover shown event
-    const handlePopoverShown = function() {
-        // Use setTimeout to ensure popover is fully rendered
-        setTimeout(() => {
-            // Find popover element by class - try multiple selectors
-            let popoverElement = document.querySelector('.popover.gender-filter-popover-glass');
-            if (!popoverElement) {
-                popoverElement = document.querySelector('.gender-filter-popover-glass');
-            }
-            if (!popoverElement) {
-                // Try to get from popover instance
-                const popoverInstance = bootstrap.Popover.getInstance(filterBtn);
-                if (popoverInstance && popoverInstance.tip) {
-                    popoverElement = popoverInstance.tip;
-                }
-            }
-            
-            if (!popoverElement) {
-                console.error('Popover element not found');
-                return;
-            }
-            
-            // Find the popover body and header
-            const popoverBody = popoverElement.querySelector('.popover-body');
-            const popoverHeader = popoverElement.querySelector('.popover-header');
-            
-            if (!popoverBody) {
-                console.error('Popover body not found');
-                return;
-            }
-            
-            // Set current selection
-            const currentFilter = paginationState.currentGenderFilter;
-            const maleRadio = popoverBody.querySelector('#genderFilterMale');
-            const femaleRadio = popoverBody.querySelector('#genderFilterFemale');
-            
-            if (maleRadio && femaleRadio) {
-                maleRadio.checked = (currentFilter === 'Male');
-                femaleRadio.checked = (currentFilter === 'Female');
-            }
-            
-            // Handle radio button changes (use event delegation on popover body)
-            const handleRadioChange = function(e) {
-                if (e.target.name === 'genderFilter' && e.target.checked) {
-                    applyGenderFilter(e.target.value);
-                    popover.hide();
-                }
-            };
-            
-            // Remove old listener and add new one
-            popoverBody.removeEventListener('change', handleRadioChange);
-            popoverBody.addEventListener('change', handleRadioChange);
-            
-            // Handle clear filter button
-            const clearBtn = popoverBody.querySelector('.clear-gender-filter-btn');
-            if (clearBtn) {
-                const handleClearClick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    applyGenderFilter(null);
-                    // Uncheck all radios
-                    if (maleRadio) maleRadio.checked = false;
-                    if (femaleRadio) femaleRadio.checked = false;
-                    popover.hide();
-                };
-                
-                // Remove old listener and add new one
-                clearBtn.removeEventListener('click', handleClearClick);
-                clearBtn.addEventListener('click', handleClearClick);
-            }
-            
-            // Handle close button in header
-            const closeBtn = popoverHeader ? popoverHeader.querySelector('.gender-filter-close-btn') : null;
-            if (closeBtn) {
-                const handleCloseClick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    popover.hide();
-                };
-                
-                // Remove old listener and add new one
-                closeBtn.removeEventListener('click', handleCloseClick);
-                closeBtn.addEventListener('click', handleCloseClick);
-            }
-        }, 100);
-    };
-    
-    // Remove existing listener if any
-    filterBtn.removeEventListener('shown.bs.popover', handlePopoverShown);
-    // Add new listener
-    filterBtn.addEventListener('shown.bs.popover', handlePopoverShown);
-    
-    // Handle click outside popover to close it
-    const handleClickOutside = function(event) {
-        const popoverInstance = bootstrap.Popover.getInstance(filterBtn);
-        if (!popoverInstance || !popoverInstance.tip) {
-            return;
-        }
-        
-        const popoverElement = popoverInstance.tip;
-        const isClickInsidePopover = popoverElement.contains(event.target);
-        const isClickOnFilterBtn = filterBtn.contains(event.target);
-        
-        // If click is outside both popover and filter button, close popover
-        if (!isClickInsidePopover && !isClickOnFilterBtn) {
-            popoverInstance.hide();
-        }
-    };
-    
-    // Add click outside listener when popover is shown
-    filterBtn.addEventListener('shown.bs.popover', function() {
-        // Use setTimeout to ensure popover is rendered
-        setTimeout(() => {
-            document.addEventListener('click', handleClickOutside);
-        }, 10);
-    });
-    
-    // Remove click outside listener when popover is hidden
-    filterBtn.addEventListener('hidden.bs.popover', function() {
-        document.removeEventListener('click', handleClickOutside);
-    });
-}
-
-// Initialize age filter popover
-function initAgeFilterPopover() {
-    const filterBtn = document.querySelector('.age-filter-btn');
-    if (!filterBtn) return;
-    
-    // Remove existing popover instance if any
-    const existingPopover = bootstrap.Popover.getInstance(filterBtn);
-    if (existingPopover) {
-        existingPopover.dispose();
-    }
-    
-    // Remove existing tooltip if any (to avoid conflicts)
-    const existingTooltip = bootstrap.Tooltip.getInstance(filterBtn);
-    if (existingTooltip) {
-        existingTooltip.dispose();
-    }
-    
-    // Create popover content function that returns HTML string
-    const getPopoverContent = function() {
-        const currentFilter = paginationState.currentAgeFilter;
-        return `
-            <div class="age-filter-popover">
-                <div class="mb-3">
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <label for="ageFilterMin" class="form-label small" style="color: var(--text);">Min Age</label>
-                            <input type="number" class="form-control form-control-sm" id="ageFilterMin" 
-                                   placeholder="Min" min="0" max="150" 
-                                   value="${currentFilter.min !== null ? currentFilter.min : ''}"
-                                   style="color: var(--text); background-color: var(--bg-alt); border-color: var(--border);">
-                        </div>
-                        <div class="col-6">
-                            <label for="ageFilterMax" class="form-label small" style="color: var(--text);">Max Age</label>
-                            <input type="number" class="form-control form-control-sm" id="ageFilterMax" 
-                                   placeholder="Max" min="0" max="150"
-                                   value="${currentFilter.max !== null ? currentFilter.max : ''}"
-                                   style="color: var(--text); background-color: var(--bg-alt); border-color: var(--border);">
-                        </div>
-                    </div>
-                </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-primary w-100 apply-age-filter-btn" style="font-size: 0.875rem;">
-                        <i class="bi bi-check-circle me-1"></i>Apply Filter
-                    </button>
-                    <button class="btn btn-sm btn-outline-secondary w-100 clear-age-filter-btn" style="font-size: 0.875rem;">
-                        <i class="bi bi-x-circle me-1"></i>Clear
-                    </button>
-                </div>
-            </div>
-        `;
-    };
-    
-    // Create popover title
-    const getPopoverTitle = function() {
-        return `
-            <div class="d-flex justify-content-between align-items-center w-100">
-                <span style="font-weight: 300 !important;">Filter by Age Range</span>
-            </div>
-        `;
-    };
-    
-    // Initialize Bootstrap popover using getOrCreateInstance
-    const popover = bootstrap.Popover.getOrCreateInstance(filterBtn, {
-        title: getPopoverTitle,
-        content: getPopoverContent,
-        html: true,
-        sanitize: false,
-        placement: 'bottom',
-        trigger: 'click',
-        container: 'body',
-        customClass: 'age-filter-popover-glass'
-    });
-    
-    // Handle popover shown event
-    const handlePopoverShown = function() {
-        // Use setTimeout to ensure popover is fully rendered
-        setTimeout(() => {
-            // Find popover element by class - try multiple selectors
-            let popoverElement = document.querySelector('.popover.age-filter-popover-glass');
-            if (!popoverElement) {
-                popoverElement = document.querySelector('.age-filter-popover-glass');
-            }
-            if (!popoverElement) {
-                // Try to get from popover instance
-                const popoverInstance = bootstrap.Popover.getInstance(filterBtn);
-                if (popoverInstance && popoverInstance.tip) {
-                    popoverElement = popoverInstance.tip;
-                }
-            }
-            
-            if (!popoverElement) {
-                console.error('Popover element not found');
-                return;
-            }
-            
-            // Find the popover body
-            const popoverBody = popoverElement.querySelector('.popover-body');
-            if (!popoverBody) {
-                console.error('Popover body not found');
-                return;
-            }
-            
-            // Get input fields
-            const minInput = popoverBody.querySelector('#ageFilterMin');
-            const maxInput = popoverBody.querySelector('#ageFilterMax');
-            
-            // Handle apply filter button
-            const applyBtn = popoverBody.querySelector('.apply-age-filter-btn');
-            if (applyBtn) {
-                const handleApplyClick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const minValue = minInput.value ? parseInt(minInput.value) : null;
-                    const maxValue = maxInput.value ? parseInt(maxInput.value) : null;
-                    
-                    // Validate range
-                    if (minValue !== null && maxValue !== null && minValue > maxValue) {
-                        showAlertModal('Invalid Age Range', 'Minimum age cannot be greater than maximum age');
-                        return;
-                    }
-                    
-                    // Apply filter
-                    paginationState.currentAgeFilter = {
-                        min: minValue,
-                        max: maxValue
-                    };
-                    
-                    // Update filter button appearance
-                    if (minValue !== null || maxValue !== null) {
-                        filterBtn.classList.add('active');
-                    } else {
-                        filterBtn.classList.remove('active');
-                    }
-                    
-                    // Apply filters
-                    applyDoctorFilter();
-                    
-                    // Apply current search filter if exists
-                    const quickSearch = document.getElementById('quickSearch');
-                    if (quickSearch && quickSearch.value.trim()) {
-                        filterPatientsLocally(quickSearch.value);
-                    } else {
-                    // Update display
-                    renderPatientsTable();
-                    updatePaginationInfo();
-                    renderPaginationNav();
-                }
-                
-                // Update clear filters button visibility
-                updateClearFiltersVisibility();
-                
-                popover.hide();
-            };
-            
-            // Remove old listener and add new one
-            applyBtn.removeEventListener('click', handleApplyClick);
-            applyBtn.addEventListener('click', handleApplyClick);
-        }
-        
-        // Handle clear filter button
-        const clearBtn = popoverBody.querySelector('.clear-age-filter-btn');
-            if (clearBtn) {
-                const handleClearClick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    // Clear filter
-                    paginationState.currentAgeFilter = { min: null, max: null };
-                    
-                    // Clear inputs
-                    if (minInput) minInput.value = '';
-                    if (maxInput) maxInput.value = '';
-                    
-                    // Update filter button appearance
-                    filterBtn.classList.remove('active');
-                    
-                    // Apply filters
-                    applyDoctorFilter();
-                    
-                    // Apply current search filter if exists
-                    const quickSearch = document.getElementById('quickSearch');
-                    if (quickSearch && quickSearch.value.trim()) {
-                        filterPatientsLocally(quickSearch.value);
-                    } else {
-                        // Update display
-                        renderPatientsTable();
-                        updatePaginationInfo();
-                        renderPaginationNav();
-                    }
-                    
-                    // Update clear filters button visibility
-                    updateClearFiltersVisibility();
-                    
-                    popover.hide();
-                };
-                
-                // Remove old listener and add new one
-                clearBtn.removeEventListener('click', handleClearClick);
-                clearBtn.addEventListener('click', handleClearClick);
-            }
-            
-            // Handle Enter key on inputs
-            if (minInput && maxInput) {
-                const handleInputKeyPress = function(e) {
-                    if (e.key === 'Enter') {
-                        applyBtn.click();
-                    }
-                };
-                
-                minInput.removeEventListener('keypress', handleInputKeyPress);
-                maxInput.removeEventListener('keypress', handleInputKeyPress);
-                minInput.addEventListener('keypress', handleInputKeyPress);
-                maxInput.addEventListener('keypress', handleInputKeyPress);
-            }
-        }, 100);
-    };
-    
-    // Remove existing listener if any
-    filterBtn.removeEventListener('shown.bs.popover', handlePopoverShown);
-    // Add new listener
-    filterBtn.addEventListener('shown.bs.popover', handlePopoverShown);
-    
-    // Handle click outside popover to close it
-    const handleClickOutside = function(event) {
-        const popoverInstance = bootstrap.Popover.getInstance(filterBtn);
-        if (!popoverInstance || !popoverInstance.tip) {
-            return;
-        }
-        
-        const popoverElement = popoverInstance.tip;
-        const isClickInsidePopover = popoverElement.contains(event.target);
-        const isClickOnFilterBtn = filterBtn.contains(event.target);
-        
-        // If click is outside both popover and filter button, close popover
-        if (!isClickInsidePopover && !isClickOnFilterBtn) {
-            popoverInstance.hide();
-        }
-    };
-    
-    // Add click outside listener when popover is shown
-    filterBtn.addEventListener('shown.bs.popover', function() {
-        // Use setTimeout to ensure popover is rendered
-        setTimeout(() => {
-            document.addEventListener('click', handleClickOutside);
-        }, 10);
-    });
-    
-    // Remove click outside listener when popover is hidden
-    filterBtn.addEventListener('hidden.bs.popover', function() {
-        document.removeEventListener('click', handleClickOutside);
-    });
-}
-
-// Initialize last visit filter popover
-function initLastVisitFilterPopover() {
-    const filterBtn = document.querySelector('.last-visit-filter-btn');
-    if (!filterBtn) return;
-    
-    // Remove existing popover instance if any
-    const existingPopover = bootstrap.Popover.getInstance(filterBtn);
-    if (existingPopover) {
-        existingPopover.dispose();
-    }
-    
-    // Remove existing tooltip if any (to avoid conflicts)
-    const existingTooltip = bootstrap.Tooltip.getInstance(filterBtn);
-    if (existingTooltip) {
-        existingTooltip.dispose();
-    }
-    
-    // Create popover content function that returns HTML string
-    const getPopoverContent = function() {
-        const currentFilter = paginationState.currentLastVisitFilter;
-        return `
-            <div class="last-visit-filter-popover">
-                <div class="mb-3">
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <label for="lastVisitFilterFrom" class="form-label small" style="color: var(--text);">From Date</label>
-                            <input type="date" class="form-control form-control-sm" id="lastVisitFilterFrom" 
-                                   value="${currentFilter.from !== null ? currentFilter.from : ''}"
-                                   style="color: var(--text); background-color: var(--bg-alt); border-color: var(--border);">
-                        </div>
-                        <div class="col-6">
-                            <label for="lastVisitFilterTo" class="form-label small" style="color: var(--text);">To Date</label>
-                            <input type="date" class="form-control form-control-sm" id="lastVisitFilterTo" 
-                                   value="${currentFilter.to !== null ? currentFilter.to : ''}"
-                                   style="color: var(--text); background-color: var(--bg-alt); border-color: var(--border);">
-                        </div>
-                    </div>
-                </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-primary w-100 apply-last-visit-filter-btn" style="font-size: 0.875rem;">
-                        <i class="bi bi-check-circle me-1"></i>Apply Filter
-                    </button>
-                    <button class="btn btn-sm btn-outline-secondary w-100 clear-last-visit-filter-btn" style="font-size: 0.875rem;">
-                        <i class="bi bi-x-circle me-1"></i>Clear
-                    </button>
-                </div>
-            </div>
-        `;
-    };
-    
-    // Create popover title
-    const getPopoverTitle = function() {
-        return `
-            <div class="d-flex justify-content-between align-items-center w-100">
-                <span style="font-weight: 300 !important;">Filter by Last Visit</span>
-            </div>
-        `;
-    };
-    
-    // Initialize Bootstrap popover using getOrCreateInstance
-    const popover = bootstrap.Popover.getOrCreateInstance(filterBtn, {
-        title: getPopoverTitle,
-        content: getPopoverContent,
-        html: true,
-        sanitize: false,
-        placement: 'bottom',
-        trigger: 'click',
-        container: 'body',
-        customClass: 'last-visit-filter-popover-glass'
-    });
-    
-    // Handle popover shown event
-    const handlePopoverShown = function() {
-        // Use setTimeout to ensure popover is fully rendered
-        setTimeout(() => {
-            // Find popover element by class - try multiple selectors
-            let popoverElement = document.querySelector('.popover.last-visit-filter-popover-glass');
-            if (!popoverElement) {
-                popoverElement = document.querySelector('.last-visit-filter-popover-glass');
-            }
-            if (!popoverElement) {
-                // Try to get from popover instance
-                const popoverInstance = bootstrap.Popover.getInstance(filterBtn);
-                if (popoverInstance && popoverInstance.tip) {
-                    popoverElement = popoverInstance.tip;
-                }
-            }
-            
-            if (!popoverElement) {
-                console.error('Popover element not found');
-                return;
-            }
-            
-            // Find the popover body
-            const popoverBody = popoverElement.querySelector('.popover-body');
-            if (!popoverBody) {
-                console.error('Popover body not found');
-                return;
-            }
-            
-            // Get input fields
-            const fromInput = popoverBody.querySelector('#lastVisitFilterFrom');
-            const toInput = popoverBody.querySelector('#lastVisitFilterTo');
-            
-            // Handle apply filter button
-            const applyBtn = popoverBody.querySelector('.apply-last-visit-filter-btn');
-            if (applyBtn) {
-                const handleApplyClick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const fromValue = fromInput.value || null;
-                    const toValue = toInput.value || null;
-                    
-                    // Validate range
-                    if (fromValue && toValue && new Date(fromValue) > new Date(toValue)) {
-                        showAlertModal('Invalid Date Range', 'From date cannot be greater than To date');
-                        return;
-                    }
-                    
-                    // Apply filter
-                    paginationState.currentLastVisitFilter = {
-                        from: fromValue,
-                        to: toValue
-                    };
-                    
-                    // Update filter button appearance
-                    if (fromValue || toValue) {
-                        filterBtn.classList.add('active');
-                    } else {
-                        filterBtn.classList.remove('active');
-                    }
-                    
-                    // Apply filters
-                    applyDoctorFilter();
-                    
-                    // Apply current search filter if exists
-                    const quickSearch = document.getElementById('quickSearch');
-                    if (quickSearch && quickSearch.value.trim()) {
-                        filterPatientsLocally(quickSearch.value);
-                    } else {
-                    // Update display
-                    renderPatientsTable();
-                    updatePaginationInfo();
-                    renderPaginationNav();
-                }
-                
-                // Update clear filters button visibility
-                updateClearFiltersVisibility();
-                
-                popover.hide();
-            };
-            
-            // Remove old listener and add new one
-            applyBtn.removeEventListener('click', handleApplyClick);
-            applyBtn.addEventListener('click', handleApplyClick);
-        }
-        
-        // Handle clear filter button
-        const clearBtn = popoverBody.querySelector('.clear-last-visit-filter-btn');
-            if (clearBtn) {
-                const handleClearClick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    // Clear filter
-                    paginationState.currentLastVisitFilter = { from: null, to: null };
-                    
-                    // Clear inputs
-                    if (fromInput) fromInput.value = '';
-                    if (toInput) toInput.value = '';
-                    
-                    // Update filter button appearance
-                    filterBtn.classList.remove('active');
-                    
-                    // Apply filters
-                    applyDoctorFilter();
-                    
-                    // Apply current search filter if exists
-                    const quickSearch = document.getElementById('quickSearch');
-                    if (quickSearch && quickSearch.value.trim()) {
-                        filterPatientsLocally(quickSearch.value);
-                    } else {
-                        // Update display
-                        renderPatientsTable();
-                        updatePaginationInfo();
-                        renderPaginationNav();
-                    }
-                    
-                    // Update clear filters button visibility
-                    updateClearFiltersVisibility();
-                    
-                    popover.hide();
-                };
-                
-                // Remove old listener and add new one
-                clearBtn.removeEventListener('click', handleClearClick);
-                clearBtn.addEventListener('click', handleClearClick);
-            }
-            
-            // Handle Enter key on inputs
-            if (fromInput && toInput) {
-                const handleInputKeyPress = function(e) {
-                    if (e.key === 'Enter') {
-                        applyBtn.click();
-                    }
-                };
-                
-                fromInput.removeEventListener('keypress', handleInputKeyPress);
-                toInput.removeEventListener('keypress', handleInputKeyPress);
-                fromInput.addEventListener('keypress', handleInputKeyPress);
-                toInput.addEventListener('keypress', handleInputKeyPress);
-            }
-        }, 100);
-    };
-    
-    // Remove existing listener if any
-    filterBtn.removeEventListener('shown.bs.popover', handlePopoverShown);
-    // Add new listener
-    filterBtn.addEventListener('shown.bs.popover', handlePopoverShown);
-    
-    // Handle click outside popover to close it
-    const handleClickOutside = function(event) {
-        const popoverInstance = bootstrap.Popover.getInstance(filterBtn);
-        if (!popoverInstance || !popoverInstance.tip) {
-            return;
-        }
-        
-        const popoverElement = popoverInstance.tip;
-        const isClickInsidePopover = popoverElement.contains(event.target);
-        const isClickOnFilterBtn = filterBtn.contains(event.target);
-        
-        // If click is outside both popover and filter button, close popover
-        if (!isClickInsidePopover && !isClickOnFilterBtn) {
-            popoverInstance.hide();
-        }
-    };
-    
-    // Add click outside listener when popover is shown
-    filterBtn.addEventListener('shown.bs.popover', function() {
-        // Use setTimeout to ensure popover is rendered
-        setTimeout(() => {
-            document.addEventListener('click', handleClickOutside);
-        }, 10);
-    });
-    
-    // Remove click outside listener when popover is hidden
-    filterBtn.addEventListener('hidden.bs.popover', function() {
-        document.removeEventListener('click', handleClickOutside);
-    });
-}
+// OLD FILTER CODE REMOVED - Using UnifiedFilterManager instead
+// OLD FILTER POPOVER FUNCTIONS REMOVED - Using UnifiedFilterManager instead
 
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', function() {
@@ -4868,14 +5274,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Initialize gender filter popover
-    initGenderFilterPopover();
-    
-    // Initialize age filter popover
-    initAgeFilterPopover();
-    
-    // Initialize last visit filter popover
-    initLastVisitFilterPopover();
+    // OLD FILTER POPOVER INITIALIZATION REMOVED - Using UnifiedFilterManager instead
     
     // Initialize clear filters buttons
     const clearAllFiltersBtn = document.querySelector('.clear-all-filters-btn');
@@ -5468,10 +5867,7 @@ function loadFolders(skipRender = false) {
                 renderFoldersView();
             }
             
-            // Initialize filter manager (with delay to ensure DOM is ready)
-            setTimeout(() => {
-                initFilterManager();
-            }, 50);
+            // OLD FILTER MANAGER INIT REMOVED - Using UnifiedFilterManager instead
         }
         return data;
     })
@@ -5515,22 +5911,12 @@ function renderFoldersView(page = 1, clearState = true) {
         clearBtn.style.display = 'none';
     }
     
-    // Show the header toggle buttons again
-    const headerToggle = document.getElementById('viewModeToggleFoldersHeader');
-    if (headerToggle) {
-        headerToggle.style.display = 'flex';
-    }
+    // View toggle moved to unified filter bar - no need to show/hide header toggle
     
-    // Show Create Folder button and clear header actions
+    // Show Create Folder button
     const createFolderBtn = document.querySelector('button[onclick="showCreateFolderModal()"]');
     if (createFolderBtn) {
         createFolderBtn.style.display = 'inline-block';
-    }
-    
-    // Clear folder header actions
-    const headerActionsContainer = document.querySelector('#viewModeToggleFoldersHeader .folder-header-actions');
-    if (headerActionsContainer) {
-        headerActionsContainer.innerHTML = '';
     }
     
     // Hide folderContentArea and show patientsFoldersContainer
@@ -5904,11 +6290,7 @@ function openFolder(folderId) {
         // Save state immediately for navigation tracking
         saveFolderNavigationState();
     
-    // Hide the header toggle buttons to avoid duplication
-    const headerToggle = document.getElementById('viewModeToggleFoldersHeader');
-    if (headerToggle) {
-        headerToggle.style.display = 'none';
-    }
+    // View toggle moved to unified filter bar - no need to hide header toggle
     
     // Hide Create Folder button when in system folder
     const createFolderBtn = document.querySelector('button[onclick="showCreateFolderModal()"]');
@@ -6077,7 +6459,11 @@ function openFolder(folderId) {
                 if (folderTreeview) {
                     folderTreeview.expandFolderPath(folderPathStack).then(() => {
                         // After expanding path, expand current folder and all its children
-                        const currentFolderIdForTree = isSystem ? `system_${folderId}` : folderId;
+                        // folderId already has 'system_' prefix if it's a system folder (from treeview click)
+                        // Only add prefix if folderId doesn't already have it
+                        const currentFolderIdForTree = isSystem && !String(folderId).startsWith('system_')
+                            ? `system_${folderId}`
+                            : String(folderId);
                         folderTreeview.expandFolder(currentFolderIdForTree, true).then(() => {
                             folderTreeview.render();
                             folderTreeview.highlightActive(currentFolderIdForTree);
@@ -6177,7 +6563,11 @@ function openFolder(folderId) {
                 if (folderTreeview && breadcrumb.length > 0) {
                     folderTreeview.expandFolderPath(folderPathStack).then(() => {
                         // After expanding path, expand current folder and all its children
-                        const currentFolderIdForTree = isSystem ? `system_${folderId}` : folderId;
+                        // folderId already has 'system_' prefix if it's a system folder (from treeview click)
+                        // Only add prefix if folderId doesn't already have it
+                        const currentFolderIdForTree = isSystem && !String(folderId).startsWith('system_')
+                            ? `system_${folderId}`
+                            : String(folderId);
                         folderTreeview.expandFolder(currentFolderIdForTree, true).then(() => {
                             folderTreeview.render();
                             folderTreeview.highlightActive(currentFolderIdForTree);
@@ -6215,10 +6605,7 @@ function openFolder(folderId) {
                 }
             }
             
-            // Initialize filter manager if not already initialized (with delay to ensure DOM is ready)
-            setTimeout(() => {
-                initFilterManager();
-            }, 50);
+            // OLD FILTER MANAGER INIT REMOVED - Using UnifiedFilterManager instead
             
             // Render patients
             if (data.patients) {
@@ -6246,7 +6633,11 @@ function openFolder(folderId) {
 
             // Ensure treeview is highlighted after all operations complete
             if (folderTreeview) {
-                const currentFolderIdForTree = isSystem ? `system_${folderId}` : folderId;
+                // folderId already has 'system_' prefix if it's a system folder (from treeview click)
+                // Only add prefix if folderId doesn't already have it
+                const currentFolderIdForTree = isSystem && !String(folderId).startsWith('system_')
+                    ? `system_${folderId}`
+                    : String(folderId);
                 // Use setTimeout to ensure this runs after all promises resolve
                 setTimeout(() => {
                     folderTreeview.highlightActive(currentFolderIdForTree);
@@ -6321,10 +6712,7 @@ function filterCardsContent(searchTerm) {
         updatePaginationInfoCards();
         renderPaginationNavCards();
         
-        // Apply additional filters if cardsFilterManager exists
-        if (cardsFilterManager) {
-            cardsFilterManager.applyFilters(paginationState.allPatients);
-        }
+        // OLD FILTER MANAGER REMOVED - Using UnifiedFilterManager instead
         return;
     }
     
@@ -6344,10 +6732,8 @@ function filterCardsContent(searchTerm) {
     paginationState.filteredPatients = filtered;
     paginationState.currentPage = 1;
     
-    // Apply additional filters if cardsFilterManager exists
-    if (cardsFilterManager) {
-        cardsFilterManager.applyFilters(filtered);
-    } else {
+    // OLD FILTER MANAGER REMOVED - Using UnifiedFilterManager instead
+    {
         renderPatientsCards();
         updatePaginationInfoCards();
         renderPaginationNavCards();
@@ -7955,461 +8341,7 @@ function removeTagFromPatient(patientId, tagId) {
 }
 
 // ============================================
-// FilterManager Class
-// ============================================
-class FilterManager {
-    constructor(containerId, mode = 'folder') {
-        this.container = document.getElementById(containerId);
-        if (!this.container) {
-            console.warn(`FilterManager: Container ${containerId} not found`);
-            // Don't return, just set container to null to prevent errors
-            this.container = null;
-            return;
-        }
-
-        this.mode = mode; // 'folder' or 'cards'
-
-        this.filters = {
-            colors: [],
-            tags: [],
-            dateCreated: { from: null, to: null },
-            gender: null,
-            age: { min: null, max: null }
-        };
-
-        // Create debounced version of applyFilters for text/number inputs (150ms delay)
-        this.debouncedApplyFilters = this.createDebouncedApply(150);
-
-        this.render();
-    }
-
-    // Create a debounced apply function
-    createDebouncedApply(delay) {
-        let timeout = null;
-        return (patients) => {
-            if (timeout) clearTimeout(timeout);
-            timeout = setTimeout(() => {
-                this.applyFilters(patients);
-            }, delay);
-        };
-    }
-    
-    render() {
-        if (!this.container) return;
-        
-        let html = `
-            <div class="filters-header mb-3">
-                <h6 class="mb-0">
-                    <i class="bi bi-funnel me-2"></i>
-                    Filters
-                </h6>
-                <button class="btn btn-sm btn-link p-0" onclick="${this.mode === 'cards' ? 'cardsFilterManager' : 'filterManager'}.clearFilters()" title="Clear all filters">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
-            <div class="filters-content">
-                <!-- Color Filter -->
-                <div class="filter-section">
-                    <div class="filter-header" onclick="this.parentElement.classList.toggle('expanded')">
-                        <span><i class="bi bi-palette me-2"></i>Color Markers</span>
-                        <i class="bi bi-chevron-down"></i>
-                    </div>
-                    <div class="filter-body">
-                        <div class="color-filter-grid" id="${this.mode === 'cards' ? 'cards' : 'folder'}ColorFilterGrid">
-                            <!-- Colors will be added here -->
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Tag Filter -->
-                <div class="filter-section">
-                    <div class="filter-header" onclick="this.parentElement.classList.toggle('expanded')">
-                        <span><i class="bi bi-tags me-2"></i>Tags</span>
-                        <i class="bi bi-chevron-down"></i>
-                    </div>
-                    <div class="filter-body">
-                        <div class="tag-filter-list" id="${this.mode === 'cards' ? 'cards' : 'folder'}TagFilterList">
-                            <!-- Tags will be added here -->
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Date Created Filter -->
-                <div class="filter-section">
-                    <div class="filter-header" onclick="this.parentElement.classList.toggle('expanded')">
-                        <span><i class="bi bi-calendar me-2"></i>Date Created</span>
-                        <i class="bi bi-chevron-down"></i>
-                    </div>
-                    <div class="filter-body">
-                        <div class="mb-2">
-                            <label class="form-label small">From</label>
-                            <input type="date" class="form-control form-control-sm" id="${this.mode === 'cards' ? 'cards' : 'folder'}DateCreatedFrom" onchange="${this.mode === 'cards' ? 'cardsFilterManager' : 'filterManager'}.setDateCreated('from', this.value)">
-                        </div>
-                        <div>
-                            <label class="form-label small">To</label>
-                            <input type="date" class="form-control form-control-sm" id="${this.mode === 'cards' ? 'cards' : 'folder'}DateCreatedTo" onchange="${this.mode === 'cards' ? 'cardsFilterManager' : 'filterManager'}.setDateCreated('to', this.value)">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Gender Filter -->
-                <div class="filter-section">
-                    <div class="filter-header" onclick="this.parentElement.classList.toggle('expanded')">
-                        <span><i class="bi bi-gender-ambiguous me-2"></i>Gender</span>
-                        <i class="bi bi-chevron-down"></i>
-                    </div>
-                    <div class="filter-body">
-                        <select class="form-select form-select-sm" id="${this.mode === 'cards' ? 'cards' : 'folder'}GenderFilter" onchange="${this.mode === 'cards' ? 'cardsFilterManager' : 'filterManager'}.setGender(this.value)">
-                            <option value="">All</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <!-- Age Filter -->
-                <div class="filter-section">
-                    <div class="filter-header" onclick="this.parentElement.classList.toggle('expanded')">
-                        <span><i class="bi bi-person me-2"></i>Age</span>
-                        <i class="bi bi-chevron-down"></i>
-                    </div>
-                    <div class="filter-body">
-                        <div class="mb-2">
-                            <label class="form-label small">Min</label>
-                            <input type="number" class="form-control form-control-sm" id="${this.mode === 'cards' ? 'cards' : 'folder'}AgeMin" min="0" max="150" placeholder="Min age" onchange="${this.mode === 'cards' ? 'cardsFilterManager' : 'filterManager'}.setAge('min', this.value)">
-                        </div>
-                        <div>
-                            <label class="form-label small">Max</label>
-                            <input type="number" class="form-control form-control-sm" id="${this.mode === 'cards' ? 'cards' : 'folder'}AgeMax" min="0" max="150" placeholder="Max age" onchange="${this.mode === 'cards' ? 'cardsFilterManager' : 'filterManager'}.setAge('max', this.value)">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        this.container.innerHTML = html;
-        
-        // Initialize color filter
-        this.initColorFilter();
-        
-        // Initialize tag filter
-        this.initTagFilter();
-    }
-    
-    initColorFilter() {
-        const gridId = this.mode === 'cards' ? 'cardsColorFilterGrid' : 'folderColorFilterGrid';
-        const grid = document.getElementById(gridId);
-        if (!grid) return;
-        
-        const colors = [
-            { code: '#ef4444', name: 'Red' },
-            { code: '#f59e0b', name: 'Orange' },
-            { code: '#eab308', name: 'Yellow' },
-            { code: '#22c55e', name: 'Green' },
-            { code: '#06b6d4', name: 'Cyan' },
-            { code: '#3b82f6', name: 'Blue' },
-            { code: '#8b5cf6', name: 'Purple' },
-            { code: '#ec4899', name: 'Pink' }
-        ];
-        
-        grid.style.cssText = 'display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;';
-        
-        colors.forEach(color => {
-            const colorBtn = document.createElement('button');
-            colorBtn.type = 'button';
-            colorBtn.className = 'btn color-filter-btn';
-            colorBtn.style.cssText = `width: 100%; height: 32px; background: ${color.code}; border: 2px solid transparent; border-radius: 4px;`;
-            colorBtn.setAttribute('data-color', color.code);
-            colorBtn.setAttribute('title', color.name);
-            colorBtn.addEventListener('click', () => {
-                this.toggleColorFilter(color.code);
-            });
-            grid.appendChild(colorBtn);
-        });
-    }
-    
-    async initTagFilter() {
-        const listId = this.mode === 'cards' ? 'cardsTagFilterList' : 'folderTagFilterList';
-        const list = document.getElementById(listId);
-        if (!list) return;
-        
-        try {
-            const response = await fetch('/api/patient-tags', {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Content-Type': 'application/json'
-                }
-            });
-            const data = await response.json();
-            
-            if (data.ok && data.tags) {
-                list.innerHTML = '';
-                if (data.tags.length === 0) {
-                    list.innerHTML = '<p class="text-muted small">No tags available</p>';
-                } else {
-                    data.tags.forEach(tag => {
-                        const tagItem = document.createElement('div');
-                        tagItem.className = 'tag-filter-item mb-2';
-                        tagItem.style.cssText = 'display: flex; align-items: center; padding: 6px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer;';
-                        tagItem.innerHTML = `
-                            <input type="checkbox" 
-                                   class="form-check-input me-2" 
-                                   onchange="${this.mode === 'cards' ? 'cardsFilterManager' : 'filterManager'}.toggleTagFilter(${tag.id}, this.checked)">
-                            <span class="badge" style="background: ${tag.color || '#6366f1'};">
-                                ${tag.icon ? `<i class="bi ${tag.icon} me-1"></i>` : ''}
-                                ${this.escapeHtml(tag.name)}
-                            </span>
-                        `;
-                        list.appendChild(tagItem);
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('Error loading tags:', error);
-            list.innerHTML = '<p class="text-danger small">Error loading tags</p>';
-        }
-    }
-    
-    toggleColorFilter(colorCode) {
-        const index = this.filters.colors.indexOf(colorCode);
-        if (index > -1) {
-            this.filters.colors.splice(index, 1);
-        } else {
-            this.filters.colors.push(colorCode);
-        }
-        this.updateColorFilterUI();
-        this.applyFilters();
-    }
-    
-    toggleTagFilter(tagId, checked) {
-        if (checked) {
-            if (!this.filters.tags.includes(tagId)) {
-                this.filters.tags.push(tagId);
-            }
-        } else {
-            const index = this.filters.tags.indexOf(tagId);
-            if (index > -1) {
-                this.filters.tags.splice(index, 1);
-            }
-        }
-        this.applyFilters();
-    }
-    
-    setDateCreated(type, value) {
-        this.filters.dateCreated[type] = value || null;
-        this.applyFilters();
-    }
-    
-    setGender(value) {
-        this.filters.gender = value || null;
-        this.applyFilters();
-    }
-    
-    setAge(type, value) {
-        this.filters.age[type] = value ? parseInt(value) : null;
-        // Use debounced apply for number inputs (may change rapidly while typing)
-        this.debouncedApplyFilters();
-    }
-    
-    updateColorFilterUI() {
-        document.querySelectorAll('.color-filter-btn').forEach(btn => {
-            const colorCode = btn.getAttribute('data-color');
-            if (this.filters.colors.includes(colorCode)) {
-                btn.style.borderColor = '#000';
-                btn.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.2)';
-            } else {
-                btn.style.borderColor = 'transparent';
-                btn.style.boxShadow = 'none';
-            }
-        });
-    }
-    
-    applyFilters(patients) {
-        if (!patients) {
-            if (this.mode === 'cards') {
-                patients = paginationState.allPatients || [];
-            } else {
-                patients = currentFolderPatients || [];
-            }
-        }
-        
-        let filtered = [...patients];
-        
-        // Color filter
-        if (this.filters.colors.length > 0) {
-            filtered = filtered.filter(patient => {
-                const colorMarker = patient.color_marker;
-                return colorMarker && this.filters.colors.includes(colorMarker);
-            });
-        }
-        
-        // Tag filter
-        if (this.filters.tags.length > 0) {
-            filtered = filtered.filter(patient => {
-                if (!patient.tags || patient.tags.length === 0) return false;
-                const patientTagIds = patient.tags.map(t => t.id);
-                return this.filters.tags.some(tagId => patientTagIds.includes(tagId));
-            });
-        }
-        
-        // Date created filter
-        if (this.filters.dateCreated.from || this.filters.dateCreated.to) {
-            filtered = filtered.filter(patient => {
-                if (!patient.created_at) return false;
-                const createdDate = new Date(patient.created_at);
-                if (this.filters.dateCreated.from) {
-                    const fromDate = new Date(this.filters.dateCreated.from);
-                    if (createdDate < fromDate) return false;
-                }
-                if (this.filters.dateCreated.to) {
-                    const toDate = new Date(this.filters.dateCreated.to);
-                    toDate.setHours(23, 59, 59, 999);
-                    if (createdDate > toDate) return false;
-                }
-                return true;
-            });
-        }
-        
-        // Gender filter
-        if (this.filters.gender) {
-            filtered = filtered.filter(patient => patient.gender === this.filters.gender);
-        }
-        
-        // Age filter
-        if (this.filters.age.min !== null || this.filters.age.max !== null) {
-            filtered = filtered.filter(patient => {
-                if (!patient.dob) return false;
-                const age = calculateAge(patient.dob);
-                if (this.filters.age.min !== null && age < this.filters.age.min) return false;
-                if (this.filters.age.max !== null && age > this.filters.age.max) return false;
-                return true;
-            });
-        }
-        
-        // Render filtered patients based on mode
-        if (this.mode === 'cards') {
-            paginationState.filteredPatients = filtered;
-            paginationState.currentPage = 1;
-            renderPatientsCards();
-            updatePaginationInfoCards();
-            renderPaginationNavCards();
-        } else {
-            renderFolderPatients(filtered);
-        }
-        
-        return filtered;
-    }
-    
-    clearFilters() {
-        this.filters = {
-            colors: [],
-            tags: [],
-            dateCreated: { from: null, to: null },
-            gender: null,
-            age: { min: null, max: null }
-        };
-        
-        // Reset UI with mode-specific IDs
-        const prefix = this.mode === 'cards' ? 'cards' : 'folder';
-        const dateFromEl = document.getElementById(`${prefix}DateCreatedFrom`);
-        const dateToEl = document.getElementById(`${prefix}DateCreatedTo`);
-        const genderEl = document.getElementById(`${prefix}GenderFilter`);
-        const ageMinEl = document.getElementById(`${prefix}AgeMin`);
-        const ageMaxEl = document.getElementById(`${prefix}AgeMax`);
-        const tagListId = `${prefix}TagFilterList`;
-        
-        if (dateFromEl) dateFromEl.value = '';
-        if (dateToEl) dateToEl.value = '';
-        if (genderEl) genderEl.value = '';
-        if (ageMinEl) ageMinEl.value = '';
-        if (ageMaxEl) ageMaxEl.value = '';
-        
-        // Reset color filter buttons within this container
-        if (this.container) {
-            this.container.querySelectorAll('.color-filter-btn').forEach(btn => {
-                btn.style.borderColor = 'transparent';
-                btn.style.boxShadow = 'none';
-            });
-        }
-        
-        // Reset tag checkboxes within this container
-        const tagList = document.getElementById(tagListId);
-        if (tagList) {
-            tagList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-                cb.checked = false;
-            });
-        }
-        
-        this.updateColorFilterUI();
-        this.applyFilters();
-    }
-    
-    getActiveFilters() {
-        const active = [];
-        if (this.filters.colors.length > 0) {
-            active.push(`Colors: ${this.filters.colors.length}`);
-        }
-        if (this.filters.tags.length > 0) {
-            active.push(`Tags: ${this.filters.tags.length}`);
-        }
-        if (this.filters.dateCreated.from || this.filters.dateCreated.to) {
-            active.push('Date Created');
-        }
-        if (this.filters.gender) {
-            active.push(`Gender: ${this.filters.gender}`);
-        }
-        if (this.filters.age.min !== null || this.filters.age.max !== null) {
-            active.push('Age');
-        }
-        return active;
-    }
-    
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-}
-
-// Global filter manager instance
-let filterManager = null;
-
-// Global filter manager instance for cards view
-let cardsFilterManager = null;
-
-// Initialize filter manager when folders view is active
-function initFilterManager() {
-    // Always try to initialize if sidebarFilters exists, regardless of currentViewMode check
-    // The view mode check might not be set correctly at initialization time
-    const sidebarFilters = document.getElementById('sidebarFilters');
-    if (sidebarFilters && !filterManager) {
-        filterManager = new FilterManager('sidebarFilters');
-    } else if (!sidebarFilters && !filterManager) {
-        // Retry after a short delay if element is not yet available
-        setTimeout(() => {
-            const retryElement = document.getElementById('sidebarFilters');
-            if (retryElement && !filterManager) {
-                filterManager = new FilterManager('sidebarFilters');
-            }
-        }, 200);
-    }
-}
-
-// Initialize filter manager for cards view
-function initCardsFilterManager() {
-    const cardsFilters = document.getElementById('cardsFilters');
-    if (cardsFilters && !cardsFilterManager) {
-        cardsFilterManager = new FilterManager('cardsFilters', 'cards');
-    } else if (!cardsFilters && !cardsFilterManager) {
-        setTimeout(() => {
-            const retryElement = document.getElementById('cardsFilters');
-            if (retryElement && !cardsFilterManager) {
-                cardsFilterManager = new FilterManager('cardsFilters', 'cards');
-            }
-        }, 200);
-    }
-}
+// OLD FilterManager Class REMOVED - Using UnifiedFilterManager instead
 
 // ============================================
 // Folder Management Functions

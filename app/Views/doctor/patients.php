@@ -1,5 +1,6 @@
 <link href="/app/Views/doctor/assets/css/patients.css?v=<?= file_exists(__DIR__ . '/assets/css/patients.css') ? filemtime(__DIR__ . '/assets/css/patients.css') : time() ?>" rel="stylesheet">
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/doctor/assets/css/filter-bar.css?v=<?= file_exists(__DIR__ . '/assets/css/filter-bar.css') ? filemtime(__DIR__ . '/assets/css/filter-bar.css') : time() ?>" rel="stylesheet">
 
 <div class="row mb-4">
     <div class="col-md-8">
@@ -191,62 +192,256 @@
     </div>
 </div>
 
-<!-- Doctor Filter -->
-<div class="row mb-3">
-    <div class="col-12">
-        <div class="card border-info">
-            <div class="card-header bg-info bg-opacity-10">
-                <h6 class="mb-0 text-info">
-                    <i class="bi bi-funnel me-2"></i>
-                    Filter by Doctor
-                </h6>
+<!-- Unified Filter Bar -->
+<div class="unified-filter-bar" id="unifiedFilterBar">
+    <!-- Desktop View -->
+    <div class="filter-bar-desktop">
+        <!-- View Mode Toggle (Always Left) -->
+        <div class="filter-bar-view-toggle">
+            <div class="filter-bar-label">
+                <i class="bi bi-layout-three-columns"></i>
+                <span>Change View</span>
             </div>
-            <div class="card-body py-2">
-                <div class="btn-group" role="group" id="doctorFilterGroup">
-                    <button type="button" 
-                            class="btn btn-outline-primary active" 
-                            data-doctor="all" 
-                            onclick="filterByDoctor('all')">
-                        <i class="bi bi-people me-1"></i>
-                        All Doctors
-                    </button>
-                    <?php 
-                    $buttonColors = ['btn-outline-success', 'btn-outline-warning', 'btn-outline-info', 'btn-outline-secondary'];
-                    $colorIndex = 0;
-                    foreach ($doctors as $doctor): 
-                        $colorClass = $buttonColors[$colorIndex % count($buttonColors)];
-                        $colorIndex++;
-                    ?>
-                    <button type="button" 
-                            class="btn <?= $colorClass ?> d-flex align-items-center" 
-                            data-doctor="<?= $doctor['id'] ?>" 
-                            onclick="filterByDoctor('<?= $doctor['id'] ?>')">
-                        <?php if (!empty($doctor['profile_image'])): 
-                            $doctorImagePath = strpos($doctor['profile_image'], '/public/') === 0 ? $doctor['profile_image'] : '/public' . $doctor['profile_image'];
-                        ?>
-                            <img src="<?= htmlspecialchars($doctorImagePath) ?>" 
-                                 alt="<?= htmlspecialchars($doctor['display_name']) ?>" 
-                                 class="doctor-filter-avatar me-2"
-                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <div class="doctor-filter-avatar-fallback me-2" style="display: none;">
-                                <?= strtoupper(substr($doctor['display_name'] ?? 'D', 0, 1)) ?>
-                            </div>
-                        <?php else: ?>
-                            <div class="doctor-filter-avatar me-2">
-                                <?= strtoupper(substr($doctor['display_name'] ?? 'D', 0, 1)) ?>
-                            </div>
-                        <?php endif; ?>
-                        <i class="bi bi-person-badge me-1"></i>
-                        <?= htmlspecialchars($doctor['display_name']) ?>
-                    </button>
-                    <?php endforeach; ?>
+            <div class="btn-group btn-group-sm" role="group" id="viewModeToggleUnified">
+                <button type="button" 
+                        class="btn btn-view-toggle" 
+                        data-view="table"
+                        onclick="switchViewMode('table')"
+                        title="Table View">
+                    <i class="bi bi-table"></i>
+                    <span class="d-none d-md-inline ms-1">Table</span>
+                </button>
+                <button type="button" 
+                        class="btn btn-view-toggle" 
+                        data-view="cards"
+                        onclick="switchViewMode('cards')"
+                        title="Cards View">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                    <span class="d-none d-md-inline ms-1">Cards</span>
+                </button>
+                <button type="button" 
+                        class="btn btn-view-toggle" 
+                        data-view="folders"
+                        onclick="switchViewMode('folders')"
+                        title="Folders View">
+                    <i class="bi bi-folder"></i>
+                    <span class="d-none d-md-inline ms-1">Folders</span>
+                </button>
+            </div>
+        </div>
+
+        <span class="filter-bar-separator" aria-hidden="true"></span>
+
+        <div class="filter-bar-label filter-bar-label-filters">
+            <i class="bi bi-funnel"></i>
+            <span>Filters</span>
+        </div>
+
+        <div class="filter-chips">
+            <!-- Doctor Filter Chip -->
+            <div class="filter-chip" data-filter="doctor" id="doctorFilterChip">
+                <span class="filter-chip-label">Doctor</span>
+                <span class="filter-chip-value" id="doctorChipValue">All</span>
+                <i class="bi bi-chevron-down filter-chip-arrow"></i>
+                <div class="filter-dropdown filter-dropdown-scrollable" id="doctorDropdown">
+                    <div class="filter-dropdown-content">
+                        <!-- Doctor options will be rendered by JS -->
+                    </div>
                 </div>
-                <div class="mt-2">
-                    <small class="text-muted">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Showing patients for: <span id="currentFilterText">All Doctors</span>
-                    </small>
+            </div>
+
+            <!-- Gender Filter Chip -->
+            <div class="filter-chip" data-filter="gender" id="genderFilterChip">
+                <span class="filter-chip-label">Gender</span>
+                <span class="filter-chip-value" id="genderChipValue">All</span>
+                <i class="bi bi-chevron-down filter-chip-arrow"></i>
+                <div class="filter-dropdown" id="genderDropdown">
+                    <div class="filter-dropdown-content">
+                        <button class="filter-option selected" data-value="">All</button>
+                        <button class="filter-option" data-value="Male">
+                            <i class="bi bi-gender-male text-primary me-2"></i>Male
+                        </button>
+                        <button class="filter-option" data-value="Female">
+                            <i class="bi bi-gender-female me-2" style="color: #ec4899;"></i>Female
+                        </button>
+                    </div>
                 </div>
+            </div>
+
+            <!-- Age Filter Chip -->
+            <div class="filter-chip" data-filter="age" id="ageFilterChip">
+                <span class="filter-chip-label">Age</span>
+                <span class="filter-chip-value" id="ageChipValue">All</span>
+                <i class="bi bi-chevron-down filter-chip-arrow"></i>
+                <div class="filter-dropdown filter-dropdown-wide" id="ageDropdown">
+                    <div class="filter-range-inputs">
+                        <input type="number" class="form-control form-control-sm"
+                               id="ageFilterMin" placeholder="Min" min="0" max="150">
+                        <span class="range-separator">to</span>
+                        <input type="number" class="form-control form-control-sm"
+                               id="ageFilterMax" placeholder="Max" min="0" max="150">
+                    </div>
+                    <div class="filter-dropdown-actions">
+                        <button class="btn btn-sm btn-link" id="clearAgeFilter">Clear</button>
+                        <button class="btn btn-sm btn-primary" id="applyAgeFilter">Apply</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Color Markers Filter Chip (All views) -->
+            <div class="filter-chip filter-chip-colors" data-filter="colors" id="colorsFilterChip">
+                <span class="filter-chip-label">Colors</span>
+                <div class="color-dots" id="colorDotsPreview"></div>
+                <i class="bi bi-chevron-down filter-chip-arrow"></i>
+                <div class="filter-dropdown" id="colorsDropdown">
+                    <div class="color-palette">
+                        <!-- Color buttons will be rendered by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tags Filter Chip (All views) -->
+            <div class="filter-chip" data-filter="tags" id="tagsFilterChip">
+                <span class="filter-chip-label">Tags</span>
+                <span class="filter-chip-value" id="tagsChipValue">All</span>
+                <i class="bi bi-chevron-down filter-chip-arrow"></i>
+                <div class="filter-dropdown filter-dropdown-scrollable" id="tagsDropdown">
+                    <div class="tags-list">
+                        <!-- Tags will be loaded via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Date Created Filter Chip (Cards/Folders only) -->
+            <div class="filter-chip" data-filter="dateCreated" id="dateCreatedFilterChip" data-views="cards,folders">
+                <span class="filter-chip-label">Created</span>
+                <span class="filter-chip-value" id="dateCreatedChipValue">All</span>
+                <i class="bi bi-chevron-down filter-chip-arrow"></i>
+                <div class="filter-dropdown filter-dropdown-wide" id="dateCreatedDropdown">
+                    <div class="filter-date-inputs">
+                        <div class="date-input-group">
+                            <label>From</label>
+                            <input type="date" class="form-control form-control-sm" id="dateCreatedFrom">
+                        </div>
+                        <div class="date-input-group">
+                            <label>To</label>
+                            <input type="date" class="form-control form-control-sm" id="dateCreatedTo">
+                        </div>
+                    </div>
+                    <div class="filter-dropdown-actions">
+                        <button class="btn btn-sm btn-link" id="clearDateCreatedFilter">Clear</button>
+                        <button class="btn btn-sm btn-primary" id="applyDateCreatedFilter">Apply</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Last Visit Filter Chip (Table only) -->
+            <div class="filter-chip" data-filter="lastVisit" id="lastVisitFilterChip" data-views="table">
+                <span class="filter-chip-label">Last Visit</span>
+                <span class="filter-chip-value" id="lastVisitChipValue">All</span>
+                <i class="bi bi-chevron-down filter-chip-arrow"></i>
+                <div class="filter-dropdown filter-dropdown-wide" id="lastVisitDropdown">
+                    <div class="filter-date-inputs">
+                        <div class="date-input-group">
+                            <label>From</label>
+                            <input type="date" class="form-control form-control-sm" id="lastVisitFrom">
+                        </div>
+                        <div class="date-input-group">
+                            <label>To</label>
+                            <input type="date" class="form-control form-control-sm" id="lastVisitTo">
+                        </div>
+                    </div>
+                    <div class="filter-dropdown-actions">
+                        <button class="btn btn-sm btn-link" id="clearLastVisitFilter">Clear</button>
+                        <button class="btn btn-sm btn-primary" id="applyLastVisitFilter">Apply</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Filters Indicator & Clear (Always Right) -->
+        <div class="filter-bar-actions">
+            <span class="active-filters-badge" id="activeFiltersBadge" style="display: none;">
+                <span id="activeFiltersCount">0</span> active
+            </span>
+            <button class="btn btn-sm btn-link clear-all-btn" id="clearAllFilters" style="display: none;">
+                <i class="bi bi-x-circle me-1"></i>Clear All
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile View -->
+    <div class="filter-bar-mobile">
+        <div class="d-flex align-items-center gap-2 flex-wrap w-100">
+            <!-- View Mode Toggle (Mobile) -->
+            <div class="filter-bar-view-toggle-mobile">
+                <div class="filter-bar-label-mobile">
+                    <i class="bi bi-layout-three-columns"></i>
+                    <span>View</span>
+                </div>
+                <div class="btn-group btn-group-sm" role="group" id="viewModeToggleMobile">
+                    <button type="button" 
+                            class="btn btn-view-toggle" 
+                            data-view="table"
+                            onclick="switchViewMode('table')"
+                            title="Table View">
+                        <i class="bi bi-table"></i>
+                    </button>
+                    <button type="button" 
+                            class="btn btn-view-toggle" 
+                            data-view="cards"
+                            onclick="switchViewMode('cards')"
+                            title="Cards View">
+                        <i class="bi bi-grid-3x3-gap"></i>
+                    </button>
+                    <button type="button" 
+                            class="btn btn-view-toggle" 
+                            data-view="folders"
+                            onclick="switchViewMode('folders')"
+                            title="Folders View">
+                        <i class="bi bi-folder"></i>
+                    </button>
+                </div>
+            </div>
+
+            <span class="filter-bar-separator filter-bar-separator-mobile" aria-hidden="true"></span>
+            
+            <div class="d-flex align-items-center gap-2 ms-auto">
+                <button class="filter-mobile-trigger" id="filterMobileTrigger" data-bs-toggle="modal" data-bs-target="#mobileFilterModal">
+                    <i class="bi bi-funnel me-2"></i>
+                    <span>Filters</span>
+                    <span class="mobile-active-badge" id="mobileActiveBadge" style="display: none;">
+                        <span id="mobileActiveCount">0</span>
+                    </span>
+                </button>
+                <button class="btn btn-sm btn-link text-danger" id="mobileClearAll" style="display: none;">
+                    Clear
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Filter Modal -->
+<div class="modal fade" id="mobileFilterModal" tabindex="-1" aria-labelledby="mobileFilterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-bottom">
+        <div class="modal-content filter-modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title" id="mobileFilterModalLabel">
+                    <i class="bi bi-funnel me-2"></i>Filters
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="mobileFilterContent">
+                <!-- Mobile filter options will be rendered by JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary" id="mobileFilterClear">
+                    Clear All
+                </button>
+                <button class="btn btn-primary" data-bs-dismiss="modal" id="mobileFilterApply">
+                    Apply Filters
+                </button>
             </div>
         </div>
     </div>
@@ -264,33 +459,7 @@
             </div>
             <div class="col-md-6 text-end">
                 <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
-                    <!-- View Mode Toggle -->
-                    <div class="btn-group" role="group" id="viewModeToggle">
-                        <button type="button" 
-                                class="btn btn-sm btn-outline-primary active" 
-                                data-view="table"
-                                onclick="switchViewMode('table')"
-                                title="Table View">
-                            <i class="bi bi-table me-1"></i>
-                            Table
-                        </button>
-                        <button type="button" 
-                                class="btn btn-sm btn-outline-primary" 
-                                data-view="cards"
-                                onclick="switchViewMode('cards')"
-                                title="Cards View">
-                            <i class="bi bi-grid-3x3-gap me-1"></i>
-                            Cards
-                        </button>
-                        <button type="button" 
-                                class="btn btn-sm btn-outline-primary" 
-                                data-view="folders"
-                                onclick="switchViewMode('folders')"
-                                title="Folders View">
-                            <i class="bi bi-folder me-1"></i>
-                            Folders
-                        </button>
-                    </div>
+                    <!-- View Mode Toggle moved to unified filter bar -->
                     
                     <!-- Clear Filters and Sorting Buttons -->
                     <div class="d-flex gap-2 align-items-center me-3 d-none" id="clearFiltersGroup">
@@ -379,15 +548,6 @@
                                     </button>
                                 </div>
                                 <span>Gender</span>
-                                <button class="btn btn-sm btn-link p-0 gender-filter-btn" 
-                                        data-bs-toggle="popover" 
-                                        data-bs-placement="bottom" 
-                                        data-bs-html="true"
-                                        data-bs-content=""
-                                        title="Filter by Gender"
-                                        style="color: var(--accent); font-size: 0.875rem; line-height: 1; min-width: auto; padding: 0.125rem 0.25rem !important;">
-                                    <i class="bi bi-funnel"></i>
-                                </button>
                             </div>
                         </th>
                         <th>
@@ -401,15 +561,6 @@
                                     </button>
                                 </div>
                                 <span>Age</span>
-                                <button class="btn btn-sm btn-link p-0 age-filter-btn" 
-                                        data-bs-toggle="popover" 
-                                        data-bs-placement="bottom" 
-                                        data-bs-html="true"
-                                        data-bs-content=""
-                                        title="Filter by Age"
-                                        style="color: var(--accent); font-size: 0.875rem; line-height: 1; min-width: auto; padding: 0.125rem 0.25rem !important;">
-                                    <i class="bi bi-funnel"></i>
-                                </button>
                             </div>
                         </th>
                         <th>
@@ -436,15 +587,6 @@
                                     </button>
                                 </div>
                                 <span>Last Visit</span>
-                                <button class="btn btn-sm btn-link p-0 last-visit-filter-btn" 
-                                        data-bs-toggle="popover" 
-                                        data-bs-placement="bottom" 
-                                        data-bs-html="true"
-                                        data-bs-content=""
-                                        title="Filter by Last Visit"
-                                        style="color: var(--accent); font-size: 0.875rem; line-height: 1; min-width: auto; padding: 0.125rem 0.25rem !important;">
-                                    <i class="bi bi-funnel"></i>
-                                </button>
                             </div>
                         </th>
                         <th>
@@ -502,33 +644,7 @@
             </div>
             <div class="col-md-6 text-end">
                 <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
-                    <!-- View Mode Toggle -->
-                    <div class="btn-group" role="group" id="viewModeToggleCards">
-                        <button type="button" 
-                                class="btn btn-sm btn-outline-primary" 
-                                data-view="table"
-                                onclick="switchViewMode('table')"
-                                title="Table View">
-                            <i class="bi bi-table me-1"></i>
-                            Table
-                        </button>
-                        <button type="button" 
-                                class="btn btn-sm btn-outline-primary active" 
-                                data-view="cards"
-                                onclick="switchViewMode('cards')"
-                                title="Cards View">
-                            <i class="bi bi-grid-3x3-gap me-1"></i>
-                            Cards
-                        </button>
-                        <button type="button" 
-                                class="btn btn-sm btn-outline-primary" 
-                                data-view="folders"
-                                onclick="switchViewMode('folders')"
-                                title="Folders View">
-                            <i class="bi bi-folder me-1"></i>
-                            Folders
-                        </button>
-                    </div>
+                    <!-- View Mode Toggle moved to unified filter bar -->
                     
                     <!-- Quick Search Group -->
                     <div class="input-group input-group-sm" style="width: auto; min-width: 220px;">
@@ -576,11 +692,6 @@
         </div>
     </div>
     <div class="card-body">
-        <!-- Filters Section for Cards View -->
-        <div class="sidebar-filters mb-3" id="cardsFilters">
-            <!-- Filters will be added by FilterManager -->
-        </div>
-        
         <!-- Quick Search for Cards View -->
         <div class="mb-3 cards-search-container">
             <label for="cardsSearchInput" class="form-label small text-muted mb-2">
@@ -664,33 +775,7 @@
             </div>
             <div class="col-md-6 text-end">
                 <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
-                    <!-- View Mode Toggle -->
-                    <div class="btn-group" role="group" id="viewModeToggleFoldersHeader">
-                        <button type="button" 
-                                class="btn btn-sm btn-outline-primary" 
-                                data-view="table"
-                                onclick="switchViewMode('table')"
-                                title="Table View">
-                            <i class="bi bi-table me-1"></i>
-                            Table
-                        </button>
-                        <button type="button" 
-                                class="btn btn-sm btn-outline-primary" 
-                                data-view="cards"
-                                onclick="switchViewMode('cards')"
-                                title="Cards View">
-                            <i class="bi bi-grid-3x3-gap me-1"></i>
-                            Cards
-                        </button>
-                        <button type="button" 
-                                class="btn btn-sm btn-outline-primary active" 
-                                data-view="folders"
-                                onclick="switchViewMode('folders')"
-                                title="Folders View">
-                            <i class="bi bi-folder me-1"></i>
-                            Folders
-                        </button>
-                    </div>
+                    <!-- View Mode Toggle moved to unified filter bar -->
                     <button type="button" 
                             class="btn btn-success btn-sm" 
                             onclick="showCreateFolderModal()"
@@ -757,11 +842,6 @@
                 <div id="folderContentArea" style="display: none;">
                     <!-- Breadcrumb -->
                     <div id="folderBreadcrumb" class="mb-3"></div>
-                    
-                    <!-- Filters Section - moved to top of folder search -->
-                    <div class="sidebar-filters" id="sidebarFilters">
-                        <!-- Filters will be added by FilterManager -->
-                    </div>
                     
                     <!-- Search -->
                     <div id="folderSearchContainer" class="mb-3"></div>
