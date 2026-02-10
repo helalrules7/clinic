@@ -1817,6 +1817,18 @@ window.PATIENT_CONFIG = {
 </script>
 <script src="/app/Views/doctor/assets/js/patients.js?v=<?= file_exists(__DIR__ . '/assets/js/patients.js') ? filemtime(__DIR__ . '/assets/js/patients.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/patient.js?v=<?= file_exists(__DIR__ . '/assets/js/patient.js') ? filemtime(__DIR__ . '/assets/js/patient.js') : time() ?>"></script>
+<link rel="stylesheet" href="/app/Views/doctor/assets/css/ai-chat-widget.css?v=<?= file_exists(__DIR__ . '/assets/css/ai-chat-widget.css') ? filemtime(__DIR__ . '/assets/css/ai-chat-widget.css') : time() ?>">
+<script src="/app/Views/doctor/assets/js/ai-chat-widget.js?v=<?= file_exists(__DIR__ . '/assets/js/ai-chat-widget.js') ? filemtime(__DIR__ . '/assets/js/ai-chat-widget.js') : time() ?>"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof initAIChatWidget === 'function') {
+            const patientId = (window.PATIENT_CONFIG && window.PATIENT_CONFIG.patientId) || <?= json_encode($patient['id'] ?? null) ?>;
+            if (patientId) {
+                initAIChatWidget(patientId, null);
+            }
+        }
+    });
+</script>
 <style>
     .modal-backdrop.show{
         display: none !important;
