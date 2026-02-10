@@ -243,6 +243,11 @@ try {
     // Ophthalmology News routes
     $router->get('/api/ophthalmology-news', 'ApiController@getOphthalmologyNews');
 
+    // AI Chat API routes
+    $router->post('/api/ai/chat', 'ApiController@chatWithAI');
+    $router->get('/api/ai/chat/history', 'ApiController@getChatHistory');
+    $router->delete('/api/ai/chat/history', 'ApiController@clearChatHistory');
+
     // Weather API route
     $router->get('/api/weather', 'ApiController@getWeather');
     $router->get('/api/weather-forecast', 'ApiController@getWeatherForecast');

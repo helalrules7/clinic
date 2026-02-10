@@ -1063,29 +1063,11 @@
                 updateWeatherWarnings(null);
             }
 
-            // Try to update from API in background (non-blocking)
+            // Use default coordinates - geolocation must only be requested in response to user gesture
+            // (browsers raise [Violation] otherwise). Use DEFAULT_LAT/LON from config.
             const DEFAULT_LAT = 31.1117;
             const DEFAULT_LON = 30.9397;
-            
-            if ('geolocation' in navigator) {
-                const geoOptions = {
-                    enableHighAccuracy: false,
-                    timeout: 3000,
-                    maximumAge: 600000
-                };
-                
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        fetchNoticeBarWeatherData(position.coords.latitude, position.coords.longitude);
-                    },
-                    (error) => {
-                        fetchNoticeBarWeatherData(DEFAULT_LAT, DEFAULT_LON);
-                    },
-                    geoOptions
-                );
-            } else {
-                fetchNoticeBarWeatherData(DEFAULT_LAT, DEFAULT_LON);
-            }
+            fetchNoticeBarWeatherData(DEFAULT_LAT, DEFAULT_LON);
         }
 
         // Initialize weather on page load
