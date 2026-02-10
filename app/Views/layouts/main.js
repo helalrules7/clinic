@@ -873,24 +873,8 @@
                 }
             }
 
-            // Try browser geolocation
-            if ('geolocation' in navigator && !useCached) {
-                const geoOptions = {
-                    enableHighAccuracy: false,
-                    timeout: 3000,
-                    maximumAge: 600000
-                };
-                
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        fetchNoticeBarWeatherData(position.coords.latitude, position.coords.longitude);
-                    },
-                    (error) => {
-                        fetchNoticeBarWeatherData(DEFAULT_LAT, DEFAULT_LON);
-                    },
-                    geoOptions
-                );
-            } else if (!useCached) {
+            // Use default coordinates - geolocation must only be requested in response to user gesture
+            if (!useCached) {
                 fetchNoticeBarWeatherData(DEFAULT_LAT, DEFAULT_LON);
             }
         }
