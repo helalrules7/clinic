@@ -2240,9 +2240,6 @@ function switchViewMode(mode, saveToStorage = true) {
             updatePaginationInfoCards();
             renderPaginationNavCards();
             stopFoldersAutoRefresh();
-            setTimeout(() => {
-                initCardsSearch();
-            }, 50);
             break;
         case 'folders':
             document.getElementById('patientsFoldersCard').style.display = 'block';
@@ -6123,7 +6120,8 @@ function renderFolderCard(folder, isSystem) {
         if (customFolderPrefs[folderId] && customFolderPrefs[folderId].gradient_color) {
             gradientColor = customFolderPrefs[folderId].gradient_color;
         } else if (!gradientColor) {
-            gradientColor = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+            // Updated to Blue Gradient as per request
+            gradientColor = 'linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%)';
         }
     }
     
@@ -6224,16 +6222,15 @@ function renderFolderCard(folder, isSystem) {
                         ${escapeHtml(folder.name)}
                     </h6>
                     <p class="text-white mb-2" style="opacity: 0.95; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
-                        <i class="bi bi-people me-1"></i>
-                        <span class="folder-patient-count">${folder.patient_count || 0}</span> patients
-                        ${folder.sub_folders_count > 0 ? ` • <i class="bi bi-folder me-1"></i>${folder.sub_folders_count} sub-folders` : ''}
-                    </p>
-                    ${isSystem ? `
-                        <small class="text-white" style="opacity: 0.85; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
-                            <i class="bi bi-info-circle me-1"></i>
-                            System folder
-                        </small>
-                    ` : ''}
+                        <span class="badge bg-white text-black rounded-pill me-1 folder-patient-count" style="color:black !important;"><i class="bi bi-people me-1"></i> ${folder.patient_count || 0} patients</span> 
+                        ${folder.sub_folders_count > 0 ? `<span class="badge bg-info text-white rounded-pill me-1 folder-patient-count" style="color:white !important;"><i class="bi bi-folder me-1"></i>${folder.sub_folders_count} sub-folders</span>` : ''}
+                        ${isSystem ? `
+                            <span class="badge bg-danger text-white rounded-pill me-1 folder-patient-count" style="color:white !important;">
+                                <i class="bi bi-info-circle me-1"></i>
+                                System folder
+                            </span>
+                        ` : ''} 
+                    </p>         
                 </div>
             </div>
         </div>
@@ -6300,18 +6297,21 @@ function openFolder(folderId) {
     
     // Create header actions (Create Sub-folder + Group by buttons for system folders)
     const headerActions = isSystem ? `
-        <div class="d-flex align-items-center gap-2" style="flex-wrap: wrap;">
+        <div class="d-flex align-items-center gap-2 folder-header-actions-row">
             <button class="btn btn-sm create-subfolder-btn" onclick="showCreateSubFolderModal('${folderId}', '${currentFolderType}', '${escapeHtml(currentFolderName).replace(/'/g, "\\'")}')" title="Create Sub-folder">
                 <i class="bi bi-folder-plus me-1"></i>
-                Create Sub-folder
+                <span class="btn-text-full">Create Sub-folder</span>
+                <span class="btn-text-short d-none">Sub-folder</span>
             </button>
             <button class="btn btn-sm folder-action-btn" onclick="quickSortSystemFolder('${folderId}', 'by_date_created')" title="Group by Date Created">
                 <i class="bi bi-calendar-event me-1"></i>
-                Group by Date Created
+                <span class="btn-text-full">Group by Date Created</span>
+                <span class="btn-text-short d-none">By Date</span>
             </button>
             <button class="btn btn-sm folder-action-btn" onclick="quickSortSystemFolder('${folderId}', 'by_visits')" title="Group by Visits">
                 <i class="bi bi-calendar-check me-1"></i>
-                Group by Visits
+                <span class="btn-text-full">Group by Visits</span>
+                <span class="btn-text-short d-none">By Visits</span>
             </button>
             <button class="btn btn-sm folder-action-btn" onclick="toggleSelectionMode(); renderFolderViewWithSelection();" title="Multi-select">
                 <i class="bi bi-check-square me-1"></i>
@@ -6319,10 +6319,11 @@ function openFolder(folderId) {
             </button>
         </div>
     ` : `
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex align-items-center gap-2 folder-header-actions-row">
             <button class="btn btn-sm create-subfolder-btn" onclick="showCreateSubFolderModal('${folderId}', '${currentFolderType}', '${escapeHtml(currentFolderName).replace(/'/g, "\\'")}')" title="Create Sub-folder">
                 <i class="bi bi-folder-plus me-1"></i>
-                Create Sub-folder
+                <span class="btn-text-full">Create Sub-folder</span>
+                <span class="btn-text-short d-none">Sub-folder</span>
             </button>
             <button class="btn btn-sm folder-action-btn" onclick="toggleSelectionMode(); renderFolderViewWithSelection();" title="Multi-select">
                 <i class="bi bi-check-square me-1"></i>
@@ -6370,32 +6371,34 @@ function openFolder(folderId) {
     
     if (folderSearchContainer) {
         folderSearchContainer.innerHTML = `
-            <div class="mb-3 folder-search-container">
-                <label for="folderSearchInput" class="form-label small text-muted mb-2">
-                    <i class="bi bi-search me-1"></i>Quick Search
-                </label>
-                <div class="input-group">
-                    <span class="input-group-text" style="background: var(--bg-alt); border-color: var(--border);">
-                        <i class="bi bi-search" style="color: var(--accent);"></i>
-                    </span>
-                    <input type="text" 
-                           id="folderSearchInput" 
-                           class="form-control folder-search-input" 
-                           placeholder="Search patients and folders by name, phone, or ID..."
-                           autocomplete="off">
-                    <button class="btn btn-outline-secondary" type="button" id="clearFolderSearch" style="display: none; border-color: var(--border);">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
+            <div class="folder-view-layout">
+                <div class="folder-search-row mb-3 folder-search-container">
+                    <label for="folderSearchInput" class="form-label small text-muted mb-2">
+                        <i class="bi bi-search me-1"></i>Quick Search
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text" style="background: var(--bg-alt); border-color: var(--border);">
+                            <i class="bi bi-search" style="color: var(--accent);"></i>
+                        </span>
+                        <input type="text" 
+                               id="folderSearchInput" 
+                               class="form-control folder-search-input" 
+                               placeholder="Search patients and folders by name, phone, or ID..."
+                               autocomplete="off">
+                        <button class="btn btn-outline-secondary" type="button" id="clearFolderSearch" style="display: none; border-color: var(--border);">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <div class="mt-2 d-flex justify-content-between align-items-start">
-                <div>
+                <div class="folder-title-row mb-2">
                     <h5 class="mb-1" style="color: var(--text); font-weight: 600;">
                         ${escapeHtml(currentFolderName)}
                     </h5>
                     <small class="text-muted">Patients in this folder</small>
                 </div>
-                ${headerActions}
+                <div class="folder-actions-row">
+                    ${headerActions}
+                </div>
             </div>
         `;
     }
@@ -6740,39 +6743,7 @@ function filterCardsContent(searchTerm) {
     }
 }
 
-// Initialize cards search
-function initCardsSearch() {
-    const searchInput = document.getElementById('cardsSearchInput');
-    const clearBtn = document.getElementById('clearCardsSearch');
-    
-    if (!searchInput) return;
-    
-    let cardsSearchTimeout = null;
-    
-    searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.trim();
-        
-        if (clearBtn) {
-            clearBtn.style.display = searchTerm ? 'block' : 'none';
-        }
-        
-        if (cardsSearchTimeout) {
-            clearTimeout(cardsSearchTimeout);
-        }
-        
-        cardsSearchTimeout = setTimeout(() => {
-            filterCardsContent(searchTerm);
-        }, 300);
-    });
-    
-    if (clearBtn) {
-        clearBtn.addEventListener('click', function() {
-            searchInput.value = '';
-            this.style.display = 'none';
-            filterCardsContent('');
-        });
-    }
-}
+// Cards quick search uses single input in card header (quickSearchCards) - see initializePagination()
 
 function filterFolderContent(searchTerm) {
     if (!searchTerm) {
@@ -6960,7 +6931,7 @@ function renderSubFolders(subFolders, parentId, parentType) {
     `;
     
     subFolders.forEach(subFolder => {
-        const safeGradient = (subFolder.gradient_color || 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)').replace(/'/g, "\\'");
+        const safeGradient = (subFolder.gradient_color || 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)').replace(/'/g, "\\'");
         const subFolderIcon = subFolder.icon || 'bi-folder';
         
         // Store parent info in subfolder data for breadcrumb
@@ -7020,9 +6991,8 @@ function renderSubFolders(subFolders, parentId, parentType) {
                         <h6 class="card-title mb-1 text-white" style="font-size: 0.85rem; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
                             ${escapeHtml(subFolder.name)}
                         </h6>
-                        <small class="text-white" style="opacity: 0.9; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
-                            <i class="bi bi-people me-1"></i>
-                            ${subFolder.patient_count || 0}
+                        <small class="text-white" style="opacity: 0.95; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+                            <span class="badge bg-white text-black rounded-pill me-1 folder-patient-count" style="color:black !important"><i class="bi bi-people me-1"></i> ${subFolder.patient_count || 0} patients</span>
                         </small>
                     </div>
                 </div>
@@ -8375,7 +8345,7 @@ function showChangeFolderIconModal(folderId, currentIcon, currentGradient) {
         }
     } else {
         actualIcon = currentIcon || 'bi-folder';
-        actualGradient = currentGradient || 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+        actualGradient = currentGradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
     }
     
     document.getElementById('changeFolderIconId').value = folderId;

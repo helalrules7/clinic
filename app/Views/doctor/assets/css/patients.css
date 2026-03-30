@@ -2151,6 +2151,28 @@ kbd[lang="ar"] {
     box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25);
 }
 
+/* Quick search input group - reduced width (table + cards view) */
+.quick-search-input-group {
+    max-width: 200px;
+    min-width: 160px;
+    flex-shrink: 0;
+}
+
+/* Desktop: keep quick search, per-page, and patient count on same row (Table + Cards) */
+#patientsTableCard .card-header .header-actions-row,
+#patientsCardsCard .card-header .header-actions-row,
+.header-actions-row {
+    flex-wrap: nowrap !important;
+    align-items: center;
+}
+
+#patientsTableCard .card-header .header-actions-row .total-count-label,
+#patientsCardsCard .card-header .header-actions-row .total-count-label,
+.header-actions-row .total-count-label {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
 #quickSearch {
     background-color: var(--bg);
     border-color: var(--border);
@@ -5972,6 +5994,16 @@ tr:hover .patient-color-marker-add-table {
 }
 
 @media (max-width: 768px) {
+    /* Add/Search buttons - shorter text and smaller size on mobile */
+    .header-action-buttons .btn {
+        font-size: 0.8125rem;
+        padding: 0.375rem 0.625rem;
+    }
+
+    .header-action-buttons .btn .me-2 {
+        margin-right: 0.375rem !important;
+    }
+
     .folders-main-content {
         padding: 12px;
     }
@@ -6007,7 +6039,14 @@ tr:hover .patient-color-marker-add-table {
         flex-wrap: wrap;
     }
 
-    /* Patient cards - 2 per row on tablets */
+    /* Patient cards - 1 per row on mobile (Cards view + Folders view) */
+    #patientsCardsContainer .col-md-6,
+    #patientsCardsContainer .col-md-4,
+    #patientsCardsContainer .col-md-3,
+    #patientsCardsContainer .col-lg-4,
+    #patientsCardsContainer .col-lg-3,
+    #patientsCardsContainer .col-lg-2,
+    #patientsCardsContainer .col-xl-3,
     .patient-cards-grid .col-md-6,
     .patient-cards-grid .col-md-4,
     .patient-cards-grid .col-md-3,
@@ -6022,8 +6061,25 @@ tr:hover .patient-color-marker-add-table {
     #folderPatientsContainer .col-lg-3,
     #folderPatientsContainer .col-lg-2,
     #folderPatientsContainer .col-xl-3 {
-        flex: 0 0 50%;
-        max-width: 50%;
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* Quick search - reduced width on mobile */
+    .quick-search-input-group {
+        max-width: 200px;
+        min-width: 140px;
+    }
+
+    /* Hide per-page label and total count on mobile */
+    .per-page-label,
+    .total-count-label {
+        display: none !important;
+    }
+
+    /* Header row: quick search + per-page on same row */
+    .header-actions-row {
+        flex-wrap: nowrap;
     }
 
     /* Per-page selector - compact */
@@ -6042,7 +6098,7 @@ tr:hover .patient-color-marker-add-table {
         align-items: stretch !important;
     }
 
-    .patientsTableCard .card-header .input-group {
+    .patientsTableCard .card-header .input-group:not(.quick-search-input-group) {
         width: 100% !important;
     }
 
@@ -6060,23 +6116,67 @@ tr:hover .patient-color-marker-add-table {
     .sidebar-toggle {
         display: none !important;
     }
+
+    /* Folder view: Create Sub-folder + group buttons in one row on mobile */
+    .folder-header-actions-row {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: 0.375rem;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .folder-header-actions-row .btn {
+        flex-shrink: 0;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        white-space: nowrap;
+    }
+
+    .folder-header-actions-row .btn-text-full {
+        display: none !important;
+    }
+
+    .folder-header-actions-row .btn-text-short.d-none {
+        display: inline !important;
+    }
+
+    /* Folder view: search in own row, then title, then actions row so all buttons visible */
+    .folder-view-layout {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .folder-search-row {
+        width: 100%;
+    }
+
+    .folder-title-row {
+        width: 100%;
+    }
+
+    .folder-actions-row {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .folder-actions-row .folder-header-actions-row {
+        min-width: min-content;
+        width: 100%;
+    }
 }
 
 /* Small mobile breakpoint */
 @media (max-width: 576px) {
-    /* Patient cards - 2 per row on small screens */
-    .patient-cards-grid .col-md-6,
-    .patient-cards-grid .col-md-4,
-    .patient-cards-grid .col-md-3,
-    .patient-cards-grid .col-lg-4,
-    .patient-cards-grid .col-lg-3,
-    .patient-cards-grid .col-lg-2,
-    .patient-cards-grid .col-xl-3 {
-        flex: 0 0 50%;
-        max-width: 50%;
+    /* Patient cards - 1 per row on small screens (Cards view + Folders view) */
+    #patientsCardsContainer [class*="col-"],
+    .patient-cards-grid [class*="col-"],
+    #folderPatientsContainer [class*="col-"] {
+        flex: 0 0 100%;
+        max-width: 100%;
     }
 
-    /* Folder patient cards - 2 per row */
+    /* Folder patient cards - 1 per row (explicit fallback) */
     #folderPatientsContainer .col-md-6,
     #folderPatientsContainer .col-md-4,
     #folderPatientsContainer .col-md-3,
@@ -6084,8 +6184,8 @@ tr:hover .patient-color-marker-add-table {
     #folderPatientsContainer .col-lg-3,
     #folderPatientsContainer .col-lg-2,
     #folderPatientsContainer .col-xl-3 {
-        flex: 0 0 50%;
-        max-width: 50%;
+        flex: 0 0 100%;
+        max-width: 100%;
     }
 
     /* Compact patient card on mobile */
@@ -6128,21 +6228,57 @@ tr:hover .patient-color-marker-add-table {
         gap: 0.5rem;
     }
 
-    /* View mode toggle - keep horizontal */
-    #viewModeToggle,
-    #viewModeToggleCards,
-    #viewModeToggleFoldersHeader {
+    /* View mode toggle - keep horizontal (unified filter bar) */
+    #viewModeToggleUnified,
+    #viewModeToggleMobile {
         display: inline-flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         width: auto !important;
     }
 
-    #viewModeToggle .btn,
-    #viewModeToggleCards .btn,
-    #viewModeToggleFoldersHeader .btn {
+    #viewModeToggleUnified .btn,
+    #viewModeToggleMobile .btn {
         padding: 0.375rem 0.5rem;
         font-size: 0.8rem;
+    }
+
+    /* Cards view - responsive grid and header */
+    #patientsCardsCard .card-header .row {
+        align-items: center;
+    }
+
+    /* Keep quick search + per-page on same row on mobile (Table and Cards) */
+    #patientsTableCard .card-header .col-md-6.text-end .d-flex,
+    #patientsCardsCard .card-header .col-md-6.text-end .d-flex {
+        flex-wrap: nowrap;
+        justify-content: flex-end;
+    }
+
+    #patientsTableCard .card-header .header-actions-row,
+    #patientsCardsCard .card-header .header-actions-row {
+        flex-wrap: nowrap;
+        flex-shrink: 0;
+    }
+
+    /* Quick search must not take full width so per-page stays on same row */
+    #patientsTableCard .card-header .quick-search-input-group,
+    #patientsCardsCard .card-header .quick-search-input-group {
+        width: auto !important;
+        min-width: 140px;
+        max-width: 200px;
+    }
+
+    /* Folders view - Create Folder and Card Size horizontal on mobile */
+    #patientsFoldersCard .card-header .d-flex {
+        flex-wrap: nowrap;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    #patientsFoldersCard .card-header .btn-group#cardSizeToggle {
+        flex-shrink: 0;
     }
 
     /* Color marker add button - smaller on mobile */

@@ -20,14 +20,15 @@
         </div>
     </div>
     <div class="col-md-4 text-end">
-        <div class="btn-group" role="group">
+        <div class="btn-group header-action-buttons" role="group">
             <button class="btn btn-success" 
                     data-bs-toggle="modal" 
                     data-bs-target="#addPatientModal" 
                     title="Use N or ى or Ctrl+N to add a new patient">
                 <i class="bi bi-person-plus me-2"></i>
-                Add Patient
-                <span class="ms-2">
+                <span class="d-none d-md-inline">Add Patient</span>
+                <span class="d-md-none">Add</span>
+                <span class="ms-2 d-none d-md-inline">
                     <kbd>N</kbd>
                     <span class="text-white-50 mx-1">/</span>
                     <kbd lang="ar">ى</kbd>
@@ -38,8 +39,9 @@
                 data-bs-target="#searchModal" 
                 title="Use F or ب to search for patients">
             <i class="bi bi-search me-2"></i>
-            Search Patients
-            <span class="ms-2">
+            <span class="d-none d-md-inline">Search Patients</span>
+            <span class="d-md-none">Search</span>
+            <span class="ms-2 d-none d-md-inline">
                 <kbd>F</kbd>
                 <span class="text-white-50 mx-1">/</span>
                 <kbd lang="ar">ب</kbd>
@@ -422,31 +424,6 @@
     </div>
 </div>
 
-<!-- Mobile Filter Modal -->
-<div class="modal fade" id="mobileFilterModal" tabindex="-1" aria-labelledby="mobileFilterModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-bottom">
-        <div class="modal-content filter-modal-content">
-            <div class="modal-header">
-                <h6 class="modal-title" id="mobileFilterModalLabel">
-                    <i class="bi bi-funnel me-2"></i>Filters
-                </h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="mobileFilterContent">
-                <!-- Mobile filter options will be rendered by JS -->
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline-secondary" id="mobileFilterClear">
-                    Clear All
-                </button>
-                <button class="btn btn-primary" data-bs-dismiss="modal" id="mobileFilterApply">
-                    Apply Filters
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Patients Table -->
 <div class="card" id="patientsTableCard">
     <div class="card-header">
@@ -473,46 +450,47 @@
                         </button>
                     </div>
                     
-                    <!-- Quick Search Group -->
-                    <div class="input-group input-group-sm" style="width: auto; min-width: 220px;">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-search"></i>
-                        </span>
-                        <input type="text" 
-                               class="form-control border-start-0 border-end-0" 
-                               id="quickSearch" 
-                               placeholder="Quick search..."
-                               autocomplete="off"
-                               style="border-left: none; border-right: none;">
-                        <button class="btn btn-outline-secondary border-start-0" type="button" id="clearQuickSearch" style="display: none;">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
-                    </div>
-                    <!-- Items per page -->
-                    <div class="d-flex align-items-center">
-                        <label for="paginationLimit" class="form-label mb-0 me-2 text-muted small">View:</label>
-                        <section class="field menu" style="min-width: 70px; width: auto;">
-                            <div class="control">
-                                <select class="form-select form-select-sm d-none center-select" id="paginationLimit" style="width: auto;">
-                                    <option value="10">10</option>
-                                    <option value="20" selected>20</option>
-                                    <option value="30">30</option>
-                                    <option value="50">50</option>
-                                    <option value="all">All</option>
-                                </select>
-                                <button type="button" class="custom-select-toggle" aria-expanded="false" style="font-size: 0.875rem; padding: 0.75rem 2rem 0.75rem 0.75rem;">20</button>
-                                <menu>
-                                    <li data-option="10" tabindex="0" role="button"><h3>10</h3></li>
-                                    <li data-option="20" tabindex="0" role="button" class="selected"><h3>20</h3></li>
-                                    <li data-option="30" tabindex="0" role="button"><h3>30</h3></li>
-                                    <li data-option="50" tabindex="0" role="button"><h3>50</h3></li>
-                                    <li data-option="all" tabindex="0" role="button"><h3>All</h3></li>
-                                </menu>
-                            </div>
-                        </section>
-                    </div>
-                    <div class="text-muted">
-                        <small>Total: <span id="totalPatientsCount"><?= count($patients) ?></span> patients</small>
+                    <!-- Quick Search + Per page (same row) -->
+                    <div class="d-flex align-items-center gap-2 header-actions-row">
+                        <div class="input-group input-group-sm quick-search-input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" 
+                                   class="form-control border-start-0 border-end-0" 
+                                   id="quickSearch" 
+                                   placeholder="Quick search..."
+                                   autocomplete="off"
+                                   style="border-left: none; border-right: none;">
+                            <button class="btn btn-outline-secondary border-start-0" type="button" id="clearQuickSearch" style="display: none;">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <label for="paginationLimit" class="form-label mb-0 me-2 text-muted small per-page-label">View:</label>
+                            <section class="field menu" style="min-width: 70px; width: auto;">
+                                <div class="control">
+                                    <select class="form-select form-select-sm d-none center-select" id="paginationLimit" style="width: auto;">
+                                        <option value="10">10</option>
+                                        <option value="20" selected>20</option>
+                                        <option value="30">30</option>
+                                        <option value="50">50</option>
+                                        <option value="all">All</option>
+                                    </select>
+                                    <button type="button" class="custom-select-toggle" aria-expanded="false" style="font-size: 0.875rem; padding: 0.75rem 2rem 0.75rem 0.75rem;">20</button>
+                                    <menu>
+                                        <li data-option="10" tabindex="0" role="button"><h3>10</h3></li>
+                                        <li data-option="20" tabindex="0" role="button" class="selected"><h3>20</h3></li>
+                                        <li data-option="30" tabindex="0" role="button"><h3>30</h3></li>
+                                        <li data-option="50" tabindex="0" role="button"><h3>50</h3></li>
+                                        <li data-option="all" tabindex="0" role="button"><h3>All</h3></li>
+                                    </menu>
+                                </div>
+                            </section>
+                        </div>
+                        <div class="text-muted total-count-label">
+                            <small>Total: <span id="totalPatientsCount"><?= count($patients) ?></span> patients</small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -646,72 +624,54 @@
                 <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
                     <!-- View Mode Toggle moved to unified filter bar -->
                     
-                    <!-- Quick Search Group -->
-                    <div class="input-group input-group-sm" style="width: auto; min-width: 220px;">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-search"></i>
-                        </span>
-                        <input type="text" 
-                               class="form-control border-start-0 border-end-0" 
-                               id="quickSearchCards" 
-                               placeholder="Quick search..."
-                               autocomplete="off"
-                               style="border-left: none; border-right: none;">
-                        <button class="btn btn-outline-secondary border-start-0" type="button" id="clearQuickSearchCards" style="display: none;">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
-                    </div>
-                    <!-- Items per page -->
-                    <div class="d-flex align-items-center">
-                        <label for="paginationLimitCards" class="form-label mb-0 me-2 text-muted small">View:</label>
-                        <section class="field menu" style="min-width: 70px; width: auto;">
-                            <div class="control">
-                                <select class="form-select form-select-sm d-none center-select" id="paginationLimitCards" style="width: auto;">
-                                    <option value="12">12</option>
-                                    <option value="24" selected>24</option>
-                                    <option value="36">36</option>
-                                    <option value="48">48</option>
-                                    <option value="all">All</option>
-                                </select>
-                                <button type="button" class="custom-select-toggle" aria-expanded="false" style="font-size: 0.875rem; padding: 0.75rem 2rem 0.75rem 0.75rem;">24</button>
-                                <menu>
-                                    <li data-option="12" tabindex="0" role="button"><h3>12</h3></li>
-                                    <li data-option="24" tabindex="0" role="button" class="selected"><h3>24</h3></li>
-                                    <li data-option="36" tabindex="0" role="button"><h3>36</h3></li>
-                                    <li data-option="48" tabindex="0" role="button"><h3>48</h3></li>
-                                    <li data-option="all" tabindex="0" role="button"><h3>All</h3></li>
-                                </menu>
-                            </div>
-                        </section>
-                    </div>
-                    <div class="text-muted">
-                        <small>Total: <span id="totalPatientsCountCards">0</span> patients</small>
+                    <!-- Quick Search + Per page (same row) -->
+                    <div class="d-flex align-items-center gap-2 header-actions-row">
+                        <div class="input-group input-group-sm quick-search-input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" 
+                                   class="form-control border-start-0 border-end-0" 
+                                   id="quickSearchCards" 
+                                   placeholder="Quick search..."
+                                   autocomplete="off"
+                                   style="border-left: none; border-right: none;">
+                            <button class="btn btn-outline-secondary border-start-0" type="button" id="clearQuickSearchCards" style="display: none;">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <label for="paginationLimitCards" class="form-label mb-0 me-2 text-muted small per-page-label">View:</label>
+                            <section class="field menu" style="min-width: 70px; width: auto;">
+                                <div class="control">
+                                    <select class="form-select form-select-sm d-none center-select" id="paginationLimitCards" style="width: auto;">
+                                        <option value="12">12</option>
+                                        <option value="24" selected>24</option>
+                                        <option value="36">36</option>
+                                        <option value="48">48</option>
+                                        <option value="all">All</option>
+                                    </select>
+                                    <button type="button" class="custom-select-toggle" aria-expanded="false" style="font-size: 0.875rem; padding: 0.75rem 2rem 0.75rem 0.75rem;">24</button>
+                                    <menu>
+                                        <li data-option="12" tabindex="0" role="button"><h3>12</h3></li>
+                                        <li data-option="24" tabindex="0" role="button" class="selected"><h3>24</h3></li>
+                                        <li data-option="36" tabindex="0" role="button"><h3>36</h3></li>
+                                        <li data-option="48" tabindex="0" role="button"><h3>48</h3></li>
+                                        <li data-option="all" tabindex="0" role="button"><h3>All</h3></li>
+                                    </menu>
+                                </div>
+                            </section>
+                        </div>
+                        <div class="text-muted total-count-label">
+                            <small>Total: <span id="totalPatientsCountCards">0</span> patients</small>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     <div class="card-body">
-        <!-- Quick Search for Cards View -->
-        <div class="mb-3 cards-search-container">
-            <label for="cardsSearchInput" class="form-label small text-muted mb-2">
-                <i class="bi bi-search me-1"></i>Quick Search
-            </label>
-            <div class="input-group">
-                <input type="text" 
-                       id="cardsSearchInput" 
-                       class="form-control cards-search-input" 
-                       placeholder="Search patients by name, phone, or ID..."
-                       autocomplete="off">
-                <button class="btn btn-outline-secondary" 
-                        type="button" 
-                        id="clearCardsSearch"
-                        style="display: none;"
-                        title="Clear search">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
-        </div>
+        <!-- Single Quick Search is in card header (quickSearchCards) - no duplicate here -->
         
         <!-- Card Size Toggle for Cards View -->
         <div class="d-flex justify-content-end mb-3">
@@ -739,7 +699,7 @@
                 </button>
             </div>
         </div>
-        <div id="patientsCardsContainer" class="row g-3">
+        <div id="patientsCardsContainer" class="row g-3 patient-cards-grid">
             <!-- Cards will be rendered here by JavaScript -->
         </div>
     </div>
@@ -1345,6 +1305,31 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Filter Modal (moved here so it appears above all elements on mobile, same as search/add modals) -->
+<div class="modal fade" id="mobileFilterModal" tabindex="-1" aria-labelledby="mobileFilterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-bottom">
+        <div class="modal-content filter-modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title" id="mobileFilterModalLabel">
+                    <i class="bi bi-funnel me-2"></i>Filters
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="mobileFilterContent">
+                <!-- Mobile filter options will be rendered by JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary" id="mobileFilterClear">
+                    Clear All
+                </button>
+                <button class="btn btn-primary" data-bs-dismiss="modal" id="mobileFilterApply">
+                    Apply Filters
+                </button>
+            </div>
         </div>
     </div>
 </div>

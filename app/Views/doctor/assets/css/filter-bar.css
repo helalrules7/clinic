@@ -538,16 +538,22 @@
 
     .filter-bar-mobile {
         display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 0.5rem;
+        align-items: center;
     }
 
     .filter-bar-mobile .d-flex {
-        width: 100%;
+        flex-wrap: nowrap;
+        width: auto;
+        min-width: 0;
     }
 
     #viewModeToggleMobile {
         flex-shrink: 0;
+        display: inline-flex;
+        flex-wrap: nowrap;
     }
 
     #viewModeToggleMobile .btn {
@@ -575,6 +581,11 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        flex-wrap: nowrap;
+    }
+
+    .filter-bar-view-toggle-mobile .btn-group {
+        flex-wrap: nowrap;
     }
 
     .filter-bar-label-mobile {
@@ -644,7 +655,9 @@
     .filter-mobile-trigger {
         display: flex;
         align-items: center;
-        padding: 0.5rem 0.875rem;
+        padding: 0.5rem 0.75rem;
+        min-width: 0;
+        flex-shrink: 0;
         background: var(--bg);
         border: 1px solid var(--border);
         border-radius: 20px;
@@ -687,6 +700,24 @@
     right: 0;
     transform: translateY(100%);
     transition: transform 0.3s ease-out;
+}
+
+/* Ensure filter modal appears above all page elements (same as search/add modals) */
+#mobileFilterModal.modal {
+    z-index: 9999;
+}
+
+#mobileFilterModal.modal.show {
+    z-index: 9999;
+}
+
+#mobileFilterModal .modal-dialog-bottom {
+    z-index: 10000;
+}
+
+/* Backdrop for this modal - Bootstrap appends it; ensure it sits below modal */
+body:has(#mobileFilterModal.show) .modal-backdrop {
+    z-index: 9998;
 }
 
 .modal.show .modal-dialog-bottom {

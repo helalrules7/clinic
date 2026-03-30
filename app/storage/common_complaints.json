@@ -1,23 +1,47 @@
 {
-    "last_updated": "2026-01-24 23:00:01",
+    "last_updated": "2026-03-29 22:00:02",
     "total_count": 30,
     "complaints": [
         {
             "complaint": "Blured vision",
             "diagnosis": "Glasses",
             "plan": "Eye drops",
-            "count": 92
+            "count": 125
         },
         {
             "complaint": "Fu of phaco",
             "diagnosis": "Stable pseudo",
             "plan": "Regulate TTT",
-            "count": 22
+            "count": 25
         },
         {
             "complaint": "Burning, itching",
-            "diagnosis": "Allergy",
+            "diagnosis": "OSD",
             "plan": "Eye drops",
+            "count": 18
+        },
+        {
+            "complaint": "Fu of blepharitis",
+            "diagnosis": "Improved",
+            "plan": "Reduce steroid",
+            "count": 16
+        },
+        {
+            "complaint": "Fu of phaco od",
+            "diagnosis": "Stable pseudo",
+            "plan": "Reduce steroid",
+            "count": 13
+        },
+        {
+            "complaint": "Blured vision ou",
+            "diagnosis": "Glasses",
+            "plan": "Eye drops",
+            "count": 12
+        },
+        {
+            "complaint": "Fu of OSD",
+            "diagnosis": "Improved",
+            "plan": "Reduce steroid",
             "count": 12
         },
         {
@@ -27,45 +51,45 @@
             "count": 12
         },
         {
-            "complaint": "Fu of OSD",
-            "diagnosis": "Improved",
-            "plan": "Reduce steroid",
-            "count": 9
-        },
-        {
-            "complaint": "Fu of blepharitis",
-            "diagnosis": "Mild improvement",
-            "plan": "Regulate TTT",
-            "count": 8
-        },
-        {
-            "complaint": "Blured vision ou",
-            "diagnosis": "Glasses",
-            "plan": "Eye drops",
-            "count": 7
+            "complaint": "Drop of vision",
+            "diagnosis": "Myopia",
+            "plan": "Glasses",
+            "count": 10
         },
         {
             "complaint": "Blured near vision",
             "diagnosis": "Glasses",
             "plan": "Eye drops",
-            "count": 5
+            "count": 8
         },
         {
             "complaint": "Fu of adenoviral conjunctivitis",
             "diagnosis": "Improved",
             "plan": "Reduce steroid",
-            "count": 5
-        },
-        {
-            "complaint": "Fu of phaco od",
-            "diagnosis": "Stable pseudo",
-            "plan": "Reduce steroid",
-            "count": 4
+            "count": 7
         },
         {
             "complaint": "Fu of prk",
             "diagnosis": "Stable prk",
             "plan": "Regulate TTT",
+            "count": 5
+        },
+        {
+            "complaint": "Blured vision \r\nHeadache",
+            "diagnosis": "Glasses",
+            "plan": "Eye drops",
+            "count": 4
+        },
+        {
+            "complaint": "Burning, itching, fb sensation",
+            "diagnosis": "Adenoviral conjunctivitis",
+            "plan": "Eye drops",
+            "count": 4
+        },
+        {
+            "complaint": "Headache\r\nBlurred vision",
+            "diagnosis": "Cat",
+            "plan": "Phaco IOL ou \r\nOs first",
             "count": 4
         },
         {
@@ -73,12 +97,6 @@
             "diagnosis": "Myopia",
             "plan": "Glasses",
             "count": 3
-        },
-        {
-            "complaint": "Blured vision \r\nHeadache",
-            "diagnosis": "Glasses",
-            "plan": "Glasses",
-            "count": 2
         },
         {
             "complaint": "Blurred vision \r\nDNV",
@@ -93,8 +111,8 @@
             "count": 2
         },
         {
-            "complaint": "Burning, itching, fb sensation",
-            "diagnosis": "OSD",
+            "complaint": "Burning, itching, Lacrimation",
+            "diagnosis": "Blepharitis",
             "plan": "Eye drops",
             "count": 2
         },
@@ -123,12 +141,6 @@
             "count": 2
         },
         {
-            "complaint": "Drop of vision",
-            "diagnosis": "Myopia",
-            "plan": "Glasses",
-            "count": 2
-        },
-        {
             "complaint": "Eye strain",
             "diagnosis": "Dryness",
             "plan": "Eye drops",
@@ -141,45 +153,33 @@
             "count": 2
         },
         {
+            "complaint": "Fu of allergy",
+            "diagnosis": "Improved",
+            "plan": "Reduce steroid",
+            "count": 2
+        },
+        {
             "complaint": "Fu of corneal abscess",
             "diagnosis": "Mild improvement",
             "plan": "Same TTT",
             "count": 2
         },
         {
-            "complaint": "Fu of severe blepharitis",
+            "complaint": "Fu of dacrocystitis",
             "diagnosis": "Improved",
             "plan": "Reduce steroid",
             "count": 2
         },
         {
-            "complaint": "Headache",
-            "diagnosis": "Cat + high digital IOP",
-            "plan": "Orchadoxiline ed \r\nAlphanova ed\r\nSolofreash ed",
+            "complaint": "Fu of fb sensation",
+            "diagnosis": "Dryness",
+            "plan": "Eye drops",
             "count": 2
         },
         {
-            "complaint": "Headache\r\nBlurred vision",
-            "diagnosis": "Cat",
-            "plan": "Phaco IOL ou \r\nOs first",
-            "count": 2
-        },
-        {
-            "complaint": "Improved ciliary spasm",
-            "diagnosis": "Improved ciliary spasm",
-            "plan": "Follow up",
-            "count": 2
-        },
-        {
-            "complaint": "Lacrimation, discharge",
-            "diagnosis": "physiological NLD",
-            "plan": "Cyanaro Ed \r\nTobrex Ed",
-            "count": 2
-        },
-        {
-            "complaint": "Od\r\nBlurred vision \r\nPeudo ou",
-            "diagnosis": "Pvd",
-            "plan": "Orchadoxiline ed\r\nHydratears ed",
+            "complaint": "Fu of ivi",
+            "diagnosis": "Stable ivi",
+            "plan": "",
             "count": 2
         }
     ]
