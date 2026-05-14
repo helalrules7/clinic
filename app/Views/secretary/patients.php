@@ -14,6 +14,12 @@
     } catch (\Throwable $__e) {
         $__calClinics = [];
     }
+    $__clinicVisuals = [
+        'riyadh' => ['icon' => 'bi-buildings-fill', 'color' => '#0d6efd'],
+        'kfs'    => ['icon' => 'bi-hospital-fill',  'color' => '#10b981'],
+    ];
+    $__c0 = $__calClinics[0] ?? null;
+    $__v0 = $__c0 ? ($__clinicVisuals[$__c0['code']] ?? ['icon' => 'bi-building', 'color' => '#6c757d']) : ['icon' => 'bi-building', 'color' => '#6c757d'];
 ?>
 <!-- Patients Header -->
 <link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
@@ -622,15 +628,22 @@
 
                             <div class="mb-3">
                                 <label for="patientClinic" class="form-label arabic-text">العيادة <span class="text-danger">*</span></label>
-                                <select class="form-select arabic-text" id="patientClinic" name="clinic_id" required
-                                        <?php if (count($__calClinics) === 1): ?> aria-readonly="true" tabindex="-1" style="pointer-events:none;background-color:#f1f5f9;" <?php endif; ?>>
-                                    <?php if (count($__calClinics) !== 1): ?>
-                                        <option value="">اختر العيادة...</option>
-                                    <?php endif; ?>
-                                    <?php foreach ($__calClinics as $__c): ?>
-                                        <option value="<?= (int)$__c['id'] ?>" <?= count($__calClinics) === 1 ? 'selected' : '' ?>><?= htmlspecialchars($__c['name_ar'] ?: $__c['name_en']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                                <div class="input-group clinic-input-group">
+                                    <span class="input-group-text" id="patientClinicIcon" style="color: <?= $__v0['color'] ?>; background: rgba(0,0,0,0.02); min-width: 44px; justify-content: center;">
+                                        <i class="bi <?= $__v0['icon'] ?> fs-5"></i>
+                                    </span>
+                                    <select class="form-select arabic-text" id="patientClinic" name="clinic_id" required
+                                            <?php if (count($__calClinics) === 1): ?> aria-readonly="true" tabindex="-1" style="pointer-events:none;background-color:#f1f5f9;" <?php endif; ?>>
+                                        <?php if (count($__calClinics) !== 1): ?>
+                                            <option value="">اختر العيادة...</option>
+                                        <?php endif; ?>
+                                        <?php foreach ($__calClinics as $__c): ?>
+                                            <option value="<?= (int)$__c['id'] ?>"
+                                                    data-clinic-code="<?= htmlspecialchars($__c['code']) ?>"
+                                                    <?= count($__calClinics) === 1 ? 'selected' : '' ?>><?= htmlspecialchars($__c['name_ar'] ?: $__c['name_en']) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
                                 <div class="invalid-feedback"></div>
                             </div>
                         </div>
