@@ -832,3 +832,73 @@ body.draw-modal-open [class*="floating"]:not(.modal):not(.modal *) {
     background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
     color: #ffffff;
 }
+
+/* ============================================================================
+   Attachments card header — let the action buttons wrap instead of spilling
+   out of the card. On tablet widths the title + Select/Delete + Upload/Draw/
+   Capture overflowed the card because the parent .d-flex.justify-content-
+   between never wrapped. Now we allow wrap and, on narrow widths, collapse
+   the Upload/Draw/Capture buttons to icon-only so they always fit.
+   ============================================================================ */
+.card-header .d-flex.justify-content-between > .d-flex.align-items-center {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem !important;
+}
+.card-header .d-flex.justify-content-between {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+@media (max-width: 1199.98px) {
+    /* On laptops/tablets where the column gets squeezed, the Upload/Draw/
+       Capture group shrinks to icon-only text-trimming. The titles inside the
+       buttons are removed so each one fits in ~40px. */
+    .card-header .btn-group.btn-group-sm > .btn-sm.btn-primary,
+    .card-header .btn-group.btn-group-sm > .btn-sm.btn-success,
+    .card-header .btn-group.btn-group-sm > .btn-sm.btn-draw-consultation,
+    .card-header .btn-group > .btn.btn-primary,
+    .card-header .btn-group > .btn.btn-success,
+    .card-header .btn-group > .btn.btn-draw-consultation {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+
+@media (max-width: 991.98px) {
+    /* On smaller laptops / portrait tablets the title can occupy a whole
+       row; let action buttons wrap onto the next row instead of overflowing. */
+    .card-header .d-flex.justify-content-between {
+        align-items: flex-start;
+    }
+    /* Strip text from Upload / Draw / Capture buttons — keep only icons. */
+    .card-header .btn-group .btn:not(.btn-outline-secondary):not(.btn-outline-danger) .me-1 ~ *,
+    .card-header .btn-group .btn:not(.btn-outline-secondary):not(.btn-outline-danger) i.me-1 {
+        margin-right: 0 !important;
+    }
+}
+
+/* ============================================================================
+   Drawing modal canvas — true full viewport size on every device.
+   The wrap was padding the canvas by 1rem on every side (32px each axis)
+   and resizeCanvas was hard-coding `padding = 32` regardless of the
+   computed CSS, so on a phone where we trim padding to 0.35rem the
+   canvas was being shrunk by an extra ~24px each side.
+   ============================================================================ */
+#drawConsultationModal .draw-canvas-wrap {
+    padding: 0;
+    overflow: hidden;
+}
+#drawConsultationModal .draw-canvas-shell {
+    width: 100%;
+    height: 100%;
+    box-shadow: none;
+    border-radius: 0;
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+}
+#drawConsultationModal #drawCanvas {
+    width: 100% !important;
+    height: 100% !important;
+}

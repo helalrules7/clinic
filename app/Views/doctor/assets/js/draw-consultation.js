@@ -194,6 +194,9 @@
         applyBrush();
 
         window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(resizeCanvas, 150);
+        });
 
         canvas.on('path:created', (e) => {
             if (e && e.path) {
@@ -557,9 +560,14 @@
                 }
                 const stampType = item.dataset.stamp;
                 const wrap = document.getElementById('drawCanvasWrap');
-                const padding = 32;
-                const w = Math.max(320, (wrap.clientWidth || 800) - padding);
-                const h = Math.max(240, (wrap.clientHeight || 600) - padding);
+                let w = 800, h = 600;
+                if (wrap) {
+                    const cs = getComputedStyle(wrap);
+                    const padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+                    const padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+                    w = Math.max(320, (wrap.clientWidth || 800) - padX);
+                    h = Math.max(240, (wrap.clientHeight || 600) - padY);
+                }
                 const centerX = w / 2;
                 const centerY = h / 2;
                 addMedicalStamp(stampType, { x: centerX, y: centerY });
@@ -2110,9 +2118,11 @@
         if (!canvas) return;
         const wrap = document.getElementById('drawCanvasWrap');
         if (!wrap) return;
-        const padding = 32;
-        const w = Math.max(320, wrap.clientWidth - padding);
-        const h = Math.max(240, wrap.clientHeight - padding);
+        const cs = getComputedStyle(wrap);
+        const padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+        const padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+        const w = Math.max(320, wrap.clientWidth - padX);
+        const h = Math.max(240, wrap.clientHeight - padY);
         canvas.setWidth(w);
         canvas.setHeight(h);
         canvas.calcOffset();
