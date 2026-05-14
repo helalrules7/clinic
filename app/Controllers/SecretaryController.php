@@ -937,14 +937,29 @@ class SecretaryController
         $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
         
         $sql = "
-            SELECT p.*, 
+            SELECT p.*,
                    COUNT(DISTINCT a.id) as total_appointments,
                    COUNT(DISTINCT py.id) as total_payments,
                    MAX(a.date) as last_visit,
-                   COALESCE(SUM(py.amount), 0) as total_paid
+                   COALESCE(SUM(py.amount), 0) as total_paid,
+                   /* Clinic of the patient's most recent appointment. */
+                   last_clinic.id   as last_clinic_id,
+                   last_clinic.code as last_clinic_code,
+                   last_clinic.name_ar as last_clinic_name_ar,
+                   last_clinic.name_en as last_clinic_name_en
             FROM patients p
             LEFT JOIN appointments a ON p.id = a.patient_id
             LEFT JOIN payments py ON p.id = py.patient_id
+            LEFT JOIN (
+                SELECT patient_id, clinic_id,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY patient_id
+                           ORDER BY date DESC, start_time DESC, id DESC
+                       ) AS rn
+                FROM appointments
+                WHERE clinic_id IS NOT NULL
+            ) latest_appt ON latest_appt.patient_id = p.id AND latest_appt.rn = 1
+            LEFT JOIN clinics last_clinic ON last_clinic.id = latest_appt.clinic_id
             {$whereClause}
             GROUP BY p.id
             ORDER BY p.last_name, p.first_name

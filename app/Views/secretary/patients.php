@@ -264,6 +264,7 @@
                         <th class="arabic-text sortable-header text-end" dir="rtl">التواصل <i class="bi bi-arrow-down-up ms-1" style="opacity: 0.5;"></i></th>
                         <th class="arabic-text sortable-header text-end" dir="rtl">العمر <i class="bi bi-arrow-down-up ms-1" style="opacity: 0.5;"></i></th>
                         <th class="arabic-text sortable-header text-end" dir="rtl">آخر زيارة <i class="bi bi-arrow-down-up ms-1" style="opacity: 0.5;"></i></th>
+                        <th class="arabic-text sortable-header text-end" dir="rtl">آخر عيادة <i class="bi bi-arrow-down-up ms-1" style="opacity: 0.5;"></i></th>
                         <th class="arabic-text sortable-header text-end" dir="rtl">إجمالي المدفوعات <i class="bi bi-arrow-down-up ms-1" style="opacity: 0.5;"></i></th>
                         <th class="arabic-text text-end" dir="rtl">الإجراءات</th>
                     </tr>
@@ -377,10 +378,28 @@
                                     <?= $age !== 'غير محدد' ? $age . ' سنة' : '<span class="text-muted">غير محدد</span>' ?>
                                 </td>
                                 <td>
-                                    <?= $patient['last_visit'] ? 
-                                        '<span class="badge bg-success arabic-text">' . $lastVisit . '</span>' : 
+                                    <?= $patient['last_visit'] ?
+                                        '<span class="badge bg-success arabic-text">' . $lastVisit . '</span>' :
                                         '<span class="badge bg-secondary arabic-text">لم يزر بعد</span>'
                                     ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    $__lcCode = $patient['last_clinic_code'] ?? null;
+                                    $__lcName = $patient['last_clinic_name_ar'] ?? $patient['last_clinic_name_en'] ?? null;
+                                    $__lcTheme = match ($__lcCode) {
+                                        'RIYADH' => ['bg' => 'rgba(34,197,94,0.18)',  'fg' => '#16a34a'],
+                                        'KFS'    => ['bg' => 'rgba(59,130,246,0.18)', 'fg' => '#2563eb'],
+                                        default  => ['bg' => 'rgba(148,163,184,0.18)','fg' => '#64748b'],
+                                    };
+                                    ?>
+                                    <?php if ($__lcName): ?>
+                                        <span class="badge clinic-badge arabic-text" style="background: <?= $__lcTheme['bg'] ?>; color: <?= $__lcTheme['fg'] ?>; font-weight: 600; padding: 0.4rem 0.6rem; border-radius: 8px;">
+                                            <i class="bi bi-building me-1"></i><?= htmlspecialchars($__lcName) ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="text-muted small">—</span>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <?php if (($patient['total_paid'] ?? 0) > 0): ?>

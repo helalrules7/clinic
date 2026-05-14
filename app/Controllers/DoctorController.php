@@ -1550,19 +1550,36 @@ class DoctorController
                     AND te.event_summary LIKE '%New patient registered%' 
                     ORDER BY te.created_at ASC 
                     LIMIT 1) as created_by_doctor_id,
-                   (SELECT d.display_name 
-                    FROM timeline_events te 
+                   (SELECT d.display_name
+                    FROM timeline_events te
                     LEFT JOIN users u ON te.actor_user_id = u.id
                     LEFT JOIN doctors d ON u.id = d.user_id
-                    WHERE te.patient_id = p.id 
-                    AND te.event_type = 'Booking' 
-                    AND te.event_summary LIKE '%New patient registered%' 
-                    ORDER BY te.created_at ASC 
-                    LIMIT 1) as created_by_doctor_name
+                    WHERE te.patient_id = p.id
+                    AND te.event_type = 'Booking'
+                    AND te.event_summary LIKE '%New patient registered%'
+                    ORDER BY te.created_at ASC
+                    LIMIT 1) as created_by_doctor_name,
+                   /* Clinic of the patient's most recent appointment. NULL when
+                      the patient has no appointments yet or older rows that
+                      were created before clinic_id was added. */
+                   last_clinic.id   as last_clinic_id,
+                   last_clinic.code as last_clinic_code,
+                   last_clinic.name_ar as last_clinic_name_ar,
+                   last_clinic.name_en as last_clinic_name_en
             FROM patients p
             LEFT JOIN appointments a ON p.id = a.patient_id
             LEFT JOIN prescriptions pr ON a.id = pr.appointment_id
             LEFT JOIN glasses_prescriptions gp ON a.id = gp.appointment_id
+            LEFT JOIN (
+                SELECT patient_id, clinic_id,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY patient_id
+                           ORDER BY date DESC, start_time DESC, id DESC
+                       ) AS rn
+                FROM appointments
+                WHERE clinic_id IS NOT NULL
+            ) latest_appt ON latest_appt.patient_id = p.id AND latest_appt.rn = 1
+            LEFT JOIN clinics last_clinic ON last_clinic.id = latest_appt.clinic_id
             GROUP BY p.id
             ORDER BY p.created_at DESC
         ");

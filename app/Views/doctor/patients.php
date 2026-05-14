@@ -592,6 +592,19 @@
                         <th>
                             <div class="d-flex align-items-center gap-2">
                                 <div class="sort-controls d-flex flex-column">
+                                    <button class="sort-btn sort-asc" data-sort="last_clinic_name_ar" data-order="asc" title="Sort ascending">
+                                        <i class="bi bi-chevron-up"></i>
+                                    </button>
+                                    <button class="sort-btn sort-desc" data-sort="last_clinic_name_ar" data-order="desc" title="Sort descending">
+                                        <i class="bi bi-chevron-down"></i>
+                                    </button>
+                                </div>
+                                <span>Last Clinic</span>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="sort-controls d-flex flex-column">
                                     <button class="sort-btn sort-asc" data-sort="total_appointments" data-order="asc" title="Sort ascending">
                                         <i class="bi bi-chevron-up"></i>
                                     </button>

@@ -3,6 +3,47 @@ let searchTimeout;
 let currentSearchRequest;
 
 // Helper function to convert hex color to RGB string
+/**
+ * Render a small badge showing the clinic of the patient's most recent
+ * appointment. Returns muted "—" when the patient hasn't been visited yet
+ * (or all visits predate the multi-clinic feature).
+ *
+ * Each clinic gets its own color theme keyed off `last_clinic_code` so the
+ * eye can tell Riyadh from Kafr-El-Sheikh at a glance across the page.
+ *
+ * `compact` mode skips the icon, used in tight card / folder layouts.
+ */
+/**
+ * Build the API id for a SYSTEM folder. Both clinic (`clinic_X`) and
+ * legacy doctor (`system_X`) folders ship from the API with the prefix
+ * already baked into `folder.id`, so this just returns it as a string.
+ * The helper exists so that any future folder group keeps a single
+ * call-site to update.
+ */
+function systemFolderRouteId(folder) {
+    if (!folder) return '';
+    return String(folder.id);
+}
+
+function clinicBadgeStyle(code) {
+    if (code === 'RIYADH') return { bg: 'rgba(34,197,94,0.18)',  fg: '#16a34a', icon: 'bi-building' };
+    if (code === 'KFS')    return { bg: 'rgba(59,130,246,0.18)', fg: '#2563eb', icon: 'bi-building' };
+    return { bg: 'rgba(148,163,184,0.18)', fg: '#64748b', icon: 'bi-building' };
+}
+function renderClinicBadge(patient, opts) {
+    opts = opts || {};
+    var compact = !!opts.compact;
+    if (!patient || !patient.last_clinic_id) {
+        return '<span class="text-muted small">—</span>';
+    }
+    var name = patient.last_clinic_name_ar || patient.last_clinic_name_en || ('Clinic #' + patient.last_clinic_id);
+    var theme = clinicBadgeStyle(patient.last_clinic_code);
+    var icon = compact ? '' : '<i class="bi ' + theme.icon + ' me-1"></i>';
+    return '<span class="badge clinic-badge clinic-badge-' + (patient.last_clinic_code || 'none').toLowerCase() +
+           '" style="background:' + theme.bg + ';color:' + theme.fg + ';font-weight:600;padding:0.35rem 0.55rem;border-radius:8px;">' +
+           icon + escapeHtml(name) + '</span>';
+}
+
 function hexToRgb(hex) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     if (!result) return '0, 0, 0';
@@ -303,7 +344,7 @@ class FolderTreeview {
     
     renderFolderNode(folder, level) {
         // Always use string for folderId to ensure consistent comparison
-        const folderId = folder.type === 'system' ? `system_${folder.id}` : String(folder.id);
+        const folderId = folder.type === 'system' ? systemFolderRouteId(folder) : String(folder.id);
         const isExpanded = this.options.expandedFolders.includes(folderId) || this.options.expandedFolders.includes(String(folderId));
         const hasChildren = folder.subFoldersCount > 0 || (folder.children && folder.children.length > 0);
         const indent = level * 20;
@@ -706,7 +747,7 @@ class FolderTreeview {
         
         // Expand all children recursively
         const expandPromises = folder.children.map(child => {
-            const childId = child.type === 'system' ? `system_${child.id}` : child.id;
+            const childId = child.type === 'system' ? systemFolderRouteId(child) : child.id;
             return this.expandFolder(childId, true); // Recursively expand children
         });
         
@@ -718,7 +759,7 @@ class FolderTreeview {
         if (!folderPath || folderPath.length === 0) return Promise.resolve();
         
         const expandPromises = folderPath.map(folder => {
-            const folderId = folder.type === 'system' ? `system_${folder.id}` : folder.id;
+            const folderId = folder.type === 'system' ? systemFolderRouteId(folder) : folder.id;
             // Only expand, don't expand children for path folders
             return this.expandFolder(folderId, false);
         });
@@ -774,7 +815,7 @@ class FolderTreeview {
         // Find parent by searching tree recursively
         const findParent = (targetId, arr, parent = null) => {
             for (const item of arr) {
-                const itemId = item.type === 'system' ? `system_${item.id}` : String(item.id);
+                const itemId = item.type === 'system' ? systemFolderRouteId(item) : String(item.id);
                 if (itemId === targetId) {
                     return parent;
                 }
@@ -791,10 +832,10 @@ class FolderTreeview {
         
         // Build parent path by traversing up the tree
         while (current) {
-            const currentId = current.type === 'system' ? `system_${current.id}` : String(current.id);
+            const currentId = current.type === 'system' ? systemFolderRouteId(current) : String(current.id);
             const parent = findParent(currentId, allFolders);
             if (parent) {
-                const parentId = parent.type === 'system' ? `system_${parent.id}` : String(parent.id);
+                const parentId = parent.type === 'system' ? systemFolderRouteId(parent) : String(parent.id);
                 path.unshift(parentId);
                 current = parent;
             } else {
@@ -811,7 +852,7 @@ class FolderTreeview {
         
         const searchInArray = (arr) => {
             for (const folder of arr) {
-                const id = folder.type === 'system' ? `system_${folder.id}` : folder.id;
+                const id = folder.type === 'system' ? systemFolderRouteId(folder) : folder.id;
                 if (id === folderId) {
                     return folder;
                 }
@@ -2002,11 +2043,15 @@ const folderCache = {
 function saveFolderNavigationState() {
     if (!currentFolderId) return;
 
-    // Determine the treeview-compatible folder ID
-    const isSystem = currentFolderType === 'system' || currentFolderId.toString().startsWith('system_');
-    const treeviewFolderId = isSystem && !currentFolderId.toString().startsWith('system_')
+    // Determine the treeview-compatible folder ID. A system folder ID is
+    // already prefixed when it starts with either `system_` (doctor group)
+    // or `clinic_` (clinic group).
+    const _idStr = currentFolderId.toString();
+    const alreadyPrefixed = _idStr.startsWith('system_') || _idStr.startsWith('clinic_');
+    const isSystem = currentFolderType === 'system' || alreadyPrefixed;
+    const treeviewFolderId = isSystem && !alreadyPrefixed
         ? `system_${currentFolderId}`
-        : currentFolderId.toString();
+        : _idStr;
 
     const state = {
         folderId: currentFolderId,
@@ -2041,10 +2086,12 @@ function restoreFolderNavigationState() {
             if (Date.now() - state.timestamp < 3600000) {
                 // Ensure treeviewFolderId is set
                 if (!state.treeviewFolderId && state.folderId) {
-                    const isSystem = state.folderType === 'system' || state.folderId.toString().startsWith('system_');
-                    state.treeviewFolderId = isSystem && !state.folderId.toString().startsWith('system_')
+                    const _sid = state.folderId.toString();
+                    const _alreadyPrefixed = _sid.startsWith('system_') || _sid.startsWith('clinic_');
+                    const isSystem = state.folderType === 'system' || _alreadyPrefixed;
+                    state.treeviewFolderId = isSystem && !_alreadyPrefixed
                         ? `system_${state.folderId}`
-                        : state.folderId.toString();
+                        : _sid;
                 }
                 return state;
             }
@@ -2067,14 +2114,16 @@ function restoreFolderNavigationState() {
             pathStack = [];
         }
 
-        const isSystem = savedFolderType === 'system' || savedFolderId.toString().startsWith('system_');
-        const treeviewFolderId = savedTreeviewFolderId || (isSystem && !savedFolderId.toString().startsWith('system_')
+        const _savedIdStr = savedFolderId.toString();
+        const _savedAlreadyPrefixed = _savedIdStr.startsWith('system_') || _savedIdStr.startsWith('clinic_');
+        const isSystem = savedFolderType === 'system' || _savedAlreadyPrefixed;
+        const treeviewFolderId = savedTreeviewFolderId || (isSystem && !_savedAlreadyPrefixed
             ? `system_${savedFolderId}`
-            : savedFolderId.toString());
+            : _savedIdStr);
 
         return {
             folderId: savedFolderId,
-            folderType: savedFolderType || (savedFolderId.toString().startsWith('system_') ? 'system' : 'custom'),
+            folderType: savedFolderType || (_savedAlreadyPrefixed ? 'system' : 'custom'),
             pathStack: pathStack,
             scrollPosition: 0,
             treeviewFolderId: treeviewFolderId
@@ -2287,7 +2336,7 @@ function renderPatientsTable() {
         if (patientsToShow.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="text-center py-4">
+                    <td colspan="10" class="text-center py-4">
                         <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
                         <p class="text-muted mt-2 mb-0">No patients to display</p>
                     </td>
@@ -2428,10 +2477,13 @@ function renderPatientsTable() {
                             </div>
                         </td>
                         <td>
-                            ${patient.last_visit ? 
-                                `<span class="badge bg-success">${lastVisit}</span>` : 
+                            ${patient.last_visit ?
+                                `<span class="badge bg-success">${lastVisit}</span>` :
                                 '<span class="badge bg-secondary">Not visited yet</span>'
                             }
+                        </td>
+                        <td>
+                            ${renderClinicBadge(patient)}
                         </td>
                         <td>
                             <span class="badge bg-primary">${patient.total_appointments || 0}</span>
@@ -5431,6 +5483,12 @@ function renderPatientsCards() {
                             ` : ''}
                             <span class="badge ${genderBadgeClass}">${genderIcon}</span>
                         </div>
+                        ${patient.last_clinic_id ? `
+                            <!-- Last visit clinic badge (top-right) -->
+                            <div class="position-absolute p-2" style="top: ${colorMarker ? '30px' : '0'}; right: 0;">
+                                ${renderClinicBadge(patient, { compact: true })}
+                            </div>
+                        ` : ''}
                         <!-- Treatment Doctor Badge -->
                         ${patient.created_by_doctor_name ? `
                             <div class="position-absolute bottom-0 start-0 p-2">
@@ -6270,8 +6328,11 @@ function openFolder(folderId) {
         
         currentFolderId = folderId;
 
-        // Determine folder type and get folder info
-        const isSystem = folderId.toString().startsWith('system_');
+        // Determine folder type and get folder info. System folders use
+        // either the `system_X` (doctor group) or `clinic_X` (clinic
+        // group) prefix; anything else is a custom folder.
+        const _fidStr = folderId.toString();
+        const isSystem = _fidStr.startsWith('system_') || _fidStr.startsWith('clinic_');
         currentFolderType = isSystem ? 'system' : 'custom';
 
         // Get folder name from appropriate data source
@@ -6468,12 +6529,15 @@ function openFolder(folderId) {
                 // Expand folder path in treeview to make current folder visible
                 if (folderTreeview) {
                     folderTreeview.expandFolderPath(folderPathStack).then(() => {
-                        // After expanding path, expand current folder and all its children
-                        // folderId already has 'system_' prefix if it's a system folder (from treeview click)
-                        // Only add prefix if folderId doesn't already have it
-                        const currentFolderIdForTree = isSystem && !String(folderId).startsWith('system_')
+                        // After expanding path, expand current folder and all its children.
+                        // folderId may already be prefixed (system_X / clinic_X) if it
+                        // came from a treeview click; only wrap with `system_` when no
+                        // prefix is present.
+                        const _idStr = String(folderId);
+                        const _hasPrefix = _idStr.startsWith('system_') || _idStr.startsWith('clinic_');
+                        const currentFolderIdForTree = isSystem && !_hasPrefix
                             ? `system_${folderId}`
-                            : String(folderId);
+                            : _idStr;
                         folderTreeview.expandFolder(currentFolderIdForTree, true).then(() => {
                             folderTreeview.render();
                             folderTreeview.highlightActive(currentFolderIdForTree);
@@ -6572,12 +6636,11 @@ function openFolder(folderId) {
                 // Expand folder path in treeview to make current folder visible
                 if (folderTreeview && breadcrumb.length > 0) {
                     folderTreeview.expandFolderPath(folderPathStack).then(() => {
-                        // After expanding path, expand current folder and all its children
-                        // folderId already has 'system_' prefix if it's a system folder (from treeview click)
-                        // Only add prefix if folderId doesn't already have it
-                        const currentFolderIdForTree = isSystem && !String(folderId).startsWith('system_')
+                        const _idStr = String(folderId);
+                        const _hasPrefix = _idStr.startsWith('system_') || _idStr.startsWith('clinic_');
+                        const currentFolderIdForTree = isSystem && !_hasPrefix
                             ? `system_${folderId}`
-                            : String(folderId);
+                            : _idStr;
                         folderTreeview.expandFolder(currentFolderIdForTree, true).then(() => {
                             folderTreeview.render();
                             folderTreeview.highlightActive(currentFolderIdForTree);
@@ -6643,11 +6706,11 @@ function openFolder(folderId) {
 
             // Ensure treeview is highlighted after all operations complete
             if (folderTreeview) {
-                // folderId already has 'system_' prefix if it's a system folder (from treeview click)
-                // Only add prefix if folderId doesn't already have it
-                const currentFolderIdForTree = isSystem && !String(folderId).startsWith('system_')
+                const _idStr = String(folderId);
+                const _hasPrefix = _idStr.startsWith('system_') || _idStr.startsWith('clinic_');
+                const currentFolderIdForTree = isSystem && !_hasPrefix
                     ? `system_${folderId}`
-                    : String(folderId);
+                    : _idStr;
                 // Use setTimeout to ensure this runs after all promises resolve
                 setTimeout(() => {
                     folderTreeview.highlightActive(currentFolderIdForTree);
@@ -7330,6 +7393,12 @@ function renderFolderPatients(patients) {
                             ` : ''}
                             <span class="badge ${genderBadgeClass}">${genderIcon}</span>
                         </div>
+                        ${patient.last_clinic_id ? `
+                            <!-- Last visit clinic badge (top-right) -->
+                            <div class="position-absolute p-2" style="top: ${colorMarker ? '30px' : '0'}; right: 0;">
+                                ${renderClinicBadge(patient, { compact: true })}
+                            </div>
+                        ` : ''}
                         <!-- Treatment Doctor Badge -->
                         ${patient.created_by_doctor_name ? `
                             <div class="position-absolute bottom-0 start-0 p-2">

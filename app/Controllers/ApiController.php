@@ -14210,9 +14210,9 @@ class ApiController
                 // Sub-folders for system folders are stored with parent_type = 'system' and parent_id = NULL
                 // We match by doctor_id instead
                 $subFoldersStmt = $this->pdo->prepare("
-                    SELECT COUNT(*) as sub_count 
-                    FROM patient_folders 
-                    WHERE parent_type = 'system' 
+                    SELECT COUNT(*) as sub_count
+                    FROM patient_folders
+                    WHERE parent_type = 'system'
                     AND parent_id IS NULL
                     AND doctor_id = ?
                 ");
@@ -14221,6 +14221,60 @@ class ApiController
                 $sf['sub_folders_count'] = (int)$subFoldersCount;
             }
             unset($sf);
+
+            /* Clinic-based system folders — append one folder per active clinic
+               grouping patients by the clinic of their MOST RECENT appointment.
+               This is what the user means by "sort/group by clinic". A patient
+               is in exactly one clinic folder (the one of their last visit),
+               so the counts don't double-count. */
+            $clinicFoldersStmt = $this->pdo->prepare("
+                SELECT c.id, c.code, c.name_ar, c.name_en,
+                       COUNT(DISTINCT lc.patient_id) AS patient_count
+                FROM clinics c
+                LEFT JOIN (
+                    SELECT patient_id, clinic_id,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY patient_id
+                               ORDER BY date DESC, start_time DESC, id DESC
+                           ) AS rn
+                    FROM appointments
+                    WHERE clinic_id IS NOT NULL
+                ) lc ON lc.clinic_id = c.id AND lc.rn = 1
+                WHERE c.is_active = 1
+                GROUP BY c.id, c.code, c.name_ar, c.name_en
+                ORDER BY c.sort_order ASC, c.id ASC
+            ");
+            $clinicFoldersStmt->execute();
+            $clinicFoldersRaw = $clinicFoldersStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $clinicThemes = [
+                'RIYADH' => 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                'KFS'    => 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+            ];
+
+            foreach ($clinicFoldersRaw as $cf) {
+                $label = $cf['name_ar'] ?: $cf['name_en'] ?: ('Clinic #' . $cf['id']);
+                /* id is pre-prefixed with `clinic_` (mirrors how doctor system
+                   folders use `system_X`). The JS lookup tables compare by id
+                   exactly, so the id stored here must match the id used when
+                   the user clicks on the folder. */
+                $systemFolders[] = [
+                    'id' => 'clinic_' . (int)$cf['id'],
+                    'doctor_id' => null,
+                    'clinic_id' => (int)$cf['id'],
+                    'clinic_code' => $cf['code'],
+                    'name' => $label,
+                    'type' => 'system',
+                    'group' => 'clinic',
+                    'patient_count' => (int)$cf['patient_count'],
+                    'profile_image' => null,
+                    'icon' => 'bi-building-fill',
+                    'gradient_color' => $clinicThemes[$cf['code']] ?? 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
+                    'sub_folders_count' => 0,
+                    'created_at' => null,
+                    'updated_at' => null,
+                ];
+            }
 
             return $this->jsonResponse([
                 'ok' => true,
@@ -14351,6 +14405,10 @@ class ApiController
             $doctorId = $this->getDoctorId($user['id']);
 
             if ($parentType === 'system') {
+                // Clinic system folders are leaf — they never have sub-folders.
+                if (strpos((string)$parentId, 'clinic_') === 0) {
+                    return $this->jsonResponse(['ok' => true, 'sub_folders' => []]);
+                }
                 // Extract doctor_id from system folder ID (system_1 -> 1)
                 $systemDoctorId = str_replace('system_', '', $parentId);
                 if (!is_numeric($systemDoctorId)) {
@@ -14980,6 +15038,91 @@ class ApiController
             $user = $this->auth->user();
             $doctorId = $this->getDoctorId($user['id']);
 
+            // Handle clinic system folders (clinic_X) — patients whose MOST
+            // RECENT appointment is in this clinic.
+            if (strpos($id, 'clinic_') === 0) {
+                $clinicFolderId = (int)str_replace('clinic_', '', $id);
+                if ($clinicFolderId <= 0) {
+                    return $this->jsonResponse(['error' => 'Invalid clinic folder ID'], 400);
+                }
+
+                // Get clinic name for breadcrumb
+                $cStmt = $this->pdo->prepare("SELECT name_ar, name_en FROM clinics WHERE id = ?");
+                $cStmt->execute([$clinicFolderId]);
+                $cRow = $cStmt->fetch(\PDO::FETCH_ASSOC);
+                $clinicName = $cRow ? ($cRow['name_ar'] ?: $cRow['name_en']) : ('Clinic #' . $clinicFolderId);
+
+                $stmt = $this->pdo->prepare("
+                    SELECT p.*,
+                           COUNT(DISTINCT a.id) as total_appointments,
+                           MAX(a.date) as last_visit,
+                           MAX(CONCAT(a.date, ' ', a.start_time)) as last_appointment_datetime,
+                           COUNT(DISTINCT pr.id) as prescriptions_count,
+                           COUNT(DISTINCT gp.id) as glasses_count,
+                           (SELECT pa.id
+                            FROM patient_attachments pa
+                            LEFT JOIN appointments aa ON pa.appointment_id = aa.id
+                            WHERE pa.patient_id = p.id AND pa.mime_type LIKE 'image/%'
+                            ORDER BY CASE WHEN aa.id IS NOT NULL THEN 0 ELSE 1 END ASC,
+                                     CASE WHEN aa.id IS NOT NULL
+                                          THEN CONCAT(aa.date, ' ', COALESCE(aa.start_time, '00:00:00'))
+                                          ELSE '0000-00-00 00:00:00' END DESC,
+                                     pa.created_at DESC
+                            LIMIT 1) as latest_attachment_id,
+                           (SELECT d.display_name
+                            FROM timeline_events te2
+                            LEFT JOIN users u2 ON te2.actor_user_id = u2.id
+                            LEFT JOIN doctors d ON u2.id = d.user_id
+                            WHERE te2.patient_id = p.id
+                            AND te2.event_type = 'Booking'
+                            AND te2.event_summary LIKE '%New patient registered%'
+                            ORDER BY te2.created_at ASC
+                            LIMIT 1) as created_by_doctor_name,
+                           last_clinic.id   as last_clinic_id,
+                           last_clinic.code as last_clinic_code,
+                           last_clinic.name_ar as last_clinic_name_ar,
+                           last_clinic.name_en as last_clinic_name_en
+                    FROM patients p
+                    INNER JOIN (
+                        SELECT patient_id, clinic_id,
+                               ROW_NUMBER() OVER (
+                                   PARTITION BY patient_id
+                                   ORDER BY date DESC, start_time DESC, id DESC
+                               ) AS rn
+                        FROM appointments
+                        WHERE clinic_id IS NOT NULL
+                    ) latest_appt ON latest_appt.patient_id = p.id AND latest_appt.rn = 1 AND latest_appt.clinic_id = ?
+                    LEFT JOIN clinics last_clinic ON last_clinic.id = latest_appt.clinic_id
+                    LEFT JOIN appointments a ON p.id = a.patient_id
+                    LEFT JOIN prescriptions pr ON a.id = pr.appointment_id
+                    LEFT JOIN glasses_prescriptions gp ON a.id = gp.appointment_id
+                    GROUP BY p.id
+                    ORDER BY p.first_name, p.last_name
+                ");
+                $stmt->execute([$clinicFolderId]);
+                $patients = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                foreach ($patients as &$patient) {
+                    if (!isset($patient['latest_attachment_id'])) {
+                        $patient['latest_attachment_id'] = null;
+                    }
+                    if ($patient['latest_attachment_id'] === '') {
+                        $patient['latest_attachment_id'] = null;
+                    }
+                }
+                unset($patient);
+
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'folder' => [
+                        'id' => $id,
+                        'name' => $clinicName,
+                        'type' => 'system',
+                        'group' => 'clinic',
+                    ],
+                    'patients' => $patients,
+                ]);
+            }
+
             // Handle system folders first (before checking database)
             if (strpos($id, 'system_') === 0) {
                 $systemDoctorId = (int)str_replace('system_', '', $id);
@@ -15020,15 +15163,19 @@ class ApiController
                                 END DESC,
                                 pa.created_at DESC 
                             LIMIT 1) as latest_attachment_id,
-                           (SELECT d.display_name 
-                            FROM timeline_events te2 
+                           (SELECT d.display_name
+                            FROM timeline_events te2
                             LEFT JOIN users u2 ON te2.actor_user_id = u2.id
                             LEFT JOIN doctors d ON u2.id = d.user_id
-                            WHERE te2.patient_id = p.id 
-                            AND te2.event_type = 'Booking' 
-                            AND te2.event_summary LIKE '%New patient registered%' 
-                            ORDER BY te2.created_at ASC 
-                            LIMIT 1) as created_by_doctor_name
+                            WHERE te2.patient_id = p.id
+                            AND te2.event_type = 'Booking'
+                            AND te2.event_summary LIKE '%New patient registered%'
+                            ORDER BY te2.created_at ASC
+                            LIMIT 1) as created_by_doctor_name,
+                           last_clinic.id   as last_clinic_id,
+                           last_clinic.code as last_clinic_code,
+                           last_clinic.name_ar as last_clinic_name_ar,
+                           last_clinic.name_en as last_clinic_name_en
                     FROM patients p
                     INNER JOIN timeline_events te ON te.patient_id = p.id
                     INNER JOIN users u ON te.actor_user_id = u.id
@@ -15036,6 +15183,16 @@ class ApiController
                     LEFT JOIN appointments a ON p.id = a.patient_id
                     LEFT JOIN prescriptions pr ON a.id = pr.appointment_id
                     LEFT JOIN glasses_prescriptions gp ON a.id = gp.appointment_id
+                    LEFT JOIN (
+                        SELECT patient_id, clinic_id,
+                               ROW_NUMBER() OVER (
+                                   PARTITION BY patient_id
+                                   ORDER BY date DESC, start_time DESC, id DESC
+                               ) AS rn
+                        FROM appointments
+                        WHERE clinic_id IS NOT NULL
+                    ) latest_appt ON latest_appt.patient_id = p.id AND latest_appt.rn = 1
+                    LEFT JOIN clinics last_clinic ON last_clinic.id = latest_appt.clinic_id
                     WHERE d.id = ?
                     AND te.event_type = 'Booking'
                     AND te.event_summary LIKE '%New patient registered%'
