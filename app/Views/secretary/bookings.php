@@ -250,7 +250,8 @@
 
                             <div class="mb-3">
                                 <label for="bookingClinic" class="form-label arabic-text">العيادة <span class="text-danger">*</span></label>
-                                <select class="form-select arabic-text" id="bookingClinic" name="clinic_id" required <?= count($__calClinics) === 1 ? 'disabled' : '' ?>>
+                                <select class="form-select arabic-text" id="bookingClinic" name="clinic_id" required
+                                        <?php if (count($__calClinics) === 1): ?> aria-readonly="true" tabindex="-1" style="pointer-events:none;background-color:#f1f5f9;" <?php endif; ?>>
                                     <?php if (count($__calClinics) !== 1): ?>
                                         <option value="">اختر العيادة...</option>
                                     <?php endif; ?>
@@ -431,7 +432,8 @@
 
                             <div class="mb-3">
                                 <label for="patientClinic" class="form-label arabic-text">العيادة <span class="text-danger">*</span></label>
-                                <select class="form-select arabic-text" id="patientClinic" name="clinic_id" required <?= count($__calClinics) === 1 ? 'disabled' : '' ?>>
+                                <select class="form-select arabic-text" id="patientClinic" name="clinic_id" required
+                                        <?php if (count($__calClinics) === 1): ?> aria-readonly="true" tabindex="-1" style="pointer-events:none;background-color:#f1f5f9;" <?php endif; ?>>
                                     <?php if (count($__calClinics) !== 1): ?>
                                         <option value="">اختر العيادة...</option>
                                     <?php endif; ?>
