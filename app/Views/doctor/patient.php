@@ -139,6 +139,24 @@
                     <div class="col-sm-8"><?= htmlspecialchars($patient['national_id']) ?></div>
                 </div>
                 <?php endif; ?>
+                <?php if (!empty($patient['clinic_name_ar']) || !empty($patient['clinic_name_en'])): ?>
+                <?php
+                    $_clinicVisuals = [
+                        'riyadh' => ['icon' => 'bi-buildings-fill', 'color' => '#0d6efd'],
+                        'kfs'    => ['icon' => 'bi-hospital-fill',  'color' => '#10b981'],
+                    ];
+                    $_v = $_clinicVisuals[$patient['clinic_code'] ?? ''] ?? ['icon' => 'bi-building', 'color' => '#6c757d'];
+                ?>
+                <div class="row mt-2">
+                    <div class="col-sm-4"><strong>Clinic:</strong></div>
+                    <div class="col-sm-8">
+                        <span class="clinic-tag" style="--clinic-color: <?= $_v['color'] ?>;" dir="rtl">
+                            <i class="bi <?= $_v['icon'] ?>"></i>
+                            <?= htmlspecialchars($patient['clinic_name_ar'] ?: $patient['clinic_name_en']) ?>
+                        </span>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -1505,21 +1523,45 @@
                 <i class="bi bi-paperclip me-2"></i>
                 Patient Files & Documents
             </h5>
-            <div class="btn-group btn-group-sm" role="group">
-                <button class="btn btn-primary" 
-                        onclick="showPatientUploadModal(<?= $patient['id'] ?>)"
-                        data-bs-toggle="tooltip" 
-                        data-bs-placement="top" 
-                        data-bs-title="Upload files and documents for this patient">
-                    <i class="bi bi-cloud-upload me-1"></i>Upload File
-                </button>
-                <button class="btn btn-success" 
-                        onclick="openPatientCameraModal(<?= $patient['id'] ?>)"
-                        data-bs-toggle="tooltip" 
-                        data-bs-placement="top" 
-                        data-bs-title="Take a photo using camera for this patient">
-                    <i class="bi bi-camera me-1"></i>Take Photo
-                </button>
+            <div class="d-flex align-items-center gap-3">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Bulk actions">
+                    <button class="btn btn-outline-secondary" type="button" id="patientFilesSelectAllBtn"
+                            onclick="patientFilesToggleSelectAll()"
+                            data-bs-toggle="tooltip" data-bs-placement="top"
+                            data-bs-title="Select all on this page">
+                        <i class="bi bi-check2-square"></i>
+                    </button>
+                    <button class="btn btn-outline-danger" type="button" id="patientFilesDeleteSelectedBtn"
+                            onclick="patientFilesConfirmDeleteSelected()" disabled
+                            data-bs-toggle="tooltip" data-bs-placement="top"
+                            data-bs-title="Delete selected files">
+                        <i class="bi bi-trash"></i>
+                        <span class="badge bg-danger ms-1 d-none" id="patientFilesSelectedBadge">0</span>
+                    </button>
+                </div>
+                <div class="btn-group btn-group-sm" role="group" aria-label="Add file">
+                    <button class="btn btn-primary"
+                            onclick="showPatientUploadModal(<?= $patient['id'] ?>)"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            data-bs-title="Upload files and documents for this patient">
+                        <i class="bi bi-cloud-upload me-1"></i>Upload
+                    </button>
+                    <button class="btn btn-draw-consultation" type="button"
+                            onclick="DrawConsultation && DrawConsultation.openForPatient(<?= $patient['id'] ?>)"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            data-bs-title="Open the drawing canvas for this patient">
+                        <i class="bi bi-pencil-square me-1"></i>Draw
+                    </button>
+                    <button class="btn btn-success"
+                            onclick="openPatientCameraModal(<?= $patient['id'] ?>)"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            data-bs-title="Take a photo using camera for this patient">
+                        <i class="bi bi-camera me-1"></i>Capture
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1585,16 +1627,15 @@
                         <div class="d-flex align-items-center mb-2 flex-grow-1">
                             <i class="bi <?= $iconClass ?> text-primary me-2" style="font-size: 1.2rem; flex-shrink: 0;"></i>
                             <div class="flex-grow-1">
-                                <?php 
+                                <?php
                                 $originalName = $attachment['original_filename'];
-                                $displayName = strlen($originalName) > 20 ? substr($originalName, 0, 10) . '...' : $originalName;
                                 ?>
                                 <div class="d-flex align-items-center justify-content-between mb-1">
-                                    <h6 class="mb-0" style="font-size: 0.8rem; line-height: 1.1;" 
+                                    <h6 class="mb-0 attachment-filename" style="font-size: 0.8rem; line-height: 1.1; flex-grow: 1; min-width: 0;"
                                         title="<?= htmlspecialchars($originalName) ?>"
-                                        data-bs-toggle="tooltip" 
+                                        data-bs-toggle="tooltip"
                                         data-bs-placement="top">
-                                        <?= htmlspecialchars($displayName) ?>
+                                        <?= htmlspecialchars($originalName) ?>
                                     </h6>
                                     <span class="badge <?= $badgeClass ?> ms-2" style="font-size: 0.6rem;">
                                         <?= $fileType ?>
@@ -1661,6 +1702,8 @@
             </div>
         <?php endif; ?>
         </div>
+        <!-- Pagination footer (rendered by reloadPatientFiles when total > perPage) -->
+        <div id="patientFilesPagination" class="attachments-pagination mt-3"></div>
     </div>
 </div>
 
@@ -1818,7 +1861,10 @@ window.PATIENT_CONFIG = {
 <script src="/app/Views/doctor/assets/js/patients.js?v=<?= file_exists(__DIR__ . '/assets/js/patients.js') ? filemtime(__DIR__ . '/assets/js/patients.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/patient.js?v=<?= file_exists(__DIR__ . '/assets/js/patient.js') ? filemtime(__DIR__ . '/assets/js/patient.js') : time() ?>"></script>
 <link rel="stylesheet" href="/app/Views/doctor/assets/css/ai-chat-widget.css?v=<?= file_exists(__DIR__ . '/assets/css/ai-chat-widget.css') ? filemtime(__DIR__ . '/assets/css/ai-chat-widget.css') : time() ?>">
+<link rel="stylesheet" href="/app/Views/doctor/assets/css/draw-consultation.css?v=<?= file_exists(__DIR__ . '/assets/css/draw-consultation.css') ? filemtime(__DIR__ . '/assets/css/draw-consultation.css') : time() ?>">
 <script src="/app/Views/doctor/assets/js/ai-chat-widget.js?v=<?= file_exists(__DIR__ . '/assets/js/ai-chat-widget.js') ? filemtime(__DIR__ . '/assets/js/ai-chat-widget.js') : time() ?>"></script>
+<script src="/app/Views/layouts/vendor/fabric.min.js?v=<?= file_exists(dirname(__DIR__) . '/layouts/vendor/fabric.min.js') ? filemtime(dirname(__DIR__) . '/layouts/vendor/fabric.min.js') : '5.3.1' ?>"></script>
+<script src="/app/Views/doctor/assets/js/draw-consultation.js?v=<?= file_exists(__DIR__ . '/assets/js/draw-consultation.js') ? filemtime(__DIR__ . '/assets/js/draw-consultation.js') : time() ?>"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         if (typeof initAIChatWidget === 'function') {

@@ -1048,22 +1048,23 @@ class DoctorController
     {
         $stmt = $this->pdo->prepare("
             SELECT p.*, mh.allergies, mh.medications, mh.systemic_history, mh.ocular_history,
-                   (SELECT u.name 
-                    FROM timeline_events te 
+                   c.name_en as clinic_name_en, c.name_ar as clinic_name_ar, c.code as clinic_code,
+                   (SELECT u.name
+                    FROM timeline_events te
                     LEFT JOIN users u ON te.actor_user_id = u.id
-                    WHERE te.patient_id = p.id 
-                    AND te.event_type = 'Booking' 
-                    AND te.event_summary LIKE '%New patient registered%' 
-                    ORDER BY te.created_at ASC 
+                    WHERE te.patient_id = p.id
+                    AND te.event_type = 'Booking'
+                    AND te.event_summary LIKE '%New patient registered%'
+                    ORDER BY te.created_at ASC
                     LIMIT 1) as created_by_name,
-                   (SELECT d.display_name 
-                    FROM timeline_events te 
+                   (SELECT d.display_name
+                    FROM timeline_events te
                     LEFT JOIN users u ON te.actor_user_id = u.id
                     LEFT JOIN doctors d ON u.id = d.user_id
-                    WHERE te.patient_id = p.id 
-                    AND te.event_type = 'Booking' 
-                    AND te.event_summary LIKE '%New patient registered%' 
-                    ORDER BY te.created_at ASC 
+                    WHERE te.patient_id = p.id
+                    AND te.event_type = 'Booking'
+                    AND te.event_summary LIKE '%New patient registered%'
+                    ORDER BY te.created_at ASC
                     LIMIT 1) as created_by_doctor_name,
                    (SELECT pa.id 
                     FROM patient_attachments pa 
@@ -1085,11 +1086,12 @@ class DoctorController
                     LIMIT 1) as latest_attachment_id
             FROM patients p
             LEFT JOIN medical_history mh ON p.id = mh.patient_id
+            LEFT JOIN clinics c ON p.clinic_id = c.id
             WHERE p.id = ?
         ");
         $stmt->execute([$id]);
         $patient = $stmt->fetch();
-        
+
         // Normalize latest_attachment_id
         if ($patient) {
             if (!isset($patient['latest_attachment_id'])) {
@@ -1208,17 +1210,19 @@ class DoctorController
     private function getAppointmentForAllDoctors($id)
     {
         $stmt = $this->pdo->prepare("
-            SELECT a.*, 
+            SELECT a.*,
                    CONCAT(p.first_name, ' ', p.last_name) as patient_name,
                    p.first_name, p.last_name, p.phone, p.dob, p.gender,
                    YEAR(CURDATE()) - YEAR(p.dob) as patient_age,
                    CONCAT(u.name) as doctor_name,
                    u.profile_image as doctor_profile_image,
-                   d.display_name as doctor_display_name
+                   d.display_name as doctor_display_name,
+                   c.name_en as clinic_name_en, c.name_ar as clinic_name_ar, c.code as clinic_code
             FROM appointments a
             JOIN patients p ON a.patient_id = p.id
             JOIN doctors d ON a.doctor_id = d.id
             JOIN users u ON d.user_id = u.id
+            LEFT JOIN clinics c ON a.clinic_id = c.id
             WHERE a.id = ?
         ");
         $stmt->execute([$id]);

@@ -297,7 +297,7 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="sidebar-footer-text">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v7.2.8
+                        HClinic / Roaya Clinic v8.0.0
                     </div>
                     <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none sidebar-footer-link">Ahmed Helal</a></div>
                 </small>
@@ -995,6 +995,7 @@
         // TimepickerUI is already exposed globally by the loader
     </script>
     <script src="/app/Views/layouts/main.js?v=<?= filemtime(__DIR__ . '/main.js') ?>"></script>
+    <script src="/app/Views/layouts/clinics-loader.js?v=<?= filemtime(__DIR__ . '/clinics-loader.js') ?>"></script>
     
     <!-- Session Expiry Warning Script -->
     <script>

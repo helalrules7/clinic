@@ -103,13 +103,26 @@ if ($status === 'completed') {
             <p class="mb-0">
                 <a href="/doctor/calendar?date=<?= $appointment['date'] ?>&appointment_id=<?= $appointment['id'] ?>"
                    style="color: white; text-decoration: none; cursor: pointer; font-weight: 600;"
-                   data-bs-toggle="tooltip" 
-                   data-bs-placement="top" 
+                   data-bs-toggle="tooltip"
+                   data-bs-placement="top"
                    data-bs-title="Click to view calendar for this date">
                     <i class="bi bi-clock me-2"></i>
                     <?= date('l, M j, Y \a\t g:i A', strtotime($appointment['date'] . ' ' . $appointment['start_time'])) ?>
                 </a>
             </p>
+            <?php if (!empty($appointment['clinic_name_ar']) || !empty($appointment['clinic_name_en'])): ?>
+            <?php
+                $_clinicVisuals = [
+                    'riyadh' => ['icon' => 'bi-buildings-fill', 'color' => '#0d6efd'],
+                    'kfs'    => ['icon' => 'bi-hospital-fill',  'color' => '#10b981'],
+                ];
+                $_v = $_clinicVisuals[$appointment['clinic_code'] ?? ''] ?? ['icon' => 'bi-building', 'color' => '#ffffff'];
+            ?>
+            <p class="mb-0 mt-1" dir="rtl" style="text-align: left;">
+                <i class="bi <?= $_v['icon'] ?> me-2" style="color: <?= $_v['color'] ?>;"></i>
+                <strong><?= htmlspecialchars($appointment['clinic_name_ar'] ?: $appointment['clinic_name_en']) ?></strong>
+            </p>
+            <?php endif; ?>
         </div>
         <div class="col-md-4 text-end">
             <div class="d-flex flex-column align-items-end gap-2">
@@ -392,6 +405,9 @@ if ($status === 'completed') {
                         <span class="badge bg-primary ms-2"><?= count($consultationNotes) ?> Note<?= count($consultationNotes) > 1 ? 's' : '' ?></span>
                     </h5>
                     <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-draw-consultation" type="button" onclick="DrawConsultation && DrawConsultation.openForAppointment(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)" title="Open the drawing canvas">
+                            <i class="bi bi-pencil-square me-1"></i>Draw Consultation
+                        </button>
                         <button class="btn btn-outline-primary" onclick="editConsultation(<?= $appointment['id'] ?>)">
                             <i class="bi bi-pencil me-1"></i>Edit Latest
                         </button>
@@ -761,9 +777,14 @@ if ($status === 'completed') {
             <div class="card-body text-center">
                 <i class="bi bi-clipboard-pulse text-muted" style="font-size: 3rem;"></i>
                 <p class="text-muted mt-2 mb-0">No consultation notes recorded</p>
-                <button class="btn btn-outline-primary mt-3" onclick="addConsultationNotes(<?= $appointment['id'] ?>)">
-                    <i class="bi bi-plus me-2"></i>Add Consultation Notes
-                </button>
+                <div class="d-inline-flex gap-2 mt-3 flex-wrap justify-content-center">
+                    <button class="btn btn-outline-primary" onclick="addConsultationNotes(<?= $appointment['id'] ?>)">
+                        <i class="bi bi-plus me-2"></i>Add Consultation Notes
+                    </button>
+                    <button class="btn btn-draw-consultation" type="button" onclick="DrawConsultation && DrawConsultation.openForAppointment(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)" title="Open the drawing canvas">
+                        <i class="bi bi-pencil-square me-2"></i>Draw Consultation
+                    </button>
+                </div>
             </div>
         </div>
         <?php endif; ?>
@@ -787,7 +808,7 @@ if ($status === 'completed') {
                     ?>
                     <div class="btn-group btn-group-sm" role="group">
                         <?php if (!empty($medications)): ?>
-                        <button class="btn btn-sm btn-outline-warning" onclick="printPrescription(<?= $appointment['id'] ?>)" title="Print Prescription">
+                        <button class="btn btn-sm btn-warning" onclick="printPrescription(<?= $appointment['id'] ?>)" title="Print Prescription">
                             <i class="bi bi-printer"></i>
                         </button>
                         <?php endif; ?>
@@ -850,7 +871,7 @@ if ($status === 'completed') {
                     </h5>
                     <div class="btn-group btn-group-sm" role="group">
                         <?php if (!empty($glasses)): ?>
-                        <button class="btn btn-sm btn-outline-info" onclick="printGlassesPrescription(<?= $appointment['id'] ?>)" title="Print Glasses">
+                        <button class="btn btn-sm btn-info" onclick="printGlassesPrescription(<?= $appointment['id'] ?>)" title="Print Glasses">
                             <i class="bi bi-printer"></i>
                         </button>
                         <?php endif; ?>
@@ -961,13 +982,33 @@ if ($status === 'completed') {
                         <i class="bi bi-paperclip me-2"></i>
                         Images & Attachments
                     </h5>
-                    <div class="btn-group btn-group-sm" role="group">
-                        <button class="btn btn-sm btn-primary" onclick="showUploadModal(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)">
-                            <i class="bi bi-cloud-upload me-1"> Upload</i>
-                        </button>
-                        <button class="btn btn-sm btn-success" onclick="openCameraModal(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)">
-                            <i class="bi bi-camera me-1"> Take Photo</i>
-                        </button>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Bulk actions">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" id="attachmentsSelectAllBtn"
+                                    onclick="attachmentsToggleSelectAll()"
+                                    title="Select all on this page">
+                                <i class="bi bi-check2-square"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" type="button" id="attachmentsDeleteSelectedBtn"
+                                    onclick="attachmentsConfirmDeleteSelected()" disabled
+                                    title="Delete selected items">
+                                <i class="bi bi-trash"></i>
+                                <span class="badge bg-danger ms-1 d-none" id="attachmentsSelectedBadge">0</span>
+                            </button>
+                        </div>
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Add attachment">
+                            <button class="btn btn-sm btn-primary" onclick="showUploadModal(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)" title="Upload an existing file">
+                                <i class="bi bi-cloud-upload me-1"></i>Upload
+                            </button>
+                            <button class="btn btn-sm btn-draw-consultation" type="button"
+                                    onclick="DrawConsultation && DrawConsultation.openForAppointment(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)"
+                                    title="Open the drawing canvas">
+                                <i class="bi bi-pencil-square me-1"></i>Draw
+                            </button>
+                            <button class="btn btn-sm btn-success" onclick="openCameraModal(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)" title="Take a photo using the camera">
+                                <i class="bi bi-camera me-1"></i>Capture
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1081,16 +1122,15 @@ if ($status === 'completed') {
                                 <div class="d-flex align-items-center mb-2 flex-grow-1">
                                     <i class="bi <?= $iconClass ?> text-primary me-2" style="font-size: 1.2rem; flex-shrink: 0;"></i>
                                     <div class="flex-grow-1">
-                                        <?php 
+                                        <?php
                                         $originalName = $attachment['original_filename'];
-                                        $displayName = strlen($originalName) > 20 ? substr($originalName, 0, 10) . '...' : $originalName;
                                         ?>
                                         <div class="d-flex align-items-center justify-content-between mb-1">
-                                            <h6 class="mb-0" style="font-size: 0.8rem; line-height: 1.1; word-wrap: break-word; overflow-wrap: break-word; flex-grow: 1;" 
+                                            <h6 class="mb-0 attachment-filename" style="font-size: 0.8rem; line-height: 1.1; flex-grow: 1; min-width: 0;"
                                                 title="<?= htmlspecialchars($originalName) ?>"
-                                                data-bs-toggle="tooltip" 
+                                                data-bs-toggle="tooltip"
                                                 data-bs-placement="top">
-                                                <?= htmlspecialchars($displayName) ?>
+                                                <?= htmlspecialchars($originalName) ?>
                                             </h6>
                                             <span class="badge <?= $badgeClass ?> ms-2" style="font-size: 0.6rem; flex-shrink: 0; font-weight: 500; border-radius: 8px;">
                                                 <?= $fileType ?>
@@ -1153,19 +1193,8 @@ if ($status === 'completed') {
                     </div>
                 <?php endif; ?>
                 </div>
-                
-                <div class="row g-2 mt-3">
-                    <div class="col-6">
-                        <button class="btn btn-primary w-100" onclick="showUploadModal(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)">
-                            <i class="bi bi-cloud-upload me-2"></i>Upload File
-                        </button>
-                    </div>
-                    <div class="col-6">
-                        <button class="btn btn-success w-100" onclick="openCameraModal(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)">
-                            <i class="bi bi-camera me-2"></i>Take Photo
-                        </button>
-                    </div>
-                </div>
+                <!-- Pagination footer (rendered by reloadAttachments when total > perPage) -->
+                <div id="attachmentsPagination" class="attachments-pagination mt-3"></div>
             </div>
         </div>
 
@@ -1386,8 +1415,11 @@ window.APPOINTMENT_CONFIG = {
 };
 </script>
 <link rel="stylesheet" href="/app/Views/doctor/assets/css/ai-chat-widget.css?v=<?= file_exists(__DIR__ . '/assets/css/ai-chat-widget.css') ? filemtime(__DIR__ . '/assets/css/ai-chat-widget.css') : time() ?>">
+<link rel="stylesheet" href="/app/Views/doctor/assets/css/draw-consultation.css?v=<?= file_exists(__DIR__ . '/assets/css/draw-consultation.css') ? filemtime(__DIR__ . '/assets/css/draw-consultation.css') : time() ?>">
 <script src="/app/Views/doctor/assets/js/appointment.js?v=<?= file_exists(__DIR__ . '/assets/js/appointment.js') ? filemtime(__DIR__ . '/assets/js/appointment.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/ai-chat-widget.js?v=<?= file_exists(__DIR__ . '/assets/js/ai-chat-widget.js') ? filemtime(__DIR__ . '/assets/js/ai-chat-widget.js') : time() ?>"></script>
+<script src="/app/Views/layouts/vendor/fabric.min.js?v=<?= file_exists(dirname(__DIR__) . '/layouts/vendor/fabric.min.js') ? filemtime(dirname(__DIR__) . '/layouts/vendor/fabric.min.js') : '5.3.1' ?>"></script>
+<script src="/app/Views/doctor/assets/js/draw-consultation.js?v=<?= file_exists(__DIR__ . '/assets/js/draw-consultation.js') ? filemtime(__DIR__ . '/assets/js/draw-consultation.js') : time() ?>"></script>
 <script>
     // Medications are loaded with prices from API via reloadMedications() when needed
 </script>

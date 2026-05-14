@@ -3535,7 +3535,14 @@ function initializeAddPatientModal() {
             document.getElementById('gender').focus();
             return;
         }
-        
+
+        const clinicSelect = document.getElementById('patientClinic');
+        if (clinicSelect && !clinicSelect.value) {
+            showMessage('Please select a clinic.', 'error');
+            clinicSelect.focus();
+            return;
+        }
+
         // Validate phone number format (more flexible validation)
         const cleanPhone = phone.replace(/[\s\-\(\)]/g, ''); // Remove spaces, dashes, parentheses
         const phoneRegex = /^(\+\d{1,3})?\d{7,15}$/;

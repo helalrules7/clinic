@@ -88,6 +88,27 @@
                     </div>
                 </div>
                 <?php endif; ?>
+                <?php if (!empty($patient['clinic_name_ar']) || !empty($patient['clinic_name_en'])): ?>
+                <?php
+                    $_clinicVisuals = [
+                        'riyadh' => ['icon' => 'bi-buildings-fill', 'color' => '#0d6efd'],
+                        'kfs'    => ['icon' => 'bi-hospital-fill',  'color' => '#10b981'],
+                    ];
+                    $_v = $_clinicVisuals[$patient['clinic_code'] ?? ''] ?? ['icon' => 'bi-building', 'color' => '#6c757d'];
+                ?>
+                <hr>
+                <div class="row">
+                    <div class="col-sm-4">
+                        <strong class="arabic-text">العيادة:</strong>
+                    </div>
+                    <div class="col-sm-8 arabic-text">
+                        <span class="clinic-tag" style="--clinic-color: <?= $_v['color'] ?>;">
+                            <i class="bi <?= $_v['icon'] ?>"></i>
+                            <?= htmlspecialchars($patient['clinic_name_ar'] ?: $patient['clinic_name_en']) ?>
+                        </span>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -387,37 +408,7 @@
     color: var(--muted) !important;
 }
 
-body > div.modal-backdrop.fade.show{
+body > div.modal-backdrop.fade.show {
     display: none !important;
-}
-
-/* Modal z-index and centering */
-.modal {
-    z-index: 1000002 !important;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem !important;
-}
-
-.modal-backdrop {
-    z-index: 1000000 !important;
-}
-
-.modal-dialog {
-    z-index: 1000002 !important;
-    margin: 0 auto;
-    max-width: 500px;
-}
-
-.modal-dialog.modal-lg {
-    max-width: 800px;
-}
-
-.modal-dialog.modal-xl {
-    max-width: 1140px;
-}
-
-.modal-dialog.modal-sm {
-    max-width: 300px;
 }
 </style>

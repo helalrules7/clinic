@@ -80,6 +80,25 @@
             0%, 50% { opacity: 1; }
             51%, 100% { opacity: 0; }
         }
+
+        .clinic-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 1px 8px;
+            border-radius: 999px;
+            background: color-mix(in srgb, var(--clinic-color, #6c757d) 14%, transparent);
+            color: var(--clinic-color, #6c757d);
+            font-size: 0.85rem;
+            font-weight: 700;
+            line-height: 1.4;
+            white-space: nowrap;
+        }
+        .clinic-tag i { font-size: 1rem; }
+        .dark .clinic-tag {
+            background: color-mix(in srgb, var(--clinic-color, #adb5bd) 22%, transparent);
+            filter: brightness(1.15);
+        }
     </style>
 </head>
 <body>
@@ -159,7 +178,7 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="text-muted">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v7.2.8
+                        HClinic / Roaya Clinic v8.0.0
                     </div>
                     <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none" style="color: var(--accent);">Ahmed Helal</a></div>
                 </small>
@@ -284,7 +303,8 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+    <script src="/app/Views/layouts/clinics-loader.js?v=<?= filemtime(__DIR__ . '/clinics-loader.js') ?>"></script>
+
     <script>
         // Theme toggle functionality - synced with main layout using appTheme
         function updateThemeUI(theme) {

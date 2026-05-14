@@ -91,6 +91,25 @@
                                 <?= date('Y-m-d H:i', strtotime($booking['updated_at'])) ?>
                             </p>
                         </div>
+
+                        <?php if (!empty($booking['clinic_name_ar']) || !empty($booking['clinic_name_en'])): ?>
+                        <?php
+                            $_clinicVisuals = [
+                                'riyadh' => ['icon' => 'bi-buildings-fill', 'color' => '#0d6efd'],
+                                'kfs'    => ['icon' => 'bi-hospital-fill',  'color' => '#10b981'],
+                            ];
+                            $_v = $_clinicVisuals[$booking['clinic_code'] ?? ''] ?? ['icon' => 'bi-building', 'color' => '#6c757d'];
+                        ?>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold arabic-text">العيادة:</label>
+                            <p class="form-control-plaintext">
+                                <span class="clinic-tag arabic-text" style="--clinic-color: <?= $_v['color'] ?>;">
+                                    <i class="bi <?= $_v['icon'] ?>"></i>
+                                    <?= htmlspecialchars($booking['clinic_name_ar'] ?: $booking['clinic_name_en']) ?>
+                                </span>
+                            </p>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 </div>
                 
@@ -559,17 +578,17 @@ body > div.modal-backdrop.fade.show{
     align-items: center;
     justify-content: center;
     padding: 1rem !important;
-    }
-    
+}
+
 .modal-backdrop {
     z-index: 1000000 !important;
-    }
-    
+}
+
 .modal-dialog {
     z-index: 1000002 !important;
     margin: 0 auto;
     max-width: 500px;
-    }
+}
 
 .modal-dialog.modal-lg {
     max-width: 800px;

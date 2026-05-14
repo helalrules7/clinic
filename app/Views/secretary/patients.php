@@ -70,10 +70,10 @@
                     <div class="stats-card-icon">
                         <i class="bi bi-people"></i>
                     </div>
-                    </div>
                 </div>
             </div>
         </div>
+    </div>
     <div class="col-md-3 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="stats-card stats-card-success">
@@ -81,14 +81,14 @@
                     <div class="stats-card-header">
                         <h4 class="stats-card-title arabic-text">مرضى نشطين</h4>
                         <h3 class="stats-card-value arabic-text"><?= $stats['active'] ?? 0 ?></h3>
-    </div>
+                    </div>
                     <div class="stats-card-icon">
                         <i class="bi bi-person-check"></i>
-                    </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
     <div class="col-md-3 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="stats-card stats-card-warning">
@@ -96,14 +96,14 @@
                     <div class="stats-card-header">
                         <h4 class="stats-card-title arabic-text">جدد هذا الشهر</h4>
                         <h3 class="stats-card-value arabic-text"><?= $stats['recent'] ?? 0 ?></h3>
-    </div>
+                    </div>
                     <div class="stats-card-icon">
                         <i class="bi bi-person-plus"></i>
-                    </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
     <div class="col-md-3 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="stats-card stats-card-info">
@@ -111,7 +111,7 @@
                     <div class="stats-card-header">
                         <h4 class="stats-card-title arabic-text">مدفوعات إجمالية</h4>
                         <h3 class="stats-card-value arabic-text"><?= ($stats['total_paid'] ?? 0) ?></h3>
-    </div>
+                    </div>
                     <div class="stats-card-icon">
                         <i class="bi bi-credit-card"></i>
                     </div>
@@ -315,7 +315,7 @@
                                                         <i class="bi bi-whatsapp"></i>
                                                         <span>واتساب</span>
                                                     </a>
-                                    </div>
+                                                </div>
                                             </span>
                                         </div>
                                     <?php else: ?>
@@ -326,7 +326,7 @@
                                             <a href="tel:<?= htmlspecialchars($patient['alt_phone']) ?>" 
                                                class="phone-number-link" 
                                                style="text-decoration: none; color: var(--accent); font-weight: 500; cursor: pointer; transition: all 0.2s ease;">
-                                            <i class="bi bi-telephone-plus me-1"></i>
+                                                <i class="bi bi-telephone-plus me-1"></i>
                                                 <small><?= htmlspecialchars($patient['alt_phone']) ?></small>
                                             </a>
                                             <span class="phone-htooltip">
@@ -583,6 +583,14 @@
                                 <div class="invalid-feedback"></div>
                                 <div class="form-text text-danger arabic-text"><strong>مطلوب:</strong> غير الجنس إذا لزم الأمر</div>
                             </div>
+
+                            <div class="mb-3">
+                                <label for="patientClinic" class="form-label arabic-text">العيادة <span class="text-danger">*</span></label>
+                                <select class="form-select arabic-text" id="patientClinic" name="clinic_id" required>
+                                    <option value="">اختر العيادة...</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -797,9 +805,9 @@ function getAvatarInitials(firstName, lastName) {
         return firstChar + lastChar;
     } else {
         // For non-Arabic text, use uppercase with dot
-    const firstChar = firstName.charAt(0).toUpperCase();
-    const lastChar = lastName.charAt(0).toUpperCase();
-    return firstChar + '.' + lastChar;
+        const firstChar = firstName.charAt(0).toUpperCase();
+        const lastChar = lastName.charAt(0).toUpperCase();
+        return firstChar + '.' + lastChar;
     }
 }
 
@@ -1006,6 +1014,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize draggable modals after a short delay to ensure modals are ready
     setTimeout(initializeDraggableModals, 200);
     
+    // Initialize table touch/drag support for mobile
+    initTableTouchSupport();
     
     // Quick search
     const quickSearch = document.getElementById('quickSearch');
@@ -1091,6 +1101,67 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Initialize table touch/drag support
+    function initTableTouchSupport() {
+        const tableWrapper = document.querySelector('.table-responsive');
+        if (!tableWrapper) return;
+        
+        let isScrolling = false;
+        let startX = 0;
+        let scrollLeft = 0;
+        
+        // Touch support
+        tableWrapper.addEventListener('touchstart', function(e) {
+            isScrolling = true;
+            startX = e.touches[0].pageX - tableWrapper.offsetLeft;
+            scrollLeft = tableWrapper.scrollLeft;
+        }, { passive: true });
+        
+        tableWrapper.addEventListener('touchmove', function(e) {
+            if (!isScrolling) return;
+            e.preventDefault();
+            const x = e.touches[0].pageX - tableWrapper.offsetLeft;
+            const walk = (x - startX) * 2; // Scroll speed multiplier
+            tableWrapper.scrollLeft = scrollLeft - walk;
+        }, { passive: false });
+        
+        tableWrapper.addEventListener('touchend', function() {
+            isScrolling = false;
+        }, { passive: true });
+        
+        // Mouse drag support
+        let isDown = false;
+        let startMouseX = 0;
+        let scrollStartLeft = 0;
+        
+        tableWrapper.addEventListener('mousedown', function(e) {
+            isDown = true;
+            tableWrapper.style.cursor = 'grabbing';
+            startMouseX = e.pageX - tableWrapper.offsetLeft;
+            scrollStartLeft = tableWrapper.scrollLeft;
+        });
+        
+        tableWrapper.addEventListener('mouseleave', function() {
+            isDown = false;
+            tableWrapper.style.cursor = 'grab';
+        });
+        
+        tableWrapper.addEventListener('mouseup', function() {
+            isDown = false;
+            tableWrapper.style.cursor = 'grab';
+        });
+        
+        tableWrapper.addEventListener('mousemove', function(e) {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - tableWrapper.offsetLeft;
+            const walk = (x - startMouseX) * 2;
+            tableWrapper.scrollLeft = scrollStartLeft - walk;
+        });
+        
+        // Set initial cursor style
+        tableWrapper.style.cursor = 'grab';
+    }
     
     // Initialize Bootstrap Tooltips
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
@@ -1136,7 +1207,12 @@ function initializeAddPatientModal() {
         addPatientForm.classList.remove('was-validated');
         hideMessage();
         resetSubmitButton();
-        
+
+        // Load clinics into dropdown (Arabic)
+        if (window.ClinicsLoader) {
+            window.ClinicsLoader.populate('patientClinic', { lang: 'ar' });
+        }
+
         // Focus on first name field
         setTimeout(() => {
             document.getElementById('firstName').focus();
@@ -1170,7 +1246,14 @@ function initializeAddPatientModal() {
             document.getElementById('gender').focus();
             return;
         }
-        
+
+        const clinicSelect = document.getElementById('patientClinic');
+        if (clinicSelect && !clinicSelect.value) {
+            showMessage('يرجى اختيار العيادة.', 'error');
+            clinicSelect.focus();
+            return;
+        }
+
         // Validate phone number format
         const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
         const phoneRegex = /^(\+\d{1,3})?\d{7,15}$/;
@@ -1178,7 +1261,7 @@ function initializeAddPatientModal() {
             showMessage('يرجى إدخال رقم هاتف صحيح (7-15 رقم، مع إمكانية إضافة رمز الدولة).', 'error');
             return;
         }
-        
+
         // Submit form
         submitPatientForm();
     });

@@ -4639,18 +4639,50 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Reload attachments via Ajax
-function reloadAttachments() {
+window.ATTACHMENTS_PER_PAGE = 4;
+window.attachmentsCurrentPage = 1;
+
+// On page load: if the server rendered more than the per-page limit, swap to the paginated view.
+document.addEventListener('DOMContentLoaded', function () {
+    const rendered = document.querySelectorAll('#attachmentsRow > .col-md-6').length;
+    if (rendered > window.ATTACHMENTS_PER_PAGE) {
+        reloadAttachments(1);
+    }
+});
+
+function showAttachmentsLoading() {
+    const card = document.querySelector('.card .card-body #attachmentsContainer');
+    const wrap = card ? card.closest('.card-body') : null;
+    if (!wrap) return;
+    if (wrap.querySelector('.attachments-loading-overlay')) return;
+    wrap.classList.add('attachments-loading');
+    const overlay = document.createElement('div');
+    overlay.className = 'attachments-loading-overlay';
+    overlay.innerHTML = '<div class="spinner-border text-primary" role="status" aria-hidden="true"></div><span class="ms-2">Loading…</span>';
+    wrap.appendChild(overlay);
+}
+
+function hideAttachmentsLoading() {
+    const card = document.querySelector('.card .card-body #attachmentsContainer');
+    const wrap = card ? card.closest('.card-body') : null;
+    if (!wrap) return;
+    wrap.classList.remove('attachments-loading');
+    const overlay = wrap.querySelector('.attachments-loading-overlay');
+    if (overlay) overlay.remove();
+}
+
+function reloadAttachments(page) {
     const appointmentId = window.APPOINTMENT_CONFIG.appointmentId;
     if (!appointmentId) {
         console.error('No appointment ID found');
         return;
     }
-    
-    fetch(`/api/appointments/${appointmentId}/attachments`, {
+    const requestedPage = Math.max(1, parseInt(page, 10) || window.attachmentsCurrentPage || 1);
+
+    showAttachmentsLoading();
+    fetch(`/api/appointments/${appointmentId}/attachments?page=${requestedPage}&perPage=${window.ATTACHMENTS_PER_PAGE}`, {
         credentials: 'same-origin',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
         .then(response => {
             if (!response.ok) {
@@ -4665,14 +4697,17 @@ function reloadAttachments() {
                     console.error('attachmentsContainer not found');
                     return;
                 }
-                
+
+                const pag = data.pagination || { page: requestedPage, perPage: window.ATTACHMENTS_PER_PAGE, total: data.attachments.length, totalPages: 1 };
+                window.attachmentsCurrentPage = pag.page;
+
                 if (data.attachments.length === 0) {
                     container.innerHTML = `
                         <div class="text-center py-4" id="emptyAttachmentsMessage">
                             <i class="bi bi-paperclip text-muted" style="font-size: 3rem;"></i>
                             <p class="text-muted mt-2 mb-0">No images or attachments found</p>
-        </div>
-    `;
+                        </div>`;
+                    renderAttachmentsPagination(pag);
                 } else {
                     let html = '<div class="row" id="attachmentsRow">';
                     data.attachments.forEach(attachment => {
@@ -4703,9 +4738,8 @@ function reloadAttachments() {
                             badgeClass = 'bg-success';
                         }
                         
-                        const displayName = attachment.original_filename.length > 20 
-                            ? attachment.original_filename.substring(0, 10) + '...' 
-                            : attachment.original_filename;
+                        // Show the full filename; CSS handles overflow via ellipsis when truly needed.
+                        const displayName = attachment.original_filename;
                         const fileSize = (attachment.file_size / 1024).toFixed(1);
                         const createdDate = new Date(attachment.created_at).toLocaleDateString('en-GB', {
                             day: '2-digit',
@@ -4739,9 +4773,9 @@ function reloadAttachments() {
                                         <i class="bi ${iconClass} text-primary me-2" style="font-size: 1.2rem; flex-shrink: 0;"></i>
                                         <div class="flex-grow-1">
                                             <div class="d-flex align-items-center justify-content-between mb-1">
-                                                <h6 class="mb-0" style="font-size: 0.8rem; line-height: 1.1; word-wrap: break-word; overflow-wrap: break-word; flex-grow: 1;" 
+                                                <h6 class="mb-0 attachment-filename" style="font-size: 0.8rem; line-height: 1.1; flex-grow: 1; min-width: 0;"
                                                     title="${attachment.original_filename}"
-                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-toggle="tooltip"
                                                     data-bs-placement="top">
                                                     ${displayName}
                                                 </h6>
@@ -4793,10 +4827,11 @@ function reloadAttachments() {
                     });
                     html += '</div>';
                     container.innerHTML = html;
-                    
+                    renderAttachmentsPagination(pag);
+
                     // Reinitialize tooltips
                     var tooltipTriggerList = [].slice.call(container.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    tooltipTriggerList.map(function (tooltipTriggerEl) {
                         return new bootstrap.Tooltip(tooltipTriggerEl);
                     });
                 }
@@ -4812,8 +4847,231 @@ function reloadAttachments() {
             showErrorMessage('Error reloading attachments. Please refresh the page.');
             // Fallback: reload page after 2 seconds
             setTimeout(() => location.reload(), 2000);
+        })
+        .finally(() => {
+            hideAttachmentsLoading();
         });
 }
+
+function renderAttachmentsPagination(pag) {
+    const el = document.getElementById('attachmentsPagination');
+    if (!el) return;
+    if (!pag || !pag.total || pag.total <= (pag.perPage || 0) || pag.totalPages <= 1) {
+        el.innerHTML = '';
+        return;
+    }
+    el.innerHTML = buildProjectPaginationHTML(pag, 'attachmentsChangePage');
+}
+
+// Project-wide pagination markup (matches patients.js renderPaginationNav).
+// Renders a "X–Y of Z" info row above a Bootstrap <ul class="pagination">.
+function buildProjectPaginationHTML(pag, onClickFn) {
+    const current = pag.page;
+    const total   = pag.totalPages;
+
+    let startPage = Math.max(1, current - 2);
+    let endPage   = Math.min(total, current + 2);
+    if (current <= 3) {
+        startPage = 1;
+        endPage = Math.min(5, total);
+    } else if (current >= total - 2) {
+        startPage = Math.max(1, total - 4);
+        endPage = total;
+    }
+
+    const firstShown = (current - 1) * pag.perPage + 1;
+    const lastShown  = Math.min(current * pag.perPage, pag.total);
+
+    let html = '';
+    html += `<div class="pagination-info text-muted mb-2 text-center small">Showing ${firstShown}–${lastShown} of ${pag.total}</div>`;
+    html += `<nav aria-label="Attachments pagination"><ul class="pagination pagination-sm justify-content-center mb-0">`;
+
+    html += `<li class="page-item ${current === 1 ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="${onClickFn}(${current - 1}); return false;" aria-label="Previous">
+            <i class="bi bi-chevron-left"></i>
+        </a>
+    </li>`;
+
+    if (startPage > 1) {
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="${onClickFn}(1); return false;">1</a></li>`;
+        if (startPage > 2) {
+            html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        html += `<li class="page-item ${i === current ? 'active' : ''}">
+            <a class="page-link" href="#" onclick="${onClickFn}(${i}); return false;">${i}</a>
+        </li>`;
+    }
+
+    if (endPage < total) {
+        if (endPage < total - 1) {
+            html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="${onClickFn}(${total}); return false;">${total}</a></li>`;
+    }
+
+    html += `<li class="page-item ${current === total ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="${onClickFn}(${current + 1}); return false;" aria-label="Next">
+            <i class="bi bi-chevron-right"></i>
+        </a>
+    </li>`;
+
+    html += `</ul></nav>`;
+    return html;
+}
+
+// Exposed for the onclick attribute in the pagination markup.
+window.attachmentsChangePage = function (page) {
+    const target = parseInt(page, 10);
+    if (!Number.isFinite(target) || target < 1) return;
+    if (target === window.attachmentsCurrentPage) return;
+    reloadAttachments(target);
+};
+
+// ===========================================================================
+// Attachment selection + bulk delete
+// ===========================================================================
+window.attachmentsSelectedIds = new Set();
+
+function attachmentsRefreshSelectionUI() {
+    // Wire checkboxes that may have been re-rendered by reloadAttachments().
+    document.querySelectorAll('#attachmentsRow .attachment-select-checkbox').forEach(cb => {
+        if (cb.dataset.wired === '1') return;
+        cb.dataset.wired = '1';
+        cb.addEventListener('click', (e) => {
+            e.stopPropagation();
+            attachmentsToggleId(parseInt(cb.dataset.id, 10), cb.checked);
+        });
+        // Restore checked state when re-rendering
+        const id = parseInt(cb.dataset.id, 10);
+        if (window.attachmentsSelectedIds.has(id)) {
+            cb.checked = true;
+            cb.closest('.attachment-card')?.classList.add('is-selected');
+        }
+    });
+    attachmentsSyncSelectAllButton();
+    attachmentsSyncDeleteButton();
+}
+
+function attachmentsToggleId(id, checked) {
+    if (!Number.isFinite(id)) return;
+    const card = document.querySelector(`#attachmentsRow .attachment-card[data-attachment-id="${id}"]`);
+    if (checked) {
+        window.attachmentsSelectedIds.add(id);
+        card?.classList.add('is-selected');
+    } else {
+        window.attachmentsSelectedIds.delete(id);
+        card?.classList.remove('is-selected');
+    }
+    attachmentsSyncSelectAllButton();
+    attachmentsSyncDeleteButton();
+}
+
+function attachmentsToggleSelectAll() {
+    const checkboxes = document.querySelectorAll('#attachmentsRow .attachment-select-checkbox');
+    if (!checkboxes.length) return;
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    checkboxes.forEach(cb => {
+        const id = parseInt(cb.dataset.id, 10);
+        cb.checked = !allChecked;
+        attachmentsToggleId(id, !allChecked);
+    });
+}
+
+function attachmentsSyncSelectAllButton() {
+    const btn = document.getElementById('attachmentsSelectAllBtn');
+    if (!btn) return;
+    const checkboxes = document.querySelectorAll('#attachmentsRow .attachment-select-checkbox');
+    const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+    btn.classList.toggle('active', allChecked);
+    const icon = btn.querySelector('i');
+    if (icon) icon.className = allChecked ? 'bi bi-x-square' : 'bi bi-check2-square';
+    btn.title = allChecked ? 'Clear selection on this page' : 'Select all on this page';
+}
+
+function attachmentsSyncDeleteButton() {
+    const btn = document.getElementById('attachmentsDeleteSelectedBtn');
+    if (!btn) return;
+    const count = window.attachmentsSelectedIds.size;
+    btn.disabled = count === 0;
+    const badge = document.getElementById('attachmentsSelectedBadge');
+    if (badge) {
+        if (count > 0) { badge.textContent = String(count); badge.classList.remove('d-none'); }
+        else { badge.classList.add('d-none'); }
+    }
+}
+
+function attachmentsConfirmDeleteSelected() {
+    const ids = Array.from(window.attachmentsSelectedIds);
+    if (!ids.length) return;
+    openBulkDeleteConfirmModal({
+        count: ids.length,
+        kind: 'attachment',
+        onConfirm: () => attachmentsBulkDeleteRequest(ids),
+    });
+}
+
+function attachmentsBulkDeleteRequest(ids) {
+    const cfg = window.APPOINTMENT_CONFIG || {};
+    const appointmentId = cfg.appointmentId;
+    if (!appointmentId) return Promise.reject(new Error('No appointment id'));
+
+    return fetch('/api/attachments/bulk-delete', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({ appointment_id: appointmentId, ids })
+    })
+    .then(r => r.json())
+    .then(json => {
+        if (!json || !json.success) {
+            throw new Error(json && json.message ? json.message : 'Bulk delete failed');
+        }
+        window.attachmentsSelectedIds.clear();
+        attachmentsSyncDeleteButton();
+        reloadAttachments(window.attachmentsCurrentPage);
+        return json;
+    });
+}
+
+function attachmentsInjectCheckboxes() {
+    document.querySelectorAll('#attachmentsRow .attachment-card').forEach(card => {
+        if (card.querySelector('.attachment-select-checkbox')) return;
+        const id = card.dataset.attachmentId;
+        if (!id) return;
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'attachment-select-checkbox';
+        cb.dataset.id = id;
+        cb.title = 'Select for bulk delete';
+
+        // Pin the checkbox to the top-right corner of the IMAGE thumbnail when
+        // the card has one (so it sits visibly on the image itself), otherwise
+        // fall back to the card's top-right corner for document cards.
+        const thumb = card.querySelector(':scope > .mb-2.text-center');
+        if (thumb) {
+            thumb.classList.add('attachment-thumb-host');
+            thumb.appendChild(cb);
+        } else {
+            card.classList.add('attachment-card--no-thumb');
+            card.appendChild(cb);
+        }
+    });
+    attachmentsRefreshSelectionUI();
+}
+
+// Inject checkboxes once on first paint, then every time #attachmentsContainer
+// re-renders (reloadAttachments replaces innerHTML rather than returning a promise).
+document.addEventListener('DOMContentLoaded', () => {
+    attachmentsInjectCheckboxes();
+    const container = document.getElementById('attachmentsContainer');
+    if (container && 'MutationObserver' in window) {
+        new MutationObserver(() => attachmentsInjectCheckboxes())
+            .observe(container, { childList: true, subtree: true });
+    }
+});
 
 function reloadMedications() {
     const appointmentId = window.APPOINTMENT_CONFIG.appointmentId;

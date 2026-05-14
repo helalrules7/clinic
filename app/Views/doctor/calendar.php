@@ -309,6 +309,21 @@
                         
                         <div class="col-md-6">
                             <div class="mb-3">
+                                <label for="appointmentClinic" class="form-label">Clinic <span class="text-danger">*</span></label>
+                                <section class="field menu" style="min-width: 100%;">
+                                    <div class="control">
+                                        <select class="form-select d-none" id="appointmentClinic" name="clinic_id" required>
+                                            <option value="">Select clinic...</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false"><i class="bi bi-building fs-5"></i> <h3>Select clinic...</h3></button>
+                                        <menu>
+                                            <li data-option="" tabindex="0" role="button" class="selected"><h3>Select clinic...</h3></li>
+                                        </menu>
+                                    </div>
+                                </section>
+                            </div>
+
+                            <div class="mb-3">
                                 <label for="visitType" class="form-label">Visit Type *</label>
                                 <section class="field menu" style="min-width: 100%;">
                                     <div class="control">
@@ -429,9 +444,13 @@
                             
                             <div class="mb-3">
                                 <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control" id="phone" name="phone" required maxlength="20">
+                                <input type="tel" class="form-control" id="phone" name="phone" required maxlength="11" pattern="^0\d{10}$" placeholder="0XXXXXXXXXX">
                                 <div class="invalid-feedback"></div>
-                                <div class="form-text">Primary contact number</div>
+                                <div id="phoneValidationAlert" class="alert alert-danger d-none mt-2" role="alert">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <span id="phoneValidationMessage">Phone number must start with 0 and consist of exactly 11 digits.</span>
+                                </div>
+                                <div class="form-text">Primary contact number (must start with 0 and be 11 digits)</div>
                             </div>
                             
                             <div class="mb-3">
@@ -457,6 +476,22 @@
                                 </section>
                                 <div class="invalid-feedback"></div>
                                 <div class="form-text text-danger"><strong>Required:</strong> Change the gender if needed</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="patientClinic" class="form-label">Clinic <span class="text-danger">*</span></label>
+                                <section class="field menu" style="min-width: 100%;">
+                                    <div class="control">
+                                        <select class="form-select d-none" id="patientClinic" name="clinic_id" required>
+                                            <option value="">Select clinic...</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false"><i class="bi bi-building fs-5"></i> <h3>Select clinic...</h3></button>
+                                        <menu>
+                                            <li data-option="" tabindex="0" role="button" class="selected"><h3>Select clinic...</h3></li>
+                                        </menu>
+                                    </div>
+                                </section>
+                                <div class="invalid-feedback"></div>
                             </div>
                         </div>
                     </div>
@@ -493,29 +528,39 @@ window.CALENDAR_CONFIG = {
     doctorId: <?= $doctorId ?>,
     preselectedPatient: <?= $preselectedPatient ? json_encode($preselectedPatient) : 'null' ?>
 };
+
+// Modals z-index is handled by main.js - no need for custom scripts here
 </script>
 <script src="/app/Views/doctor/assets/js/calendar.js?v=<?= file_exists(__DIR__ . '/assets/js/calendar.js') ? filemtime(__DIR__ . '/assets/js/calendar.js') : time() ?>"></script>
+<script>
+    // Populate Clinic dropdowns whenever the Add Appointment / Add Patient modals open
+    document.addEventListener('DOMContentLoaded', function () {
+        const addApptModal = document.getElementById('addAppointmentModal');
+        const addPatientModal = document.getElementById('addPatientModal');
+
+        if (addApptModal) {
+            addApptModal.addEventListener('show.bs.modal', function () {
+                if (window.ClinicsLoader) {
+                    window.ClinicsLoader.populate('appointmentClinic', { lang: 'ar' });
+                }
+            });
+        }
+        if (addPatientModal) {
+            addPatientModal.addEventListener('show.bs.modal', function () {
+                if (window.ClinicsLoader) {
+                    window.ClinicsLoader.populate('patientClinic', { lang: 'ar' });
+                }
+            });
+        }
+    });
+</script>
 <style>
-    .modal-backdrop.show{
+    /*.modal-backdrop.show{
         display: none !important;
     }
     body > div.modal-backdrop.fade.show{
         display: none !important;
-    }
-    .dark .modal-content{
-    background: rgba(11, 18, 32, 0.8) !important;
-    }
-    .modal-content{
-    background: rgba(248, 250, 252, 0.8) !important;
-    }
-</style>
-<style>
-    .modal-backdrop.show{
-        display: none !important;
-    }
-    body > div.modal-backdrop.fade.show{
-        display: none !important;
-    }
+    }*/
     .dark .modal-content{
     background: rgba(11, 18, 32, 0.8) !important;
     }

@@ -95,7 +95,7 @@
             -webkit-backdrop-filter: blur(10px);
             border-right: 1px solid rgba(226, 232, 240, 0.3);
             box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
-            z-index: 1000001 !important;
+            z-index: 999 !important;
             transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
             overflow-y: auto;
         }
@@ -10670,4 +10670,24 @@
         padding: 0.4rem 0.6rem;
         min-width: auto;
     }
+}
+
+/* Clinic chip — shared across all doctor pages (calendar.css overrides for the small variant inside cards). */
+.clinic-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--clinic-color, #6c757d) 14%, transparent);
+    color: var(--clinic-color, #6c757d);
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+.clinic-tag i { font-size: 1rem; }
+.dark .clinic-tag {
+    background: color-mix(in srgb, var(--clinic-color, #adb5bd) 22%, transparent);
+    filter: brightness(1.15);
 }

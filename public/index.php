@@ -274,6 +274,7 @@ try {
     $router->get('/api/medications/prescriptions/patient', 'MedicationsController@getPatientMedicationsPrescriptions');
     
     // API routes
+    $router->get('/api/clinics', 'ApiController@getClinics');
     $router->get('/api/calendar', 'ApiController@getCalendar');
     $router->get('/api/organizer/month', 'ApiController@getOrganizerMonth');
     // More specific routes first
@@ -382,12 +383,16 @@ try {
     
     // Attachment API routes
     $router->post('/api/attachments/upload', 'ApiController@uploadAttachment');
+    $router->post('/api/attachments/replace/{id}', 'ApiController@replaceAttachment');
+    $router->post('/api/attachments/bulk-delete', 'ApiController@bulkDeleteAttachments');
     $router->get('/api/attachments/view/{id}', 'ApiController@viewAttachment');
     $router->get('/api/attachments/download/{id}', 'ApiController@downloadAttachment');
     $router->delete('/api/attachments/{id}', 'ApiController@deleteAttachment');
     
     // Patient Files API routes
     $router->post('/api/patients/files/upload', 'ApiController@uploadPatientFile');
+    $router->post('/api/patients/files/replace/{id}', 'ApiController@replacePatientFile');
+    $router->post('/api/patients/files/bulk-delete', 'ApiController@bulkDeletePatientFiles');
     $router->get('/api/patients/files/view/{id}', 'ApiController@viewPatientFile');
     $router->get('/api/patients/files/download/{id}', 'ApiController@downloadPatientFile');
     $router->delete('/api/patients/files/{id}', 'ApiController@deletePatientFile');

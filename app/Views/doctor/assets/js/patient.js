@@ -3727,15 +3727,40 @@ function printMedicationPrescription(appointmentId) {
     window.open(printUrl, '_blank');
 }
 
-// Reload patient files via Ajax
-function reloadPatientFiles() {
+// Reload patient files via Ajax — paginated (4 per page) with loading overlay.
+window.PATIENT_FILES_PER_PAGE = 4;
+window.patientFilesCurrentPage = 1;
+
+function showPatientFilesLoading() {
+    const card = document.querySelector('#patientFilesContainer');
+    const wrap = card ? card.closest('.card-body') : null;
+    if (!wrap) return;
+    if (wrap.querySelector('.attachments-loading-overlay')) return;
+    wrap.classList.add('attachments-loading');
+    const overlay = document.createElement('div');
+    overlay.className = 'attachments-loading-overlay';
+    overlay.innerHTML = '<div class="spinner-border text-primary" role="status" aria-hidden="true"></div><span class="ms-2">Loading…</span>';
+    wrap.appendChild(overlay);
+}
+function hidePatientFilesLoading() {
+    const card = document.querySelector('#patientFilesContainer');
+    const wrap = card ? card.closest('.card-body') : null;
+    if (!wrap) return;
+    wrap.classList.remove('attachments-loading');
+    const overlay = wrap.querySelector('.attachments-loading-overlay');
+    if (overlay) overlay.remove();
+}
+
+function reloadPatientFiles(page) {
     const patientId = window.PATIENT_CONFIG.patientId;
     if (!patientId) {
         console.error('No patient ID found');
         return;
     }
-    
-    fetch(`/api/patients/${patientId}/files`, {
+    const requestedPage = Math.max(1, parseInt(page, 10) || window.patientFilesCurrentPage || 1);
+
+    showPatientFilesLoading();
+    fetch(`/api/patients/${patientId}/files?page=${requestedPage}&perPage=${window.PATIENT_FILES_PER_PAGE}`, {
         credentials: 'same-origin',
         headers: {
             'X-Requested-With': 'XMLHttpRequest'
@@ -3752,16 +3777,19 @@ function reloadPatientFiles() {
                 const container = document.getElementById('patientFilesContainer');
                 if (!container) {
                     console.error('patientFilesContainer not found');
-        return;
-    }
-    
+                    return;
+                }
+
+                const pag = data.pagination || { page: requestedPage, perPage: window.PATIENT_FILES_PER_PAGE, total: data.files.length, totalPages: 1 };
+                window.patientFilesCurrentPage = pag.page;
+
                 if (data.files.length === 0) {
                     container.innerHTML = `
                         <div class="text-center py-4" id="emptyPatientFilesMessage">
                             <i class="bi bi-paperclip text-muted" style="font-size: 3rem;"></i>
                             <p class="text-muted mt-2 mb-0">No files or documents found for this patient</p>
-                        </div>
-                    `;
+                        </div>`;
+                    renderPatientFilesPagination(pag);
                 } else {
                     let html = '<div class="row" id="patientFilesRow">';
                     data.files.forEach(file => {
@@ -3784,9 +3812,8 @@ function reloadPatientFiles() {
                             badgeClass = 'bg-danger';
                         }
                         
-                        const displayName = file.original_filename.length > 20 
-                            ? file.original_filename.substring(0, 10) + '...' 
-                            : file.original_filename;
+                        // Show the full filename; CSS handles overflow via ellipsis when truly needed.
+                        const displayName = file.original_filename;
                         const fileSize = (file.file_size / 1024).toFixed(1);
                         const createdDate = new Date(file.created_at).toLocaleDateString('en-GB', {
                             day: '2-digit',
@@ -3825,9 +3852,9 @@ function reloadPatientFiles() {
                                         <i class="bi ${iconClass} text-primary me-2" style="font-size: 1.2rem; flex-shrink: 0;"></i>
                                         <div class="flex-grow-1">
                                             <div class="d-flex align-items-center justify-content-between mb-1">
-                                                <h6 class="mb-0" style="font-size: 0.8rem; line-height: 1.1;" 
+                                                <h6 class="mb-0 attachment-filename" style="font-size: 0.8rem; line-height: 1.1; flex-grow: 1; min-width: 0;"
                                                     title="${safeFileName}"
-                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-toggle="tooltip"
                                                     data-bs-placement="top">
                                                     ${displayName}
                                                 </h6>
@@ -3879,10 +3906,11 @@ function reloadPatientFiles() {
                     });
                     html += '</div>';
                     container.innerHTML = html;
-                    
+                    renderPatientFilesPagination(pag);
+
                     // Reinitialize tooltips
                     var tooltipTriggerList = [].slice.call(container.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    tooltipTriggerList.map(function (tooltipTriggerEl) {
                         return new bootstrap.Tooltip(tooltipTriggerEl);
                     });
                 }
@@ -3898,8 +3926,223 @@ function reloadPatientFiles() {
             showNotification('Error reloading files. Please refresh the page.', 'error');
             // Fallback: reload page after 2 seconds
             setTimeout(() => location.reload(), 2000);
+        })
+        .finally(() => {
+            hidePatientFilesLoading();
         });
 }
+
+function renderPatientFilesPagination(pag) {
+    const el = document.getElementById('patientFilesPagination');
+    if (!el) return;
+    if (!pag || !pag.total || pag.total <= (pag.perPage || 0) || pag.totalPages <= 1) {
+        el.innerHTML = '';
+        return;
+    }
+
+    const current = pag.page;
+    const total   = pag.totalPages;
+
+    // Same paging window as the project-wide patients.js helper.
+    let startPage = Math.max(1, current - 2);
+    let endPage   = Math.min(total, current + 2);
+    if (current <= 3) {
+        startPage = 1;
+        endPage = Math.min(5, total);
+    } else if (current >= total - 2) {
+        startPage = Math.max(1, total - 4);
+        endPage = total;
+    }
+
+    const firstShown = (current - 1) * pag.perPage + 1;
+    const lastShown  = Math.min(current * pag.perPage, pag.total);
+
+    let html = '';
+    html += `<div class="pagination-info text-muted mb-2 text-center small">Showing ${firstShown}–${lastShown} of ${pag.total}</div>`;
+    html += `<nav aria-label="Patient files pagination"><ul class="pagination pagination-sm justify-content-center mb-0">`;
+
+    html += `<li class="page-item ${current === 1 ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="patientFilesChangePage(${current - 1}); return false;" aria-label="Previous">
+            <i class="bi bi-chevron-right"></i>
+        </a>
+    </li>`;
+
+    if (startPage > 1) {
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="patientFilesChangePage(1); return false;">1</a></li>`;
+        if (startPage > 2) html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        html += `<li class="page-item ${i === current ? 'active' : ''}">
+            <a class="page-link" href="#" onclick="patientFilesChangePage(${i}); return false;">${i}</a>
+        </li>`;
+    }
+
+    if (endPage < total) {
+        if (endPage < total - 1) html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="patientFilesChangePage(${total}); return false;">${total}</a></li>`;
+    }
+
+    html += `<li class="page-item ${current === total ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="patientFilesChangePage(${current + 1}); return false;" aria-label="Next">
+            <i class="bi bi-chevron-left"></i>
+        </a>
+    </li>`;
+
+    html += `</ul></nav>`;
+    el.innerHTML = html;
+}
+
+window.patientFilesChangePage = function (page) {
+    const target = parseInt(page, 10);
+    if (!Number.isFinite(target) || target < 1) return;
+    if (target === window.patientFilesCurrentPage) return;
+    reloadPatientFiles(target);
+};
+
+// ===========================================================================
+// Patient files selection + bulk delete
+// ===========================================================================
+window.patientFilesSelectedIds = new Set();
+
+function patientFilesRefreshSelectionUI() {
+    document.querySelectorAll('#patientFilesRow .attachment-select-checkbox').forEach(cb => {
+        if (cb.dataset.wired === '1') return;
+        cb.dataset.wired = '1';
+        cb.addEventListener('click', (e) => {
+            e.stopPropagation();
+            patientFilesToggleId(parseInt(cb.dataset.id, 10), cb.checked);
+        });
+        const id = parseInt(cb.dataset.id, 10);
+        if (window.patientFilesSelectedIds.has(id)) {
+            cb.checked = true;
+            cb.closest('.attachment-card')?.classList.add('is-selected');
+        }
+    });
+    patientFilesSyncSelectAllButton();
+    patientFilesSyncDeleteButton();
+}
+
+function patientFilesToggleId(id, checked) {
+    if (!Number.isFinite(id)) return;
+    const card = document.querySelector(`#patientFilesRow .attachment-card[data-attachment-id="${id}"]`);
+    if (checked) {
+        window.patientFilesSelectedIds.add(id);
+        card?.classList.add('is-selected');
+    } else {
+        window.patientFilesSelectedIds.delete(id);
+        card?.classList.remove('is-selected');
+    }
+    patientFilesSyncSelectAllButton();
+    patientFilesSyncDeleteButton();
+}
+
+function patientFilesToggleSelectAll() {
+    const checkboxes = document.querySelectorAll('#patientFilesRow .attachment-select-checkbox');
+    if (!checkboxes.length) return;
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    checkboxes.forEach(cb => {
+        const id = parseInt(cb.dataset.id, 10);
+        cb.checked = !allChecked;
+        patientFilesToggleId(id, !allChecked);
+    });
+}
+
+function patientFilesSyncSelectAllButton() {
+    const btn = document.getElementById('patientFilesSelectAllBtn');
+    if (!btn) return;
+    const checkboxes = document.querySelectorAll('#patientFilesRow .attachment-select-checkbox');
+    const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+    btn.classList.toggle('active', allChecked);
+    const icon = btn.querySelector('i');
+    if (icon) icon.className = allChecked ? 'bi bi-x-square' : 'bi bi-check2-square';
+    btn.title = allChecked ? 'Clear selection on this page' : 'Select all on this page';
+}
+
+function patientFilesSyncDeleteButton() {
+    const btn = document.getElementById('patientFilesDeleteSelectedBtn');
+    if (!btn) return;
+    const count = window.patientFilesSelectedIds.size;
+    btn.disabled = count === 0;
+    const badge = document.getElementById('patientFilesSelectedBadge');
+    if (badge) {
+        if (count > 0) { badge.textContent = String(count); badge.classList.remove('d-none'); }
+        else { badge.classList.add('d-none'); }
+    }
+}
+
+function patientFilesConfirmDeleteSelected() {
+    const ids = Array.from(window.patientFilesSelectedIds);
+    if (!ids.length) return;
+    openBulkDeleteConfirmModal({
+        count: ids.length,
+        kind: 'file',
+        onConfirm: () => patientFilesBulkDeleteRequest(ids),
+    });
+}
+
+function patientFilesBulkDeleteRequest(ids) {
+    const cfg = window.PATIENT_CONFIG || {};
+    const patientId = cfg.patientId;
+    if (!patientId) return Promise.reject(new Error('No patient id'));
+
+    return fetch('/api/patients/files/bulk-delete', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({ patient_id: patientId, ids })
+    })
+    .then(r => r.json())
+    .then(json => {
+        if (!json || !json.success) {
+            throw new Error(json && json.message ? json.message : 'Bulk delete failed');
+        }
+        window.patientFilesSelectedIds.clear();
+        patientFilesSyncDeleteButton();
+        reloadPatientFiles(window.patientFilesCurrentPage);
+        return json;
+    });
+}
+
+function patientFilesInjectCheckboxes() {
+    document.querySelectorAll('#patientFilesRow .attachment-card').forEach(card => {
+        if (card.querySelector('.attachment-select-checkbox')) return;
+        const id = card.dataset.attachmentId;
+        if (!id) return;
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'attachment-select-checkbox';
+        cb.dataset.id = id;
+        cb.title = 'Select for bulk delete';
+
+        const thumb = card.querySelector(':scope > .mb-2.text-center');
+        if (thumb) {
+            thumb.classList.add('attachment-thumb-host');
+            thumb.appendChild(cb);
+        } else {
+            card.classList.add('attachment-card--no-thumb');
+            card.appendChild(cb);
+        }
+    });
+    patientFilesRefreshSelectionUI();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    patientFilesInjectCheckboxes();
+    const container = document.getElementById('patientFilesContainer');
+    if (container && 'MutationObserver' in window) {
+        new MutationObserver(() => patientFilesInjectCheckboxes())
+            .observe(container, { childList: true, subtree: true });
+    }
+});
+
+// On page load: if the server rendered more than the per-page limit, swap to the paginated view.
+document.addEventListener('DOMContentLoaded', function () {
+    const rendered = document.querySelectorAll('#patientFilesRow > .col-md-6').length;
+    if (rendered > window.PATIENT_FILES_PER_PAGE) {
+        reloadPatientFiles(1);
+    }
+});
 
 // Load Patient Alerts
 function loadPatientAlerts() {

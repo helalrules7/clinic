@@ -229,7 +229,14 @@
                                     <?php endif; ?>
                                 </select>
                             </div>
-                            
+
+                            <div class="mb-3">
+                                <label for="bookingClinic" class="form-label arabic-text">العيادة <span class="text-danger">*</span></label>
+                                <select class="form-select arabic-text" id="bookingClinic" name="clinic_id" required>
+                                    <option value="">اختر العيادة...</option>
+                                </select>
+                            </div>
+
                             <div class="mb-3">
                                 <label for="visitType" class="form-label arabic-text">نوع الزيارة <span class="text-danger">*</span></label>
                                 <select class="form-select" id="visitType" name="visit_type" required onchange="updateVisitCost()">
@@ -397,6 +404,14 @@
                                 </select>
                                 <div class="invalid-feedback"></div>
                                 <div class="form-text text-danger arabic-text"><strong>مطلوب:</strong> غير الجنس إذا لزم الأمر</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="patientClinic" class="form-label arabic-text">العيادة <span class="text-danger">*</span></label>
+                                <select class="form-select arabic-text" id="patientClinic" name="clinic_id" required>
+                                    <option value="">اختر العيادة...</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
                             </div>
                         </div>
                     </div>
@@ -1114,6 +1129,25 @@ kbd[lang="ar"] {
     border: 1px solid var(--border);
     background: var(--card);
     color: var(--text);
+}
+
+.clinic-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--clinic-color, #6c757d) 14%, transparent);
+    color: var(--clinic-color, #6c757d);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+.clinic-tag i { font-size: 0.95rem; }
+.dark .clinic-tag {
+    background: color-mix(in srgb, var(--clinic-color, #adb5bd) 22%, transparent);
+    filter: brightness(1.15);
 }
 
 /* Dark Mode Appointment Cards */
@@ -2824,6 +2858,16 @@ function renderAppointmentSlot(appointment) {
                        <div class="text-muted small arabic-text mb-2">
                       <strong>الطبيب: </strong> ${appointment.doctor_display_name}
                     </div>
+                    ${(appointment.clinic_name_ar || appointment.clinic_name_en) ? (() => {
+                        const v = (window.ClinicsLoader && window.ClinicsLoader.getVisual)
+                            ? window.ClinicsLoader.getVisual(appointment.clinic_code)
+                            : { icon: 'bi-building', color: '#6c757d' };
+                        return `
+                    <div class="text-muted small arabic-text mb-2">
+                       <strong>العيادة: </strong>
+                       <span class="clinic-tag" style="--clinic-color:${v.color}"><i class="bi ${v.icon}"></i> ${appointment.clinic_name_ar || appointment.clinic_name_en}</span>
+                    </div>`;
+                    })() : ''}
                     <div class="payment-info arabic-text">
                         <div class="small">
                             <div class="text-success mb-1">
@@ -3129,7 +3173,12 @@ async function handleAddBooking(e) {
         showNotification('يرجى اختيار نوع الزيارة', 'warning');
         return;
     }
-    
+
+    if (!bookingData.clinic_id) {
+        showNotification('يرجى اختيار العيادة', 'warning');
+        return;
+    }
+
     // Get visit cost from selected option's data-cost attribute
     const visitTypeSelect = document.getElementById('visitType');
     const selectedOption = visitTypeSelect.querySelector(`option[value="${bookingData.visit_type}"]`);
@@ -4113,7 +4162,14 @@ function initializeAddPatientModal() {
             document.getElementById('gender').focus();
             return;
         }
-        
+
+        const clinicSelect = document.getElementById('patientClinic');
+        if (clinicSelect && !clinicSelect.value) {
+            showMessage('يرجى اختيار العيادة.', 'error');
+            clinicSelect.focus();
+            return;
+        }
+
         // Validate phone number format
         const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
         const phoneRegex = /^(\+\d{1,3})?\d{7,15}$/;
@@ -4121,7 +4177,7 @@ function initializeAddPatientModal() {
             showMessage('يرجى إدخال رقم هاتف صحيح (7-15 رقم، مع إمكانية إضافة رمز الدولة).', 'error');
             return;
         }
-        
+
         // Submit form
         submitPatientForm();
     });
@@ -4405,7 +4461,21 @@ function formatMoney(amount) {
 // Initialize add patient modal when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     initializeAddPatientModal();
-    
+
+    // Populate Clinic dropdowns (Arabic) whenever the booking / patient modal opens
+    const _addBookingModal = document.getElementById('addBookingModal');
+    if (_addBookingModal && window.ClinicsLoader) {
+        _addBookingModal.addEventListener('show.bs.modal', function () {
+            window.ClinicsLoader.populate('bookingClinic', { lang: 'ar' });
+        });
+    }
+    const _addPatientModal = document.getElementById('addPatientModal');
+    if (_addPatientModal && window.ClinicsLoader) {
+        _addPatientModal.addEventListener('show.bs.modal', function () {
+            window.ClinicsLoader.populate('patientClinic', { lang: 'ar' });
+        });
+    }
+
     // Check for openModal query parameter and open the corresponding modal
     const urlParams = new URLSearchParams(window.location.search);
     const openModal = urlParams.get('openModal');

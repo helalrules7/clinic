@@ -1,0 +1,35 @@
+# Local secrets / per-environment configuration
+.env
+.env.*
+!env.example
+
+# Composer-managed (project root only — keep vendored libraries elsewhere,
+# e.g. app/Views/layouts/vendor/fabric.min.js)
+/vendor/
+composer.phar
+
+# Runtime / cache (don't commit user-generated state)
+storage/logs/*
+storage/cache/*
+storage/sessions/*
+!storage/logs/.gitkeep
+!storage/cache/.gitkeep
+!storage/sessions/.gitkeep
+
+# User-uploaded files
+uploads/
+
+# Backups / migration leftovers
+backups/
+storage.zip
+
+# Editor / OS noise
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Local-only generated artifacts
+*.log

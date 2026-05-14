@@ -1278,7 +1278,23 @@
                                 <div class="invalid-feedback"></div>
                                 <div class="form-text text-danger"><strong>Required:</strong> Change the gender if needed</div>
                             </div>
-                            
+
+                            <div class="mb-3">
+                                <label for="patientClinic" class="form-label">Clinic <span class="text-danger">*</span></label>
+                                <section class="field menu" style="min-width: 100%;">
+                                    <div class="control">
+                                        <select class="form-select d-none" id="patientClinic" name="clinic_id" required>
+                                            <option value="">Select clinic...</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false"><i class="bi bi-building fs-5"></i> <h3>Select clinic...</h3></button>
+                                        <menu>
+                                            <li data-option="" tabindex="0" role="button" class="selected"><h3>Select clinic...</h3></li>
+                                        </menu>
+                                    </div>
+                                </section>
+                                <div class="invalid-feedback"></div>
+                            </div>
+
                             <div class="mb-3" style="display: none;">
                                 <label for="emergencyContact" class="form-label">Emergency Contact</label>
                                 <input type="text" class="form-control" id="emergencyContact" name="emergency_contact" maxlength="100">
@@ -1483,6 +1499,16 @@
     };
 </script>
 <script src="/app/Views/doctor/assets/js/patients.js?v=<?= file_exists(__DIR__ . '/assets/js/patients.js') ? filemtime(__DIR__ . '/assets/js/patients.js') : time() ?>"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const addPatientModal = document.getElementById('addPatientModal');
+        if (addPatientModal && window.ClinicsLoader) {
+            addPatientModal.addEventListener('show.bs.modal', function () {
+                window.ClinicsLoader.populate('patientClinic', { lang: 'ar' });
+            });
+        }
+    });
+</script>
 <style>
     .modal-backdrop.show{
         display: none !important;

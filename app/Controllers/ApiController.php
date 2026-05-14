@@ -54,6 +54,43 @@ class ApiController
         }
     }
 
+    public function getClinics()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+
+            // Secretaries are scoped to their own clinic; doctors/admins see all active clinics.
+            if (($user['role'] ?? null) === 'secretary' && !empty($user['clinic_id'])) {
+                $stmt = $this->pdo->prepare("
+                    SELECT id, code, name_ar, name_en
+                    FROM clinics
+                    WHERE is_active = 1 AND id = ?
+                    ORDER BY sort_order ASC, id ASC
+                ");
+                $stmt->execute([(int)$user['clinic_id']]);
+            } else {
+                $stmt = $this->pdo->query("
+                    SELECT id, code, name_ar, name_en
+                    FROM clinics
+                    WHERE is_active = 1
+                    ORDER BY sort_order ASC, id ASC
+                ");
+            }
+            $clinics = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => $clinics
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function getCalendar()
     {
         try {
@@ -325,6 +362,7 @@ class ApiController
             $rules = [
                 'patient_id' => 'required|integer',
                 'doctor_id' => 'required|integer',
+                'clinic_id' => 'required|integer',
                 'date' => 'required|date',
                 'start_time' => 'required',
                 'visit_type' => 'required|in:New,FollowUp,Procedure',
@@ -339,11 +377,27 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Invalid JSON input'], 400);
             }
 
+            // Secretaries are clinic-scoped: ignore client-sent clinic_id and pin to their own.
+            $currentUser = $this->auth->user();
+            if (($currentUser['role'] ?? null) === 'secretary') {
+                if (empty($currentUser['clinic_id'])) {
+                    return $this->jsonResponse(['error' => 'Your account has no clinic assigned'], 403);
+                }
+                $data['clinic_id'] = (int)$currentUser['clinic_id'];
+            }
+
             if (!$this->validator->validate($data, $rules)) {
                 return $this->jsonResponse([
                     'error' => 'Validation failed',
                     'details' => $this->validator->getAllErrors()
                 ], 400);
+            }
+
+            // Ensure clinic_id is valid
+            $clinicCheck = $this->pdo->prepare("SELECT id FROM clinics WHERE id = ? AND is_active = 1");
+            $clinicCheck->execute([(int)$data['clinic_id']]);
+            if (!$clinicCheck->fetch()) {
+                return $this->jsonResponse(['error' => 'Invalid or inactive clinic'], 400);
             }
 
             // Check if patient already has an active appointment for today
@@ -1082,11 +1136,22 @@ class ApiController
                 'alt_phone' => 'max:20',
                 'address' => 'max:500',
                 'national_id' => 'max:20',
+                'clinic_id' => 'required|integer',
                 'emergency_contact' => 'max:100',
                 'emergency_phone' => 'max:20'
             ];
 
             $data = $_POST;
+
+            // Secretaries are clinic-scoped: ignore any client-sent clinic_id and pin to their own.
+            $currentUser = $this->auth->user();
+            if (($currentUser['role'] ?? null) === 'secretary') {
+                if (empty($currentUser['clinic_id'])) {
+                    return $this->jsonResponse(['error' => 'Your account has no clinic assigned'], 403);
+                }
+                $data['clinic_id'] = (int)$currentUser['clinic_id'];
+            }
+
             if (!$this->validator->validate($data, $rules)) {
                 return $this->jsonResponse([
                     'error' => 'Validation failed',
@@ -1099,6 +1164,13 @@ class ApiController
                 return $this->jsonResponse([
                     'error' => 'Gender is required and must be either Male or Female'
                 ], 400);
+            }
+
+            // Ensure clinic_id is valid
+            $clinicCheck = $this->pdo->prepare("SELECT id FROM clinics WHERE id = ? AND is_active = 1");
+            $clinicCheck->execute([(int)$data['clinic_id']]);
+            if (!$clinicCheck->fetch()) {
+                return $this->jsonResponse(['error' => 'Invalid or inactive clinic'], 400);
             }
 
             // Process age and date of birth
@@ -1672,10 +1744,12 @@ class ApiController
         $stmt = $this->pdo->prepare("
             SELECT a.*, p.first_name, p.last_name, p.phone, p.dob, p.gender,
                    CONCAT(p.first_name, ' ', p.last_name) as patient_name,
+                   c.name_en as clinic_name_en, c.name_ar as clinic_name_ar, c.code as clinic_code,
                    DATE_FORMAT(a.start_time, '%H:%i') as start_time_formatted,
                    DATE_FORMAT(a.end_time, '%H:%i') as end_time_formatted
             FROM appointments a
             JOIN patients p ON a.patient_id = p.id
+            LEFT JOIN clinics c ON a.clinic_id = c.id
             WHERE a.doctor_id = ? AND a.date = ? AND a.status NOT IN ('Cancelled', 'NoShow')
             ORDER BY a.start_time
         ");
@@ -1701,6 +1775,7 @@ class ApiController
         $stmt = $this->pdo->prepare("
             SELECT a.*, p.first_name, p.last_name, p.phone, p.dob, p.gender,
                    CONCAT(p.first_name, ' ', p.last_name) as patient_name,
+                   c.name_en as clinic_name_en, c.name_ar as clinic_name_ar, c.code as clinic_code,
                    DATE_FORMAT(a.start_time, '%H:%i') as start_time_formatted,
                    DATE_FORMAT(a.end_time, '%H:%i') as end_time_formatted,
                    d.display_name as doctor_name, u.name as user_name
@@ -1708,6 +1783,7 @@ class ApiController
             JOIN patients p ON a.patient_id = p.id
             JOIN doctors d ON a.doctor_id = d.id
             JOIN users u ON d.user_id = u.id
+            LEFT JOIN clinics c ON a.clinic_id = c.id
             WHERE a.date = ? AND a.status NOT IN ('Cancelled', 'NoShow')
             ORDER BY a.start_time
         ");
@@ -2064,11 +2140,13 @@ class ApiController
         $stmt = $this->pdo->prepare("
             SELECT a.*, p.first_name, p.last_name, p.phone, p.dob, p.gender,
                    CONCAT(p.first_name, ' ', p.last_name) as patient_name,
-                   CONCAT(u.name) as doctor_name
+                   CONCAT(u.name) as doctor_name,
+                   c.name_en as clinic_name_en, c.name_ar as clinic_name_ar, c.code as clinic_code
             FROM appointments a
             JOIN patients p ON a.patient_id = p.id
             JOIN doctors d ON a.doctor_id = d.id
             JOIN users u ON d.user_id = u.id
+            LEFT JOIN clinics c ON a.clinic_id = c.id
             WHERE a.id = ?
         ");
         $stmt->execute([$id]);
@@ -2192,8 +2270,8 @@ class ApiController
     {
         try {
             $stmt = $this->pdo->prepare("
-                INSERT INTO appointments (patient_id, doctor_id, booked_by, source, date, start_time, end_time, visit_type, notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO appointments (patient_id, doctor_id, clinic_id, booked_by, source, date, start_time, end_time, visit_type, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
 
             $endTime = $this->calculateEndTime($data['start_time']);
@@ -2205,9 +2283,18 @@ class ApiController
                 throw new \Exception('booked_by is required');
             }
 
+            $clinicId = !empty($data['clinic_id']) ? (int)$data['clinic_id'] : null;
+
+            // If patient was created without a clinic, adopt the appointment's clinic as their default
+            if ($clinicId) {
+                $this->pdo->prepare("UPDATE patients SET clinic_id = ? WHERE id = ? AND clinic_id IS NULL")
+                    ->execute([$clinicId, $data['patient_id']]);
+            }
+
             $result = $stmt->execute([
                 $data['patient_id'],
                 $data['doctor_id'],
+                $clinicId,
                 $bookedBy,
                 $data['source'],
                 $data['date'],
@@ -2823,8 +2910,8 @@ class ApiController
     private function createPatientRecord($data)
     {
         $stmt = $this->pdo->prepare("
-            INSERT INTO patients (first_name, last_name, dob, gender, phone, alt_phone, address, national_id, emergency_contact, emergency_phone)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO patients (first_name, last_name, dob, gender, phone, alt_phone, address, national_id, clinic_id, emergency_contact, emergency_phone)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
 
         $stmt->execute([
@@ -2836,6 +2923,7 @@ class ApiController
             $data['alt_phone'] ?? null,
             $data['address'] ?? null,
             $data['national_id'] ?? null,
+            !empty($data['clinic_id']) ? (int)$data['clinic_id'] : null,
             $data['emergency_contact'] ?? null,
             $data['emergency_phone'] ?? null
         ]);
@@ -3213,10 +3301,16 @@ class ApiController
             ]);
 
             if ($result) {
+                $attachmentId = $this->pdo->lastInsertId();
+
                 // Create timeline event
                 $this->createTimelineEvent($patientId, $appointmentId, 'Attachment', 'Uploaded: ' . $file['name']);
 
-                return $this->jsonResponse(['success' => true, 'message' => 'File uploaded successfully']);
+                return $this->jsonResponse([
+                    'success' => true,
+                    'message' => 'File uploaded successfully',
+                    'attachment_id' => (int)$attachmentId,
+                ]);
             } else {
                 // Delete file if database insert failed
                 unlink($filePath);
@@ -3224,6 +3318,123 @@ class ApiController
             }
 
         } catch (Exception $e) {
+            return $this->jsonResponse(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Replace the binary content of an existing attachment in place.
+     * Keeps the same DB row + same filename so the appointment's attachment list
+     * doesn't accumulate duplicates from auto-save (e.g. consultation drawings).
+     */
+    public function replaceAttachment($id)
+    {
+        if (ob_get_level()) {
+            ob_clean();
+        }
+
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            $id = (int)$id;
+            if ($id <= 0) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Invalid attachment id'], 400);
+            }
+
+            // Fetch existing
+            $stmt = $this->pdo->prepare("SELECT * FROM patient_attachments WHERE id = ?");
+            $stmt->execute([$id]);
+            $existing = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if (!$existing) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Attachment not found'], 404);
+            }
+
+            $user = $this->auth->user();
+            // Only the original uploader (or a doctor/admin) may replace the content.
+            if ((int)$existing['uploaded_by'] !== (int)$user['id']
+                && !in_array($user['role'] ?? '', ['doctor', 'admin'], true)) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Forbidden'], 403);
+            }
+
+            if (!isset($_FILES['attachment_file']) || $_FILES['attachment_file']['error'] !== UPLOAD_ERR_OK) {
+                return $this->jsonResponse(['success' => false, 'message' => 'No file uploaded or upload error']);
+            }
+
+            $file = $_FILES['attachment_file'];
+
+            if ($file['size'] > 5 * 1024 * 1024) {
+                return $this->jsonResponse(['success' => false, 'message' => 'File size exceeds 5MB limit']);
+            }
+
+            $allowedMimes = [
+                'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'text/plain',
+            ];
+
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+
+            if (!in_array($mimeType, $allowedMimes, true)) {
+                return $this->jsonResponse(['success' => false, 'message' => 'File type not allowed']);
+            }
+
+            $uploadDir = __DIR__ . '/../../storage/uploads/attachments/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            // Keep the existing filename if its extension still matches; otherwise create a new
+            // filename and delete the old file. This keeps URLs stable for in-session reloads.
+            $existingFilename = $existing['filename'];
+            $existingExt = strtolower(pathinfo($existingFilename, PATHINFO_EXTENSION));
+            $newExt = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+            if ($existingExt === $newExt) {
+                $filename = $existingFilename;
+                $filePath = $uploadDir . $filename;
+                // Overwrite in place
+                if (!@move_uploaded_file($file['tmp_name'], $filePath)) {
+                    return $this->jsonResponse(['success' => false, 'message' => 'Failed to overwrite file']);
+                }
+            } else {
+                $filename = uniqid('att_') . '.' . $newExt;
+                $filePath = $uploadDir . $filename;
+                if (!@move_uploaded_file($file['tmp_name'], $filePath)) {
+                    return $this->jsonResponse(['success' => false, 'message' => 'Failed to save new file']);
+                }
+                // Delete the old file once the new one is in place
+                $oldPath = $uploadDir . $existingFilename;
+                if (is_file($oldPath)) {
+                    @unlink($oldPath);
+                }
+            }
+
+            $updateStmt = $this->pdo->prepare("
+                UPDATE patient_attachments
+                SET filename = ?, original_filename = ?, file_path = ?, file_size = ?, mime_type = ?
+                WHERE id = ?
+            ");
+            $updateStmt->execute([
+                $filename,
+                $file['name'],
+                'storage/uploads/attachments/' . $filename,
+                $file['size'],
+                $mimeType,
+                $id,
+            ]);
+
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => 'Attachment replaced',
+                'attachment_id' => $id,
+            ]);
+        } catch (\Exception $e) {
             return $this->jsonResponse(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
         }
     }
@@ -3423,6 +3634,72 @@ class ApiController
         }
     }
 
+    /**
+     * Bulk-delete a set of attachment ids that all belong to the same appointment.
+     * Body: { appointment_id: int, ids: int[] }
+     * Returns counts so the UI can confirm the operation.
+     */
+    public function bulkDeleteAttachments()
+    {
+        if (ob_get_level()) {
+            ob_clean();
+        }
+
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            $input = json_decode(file_get_contents('php://input'), true) ?: [];
+            $appointmentId = isset($input['appointment_id']) ? (int)$input['appointment_id'] : 0;
+            $ids = isset($input['ids']) && is_array($input['ids']) ? $input['ids'] : [];
+            $ids = array_values(array_unique(array_filter(array_map('intval', $ids), fn($n) => $n > 0)));
+
+            if ($appointmentId <= 0 || empty($ids)) {
+                return $this->jsonResponse(['success' => false, 'message' => 'appointment_id and ids are required'], 400);
+            }
+
+            // Only allow deleting rows that actually belong to this appointment (defence-in-depth).
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $params = array_merge([$appointmentId], $ids);
+            $stmt = $this->pdo->prepare("SELECT * FROM patient_attachments WHERE appointment_id = ? AND id IN ($placeholders)");
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            if (empty($rows)) {
+                return $this->jsonResponse(['success' => true, 'deleted' => 0, 'message' => 'Nothing to delete']);
+            }
+
+            $deleted = 0;
+            $uploadDir = __DIR__ . '/../../';
+            $this->pdo->beginTransaction();
+            try {
+                $del = $this->pdo->prepare("DELETE FROM patient_attachments WHERE id = ?");
+                foreach ($rows as $row) {
+                    if ($del->execute([$row['id']])) {
+                        $deleted++;
+                        $path = $uploadDir . $row['file_path'];
+                        if (is_file($path)) @unlink($path);
+                        $this->createTimelineEvent(
+                            $row['patient_id'],
+                            $row['appointment_id'],
+                            'Attachment',
+                            'Deleted: ' . $row['original_filename']
+                        );
+                    }
+                }
+                $this->pdo->commit();
+            } catch (\Throwable $e) {
+                $this->pdo->rollBack();
+                throw $e;
+            }
+
+            return $this->jsonResponse(['success' => true, 'deleted' => $deleted]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['success' => false, 'message' => 'Server error: ' . $e->getMessage()], 500);
+        }
+    }
+
     public function getAppointmentAttachments($appointmentId)
     {
         try {
@@ -3430,17 +3707,49 @@ class ApiController
                 return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
             }
 
-            $stmt = $this->pdo->prepare("
-                SELECT * FROM patient_attachments 
-                WHERE appointment_id = ? 
-                ORDER BY created_at DESC
-            ");
-            $stmt->execute([$appointmentId]);
+            // Pagination — `perPage = 0` means "no pagination", return everything.
+            $page    = max(1, (int)($_GET['page']    ?? 1));
+            $perPage = max(0, (int)($_GET['perPage'] ?? 0));
+
+            $countStmt = $this->pdo->prepare("SELECT COUNT(*) FROM patient_attachments WHERE appointment_id = ?");
+            $countStmt->execute([$appointmentId]);
+            $total = (int)$countStmt->fetchColumn();
+
+            if ($perPage > 0) {
+                $totalPages = max(1, (int)ceil($total / $perPage));
+                if ($page > $totalPages) $page = $totalPages;
+                $offset = ($page - 1) * $perPage;
+                $stmt = $this->pdo->prepare("
+                    SELECT * FROM patient_attachments
+                    WHERE appointment_id = ?
+                    ORDER BY created_at DESC
+                    LIMIT ? OFFSET ?
+                ");
+                $stmt->bindValue(1, (int)$appointmentId, \PDO::PARAM_INT);
+                $stmt->bindValue(2, (int)$perPage,       \PDO::PARAM_INT);
+                $stmt->bindValue(3, (int)$offset,        \PDO::PARAM_INT);
+                $stmt->execute();
+            } else {
+                $totalPages = 1;
+                $stmt = $this->pdo->prepare("
+                    SELECT * FROM patient_attachments
+                    WHERE appointment_id = ?
+                    ORDER BY created_at DESC
+                ");
+                $stmt->execute([$appointmentId]);
+            }
+
             $attachments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             return $this->jsonResponse([
                 'success' => true,
-                'attachments' => $attachments
+                'attachments' => $attachments,
+                'pagination' => [
+                    'page'        => $page,
+                    'perPage'     => $perPage,
+                    'total'       => $total,
+                    'totalPages'  => $totalPages,
+                ],
             ]);
 
         } catch (\Exception $e) {
@@ -4233,6 +4542,177 @@ class ApiController
         }
     }
 
+    /**
+     * Bulk-delete a set of patient_files ids that all belong to the same patient.
+     * Body: { patient_id: int, ids: int[] }
+     */
+    public function bulkDeletePatientFiles()
+    {
+        if (ob_get_level()) {
+            ob_clean();
+        }
+
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            $input = json_decode(file_get_contents('php://input'), true) ?: [];
+            $patientId = isset($input['patient_id']) ? (int)$input['patient_id'] : 0;
+            $ids = isset($input['ids']) && is_array($input['ids']) ? $input['ids'] : [];
+            $ids = array_values(array_unique(array_filter(array_map('intval', $ids), fn($n) => $n > 0)));
+
+            if ($patientId <= 0 || empty($ids)) {
+                return $this->jsonResponse(['success' => false, 'message' => 'patient_id and ids are required'], 400);
+            }
+
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $params = array_merge([$patientId], $ids);
+            $stmt = $this->pdo->prepare("SELECT * FROM patient_files WHERE patient_id = ? AND id IN ($placeholders)");
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            if (empty($rows)) {
+                return $this->jsonResponse(['success' => true, 'deleted' => 0, 'message' => 'Nothing to delete']);
+            }
+
+            $deleted = 0;
+            $uploadDir = __DIR__ . '/../../';
+            $this->pdo->beginTransaction();
+            try {
+                $del = $this->pdo->prepare("DELETE FROM patient_files WHERE id = ?");
+                foreach ($rows as $row) {
+                    if ($del->execute([$row['id']])) {
+                        $deleted++;
+                        $path = $uploadDir . $row['file_path'];
+                        if (is_file($path)) @unlink($path);
+                    }
+                }
+                $this->pdo->commit();
+            } catch (\Throwable $e) {
+                $this->pdo->rollBack();
+                throw $e;
+            }
+
+            return $this->jsonResponse(['success' => true, 'deleted' => $deleted]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['success' => false, 'message' => 'Server error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Replace the binary content of an existing patient_files row in place.
+     * Mirrors replaceAttachment but targets the separate patient files endpoint
+     * used by the patient profile page.
+     */
+    public function replacePatientFile($id)
+    {
+        if (ob_get_level()) {
+            ob_clean();
+        }
+
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            $id = (int)$id;
+            if ($id <= 0) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Invalid file id'], 400);
+            }
+
+            $stmt = $this->pdo->prepare("SELECT * FROM patient_files WHERE id = ?");
+            $stmt->execute([$id]);
+            $existing = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if (!$existing) {
+                return $this->jsonResponse(['success' => false, 'message' => 'File not found'], 404);
+            }
+
+            $user = $this->auth->user();
+            if ((int)$existing['uploaded_by'] !== (int)$user['id']
+                && !in_array($user['role'] ?? '', ['doctor', 'admin'], true)) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Forbidden'], 403);
+            }
+
+            if (!isset($_FILES['patient_file']) || $_FILES['patient_file']['error'] !== UPLOAD_ERR_OK) {
+                return $this->jsonResponse(['success' => false, 'message' => 'No file uploaded or upload error']);
+            }
+
+            $file = $_FILES['patient_file'];
+
+            if ($file['size'] > 5 * 1024 * 1024) {
+                return $this->jsonResponse(['success' => false, 'message' => 'File size exceeds 5MB limit']);
+            }
+
+            $allowedMimes = [
+                'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'text/plain',
+            ];
+
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+
+            if (!in_array($mimeType, $allowedMimes, true)) {
+                return $this->jsonResponse(['success' => false, 'message' => 'File type not allowed']);
+            }
+
+            $uploadDir = __DIR__ . '/../../uploads/patients/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            // Keep the same on-disk filename when the extension matches so the URL stays stable.
+            $existingPath = $existing['file_path']; // e.g. "uploads/patients/patient_5_xxx.png"
+            $existingBasename = basename($existingPath);
+            $existingExt = strtolower(pathinfo($existingBasename, PATHINFO_EXTENSION));
+            $newExt = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+            if ($existingExt === $newExt) {
+                $newBasename = $existingBasename;
+                $newRelativePath = $existingPath;
+                $newAbsPath = $uploadDir . $newBasename;
+                if (!@move_uploaded_file($file['tmp_name'], $newAbsPath)) {
+                    return $this->jsonResponse(['success' => false, 'message' => 'Failed to overwrite file']);
+                }
+            } else {
+                $newBasename = 'patient_' . (int)$existing['patient_id'] . '_' . time() . '_' . uniqid() . '.' . $newExt;
+                $newRelativePath = 'uploads/patients/' . $newBasename;
+                $newAbsPath = $uploadDir . $newBasename;
+                if (!@move_uploaded_file($file['tmp_name'], $newAbsPath)) {
+                    return $this->jsonResponse(['success' => false, 'message' => 'Failed to save new file']);
+                }
+                $oldAbsPath = __DIR__ . '/../../' . $existingPath;
+                if (is_file($oldAbsPath)) {
+                    @unlink($oldAbsPath);
+                }
+            }
+
+            $updateStmt = $this->pdo->prepare("
+                UPDATE patient_files
+                SET original_filename = ?, file_path = ?, file_size = ?
+                WHERE id = ?
+            ");
+            $updateStmt->execute([
+                $file['name'],
+                $newRelativePath,
+                $file['size'],
+                $id,
+            ]);
+
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => 'File replaced',
+                'file_id' => $id,
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+        }
+    }
+
     public function getPatientFiles($patientId)
     {
         try {
@@ -4240,17 +4720,48 @@ class ApiController
                 return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
             }
 
-            $stmt = $this->pdo->prepare("
-                SELECT * FROM patient_files 
-                WHERE patient_id = ? 
-                ORDER BY created_at DESC
-            ");
-            $stmt->execute([$patientId]);
+            $page    = max(1, (int)($_GET['page']    ?? 1));
+            $perPage = max(0, (int)($_GET['perPage'] ?? 0));
+
+            $countStmt = $this->pdo->prepare("SELECT COUNT(*) FROM patient_files WHERE patient_id = ?");
+            $countStmt->execute([$patientId]);
+            $total = (int)$countStmt->fetchColumn();
+
+            if ($perPage > 0) {
+                $totalPages = max(1, (int)ceil($total / $perPage));
+                if ($page > $totalPages) $page = $totalPages;
+                $offset = ($page - 1) * $perPage;
+                $stmt = $this->pdo->prepare("
+                    SELECT * FROM patient_files
+                    WHERE patient_id = ?
+                    ORDER BY created_at DESC
+                    LIMIT ? OFFSET ?
+                ");
+                $stmt->bindValue(1, (int)$patientId, \PDO::PARAM_INT);
+                $stmt->bindValue(2, (int)$perPage,   \PDO::PARAM_INT);
+                $stmt->bindValue(3, (int)$offset,    \PDO::PARAM_INT);
+                $stmt->execute();
+            } else {
+                $totalPages = 1;
+                $stmt = $this->pdo->prepare("
+                    SELECT * FROM patient_files
+                    WHERE patient_id = ?
+                    ORDER BY created_at DESC
+                ");
+                $stmt->execute([$patientId]);
+            }
+
             $files = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             return $this->jsonResponse([
                 'success' => true,
-                'files' => $files
+                'files' => $files,
+                'pagination' => [
+                    'page'       => $page,
+                    'perPage'    => $perPage,
+                    'total'      => $total,
+                    'totalPages' => $totalPages,
+                ],
             ]);
 
         } catch (Exception $e) {

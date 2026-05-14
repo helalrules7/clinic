@@ -185,13 +185,29 @@ class SecretaryController
             }
 
             $input = json_decode(file_get_contents('php://input'), true);
-            
+
+            // Pin clinic_id to the logged-in secretary's clinic (server-side enforcement).
+            $currentUser = $this->auth->user();
+            if (($currentUser['role'] ?? null) === 'secretary') {
+                if (empty($currentUser['clinic_id'])) {
+                    return $this->jsonResponse(['error' => 'Your account has no clinic assigned'], 403);
+                }
+                $input['clinic_id'] = (int)$currentUser['clinic_id'];
+            }
+
             // Validate required fields
-            $requiredFields = ['patient_id', 'doctor_id', 'date', 'start_time', 'visit_type'];
+            $requiredFields = ['patient_id', 'doctor_id', 'clinic_id', 'date', 'start_time', 'visit_type'];
             foreach ($requiredFields as $field) {
                 if (empty($input[$field])) {
                     return $this->jsonResponse(['error' => "Field {$field} is required"], 400);
                 }
+            }
+
+            // Validate clinic_id
+            $clinicCheck = $this->pdo->prepare("SELECT id FROM clinics WHERE id = ? AND is_active = 1");
+            $clinicCheck->execute([(int)$input['clinic_id']]);
+            if (!$clinicCheck->fetch()) {
+                return $this->jsonResponse(['error' => 'Invalid or inactive clinic'], 400);
             }
 
             // Validate date format
@@ -248,6 +264,7 @@ class SecretaryController
             $appointmentData = [
                 'patient_id' => $input['patient_id'],
                 'doctor_id' => $input['doctor_id'],
+                'clinic_id' => (int)$input['clinic_id'],
                 'date' => $input['date'],
                 'start_time' => $startTime,
                 'end_time' => $endTime,
@@ -329,6 +346,25 @@ class SecretaryController
         }
     }
 
+    /**
+     * Verify the logged-in secretary may act on this appointment.
+     * Returns a JSON 403 response if not — caller should return that.
+     * Doctors/admins are always allowed (NULL clinic_id on user).
+     */
+    private function assertBookingInScope(array $appointment)
+    {
+        $user = $this->auth->user();
+        if (($user['role'] ?? null) !== 'secretary' || empty($user['clinic_id'])) {
+            return null; // not a clinic-scoped user
+        }
+        if ((int)($appointment['clinic_id'] ?? 0) !== (int)$user['clinic_id']) {
+            return $this->jsonResponse([
+                'error' => 'هذا الحجز يخص عيادة أخرى ولا يمكنك التعديل عليه.'
+            ], 403);
+        }
+        return null;
+    }
+
     public function deleteBooking($id)
     {
         try {
@@ -342,6 +378,8 @@ class SecretaryController
             if (!$appointment) {
                 return $this->jsonResponse(['error' => 'Appointment not found'], 404);
             }
+
+            if ($denied = $this->assertBookingInScope($appointment)) return $denied;
 
             // Delete associated payments first
             $stmt = $this->pdo->prepare("DELETE FROM payments WHERE appointment_id = ?");
@@ -400,6 +438,8 @@ class SecretaryController
             if (!$appointment) {
                 return $this->jsonResponse(['error' => 'الموعد غير موجود'], 404);
             }
+
+            if ($denied = $this->assertBookingInScope($appointment)) return $denied;
 
             // Get visit cost based on visit type
             $settings = $this->getSystemSettings();
@@ -811,10 +851,14 @@ class SecretaryController
     {
         $limit = \App\Config\Constants::ITEMS_PER_PAGE;
         $offset = ($page - 1) * $limit;
-        
+
         $whereConditions = [];
         $params = [];
-        
+
+        // Note: patient list is intentionally shared across clinics — a patient registered
+        // in one clinic is free to book at another. Only appointments and finances are
+        // clinic-scoped for secretaries.
+
         // Search filter
         if (!empty($search)) {
             if ($this->isPhoneNumberSearch($search)) {
@@ -1230,24 +1274,35 @@ class SecretaryController
         try {
             // Get visit costs from settings
             $settings = $this->getSystemSettings();
-            
+
+            // Scope to secretary's clinic; doctors/admins see all clinics.
+            $currentUser = $this->auth->user();
+            $clinicFilter = '';
+            $params = [$date];
+            if (($currentUser['role'] ?? null) === 'secretary' && !empty($currentUser['clinic_id'])) {
+                $clinicFilter = ' AND a.clinic_id = ? ';
+                $params[] = (int)$currentUser['clinic_id'];
+            }
+
             $stmt = $this->pdo->prepare("
-                SELECT a.*, 
+                SELECT a.*,
                        CONCAT(p.first_name, ' ', p.last_name) as patient_name,
                        p.phone,
                        p.dob,
                        d.display_name as doctor_display_name,
                        d.id as doctor_id,
+                       c.name_ar as clinic_name_ar, c.name_en as clinic_name_en, c.code as clinic_code,
                        COALESCE(SUM(pay.amount), 0) as total_paid
                 FROM appointments a
                 JOIN patients p ON a.patient_id = p.id
                 JOIN doctors d ON a.doctor_id = d.id
+                LEFT JOIN clinics c ON a.clinic_id = c.id
                 LEFT JOIN payments pay ON a.id = pay.appointment_id
-                WHERE a.date = ?
+                WHERE a.date = ? {$clinicFilter}
                 GROUP BY a.id
                 ORDER BY a.start_time
             ");
-            $stmt->execute([$date]);
+            $stmt->execute($params);
             $appointments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             
             // Add visit cost based on visit type
@@ -1429,14 +1484,16 @@ class SecretaryController
     {
         try {
             $stmt = $this->pdo->prepare("
-                SELECT a.*, 
+                SELECT a.*,
                        CONCAT(p.first_name, ' ', p.last_name) as patient_name,
                        p.phone as patient_phone,
                        p.dob,
-                       d.display_name as doctor_display_name
+                       d.display_name as doctor_display_name,
+                       c.name_ar as clinic_name_ar, c.name_en as clinic_name_en, c.code as clinic_code
                 FROM appointments a
                 JOIN patients p ON a.patient_id = p.id
                 JOIN doctors d ON a.doctor_id = d.id
+                LEFT JOIN clinics c ON a.clinic_id = c.id
                 WHERE a.id = ?
             ");
             $stmt->execute([$id]);
@@ -1449,15 +1506,24 @@ class SecretaryController
     private function createAppointmentRecord($data)
     {
         try {
+            $clinicId = !empty($data['clinic_id']) ? (int)$data['clinic_id'] : null;
+
+            // Adopt clinic as patient default if the patient has none
+            if ($clinicId) {
+                $this->pdo->prepare("UPDATE patients SET clinic_id = ? WHERE id = ? AND clinic_id IS NULL")
+                    ->execute([$clinicId, $data['patient_id']]);
+            }
+
             $stmt = $this->pdo->prepare("
-                INSERT INTO appointments (patient_id, doctor_id, date, start_time, end_time, 
+                INSERT INTO appointments (patient_id, doctor_id, clinic_id, date, start_time, end_time,
                                         visit_type, source, notes, status, booked_by, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             ");
-            
+
             $stmt->execute([
                 $data['patient_id'],
                 $data['doctor_id'],
+                $clinicId,
                 $data['date'],
                 $data['start_time'],
                 $data['end_time'],
@@ -1467,7 +1533,7 @@ class SecretaryController
                 $data['status'],
                 $data['booked_by']
             ]);
-            
+
             return $this->pdo->lastInsertId();
         } catch (Exception $e) {
             throw $e;
@@ -1531,11 +1597,13 @@ class SecretaryController
             ");
             $stmt->execute([$id]);
             $appointment = $stmt->fetch(\PDO::FETCH_ASSOC);
-            
+
             if (!$appointment) {
                 return $this->jsonResponse(['error' => 'Appointment not found'], 404);
             }
-            
+
+            if ($denied = $this->assertBookingInScope($appointment)) return $denied;
+
             // Add visit cost based on visit type
             $settings = $this->getSystemSettings();
             switch ($appointment['visit_type']) {
@@ -1551,17 +1619,17 @@ class SecretaryController
                 default:
                     $appointment['visit_cost'] = 150;
             }
-            
+
             return $this->jsonResponse([
                 'ok' => true,
                 'booking' => $appointment
             ]);
-            
+
         } catch (Exception $e) {
             return $this->jsonResponse(['error' => 'Error getting booking details: ' . $e->getMessage()], 500);
         }
     }
-    
+
     public function updateBooking($id)
     {
         try {
@@ -1570,8 +1638,15 @@ class SecretaryController
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
 
+            // Block edits to bookings outside the secretary's clinic.
+            $existing = $this->getAppointmentDetails($id);
+            if (!$existing) {
+                return $this->jsonResponse(['error' => 'Booking not found'], 404);
+            }
+            if ($denied = $this->assertBookingInScope($existing)) return $denied;
+
             $input = json_decode(file_get_contents('php://input'), true);
-            
+
             // Validate required fields
             $requiredFields = ['patient_id', 'doctor_id', 'date', 'start_time', 'visit_type'];
             foreach ($requiredFields as $field) {
@@ -1579,7 +1654,7 @@ class SecretaryController
                     return $this->jsonResponse(['error' => "Field {$field} is required"], 400);
                 }
             }
-            
+
             // Get visit cost
             $settings = $this->getSystemSettings();
             $visitCost = 0;
@@ -1594,14 +1669,14 @@ class SecretaryController
                     $visitCost = $settings['consultation_cost'] ?? 200;
                     break;
             }
-            
+
             // Validate additional payment amount
             if (isset($input['additional_payment']) && $input['additional_payment'] < 0) {
                 return $this->jsonResponse([
                     'error' => 'المبلغ الإضافي لا يمكن أن يكون سالباً'
                 ], 400);
             }
-            
+
             // Calculate end time
             $endTime = $this->calculateEndTime($input['start_time']);
             
@@ -1859,21 +1934,26 @@ class SecretaryController
     {
         try {
             $stmt = $this->pdo->prepare("
-                SELECT 
-                    id,
-                    first_name,
-                    last_name,
-                    dob,
-                    gender,
-                    phone,
-                    alt_phone,
-                    national_id,
-                    emergency_contact,
-                    emergency_phone,
-                    address,
-                    created_at
-                FROM patients 
-                WHERE id = ?
+                SELECT
+                    p.id,
+                    p.first_name,
+                    p.last_name,
+                    p.dob,
+                    p.gender,
+                    p.phone,
+                    p.alt_phone,
+                    p.national_id,
+                    p.clinic_id,
+                    p.emergency_contact,
+                    p.emergency_phone,
+                    p.address,
+                    p.created_at,
+                    c.name_ar as clinic_name_ar,
+                    c.name_en as clinic_name_en,
+                    c.code as clinic_code
+                FROM patients p
+                LEFT JOIN clinics c ON p.clinic_id = c.id
+                WHERE p.id = ?
             ");
             $stmt->execute([$patientId]);
             return $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -2051,13 +2131,22 @@ class SecretaryController
             ");
             $stmt->execute([$id]);
             $booking = $stmt->fetch(\PDO::FETCH_ASSOC);
-            
+
             if (!$booking) {
                 http_response_code(404);
                 echo "Booking not found";
                 return;
             }
-            
+
+            // Block secretaries from viewing bookings outside their clinic.
+            if (($user['role'] ?? null) === 'secretary'
+                && !empty($user['clinic_id'])
+                && (int)$booking['clinic_id'] !== (int)$user['clinic_id']) {
+                http_response_code(403);
+                echo "This booking belongs to another clinic.";
+                return;
+            }
+
             // Add visit cost based on visit type
             $settings = $this->getSystemSettings();
             switch ($booking['visit_type']) {
