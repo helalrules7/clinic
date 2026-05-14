@@ -683,37 +683,29 @@ body.draw-modal-open [class*="floating"]:not(.modal):not(.modal *) {
     #drawConsultationModal #stampDropdown span,
     #drawConsultationModal #templateDropdown span { display: none; }
 
-    /* Layers panel on mobile: hidden by default, opens as a floating card
-       slightly raised from the bottom edge so it visually reads as a card
-       (not flush with the viewport) and leaves the modal-footer (Save
-       button) reachable underneath it. Tapping the toolbar Layers button
-       or the X inside toggles the .is-open class. */
+    /* Layers panel on phones: same anchor as desktop/tablet — top-right
+       corner of the canvas with a small inset — but narrower so it doesn't
+       hog the canvas. Hidden by default (the JS removes .is-open on
+       phones); the toolbar Layers button or the X inside toggles it. The
+       user can drag it anywhere from there. */
     #drawConsultationModal .draw-layers-panel {
-        position: fixed;
-        left: 12px;
-        right: 12px;
-        /* Sit above the modal-footer so the Save button stays tappable. */
-        bottom: 72px;
-        top: auto;
-        width: auto;
-        max-width: none;
-        max-height: 38vh;
-        border-radius: 14px;
-        z-index: 1200;
-        box-shadow: 0 8px 28px rgba(0,0,0,0.28), 0 -2px 8px rgba(0,0,0,0.05);
-        transform: translateY(120%);
-        opacity: 0;
-        transition: transform 0.22s ease, opacity 0.22s ease;
-        pointer-events: none;
-        display: block;
-    }
-    #drawConsultationModal .draw-layers-panel.is-open {
-        transform: translateY(0);
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        left: auto;
+        bottom: auto;
+        width: min(260px, calc(100% - 24px));
+        max-width: calc(100% - 24px);
+        max-height: 55vh;
+        border-radius: 10px;
+        z-index: 100;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.28);
+        transform: none;
         opacity: 1;
-        pointer-events: auto;
+        transition: none;
     }
     #drawConsultationModal .draw-layers-header {
-        padding: 0.7rem 0.85rem;
+        padding: 0.55rem 0.7rem;
         background: #f1f5f9;
     }
     .dark #drawConsultationModal .draw-layers-header {
@@ -721,12 +713,11 @@ body.draw-modal-open [class*="floating"]:not(.modal):not(.modal *) {
     }
     /* Slightly larger close button on phone for easier tapping. */
     #drawConsultationModal .draw-layers-close {
-        width: 36px;
-        height: 36px;
-        font-size: 1.15rem;
+        width: 32px;
+        height: 32px;
     }
     #drawConsultationModal .draw-layers-list {
-        max-height: calc(38vh - 60px);
+        max-height: calc(55vh - 50px);
     }
 
     /* Footer compact: Save button is the priority. The header already has
