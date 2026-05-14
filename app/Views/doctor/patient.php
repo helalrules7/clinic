@@ -811,15 +811,31 @@
                             <?php
             $appointmentIndex = 0;
             $totalAppointments = count($allAppointments);
-            foreach ($allAppointments as $index => $appointment): 
+            foreach ($allAppointments as $index => $appointment):
                 $isLatest = ($appointmentIndex === 0);
                 $appointmentIndex++;
                 $collapseId = 'appointmentCollapse' . $appointment['id'];
-                $statusColor = $appointment['status'] === 'Completed' ? 'success' : ($appointment['status'] === 'Cancelled' ? 'danger' : ($appointment['status'] === 'InProgress' ? 'warning' : 'primary'));
+                /* Effective status: a Booked appointment whose date is in the
+                   past is shown as "Missed" everywhere — the DB enum doesn't
+                   carry a 'Missed' value so we compute it here. Matches the
+                   logic on the single-appointment detail page. */
+                $rawStatus = $appointment['status'] ?? '';
+                $apptDate  = $appointment['date']   ?? '';
+                $isPastBooked = ($rawStatus === 'Booked' && $apptDate !== '' && $apptDate < date('Y-m-d'));
+                $effectiveStatus = $isPastBooked ? 'Missed' : $rawStatus;
+                $isMissedAppt = ($isPastBooked || $rawStatus === 'Cancelled' || $rawStatus === 'NoShow');
+                $statusColor = $rawStatus === 'Completed' ? 'success'
+                             : ($isMissedAppt ? 'danger'
+                             : ($rawStatus === 'InProgress' ? 'warning' : 'primary'));
+                $headerStateClass = '';
+                if ($rawStatus === 'Completed')          $headerStateClass = 'completed';
+                elseif ($isMissedAppt)                   $headerStateClass = 'missed';
+                elseif ($rawStatus === 'Closed')         $headerStateClass = 'closed';
+                elseif ($rawStatus === 'Rescheduled')    $headerStateClass = 'rescheduled';
                 $isFollowup = !empty($appointment['is_followup']) && $appointment['is_followup'] === true;
             ?>
             <div class="timeline-item appointment-timeline-item <?= $isFollowup ? 'followup-appointment' : '' ?>">
-                <div class="timeline-marker <?= $isLatest ? 'bg-warning' : 'bg-' . $statusColor ?>" 
+                <div class="timeline-marker <?= $isLatest ? 'bg-warning' : 'bg-' . $statusColor ?>"
                      onclick="handleAppointmentHeaderClick(event, '<?= $collapseId ?>')"
                      style="cursor: pointer; transition: transform 0.2s ease;"
                      onmouseover="this.style.transform='scale(1.1)'"
@@ -827,7 +843,7 @@
                     <i class="bi bi-calendar-event text-white"></i>
                                     </div>
                         <div class="timeline-content">
-                    <div class="timeline-header appointment-header <?= $isLatest ? 'expanded' : 'collapsed' ?>" 
+                    <div class="timeline-header appointment-header <?= $headerStateClass ?> <?= $isLatest ? 'expanded' : 'collapsed' ?>"
                          data-bs-target="#<?= $collapseId ?>"
                          aria-expanded="<?= $isLatest ? 'true' : 'false' ?>"
                          aria-controls="<?= $collapseId ?>"
@@ -847,7 +863,7 @@
                                 </span>
                                     <?php endif; ?>
                                 <span class="badge bg-<?= $statusColor ?> ms-2">
-                                    <?= ucfirst($appointment['status']) ?>
+                                    <?= htmlspecialchars($effectiveStatus) ?>
                                     </span>
                             </h6>
                             <div class="d-flex flex-wrap gap-2 mb-2">

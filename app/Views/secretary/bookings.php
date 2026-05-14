@@ -2888,15 +2888,24 @@ function renderCalendar(data) {
 }
 
 function renderAppointmentSlot(appointment) {
-    const statusClass = getStatusBadgeClass(appointment.status);
-    
+    /* Effective status: a Booked appointment whose date is in the past is
+       shown as "Missed" everywhere. The DB enum has no 'Missed' value, so
+       this is a render-time computation — mirrors the same logic used on
+       the doctor's appointment detail page and patient timeline. */
+    const _today = new Date().toISOString().slice(0, 10);
+    const _isPastBooked = appointment.status === 'Booked' && appointment.date && appointment.date < _today;
+    const effectiveStatus = _isPastBooked ? 'Missed' : appointment.status;
+    const statusClass = _isPastBooked ? 'bg-danger text-white' : getStatusBadgeClass(appointment.status);
+    const statusIcon  = _isPastBooked ? 'bi-exclamation-triangle' : getStatusIcon(appointment.status);
+    const statusText  = _isPastBooked ? 'Missed' : getStatusDisplayText(appointment.status);
+
     // Calculate payment info
     const totalPaid = appointment.total_paid || 0;
     const visitCost = appointment.visit_cost || 0;
     const remainingAmount = visitCost - totalPaid;
-    
+
     return `
-        <div class="bookings-appointment-card ${appointment.status.toLowerCase()}" 
+        <div class="bookings-appointment-card ${effectiveStatus.toLowerCase()}"
              onclick="viewAppointmentDetails(${appointment.id})">
             <div class="booking-card-content-wrapper">
                 <div class="booking-card-details">
@@ -2939,8 +2948,8 @@ function renderAppointmentSlot(appointment) {
                 <div class="booking-card-actions">
                     <div class="booking-badge-wrapper">
                         <span class="badge ${statusClass} d-flex align-items-center gap-1">
-                            <i class="bi ${getStatusIcon(appointment.status)}"></i>
-                            ${getStatusDisplayText(appointment.status)}
+                            <i class="bi ${statusIcon}"></i>
+                            ${statusText}
                         </span>
                     </div>
                     <div class="btn-group booking-action-buttons" role="group">
