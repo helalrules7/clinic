@@ -10755,24 +10755,39 @@ body.sidebar-mini .sidebar .clinic-name,
 body.sidebar-mini .sidebar .user-details,
 body.sidebar-mini .sidebar .sidebar-footer,
 body.sidebar-mini .sidebar .nav-submenu,
-body.sidebar-mini .sidebar .nav-link-toggle .arrow,
-body.sidebar-mini .sidebar .nav-link-toggle .submenu-arrow,
-body.sidebar-mini .sidebar .submenu-arrow,
 body.sidebar-mini .sidebar .nav-section-header,
 body.sidebar-mini .sidebar .badge {
     display: none !important;
 }
 
-/* When the user hovers a mini sidebar (peek-expand on desktop) OR clicks
-   the toggle to open it, the chevron should re-appear — these rules are
-   scoped to NOT match the .sidebar-mini state, so the natural rule above
-   keeps it hidden while collapsed, and removing .sidebar-mini lets the
-   chevron show again. The hover peek is handled separately below by the
-   same mechanism since hover expands sidebar width but doesn't remove the
-   .sidebar-mini class; for that path we re-show the chevron explicitly. */
+/* Submenu chevron (Medical Storage etc.) stays VISIBLE in the mini rail
+   so the user can still expand/collapse a submenu without first having
+   to fully expand the whole sidebar. We just shrink it down to a small
+   indicator that doesn't crowd the single-icon row. */
+body.sidebar-mini .sidebar .nav-link-toggle {
+    position: relative;
+}
+body.sidebar-mini .sidebar .submenu-arrow {
+    position: absolute;
+    bottom: 4px;
+    right: 50%;
+    transform: translateX(50%);
+    font-size: 0.6rem !important;
+    opacity: 0.65;
+    margin: 0 !important;
+    line-height: 1;
+}
+body.sidebar-mini .sidebar .nav-item.has-submenu.expanded .submenu-arrow {
+    opacity: 1;
+}
+/* On peek-expand (hover) the sidebar widens back to full size, so the
+   chevron returns to its natural inline position at the end of the row. */
 @media (hover: hover) and (pointer: fine) {
     body.sidebar-mini .sidebar:hover .submenu-arrow {
-        display: inline-block !important;
+        position: static;
+        transform: none;
+        font-size: inherit !important;
+        opacity: 1;
     }
 }
 

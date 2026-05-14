@@ -5372,7 +5372,11 @@ div.card.folder-card[style*="linear-gradient"] {
     overflow: hidden;
 }
 
-.sidebar-header {
+/* Folders-view internal sidebar header (scoped). The global app sidebar
+   in main.php uses the same `.sidebar-header` class — without this scope,
+   the rule below knocks out the clinic-logo centering that happens when
+   the main sidebar is in mini mode. */
+.folders-view-layout .sidebar-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -5381,7 +5385,7 @@ div.card.folder-card[style*="linear-gradient"] {
     background: var(--bg-alt);
 }
 
-.sidebar-header h6 {
+.folders-view-layout .sidebar-header h6 {
     margin: 0;
     color: var(--text);
     font-weight: 600;
