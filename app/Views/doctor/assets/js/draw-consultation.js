@@ -237,7 +237,14 @@
         canvas.on('object:moving', updateCtxMenuPosition);
         canvas.on('object:scaling', updateCtxMenuPosition);
         canvas.on('object:rotating', updateCtxMenuPosition);
-        canvas.on('after:render', updateCtxMenuPosition);
+        /* NOTE: do NOT bind to `after:render`. Fabric re-renders every
+           frame while a Textbox is being edited (cursor blink, every
+           keystroke, every blink — 60 fps). Recomputing the contextual
+           menu position on every one of those caused the typing UI to
+           glitch and click-to-edit to flake out. The events above
+           (object:moving/scaling/rotating + selection:*) plus the window
+           resize listener bound in bindCtxMenuEvents are enough to keep
+           the menu glued to the object during user interaction. */
 
         canvas.on('mouse:down', handleMouseDown);
         canvas.on('mouse:move', handleMouseMove);
@@ -246,6 +253,9 @@
 
         canvas.on('text:editing:entered', function () {
             currentTool = 'textEditing';
+            // Pull the contextual menu out of the way so the typing cursor
+            // and Fabric's hidden textarea aren't fighting for hit targets.
+            hideCtxMenu();
         });
 
         canvas.on('text:editing:exited', function () {
@@ -257,6 +267,8 @@
             if (!isExitingTextEditing && currentTool === 'textEditing') {
                 setTool('select');
             }
+            // Bring the menu back if the text is still the active object.
+            showCtxMenu();
         });
 
         setTool(currentTool);
@@ -655,10 +667,15 @@
     function isContextMenuEligible(obj) {
         if (!obj) return false;
         if (obj.isOverlay) return false;
-        if (obj.isTemplate || obj._isTemplate) return false;
         if (obj.eraserMark) return false;
-        if (obj.type === 'i-text' && obj.isEditing) return false;
+        // Hide menu while text is being edited (any text class) so cursor /
+        // typing isn't fought over by the floating button cluster.
+        const isAnyText = obj.type === 'i-text' || obj.type === 'textbox' || obj.type === 'text';
+        if (isAnyText && obj.isEditing) return false;
         return true;
+    }
+    function isAnchoredLayer(obj) {
+        return !!(obj && (obj.isTemplate || obj._isTemplate || obj.isOverlay));
     }
 
     function hideCtxMenu() {
@@ -675,10 +692,17 @@
         if (!isContextMenuEligible(active)) { hideCtxMenu(); return; }
 
         const isMulti = active.type === 'activeSelection';
+        const anchored = isAnchoredLayer(active);
         menu.querySelectorAll('.draw-ctx-group-only').forEach(b => { b.hidden = !isMulti; });
         menu.querySelectorAll('.draw-ctx-ungroup-only').forEach(b => { b.hidden = active.type !== 'group'; });
         menu.querySelectorAll('.draw-ctx-sep-group').forEach(s => {
             s.hidden = !(isMulti || active.type === 'group');
+        });
+        // Templates + overlays are anchored at the bottom of the z-order —
+        // exposing bring-forward / send-backward on them would break the
+        // "drawing always on top of template" rule, so we hide those two.
+        menu.querySelectorAll('[data-ctx-action="bring-forward"], [data-ctx-action="send-backward"]').forEach(b => {
+            b.hidden = anchored;
         });
 
         // Visibility/lock icon state
