@@ -10873,6 +10873,33 @@ body.sidebar-mini .sidebar .user-avatar {
     body.sidebar-mini .sidebar .clinic-name,
     body.sidebar-mini .sidebar .user-details,
     body.sidebar-mini .sidebar .sidebar-footer { display: block !important; }
+
+    /* Submenu chevron is full-size, inline at the end of the row — the
+       mini-rail absolute-positioning from desktop is undone here. */
+    body.sidebar-mini .sidebar .nav-link-toggle {
+        position: static;
+    }
+    body.sidebar-mini .sidebar .submenu-arrow {
+        position: static !important;
+        transform: none !important;
+        font-size: inherit !important;
+        opacity: 1 !important;
+        margin: 0 !important;
+        margin-left: auto !important;
+        line-height: inherit;
+    }
+    /* Allow `.nav-item.has-submenu.expanded` to expand the submenu — the
+       desktop mini rule hides `.nav-submenu` with !important; we override
+       that here so clicking the chevron actually opens it on mobile. */
+    body.sidebar-mini .sidebar .nav-submenu {
+        display: none !important;
+    }
+    body.sidebar-mini .sidebar .nav-item.has-submenu.expanded > .nav-submenu {
+        display: block !important;
+    }
+    body.sidebar-mini .sidebar .nav-item.has-submenu.expanded .submenu-arrow {
+        transform: rotate(180deg) !important;
+    }
 }
 
 /* Tablet (768–991px) — when sidebar is overlay-open OR mini, keep main
