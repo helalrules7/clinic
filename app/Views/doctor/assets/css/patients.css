@@ -3331,16 +3331,18 @@ kbd[lang="ar"] {
     color: var(--muted) !important;
 }
 
-/* Hide sidebar toggle on desktop for this page specifically */
+/* Sidebar toggle behaviour for the FOLDERS-VIEW internal sidebar only.
+   The selector deliberately scopes to `.folders-view-layout` because the
+   global app sidebar toggle in the top-bar shares the `.sidebar-toggle`
+   class — without the scope, this rule hides the main-nav toggle and
+   the user can no longer open the menu on the patients page. */
 @media (min-width: 993px) {
-    .sidebar-toggle {
+    .folders-view-layout .sidebar-toggle {
         display: none !important;
     }
 }
-
-/* Ensure sidebar toggle works normally on mobile */
 @media (max-width: 992px) {
-    .sidebar-toggle {
+    .folders-view-layout .sidebar-toggle {
         display: flex !important;
     }
 }
@@ -6112,8 +6114,13 @@ tr:hover .patient-color-marker-add-table {
         margin-left: 0 !important;
     }
 
-    /* Hide sidebar toggle on mobile since sidebar is hidden */
-    .sidebar-toggle {
+    /* Hide the FOLDERS-VIEW internal sidebar toggle on mobile (the
+       folders treeview is already collapsed on small screens). The
+       global app sidebar toggle in the top-bar uses the same class
+       name, so we have to scope the rule to the folders view; without
+       the scope the user can't open the main nav on the patients page. */
+    .folders-sidebar .sidebar-toggle,
+    .folders-view-layout .sidebar-toggle {
         display: none !important;
     }
 

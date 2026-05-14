@@ -467,9 +467,7 @@
           <div class="draw-canvas-shell">
             <canvas id="drawCanvas"></canvas>
           </div>
-          <!-- Canva-style contextual action menu — hovers above whichever
-               element is currently selected. Hidden by default; shown via
-               JS on `selection:created` / `selection:updated`. -->
+          <!-- Canva-style contextual action menu shown on selection. -->
           <div class="draw-ctx-menu" id="drawCtxMenu" aria-hidden="true" hidden>
             <button type="button" class="draw-ctx-btn" data-ctx-action="bring-forward" title="Bring forward">
               <i class="bi bi-arrow-up-square"></i>

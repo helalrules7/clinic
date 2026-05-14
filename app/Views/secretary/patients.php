@@ -391,17 +391,20 @@
                                 </td>
                                 <td>
                                     <?php
-                                    $__lcCode = $patient['last_clinic_code'] ?? null;
+                                    $__lcCode = strtolower((string)($patient['last_clinic_code'] ?? ''));
                                     $__lcName = $patient['last_clinic_name_ar'] ?? $patient['last_clinic_name_en'] ?? null;
+                                    /* Solid-colour badges — same shape as the "Last Visit" green
+                                       date badge, just with a per-clinic background so the eye can
+                                       distinguish them. No icon, per user feedback. */
                                     $__lcTheme = match ($__lcCode) {
-                                        'RIYADH' => ['bg' => 'rgba(34,197,94,0.18)',  'fg' => '#16a34a'],
-                                        'KFS'    => ['bg' => 'rgba(59,130,246,0.18)', 'fg' => '#2563eb'],
-                                        default  => ['bg' => 'rgba(148,163,184,0.18)','fg' => '#64748b'],
+                                        'riyadh' => ['bg' => '#3b82f6', 'fg' => '#ffffff'],
+                                        'kfs'    => ['bg' => '#10b981', 'fg' => '#ffffff'],
+                                        default  => ['bg' => '#64748b', 'fg' => '#ffffff'],
                                     };
                                     ?>
                                     <?php if ($__lcName): ?>
-                                        <span class="badge clinic-badge arabic-text" style="background: <?= $__lcTheme['bg'] ?>; color: <?= $__lcTheme['fg'] ?>; font-weight: 600; padding: 0.4rem 0.6rem; border-radius: 8px;">
-                                            <i class="bi bi-building me-1"></i><?= htmlspecialchars($__lcName) ?>
+                                        <span class="badge clinic-badge clinic-badge-<?= htmlspecialchars($__lcCode ?: 'none') ?> arabic-text" style="background: <?= $__lcTheme['bg'] ?>; color: <?= $__lcTheme['fg'] ?>; font-weight: 600; padding: 0.4em 0.65em; border-radius: 6px;">
+                                            <?= htmlspecialchars($__lcName) ?>
                                         </span>
                                     <?php else: ?>
                                         <span class="text-muted small">—</span>

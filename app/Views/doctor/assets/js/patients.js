@@ -25,23 +25,27 @@ function systemFolderRouteId(folder) {
     return String(folder.id);
 }
 
+/**
+ * Render a small coloured badge with the clinic name — same SHAPE as the
+ * "Last Visit" date badge but with a clinic-specific BACKGROUND colour
+ * so the eye can tell Riyadh from KFS at a glance. No icon.
+ */
 function clinicBadgeStyle(code) {
-    if (code === 'RIYADH') return { bg: 'rgba(34,197,94,0.18)',  fg: '#16a34a', icon: 'bi-building' };
-    if (code === 'KFS')    return { bg: 'rgba(59,130,246,0.18)', fg: '#2563eb', icon: 'bi-building' };
-    return { bg: 'rgba(148,163,184,0.18)', fg: '#64748b', icon: 'bi-building' };
+    var key = (code || '').toString().toLowerCase();
+    if (key === 'riyadh') return { bg: '#3b82f6', fg: '#ffffff' };  // blue
+    if (key === 'kfs')    return { bg: '#10b981', fg: '#ffffff' };  // emerald
+    return { bg: '#64748b', fg: '#ffffff' };                          // slate fallback
 }
-function renderClinicBadge(patient, opts) {
-    opts = opts || {};
-    var compact = !!opts.compact;
+function renderClinicBadge(patient /* , opts unused */) {
     if (!patient || !patient.last_clinic_id) {
         return '<span class="text-muted small">—</span>';
     }
     var name = patient.last_clinic_name_ar || patient.last_clinic_name_en || ('Clinic #' + patient.last_clinic_id);
     var theme = clinicBadgeStyle(patient.last_clinic_code);
-    var icon = compact ? '' : '<i class="bi ' + theme.icon + ' me-1"></i>';
-    return '<span class="badge clinic-badge clinic-badge-' + (patient.last_clinic_code || 'none').toLowerCase() +
-           '" style="background:' + theme.bg + ';color:' + theme.fg + ';font-weight:600;padding:0.35rem 0.55rem;border-radius:8px;">' +
-           icon + escapeHtml(name) + '</span>';
+    var codeKey = (patient.last_clinic_code || 'none').toString().toLowerCase();
+    return '<span class="badge clinic-badge clinic-badge-' + codeKey +
+           '" style="background:' + theme.bg + ';color:' + theme.fg + ';font-weight:600;padding:0.4em 0.65em;border-radius:6px;">' +
+           escapeHtml(name) + '</span>';
 }
 
 function hexToRgb(hex) {
