@@ -3,7 +3,9 @@ $title = 'Roaya Clinic - Financial Management';
 $pageTitle = 'Financial Management';
 $pageSubtitle = 'Manage payments, expenses, and daily operations';
 ?>
-<link href="/app/Views/doctor/assets/css/payments.css?v=<?= file_exists(__DIR__ . '/assets/css/payments.css') ? filemtime(__DIR__ . '/assets/css/payments.css') : time() ?>" rel="stylesheet">
+<link
+    href="/app/Views/doctor/assets/css/payments.css?v=<?= file_exists(__DIR__ . '/assets/css/payments.css') ? filemtime(__DIR__ . '/assets/css/payments.css') : time() ?>"
+    rel="stylesheet">
 
 <div class="container-fluid">
     <!-- Page Header -->
@@ -15,31 +17,40 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
             </a>
         </div>
         <div class="col-md-6 text-end">
-            <div class="d-flex gap-2 justify-content-end">
-                <button class="btn btn-primary" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#dailyBalanceModal" 
-                        title="Add Daily Balance">
+            <div class="d-flex gap-2 justify-content-end align-items-center flex-wrap">
+                <!-- Clinic filter (doctor only — secretaries are server-side pinned) -->
+                <form method="get" id="financeClinicFilterForm" class="d-flex align-items-center gap-2 me-2">
+                    <label for="financeClinicFilter" class="form-label mb-0 text-muted small">
+                        <i class="bi bi-building me-1"></i>Clinic:
+                    </label>
+                    <select id="financeClinicFilter" name="clinic_id" class="form-select form-select-sm" style="min-width: 180px;"
+                            onchange="document.getElementById('financeClinicFilterForm').submit()">
+                        <option value="" <?= empty($selectedClinicId) ? 'selected' : '' ?>>All Clinics</option>
+                        <?php foreach (($clinics ?? []) as $_clinic): ?>
+                            <option value="<?= (int)$_clinic['id'] ?>" <?= ($selectedClinicId == $_clinic['id']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($_clinic['name_en'] ?: $_clinic['name_ar']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </form>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dailyBalanceModal"
+                    title="Add Daily Balance">
                     <i class="bi bi-plus-circle me-2"></i>
                     Add Balance
                     <span class="ms-2">
                         <kbd>B</kbd>
                     </span>
                 </button>
-                <button class="btn btn-warning" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#expenseModal" 
-                        title="Add Expense">
+                <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#expenseModal"
+                    title="Add Expense">
                     <i class="bi bi-dash-circle me-2"></i>
                     Add Expense
                     <span class="ms-2">
                         <kbd>E</kbd>
                     </span>
                 </button>
-                <button class="btn btn-info" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#searchModal" 
-                        title="Search Transactions">
+                <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#searchModal"
+                    title="Search Transactions">
                     <i class="bi bi-search me-2"></i>
                     Search
                     <span class="ms-2">
@@ -58,7 +69,9 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                     <div class="text-primary mb-2">
                         <i class="bi bi-wallet2" style="font-size: 2rem;"></i>
                     </div>
-                    <h4 class="text-primary mb-1" id="openingBalance"><?= number_format($dailyBalance['opening_balance'], 2) ?> EGP</h4>
+                    <h4 class="text-primary mb-1" id="openingBalance">
+                        <?= number_format($dailyBalance['opening_balance'], 2) ?> EGP
+                    </h4>
                     <p class="text-muted mb-0">Opening Balance</p>
                 </div>
             </div>
@@ -69,7 +82,9 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                     <div class="text-success mb-2">
                         <i class="bi bi-arrow-down-circle" style="font-size: 2rem;"></i>
                     </div>
-                    <h4 class="text-success mb-1" id="totalReceived"><?= number_format($dailyBalance['total_received'], 2) ?> EGP</h4>
+                    <h4 class="text-success mb-1" id="totalReceived">
+                        <?= number_format($dailyBalance['total_received'], 2) ?> EGP
+                    </h4>
                     <p class="text-muted mb-0">Total Received</p>
                 </div>
             </div>
@@ -80,7 +95,9 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                     <div class="text-danger mb-2">
                         <i class="bi bi-arrow-up-circle" style="font-size: 2rem;"></i>
                     </div>
-                    <h4 class="text-danger mb-1" id="totalExpenses"><?= number_format($dailyBalance['total_expenses'], 2) ?> EGP</h4>
+                    <h4 class="text-danger mb-1" id="totalExpenses">
+                        <?= number_format($dailyBalance['total_expenses'], 2) ?> EGP
+                    </h4>
                     <p class="text-muted mb-0">Total Expenses</p>
                 </div>
             </div>
@@ -91,7 +108,9 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                     <div class="text-info mb-2">
                         <i class="bi bi-calculator" style="font-size: 2rem;"></i>
                     </div>
-                    <h4 class="text-info mb-1" id="currentBalance"><?= number_format($dailyBalance['current_balance'], 2) ?> EGP</h4>
+                    <h4 class="text-info mb-1" id="currentBalance">
+                        <?= number_format($dailyBalance['current_balance'], 2) ?> EGP
+                    </h4>
                     <p class="text-muted mb-0">Current Balance</p>
                 </div>
             </div>
@@ -114,49 +133,62 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                             <div class="text-center">
                                 <div class="badge bg-primary fs-6 mb-2">New Booking</div>
                                 <h4 id="BookingCount"><?= $paymentTypes['Booking']['count'] ?? 0 ?></h4>
-                                <small class="text-muted"><?= number_format($paymentTypes['Booking']['total'] ?? 0, 2) ?> EGP</small>
+                                <small
+                                    class="text-muted"><?= number_format($paymentTypes['Booking']['total'] ?? 0, 2) ?>
+                                    EGP</small>
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="text-center">
                                 <div class="badge bg-success fs-6 mb-2">Follow-up</div>
                                 <h4 id="FollowUpCount"><?= $paymentTypes['FollowUp']['count'] ?? 0 ?></h4>
-                                <small class="text-muted"><?= number_format($paymentTypes['FollowUp']['total'] ?? 0, 2) ?> EGP</small>
+                                <small
+                                    class="text-muted"><?= number_format($paymentTypes['FollowUp']['total'] ?? 0, 2) ?>
+                                    EGP</small>
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="text-center">
                                 <div class="badge bg-info fs-6 mb-2">Consultation</div>
                                 <h4 id="ConsultationCount"><?= $paymentTypes['Consultation']['count'] ?? 0 ?></h4>
-                                <small class="text-muted"><?= number_format($paymentTypes['Consultation']['total'] ?? 0, 2) ?> EGP</small>
+                                <small
+                                    class="text-muted"><?= number_format($paymentTypes['Consultation']['total'] ?? 0, 2) ?>
+                                    EGP</small>
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="text-center">
                                 <div class="badge bg-warning fs-6 mb-2">Procedure</div>
                                 <h4 id="ProcedureCount"><?= $paymentTypes['Procedure']['count'] ?? 0 ?></h4>
-                                <small class="text-muted"><?= number_format($paymentTypes['Procedure']['total'] ?? 0, 2) ?> EGP</small>
+                                <small
+                                    class="text-muted"><?= number_format($paymentTypes['Procedure']['total'] ?? 0, 2) ?>
+                                    EGP</small>
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="text-center">
                                 <div class="badge bg-secondary fs-6 mb-2">Other</div>
                                 <h4 id="OtherCount"><?= $paymentTypes['Other']['count'] ?? 0 ?></h4>
-                                <small class="text-muted"><?= number_format($paymentTypes['Other']['total'] ?? 0, 2) ?> EGP</small>
+                                <small class="text-muted"><?= number_format($paymentTypes['Other']['total'] ?? 0, 2) ?>
+                                    EGP</small>
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="text-center">
                                 <div class="badge bg-warning fs-6 mb-2">Withdrawals</div>
                                 <h4 id="withdrawalsCount"><?= $dailyBalance['withdrawals_count'] ?? 0 ?></h4>
-                                <small class="text-muted"><?= number_format($dailyBalance['total_withdrawals'] ?? 0, 2) ?> EGP</small>
+                                <small
+                                    class="text-muted"><?= number_format($dailyBalance['total_withdrawals'] ?? 0, 2) ?>
+                                    EGP</small>
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="text-center">
                                 <div class="badge bg-danger fs-6 mb-2">Expenses</div>
                                 <h4><?= count($expenses) ?></h4>
-                                <small class="text-muted"><?= number_format(array_sum(array_column($expenses, 'amount')), 2) ?> EGP</small>
+                                <small
+                                    class="text-muted"><?= number_format(array_sum(array_column($expenses, 'amount')), 2) ?>
+                                    EGP</small>
                             </div>
                         </div>
                     </div>
@@ -185,25 +217,40 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                         <!-- Date Filter -->
                         <div class="d-flex align-items-center">
                             <label for="dateFilter" class="form-label mb-0 me-2 text-muted">Date:</label>
-                            <input type="date" class="form-control form-control-sm" id="dateFilter" style="width: auto;">
+                            <input type="date" class="form-control form-control-sm" id="dateFilter"
+                                style="width: auto;">
                         </div>
                         <!-- Transaction Type Filter -->
                         <div class="d-flex align-items-center">
                             <label for="transactionTypeFilter" class="form-label mb-0 me-2 text-muted">Type:</label>
                             <section class="field menu" style="min-width: auto; width: auto;">
                                 <div class="control">
-                                    <select class="form-select form-select-sm d-none" id="transactionTypeFilter" style="width: auto;">
+                                    <select class="form-select form-select-sm d-none" id="transactionTypeFilter"
+                                        style="width: auto;">
                                         <option value="all" selected>All</option>
-                                <option value="payment">Payments</option>
-                                <option value="expense">Expenses</option>
-                                <option value="balance">Balance</option>
-                            </select>
-                                    <button type="button" class="custom-select-toggle" aria-expanded="false" style="font-size: 0.875rem; padding: 0.375rem 2rem 0.375rem 0.75rem;">All</button>
+                                        <option value="payment">Payments</option>
+                                        <option value="expense">Expenses</option>
+                                        <option value="balance">Balance</option>
+                                    </select>
+                                    <button type="button" class="custom-select-toggle" aria-expanded="false"
+                                        style="font-size: 0.875rem; padding: 0.375rem 2rem 0.375rem 0.75rem;">All</button>
                                     <menu>
-                                        <li data-option="all" tabindex="0" role="button" class="selected"><i class="bi-list fs-5"></i><h3>All</h3></li>
-                                        <li data-option="payment" tabindex="0" role="button"><i class="bi-list fs-5"></i><h3>Payments</h3></li>
-                                        <li data-option="expense" tabindex="0" role="button"><i class="bi-list fs-5"></i><h3>Expenses</h3></li>
-                                        <li data-option="balance" tabindex="0" role="button"><i class="bi-list fs-5"></i><h3>Balance</h3></li>
+                                        <li data-option="all" tabindex="0" role="button" class="selected"><i
+                                                class="bi-list fs-5"></i>
+                                            <h3>All</h3>
+                                        </li>
+                                        <li data-option="payment" tabindex="0" role="button"><i
+                                                class="bi-list fs-5"></i>
+                                            <h3>Payments</h3>
+                                        </li>
+                                        <li data-option="expense" tabindex="0" role="button"><i
+                                                class="bi-list fs-5"></i>
+                                            <h3>Expenses</h3>
+                                        </li>
+                                        <li data-option="balance" tabindex="0" role="button"><i
+                                                class="bi-list fs-5"></i>
+                                            <h3>Balance</h3>
+                                        </li>
                                     </menu>
                                 </div>
                             </section>
@@ -230,11 +277,12 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                     </tbody>
                 </table>
             </div>
-            
+
             <!-- Pagination -->
             <div class="d-flex justify-content-between align-items-center p-3 border-top">
                 <div class="text-muted">
-                    Showing <span id="showingFrom">1</span> to <span id="showingTo">10</span> of <span id="totalRecords">0</span> transactions
+                    Showing <span id="showingFrom">1</span> to <span id="showingTo">10</span> of <span
+                        id="totalRecords">0</span> transactions
                 </div>
                 <nav>
                     <ul class="pagination pagination-sm mb-0" id="transactionsPagination">
@@ -257,11 +305,16 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                 </div>
                 <div class="col-md-6 text-end">
                     <div class="d-flex align-items-center justify-content-end gap-2">
-                        <input type="text" class="form-control form-control-sm" id="paymentSearch" placeholder="Search payments..." style="width: 200px;">
-                        <button class="btn btn-outline-primary btn-sm" onclick="filterPaymentsByType('all')">All</button>
-                        <button class="btn btn-outline-primary btn-sm" onclick="filterPaymentsByType('Booking')">New Booking</button>
-                        <button class="btn btn-outline-primary btn-sm" onclick="filterPaymentsByType('FollowUp')">Follow-up</button>
-                        <button class="btn btn-outline-primary btn-sm" onclick="filterPaymentsByType('Consultation')">Consultation</button>
+                        <input type="text" class="form-control form-control-sm" id="paymentSearch"
+                            placeholder="Search payments..." style="width: 200px;">
+                        <button class="btn btn-outline-primary btn-sm"
+                            onclick="filterPaymentsByType('all')">All</button>
+                        <button class="btn btn-outline-primary btn-sm" onclick="filterPaymentsByType('Booking')">New
+                            Booking</button>
+                        <button class="btn btn-outline-primary btn-sm"
+                            onclick="filterPaymentsByType('FollowUp')">Follow-up</button>
+                        <button class="btn btn-outline-primary btn-sm"
+                            onclick="filterPaymentsByType('Consultation')">Consultation</button>
                     </div>
                 </div>
             </div>
@@ -273,6 +326,7 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                         <tr>
                             <th>Date</th>
                             <th>Patient</th>
+                            <th>Clinic</th>
                             <th>Type</th>
                             <th>Method</th>
                             <th>Amount</th>
@@ -281,54 +335,71 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                         </tr>
                     </thead>
                     <tbody id="paymentsTableBody">
+                        <?php
+                            $_clinicVisuals = [
+                                'riyadh' => ['icon' => 'bi-buildings-fill', 'color' => '#0d6efd'],
+                                'kfs'    => ['icon' => 'bi-hospital-fill',  'color' => '#10b981'],
+                            ];
+                        ?>
                         <?php foreach ($payments as $payment): ?>
-                        <tr data-type="<?= $payment['type'] ?>">
-                            <td><?= date('H:i', strtotime($payment['created_at'])) ?></td>
-                            <td>
-                                <div>
-                                    <strong><?= htmlspecialchars($payment['patient_name'] ?? 'N/A') ?></strong>
-                                    <br><small class="text-muted"><?= htmlspecialchars($payment['phone'] ?? 'N/A') ?></small>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge <?= $viewHelper->getPaymentTypeBadgeClass($payment['type']) ?>">
-                                    <?= $viewHelper->getPaymentTypeText($payment['type']) ?>
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge <?= $viewHelper->getPaymentMethodBadgeClass($payment['method']) ?>">
-                                    <?= $viewHelper->getPaymentMethodText($payment['method']) ?>
-                                </span>
-                            </td>
-                            <td>
-                                <strong class="text-success"><?= number_format($payment['amount'], 2) ?> EGP</strong>
-                            </td>
-                            <td><?= htmlspecialchars($payment['description'] ?? 'N/A') ?></td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-outline-primary btn-sm" 
-                                            onclick="viewPayment(<?= $payment['id'] ?>)" 
-                                            title="View Details">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-info btn-sm" 
-                                            onclick="printReceipt(<?= $payment['id'] ?>)" 
-                                            title="Print Receipt">
-                                        <i class="bi bi-printer"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-warning btn-sm" 
-                                            onclick="editPayment(<?= $payment['id'] ?>)" 
-                                            title="Edit Payment">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-danger btn-sm" 
-                                            onclick="deletePayment(<?= $payment['id'] ?>)" 
-                                            title="Delete Payment">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
+                            <tr data-type="<?= $payment['type'] ?>" data-clinic="<?= (int)($payment['clinic_id'] ?? 0) ?>">
+                                <td><?= date('H:i', strtotime($payment['created_at'])) ?></td>
+                                <td>
+                                    <div>
+                                        <strong><?= htmlspecialchars($payment['patient_name'] ?? 'N/A') ?></strong>
+                                        <br><small
+                                            class="text-muted"><?= htmlspecialchars($payment['phone'] ?? 'N/A') ?></small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <?php
+                                        $_clinicName = $payment['clinic_name_ar'] ?? $payment['clinic_name_en'] ?? null;
+                                        if ($_clinicName):
+                                            $_v = $_clinicVisuals[$payment['clinic_code'] ?? ''] ?? ['icon' => 'bi-building', 'color' => '#6c757d'];
+                                    ?>
+                                        <span class="clinic-tag" style="--clinic-color: <?= $_v['color'] ?>;" dir="rtl">
+                                            <i class="bi <?= $_v['icon'] ?>"></i>
+                                            <?= htmlspecialchars($_clinicName) ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="text-muted small">—</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <span class="badge <?= $viewHelper->getPaymentTypeBadgeClass($payment['type']) ?>">
+                                        <?= $viewHelper->getPaymentTypeText($payment['type']) ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge <?= $viewHelper->getPaymentMethodBadgeClass($payment['method']) ?>">
+                                        <?= $viewHelper->getPaymentMethodText($payment['method']) ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong class="text-success"><?= number_format($payment['amount'], 2) ?> EGP</strong>
+                                </td>
+                                <td><?= htmlspecialchars($payment['description'] ?? 'N/A') ?></td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-primary btn-sm"
+                                            onclick="viewPayment(<?= $payment['id'] ?>)" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-info btn-sm"
+                                            onclick="printReceipt(<?= $payment['id'] ?>)" title="Print Receipt">
+                                            <i class="bi bi-printer"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-warning btn-sm"
+                                            onclick="editPayment(<?= $payment['id'] ?>)" title="Edit Payment">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                            onclick="deletePayment(<?= $payment['id'] ?>)" title="Delete Payment">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
@@ -355,73 +426,78 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                 <div class="modal-body">
                     <!-- Success/Error Messages -->
                     <div id="dailyBalanceMessage" class="alert d-none" role="alert"></div>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <h6 class="text-primary mb-3">
                                 <i class="bi bi-plus-circle me-1"></i>
                                 Balance Details
                             </h6>
-                            
+
                             <div class="mb-3">
-                                <label for="balanceAmount" class="form-label">Balance Amount <span class="text-danger">*</span></label>
+                                <label for="balanceAmount" class="form-label">Balance Amount <span
+                                        class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text">EGP</span>
-                                    <input type="number" 
-                                           class="form-control" 
-                                           id="balanceAmount" 
-                                           name="amount" 
-                                           step="0.01" 
-                                           min="0" 
-                                           required>
+                                    <input type="number" class="form-control" id="balanceAmount" name="amount"
+                                        step="0.01" min="0" required>
                                 </div>
                                 <div class="invalid-feedback"></div>
                             </div>
-                            
+
                             <div class="mb-3">
-                                <label for="balanceType" class="form-label">Balance Type <span class="text-danger">*</span></label>
+                                <label for="balanceType" class="form-label">Balance Type <span
+                                        class="text-danger">*</span></label>
                                 <section class="field menu" style="min-width: 100%;">
                                     <div class="control">
-                                        <select class="form-select d-none" id="balanceType" name="balance_type" required>
-                                    <option value="">Select type...</option>
-                                    <option value="opening">Opening Balance</option>
-                                    <option value="additional">Additional Balance</option>
-                                    <option value="withdrawal">Withdrawal</option>
-                                </select>
-                                        <button type="button" class="custom-select-toggle" aria-expanded="false">Select type...</button>
+                                        <select class="form-select d-none" id="balanceType" name="balance_type"
+                                            required>
+                                            <option value="">Select type...</option>
+                                            <option value="opening">Opening Balance</option>
+                                            <option value="additional">Additional Balance</option>
+                                            <option value="withdrawal">Withdrawal</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false">Select
+                                            type...</button>
                                         <menu>
-                                            <li data-option="" tabindex="0" role="button" class="selected"><i class="bi-wallet fs-5"></i><h3>Select type...</h3></li>
-                                            <li data-option="opening" tabindex="0" role="button"><i class="bi-wallet fs-5"></i><h3>Opening Balance</h3></li>
-                                            <li data-option="additional" tabindex="0" role="button"><i class="bi-wallet fs-5"></i><h3>Additional Balance</h3></li>
-                                            <li data-option="withdrawal" tabindex="0" role="button"><i class="bi-wallet fs-5"></i><h3>Withdrawal</h3></li>
+                                            <li data-option="" tabindex="0" role="button" class="selected"><i
+                                                    class="bi-wallet fs-5"></i>
+                                                <h3>Select type...</h3>
+                                            </li>
+                                            <li data-option="opening" tabindex="0" role="button"><i
+                                                    class="bi-wallet fs-5"></i>
+                                                <h3>Opening Balance</h3>
+                                            </li>
+                                            <li data-option="additional" tabindex="0" role="button"><i
+                                                    class="bi-wallet fs-5"></i>
+                                                <h3>Additional Balance</h3>
+                                            </li>
+                                            <li data-option="withdrawal" tabindex="0" role="button"><i
+                                                    class="bi-wallet fs-5"></i>
+                                                <h3>Withdrawal</h3>
+                                            </li>
                                         </menu>
                                     </div>
                                 </section>
                                 <div class="invalid-feedback"></div>
                             </div>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <h6 class="text-primary mb-3">
                                 <i class="bi bi-info-circle me-1"></i>
                                 Additional Details
                             </h6>
-                            
+
                             <div class="mb-3">
                                 <label for="balanceDescription" class="form-label">Description</label>
-                                <textarea class="form-control" 
-                                          id="balanceDescription" 
-                                          name="description" 
-                                          rows="3" 
-                                          placeholder="Enter description..."></textarea>
+                                <textarea class="form-control" id="balanceDescription" name="description" rows="3"
+                                    placeholder="Enter description..."></textarea>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label for="balanceDate" class="form-label">Balance Date</label>
-                                <input type="datetime-local" 
-                                       class="form-control" 
-                                       id="balanceDate" 
-                                       name="balance_date">
+                                <input type="datetime-local" class="form-control" id="balanceDate" name="balance_date">
                             </div>
                         </div>
                     </div>
@@ -457,129 +533,128 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                 <div class="modal-body">
                     <!-- Success/Error Messages -->
                     <div id="expenseMessage" class="alert d-none" role="alert"></div>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <h6 class="text-primary mb-3">
                                 <i class="bi bi-dash-circle me-1"></i>
                                 Expense Details
                             </h6>
-                            
+
                             <div class="mb-3">
-                                <label for="expenseAmount" class="form-label">Expense Amount <span class="text-danger">*</span></label>
+                                <label for="expenseAmount" class="form-label">Expense Amount <span
+                                        class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text">EGP</span>
-                                    <input type="number" 
-                                           class="form-control" 
-                                           id="expenseAmount" 
-                                           name="amount" 
-                                           step="0.01" 
-                                           min="0" 
-                                           required>
+                                    <input type="number" class="form-control" id="expenseAmount" name="amount"
+                                        step="0.01" min="0" required>
                                 </div>
                                 <div class="invalid-feedback"></div>
                             </div>
-                            
+
                             <div class="mb-3">
-                                <label for="expenseName" class="form-label">Expense Name <span class="text-danger">*</span></label>
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="expenseName" 
-                                       name="expense_name" 
-                                       placeholder="Enter expense name..."
-                                       required>
+                                <label for="expenseName" class="form-label">Expense Name <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="expenseName" name="expense_name"
+                                    placeholder="Enter expense name..." required>
                                 <div class="invalid-feedback"></div>
                             </div>
-                            
+
                             <!-- Expense Type Badges -->
                             <div class="mb-3">
                                 <label class="form-label">Quick Expense Types:</label>
                                 <div class="d-flex flex-wrap gap-2">
-                                    <span class="badge bg-light text-dark cursor-pointer expense-type-badge" 
-                                          data-type="Water Bill" 
-                                          style="cursor: pointer;">
+                                    <span class="badge bg-light text-dark cursor-pointer expense-type-badge"
+                                        data-type="Water Bill" style="cursor: pointer;">
                                         Water Bill
                                     </span>
-                                    <span class="badge bg-light text-dark cursor-pointer expense-type-badge" 
-                                          data-type="Electricity Bill" 
-                                          style="cursor: pointer;">
+                                    <span class="badge bg-light text-dark cursor-pointer expense-type-badge"
+                                        data-type="Electricity Bill" style="cursor: pointer;">
                                         Electricity Bill
                                     </span>
-                                    <span class="badge bg-light text-dark cursor-pointer expense-type-badge" 
-                                          data-type="Medical Supplies" 
-                                          style="cursor: pointer;">
+                                    <span class="badge bg-light text-dark cursor-pointer expense-type-badge"
+                                        data-type="Medical Supplies" style="cursor: pointer;">
                                         Medical Supplies
                                     </span>
-                                    <span class="badge bg-light text-dark cursor-pointer expense-type-badge" 
-                                          data-type="Cleaning Expenses" 
-                                          style="cursor: pointer;">
+                                    <span class="badge bg-light text-dark cursor-pointer expense-type-badge"
+                                        data-type="Cleaning Expenses" style="cursor: pointer;">
                                         Cleaning Expenses
                                     </span>
-                                    <span class="badge bg-light text-dark cursor-pointer expense-type-badge" 
-                                          data-type="Secretary Salary" 
-                                          style="cursor: pointer;">
+                                    <span class="badge bg-light text-dark cursor-pointer expense-type-badge"
+                                        data-type="Secretary Salary" style="cursor: pointer;">
                                         Secretary Salary
                                     </span>
-                                    <span class="badge bg-light text-dark cursor-pointer expense-type-badge" 
-                                          data-type="Maintenance" 
-                                          style="cursor: pointer;">
+                                    <span class="badge bg-light text-dark cursor-pointer expense-type-badge"
+                                        data-type="Maintenance" style="cursor: pointer;">
                                         Maintenance
                                     </span>
-                                    <span class="badge bg-light text-dark cursor-pointer expense-type-badge" 
-                                          data-type="Other" 
-                                          style="cursor: pointer;">
+                                    <span class="badge bg-light text-dark cursor-pointer expense-type-badge"
+                                        data-type="Other" style="cursor: pointer;">
                                         Other
                                     </span>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <h6 class="text-primary mb-3">
                                 <i class="bi bi-info-circle me-1"></i>
                                 Additional Details
                             </h6>
-                            
+
                             <div class="mb-3">
                                 <label for="expenseCategory" class="form-label">Expense Category</label>
                                 <section class="field menu" style="min-width: 100%;">
                                     <div class="control">
                                         <select class="form-select d-none" id="expenseCategory" name="category">
                                             <option value="utilities" selected>Utilities</option>
-                                    <option value="medical">Medical</option>
-                                    <option value="maintenance">Maintenance</option>
-                                    <option value="office">Office</option>
-                                    <option value="salary">Salary</option>
-                                    <option value="other">Other</option>
-                                </select>
-                                        <button type="button" class="custom-select-toggle" aria-expanded="false">Utilities</button>
+                                            <option value="medical">Medical</option>
+                                            <option value="maintenance">Maintenance</option>
+                                            <option value="office">Office</option>
+                                            <option value="salary">Salary</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle"
+                                            aria-expanded="false">Utilities</button>
                                         <menu>
-                                            <li data-option="utilities" tabindex="0" role="button" class="selected"><i class="bi-tags fs-5"></i><h3>Utilities</h3></li>
-                                            <li data-option="medical" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Medical</h3></li>
-                                            <li data-option="maintenance" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Maintenance</h3></li>
-                                            <li data-option="office" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Office</h3></li>
-                                            <li data-option="salary" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Salary</h3></li>
-                                            <li data-option="other" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Other</h3></li>
+                                            <li data-option="utilities" tabindex="0" role="button" class="selected"><i
+                                                    class="bi-tags fs-5"></i>
+                                                <h3>Utilities</h3>
+                                            </li>
+                                            <li data-option="medical" tabindex="0" role="button"><i
+                                                    class="bi-tags fs-5"></i>
+                                                <h3>Medical</h3>
+                                            </li>
+                                            <li data-option="maintenance" tabindex="0" role="button"><i
+                                                    class="bi-tags fs-5"></i>
+                                                <h3>Maintenance</h3>
+                                            </li>
+                                            <li data-option="office" tabindex="0" role="button"><i
+                                                    class="bi-tags fs-5"></i>
+                                                <h3>Office</h3>
+                                            </li>
+                                            <li data-option="salary" tabindex="0" role="button"><i
+                                                    class="bi-tags fs-5"></i>
+                                                <h3>Salary</h3>
+                                            </li>
+                                            <li data-option="other" tabindex="0" role="button"><i
+                                                    class="bi-tags fs-5"></i>
+                                                <h3>Other</h3>
+                                            </li>
                                         </menu>
                                     </div>
                                 </section>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label for="expenseNotes" class="form-label">Notes</label>
-                                <textarea class="form-control" 
-                                          id="expenseNotes" 
-                                          name="notes" 
-                                          rows="3" 
-                                          placeholder="Notes about the expense..."></textarea>
+                                <textarea class="form-control" id="expenseNotes" name="notes" rows="3"
+                                    placeholder="Notes about the expense..."></textarea>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label for="expenseDate" class="form-label">Expense Date</label>
-                                <input type="datetime-local" 
-                                       class="form-control" 
-                                       id="expenseDate" 
-                                       name="expense_date">
+                                <input type="datetime-local" class="form-control" id="expenseDate" name="expense_date">
                             </div>
                         </div>
                     </div>
@@ -630,16 +705,29 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                                 <div class="control">
                                     <select class="form-select d-none" id="searchType">
                                         <option value="" selected>All Types</option>
-                                <option value="payment">Payments</option>
-                                <option value="expense">Expenses</option>
-                                <option value="balance">Balance</option>
-                            </select>
-                                    <button type="button" class="custom-select-toggle" aria-expanded="false">All Types</button>
+                                        <option value="payment">Payments</option>
+                                        <option value="expense">Expenses</option>
+                                        <option value="balance">Balance</option>
+                                    </select>
+                                    <button type="button" class="custom-select-toggle" aria-expanded="false">All
+                                        Types</button>
                                     <menu>
-                                        <li data-option="" tabindex="0" role="button" class="selected"><i class="bi-list fs-5"></i><h3>All Types</h3></li>
-                                        <li data-option="payment" tabindex="0" role="button"><i class="bi-list fs-5"></i><h3>Payments</h3></li>
-                                        <li data-option="expense" tabindex="0" role="button"><i class="bi-list fs-5"></i><h3>Expenses</h3></li>
-                                        <li data-option="balance" tabindex="0" role="button"><i class="bi-list fs-5"></i><h3>Balance</h3></li>
+                                        <li data-option="" tabindex="0" role="button" class="selected"><i
+                                                class="bi-list fs-5"></i>
+                                            <h3>All Types</h3>
+                                        </li>
+                                        <li data-option="payment" tabindex="0" role="button"><i
+                                                class="bi-list fs-5"></i>
+                                            <h3>Payments</h3>
+                                        </li>
+                                        <li data-option="expense" tabindex="0" role="button"><i
+                                                class="bi-list fs-5"></i>
+                                            <h3>Expenses</h3>
+                                        </li>
+                                        <li data-option="balance" tabindex="0" role="button"><i
+                                                class="bi-list fs-5"></i>
+                                            <h3>Balance</h3>
+                                        </li>
                                     </menu>
                                 </div>
                             </section>
@@ -663,7 +751,8 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="searchKeyword" class="form-label">Keyword</label>
-                            <input type="text" class="form-control" id="searchKeyword" placeholder="Search in descriptions...">
+                            <input type="text" class="form-control" id="searchKeyword"
+                                placeholder="Search in descriptions...">
                         </div>
                     </div>
                 </div>
@@ -723,86 +812,109 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
             <form id="editPaymentForm">
                 <div class="modal-body">
                     <div id="editPaymentMessage" class="alert d-none" role="alert"></div>
-                    
+
                     <input type="hidden" id="editPaymentId" name="payment_id">
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="editPaymentAmount" class="form-label">Amount <span class="text-danger">*</span></label>
+                                <label for="editPaymentAmount" class="form-label">Amount <span
+                                        class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text">EGP</span>
-                                    <input type="number" 
-                                           class="form-control" 
-                                           id="editPaymentAmount" 
-                                           name="amount" 
-                                           step="0.01" 
-                                           min="0" 
-                                           required>
+                                    <input type="number" class="form-control" id="editPaymentAmount" name="amount"
+                                        step="0.01" min="0" required>
                                 </div>
                             </div>
-                            
+
                             <div class="mb-3">
-                                <label for="editPaymentType" class="form-label">Payment Type <span class="text-danger">*</span></label>
+                                <label for="editPaymentType" class="form-label">Payment Type <span
+                                        class="text-danger">*</span></label>
                                 <section class="field menu" style="min-width: 100%;">
                                     <div class="control">
                                         <select class="form-select d-none" id="editPaymentType" name="type" required>
                                             <option value="Booking" selected>New Booking</option>
-                                    <option value="FollowUp">Follow-up</option>
-                                    <option value="Consultation">Consultation</option>
-                                    <option value="Procedure">Procedure</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                                        <button type="button" class="custom-select-toggle" aria-expanded="false">New Booking</button>
+                                            <option value="FollowUp">Follow-up</option>
+                                            <option value="Consultation">Consultation</option>
+                                            <option value="Procedure">Procedure</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false">New
+                                            Booking</button>
                                         <menu>
-                                            <li data-option="Booking" tabindex="0" role="button" class="selected"><i class="bi-credit-card fs-5"></i><h3>New Booking</h3></li>
-                                            <li data-option="FollowUp" tabindex="0" role="button"><i class="bi-credit-card fs-5"></i><h3>Follow-up</h3></li>
-                                            <li data-option="Consultation" tabindex="0" role="button"><i class="bi-credit-card fs-5"></i><h3>Consultation</h3></li>
-                                            <li data-option="Procedure" tabindex="0" role="button"><i class="bi-credit-card fs-5"></i><h3>Procedure</h3></li>
-                                            <li data-option="Other" tabindex="0" role="button"><i class="bi-credit-card fs-5"></i><h3>Other</h3></li>
+                                            <li data-option="Booking" tabindex="0" role="button" class="selected"><i
+                                                    class="bi-credit-card fs-5"></i>
+                                                <h3>New Booking</h3>
+                                            </li>
+                                            <li data-option="FollowUp" tabindex="0" role="button"><i
+                                                    class="bi-credit-card fs-5"></i>
+                                                <h3>Follow-up</h3>
+                                            </li>
+                                            <li data-option="Consultation" tabindex="0" role="button"><i
+                                                    class="bi-credit-card fs-5"></i>
+                                                <h3>Consultation</h3>
+                                            </li>
+                                            <li data-option="Procedure" tabindex="0" role="button"><i
+                                                    class="bi-credit-card fs-5"></i>
+                                                <h3>Procedure</h3>
+                                            </li>
+                                            <li data-option="Other" tabindex="0" role="button"><i
+                                                    class="bi-credit-card fs-5"></i>
+                                                <h3>Other</h3>
+                                            </li>
                                         </menu>
                                     </div>
                                 </section>
                             </div>
-                            
+
                             <div class="mb-3">
-                                <label for="editPaymentMethod" class="form-label">Payment Method <span class="text-danger">*</span></label>
+                                <label for="editPaymentMethod" class="form-label">Payment Method <span
+                                        class="text-danger">*</span></label>
                                 <section class="field menu" style="min-width: 100%;">
                                     <div class="control">
-                                        <select class="form-select d-none" id="editPaymentMethod" name="method" required>
+                                        <select class="form-select d-none" id="editPaymentMethod" name="method"
+                                            required>
                                             <option value="Cash" selected>Cash</option>
-                                    <option value="Card">Card</option>
-                                    <option value="Transfer">Transfer</option>
-                                    <option value="Wallet">Wallet</option>
-                                </select>
-                                        <button type="button" class="custom-select-toggle" aria-expanded="false">Cash</button>
+                                            <option value="Card">Card</option>
+                                            <option value="Transfer">Transfer</option>
+                                            <option value="Wallet">Wallet</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle"
+                                            aria-expanded="false">Cash</button>
                                         <menu>
-                                            <li data-option="Cash" tabindex="0" role="button" class="selected"><i class="bi-cash fs-5"></i><h3>Cash</h3></li>
-                                            <li data-option="Card" tabindex="0" role="button"><i class="bi-cash fs-5"></i><h3>Card</h3></li>
-                                            <li data-option="Transfer" tabindex="0" role="button"><i class="bi-cash fs-5"></i><h3>Transfer</h3></li>
-                                            <li data-option="Wallet" tabindex="0" role="button"><i class="bi-cash fs-5"></i><h3>Wallet</h3></li>
+                                            <li data-option="Cash" tabindex="0" role="button" class="selected"><i
+                                                    class="bi-cash fs-5"></i>
+                                                <h3>Cash</h3>
+                                            </li>
+                                            <li data-option="Card" tabindex="0" role="button"><i
+                                                    class="bi-cash fs-5"></i>
+                                                <h3>Card</h3>
+                                            </li>
+                                            <li data-option="Transfer" tabindex="0" role="button"><i
+                                                    class="bi-cash fs-5"></i>
+                                                <h3>Transfer</h3>
+                                            </li>
+                                            <li data-option="Wallet" tabindex="0" role="button"><i
+                                                    class="bi-cash fs-5"></i>
+                                                <h3>Wallet</h3>
+                                            </li>
                                         </menu>
                                     </div>
                                 </section>
                             </div>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="editPaymentDescription" class="form-label">Description</label>
-                                <textarea class="form-control" 
-                                          id="editPaymentDescription" 
-                                          name="description" 
-                                          rows="3" 
-                                          placeholder="Payment description..."></textarea>
+                                <textarea class="form-control" id="editPaymentDescription" name="description" rows="3"
+                                    placeholder="Payment description..."></textarea>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label for="editPaymentDate" class="form-label">Payment Date</label>
-                                <input type="datetime-local" 
-                                       class="form-control" 
-                                       id="editPaymentDate" 
-                                       name="payment_date">
+                                <input type="datetime-local" class="form-control" id="editPaymentDate"
+                                    name="payment_date">
                             </div>
                         </div>
                     </div>
@@ -834,36 +946,29 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
             <form id="editExpenseForm">
                 <div class="modal-body">
                     <div id="editExpenseMessage" class="alert d-none" role="alert"></div>
-                    
+
                     <input type="hidden" id="editExpenseId" name="expense_id">
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="editExpenseAmount" class="form-label">Amount <span class="text-danger">*</span></label>
+                                <label for="editExpenseAmount" class="form-label">Amount <span
+                                        class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text">EGP</span>
-                                    <input type="number" 
-                                           class="form-control" 
-                                           id="editExpenseAmount" 
-                                           name="amount" 
-                                           step="0.01" 
-                                           min="0" 
-                                           required>
+                                    <input type="number" class="form-control" id="editExpenseAmount" name="amount"
+                                        step="0.01" min="0" required>
                                 </div>
                             </div>
-                            
+
                             <div class="mb-3">
-                                <label for="editExpenseName" class="form-label">Expense Name <span class="text-danger">*</span></label>
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="editExpenseName" 
-                                       name="expense_name" 
-                                       placeholder="Enter expense name..."
-                                       required>
+                                <label for="editExpenseName" class="form-label">Expense Name <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editExpenseName" name="expense_name"
+                                    placeholder="Enter expense name..." required>
                             </div>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="editExpenseCategory" class="form-label">Category</label>
@@ -871,42 +976,56 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                                     <div class="control">
                                         <select class="form-select d-none" id="editExpenseCategory" name="category">
                                             <option value="utilities" selected>Utilities</option>
-                                    <option value="medical">Medical</option>
-                                    <option value="maintenance">Maintenance</option>
-                                    <option value="office">Office</option>
-                                    <option value="salary">Salary</option>
-                                    <option value="other">Other</option>
-                                </select>
-                                        <button type="button" class="custom-select-toggle" aria-expanded="false">Utilities</button>
+                                            <option value="medical">Medical</option>
+                                            <option value="maintenance">Maintenance</option>
+                                            <option value="office">Office</option>
+                                            <option value="salary">Salary</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                        <button type="button" class="custom-select-toggle"
+                                            aria-expanded="false">Utilities</button>
                                         <menu>
-                                            <li data-option="utilities" tabindex="0" role="button" class="selected"><i class="bi-tags fs-5"></i><h3>Utilities</h3></li>
-                                            <li data-option="medical" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Medical</h3></li>
-                                            <li data-option="maintenance" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Maintenance</h3></li>
-                                            <li data-option="office" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Office</h3></li>
-                                            <li data-option="salary" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Salary</h3></li>
-                                            <li data-option="other" tabindex="0" role="button"><i class="bi-tags fs-5"></i><h3>Other</h3></li>
+                                            <li data-option="utilities" tabindex="0" role="button" class="selected"><i
+                                                    class="bi-tags fs-5"></i>
+                                                <h3>Utilities</h3>
+                                            </li>
+                                            <li data-option="medical" tabindex="0" role="button"><i
+                                                    class="bi-tags fs-5"></i>
+                                                <h3>Medical</h3>
+                                            </li>
+                                            <li data-option="maintenance" tabindex="0" role="button"><i
+                                                    class="bi-tags fs-5"></i>
+                                                <h3>Maintenance</h3>
+                                            </li>
+                                            <li data-option="office" tabindex="0" role="button"><i
+                                                    class="bi-tags fs-5"></i>
+                                                <h3>Office</h3>
+                                            </li>
+                                            <li data-option="salary" tabindex="0" role="button"><i
+                                                    class="bi-tags fs-5"></i>
+                                                <h3>Salary</h3>
+                                            </li>
+                                            <li data-option="other" tabindex="0" role="button"><i
+                                                    class="bi-tags fs-5"></i>
+                                                <h3>Other</h3>
+                                            </li>
                                         </menu>
                                     </div>
                                 </section>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label for="editExpenseDate" class="form-label">Expense Date</label>
-                                <input type="datetime-local" 
-                                       class="form-control" 
-                                       id="editExpenseDate" 
-                                       name="expense_date">
+                                <input type="datetime-local" class="form-control" id="editExpenseDate"
+                                    name="expense_date">
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="editExpenseNotes" class="form-label">Notes</label>
-                        <textarea class="form-control" 
-                                  id="editExpenseNotes" 
-                                  name="notes" 
-                                  rows="3" 
-                                  placeholder="Notes about the expense..."></textarea>
+                        <textarea class="form-control" id="editExpenseNotes" name="notes" rows="3"
+                            placeholder="Notes about the expense..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -955,8 +1074,27 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
         paymentTypes: <?= json_encode($paymentTypes, JSON_UNESCAPED_UNICODE) ?>,
     };
 </script>
-<script src="/app/Views/doctor/assets/js/payments.js?v=<?= file_exists(__DIR__ . '/assets/js/payments.js') ? filemtime(__DIR__ . '/assets/js/payments.js') : time() ?>"></script>
+<script
+    src="/app/Views/doctor/assets/js/payments.js?v=<?= file_exists(__DIR__ . '/assets/js/payments.js') ? filemtime(__DIR__ . '/assets/js/payments.js') : time() ?>"></script>
+
+<!-- AI Chat Widget -->
+<link href="/app/Views/doctor/assets/css/ai-chat-widget.css" rel="stylesheet">
+<script src="/app/Views/doctor/assets/js/ai-chat-widget.js"></script>
 <style>
+    /*.modal-backdrop.show{
+        display: none !important;
+    }
+    body > div.modal-backdrop.fade.show{
+        display: none !important;
+    }*/
+    .dark .modal-content {
+        background: rgba(11, 18, 32, 0.8) !important;
+    }
+
+    .modal-content {
+        background: rgba(248, 250, 252, 0.8) !important;
+    }
+
     .modal-backdrop.show{
         display: none !important;
     }

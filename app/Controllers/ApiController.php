@@ -675,6 +675,73 @@ class ApiController
         }
     }
 
+    /**
+     * Resolve the clinic_id to use when writing a finance row.
+     *
+     *   - Secretary: ALWAYS pinned to their own users.clinic_id. Anything the
+     *     client sent is ignored (defence-in-depth, same pattern as appointments).
+     *   - Doctor / admin: uses $input['clinic_id'] if provided and valid;
+     *     otherwise inherits from a linked appointment (if any), otherwise
+     *     falls back to clinic 1 (Riyadh, historical default).
+     *
+     * Throws a controlled \RuntimeException with a JSON-friendly message when
+     * the resolved clinic cannot be used (no clinic on user, invalid id, etc.).
+     */
+    private function resolveClinicIdForRequest(array $input = [], ?int $inheritFromAppointmentId = null): int
+    {
+        $user = $this->auth->user();
+        $role = $user['role'] ?? null;
+
+        if ($role === 'secretary') {
+            if (empty($user['clinic_id'])) {
+                throw new \RuntimeException('Your account has no clinic assigned');
+            }
+            return (int)$user['clinic_id'];
+        }
+
+        // Doctor / admin path
+        if (!empty($input['clinic_id'])) {
+            $cid = (int)$input['clinic_id'];
+            $stmt = $this->pdo->prepare("SELECT id FROM clinics WHERE id = ? AND is_active = 1");
+            $stmt->execute([$cid]);
+            if ($stmt->fetch()) {
+                return $cid;
+            }
+            throw new \RuntimeException('Invalid or inactive clinic');
+        }
+
+        if ($inheritFromAppointmentId) {
+            $stmt = $this->pdo->prepare("SELECT clinic_id FROM appointments WHERE id = ?");
+            $stmt->execute([$inheritFromAppointmentId]);
+            $inherited = $stmt->fetchColumn();
+            if ($inherited) {
+                return (int)$inherited;
+            }
+        }
+
+        // Final fallback — keeps doctor/admin UIs working until Phase 3 adds
+        // an explicit clinic picker on every financial form.
+        return 1;
+    }
+
+    /**
+     * For update/delete on a financial row: secretaries may only touch rows
+     * inside their own clinic. Returns a JSON 403 response to be returned by
+     * the caller if denied; null when allowed.
+     */
+    private function assertFinanceRowInScope(?array $row): ?array
+    {
+        $user = $this->auth->user();
+        if (($user['role'] ?? null) !== 'secretary' || empty($user['clinic_id'])) {
+            return null; // doctors/admins can touch any clinic
+        }
+        $rowClinic = isset($row['clinic_id']) ? (int)$row['clinic_id'] : 0;
+        if ($rowClinic !== (int)$user['clinic_id']) {
+            return $this->jsonResponse(['error' => 'هذا السجل يخص عيادة أخرى ولا يمكنك التعديل عليه.'], 403);
+        }
+        return null;
+    }
+
     public function createPayment()
     {
         try {
@@ -698,6 +765,17 @@ class ApiController
                     'error' => 'Validation failed',
                     'details' => $this->validator->getAllErrors()
                 ], 400);
+            }
+
+            // Resolve clinic_id: secretary → own, doctor/admin → input or inherit
+            // from the linked appointment, falling back to clinic 1.
+            try {
+                $data['clinic_id'] = $this->resolveClinicIdForRequest(
+                    $data,
+                    isset($data['appointment_id']) ? (int)$data['appointment_id'] : null
+                );
+            } catch (\RuntimeException $e) {
+                return $this->jsonResponse(['error' => $e->getMessage()], 400);
             }
 
             // Check if discount/exemption requires approval
@@ -2703,15 +2781,19 @@ class ApiController
 
     private function createPaymentRecord($data, $userId, $requiresApproval)
     {
+        // created_at = NOW() (explicit) so it reflects the DB session timezone
+        // (pinned in Database.php). clinic_id is expected to be already
+        // resolved by createPayment() via resolveClinicIdForRequest().
         $stmt = $this->pdo->prepare("
-            INSERT INTO payments (appointment_id, patient_id, received_by, type, method, amount, 
-                                discount_amount, discount_reason, is_exempt, exempt_reason)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO payments (appointment_id, patient_id, clinic_id, received_by, type, method, amount,
+                                discount_amount, discount_reason, is_exempt, exempt_reason, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
         ");
 
         $stmt->execute([
             $data['appointment_id'] ?? null,
             $data['patient_id'],
+            isset($data['clinic_id']) ? (int)$data['clinic_id'] : null,
             $userId,
             $data['type'],
             $data['method'],
@@ -3135,36 +3217,60 @@ class ApiController
         return $this->pdo->lastInsertId();
     }
 
-    private function isDateClosed($date)
+    /**
+     * Is the day already closed for this clinic? After migration 028 the
+     * UNIQUE on daily_closures is (clinic_id, doctor_id, date) so closures
+     * are per-clinic. A NULL $clinicId argument means "any clinic" (used in
+     * legacy callers that haven't been updated yet).
+     */
+    private function isDateClosed($date, ?int $clinicId = null)
     {
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM daily_closures WHERE date = ?");
-        $stmt->execute([$date]);
+        if ($clinicId === null) {
+            $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM daily_closures WHERE date = ?");
+            $stmt->execute([$date]);
+        } else {
+            $stmt = $this->pdo->prepare(
+                "SELECT COUNT(*) FROM daily_closures WHERE date = ? AND clinic_id = ?"
+            );
+            $stmt->execute([$date, $clinicId]);
+        }
         return $stmt->fetchColumn() > 0;
     }
 
-    private function createDailyClosure($date, $userId)
+    private function createDailyClosure($date, $userId, ?int $clinicId = null)
     {
-        // Calculate totals for the date
-        $stmt = $this->pdo->prepare("
-            SELECT COUNT(*) as total, SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed
-            FROM appointments WHERE DATE(created_at) = ?
-        ");
-        $stmt->execute([$date]);
+        // Aggregates are scoped to the same clinic as the closure when given,
+        // so per-clinic totals stay accurate.
+        $appointmentsSql = "SELECT COUNT(*) as total,
+                                  SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed
+                             FROM appointments WHERE DATE(created_at) = ?";
+        $paymentsSql     = "SELECT SUM(CASE WHEN is_exempt = 1 THEN 0
+                                            ELSE (amount - COALESCE(discount_amount, 0))
+                                       END) as total_payments
+                             FROM payments WHERE DATE(created_at) = ?";
+        $params = [$date];
+        if ($clinicId !== null) {
+            $appointmentsSql .= " AND clinic_id = ?";
+            $paymentsSql     .= " AND clinic_id = ?";
+            $params[] = $clinicId;
+        }
+
+        $stmt = $this->pdo->prepare($appointmentsSql);
+        $stmt->execute($params);
         $appointmentStats = $stmt->fetch();
 
-        $stmt = $this->pdo->prepare("
-            SELECT SUM(amount) as total_payments FROM payments WHERE DATE(created_at) = ?
-        ");
-        $stmt->execute([$date]);
+        $stmt = $this->pdo->prepare($paymentsSql);
+        $stmt->execute($params);
         $paymentStats = $stmt->fetch();
 
         $stmt = $this->pdo->prepare("
-            INSERT INTO daily_closures (date, closed_by, total_appointments, completed_appointments, total_payments, note)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO daily_closures (date, clinic_id, closed_by, total_appointments, completed_appointments, total_payments, note)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
 
         $stmt->execute([
             $date,
+            $clinicId,
             $userId,
             $appointmentStats['total'] ?? 0,
             $appointmentStats['completed'] ?? 0,
@@ -7508,10 +7614,17 @@ class ApiController
                 ], 400);
             }
 
+            // Resolve clinic_id (secretary pinned; doctor/admin from input or fallback)
+            try {
+                $clinicId = $this->resolveClinicIdForRequest($data);
+            } catch (\RuntimeException $e) {
+                return $this->jsonResponse(['error' => $e->getMessage()], 400);
+            }
+
             // Create daily balance record
             $stmt = $this->pdo->prepare("
-                INSERT INTO daily_balances (amount, balance_type, description, created_by, created_at)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO daily_balances (amount, balance_type, clinic_id, description, created_by, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
             ");
 
             $createdAt = !empty($data['balance_date']) ? $data['balance_date'] : date('Y-m-d H:i:s');
@@ -7519,6 +7632,7 @@ class ApiController
             $stmt->execute([
                 $data['amount'],
                 $data['balance_type'],
+                $clinicId,
                 $data['description'] ?? null,
                 $user['id'],
                 $createdAt
@@ -7556,13 +7670,22 @@ class ApiController
 
             $today = date('Y-m-d');
 
-            // Check if today is already closed
-            if ($this->isDateClosed($today)) {
+            // The doctor's UI doesn't have a clinic picker yet (Phase 3); accept
+            // an explicit `clinic_id` from POST when sent, otherwise pass NULL =
+            // close every clinic for the day in one shot.
+            $input = $_POST;
+            $clinicId = null;
+            if (!empty($input['clinic_id'])) {
+                $clinicId = (int)$input['clinic_id'];
+            }
+
+            // Check if today is already closed (for this clinic if specified)
+            if ($this->isDateClosed($today, $clinicId)) {
                 return $this->jsonResponse(['error' => 'تم إغلاق اليوم مسبقاً'], 400);
             }
 
             // Create closure using existing method
-            $closureId = $this->createDailyClosure($today, $user['id']);
+            $closureId = $this->createDailyClosure($today, $user['id'], $clinicId);
 
             return $this->jsonResponse([
                 'ok' => true,
@@ -7607,10 +7730,17 @@ class ApiController
                 ], 400);
             }
 
+            // Resolve clinic_id (secretary pinned; doctor/admin from input or fallback)
+            try {
+                $clinicId = $this->resolveClinicIdForRequest($data ?: []);
+            } catch (\RuntimeException $e) {
+                return $this->jsonResponse(['error' => $e->getMessage()], 400);
+            }
+
             // Create expense record
             $stmt = $this->pdo->prepare("
-                INSERT INTO expenses (amount, expense_name, category, notes, created_by, created_at)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO expenses (amount, expense_name, category, clinic_id, notes, created_by, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
             ");
 
             $createdAt = !empty($data['expense_date']) ? $data['expense_date'] : date('Y-m-d H:i:s');
@@ -7619,6 +7749,7 @@ class ApiController
                 $data['amount'],
                 $data['expense_name'],
                 $data['category'],
+                $clinicId,
                 $data['notes'] ?? null,
                 $user['id'],
                 $createdAt
@@ -7682,9 +7813,11 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Expense not found'], 404);
             }
 
+            if ($denied = $this->assertFinanceRowInScope($expense)) return $denied;
+
             // Update expense record
             $stmt = $this->pdo->prepare("
-                UPDATE expenses 
+                UPDATE expenses
                 SET amount = ?, expense_name = ?, category = ?, notes = ?
                 WHERE id = ?
             ");
@@ -7729,6 +7862,8 @@ class ApiController
             if (!$expense) {
                 return $this->jsonResponse(['error' => 'Expense not found'], 404);
             }
+
+            if ($denied = $this->assertFinanceRowInScope($expense)) return $denied;
 
             // Delete expense record
             $stmt = $this->pdo->prepare("DELETE FROM expenses WHERE id = ?");
@@ -7788,9 +7923,11 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Payment not found'], 404);
             }
 
+            if ($denied = $this->assertFinanceRowInScope($payment)) return $denied;
+
             // Update payment record
             $stmt = $this->pdo->prepare("
-                UPDATE payments 
+                UPDATE payments
                 SET amount = ?, type = ?, method = ?, description = ?
                 WHERE id = ?
             ");
@@ -7836,9 +7973,25 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Payment not found'], 404);
             }
 
-            // Delete payment record
+            if ($denied = $this->assertFinanceRowInScope($payment)) return $denied;
+
+            // Delete payment record. Removing the row is enough to "deduct"
+            // the amount from the secretary's daily balance because every
+            // aggregate query (getDailyBalance, getPaymentTypesSummary,
+            // getFinancialTransactions) recomputes from current rows.
             $stmt = $this->pdo->prepare("DELETE FROM payments WHERE id = ?");
             $stmt->execute([$id]);
+
+            // Audit trail on the patient's timeline so the secretary can see
+            // the cancellation reflected in their balance.
+            $actor = $this->auth->user();
+            $actorName = $actor['name'] ?? ($actor['username'] ?? 'system');
+            $this->createTimelineEvent(
+                $payment['patient_id'],
+                $payment['appointment_id'] ?? null,
+                'Payment',
+                "Payment cancelled by {$actorName}: {$payment['amount']} EGP"
+            );
 
             return $this->jsonResponse([
                 'ok' => true,
@@ -7945,16 +8098,30 @@ class ApiController
                 $params[] = $date;
             }
 
+            // Secretary scope: pin to their clinic.
+            $user = $this->auth->user();
+            if (($user['role'] ?? null) === 'secretary' && !empty($user['clinic_id'])) {
+                $whereConditions[] = "clinic_id = ?";
+                $params[] = (int)$user['clinic_id'];
+            }
+
             // Get transactions from different sources
             $transactions = [];
 
-            // Get payments
+            // Get payments — `amount` here is the NET (gross minus discount,
+            // exempt rows = 0) so summing the rows reconciles with the
+            // "Total Received" card on the dashboard.
             if ($type === 'all' || $type === 'payment') {
                 $paymentQuery = "
-                    SELECT 
+                    SELECT
                         'payment' as type,
                         p.id,
-                        p.amount,
+                        CASE WHEN p.is_exempt = 1 THEN 0
+                             ELSE (p.amount - COALESCE(p.discount_amount, 0))
+                        END as amount,
+                        p.amount as gross_amount,
+                        COALESCE(p.discount_amount, 0) as discount_amount,
+                        p.is_exempt,
                         p.created_at,
                         CONCAT('دفعة - ', pat.first_name, ' ', pat.last_name) as description,
                         u.name as created_by_name
@@ -8884,66 +9051,79 @@ class ApiController
         try {
             $today = date('Y-m-d');
 
-            // Get opening balance
+            $user = $this->auth->user();
+            $secClinicId = (($user['role'] ?? null) === 'secretary' && !empty($user['clinic_id']))
+                ? (int)$user['clinic_id'] : null;
+            $clinicFilter = $secClinicId ? ' AND clinic_id = ? ' : '';
+            $extraParam   = $secClinicId ? [$secClinicId] : [];
+
+            // Opening balance
             $stmt = $this->pdo->prepare("
                 SELECT COALESCE(SUM(amount), 0) as opening_balance
-                FROM daily_balances 
-                WHERE DATE(created_at) = ? AND balance_type = 'opening'
+                FROM daily_balances
+                WHERE DATE(created_at) = ? AND balance_type = 'opening' {$clinicFilter}
             ");
-            $stmt->execute([$today]);
+            $stmt->execute(array_merge([$today], $extraParam));
             $openingBalance = $stmt->fetchColumn();
 
-            // Get additional balance (positive amounts)
+            // Additional balance
             $stmt = $this->pdo->prepare("
                 SELECT COALESCE(SUM(amount), 0) as additional_balance
-                FROM daily_balances 
-                WHERE DATE(created_at) = ? AND balance_type = 'additional'
+                FROM daily_balances
+                WHERE DATE(created_at) = ? AND balance_type = 'additional' {$clinicFilter}
             ");
-            $stmt->execute([$today]);
+            $stmt->execute(array_merge([$today], $extraParam));
             $additionalBalance = $stmt->fetchColumn();
 
-            // Get total withdrawals (negative amounts)
+            // Withdrawals
             $stmt = $this->pdo->prepare("
                 SELECT COALESCE(SUM(amount), 0) as total_withdrawals
-                FROM daily_balances 
-                WHERE DATE(created_at) = ? AND balance_type = 'withdrawal'
+                FROM daily_balances
+                WHERE DATE(created_at) = ? AND balance_type = 'withdrawal' {$clinicFilter}
             ");
-            $stmt->execute([$today]);
+            $stmt->execute(array_merge([$today], $extraParam));
             $totalWithdrawals = $stmt->fetchColumn();
 
-            // Get total received today
+            // Total received today — NET of discount, exempt rows count as 0.
             $stmt = $this->pdo->prepare("
-                SELECT COALESCE(SUM(amount), 0) as total_received
-                FROM payments 
-                WHERE DATE(created_at) = ?
+                SELECT COALESCE(SUM(
+                    CASE WHEN is_exempt = 1 THEN 0
+                         ELSE (amount - COALESCE(discount_amount, 0))
+                    END
+                ), 0) as total_received
+                FROM payments
+                WHERE DATE(created_at) = ? {$clinicFilter}
             ");
-            $stmt->execute([$today]);
+            $stmt->execute(array_merge([$today], $extraParam));
             $totalReceived = $stmt->fetchColumn();
 
-            // Get total expenses today
+            // Total expenses today
             $stmt = $this->pdo->prepare("
                 SELECT COALESCE(SUM(amount), 0) as total_expenses
-                FROM expenses 
-                WHERE DATE(created_at) = ?
+                FROM expenses
+                WHERE DATE(created_at) = ? {$clinicFilter}
             ");
-            $stmt->execute([$today]);
+            $stmt->execute(array_merge([$today], $extraParam));
             $totalExpenses = $stmt->fetchColumn();
 
             // Calculate current balance: opening + additional + payments - withdrawals - expenses
             $currentBalance = $openingBalance + $additionalBalance + $totalReceived - $totalWithdrawals - $totalExpenses;
 
-            // Get transactions count
+            // Transactions count (also clinic-scoped for secretary)
             $stmt = $this->pdo->prepare("
                 SELECT COUNT(*) as transactions_count
                 FROM (
-                    SELECT id FROM payments WHERE DATE(created_at) = ?
+                    SELECT id FROM payments       WHERE DATE(created_at) = ? {$clinicFilter}
                     UNION ALL
-                    SELECT id FROM expenses WHERE DATE(created_at) = ?
+                    SELECT id FROM expenses       WHERE DATE(created_at) = ? {$clinicFilter}
                     UNION ALL
-                    SELECT id FROM daily_balances WHERE DATE(created_at) = ?
+                    SELECT id FROM daily_balances WHERE DATE(created_at) = ? {$clinicFilter}
                 ) as all_transactions
             ");
-            $stmt->execute([$today, $today, $today]);
+            $params = $secClinicId
+                ? [$today, $secClinicId, $today, $secClinicId, $today, $secClinicId]
+                : [$today, $today, $today];
+            $stmt->execute($params);
             $transactionsCount = $stmt->fetchColumn();
 
             return [
@@ -9482,35 +9662,65 @@ class ApiController
         }
     }
 
+    /**
+     * Today's payment totals grouped by normalized type, with NET amounts
+     * (gross minus discount, exempt rows count as 0). Secretary sees only
+     * their clinic; doctor/admin sees all clinics. Shape MUST match
+     * SecretaryController::getPaymentTypesSummary().
+     */
     private function getPaymentTypesSummary()
     {
         try {
             $today = date('Y-m-d');
+            $params = [$today];
+            $clinicFilter = '';
+            $user = $this->auth->user();
+            if (($user['role'] ?? null) === 'secretary' && !empty($user['clinic_id'])) {
+                $clinicFilter = ' AND clinic_id = ? ';
+                $params[] = (int)$user['clinic_id'];
+            }
 
             $stmt = $this->pdo->prepare("
-                SELECT 
-                    type,
-                    COUNT(*) as count,
-                    SUM(amount) as total
-                FROM payments 
-                WHERE DATE(created_at) = ?
-                GROUP BY type
+                SELECT
+                    CASE
+                        WHEN type = 'Booking'      THEN 'new_booking'
+                        WHEN type = 'FollowUp'     THEN 'followup'
+                        WHEN type = 'Consultation' THEN 'consultation'
+                        WHEN type = 'Procedure'    THEN 'procedure'
+                        ELSE 'other'
+                    END as payment_type,
+                    COALESCE(SUM(
+                        CASE WHEN is_exempt = 1 THEN 0
+                             ELSE (amount - COALESCE(discount_amount, 0))
+                        END
+                    ), 0) as total_amount
+                FROM payments
+                WHERE DATE(created_at) = ? {$clinicFilter}
+                GROUP BY payment_type
             ");
-            $stmt->execute([$today]);
+            $stmt->execute($params);
             $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-            $summary = [];
-            foreach ($results as $result) {
-                $summary[$result['type']] = [
-                    'count' => $result['count'],
-                    'total' => $result['total']
-                ];
+            $summary = [
+                'new_booking'  => 0,
+                'followup'     => 0,
+                'consultation' => 0,
+                'procedure'    => 0,
+                'other'        => 0,
+            ];
+            foreach ($results as $row) {
+                $summary[$row['payment_type']] = $row['total_amount'];
             }
 
             return $summary;
-
-        } catch (Exception $e) {
-            return [];
+        } catch (\Exception $e) {
+            return [
+                'new_booking'  => 0,
+                'followup'     => 0,
+                'consultation' => 0,
+                'procedure'    => 0,
+                'other'        => 0,
+            ];
         }
     }
 

@@ -87,10 +87,10 @@
                     <div class="stats-card-icon">
                         <i class="bi bi-wallet2"></i>
                     </div>
-                    </div>
                 </div>
             </div>
         </div>
+    </div>
     <div class="col-md-3 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="stats-card stats-card-primary">
@@ -98,14 +98,14 @@
                     <div class="stats-card-header">
                         <h4 class="stats-card-title arabic-text">إجمالي المستلم</h4>
                         <h3 class="stats-card-value arabic-text" id="totalReceived"><?= number_format($dailyBalance['total_received'] ?? 0, 2) ?></h3>
-    </div>
+                    </div>
                     <div class="stats-card-icon">
                         <i class="bi bi-arrow-up-circle"></i>
-                    </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
     <div class="col-md-3 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="stats-card stats-card-danger">
@@ -113,14 +113,14 @@
                     <div class="stats-card-header">
                         <h4 class="stats-card-title arabic-text">إجمالي المصروفات</h4>
                         <h3 class="stats-card-value arabic-text" id="totalExpenses"><?= number_format($dailyBalance['total_expenses'] ?? 0, 2) ?></h3>
-    </div>
+                    </div>
                     <div class="stats-card-icon">
                         <i class="bi bi-arrow-down-circle"></i>
-                    </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
     <div class="col-md-3 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="stats-card stats-card-info">
@@ -128,7 +128,7 @@
                     <div class="stats-card-header">
                         <h4 class="stats-card-title arabic-text">الرصيد الحالي</h4>
                         <h3 class="stats-card-value arabic-text" id="currentBalance"><?= number_format($dailyBalance['current_balance'] ?? 0, 2) ?></h3>
-    </div>
+                    </div>
                     <div class="stats-card-icon">
                         <i class="bi bi-calculator"></i>
                     </div>
@@ -157,7 +157,7 @@
                             </div>
                             <div>
                                 <h6 class="mb-0 arabic-text">حجز جديد</h6>
-                                <span class="text-success fw-bold"><?= $paymentTypes['new_booking'] ?? 0 ?> جنيه</span>
+                                <span class="text-success fw-bold" data-payment-type="new_booking"><span class="payment-type-amount"><?= $paymentTypes['new_booking'] ?? 0 ?></span> جنيه</span>
                             </div>
                         </div>
                     </div>
@@ -168,7 +168,7 @@
                             </div>
                             <div>
                                 <h6 class="mb-0 arabic-text">إعادة كشف</h6>
-                                <span class="text-success fw-bold"><?= $paymentTypes['followup'] ?? 0 ?> جنيه</span>
+                                <span class="text-success fw-bold" data-payment-type="followup"><span class="payment-type-amount"><?= $paymentTypes['followup'] ?? 0 ?></span> جنيه</span>
                             </div>
                         </div>
                     </div>
@@ -179,7 +179,7 @@
                             </div>
                             <div>
                                 <h6 class="mb-0 arabic-text">استشارة طبية</h6>
-                                <span class="text-success fw-bold"><?= $paymentTypes['consultation'] ?? 0 ?> جنيه</span>
+                                <span class="text-success fw-bold" data-payment-type="consultation"><span class="payment-type-amount"><?= $paymentTypes['consultation'] ?? 0 ?></span> جنيه</span>
                             </div>
                         </div>
                     </div>
@@ -190,7 +190,7 @@
                             </div>
                             <div>
                                 <h6 class="mb-0 arabic-text">إجراء طبي</h6>
-                                <span class="text-success fw-bold"><?= $paymentTypes['procedure'] ?? 0 ?> جنيه</span>
+                                <span class="text-success fw-bold" data-payment-type="procedure"><span class="payment-type-amount"><?= $paymentTypes['procedure'] ?? 0 ?></span> جنيه</span>
                             </div>
                         </div>
                     </div>
@@ -1702,12 +1702,16 @@ function updateDashboardCards() {
                     }
                 }
                 
-                // Update payment types summary
+                // Update payment-type cards. The API returns the same flat
+                // shape rendered by SecretaryController on initial load:
+                //   { new_booking: 150, followup: 100, consultation: 0, procedure: 0, other: 0 }
                 if (data.data.paymentTypes) {
                     Object.keys(data.data.paymentTypes).forEach(type => {
-                        const element = document.getElementById(type + 'Count');
-                        if (element) {
-                            element.textContent = data.data.paymentTypes[type].count;
+                        const card = document.querySelector(`[data-payment-type="${type}"]`);
+                        if (!card) return;
+                        const amountEl = card.querySelector('.payment-type-amount');
+                        if (amountEl) {
+                            amountEl.textContent = formatMoney(data.data.paymentTypes[type] || 0);
                         }
                     });
                 }
@@ -3190,9 +3194,12 @@ h1, h2, h3, h4, h5, h6 {
 color: var(--text) !important;
 }
 
-body > div.modal-backdrop.fade.show{
-    display: none !important;
-}
+/* (Removed) The previous rule
+       body > div.modal-backdrop.fade.show { display: none !important; }
+   hid the dim layer entirely, which broke stacked modals — opening the
+   delete-confirmation modal on top of another modal left a phantom overlay
+   above the dialog. Letting Bootstrap manage its own backdrops keeps stacked
+   confirmations clean (same approach used on the appointments / calendar pages). */
 
 /* Modal z-index and centering */
 .modal {
@@ -3205,6 +3212,11 @@ body > div.modal-backdrop.fade.show{
 .modal-backdrop {
     z-index: 1000000 !important;
 }
+
+/* When a second modal stacks above the first, raise its backdrop + dialog
+   so it cleanly covers the modal beneath instead of fighting the same plane. */
+.modal-backdrop + .modal-backdrop { z-index: 1000003 !important; }
+.modal.show ~ .modal.show          { z-index: 1000005 !important; }
 
 .modal-dialog {
     z-index: 1000002 !important;

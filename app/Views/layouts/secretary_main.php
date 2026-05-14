@@ -100,6 +100,39 @@
             filter: brightness(1.15);
         }
     </style>
+
+    <!-- Clinics bootstrap: secretary sees only her own clinic (server-side
+         pinned). The list is rendered into the page so modal dropdowns can
+         populate synchronously on first open without waiting on /api/clinics. -->
+    <?php
+        try {
+            $__clinicsBootstrapPdo = \App\Config\Database::getInstance()->getConnection();
+            $__clinicsBootstrapAuth = new \App\Lib\Auth();
+            $__clinicsBootstrapUser = $__clinicsBootstrapAuth->user();
+            if (!empty($__clinicsBootstrapUser['clinic_id'])) {
+                $__cstmt = $__clinicsBootstrapPdo->prepare("
+                    SELECT id, code, name_ar, name_en
+                    FROM clinics
+                    WHERE is_active = 1 AND id = ?
+                    ORDER BY sort_order ASC, id ASC
+                ");
+                $__cstmt->execute([(int)$__clinicsBootstrapUser['clinic_id']]);
+                $__clinicsBootstrap = $__cstmt->fetchAll(\PDO::FETCH_ASSOC);
+            } else {
+                $__clinicsBootstrap = $__clinicsBootstrapPdo->query("
+                    SELECT id, code, name_ar, name_en
+                    FROM clinics
+                    WHERE is_active = 1
+                    ORDER BY sort_order ASC, id ASC
+                ")->fetchAll(\PDO::FETCH_ASSOC);
+            }
+        } catch (\Throwable $__e) {
+            $__clinicsBootstrap = [];
+        }
+    ?>
+    <script>
+        window.CLINICS_BOOTSTRAP = <?= json_encode($__clinicsBootstrap, JSON_UNESCAPED_UNICODE) ?>;
+    </script>
 </head>
 <body>
     <!-- Sidebar -->
@@ -178,7 +211,7 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="text-muted">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v8.0.0
+                        HClinic / Roaya Clinic v9.0.0
                     </div>
                     <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none" style="color: var(--accent);">Ahmed Helal</a></div>
                 </small>
@@ -887,5 +920,7 @@
             });
         })();
     </script>
+
+    <?php include __DIR__ . '/whats-new-v9-modal.php'; ?>
 </body>
 </html>

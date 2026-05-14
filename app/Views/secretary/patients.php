@@ -1,3 +1,20 @@
+<?php
+    // Server-render the secretary's clinic for the Add Patient dropdown.
+    try {
+        $__cal_pdo  = \App\Config\Database::getInstance()->getConnection();
+        $__cal_auth = new \App\Lib\Auth();
+        $__cal_user = $__cal_auth->user();
+        if (!empty($__cal_user['clinic_id'])) {
+            $__s = $__cal_pdo->prepare("SELECT id, code, name_ar, name_en FROM clinics WHERE is_active = 1 AND id = ? ORDER BY sort_order, id");
+            $__s->execute([(int)$__cal_user['clinic_id']]);
+            $__calClinics = $__s->fetchAll(\PDO::FETCH_ASSOC);
+        } else {
+            $__calClinics = $__cal_pdo->query("SELECT id, code, name_ar, name_en FROM clinics WHERE is_active = 1 ORDER BY sort_order, id")->fetchAll(\PDO::FETCH_ASSOC);
+        }
+    } catch (\Throwable $__e) {
+        $__calClinics = [];
+    }
+?>
 <!-- Patients Header -->
 <link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
@@ -586,8 +603,13 @@
 
                             <div class="mb-3">
                                 <label for="patientClinic" class="form-label arabic-text">العيادة <span class="text-danger">*</span></label>
-                                <select class="form-select arabic-text" id="patientClinic" name="clinic_id" required>
-                                    <option value="">اختر العيادة...</option>
+                                <select class="form-select arabic-text" id="patientClinic" name="clinic_id" required <?= count($__calClinics) === 1 ? 'disabled' : '' ?>>
+                                    <?php if (count($__calClinics) !== 1): ?>
+                                        <option value="">اختر العيادة...</option>
+                                    <?php endif; ?>
+                                    <?php foreach ($__calClinics as $__c): ?>
+                                        <option value="<?= (int)$__c['id'] ?>" <?= count($__calClinics) === 1 ? 'selected' : '' ?>><?= htmlspecialchars($__c['name_ar'] ?: $__c['name_en']) ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                                 <div class="invalid-feedback"></div>
                             </div>
@@ -1208,10 +1230,8 @@ function initializeAddPatientModal() {
         hideMessage();
         resetSubmitButton();
 
-        // Load clinics into dropdown (Arabic)
-        if (window.ClinicsLoader) {
-            window.ClinicsLoader.populate('patientClinic', { lang: 'ar' });
-        }
+        // Clinic dropdown is server-rendered in this view (and locked when
+        // only the secretary's own clinic is visible), so nothing to do here.
 
         // Focus on first name field
         setTimeout(() => {

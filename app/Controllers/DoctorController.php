@@ -2387,25 +2387,33 @@ class DoctorController
     public function payments()
     {
         $user = $this->auth->user();
-        
-        // Get daily balance
-        $dailyBalance = $this->getDailyBalance();
-        
-        // Get payment types summary
-        $paymentTypes = $this->getPaymentTypesSummary();
-        
-        // Get today's payments
-        $payments = $this->getTodayPayments();
-        
-        // Get today's expenses
-        $expenses = $this->getTodayExpenses();
-        
+
+        // Doctor can filter the whole financial page by clinic via ?clinic_id=
+        // (empty / missing = "all clinics", matching the cross-clinic visibility
+        // doctors retain by default).
+        $clinicFilter = !empty($_GET['clinic_id']) ? (int)$_GET['clinic_id'] : null;
+
+        // Get the active clinics list for the toolbar dropdown
+        $clinics = $this->pdo->query("
+            SELECT id, code, name_ar, name_en
+            FROM clinics
+            WHERE is_active = 1
+            ORDER BY sort_order ASC, id ASC
+        ")->fetchAll(\PDO::FETCH_ASSOC);
+
+        $dailyBalance = $this->getDailyBalance($clinicFilter);
+        $paymentTypes = $this->getPaymentTypesSummary($clinicFilter);
+        $payments     = $this->getTodayPayments($clinicFilter);
+        $expenses     = $this->getTodayExpenses($clinicFilter);
+
         $content = $this->view->render('doctor/payments', [
             'dailyBalance' => $dailyBalance,
             'paymentTypes' => $paymentTypes,
             'payments' => $payments,
             'expenses' => $expenses,
             'userRole' => $user['role'],
+            'clinics' => $clinics,
+            'selectedClinicId' => $clinicFilter,
             'viewHelper' => $this->view
         ]);
         
@@ -2450,71 +2458,74 @@ class DoctorController
         ]);
     }
 
-    private function getDailyBalance()
+    private function getDailyBalance(?int $clinicId = null)
     {
         try {
             $today = date('Y-m-d');
-            
-            // Get opening balance
+            $clinicFilter = $clinicId ? ' AND clinic_id = ? ' : '';
+            $clinicParam  = $clinicId ? [$clinicId] : [];
+
             $stmt = $this->pdo->prepare("
                 SELECT COALESCE(SUM(amount), 0) as opening_balance
-                FROM daily_balances 
-                WHERE DATE(created_at) = ? AND balance_type = 'opening'
+                FROM daily_balances
+                WHERE DATE(created_at) = ? AND balance_type = 'opening' {$clinicFilter}
             ");
-            $stmt->execute([$today]);
+            $stmt->execute(array_merge([$today], $clinicParam));
             $openingBalance = $stmt->fetchColumn();
-            
-            // Get additional balance (positive amounts)
+
             $stmt = $this->pdo->prepare("
                 SELECT COALESCE(SUM(amount), 0) as additional_balance
-                FROM daily_balances 
-                WHERE DATE(created_at) = ? AND balance_type = 'additional'
+                FROM daily_balances
+                WHERE DATE(created_at) = ? AND balance_type = 'additional' {$clinicFilter}
             ");
-            $stmt->execute([$today]);
+            $stmt->execute(array_merge([$today], $clinicParam));
             $additionalBalance = $stmt->fetchColumn();
-            
-            // Get total withdrawals (negative amounts)
+
             $stmt = $this->pdo->prepare("
                 SELECT COALESCE(SUM(amount), 0) as total_withdrawals
-                FROM daily_balances 
-                WHERE DATE(created_at) = ? AND balance_type = 'withdrawal'
+                FROM daily_balances
+                WHERE DATE(created_at) = ? AND balance_type = 'withdrawal' {$clinicFilter}
             ");
-            $stmt->execute([$today]);
+            $stmt->execute(array_merge([$today], $clinicParam));
             $totalWithdrawals = $stmt->fetchColumn();
-            
-            // Get total received today
+
+            // NET total received (matches Phase 0 fix across other controllers).
             $stmt = $this->pdo->prepare("
-                SELECT COALESCE(SUM(amount), 0) as total_received
-                FROM payments 
-                WHERE DATE(created_at) = ?
+                SELECT COALESCE(SUM(
+                    CASE WHEN is_exempt = 1 THEN 0
+                         ELSE (amount - COALESCE(discount_amount, 0))
+                    END
+                ), 0) as total_received
+                FROM payments
+                WHERE DATE(created_at) = ? {$clinicFilter}
             ");
-            $stmt->execute([$today]);
+            $stmt->execute(array_merge([$today], $clinicParam));
             $totalReceived = $stmt->fetchColumn();
-            
-            // Get total expenses today
+
             $stmt = $this->pdo->prepare("
                 SELECT COALESCE(SUM(amount), 0) as total_expenses
-                FROM expenses 
-                WHERE DATE(created_at) = ?
+                FROM expenses
+                WHERE DATE(created_at) = ? {$clinicFilter}
             ");
-            $stmt->execute([$today]);
+            $stmt->execute(array_merge([$today], $clinicParam));
             $totalExpenses = $stmt->fetchColumn();
-            
-            // Calculate current balance: opening + additional + payments - withdrawals - expenses
+
             $currentBalance = $openingBalance + $additionalBalance + $totalReceived - $totalWithdrawals - $totalExpenses;
-            
-            // Get transactions count
+
             $stmt = $this->pdo->prepare("
                 SELECT COUNT(*) as transactions_count
                 FROM (
-                    SELECT id FROM payments WHERE DATE(created_at) = ?
+                    SELECT id FROM payments       WHERE DATE(created_at) = ? {$clinicFilter}
                     UNION ALL
-                    SELECT id FROM expenses WHERE DATE(created_at) = ?
+                    SELECT id FROM expenses       WHERE DATE(created_at) = ? {$clinicFilter}
                     UNION ALL
-                    SELECT id FROM daily_balances WHERE DATE(created_at) = ?
+                    SELECT id FROM daily_balances WHERE DATE(created_at) = ? {$clinicFilter}
                 ) as all_transactions
             ");
-            $stmt->execute([$today, $today, $today]);
+            $params = $clinicId
+                ? [$today, $clinicId, $today, $clinicId, $today, $clinicId]
+                : [$today, $today, $today];
+            $stmt->execute($params);
             $transactionsCount = $stmt->fetchColumn();
             
             return [
@@ -2539,81 +2550,97 @@ class DoctorController
         }
     }
 
-    private function getPaymentTypesSummary()
+    private function getPaymentTypesSummary(?int $clinicId = null)
     {
         try {
             $today = date('Y-m-d');
-            
+            $clinicFilter = $clinicId ? ' AND clinic_id = ? ' : '';
+            $params = $clinicId ? [$today, $clinicId] : [$today];
+
             $stmt = $this->pdo->prepare("
-                SELECT 
-                    type,
+                SELECT
+                    CASE
+                        WHEN type = 'Booking'      THEN 'new_booking'
+                        WHEN type = 'FollowUp'     THEN 'followup'
+                        WHEN type = 'Consultation' THEN 'consultation'
+                        WHEN type = 'Procedure'    THEN 'procedure'
+                        ELSE 'other'
+                    END as payment_type,
                     COUNT(*) as count,
-                    SUM(amount) as total
-                FROM payments 
-                WHERE DATE(created_at) = ?
-                GROUP BY type
+                    COALESCE(SUM(
+                        CASE WHEN is_exempt = 1 THEN 0
+                             ELSE (amount - COALESCE(discount_amount, 0))
+                        END
+                    ), 0) as total
+                FROM payments
+                WHERE DATE(created_at) = ? {$clinicFilter}
+                GROUP BY payment_type
             ");
-            $stmt->execute([$today]);
+            $stmt->execute($params);
             $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            
+
             $summary = [];
-            foreach ($results as $result) {
-                $summary[$result['type']] = [
-                    'count' => $result['count'],
-                    'total' => $result['total']
+            foreach ($results as $row) {
+                $summary[$row['payment_type']] = [
+                    'count' => $row['count'],
+                    'total' => $row['total'],
                 ];
             }
-            
             return $summary;
-            
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return [];
         }
     }
 
-    private function getTodayPayments()
+    private function getTodayPayments(?int $clinicId = null)
     {
         try {
             $today = date('Y-m-d');
-            
+            $clinicFilter = $clinicId ? ' AND p.clinic_id = ? ' : '';
+            $params = $clinicId ? [$today, $clinicId] : [$today];
+
             $stmt = $this->pdo->prepare("
-                SELECT 
+                SELECT
                     p.*,
                     CONCAT(pat.first_name, ' ', pat.last_name) as patient_name,
                     pat.phone,
-                    u.name as received_by_name
+                    u.name as received_by_name,
+                    c.name_ar as clinic_name_ar, c.name_en as clinic_name_en, c.code as clinic_code
                 FROM payments p
                 LEFT JOIN patients pat ON p.patient_id = pat.id
                 LEFT JOIN users u ON p.received_by = u.id
-                WHERE DATE(p.created_at) = ?
+                LEFT JOIN clinics c ON p.clinic_id = c.id
+                WHERE DATE(p.created_at) = ? {$clinicFilter}
                 ORDER BY p.created_at DESC
             ");
-            $stmt->execute([$today]);
+            $stmt->execute($params);
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return [];
         }
     }
 
-    private function getTodayExpenses()
+    private function getTodayExpenses(?int $clinicId = null)
     {
         try {
             $today = date('Y-m-d');
-            
+            $clinicFilter = $clinicId ? ' AND e.clinic_id = ? ' : '';
+            $params = $clinicId ? [$today, $clinicId] : [$today];
+
             $stmt = $this->pdo->prepare("
-                SELECT 
+                SELECT
                     e.*,
-                    u.name as created_by_name
+                    u.name as created_by_name,
+                    c.name_ar as clinic_name_ar, c.name_en as clinic_name_en, c.code as clinic_code
                 FROM expenses e
                 LEFT JOIN users u ON e.created_by = u.id
-                WHERE DATE(e.created_at) = ?
+                LEFT JOIN clinics c ON e.clinic_id = c.id
+                WHERE DATE(e.created_at) = ? {$clinicFilter}
                 ORDER BY e.created_at DESC
             ");
-            $stmt->execute([$today]);
+            $stmt->execute($params);
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return [];
         }
     }

@@ -1550,22 +1550,41 @@ class SecretaryController
                 $appointment = $stmt->fetch(\PDO::FETCH_ASSOC);
                 $data['patient_id'] = $appointment['patient_id'] ?? null;
             }
-            
+
+            // Resolve clinic_id from the linked appointment first, otherwise from
+            // the secretary's own clinic. Doctors/admins acting through this
+            // path inherit from appointment or fall back to clinic 1.
+            $clinicId = null;
+            if (!empty($data['appointment_id'])) {
+                $stmt = $this->pdo->prepare("SELECT clinic_id FROM appointments WHERE id = ?");
+                $stmt->execute([$data['appointment_id']]);
+                $clinicId = $stmt->fetchColumn() ?: null;
+            }
+            if (!$clinicId) {
+                $user = $this->auth->user();
+                if (($user['role'] ?? null) === 'secretary' && !empty($user['clinic_id'])) {
+                    $clinicId = (int)$user['clinic_id'];
+                } else {
+                    $clinicId = 1; // doctor/admin fallback (historical default)
+                }
+            }
+
             $stmt = $this->pdo->prepare("
-                INSERT INTO payments (appointment_id, patient_id, amount, method, 
+                INSERT INTO payments (appointment_id, patient_id, clinic_id, amount, method,
                                     type, received_by, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, NOW())
+                VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
             ");
-            
+
             $stmt->execute([
                 $data['appointment_id'],
                 $data['patient_id'],
+                $clinicId,
                 $data['amount'],
                 $data['method'],
                 $data['type'],
                 $userId
             ]);
-            
+
             return $this->pdo->lastInsertId();
         } catch (Exception $e) {
             throw $e;
@@ -1744,64 +1763,80 @@ class SecretaryController
     {
         try {
             $today = date('Y-m-d');
-            
-            // Get opening balance for today
+
+            // Secretary scope: only their own clinic's books.
+            $user = $this->auth->user();
+            $secClinicId = (($user['role'] ?? null) === 'secretary' && !empty($user['clinic_id']))
+                ? (int)$user['clinic_id'] : null;
+            $clinicFilter = $secClinicId ? ' AND clinic_id = ? ' : '';
+            $extraParam   = $secClinicId ? [$secClinicId] : [];
+
+            // Opening balance
             $stmt = $this->pdo->prepare("
                 SELECT COALESCE(SUM(amount), 0) as opening_balance
-                FROM daily_balances 
-                WHERE DATE(created_at) = ? AND balance_type = 'opening'
+                FROM daily_balances
+                WHERE DATE(created_at) = ? AND balance_type = 'opening' {$clinicFilter}
             ");
-            $stmt->execute([$today]);
+            $stmt->execute(array_merge([$today], $extraParam));
             $openingBalance = $stmt->fetch(\PDO::FETCH_ASSOC)['opening_balance'] ?? 0;
-            
-            // Get additional balance (positive amounts)
+
+            // Additional balance
             $stmt = $this->pdo->prepare("
                 SELECT COALESCE(SUM(amount), 0) as additional_balance
-                FROM daily_balances 
-                WHERE DATE(created_at) = ? AND balance_type = 'additional'
+                FROM daily_balances
+                WHERE DATE(created_at) = ? AND balance_type = 'additional' {$clinicFilter}
             ");
-            $stmt->execute([$today]);
+            $stmt->execute(array_merge([$today], $extraParam));
             $additionalBalance = $stmt->fetch(\PDO::FETCH_ASSOC)['additional_balance'] ?? 0;
-            
-            // Get total withdrawals (negative amounts)
+
+            // Withdrawals
             $stmt = $this->pdo->prepare("
                 SELECT COALESCE(SUM(amount), 0) as total_withdrawals
-                FROM daily_balances 
-                WHERE DATE(created_at) = ? AND balance_type = 'withdrawal'
+                FROM daily_balances
+                WHERE DATE(created_at) = ? AND balance_type = 'withdrawal' {$clinicFilter}
             ");
-            $stmt->execute([$today]);
+            $stmt->execute(array_merge([$today], $extraParam));
             $totalWithdrawals = $stmt->fetch(\PDO::FETCH_ASSOC)['total_withdrawals'] ?? 0;
-            
-            // Get total received today
+
+            // Total received today — NET of discount, exempt rows count as 0.
+            // Matches the SUM in getPaymentTypesSummary + per-row net in
+            // getFinancialTransactions.
             $stmt = $this->pdo->prepare("
-                SELECT COALESCE(SUM(amount), 0) as total_received
-                FROM payments 
-                WHERE DATE(created_at) = ?
+                SELECT COALESCE(SUM(
+                    CASE WHEN is_exempt = 1 THEN 0
+                         ELSE (amount - COALESCE(discount_amount, 0))
+                    END
+                ), 0) as total_received
+                FROM payments
+                WHERE DATE(created_at) = ? {$clinicFilter}
             ");
-            $stmt->execute([$today]);
+            $stmt->execute(array_merge([$today], $extraParam));
             $totalReceived = $stmt->fetch(\PDO::FETCH_ASSOC)['total_received'] ?? 0;
-            
-            // Get total expenses today
+
+            // Total expenses today
             $stmt = $this->pdo->prepare("
                 SELECT COALESCE(SUM(amount), 0) as total_expenses
-                FROM expenses 
-                WHERE DATE(created_at) = ?
+                FROM expenses
+                WHERE DATE(created_at) = ? {$clinicFilter}
             ");
-            $stmt->execute([$today]);
+            $stmt->execute(array_merge([$today], $extraParam));
             $totalExpenses = $stmt->fetch(\PDO::FETCH_ASSOC)['total_expenses'] ?? 0;
-            
-            // Get transactions count
+
+            // Transactions count (also scoped)
             $stmt = $this->pdo->prepare("
                 SELECT COUNT(*) as transactions_count
                 FROM (
-                    SELECT id FROM payments WHERE DATE(created_at) = ?
+                    SELECT id FROM payments       WHERE DATE(created_at) = ? {$clinicFilter}
                     UNION ALL
-                    SELECT id FROM expenses WHERE DATE(created_at) = ?
+                    SELECT id FROM expenses       WHERE DATE(created_at) = ? {$clinicFilter}
                     UNION ALL
-                    SELECT id FROM daily_balances WHERE DATE(created_at) = ?
+                    SELECT id FROM daily_balances WHERE DATE(created_at) = ? {$clinicFilter}
                 ) as all_transactions
             ");
-            $stmt->execute([$today, $today, $today]);
+            $params = $secClinicId
+                ? [$today, $secClinicId, $today, $secClinicId, $today, $secClinicId]
+                : [$today, $today, $today];
+            $stmt->execute($params);
             $transactionsCount = $stmt->fetch(\PDO::FETCH_ASSOC)['transactions_count'] ?? 0;
             
             // Calculate current balance: opening + additional + payments - withdrawals - expenses
@@ -1827,47 +1862,64 @@ class SecretaryController
     /**
      * Get payment types summary
      */
+    /**
+     * Today's payment totals grouped by normalized type, with NET amounts.
+     * Secretary sees only their clinic; doctor/admin (when they reach this
+     * code path, which is rare) sees all. Shape stays in sync with
+     * ApiController::getPaymentTypesSummary().
+     */
     private function getPaymentTypesSummary()
     {
         try {
             $today = date('Y-m-d');
-            
+            $params = [$today];
+            $clinicFilter = '';
+            $user = $this->auth->user();
+            if (($user['role'] ?? null) === 'secretary' && !empty($user['clinic_id'])) {
+                $clinicFilter = ' AND clinic_id = ? ';
+                $params[] = (int)$user['clinic_id'];
+            }
+
             $stmt = $this->pdo->prepare("
-                SELECT 
-                    CASE 
-                        WHEN type = 'Booking' THEN 'new_booking'
-                        WHEN type = 'FollowUp' THEN 'followup'
+                SELECT
+                    CASE
+                        WHEN type = 'Booking'      THEN 'new_booking'
+                        WHEN type = 'FollowUp'     THEN 'followup'
                         WHEN type = 'Consultation' THEN 'consultation'
+                        WHEN type = 'Procedure'    THEN 'procedure'
                         ELSE 'other'
                     END as payment_type,
-                    COALESCE(SUM(amount), 0) as total_amount
-                FROM payments 
-                WHERE DATE(created_at) = ?
+                    COALESCE(SUM(
+                        CASE WHEN is_exempt = 1 THEN 0
+                             ELSE (amount - COALESCE(discount_amount, 0))
+                        END
+                    ), 0) as total_amount
+                FROM payments
+                WHERE DATE(created_at) = ? {$clinicFilter}
                 GROUP BY payment_type
             ");
-            $stmt->execute([$today]);
+            $stmt->execute($params);
             $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            
+
             $summary = [
-                'new_booking' => 0,
-                'followup' => 0,
+                'new_booking'  => 0,
+                'followup'     => 0,
                 'consultation' => 0,
-                'procedure' => 0,
-                'other' => 0
+                'procedure'    => 0,
+                'other'        => 0,
             ];
-            
-            foreach ($results as $result) {
-                $summary[$result['payment_type']] = $result['total_amount'];
+            foreach ($results as $row) {
+                $summary[$row['payment_type']] = $row['total_amount'];
             }
-            
+
             return $summary;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return [
-                'new_booking' => 0,
-                'followup' => 0,
+                'new_booking'  => 0,
+                'followup'     => 0,
                 'consultation' => 0,
-                'procedure' => 0,
-                'other' => 0
+                'procedure'    => 0,
+                'other'        => 0,
             ];
         }
     }

@@ -58,7 +58,7 @@
         (function() {
             // Read theme from localStorage immediately (before page renders)
             const savedTheme = localStorage.getItem('appTheme');
-            
+
             if (savedTheme === 'light' || savedTheme === 'dark') {
                 // Apply theme immediately
                 document.documentElement.classList.toggle('dark', savedTheme === 'dark');
@@ -69,6 +69,27 @@
                 document.documentElement.classList.add('theme-loaded');
             }
         })();
+    </script>
+
+    <!-- Clinics bootstrap: render the (small, static) clinic list server-side so
+         every modal dropdown can populate synchronously on first open without
+         waiting on /api/clinics. Doctors/admins see all active clinics; the
+         secretary layout overrides this list with just their own clinic. -->
+    <?php
+        try {
+            $__clinicsBootstrapPdo = \App\Config\Database::getInstance()->getConnection();
+            $__clinicsBootstrap = $__clinicsBootstrapPdo->query("
+                SELECT id, code, name_ar, name_en
+                FROM clinics
+                WHERE is_active = 1
+                ORDER BY sort_order ASC, id ASC
+            ")->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (\Throwable $__e) {
+            $__clinicsBootstrap = [];
+        }
+    ?>
+    <script>
+        window.CLINICS_BOOTSTRAP = <?= json_encode($__clinicsBootstrap, JSON_UNESCAPED_UNICODE) ?>;
     </script>
 </head>
 <body>
@@ -297,7 +318,7 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="sidebar-footer-text">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v8.0.0
+                        HClinic / Roaya Clinic v9.0.0
                     </div>
                     <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none sidebar-footer-link">Ahmed Helal</a></div>
                 </small>
@@ -1177,5 +1198,7 @@
             });
         })();
     </script>
+
+    <?php include __DIR__ . '/whats-new-v9-modal.php'; ?>
 </body>
 </html>

@@ -1,3 +1,21 @@
+<?php
+    // Server-render the secretary's clinic so the dropdown ships its options
+    // in the initial HTML (no JS fetch, no race with Bootstrap modal show).
+    try {
+        $__cal_pdo  = \App\Config\Database::getInstance()->getConnection();
+        $__cal_auth = new \App\Lib\Auth();
+        $__cal_user = $__cal_auth->user();
+        if (!empty($__cal_user['clinic_id'])) {
+            $__s = $__cal_pdo->prepare("SELECT id, code, name_ar, name_en FROM clinics WHERE is_active = 1 AND id = ? ORDER BY sort_order, id");
+            $__s->execute([(int)$__cal_user['clinic_id']]);
+            $__calClinics = $__s->fetchAll(\PDO::FETCH_ASSOC);
+        } else {
+            $__calClinics = $__cal_pdo->query("SELECT id, code, name_ar, name_en FROM clinics WHERE is_active = 1 ORDER BY sort_order, id")->fetchAll(\PDO::FETCH_ASSOC);
+        }
+    } catch (\Throwable $__e) {
+        $__calClinics = [];
+    }
+?>
 <link href="/app/Views/secretary/assets/css/bookings.css?v=<?= file_exists(__DIR__ . '/assets/css/bookings.css') ? filemtime(__DIR__ . '/assets/css/bookings.css') : time() ?>" rel="stylesheet">
 <link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
@@ -232,8 +250,13 @@
 
                             <div class="mb-3">
                                 <label for="bookingClinic" class="form-label arabic-text">العيادة <span class="text-danger">*</span></label>
-                                <select class="form-select arabic-text" id="bookingClinic" name="clinic_id" required>
-                                    <option value="">اختر العيادة...</option>
+                                <select class="form-select arabic-text" id="bookingClinic" name="clinic_id" required <?= count($__calClinics) === 1 ? 'disabled' : '' ?>>
+                                    <?php if (count($__calClinics) !== 1): ?>
+                                        <option value="">اختر العيادة...</option>
+                                    <?php endif; ?>
+                                    <?php foreach ($__calClinics as $__c): ?>
+                                        <option value="<?= (int)$__c['id'] ?>" <?= count($__calClinics) === 1 ? 'selected' : '' ?>><?= htmlspecialchars($__c['name_ar'] ?: $__c['name_en']) ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
 
@@ -408,8 +431,13 @@
 
                             <div class="mb-3">
                                 <label for="patientClinic" class="form-label arabic-text">العيادة <span class="text-danger">*</span></label>
-                                <select class="form-select arabic-text" id="patientClinic" name="clinic_id" required>
-                                    <option value="">اختر العيادة...</option>
+                                <select class="form-select arabic-text" id="patientClinic" name="clinic_id" required <?= count($__calClinics) === 1 ? 'disabled' : '' ?>>
+                                    <?php if (count($__calClinics) !== 1): ?>
+                                        <option value="">اختر العيادة...</option>
+                                    <?php endif; ?>
+                                    <?php foreach ($__calClinics as $__c): ?>
+                                        <option value="<?= (int)$__c['id'] ?>" <?= count($__calClinics) === 1 ? 'selected' : '' ?>><?= htmlspecialchars($__c['name_ar'] ?: $__c['name_en']) ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                                 <div class="invalid-feedback"></div>
                             </div>
@@ -4462,19 +4490,9 @@ function formatMoney(amount) {
 document.addEventListener('DOMContentLoaded', function() {
     initializeAddPatientModal();
 
-    // Populate Clinic dropdowns (Arabic) whenever the booking / patient modal opens
-    const _addBookingModal = document.getElementById('addBookingModal');
-    if (_addBookingModal && window.ClinicsLoader) {
-        _addBookingModal.addEventListener('show.bs.modal', function () {
-            window.ClinicsLoader.populate('bookingClinic', { lang: 'ar' });
-        });
-    }
-    const _addPatientModal = document.getElementById('addPatientModal');
-    if (_addPatientModal && window.ClinicsLoader) {
-        _addPatientModal.addEventListener('show.bs.modal', function () {
-            window.ClinicsLoader.populate('patientClinic', { lang: 'ar' });
-        });
-    }
+    // Clinic dropdowns are now server-rendered above (with the secretary's
+    // own clinic, disabled when only one option is available). No JS populate
+    // is needed any more — the modal opens with the dropdown ready.
 
     // Check for openModal query parameter and open the corresponding modal
     const urlParams = new URLSearchParams(window.location.search);

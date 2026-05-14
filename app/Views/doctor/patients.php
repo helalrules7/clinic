@@ -1,3 +1,25 @@
+<?php
+    // Server-render clinic options for the Add Patient modal (eliminates the
+    // JS populate race — see doctor/calendar.php for the same approach).
+    try {
+        $__cal_pdo  = \App\Config\Database::getInstance()->getConnection();
+        $__cal_auth = new \App\Lib\Auth();
+        $__cal_user = $__cal_auth->user();
+        if (($__cal_user['role'] ?? null) === 'secretary' && !empty($__cal_user['clinic_id'])) {
+            $__s = $__cal_pdo->prepare("SELECT id, code, name_ar, name_en FROM clinics WHERE is_active = 1 AND id = ? ORDER BY sort_order, id");
+            $__s->execute([(int)$__cal_user['clinic_id']]);
+            $__calClinics = $__s->fetchAll(\PDO::FETCH_ASSOC);
+        } else {
+            $__calClinics = $__cal_pdo->query("SELECT id, code, name_ar, name_en FROM clinics WHERE is_active = 1 ORDER BY sort_order, id")->fetchAll(\PDO::FETCH_ASSOC);
+        }
+    } catch (\Throwable $__e) {
+        $__calClinics = [];
+    }
+    $__clinicVisuals = [
+        'riyadh' => ['icon' => 'bi-buildings-fill', 'color' => '#0d6efd'],
+        'kfs'    => ['icon' => 'bi-hospital-fill',  'color' => '#10b981'],
+    ];
+?>
 <link href="/app/Views/doctor/assets/css/patients.css?v=<?= file_exists(__DIR__ . '/assets/css/patients.css') ? filemtime(__DIR__ . '/assets/css/patients.css') : time() ?>" rel="stylesheet">
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 <link href="/app/Views/doctor/assets/css/filter-bar.css?v=<?= file_exists(__DIR__ . '/assets/css/filter-bar.css') ? filemtime(__DIR__ . '/assets/css/filter-bar.css') : time() ?>" rel="stylesheet">
@@ -1284,11 +1306,19 @@
                                 <section class="field menu" style="min-width: 100%;">
                                     <div class="control">
                                         <select class="form-select d-none" id="patientClinic" name="clinic_id" required>
-                                            <option value="">Select clinic...</option>
+                                            <option value="">اختر العيادة...</option>
+                                            <?php foreach ($__calClinics as $__c): ?>
+                                                <option value="<?= (int)$__c['id'] ?>"><?= htmlspecialchars($__c['name_ar'] ?: $__c['name_en']) ?></option>
+                                            <?php endforeach; ?>
                                         </select>
-                                        <button type="button" class="custom-select-toggle" aria-expanded="false"><i class="bi bi-building fs-5"></i> <h3>Select clinic...</h3></button>
+                                        <button type="button" class="custom-select-toggle" aria-expanded="false"><i class="bi bi-building fs-5"></i> <h3>اختر العيادة...</h3></button>
                                         <menu>
-                                            <li data-option="" tabindex="0" role="button" class="selected"><h3>Select clinic...</h3></li>
+                                            <li data-option="" tabindex="0" role="button" class="selected"><h3>اختر العيادة...</h3></li>
+                                            <?php foreach ($__calClinics as $__c):
+                                                $__v = $__clinicVisuals[$__c['code']] ?? ['icon' => 'bi-building', 'color' => '#6c757d'];
+                                            ?>
+                                                <li data-option="<?= (int)$__c['id'] ?>" tabindex="0" role="button"><i class="bi <?= $__v['icon'] ?> fs-5" style="color: <?= $__v['color'] ?>;"></i> <h3><?= htmlspecialchars($__c['name_ar'] ?: $__c['name_en']) ?></h3></li>
+                                            <?php endforeach; ?>
                                         </menu>
                                     </div>
                                 </section>
@@ -1499,13 +1529,35 @@
     };
 </script>
 <script src="/app/Views/doctor/assets/js/patients.js?v=<?= file_exists(__DIR__ . '/assets/js/patients.js') ? filemtime(__DIR__ . '/assets/js/patients.js') : time() ?>"></script>
+<!-- Clinic dropdown is server-rendered now; no populate() needed. We just
+     auto-lock the single-option case (secretary view) below. -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const addPatientModal = document.getElementById('addPatientModal');
-        if (addPatientModal && window.ClinicsLoader) {
-            addPatientModal.addEventListener('show.bs.modal', function () {
-                window.ClinicsLoader.populate('patientClinic', { lang: 'ar' });
-            });
+        const sel = document.getElementById('patientClinic');
+        if (!sel) return;
+        const realOpts = Array.from(sel.options).filter(o => o.value !== '');
+        if (realOpts.length === 1) {
+            sel.value = realOpts[0].value;
+            sel.disabled = true;
+            const field = sel.closest('.field.menu');
+            if (field) {
+                field.classList.add('locked');
+                const toggleBtn = field.querySelector('.custom-select-toggle');
+                if (toggleBtn) {
+                    toggleBtn.disabled = true;
+                    toggleBtn.setAttribute('aria-disabled', 'true');
+                    toggleBtn.style.pointerEvents = 'none';
+                    toggleBtn.style.opacity = '0.85';
+                    toggleBtn.style.cursor = 'not-allowed';
+                }
+                const h3 = field.querySelector('.custom-select-toggle h3');
+                if (h3) h3.textContent = realOpts[0].textContent;
+                const matchLi = field.querySelector(`menu li[data-option="${realOpts[0].value}"]`);
+                if (matchLi) {
+                    field.querySelectorAll('menu li').forEach(li => li.classList.remove('selected'));
+                    matchLi.classList.add('selected');
+                }
+            }
         }
     });
 </script>

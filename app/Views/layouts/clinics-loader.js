@@ -19,6 +19,15 @@
 
     async function fetchClinics() {
         if (clinicsCache) return clinicsCache;
+
+        // Server-side bootstrap (injected by layouts/main.php and
+        // layouts/secretary_main.php). When present we skip the network
+        // round-trip entirely — the first modal open is fully synchronous.
+        if (Array.isArray(window.CLINICS_BOOTSTRAP) && window.CLINICS_BOOTSTRAP.length) {
+            clinicsCache = window.CLINICS_BOOTSTRAP;
+            return clinicsCache;
+        }
+
         if (inflight) return inflight;
 
         inflight = fetch('/api/clinics', { credentials: 'same-origin' })
@@ -39,7 +48,14 @@
         return lang === 'ar' ? (clinic.name_ar || clinic.name_en) : (clinic.name_en || clinic.name_ar);
     }
 
-    async function populate(selectId, options) {
+    /**
+     * Populate a clinic dropdown synchronously when the server-side bootstrap
+     * is present (default path now that layouts/main.php + secretary_main.php
+     * inline the list). Falls back to async fetch only when the bootstrap is
+     * unavailable — that keeps the helper resilient on legacy pages without
+     * adding a microtask delay on the common path.
+     */
+    function populate(selectId, options) {
         const opts = Object.assign({
             lang: 'en',
             placeholder: null,           // text for the empty option
@@ -50,22 +66,30 @@
         const select = document.getElementById(selectId);
         if (!select) return;
 
-        const placeholder = opts.placeholder || (opts.lang === 'ar' ? 'اختر العيادة...' : 'Select clinic...');
-        const previousValue = opts.preserveCurrent ? select.value : '';
-
         // Reset any prior "locked single clinic" state from a previous open
         select.disabled = false;
         select.removeAttribute('readonly');
         const fieldEl = select.closest('.field.menu');
         if (fieldEl) fieldEl.classList.remove('locked');
 
-        let clinics;
-        try {
-            clinics = await fetchClinics();
-        } catch (err) {
-            console.error('ClinicsLoader:', err);
+        // Fast path: bootstrap available → render synchronously.
+        const cached = clinicsCache
+            || (Array.isArray(window.CLINICS_BOOTSTRAP) && window.CLINICS_BOOTSTRAP.length ? window.CLINICS_BOOTSTRAP : null);
+        if (cached) {
+            clinicsCache = cached;
+            renderInto(select, cached, opts);
             return;
         }
+
+        // Slow path: no bootstrap — fall back to async fetch.
+        fetchClinics()
+            .then(clinics => renderInto(select, clinics, opts))
+            .catch(err => console.error('ClinicsLoader:', err));
+    }
+
+    function renderInto(select, clinics, opts) {
+        const placeholder = opts.placeholder || (opts.lang === 'ar' ? 'اختر العيادة...' : 'Select clinic...');
+        const previousValue = opts.preserveCurrent ? select.value : '';
 
         const field = select.closest('.field.menu');
         const menu = field ? field.querySelector('menu') : null;
@@ -150,9 +174,9 @@
         // Apply the lock AFTER initCustomSelects so the custom UI is already wired.
         if (singleClinicLock) {
             select.disabled = true;
-            if (fieldEl) {
-                fieldEl.classList.add('locked');
-                const toggleBtn = fieldEl.querySelector('.custom-select-toggle');
+            if (field) {
+                field.classList.add('locked');
+                const toggleBtn = field.querySelector('.custom-select-toggle');
                 if (toggleBtn) {
                     toggleBtn.disabled = true;
                     toggleBtn.setAttribute('aria-disabled', 'true');
@@ -165,4 +189,14 @@
     }
 
     window.ClinicsLoader = { fetchClinics, populate, getVisual };
+
+    // Pre-warm the cache so the very first time a modal opens, the dropdown
+    // is populated synchronously from cache instead of after the fetch returns
+    // (which previously made the calendar / patient modals need to be opened
+    // twice for the clinic list to appear).
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => { fetchClinics().catch(() => {}); });
+    } else {
+        fetchClinics().catch(() => {});
+    }
 })();
