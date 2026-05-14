@@ -465,7 +465,11 @@
         <div class="draw-layers-panel is-open" id="layersPanel">
           <div class="draw-layers-header">
             <span>Layers</span>
-            <button type="button" class="draw-layers-close" id="closeLayersBtn" aria-label="Close layers panel"><i class="bi bi-x-lg"></i></button>
+            <button type="button" class="draw-layers-close" id="closeLayersBtn" aria-label="Close layers panel">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+                <path d="M3 3 L13 13 M13 3 L3 13"/>
+              </svg>
+            </button>
           </div>
           <div class="draw-layers-list" id="layersList"></div>
         </div>
@@ -645,7 +649,7 @@
 
         function onDown(e) {
             // Ignore clicks on the close button so it still works
-            if (e.target.closest('.btn-close')) return;
+            if (e.target.closest('.btn-close, .draw-layers-close')) return;
             const p = getXY(e);
             isDragging = true;
             startX = p.x;

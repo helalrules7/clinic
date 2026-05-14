@@ -58,7 +58,7 @@
         (function() {
             // Read theme from localStorage immediately (before page renders)
             const savedTheme = localStorage.getItem('appTheme');
-
+            
             if (savedTheme === 'light' || savedTheme === 'dark') {
                 // Apply theme immediately
                 document.documentElement.classList.toggle('dark', savedTheme === 'dark');
@@ -70,43 +70,8 @@
             }
         })();
     </script>
-
-    <!-- Clinics bootstrap: render the (small, static) clinic list server-side so
-         every modal dropdown can populate synchronously on first open without
-         waiting on /api/clinics. Doctors/admins see all active clinics; the
-         secretary layout overrides this list with just their own clinic. -->
-    <?php
-        try {
-            $__clinicsBootstrapPdo = \App\Config\Database::getInstance()->getConnection();
-            $__clinicsBootstrap = $__clinicsBootstrapPdo->query("
-                SELECT id, code, name_ar, name_en
-                FROM clinics
-                WHERE is_active = 1
-                ORDER BY sort_order ASC, id ASC
-            ")->fetchAll(\PDO::FETCH_ASSOC);
-        } catch (\Throwable $__e) {
-            $__clinicsBootstrap = [];
-        }
-    ?>
-    <script>
-        window.CLINICS_BOOTSTRAP = <?= json_encode($__clinicsBootstrap, JSON_UNESCAPED_UNICODE) ?>;
-    </script>
 </head>
 <body>
-    <!-- Pre-paint sidebar mode restore — must run before the sidebar paints,
-         otherwise the user sees a "wide → mini" flicker on every navigation. -->
-    <script>
-    (function () {
-        try {
-            var KEY = 'appSidebarMode';
-            var TABLET_BP = 1366;
-            var saved = null;
-            try { saved = localStorage.getItem(KEY); } catch (e) {}
-            var mode = saved || (window.innerWidth < TABLET_BP ? 'mini' : 'wide');
-            if (mode === 'mini' && document.body) document.body.classList.add('sidebar-mini');
-        } catch (e) { /* ignore */ }
-    })();
-    </script>
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -162,6 +127,12 @@
                     <a href="/doctor/calendar" class="nav-link <?= $this->isActiveRoute('/doctor/calendar') ? 'active' : '' ?>">
                         <i class="bi bi-calendar3"></i>
                         Calendar
+                    </a>
+                </div>
+                <div class="nav-item d-md-none">
+                    <a href="/doctor/organizer" class="nav-link <?= $this->isActiveRoute('/doctor/organizer') ? 'active' : '' ?>">
+                        <i class="bi bi-calendar-month"></i>
+                        Organizer
                     </a>
                 </div>
                 <div class="nav-item">
@@ -326,7 +297,7 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="sidebar-footer-text">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v9.0.0
+                        HClinic / Roaya Clinic v7.1.6
                     </div>
                     <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none sidebar-footer-link">Ahmed Helal</a></div>
                 </small>
@@ -334,10 +305,11 @@
         </nav>
     </div>
     
+    <!-- Overlay for mobile -->
+    <div class="overlay" id="overlay"></div>
+    
     <!-- Main Content -->
     <div class="main-content">
-        <!-- Overlay for mobile -->
-        <div class="overlay" id="overlay"></div>
         <?php 
         // View As Banner - Very visible indicator
         if (isset($_SESSION['view_as_mode']) && $_SESSION['view_as_mode'] === true): 
@@ -367,311 +339,29 @@
             <!-- Notice Bar Widget - At the top of all actions -->
             <div class="notice-bar">
                 <div class="notice-bar-content">
-                    <?php if ($this->getCurrentUser()['role'] === 'doctor'): ?>
                     <div class="notice-bar-column notice-bar-column-4">
                         <div class="notice-bar-column-4-inner">
-                            <!-- Mobile/Tablet Tools Button -->
-                            <button class="notice-bar-ophthalmology-tools-btn" id="noticeBarOphthalmologyToolsBtn" style="display: none;">
-                                <i class="bi bi-grid-3x3-gap"></i>
-                                <span>Ophthalmology Tools</span>
-                            </button>
-                            
                             <div class="notice-bar-column-4-left">
-                                <nav class="notice-bar-tools-nav">
-                                    <ul class="notice-bar-tools-menu">
-                                        <li class="notice-bar-tools-parent">
-                                            <a href="#" class="notice-bar-iol-btn" id="noticeBarIOLBtn">
-                                                <i class="bi bi-calculator"></i>
-                                                <span>Core Calculators</span>
-                                            </a>
-                                            <ul class="notice-bar-tools-child">
-                                                <li>
-                                                    <a href="#" id="calculatorsDropdownIOL">
-                                                        <i class="bi bi-calculator me-2"></i>
-                                                        <span>IOL Power Calculator</span>
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a href="#" id="calculatorsDropdownPediatric">
-                                                        <i class="bi bi-child me-2"></i>
-                                                        <span>Pediatric IOL Undercorrection</span>
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a href="#" id="calculatorsDropdownAstigmatism">
-                                                        <i class="bi bi-circle-half me-2"></i>
-                                                        <span>Corneal Astigmatism Calculator</span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                        <li class="notice-bar-tools-parent">
-                                            <a href="#" class="notice-bar-iol-btn" id="noticeBarGlaucomaBtn">
-                                                <i class="bi bi-eyedropper"></i>
-                                                <span>Glaucoma Calc</span>
-                                            </a>
-                                            <ul class="notice-bar-tools-child">
-                                                <li>
-                                                    <a href="#" id="glaucomaDropdownIOP">
-                                                        <i class="bi bi-graph-up me-2"></i>
-                                                        <span>IOP Trend Analyzer</span>
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a href="#" id="glaucomaDropdownTargetIOP">
-                                                        <i class="bi bi-bullseye me-2"></i>
-                                                        <span>Target IOP Calculator</span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                        <li class="notice-bar-tools-parent">
-                                            <a href="#" class="notice-bar-iol-btn" id="noticeBarVisionBtn">
-                                                <i class="bi bi-eye"></i>
-                                                <span>Vision</span>
-                                            </a>
-                                            <ul class="notice-bar-tools-child">
-                                                <li>
-                                                    <a href="#" id="visionDropdownRefraction">
-                                                        <i class="bi bi-eye me-2"></i>
-                                                        <span>Refraction Consistency Checker</span>
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a href="#" id="visionDropdownVA">
-                                                        <i class="bi bi-graph-up-arrow me-2"></i>
-                                                        <span>Visual Acuity Progress Calculator</span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                        <li class="notice-bar-tools-parent">
-                                            <a href="#" class="notice-bar-iol-btn" id="noticeBarCorneaBtn">
-                                                <i class="bi bi-droplet"></i>
-                                                <span>Cornea</span>
-                                            </a>
-                                            <ul class="notice-bar-tools-child">
-                                                <li>
-                                                    <a href="#" id="corneaDropdownOSDI">
-                                                        <i class="bi bi-droplet me-2"></i>
-                                                        <span>Dry Eye Severity Index (OSDI)</span>
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a href="#" id="corneaDropdownPachymetry">
-                                                        <i class="bi bi-eye me-2"></i>
-                                                        <span>Pachymetry-Adjusted IOP Calculator</span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                        <li class="notice-bar-tools-parent">
-                                            <a href="#" class="notice-bar-iol-btn" id="noticeBarRetinaBtn">
-                                                <i class="bi bi-circle"></i>
-                                                <span>Retina</span>
-                                            </a>
-                                            <ul class="notice-bar-tools-child">
-                                                <li>
-                                                    <a href="#" id="retinaDropdownDiabetic">
-                                                        <i class="bi bi-heart-pulse me-2"></i>
-                                                        <span>Diabetic Retinopathy Risk Estimator</span>
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a href="#" id="retinaDropdownMacular">
-                                                        <i class="bi bi-graph-up me-2"></i>
-                                                        <span>Macular Thickness Trend Analyzer</span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                        <li class="notice-bar-tools-parent">
-                                            <a href="#" class="notice-bar-iol-btn" id="noticeBarCataractBtn">
-                                                <i class="bi bi-scissors"></i>
-                                                <span>Cataract</span>
-                                            </a>
-                                            <ul class="notice-bar-tools-child">
-                                                <li>
-                                                    <a href="#" id="cataractDropdownReadiness">
-                                                        <i class="bi bi-clipboard-check me-2"></i>
-                                                        <span>Cataract Surgery Readiness Score</span>
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a href="#" id="cataractDropdownOutcome">
-                                                        <i class="bi bi-graph-up-arrow me-2"></i>
-                                                        <span>Post-Operative Outcome Analyzer</span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                    </ul>
-                                </nav>
+                                <button class="notice-bar-iol-btn" id="noticeBarIOLBtn">
+                                    <i class="bi bi-calculator"></i>
+                                    <span>Core Calculators</span>
+                                </button>
                             </div>
                             <div class="notice-bar-column-4-right">
 
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Unified Ophthalmology Tools Dropdown (Mobile/Tablet) -->
-                    <div class="ophthalmology-tools-dropdown" id="ophthalmologyToolsDropdown">
-                        <div class="ophthalmology-tools-dropdown-content">
-                            <!-- Core Calculators Section -->
-                            <div class="ophthalmology-tools-section">
-                                <div class="ophthalmology-tools-section-header">
-                                    <i class="bi bi-calculator"></i>
-                                    <span style="font-weight: bold;">Core Calculators</span>
-                                </div>
-                                <ul class="ophthalmology-tools-section-items">
-                                    <li>
-                                        <a href="#" id="mobileCalculatorsDropdownIOL">
-                                            <i class="bi bi-calculator me-2"></i>
-                                            <span>IOL Power Calculator</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="#" id="mobileCalculatorsDropdownPediatric">
-                                            <i class="bi bi-child me-2"></i>
-                                            <span>Pediatric IOL Undercorrection</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="#" id="mobileCalculatorsDropdownAstigmatism">
-                                            <i class="bi bi-circle-half me-2"></i>
-                                            <span>Corneal Astigmatism Calculator</span>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                            
-                            <!-- Glaucoma Calculators Section -->
-                            <div class="ophthalmology-tools-section">
-                                <div class="ophthalmology-tools-section-header">
-                                    <i class="bi bi-eyedropper"></i>
-                                    <span style="font-weight: bold;">Glaucoma Calculators</span>
-                                </div>
-                                <ul class="ophthalmology-tools-section-items">
-                                    <li>
-                                        <a href="#" id="mobileGlaucomaDropdownIOP">
-                                            <i class="bi bi-graph-up me-2"></i>
-                                            <span>IOP Trend Analyzer</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="#" id="mobileGlaucomaDropdownTargetIOP">
-                                            <i class="bi bi-bullseye me-2"></i>
-                                            <span>Target IOP Calculator</span>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                            
-                            <!-- Vision Tools Section -->
-                            <div class="ophthalmology-tools-section">
-                                <div class="ophthalmology-tools-section-header">
-                                    <i class="bi bi-eye"></i>
-                                    <span style="font-weight: bold;">Vision Tools</span>
-                                </div>
-                                <ul class="ophthalmology-tools-section-items">
-                                    <li>
-                                        <a href="#" id="mobileVisionDropdownRefraction">
-                                            <i class="bi bi-eye me-2"></i>
-                                            <span>Refraction Consistency Checker</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="#" id="mobileVisionDropdownVA">
-                                            <i class="bi bi-graph-up-arrow me-2"></i>
-                                            <span>Visual Acuity Progress Calculator</span>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                            
-                            <!-- Cornea Tools Section -->
-                            <div class="ophthalmology-tools-section">
-                                <div class="ophthalmology-tools-section-header">
-                                    <i class="bi bi-droplet"></i>
-                                    <span style="font-weight: bold;">Cornea Tools</span>
-                                </div>
-                                <ul class="ophthalmology-tools-section-items">
-                                    <li>
-                                        <a href="#" id="mobileCorneaDropdownOSDI">
-                                            <i class="bi bi-droplet me-2"></i>
-                                            <span>Dry Eye Severity Index (OSDI)</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="#" id="mobileCorneaDropdownPachymetry">
-                                            <i class="bi bi-eye me-2"></i>
-                                            <span>Pachymetry-Adjusted IOP Calculator</span>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                            
-                            <!-- Retina Tools Section -->
-                            <div class="ophthalmology-tools-section">
-                                <div class="ophthalmology-tools-section-header">
-                                    <i class="bi bi-circle"></i>
-                                    <span style="font-weight: bold;">Retina Tools</span>
-                                </div>
-                                <ul class="ophthalmology-tools-section-items">
-                                    <li>
-                                        <a href="#" id="mobileRetinaDropdownDiabetic">
-                                            <i class="bi bi-heart-pulse me-2"></i>
-                                            <span>Diabetic Retinopathy Risk Estimator</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="#" id="mobileRetinaDropdownMacular">
-                                            <i class="bi bi-graph-up me-2"></i>
-                                            <span>Macular Thickness Trend Analyzer</span>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                            
-                            <!-- Cataract Tools Section -->
-                            <div class="ophthalmology-tools-section">
-                                <div class="ophthalmology-tools-section-header">
-                                    <i class="bi bi-scissors"></i>
-                                    <span style="font-weight: bold;">Cataract Tools</span>
-                                </div>
-                                <ul class="ophthalmology-tools-section-items">
-                                    <li>
-                                        <a href="#" id="mobileCataractDropdownReadiness">
-                                            <i class="bi bi-clipboard-check me-2"></i>
-                                            <span>Cataract Surgery Readiness Score</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="#" id="mobileCataractDropdownOutcome">
-                                            <i class="bi bi-graph-up-arrow me-2"></i>
-                                            <span>Post-Operative Outcome Analyzer</span>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    
                     <div class="notice-bar-column notice-bar-column-3">
                         <i class="bi bi-calendar3"></i>
                         <span class="notice-bar-appointment-label">Next Appointment:</span>
-                        <div class="notice-bar-appointment-slider">
-                            <div class="appointment-scroller">
-                                <div class="appointment-inner" id="noticeBarNextAppointment">
-                                    <span class="spinner-border spinner-border-sm" role="status" style="width: 0.5rem; height: 0.5rem;">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+                        <span class="notice-bar-appointment-info" id="noticeBarNextAppointment">
+                            <span class="spinner-border spinner-border-sm" role="status" style="width: 0.5rem; height: 0.5rem;">
+                                <span class="visually-hidden">Loading...</span>
+                            </span>
+                        </span>
                     </div>
-                    <?php endif; ?>
-                    <div class="notice-bar-column notice-bar-column-weather">
+                    <div class="notice-bar-column notice-bar-column-2">
                         <div class="notice-bar-weather-icon" id="noticeBarWeatherIcon">
                             <div class="weather-icon-loading">
                                 <div class="spinner-border spinner-border-sm" role="status">
@@ -679,18 +369,11 @@
                                 </div>
                             </div>
                         </div>
-                        <span class="notice-bar-weather-temp" id="noticeBarWeatherTemp">--°C</span>
-                        <!-- Warning Icons -->
-                        <span class="notice-bar-weather-warning" id="noticeBarWeatherWarning" style="display: none;">
-                            <span class="warning-triangle-icon">
-                                <i class="bi bi-triangle-fill"></i>
-                                <i class="bi bi-exclamation-lg warning-exclamation"></i>
-                            </span>
-                            <sup class="warning-icon-label">
-                                <i class="bi bi-flower1" id="warningPollenIcon" style="display: none;"></i>
-                                <i class="bi bi-eye" id="warningDryEyeIcon" style="display: none;"></i>
-                            </sup>
+                        <span class="notice-bar-weather-location" id="noticeBarWeatherLocation">
+                            <i class="bi bi-geo-alt-fill"></i>
+                            <span>Loading...</span>
                         </span>
+                        <span class="notice-bar-weather-temp" id="noticeBarWeatherTemp">--°C</span>
                     </div>
                     <div class="notice-bar-column notice-bar-column-1">
                         <i class="bi bi-clock"></i>
@@ -1020,7 +703,6 @@
         // TimepickerUI is already exposed globally by the loader
     </script>
     <script src="/app/Views/layouts/main.js?v=<?= filemtime(__DIR__ . '/main.js') ?>"></script>
-    <script src="/app/Views/layouts/clinics-loader.js?v=<?= filemtime(__DIR__ . '/clinics-loader.js') ?>"></script>
     
     <!-- Session Expiry Warning Script -->
     <script>
@@ -1202,7 +884,5 @@
             });
         })();
     </script>
-
-    <?php include __DIR__ . '/whats-new-v9-modal.php'; ?>
 </body>
 </html>

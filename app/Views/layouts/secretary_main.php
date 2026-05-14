@@ -135,6 +135,21 @@
     </script>
 </head>
 <body>
+    <!-- استرجاع حالة sidebar قبل العرض — لازم يشتغل قبل ما الـ sidebar
+         يترسم، عشان المستخدم مايشوفش وميض من "wide" إلى "mini" مع كل تنقل
+         بين الصفحات. -->
+    <script>
+    (function () {
+        try {
+            var KEY = 'appSidebarMode';
+            var TABLET_BP = 1366;
+            var saved = null;
+            try { saved = localStorage.getItem(KEY); } catch (e) {}
+            var mode = saved || (window.innerWidth < TABLET_BP ? 'mini' : 'wide');
+            if (mode === 'mini' && document.body) document.body.classList.add('sidebar-mini');
+        } catch (e) { /* ignore */ }
+    })();
+    </script>
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">

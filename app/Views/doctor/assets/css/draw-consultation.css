@@ -218,7 +218,11 @@ body.draw-modal-open #quickAccessDock {
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     z-index: 100;
-    overflow: hidden;
+    /* Don't use overflow:hidden on the whole panel — it combined with
+       border-radius would clip the close button in the rounded corner on
+       phone where the panel is wide and the button sits flush against the
+       top-right corner. The layers-list itself scrolls independently. */
+    overflow: visible;
     /* Visibility is class-gated so the toolbar's Layers button and the
        panel's own close button can both toggle it consistently across
        desktop, tablet and mobile. */
@@ -267,6 +271,44 @@ body.draw-modal-open #quickAccessDock {
 
 .draw-layers-header .btn-close {
     font-size: 0.7rem;
+}
+
+/* Explicit close button for the layers panel — uses an inline SVG so we
+   don't rely on Bootstrap's data-uri SVG (which renders inconsistently on
+   some embedded browsers) or on Bootstrap Icons being available. */
+.draw-layers-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #0f172a;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    flex-shrink: 0;
+}
+.draw-layers-close svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+.draw-layers-close:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+.dark .draw-layers-close {
+    background: #1f2937;
+    border-color: #374151;
+    color: #e2e8f0;
+}
+.dark .draw-layers-close:hover {
+    background: #374151;
+    border-color: #4b5563;
 }
 
 .draw-layers-list {
@@ -677,17 +719,11 @@ body.draw-modal-open [class*="floating"]:not(.modal):not(.modal *) {
     .dark #drawConsultationModal .draw-layers-header {
         background: #111827;
     }
-    /* Make the close X clearly visible on the light header. */
-    #drawConsultationModal .draw-layers-header .btn-close {
-        width: 34px;
-        height: 34px;
-        background-size: 18px;
-        opacity: 1;
-        border-radius: 6px;
-        background-color: rgba(15, 23, 42, 0.06);
-    }
-    #drawConsultationModal .draw-layers-header .btn-close:hover {
-        background-color: rgba(15, 23, 42, 0.14);
+    /* Slightly larger close button on phone for easier tapping. */
+    #drawConsultationModal .draw-layers-close {
+        width: 36px;
+        height: 36px;
+        font-size: 1.15rem;
     }
     #drawConsultationModal .draw-layers-list {
         max-height: calc(38vh - 60px);
@@ -1061,20 +1097,24 @@ body.draw-modal-open [class*="floating"]:not(.modal):not(.modal *) {
         margin: 0 !important;
     }
 
-    /* Filename can wrap to 2 lines; if it still overflows, ellipsize the
-       second line. Long single-token filenames break at character. */
-    .attachment-filename {
+    /* Filename can wrap to 2 lines; long single-token filenames (lots of
+       underscores) get broken character-by-character since underscore is a
+       word character and would otherwise stay as one unbreakable token,
+       overflowing the card. */
+    .attachment-filename,
+    .attachment-card h6.attachment-filename {
         white-space: normal !important;
-        word-break: break-word;
-        overflow-wrap: anywhere;
+        word-break: break-all !important;
+        overflow-wrap: anywhere !important;
         display: -webkit-box !important;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        max-height: 2.4em;
+        -webkit-line-clamp: 2 !important;
+        line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+        max-height: 2.6em !important;
         font-size: 0.78rem !important;
-        line-height: 1.2 !important;
+        line-height: 1.25 !important;
+        text-overflow: ellipsis;
     }
 }
 
