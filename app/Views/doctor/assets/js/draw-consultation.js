@@ -168,14 +168,18 @@
         updateEyeSideUI();
         setTool('select');
 
-        // On narrow viewports the Layers panel covers most of the canvas, so
-        // we hide it by default and let the user tap the Layers button to
-        // open it. The CSS below 640px also styles the panel as a bottom
-        // sheet for that case.
+        // Default visibility of the layers panel: open on desktop + tablet,
+        // hidden on phones where it would cover most of the canvas. The
+        // user toggles it via the Layers button in the toolbar (or the X
+        // inside the panel itself). Also reset any drag offset from the
+        // previous session so the panel always opens at its CSS-defined
+        // anchor.
         try {
-            if (window.matchMedia && window.matchMedia('(max-width: 640px)').matches) {
-                const panel = modalEl.querySelector('#layersPanel');
-                if (panel) panel.style.display = 'none';
+            const panel = modalEl.querySelector('#layersPanel');
+            if (panel) {
+                resetLayersPanelDrag(panel);
+                const isPhone = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
+                panel.classList.toggle('is-open', !isPhone);
             }
         } catch (e) { /* feature-detect failure — leave panel as-is */ }
     }
@@ -458,10 +462,10 @@
           </div>
         </div>
 
-        <div class="draw-layers-panel" id="layersPanel" style="display: block;">
+        <div class="draw-layers-panel is-open" id="layersPanel">
           <div class="draw-layers-header">
             <span>Layers</span>
-            <button type="button" class="btn-close" id="closeLayersBtn"></button>
+            <button type="button" class="draw-layers-close" id="closeLayersBtn" aria-label="Close layers panel"><i class="bi bi-x-lg"></i></button>
           </div>
           <div class="draw-layers-list" id="layersList"></div>
         </div>
@@ -584,8 +588,8 @@
 
         modalEl.querySelector('#layersBtn').addEventListener('click', () => {
             const panel = modalEl.querySelector('#layersPanel');
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-            if (panel.style.display === 'block') refreshLayersPanel();
+            const isOpen = panel.classList.toggle('is-open');
+            if (isOpen) refreshLayersPanel();
         });
 
         modalEl.querySelector('#drawSaveBtn').addEventListener('click', () => save({ silent: false }));
@@ -603,8 +607,86 @@
 
     function bindLayersPanelEvents() {
         modalEl.querySelector('#closeLayersBtn').addEventListener('click', () => {
-            modalEl.querySelector('#layersPanel').style.display = 'none';
+            const p = modalEl.querySelector('#layersPanel');
+            p.classList.remove('is-open');
+            resetLayersPanelDrag(p);
         });
+        enableLayersPanelDrag();
+    }
+
+    function resetLayersPanelDrag(panel) {
+        if (!panel) return;
+        delete panel.dataset.dragX;
+        delete panel.dataset.dragY;
+        panel.style.transform = '';
+    }
+
+    /* Make the layers panel draggable by its header — both mouse and touch.
+       The panel is positioned with `top`/`right` (desktop) or `bottom`/
+       `left`/`right` (mobile bottom-sheet). Rather than touching those
+       anchors we layer a `transform: translate(dx, dy)` on top, which is
+       additive to whatever positioning the CSS chose. Drag deltas reset
+       each modal-open so the panel returns to its CSS-defined spot. */
+    function enableLayersPanelDrag() {
+        const panel = modalEl.querySelector('#layersPanel');
+        const header = panel && panel.querySelector('.draw-layers-header');
+        if (!panel || !header) return;
+
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+        let baseX = 0;
+        let baseY = 0;
+
+        function getXY(e) {
+            if (e.touches && e.touches.length) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            return { x: e.clientX, y: e.clientY };
+        }
+
+        function onDown(e) {
+            // Ignore clicks on the close button so it still works
+            if (e.target.closest('.btn-close')) return;
+            const p = getXY(e);
+            isDragging = true;
+            startX = p.x;
+            startY = p.y;
+            baseX = parseFloat(panel.dataset.dragX || '0');
+            baseY = parseFloat(panel.dataset.dragY || '0');
+            header.style.cursor = 'grabbing';
+            panel.classList.add('is-dragging');
+            if (e.cancelable) e.preventDefault();
+        }
+
+        function onMove(e) {
+            if (!isDragging) return;
+            const p = getXY(e);
+            const dx = baseX + (p.x - startX);
+            const dy = baseY + (p.y - startY);
+            panel.dataset.dragX = String(dx);
+            panel.dataset.dragY = String(dy);
+            panel.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+            if (e.cancelable) e.preventDefault();
+        }
+
+        function onUp() {
+            if (!isDragging) return;
+            isDragging = false;
+            header.style.cursor = 'grab';
+            panel.classList.remove('is-dragging');
+        }
+
+        header.style.cursor = 'grab';
+        header.style.userSelect = 'none';
+        header.style.touchAction = 'none';
+
+        header.addEventListener('mousedown', onDown);
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+
+        header.addEventListener('touchstart', onDown, { passive: false });
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onUp);
+        document.addEventListener('touchcancel', onUp);
     }
 
     function onKeydown(e) {

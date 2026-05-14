@@ -93,6 +93,20 @@
     </script>
 </head>
 <body>
+    <!-- Pre-paint sidebar mode restore — must run before the sidebar paints,
+         otherwise the user sees a "wide → mini" flicker on every navigation. -->
+    <script>
+    (function () {
+        try {
+            var KEY = 'appSidebarMode';
+            var TABLET_BP = 1366;
+            var saved = null;
+            try { saved = localStorage.getItem(KEY); } catch (e) {}
+            var mode = saved || (window.innerWidth < TABLET_BP ? 'mini' : 'wide');
+            if (mode === 'mini' && document.body) document.body.classList.add('sidebar-mini');
+        } catch (e) { /* ignore */ }
+    })();
+    </script>
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -876,10 +890,6 @@
             <a href="/doctor/calendar" class="dock-item" title="View Calendar">
                 <i class="bi bi-calendar3"></i>
                 <span class="htooltip">View Calendar</span>
-            </a>
-            <a href="/doctor/organizer" class="dock-item d-md-none" title="Organizer">
-                <i class="bi bi-calendar-month"></i>
-                <span class="htooltip">Organizer</span>
             </a>
             <a href="/doctor/patients" class="dock-item" title="Patient List">
                 <i class="bi bi-people"></i>
