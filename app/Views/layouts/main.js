@@ -348,18 +348,31 @@
         
         // Submenu toggle functionality
         (function() {
+            const sidebar = document.getElementById('sidebar');
             const submenuToggles = document.querySelectorAll('.nav-link-toggle');
-            
+
+            // Mirror the "any submenu is expanded" state as classes on the
+            // sidebar AND body elements. CSS uses these as non-:has()
+            // fallbacks for sticky peek-expand on tablet, since Safari
+            // `:has()` doesn't always recompute when classes are toggled
+            // dynamically.
+            function syncExpandedFlag() {
+                const anyExpanded = !!document.querySelector('.sidebar .nav-item.has-submenu.expanded');
+                if (sidebar) sidebar.classList.toggle('has-expanded-submenu', anyExpanded);
+                document.body.classList.toggle('sidebar-has-expanded-submenu', anyExpanded);
+            }
+
             submenuToggles.forEach(toggle => {
                 toggle.addEventListener('click', function(e) {
                     e.preventDefault();
                     const navItem = this.closest('.nav-item.has-submenu');
                     if (navItem) {
                         navItem.classList.toggle('expanded');
+                        syncExpandedFlag();
                     }
                 });
             });
-            
+
             // Auto-expand if any submenu item is active
             const activeSubmenuItems = document.querySelectorAll('.nav-submenu-link.active');
             activeSubmenuItems.forEach(item => {
@@ -368,6 +381,7 @@
                     navItem.classList.add('expanded');
                 }
             });
+            syncExpandedFlag();
         })();
         
         // Dock Stack Menu functionality (macOS-style genie effect)
