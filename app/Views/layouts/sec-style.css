@@ -3819,3 +3819,133 @@ body.modal-open {
     overflow: hidden;
     padding-right: 0 !important;
 }
+
+/* ============================================================================
+   Collapsible sidebar — RTL mini-rail (secretary layout).
+   Same toggle state (body.sidebar-mini) shared with the doctor layout via
+   layouts/main.js. Sidebar sits on the RIGHT in RTL, so the main content
+   margin is `margin-right` rather than margin-left.
+   ============================================================================ */
+
+:root { --sidebar-width-mini: 76px; }
+
+@media (min-width: 768px) {
+    /* Toggle button visible on every viewport from tablet up. */
+    .sidebar-toggle {
+        display: inline-flex !important;
+        opacity: 1;
+        pointer-events: auto;
+        transform: scale(1);
+    }
+}
+
+body.sidebar-mini .sidebar {
+    width: var(--sidebar-width-mini);
+    overflow-x: hidden;
+    transition: width 0.2s ease;
+}
+body.sidebar-mini .main-content {
+    margin-right: var(--sidebar-width-mini);
+    transition: margin-right 0.2s ease;
+}
+
+body.sidebar-mini .sidebar .nav-link {
+    font-size: 0;
+    padding: 0.65rem 0.5rem;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+}
+body.sidebar-mini .sidebar .nav-link i {
+    font-size: 1.3rem;
+    margin: 0 !important;
+}
+
+body.sidebar-mini .sidebar .clinic-name,
+body.sidebar-mini .sidebar .user-details,
+body.sidebar-mini .sidebar .sidebar-footer,
+body.sidebar-mini .sidebar .secretary-badge,
+body.sidebar-mini .sidebar .nav-submenu,
+body.sidebar-mini .sidebar .badge {
+    display: none !important;
+}
+
+body.sidebar-mini .sidebar .sidebar-header { padding: 1rem 0.5rem; }
+body.sidebar-mini .sidebar .clinic-logo {
+    justify-content: center;
+    margin-bottom: 0;
+}
+body.sidebar-mini .sidebar .clinic-logo img {
+    margin: 0 !important;
+}
+body.sidebar-mini .sidebar .user-info {
+    padding: 0.75rem 0.5rem;
+    justify-content: center;
+}
+body.sidebar-mini .sidebar .user-info .d-flex {
+    justify-content: center;
+}
+body.sidebar-mini .sidebar .user-avatar {
+    margin: 0 !important;
+    width: 40px;
+    height: 40px;
+}
+
+/* Peek expand on hover for desktop pointers. */
+@media (hover: hover) and (pointer: fine) {
+    body.sidebar-mini .sidebar:hover {
+        width: var(--sidebar-width);
+        box-shadow: -4px 0 18px rgba(0, 0, 0, 0.18);
+    }
+    body.sidebar-mini .sidebar:hover .nav-link {
+        font-size: 1rem;
+        justify-content: flex-start;
+        padding: 0.65rem 1.25rem;
+        text-align: right; /* RTL */
+    }
+    body.sidebar-mini .sidebar:hover .nav-link i {
+        margin-left: 0.75rem !important; /* RTL: icon spacing to the LEFT of label */
+    }
+    body.sidebar-mini .sidebar:hover .clinic-name,
+    body.sidebar-mini .sidebar:hover .user-details,
+    body.sidebar-mini .sidebar:hover .sidebar-footer,
+    body.sidebar-mini .sidebar:hover .secretary-badge,
+    body.sidebar-mini .sidebar:hover .nav-submenu,
+    body.sidebar-mini .sidebar:hover .badge {
+        display: block !important;
+    }
+    body.sidebar-mini .sidebar:hover .clinic-logo { justify-content: flex-start; }
+    body.sidebar-mini .sidebar:hover .sidebar-header { padding: 1.5rem; text-align: center; }
+    body.sidebar-mini .sidebar:hover .user-info { padding: 1rem; }
+    body.sidebar-mini .sidebar:hover .user-info .d-flex { justify-content: flex-start; }
+}
+
+/* Mobile: revert to overlay model regardless of saved mini state. */
+@media (max-width: 767.98px) {
+    body.sidebar-mini .sidebar {
+        width: var(--sidebar-width);
+        transform: translateX(100%); /* RTL slide-out to the right */
+    }
+    body.sidebar-mini .sidebar.show { transform: translateX(0); }
+    body.sidebar-mini .main-content { margin-right: 0; }
+    body.sidebar-mini .sidebar .nav-link {
+        font-size: 1rem;
+        padding: 0.65rem 1.25rem;
+        justify-content: flex-start;
+        text-align: right;
+    }
+    body.sidebar-mini .sidebar .nav-link i { margin-left: 0.75rem !important; }
+    body.sidebar-mini .sidebar .clinic-name,
+    body.sidebar-mini .sidebar .user-details,
+    body.sidebar-mini .sidebar .secretary-badge { display: block !important; }
+}
+
+/* Landscape tablet — keep the rail visible instead of slide-out. */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    body.sidebar-mini .sidebar { transform: none !important; }
+    body.sidebar-mini .main-content {
+        margin-right: var(--sidebar-width-mini);
+        padding: 1rem;
+    }
+}
