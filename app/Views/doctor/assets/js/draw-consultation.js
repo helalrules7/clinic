@@ -167,6 +167,17 @@
         refreshLayersPanel();
         updateEyeSideUI();
         setTool('select');
+
+        // On narrow viewports the Layers panel covers most of the canvas, so
+        // we hide it by default and let the user tap the Layers button to
+        // open it. The CSS below 640px also styles the panel as a bottom
+        // sheet for that case.
+        try {
+            if (window.matchMedia && window.matchMedia('(max-width: 640px)').matches) {
+                const panel = modalEl.querySelector('#layersPanel');
+                if (panel) panel.style.display = 'none';
+            }
+        } catch (e) { /* feature-detect failure — leave panel as-is */ }
     }
 
     function initCanvasOnce() {

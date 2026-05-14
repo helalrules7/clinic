@@ -455,11 +455,183 @@ body.draw-modal-open #quickAccessDock {
     background: #374151;
 }
 
-@media (max-width: 768px) {
-    .draw-tool-btn { width: 42px; height: 42px; font-size: 1.15rem; }
-    .draw-toolbar { padding: 0.5rem; }
-    .draw-tool-group__label { display: none; }
-    .draw-stroke-slider { width: 80px; }
+/* =============================================================================
+   Responsive treatment for the drawing modal — tablet (≤1024px) and mobile
+   (≤640px). The toolbar has ~10 groups by now; without these rules it
+   wraps onto 3-4 rows and the floating layers panel overlaps the buttons.
+
+   Strategy:
+     • Tablet — tighten paddings, shrink buttons, hide group labels, scrollable
+       toolbar (overflow-x) so groups stay on a single row that scrolls
+       horizontally instead of wrapping.
+     • Mobile — even tighter, single-row scrolling toolbar, the layers
+       panel becomes a full-width bottom sheet.
+     • Hide any global floating UI from the page underneath (quick-access
+       dock, camera "Capture" buttons, scroll-to-top, etc.) so nothing
+       leaks through over the modal.
+   ============================================================================ */
+
+/* Make sure nothing on the underlying page leaks above the full-screen modal. */
+body.draw-modal-open .scroll-to-top,
+body.draw-modal-open .ai-chat-widget,
+body.draw-modal-open #quickAccessDock,
+body.draw-modal-open .quick-access-dock,
+body.draw-modal-open .floating-capture-btn,
+body.draw-modal-open [class*="floating"]:not(.modal):not(.modal *) {
+    display: none !important;
+}
+
+/* TABLET — up to 1024px */
+@media (max-width: 1024px) {
+    /* Single scrollable row instead of wrapping (much easier to scan on a tablet). */
+    #drawConsultationModal .draw-toolbar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        gap: 0.3rem;
+        padding: 0.5rem 0.6rem;
+        scrollbar-width: thin;
+    }
+    #drawConsultationModal .draw-toolbar::-webkit-scrollbar { height: 5px; }
+    #drawConsultationModal .draw-toolbar::-webkit-scrollbar-thumb {
+        background: rgba(100, 116, 139, 0.4);
+        border-radius: 4px;
+    }
+
+    #drawConsultationModal .draw-tool-group {
+        flex-shrink: 0;
+        padding: 0.15rem 0.35rem;
+        gap: 0.2rem;
+    }
+    #drawConsultationModal .draw-tool-group__label,
+    #drawConsultationModal .eye-side-label {
+        display: none;
+    }
+
+    #drawConsultationModal .draw-tool-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1.05rem;
+    }
+
+    #drawConsultationModal .draw-color-input {
+        width: 32px;
+        height: 32px;
+    }
+    #drawConsultationModal .draw-stroke-preview {
+        width: 32px;
+        height: 32px;
+    }
+    #drawConsultationModal .draw-stroke-slider { width: 80px; }
+    #drawConsultationModal .draw-opacity-slider { width: 56px; }
+
+    #drawConsultationModal .modal-header { padding: 0.5rem 0.85rem; }
+    #drawConsultationModal .modal-title { font-size: 1rem; }
+    #drawConsultationModal .draw-auto-save-indicator { font-size: 0.7rem; padding: 0.2rem 0.5rem; }
+
+    /* Footer hint takes too much horizontal room on a tablet — hide it,
+       keep Cancel + Save buttons visible. */
+    #drawConsultationModal #drawHintText { display: none; }
+
+    /* Layers panel — narrower, anchored under the toolbar so it never
+       overlaps the buttons. */
+    #drawConsultationModal .draw-layers-panel {
+        top: 8px;
+        right: 8px;
+        width: 240px;
+        max-height: 50vh;
+    }
+
+    /* Canvas wrap padding shrinks so the canvas gets more area. */
+    #drawConsultationModal .draw-canvas-wrap { padding: 0.5rem; }
+}
+
+/* MOBILE — up to 640px */
+@media (max-width: 640px) {
+    #drawConsultationModal .draw-toolbar {
+        padding: 0.35rem 0.4rem;
+        gap: 0.2rem;
+    }
+    #drawConsultationModal .draw-tool-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 1rem;
+    }
+    #drawConsultationModal .draw-tool-group {
+        background: transparent;
+        border: none;
+        padding: 0.1rem 0.25rem;
+    }
+    /* Hide the vertical dividers on mobile — visual density wins over grouping. */
+    #drawConsultationModal .draw-toolbar .vr { display: none; }
+
+    #drawConsultationModal .draw-stroke-slider { width: 64px; }
+    #drawConsultationModal .draw-opacity-slider { width: 48px; }
+    #drawConsultationModal .draw-color-input { width: 28px; height: 28px; }
+    #drawConsultationModal .draw-stroke-preview { width: 28px; height: 28px; }
+
+    /* Eye-side toggle: keep the two OD/OS buttons, shrink them. */
+    #drawConsultationModal .eye-side-btn {
+        padding: 0.15rem 0.4rem;
+        font-size: 0.7rem;
+    }
+
+    /* Stamp / Template dropdown triggers: icon-only. */
+    #drawConsultationModal #stampDropdown,
+    #drawConsultationModal #templateDropdown {
+        padding: 0.25rem 0.45rem;
+        font-size: 0.78rem;
+    }
+    #drawConsultationModal #stampDropdown span,
+    #drawConsultationModal #templateDropdown span { display: none; }
+
+    /* Layers panel becomes a bottom sheet on mobile so it never overlaps
+       the toolbar. */
+    #drawConsultationModal .draw-layers-panel {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: auto;
+        width: 100vw;
+        max-width: 100vw;
+        max-height: 45vh;
+        border-radius: 14px 14px 0 0;
+        z-index: 200;
+        box-shadow: 0 -6px 20px rgba(0,0,0,0.18);
+    }
+    #drawConsultationModal .draw-layers-header {
+        padding: 0.6rem 0.85rem;
+    }
+    #drawConsultationModal .draw-layers-list {
+        max-height: calc(45vh - 50px);
+    }
+
+    /* Footer compact: Save button is the priority. */
+    #drawConsultationModal .modal-footer {
+        padding: 0.4rem 0.6rem;
+        gap: 0.3rem;
+    }
+    #drawConsultationModal .modal-footer .btn {
+        padding: 0.4rem 0.7rem;
+        font-size: 0.85rem;
+    }
+    #drawConsultationModal #drawSaveBtn span:not(.spinner-border) {
+        display: none; /* keep only the cloud-arrow icon */
+    }
+    #drawConsultationModal #drawSaveBtn i { margin: 0 !important; }
+
+    #drawConsultationModal .draw-canvas-wrap { padding: 0.35rem; }
+}
+
+/* TINY phones — extra tightening at ≤380px */
+@media (max-width: 380px) {
+    #drawConsultationModal .draw-tool-btn { width: 34px; height: 34px; font-size: 0.95rem; }
+    #drawConsultationModal .draw-stroke-slider { width: 52px; }
+    #drawConsultationModal .draw-opacity-slider { width: 40px; }
+    #drawConsultationModal .modal-title { font-size: 0.9rem; }
+    #drawConsultationModal .draw-auto-save-indicator span { display: none; }
 }
 
 /* ---------------------------------------------------------------------------
