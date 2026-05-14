@@ -276,33 +276,75 @@
             }, 5000);
         })();
         
-        // Mobile sidebar toggle
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
-        
-        // Ensure elements exist before adding event listeners
-        if (sidebarToggle && sidebar && overlay) {
+        // ---------------------------------------------------------------
+        // Sidebar toggle — two behaviours depending on viewport:
+        //   • ≥768px (desktop + tablet): flips body.sidebar-mini so the
+        //     sidebar collapses to a 76px icon rail, and persists the
+        //     choice across pages via localStorage (key: SIDEBAR_MODE_KEY).
+        //   • <768px (phone): keeps the legacy off-canvas overlay
+        //     (sidebar.show + overlay.show).
+        // ---------------------------------------------------------------
+        (function setupSidebarToggle() {
+            const SIDEBAR_MODE_KEY = 'appSidebarMode'; // 'wide' | 'mini'
+            const MOBILE_BP = 768;
+            const TABLET_BP = 1366; // tablets (≤1366) default to mini rail
+
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            if (!sidebarToggle || !sidebar || !overlay) return;
+
+            function isMobile() { return window.innerWidth < MOBILE_BP; }
+
+            function applyMode(mode) {
+                if (mode === 'mini') document.body.classList.add('sidebar-mini');
+                else document.body.classList.remove('sidebar-mini');
+            }
+
+            function defaultMode() {
+                // Smaller tablets / split-screen laptops benefit from a
+                // mini rail by default. Wide desktops stay expanded.
+                return window.innerWidth < TABLET_BP ? 'mini' : 'wide';
+            }
+
+            // Initial state — respect saved preference, otherwise auto by viewport.
+            const saved = (function () {
+                try { return localStorage.getItem(SIDEBAR_MODE_KEY); }
+                catch (e) { return null; }
+            })();
+            applyMode(saved || defaultMode());
+
             sidebarToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('show');
-                overlay.classList.toggle('show');
+                if (isMobile()) {
+                    // Phone: classic off-canvas overlay
+                    sidebar.classList.toggle('show');
+                    overlay.classList.toggle('show');
+                    return;
+                }
+                // Desktop / tablet: toggle mini rail and persist
+                const isMini = document.body.classList.toggle('sidebar-mini');
+                const mode = isMini ? 'mini' : 'wide';
+                try { localStorage.setItem(SIDEBAR_MODE_KEY, mode); }
+                catch (e) { /* ignore */ }
             });
-            
+
             overlay.addEventListener('click', () => {
                 sidebar.classList.remove('show');
                 overlay.classList.remove('show');
             });
-            
-            // Close sidebar on window resize
+
             window.addEventListener('resize', () => {
-                if (window.innerWidth > 992) {
+                // Close any open mobile overlay once we're past the breakpoint
+                if (window.innerWidth >= MOBILE_BP) {
                     sidebar.classList.remove('show');
                     overlay.classList.remove('show');
                 }
+                // If the user never expressed a preference, follow the viewport
+                let userSaved = null;
+                try { userSaved = localStorage.getItem(SIDEBAR_MODE_KEY); } catch (e) {}
+                if (!userSaved) applyMode(defaultMode());
             });
-        } else {
-            // Silent error handling
-        }
+        })();
         
         // Submenu toggle functionality
         (function() {

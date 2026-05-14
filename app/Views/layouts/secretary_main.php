@@ -470,33 +470,60 @@
             });
         }
 
-        // Mobile sidebar toggle
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
-        
-        // Ensure elements exist before adding event listeners
-        if (sidebarToggle && sidebar && overlay) {
+        // Sidebar toggle — collapses to a 76px icon rail on ≥768px (with
+        // localStorage persistence) and falls back to the legacy off-canvas
+        // overlay below that. Mirrors the same logic in layouts/main.js so
+        // the doctor and secretary layouts behave identically.
+        (function setupSidebarToggle() {
+            const SIDEBAR_MODE_KEY = 'appSidebarMode'; // 'wide' | 'mini'
+            const MOBILE_BP = 768;
+            const TABLET_BP = 1366; // tablets (≤1366) default to mini rail
+
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            if (!sidebarToggle || !sidebar || !overlay) {
+                console.error('Sidebar toggle elements not found');
+                return;
+            }
+
+            const isMobile = () => window.innerWidth < MOBILE_BP;
+            const applyMode = (mode) => {
+                if (mode === 'mini') document.body.classList.add('sidebar-mini');
+                else document.body.classList.remove('sidebar-mini');
+            };
+            const defaultMode = () => window.innerWidth < TABLET_BP ? 'mini' : 'wide';
+
+            let saved = null;
+            try { saved = localStorage.getItem(SIDEBAR_MODE_KEY); } catch (e) {}
+            applyMode(saved || defaultMode());
+
             sidebarToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('show');
-                overlay.classList.toggle('show');
+                if (isMobile()) {
+                    sidebar.classList.toggle('show');
+                    overlay.classList.toggle('show');
+                    return;
+                }
+                const isMini = document.body.classList.toggle('sidebar-mini');
+                try { localStorage.setItem(SIDEBAR_MODE_KEY, isMini ? 'mini' : 'wide'); }
+                catch (e) {}
             });
-            
+
             overlay.addEventListener('click', () => {
                 sidebar.classList.remove('show');
                 overlay.classList.remove('show');
             });
-            
-            // Close sidebar on window resize
+
             window.addEventListener('resize', () => {
-                if (window.innerWidth > 992) {
+                if (window.innerWidth >= MOBILE_BP) {
                     sidebar.classList.remove('show');
                     overlay.classList.remove('show');
                 }
+                let userSaved = null;
+                try { userSaved = localStorage.getItem(SIDEBAR_MODE_KEY); } catch (e) {}
+                if (!userSaved) applyMode(defaultMode());
             });
-        } else {
-            console.error('Sidebar toggle elements not found');
-        }
+        })();
         
         // Top-bar scroll effect
         const topBar = document.querySelector('.top-bar');
