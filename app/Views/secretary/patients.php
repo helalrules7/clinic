@@ -397,13 +397,13 @@
                                        date badge, just with a per-clinic background so the eye can
                                        distinguish them. No icon, per user feedback. */
                                     $__lcTheme = match ($__lcCode) {
-                                        'riyadh' => ['bg' => '#3b82f6', 'fg' => '#ffffff'],
-                                        'kfs'    => ['bg' => '#10b981', 'fg' => '#ffffff'],
-                                        default  => ['bg' => '#64748b', 'fg' => '#ffffff'],
+                                        'riyadh' => ['bg' => '#166534', 'fg' => '#ffffff'],  // dark green
+                                        'kfs'    => ['bg' => '#4c1d95', 'fg' => '#ffffff'],  // dark violet
+                                        default  => ['bg' => '#334155', 'fg' => '#ffffff'],  // dark slate
                                     };
                                     ?>
                                     <?php if ($__lcName): ?>
-                                        <span class="badge clinic-badge clinic-badge-<?= htmlspecialchars($__lcCode ?: 'none') ?> arabic-text" style="background: <?= $__lcTheme['bg'] ?>; color: <?= $__lcTheme['fg'] ?>; font-weight: 600; padding: 0.4em 0.65em; border-radius: 6px;">
+                                        <span class="badge clinic-badge clinic-badge-<?= htmlspecialchars($__lcCode ?: 'none') ?> arabic-text" style="background: <?= $__lcTheme['bg'] ?>; color: <?= $__lcTheme['fg'] ?>; font-weight: 600; font-size: 0.7rem; padding: 0.35em 0.55em; border-radius: 6px;">
                                             <?= htmlspecialchars($__lcName) ?>
                                         </span>
                                     <?php else: ?>

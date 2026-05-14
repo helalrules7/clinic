@@ -32,9 +32,9 @@ function systemFolderRouteId(folder) {
  */
 function clinicBadgeStyle(code) {
     var key = (code || '').toString().toLowerCase();
-    if (key === 'riyadh') return { bg: '#3b82f6', fg: '#ffffff' };  // blue
-    if (key === 'kfs')    return { bg: '#10b981', fg: '#ffffff' };  // emerald
-    return { bg: '#64748b', fg: '#ffffff' };                          // slate fallback
+    if (key === 'riyadh') return { bg: '#166534', fg: '#ffffff' };  // dark green
+    if (key === 'kfs')    return { bg: '#4c1d95', fg: '#ffffff' };  // dark violet
+    return { bg: '#334155', fg: '#ffffff' };                          // dark slate fallback
 }
 function renderClinicBadge(patient /* , opts unused */) {
     if (!patient || !patient.last_clinic_id) {
@@ -44,7 +44,7 @@ function renderClinicBadge(patient /* , opts unused */) {
     var theme = clinicBadgeStyle(patient.last_clinic_code);
     var codeKey = (patient.last_clinic_code || 'none').toString().toLowerCase();
     return '<span class="badge clinic-badge clinic-badge-' + codeKey +
-           '" style="background:' + theme.bg + ';color:' + theme.fg + ';font-weight:600;padding:0.4em 0.65em;border-radius:6px;">' +
+           '" style="background:' + theme.bg + ';color:' + theme.fg + ';font-weight:600;font-size:0.7rem;padding:0.35em 0.55em;border-radius:6px;">' +
            escapeHtml(name) + '</span>';
 }
 

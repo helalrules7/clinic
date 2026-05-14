@@ -5388,15 +5388,16 @@ div.card.folder-card[style*="linear-gradient"] {
     font-size: 0.9rem;
 }
 
-.sidebar-toggle {
+/* Folders-view internal sidebar toggle only. Scoped so it doesn't
+   override the global app sidebar toggle button (shared class name). */
+.folders-view-layout .sidebar-toggle {
     padding: 4px 8px;
     color: var(--text);
     border: none;
     background: transparent;
     cursor: pointer;
 }
-
-.sidebar-toggle:hover {
+.folders-view-layout .sidebar-toggle:hover {
     color: var(--accent);
     background: var(--bg-alt);
 }
