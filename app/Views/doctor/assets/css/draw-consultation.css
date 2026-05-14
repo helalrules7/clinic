@@ -7,17 +7,36 @@ body.draw-modal-open #quickAccessDock {
     display: none !important;
 }
 
+/* The drawing modal itself must NOT scroll — its inner flex column takes
+   care of laying out header / body / footer. Without this, mobile browsers
+   that report 100vh as taller than the visible area (URL bar) made the
+   whole modal scroll, pushing the Save/Cancel footer below the fold. */
+#drawConsultationModal {
+    overflow: hidden !important;
+}
+
 #drawConsultationModal .modal-dialog {
     max-width: 100vw;
     width: 100vw;
+    /* Use the smallest / dynamic viewport units so the modal always fits
+       the *visible* viewport on mobile (URL bar showing or not). Older
+       browsers fall through to plain `vh`. */
     height: 100vh;
+    height: 100svh;
+    height: 100dvh;
     margin: 0;
+    display: flex;
+    align-items: stretch;
 }
 
 #drawConsultationModal .modal-content {
-    height: 100vh;
+    height: 100%;
+    max-height: 100%;
     border-radius: 0;
     background: #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .dark #drawConsultationModal .modal-content {
@@ -42,8 +61,20 @@ body.draw-modal-open #quickAccessDock {
     display: flex;
     flex-direction: column;
     min-height: 0;
-    flex: 1 1 auto;
+    flex: 1 1 0;
+    overflow: hidden;
     background: #f1f5f9;
+}
+
+/* Toolbar must not steal canvas space — it stays at its natural height. */
+#drawConsultationModal .draw-toolbar {
+    flex: 0 0 auto;
+}
+
+/* Modal header + footer are fixed-height bars; never let them shrink. */
+#drawConsultationModal .modal-header,
+#drawConsultationModal .modal-footer {
+    flex: 0 0 auto;
 }
 
 .dark .draw-modal-body { background: #0f172a; }
@@ -392,8 +423,9 @@ body.draw-modal-open #quickAccessDock {
 }
 
 .draw-canvas-wrap {
-    flex: 1 1 auto;
+    flex: 1 1 0;
     min-height: 0;
+    min-width: 0;
     position: relative;
     overflow: hidden;
     display: flex;
@@ -608,19 +640,24 @@ body.draw-modal-open [class*="floating"]:not(.modal):not(.modal *) {
         max-height: calc(45vh - 50px);
     }
 
-    /* Footer compact: Save button is the priority. */
+    /* Footer compact: Save button is the priority. The header already has
+       an X close, so the Cancel button is redundant on mobile and we hide
+       it to give Save more breathing room. */
     #drawConsultationModal .modal-footer {
         padding: 0.4rem 0.6rem;
         gap: 0.3rem;
+        justify-content: space-between;
+        align-items: center;
     }
     #drawConsultationModal .modal-footer .btn {
-        padding: 0.4rem 0.7rem;
+        padding: 0.45rem 0.9rem;
         font-size: 0.85rem;
     }
-    #drawConsultationModal #drawSaveBtn span:not(.spinner-border) {
-        display: none; /* keep only the cloud-arrow icon */
+    #drawConsultationModal #drawCancelBtn { display: none; }
+    #drawConsultationModal #drawSaveBtn {
+        margin-left: auto;
+        font-weight: 600;
     }
-    #drawConsultationModal #drawSaveBtn i { margin: 0 !important; }
 
     #drawConsultationModal .draw-canvas-wrap { padding: 0.35rem; }
 }
@@ -631,6 +668,41 @@ body.draw-modal-open [class*="floating"]:not(.modal):not(.modal *) {
     #drawConsultationModal .draw-stroke-slider { width: 52px; }
     #drawConsultationModal .draw-opacity-slider { width: 40px; }
     #drawConsultationModal .modal-title { font-size: 0.9rem; }
+    #drawConsultationModal .draw-auto-save-indicator span { display: none; }
+}
+
+/* MOBILE header: keep the X close button reachable. The auto-save indicator
+   shrinks (and on very narrow screens hides its text label) so the title +
+   indicator + close button all fit in a single row at 360-414px widths. */
+@media (max-width: 640px) {
+    #drawConsultationModal .modal-header {
+        padding: 0.45rem 0.6rem;
+        gap: 0.4rem;
+        flex-wrap: nowrap;
+    }
+    #drawConsultationModal .modal-title {
+        font-size: 0.95rem;
+        min-width: 0;
+        flex: 0 1 auto;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #drawConsultationModal .modal-title .bi { margin-right: 0.3rem !important; }
+    #drawConsultationModal .draw-auto-save-indicator {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.4rem;
+        flex: 0 0 auto;
+        margin-left: auto;
+    }
+    #drawConsultationModal .btn-close {
+        margin-left: 0.2rem !important;
+        flex: 0 0 auto;
+    }
+}
+
+/* Very narrow phones (≤420px): drop the auto-save text so the X stays room. */
+@media (max-width: 420px) {
     #drawConsultationModal .draw-auto-save-indicator span { display: none; }
 }
 
