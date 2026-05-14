@@ -3824,13 +3824,28 @@ function printLabTests(appointmentId) {
 }
 
 // Status badge functions
+/* Single source of truth for "is this appointment missed". The
+   APPOINTMENT_CONFIG.appointmentIsMissed flag is set by PHP using the
+   server's timezone, so a Booked-but-past-date appointment is consistently
+   tagged everywhere without a JS-vs-server timezone drift. The fallback
+   for the rare case of a freshly-loaded status (e.g. just transitioned to
+   Booked client-side) uses the local browser date, NOT UTC. */
+function _isAppointmentMissed(status) {
+    if (status !== 'Booked') return false;
+    if (window.APPOINTMENT_CONFIG && typeof window.APPOINTMENT_CONFIG.appointmentIsMissed === 'boolean') {
+        return window.APPOINTMENT_CONFIG.appointmentIsMissed;
+    }
+    const apptDate = window.APPOINTMENT_CONFIG?.appointmentDate || '';
+    if (!apptDate) return false;
+    const n = new Date();
+    const today = n.getFullYear() + '-' +
+                  String(n.getMonth() + 1).padStart(2, '0') + '-' +
+                  String(n.getDate()).padStart(2, '0');
+    return apptDate < today;
+}
+
 function getStatusBadgeClass(status) {
-    // Check if appointment is missed (Booked status and date is in the past)
-    const appointmentDate = window.APPOINTMENT_CONFIG?.appointmentDate || '';
-    const today = new Date().toISOString().split('T')[0];
-    const isMissed = (status === 'Booked' && appointmentDate < today);
-    
-    if (isMissed) {
+    if (_isAppointmentMissed(status)) {
         return 'bg-danger text-white';
     }
     
@@ -3849,12 +3864,7 @@ function getStatusBadgeClass(status) {
 }
 
 function getStatusDisplayText(status) {
-    // Check if appointment is missed (Booked status and date is in the past)
-    const appointmentDate = window.APPOINTMENT_CONFIG?.appointmentDate || '';
-    const today = new Date().toISOString().split('T')[0];
-    const isMissed = (status === 'Booked' && appointmentDate < today);
-    
-    if (isMissed) {
+    if (_isAppointmentMissed(status)) {
         return 'Missed';
     }
     
@@ -3873,12 +3883,7 @@ function getStatusDisplayText(status) {
 }
 
 function getStatusIcon(status) {
-    // Check if appointment is missed (Booked status and date is in the past)
-    const appointmentDate = window.APPOINTMENT_CONFIG?.appointmentDate || '';
-    const today = new Date().toISOString().split('T')[0];
-    const isMissed = (status === 'Booked' && appointmentDate < today);
-    
-    if (isMissed) {
+    if (_isAppointmentMissed(status)) {
         return 'bi-exclamation-triangle-fill';
     }
     
@@ -3901,25 +3906,17 @@ function updateStatusBadge(status) {
     const icon = document.getElementById('statusIcon');
     const text = document.getElementById('statusText');
     const markCompletedBtn = document.getElementById('markCompletedBtn');
-    
+
     if (badge && icon && text) {
-        // Check if appointment is missed (Booked status and date is in the past)
-        const appointmentDate = window.APPOINTMENT_CONFIG?.appointmentDate || '';
-        const today = new Date().toISOString().split('T')[0];
-        const isMissed = (status === 'Booked' && appointmentDate < today);
-        
-        // Use "Missed" status if appointment is missed
-        const displayStatus = isMissed ? 'Missed' : status;
-        
-        // Update classes
+        /* Pass `status` through the helpers — they'll switch to "Missed"
+           internally when _isAppointmentMissed(status) is true. Previously
+           the function computed displayStatus locally and then never used
+           it, so the badge stayed "Booked" while only the header turned
+           red on past-Booked appointments. */
         badge.className = `status-badge d-flex align-items-center gap-2 ${getStatusBadgeClass(status)}`;
-        
-        // Update icon
         icon.className = `bi ${getStatusIcon(status)}`;
-        
-        // Update text
         text.textContent = getStatusDisplayText(status);
-        
+
         // Show/hide "Mark as Completed" button based on status
         if (markCompletedBtn) {
             if (status === 'Completed') {
@@ -3929,7 +3926,7 @@ function updateStatusBadge(status) {
             }
         }
     }
-    
+
     // Update appointment header background colors
     updateAppointmentHeaderClasses(status);
 }
@@ -3938,17 +3935,13 @@ function updateStatusBadge(status) {
 function updateAppointmentHeaderClasses(status) {
     const header = document.querySelector('.appointment-header');
     if (!header) return;
-    
+
     // Remove existing status classes
     header.classList.remove('completed', 'missed', 'closed', 'rescheduled');
-    
+
     const statusLower = (status || '').toLowerCase();
-    const appointmentDate = window.APPOINTMENT_CONFIG?.appointmentDate || '';
-    const today = new Date().toISOString().split('T')[0];
-    
-    // Check if appointment is missed (Booked status and date is in the past)
-    const isMissed = (statusLower === 'booked' && appointmentDate < today);
-    
+    const isMissed = _isAppointmentMissed(status);
+
     if (statusLower === 'completed') {
         header.classList.add('completed');
     } else if (isMissed || statusLower === 'cancelled' || statusLower === 'noshow') {

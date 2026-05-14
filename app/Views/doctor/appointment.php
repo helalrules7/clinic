@@ -1402,6 +1402,15 @@ window.APPOINTMENT_CONFIG = {
     appointmentDate: '<?= isset($appointment['date']) ? date('Y-m-d', strtotime($appointment['date'])) : 'null' ?>',
     appointmentTime: '<?= isset($appointment['start_time']) ? date('H:i:s', strtotime($appointment['start_time'])) : 'null' ?>',
     appointmentStatus: '<?= isset($appointment['status']) ? htmlspecialchars($appointment['status']) : 'null' ?>',
+    /* Authoritative "is this appointment past its date while still Booked"
+       flag, computed server-side using PHP's timezone (Cairo). JS used to
+       redo this check with `new Date().toISOString()` which returns UTC,
+       and on a phone that's a few hours away from UTC at the day
+       boundary the two answers disagreed — page would render with the
+       red "missed" header, then JS would re-evaluate, decide "not
+       missed", and strip the class. */
+    appointmentIsMissed: <?= !empty($isMissed) ? 'true' : 'false' ?>,
+    serverToday: '<?= $today ?>',
     patientId: <?= isset($patient['id']) ? (int)$patient['id'] : 'null' ?>,
     patientFirstName: '<?= isset($patient['first_name']) ? htmlspecialchars($patient['first_name']) : 'null' ?>',
     patientLastName: '<?= isset($patient['last_name']) ? htmlspecialchars($patient['last_name']) : 'null' ?>',
