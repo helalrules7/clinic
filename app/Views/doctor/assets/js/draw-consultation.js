@@ -168,19 +168,21 @@
         updateEyeSideUI();
         setTool('select');
 
-        // Default visibility of the layers panel: open on desktop + tablet,
-        // hidden on phones where it would cover most of the canvas. The
-        // user toggles it via the Layers button in the toolbar (or the X
-        // inside the panel itself). Also reset any drag offset from the
-        // previous session so the panel always opens at its CSS-defined
-        // anchor.
+        // Layers panel is CLOSED by default on every viewport — the new
+        // Canva-style contextual menu (drawCtxMenu) handles the common
+        // per-object actions (delete, bring forward, hide, group, …) so
+        // the layers panel only needs to be opened when the user wants
+        // a tree overview. Also reset any drag offset from the previous
+        // session so when the user does open it, it lands at the CSS-
+        // defined anchor (top-right of canvas).
         try {
             const panel = modalEl.querySelector('#layersPanel');
             if (panel) {
                 resetLayersPanelDrag(panel);
-                const isPhone = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
-                panel.classList.toggle('is-open', !isPhone);
+                panel.classList.remove('is-open');
             }
+            const ctxMenu = modalEl.querySelector('#drawCtxMenu');
+            if (ctxMenu) ctxMenu.hidden = true;
         } catch (e) { /* feature-detect failure — leave panel as-is */ }
     }
 
@@ -226,12 +228,16 @@
             session.isDirty = true;
             pushHistory();
         });
-        canvas.on('object:modified', () => { if (lockHistory) return; session.isDirty = true; pushHistory(); refreshLayersPanel(); });
+        canvas.on('object:modified', () => { if (lockHistory) return; session.isDirty = true; pushHistory(); refreshLayersPanel(); updateCtxMenuPosition(); });
         canvas.on('object:added', () => { if (lockHistory) return; session.isDirty = true; refreshLayersPanel(); });
-        canvas.on('object:removed', () => { if (lockHistory) return; session.isDirty = true; refreshLayersPanel(); });
-        canvas.on('selection:created', updatePropPanelFromSelection);
-        canvas.on('selection:updated', updatePropPanelFromSelection);
-        canvas.on('selection:cleared', refreshLayersPanel);
+        canvas.on('object:removed', () => { if (lockHistory) return; session.isDirty = true; refreshLayersPanel(); hideCtxMenu(); });
+        canvas.on('selection:created', () => { updatePropPanelFromSelection(); showCtxMenu(); });
+        canvas.on('selection:updated', () => { updatePropPanelFromSelection(); showCtxMenu(); });
+        canvas.on('selection:cleared', () => { refreshLayersPanel(); hideCtxMenu(); });
+        canvas.on('object:moving', updateCtxMenuPosition);
+        canvas.on('object:scaling', updateCtxMenuPosition);
+        canvas.on('object:rotating', updateCtxMenuPosition);
+        canvas.on('after:render', updateCtxMenuPosition);
 
         canvas.on('mouse:down', handleMouseDown);
         canvas.on('mouse:move', handleMouseMove);
@@ -303,6 +309,7 @@
         // button twice to open").
         try { bindToolbarEvents(); } catch (e) { console.error('Draw: bindToolbarEvents failed', e); }
         try { bindLayersPanelEvents(); } catch (e) { console.error('Draw: bindLayersPanelEvents failed', e); }
+        try { bindCtxMenuEvents(); } catch (e) { console.error('Draw: bindCtxMenuEvents failed', e); }
 
         modalEl.addEventListener('hidden.bs.modal', () => {
             stopAutoSave();
@@ -460,9 +467,38 @@
           <div class="draw-canvas-shell">
             <canvas id="drawCanvas"></canvas>
           </div>
+          <!-- Canva-style contextual action menu — hovers above whichever
+               element is currently selected. Hidden by default; shown via
+               JS on `selection:created` / `selection:updated`. -->
+          <div class="draw-ctx-menu" id="drawCtxMenu" aria-hidden="true" hidden>
+            <button type="button" class="draw-ctx-btn" data-ctx-action="bring-forward" title="Bring forward">
+              <i class="bi bi-arrow-up-square"></i>
+            </button>
+            <button type="button" class="draw-ctx-btn" data-ctx-action="send-backward" title="Send backward">
+              <i class="bi bi-arrow-down-square"></i>
+            </button>
+            <span class="draw-ctx-sep" aria-hidden="true"></span>
+            <button type="button" class="draw-ctx-btn" data-ctx-action="toggle-visibility" title="Hide / Show">
+              <i class="bi bi-eye"></i>
+            </button>
+            <button type="button" class="draw-ctx-btn" data-ctx-action="toggle-lock" title="Lock / Unlock">
+              <i class="bi bi-unlock"></i>
+            </button>
+            <span class="draw-ctx-sep draw-ctx-sep-group" aria-hidden="true"></span>
+            <button type="button" class="draw-ctx-btn draw-ctx-group-only" data-ctx-action="group" title="Group">
+              <i class="bi bi-collection"></i>
+            </button>
+            <button type="button" class="draw-ctx-btn draw-ctx-ungroup-only" data-ctx-action="ungroup" title="Ungroup">
+              <i class="bi bi-grid-1x2"></i>
+            </button>
+            <span class="draw-ctx-sep" aria-hidden="true"></span>
+            <button type="button" class="draw-ctx-btn draw-ctx-btn-danger" data-ctx-action="delete" title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
         </div>
 
-        <div class="draw-layers-panel is-open" id="layersPanel">
+        <div class="draw-layers-panel" id="layersPanel">
           <div class="draw-layers-header">
             <span>Layers</span>
             <button type="button" class="draw-layers-close" id="closeLayersBtn" aria-label="Close layers panel">
@@ -607,6 +643,199 @@
         try { if (typeof onKeyup === 'function') document.addEventListener('keyup', onKeyup); } catch (e) { console.warn('Draw: keyup bind failed', e); }
         updateStrokePreview();
         updateZoomUI();
+    }
+
+    /* ====================================================================
+       Contextual action menu (Canva-style). Floats above the currently
+       selected element on the canvas with quick actions: bring forward /
+       send backward, hide/show, lock/unlock, group/ungroup, delete.
+       Position is recomputed on selection, modification, scroll/resize.
+       The menu is suppressed for templates, overlays and the clock guide
+       since those aren't user-manipulable.
+       ==================================================================== */
+
+    function isContextMenuEligible(obj) {
+        if (!obj) return false;
+        if (obj.isOverlay) return false;
+        if (obj.isTemplate || obj._isTemplate) return false;
+        if (obj.eraserMark) return false;
+        if (obj.type === 'i-text' && obj.isEditing) return false;
+        return true;
+    }
+
+    function hideCtxMenu() {
+        const menu = modalEl && modalEl.querySelector('#drawCtxMenu');
+        if (!menu) return;
+        menu.hidden = true;
+        menu.style.transform = '';
+    }
+
+    function showCtxMenu() {
+        const menu = modalEl && modalEl.querySelector('#drawCtxMenu');
+        if (!menu || !canvas) return;
+        const active = canvas.getActiveObject();
+        if (!isContextMenuEligible(active)) { hideCtxMenu(); return; }
+
+        const isMulti = active.type === 'activeSelection';
+        menu.querySelectorAll('.draw-ctx-group-only').forEach(b => { b.hidden = !isMulti; });
+        menu.querySelectorAll('.draw-ctx-ungroup-only').forEach(b => { b.hidden = active.type !== 'group'; });
+        menu.querySelectorAll('.draw-ctx-sep-group').forEach(s => {
+            s.hidden = !(isMulti || active.type === 'group');
+        });
+
+        // Visibility/lock icon state
+        const visBtn = menu.querySelector('[data-ctx-action="toggle-visibility"] i');
+        if (visBtn) {
+            visBtn.classList.toggle('bi-eye', active.visible !== false);
+            visBtn.classList.toggle('bi-eye-slash', active.visible === false);
+        }
+        const lockBtn = menu.querySelector('[data-ctx-action="toggle-lock"] i');
+        if (lockBtn) {
+            const locked = !!active.locked;
+            lockBtn.classList.toggle('bi-unlock', !locked);
+            lockBtn.classList.toggle('bi-lock-fill', locked);
+        }
+
+        menu.hidden = false;
+        updateCtxMenuPosition();
+    }
+
+    function updateCtxMenuPosition() {
+        const menu = modalEl && modalEl.querySelector('#drawCtxMenu');
+        if (!menu || menu.hidden || !canvas) return;
+        const active = canvas.getActiveObject();
+        if (!isContextMenuEligible(active)) { hideCtxMenu(); return; }
+
+        const wrap = modalEl.querySelector('#drawCanvasWrap');
+        if (!wrap) return;
+
+        // Object bounding rect in canvas coords. Use absolute bounding rect so
+        // grouped / transformed shapes still report sensible coords.
+        const br = active.getBoundingRect(true, true);
+
+        // Canvas element is positioned inside the .draw-canvas-shell which is
+        // centred inside .draw-canvas-wrap. Translate canvas coords → wrap
+        // coords by offsetting with the canvas DOM rect relative to the wrap.
+        const canvasEl = canvas.lowerCanvasEl || canvas.upperCanvasEl;
+        if (!canvasEl) return;
+        const canvasRect = canvasEl.getBoundingClientRect();
+        const wrapRect = wrap.getBoundingClientRect();
+        const offsetX = canvasRect.left - wrapRect.left;
+        const offsetY = canvasRect.top  - wrapRect.top;
+
+        // Centre menu horizontally over the bounding rect; place it 10px
+        // above the rect with an 8px fallback to below when there's no
+        // room at the top.
+        const menuWidth = menu.offsetWidth || 280;
+        const menuHeight = menu.offsetHeight || 44;
+        let left = offsetX + br.left + (br.width / 2) - (menuWidth / 2);
+        let top  = offsetY + br.top - menuHeight - 12;
+
+        // Keep inside the wrap horizontally
+        const wrapW = wrap.clientWidth;
+        const wrapH = wrap.clientHeight;
+        if (left < 6) left = 6;
+        if (left + menuWidth > wrapW - 6) left = wrapW - menuWidth - 6;
+        // If above the rect would clip the top of the wrap, drop the menu
+        // below the object instead.
+        if (top < 6) {
+            top = offsetY + br.top + br.height + 12;
+            // And if even below would clip, pin to the top of the wrap.
+            if (top + menuHeight > wrapH - 6) top = 6;
+        }
+
+        menu.style.transform = 'translate(' + Math.round(left) + 'px, ' + Math.round(top) + 'px)';
+    }
+
+    function bindCtxMenuEvents() {
+        const menu = modalEl && modalEl.querySelector('#drawCtxMenu');
+        if (!menu) return;
+        menu.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-ctx-action]');
+            if (!btn) return;
+            const action = btn.dataset.ctxAction;
+            handleCtxMenuAction(action);
+        });
+        // Re-position on viewport / scroll changes.
+        window.addEventListener('resize', updateCtxMenuPosition);
+        window.addEventListener('scroll', updateCtxMenuPosition, true);
+    }
+
+    function handleCtxMenuAction(action) {
+        if (!canvas) return;
+        const active = canvas.getActiveObject();
+        if (!isContextMenuEligible(active)) return;
+
+        switch (action) {
+            case 'delete':
+                deleteSelected();
+                break;
+            case 'bring-forward':
+                canvas.bringForward(active);
+                pinAnchoredLayers();
+                canvas.requestRenderAll();
+                refreshLayersPanel();
+                pushHistory();
+                break;
+            case 'send-backward':
+                canvas.sendBackwards(active);
+                pinAnchoredLayers();
+                canvas.requestRenderAll();
+                refreshLayersPanel();
+                pushHistory();
+                break;
+            case 'toggle-visibility': {
+                const next = active.visible === false;
+                active.visible = next;
+                canvas.requestRenderAll();
+                refreshLayersPanel();
+                pushHistory();
+                showCtxMenu();
+                break;
+            }
+            case 'toggle-lock': {
+                const locked = !active.locked;
+                active.locked = locked;
+                active.selectable = !locked;
+                active.evented = !locked;
+                if (locked && active === canvas.getActiveObject()) {
+                    canvas.discardActiveObject();
+                    canvas.requestRenderAll();
+                    hideCtxMenu();
+                } else {
+                    canvas.requestRenderAll();
+                    showCtxMenu();
+                }
+                refreshLayersPanel();
+                pushHistory();
+                break;
+            }
+            case 'group': {
+                if (active.type !== 'activeSelection') return;
+                active.toGroup();
+                canvas.requestRenderAll();
+                refreshLayersPanel();
+                pushHistory();
+                showCtxMenu();
+                break;
+            }
+            case 'ungroup': {
+                if (active.type !== 'group') return;
+                active.toActiveSelection();
+                canvas.requestRenderAll();
+                refreshLayersPanel();
+                pushHistory();
+                showCtxMenu();
+                break;
+            }
+        }
+    }
+
+    // Anchored layers (templates + overlays) must stay at the bottom of the
+    // z-order. Re-pin them after any user-initiated reorder.
+    function pinAnchoredLayers() {
+        canvas.getObjects().forEach(o => { if (o.isOverlay) canvas.sendToBack(o); });
+        canvas.getObjects().forEach(o => { if (o.isTemplate || o._isTemplate) canvas.sendToBack(o); });
     }
 
     function bindLayersPanelEvents() {

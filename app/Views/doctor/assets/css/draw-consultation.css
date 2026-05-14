@@ -1056,6 +1056,108 @@ body.draw-modal-open [class*="floating"]:not(.modal):not(.modal *) {
 }
 
 /* ============================================================================
+   Canva-style contextual action menu — floats above whichever shape /
+   text / group is currently selected on the canvas. Lives inside
+   #drawCanvasWrap (position: relative) so its `transform: translate(x,y)`
+   is in canvas-local coords; JS recomputes that on every selection +
+   move event so the menu tracks the object.
+   ============================================================================ */
+.draw-ctx-menu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 90;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.3rem;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18), 0 2px 6px rgba(15, 23, 42, 0.08);
+    pointer-events: auto;
+    user-select: none;
+    /* Smooth follow-the-selection feel */
+    transition: transform 0.06s linear, opacity 0.12s ease;
+}
+.draw-ctx-menu[hidden] {
+    display: none;
+}
+.dark .draw-ctx-menu {
+    background: #0f172a;
+    border-color: #1f2937;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.draw-ctx-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #0f172a;
+    font-size: 0.95rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, transform 0.12s;
+}
+.draw-ctx-btn:hover {
+    background: rgba(14, 165, 233, 0.12);
+    color: #0ea5e9;
+    transform: translateY(-1px);
+}
+.draw-ctx-btn-danger {
+    color: #ef4444;
+}
+.draw-ctx-btn-danger:hover {
+    background: rgba(239, 68, 68, 0.14);
+    color: #b91c1c;
+}
+.dark .draw-ctx-btn {
+    color: #e2e8f0;
+}
+.dark .draw-ctx-btn:hover {
+    background: rgba(14, 165, 233, 0.22);
+}
+.dark .draw-ctx-btn-danger {
+    color: #f87171;
+}
+.dark .draw-ctx-btn-danger:hover {
+    background: rgba(239, 68, 68, 0.22);
+}
+
+.draw-ctx-sep {
+    width: 1px;
+    height: 22px;
+    background: #e2e8f0;
+    margin: 0 0.15rem;
+    flex-shrink: 0;
+}
+.dark .draw-ctx-sep {
+    background: #1f2937;
+}
+
+/* Mobile: shrink buttons a bit so the whole row fits on a 360px canvas */
+@media (max-width: 640px) {
+    .draw-ctx-menu {
+        padding: 0.2rem;
+        gap: 0.08rem;
+    }
+    .draw-ctx-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 0.85rem;
+    }
+    .draw-ctx-sep {
+        height: 18px;
+    }
+}
+
+/* ============================================================================
    Attachment cards — responsive button labels.
 
    - Header buttons (Upload / Draw / Capture) collapse to icon-only on
