@@ -1066,15 +1066,25 @@ body.draw-modal-open [class*="floating"]:not(.modal):not(.modal *) {
 
 /* ============================================================================
    Attachment cards — responsive button labels.
-   On tablet/mobile widths the Upload/Draw/Capture header buttons and the
-   per-card View/Download/Delete buttons must collapse to icon-only so they
-   stop overflowing the card. The text nodes sit right after the <i> icon
-   without a wrapper, so we shrink the BUTTON's font-size to 0 (collapsing
-   the text node) and restore the icon glyph size on the <i> child.
-   The icon's `me-1` margin is harmless because no visible text follows it.
+
+   - Header buttons (Upload / Draw / Capture) collapse to icon-only on
+     tablet+mobile viewports (the header is a single row, viewport-based).
+
+   - Per-card buttons (View / Download / Delete) AND filename use a
+     CONTAINER QUERY on the card itself, so they collapse / wrap whenever
+     the CARD is narrow. This is the right semantic: col-md-6 cards on a
+     1280px desktop are ~580px (fits text), but the same cards on a 992px
+     tablet are ~440px and overflow with text+icon labels. The previous
+     viewport-based @media couldn't see that.
+
+   The text nodes sit right after the <i> icon without a wrapper, so we
+   shrink the BUTTON's font-size to 0 (collapsing the text node) and
+   restore the icon glyph size on the <i> child. The icon's `me-1` margin
+   is harmless because no visible text follows it.
    ============================================================================ */
+
+/* Header: Upload / Draw / Capture — viewport-based */
 @media (max-width: 991.98px) {
-    /* Header: Upload / Draw / Capture */
     .card-header .btn-group[aria-label="Add attachment"] > .btn {
         font-size: 0;
         padding-left: 0.55rem;
@@ -1085,23 +1095,26 @@ body.draw-modal-open [class*="floating"]:not(.modal):not(.modal *) {
         font-size: 0.95rem;
         margin: 0 !important;
     }
+}
 
-    /* Per-card actions: View / Download / Delete */
+/* Per-card actions: View / Download / Delete + filename wrap — container-based. */
+.attachment-card {
+    container-type: inline-size;
+    container-name: attachcard;
+}
+
+@container attachcard (max-width: 380px) {
     .attachment-card .btn-group .btn {
         font-size: 0 !important;
         padding-left: 0.4rem !important;
         padding-right: 0.4rem !important;
     }
     .attachment-card .btn-group .btn i {
-        font-size: 0.95rem;
+        font-size: 1rem !important;
         margin: 0 !important;
     }
-
-    /* Filename can wrap to 2 lines; long single-token filenames (lots of
-       underscores) get broken character-by-character since underscore is a
-       word character and would otherwise stay as one unbreakable token,
-       overflowing the card. */
-    .attachment-filename,
+    /* Filename: wrap to 2 lines max, break inside long tokens. */
+    .attachment-card .attachment-filename,
     .attachment-card h6.attachment-filename {
         white-space: normal !important;
         word-break: break-all !important;
@@ -1114,18 +1127,46 @@ body.draw-modal-open [class*="floating"]:not(.modal):not(.modal *) {
         max-height: 2.6em !important;
         font-size: 0.78rem !important;
         line-height: 1.25 !important;
-        text-overflow: ellipsis;
     }
 }
 
-/* Even tighter on real phones — pad the buttons less so 3 buttons fit
-   comfortably on a 360px-wide card. */
-@media (max-width: 640px) {
+/* Tighter padding when the card is really small (col-12 on phones). */
+@container attachcard (max-width: 280px) {
     .attachment-card .btn-group .btn {
         padding-left: 0.3rem !important;
         padding-right: 0.3rem !important;
     }
     .attachment-card .btn-group .btn i {
-        font-size: 0.9rem;
+        font-size: 0.9rem !important;
+    }
+}
+
+/* Browsers without container-query support fall through to a viewport-
+   based fallback — covers Chrome <105 / Safari <16. */
+@supports not (container-type: inline-size) {
+    @media (max-width: 1199.98px) {
+        .attachment-card .btn-group .btn {
+            font-size: 0 !important;
+            padding-left: 0.4rem !important;
+            padding-right: 0.4rem !important;
+        }
+        .attachment-card .btn-group .btn i {
+            font-size: 1rem !important;
+            margin: 0 !important;
+        }
+        .attachment-card .attachment-filename,
+        .attachment-card h6.attachment-filename {
+            white-space: normal !important;
+            word-break: break-all !important;
+            overflow-wrap: anywhere !important;
+            display: -webkit-box !important;
+            -webkit-line-clamp: 2 !important;
+            line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
+            overflow: hidden !important;
+            max-height: 2.6em !important;
+            font-size: 0.78rem !important;
+            line-height: 1.25 !important;
+        }
     }
 }

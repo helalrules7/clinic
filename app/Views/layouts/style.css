@@ -10756,9 +10756,24 @@ body.sidebar-mini .sidebar .user-details,
 body.sidebar-mini .sidebar .sidebar-footer,
 body.sidebar-mini .sidebar .nav-submenu,
 body.sidebar-mini .sidebar .nav-link-toggle .arrow,
+body.sidebar-mini .sidebar .nav-link-toggle .submenu-arrow,
+body.sidebar-mini .sidebar .submenu-arrow,
 body.sidebar-mini .sidebar .nav-section-header,
 body.sidebar-mini .sidebar .badge {
     display: none !important;
+}
+
+/* When the user hovers a mini sidebar (peek-expand on desktop) OR clicks
+   the toggle to open it, the chevron should re-appear — these rules are
+   scoped to NOT match the .sidebar-mini state, so the natural rule above
+   keeps it hidden while collapsed, and removing .sidebar-mini lets the
+   chevron show again. The hover peek is handled separately below by the
+   same mechanism since hover expands sidebar width but doesn't remove the
+   .sidebar-mini class; for that path we re-show the chevron explicitly. */
+@media (hover: hover) and (pointer: fine) {
+    body.sidebar-mini .sidebar:hover .submenu-arrow {
+        display: inline-block !important;
+    }
 }
 
 body.sidebar-mini .sidebar .sidebar-header {
