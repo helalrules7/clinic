@@ -1615,6 +1615,58 @@ class SecretaryController
         }
     }
 
+    /* True when the clinic's financial day for $date is already closed
+       (daily_closures). Used to block secretaries from editing money on a
+       settled day. clinic-scoped because closures are per-clinic. */
+    private function isDateClosed($date, ?int $clinicId = null)
+    {
+        if ($clinicId === null) {
+            $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM daily_closures WHERE date = ?");
+            $stmt->execute([$date]);
+        } else {
+            $stmt = $this->pdo->prepare(
+                "SELECT COUNT(*) FROM daily_closures WHERE date = ? AND clinic_id = ?"
+            );
+            $stmt->execute([$date, $clinicId]);
+        }
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+    /* Append-only audit trail for money-affecting changes. Never throws —
+       a logging failure must not roll back the real operation. */
+    private function writeAuditLog($entityTable, $entityId, $action, $before, $after, $reason = null)
+    {
+        try {
+            $u = $this->auth->user();
+            $stmt = $this->pdo->prepare("
+                INSERT INTO audit_logs
+                    (user_id, entity_table, entity_id, action, before_json,
+                     after_json, reason, ip_address, user_agent, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            ");
+            $stmt->execute([
+                $u['id'] ?? 0,
+                $entityTable,
+                $entityId,
+                $action,
+                $before !== null ? json_encode($before, JSON_UNESCAPED_UNICODE) : null,
+                $after  !== null ? json_encode($after,  JSON_UNESCAPED_UNICODE) : null,
+                $reason,
+                $_SERVER['REMOTE_ADDR'] ?? null,
+                $_SERVER['HTTP_USER_AGENT'] ?? null,
+            ]);
+        } catch (\Throwable $e) { /* swallow — audit must not break the op */ }
+    }
+
+    /* Count of payment rows on an appointment — drives the "money locked"
+       rule (visit_type / patient become immutable once any payment exists). */
+    private function bookingHasPayments($appointmentId)
+    {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM payments WHERE appointment_id = ?");
+        $stmt->execute([$appointmentId]);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
     public function getBookingDetails($id)
     {
         try {
@@ -1663,6 +1715,17 @@ class SecretaryController
                     $appointment['visit_cost'] = 150;
             }
 
+            // Flags the edit modal uses to lock money-bearing fields:
+            //  - money_locked: a payment exists → visit_type & patient frozen
+            //  - day_closed  : the booking's financial day is closed →
+            //                  secretary can't edit it at all
+            $appointment['has_payments'] = $this->bookingHasPayments($id);
+            $appointment['money_locked'] = $appointment['has_payments'];
+            $appointment['day_closed']   = $this->isDateClosed(
+                $appointment['date'] ?? null,
+                !empty($appointment['clinic_id']) ? (int)$appointment['clinic_id'] : null
+            );
+
             return $this->jsonResponse([
                 'ok' => true,
                 'booking' => $appointment
@@ -1706,6 +1769,44 @@ class SecretaryController
                 if (empty($input[$field])) {
                     return $this->jsonResponse(['error' => "Field {$field} is required"], 400);
                 }
+            }
+
+            // ---- FULL LOCK on money-bearing fields -------------------------
+            // Once any payment exists, visit_type (drives the price) and
+            // patient_id (drives the patient ledger) are immutable. The
+            // correct fix for a wrong choice is: void the payment from the
+            // payments screen → the field unlocks → re-enter it. clinic_id
+            // is never in this UPDATE so it can't drift here.
+            $hasPayments = $this->bookingHasPayments($id);
+            if ($hasPayments) {
+                if ((string)$input['visit_type'] !== (string)($existing['visit_type'] ?? '')) {
+                    return $this->jsonResponse([
+                        'error' => 'نوع الزيارة مقفول لوجود دفعة على الحجز. لتصحيحه: ألغِ/استرجع الدفعة من شاشة المدفوعات أولاً ثم عدّل النوع.'
+                    ], 422);
+                }
+                if ((int)$input['patient_id'] !== (int)($existing['patient_id'] ?? 0)) {
+                    return $this->jsonResponse([
+                        'error' => 'لا يمكن تغيير المريض على حجز عليه دفعة (يفسد رصيد المريض). ألغِ الدفعة أولاً.'
+                    ], 422);
+                }
+            }
+
+            // ---- Closed-day guard (secretary is blocked) -------------------
+            // Both the original date and the new date must be on an OPEN
+            // financial day for this clinic. Doctors/admins get an override
+            // in the API edit path; the secretary never does.
+            $apptClinic = !empty($existing['clinic_id']) ? (int)$existing['clinic_id'] : null;
+            $oldDate = $existing['date'] ?? null;
+            $newDate = $input['date'] ?? null;
+            if ($oldDate && $this->isDateClosed($oldDate, $apptClinic)) {
+                return $this->jsonResponse([
+                    'error' => 'اليوم المالى للحجز (' . $oldDate . ') مقفول. لا يمكن للسكرتارية تعديل حجز فى يوم مقفول.'
+                ], 422);
+            }
+            if ($newDate && $newDate !== $oldDate && $this->isDateClosed($newDate, $apptClinic)) {
+                return $this->jsonResponse([
+                    'error' => 'اليوم المطلوب النقل إليه (' . $newDate . ') مقفول مالياً.'
+                ], 422);
             }
 
             // Get visit cost
@@ -1772,11 +1873,29 @@ class SecretaryController
                 }
                 
                 $this->pdo->commit();
+
+                // Audit trail — record before/after of the editable fields
+                // so any later financial discrepancy is traceable.
+                $this->writeAuditLog('appointments', $id, 'UPDATE', [
+                    'patient_id' => $existing['patient_id'] ?? null,
+                    'doctor_id'  => $existing['doctor_id'] ?? null,
+                    'date'       => $existing['date'] ?? null,
+                    'start_time' => $existing['start_time'] ?? null,
+                    'visit_type' => $existing['visit_type'] ?? null,
+                ], [
+                    'patient_id' => $input['patient_id'],
+                    'doctor_id'  => $input['doctor_id'],
+                    'date'       => $input['date'],
+                    'start_time' => $input['start_time'],
+                    'visit_type' => $input['visit_type'],
+                    'additional_payment' => $input['additional_payment'] ?? 0,
+                ], 'Secretary booking edit');
+
                 return $this->jsonResponse([
                     'ok' => true,
                     'message' => 'Booking updated successfully'
                 ]);
-                
+
             } catch (Exception $e) {
                 $this->pdo->rollBack();
                 throw $e;

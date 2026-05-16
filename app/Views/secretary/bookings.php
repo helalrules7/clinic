@@ -3585,6 +3585,55 @@ function populateEditForm(booking) {
     
     // Load available time slots for the selected date and select current time
     loadEditAvailableTimeSlots(booking.date, booking.doctor_id, booking.id, booking.start_time);
+
+    applyEditLockState(booking);
+}
+
+/* Mirror the backend FULL-LOCK rules in the UI so the secretary sees why
+   a field can't change instead of getting a 422 after submitting:
+   - money_locked (a payment exists): visit_type + patient are frozen.
+   - day_closed (booking's financial day is closed): the whole edit is
+     blocked for the secretary. */
+function applyEditLockState(booking) {
+    const visitTypeEl = document.getElementById('editVisitType');
+    const patientSearchEl = document.getElementById('editPatientSearch');
+    const saveBtn = document.getElementById('saveEditBookingBtn');
+    const hintId = 'editLockHint';
+    let hint = document.getElementById(hintId);
+    if (!hint) {
+        hint = document.createElement('div');
+        hint.id = hintId;
+        hint.className = 'alert alert-warning py-2 px-3 mb-3 arabic-text';
+        hint.style.fontSize = '0.85rem';
+        const form = document.getElementById('editBookingForm');
+        if (form) form.prepend(hint);
+    }
+
+    const moneyLocked = !!booking.money_locked;
+    const dayClosed = !!booking.day_closed;
+
+    // Reset to editable first
+    [visitTypeEl, patientSearchEl].forEach(el => { if (el) { el.disabled = false; el.classList.remove('bg-light'); } });
+    if (saveBtn) { saveBtn.disabled = false; }
+    hint.style.display = 'none';
+    hint.innerHTML = '';
+
+    if (dayClosed) {
+        // Hard stop — the secretary cannot touch a closed-day booking.
+        document.querySelectorAll('#editBookingForm input, #editBookingForm select, #editBookingForm textarea')
+            .forEach(el => { el.disabled = true; });
+        if (saveBtn) saveBtn.disabled = true;
+        hint.style.display = 'block';
+        hint.innerHTML = '<i class="bi bi-lock-fill me-1"></i> اليوم المالى لهذا الحجز مقفول — لا يمكن للسكرتارية تعديله. راجع الطبيب أو الأدمن.';
+        return;
+    }
+
+    if (moneyLocked) {
+        if (visitTypeEl) { visitTypeEl.disabled = true; visitTypeEl.classList.add('bg-light'); }
+        if (patientSearchEl) { patientSearchEl.disabled = true; patientSearchEl.classList.add('bg-light'); }
+        hint.style.display = 'block';
+        hint.innerHTML = '<i class="bi bi-shield-lock me-1"></i> هذا الحجز عليه دفعة: <strong>نوع الزيارة</strong> و<strong>المريض</strong> مقفولان. للتصحيح ألغِ/استرجع الدفعة من شاشة المدفوعات أولاً.';
+    }
 }
 
 function updateEditVisitCost() {
