@@ -300,6 +300,15 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Appointment not found'], 404);
             }
 
+            // Flags the doctor calendar edit modal uses to enforce the
+            // FULL-LOCK + closed-day policy in the UI.
+            $appointment['has_payments'] = $this->bookingHasPayments($id);
+            $appointment['money_locked'] = $appointment['has_payments'];
+            $appointment['day_closed']   = $this->isDateClosed(
+                $appointment['date'] ?? null,
+                !empty($appointment['clinic_id']) ? (int)$appointment['clinic_id'] : null
+            );
+
             return $this->jsonResponse([
                 'ok' => true,
                 'data' => $appointment
@@ -3252,6 +3261,258 @@ class ApiController
             $stmt->execute([$date, $clinicId]);
         }
         return $stmt->fetchColumn() > 0;
+    }
+
+    /* Count of payment rows on an appointment → drives the FULL-LOCK rule
+       (visit_type / patient / clinic frozen once any payment exists). */
+    private function bookingHasPayments($appointmentId)
+    {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM payments WHERE appointment_id = ?");
+        $stmt->execute([$appointmentId]);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+    /* Append-only audit trail for money-affecting changes. Never throws —
+       a logging failure must not roll back the real operation. */
+    private function writeAuditLog($entityTable, $entityId, $action, $before, $after, $reason = null)
+    {
+        try {
+            $u = $this->auth->user();
+            $stmt = $this->pdo->prepare("
+                INSERT INTO audit_logs
+                    (user_id, entity_table, entity_id, action, before_json,
+                     after_json, reason, ip_address, user_agent, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            ");
+            $stmt->execute([
+                $u['id'] ?? 0,
+                $entityTable,
+                $entityId,
+                $action,
+                $before !== null ? json_encode($before, JSON_UNESCAPED_UNICODE) : null,
+                $after  !== null ? json_encode($after,  JSON_UNESCAPED_UNICODE) : null,
+                $reason,
+                $_SERVER['REMOTE_ADDR'] ?? null,
+                $_SERVER['HTTP_USER_AGENT'] ?? null,
+            ]);
+        } catch (\Throwable $e) { /* swallow — audit must not break the op */ }
+    }
+
+    private function visitCostFor($visitType)
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT setting_key, setting_value FROM settings
+                WHERE setting_key IN ('new_visit_cost','repeated_visit_cost','consultation_cost')
+            ");
+            $stmt->execute();
+            $s = $stmt->fetchAll(\PDO::FETCH_KEY_PAIR) ?: [];
+        } catch (\Throwable $e) {
+            $s = [];
+        }
+        switch ($visitType) {
+            case 'New':          return (float)($s['new_visit_cost'] ?? 150);
+            case 'FollowUp':     return (float)($s['repeated_visit_cost'] ?? 100);
+            case 'Consultation': return (float)($s['consultation_cost'] ?? 200);
+            case 'Procedure':    return (float)($s['consultation_cost'] ?? 200);
+            default:             return (float)($s['new_visit_cost'] ?? 150);
+        }
+    }
+
+    /* ====================================================================
+       Doctor/Admin booking field edit.  Mirrors the secretary FULL-LOCK
+       rules but, per the agreed policy, doctors + admins MAY edit a
+       booking that sits on a closed financial day (with a mandatory audit
+       trail); secretaries never reach this endpoint.
+       ==================================================================== */
+    public function editAppointmentFields($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+            $user = $this->auth->user();
+            $role = $user['role'] ?? null;
+            if (!in_array($role, ['doctor', 'admin'], true)) {
+                return $this->jsonResponse(['error' => 'Insufficient permissions'], 403);
+            }
+
+            $appt = $this->getAppointmentDetails($id);
+            if (!$appt) {
+                return $this->jsonResponse(['error' => 'Appointment not found'], 404);
+            }
+            if (in_array($appt['status'], ['Completed', 'Cancelled'], true)) {
+                return $this->jsonResponse([
+                    'error' => 'Cannot field-edit a ' . strtolower($appt['status']) . ' appointment'
+                ], 422);
+            }
+
+            $data = json_decode(file_get_contents('php://input'), true) ?: [];
+            foreach (['patient_id','doctor_id','date','start_time','visit_type'] as $f) {
+                if (empty($data[$f])) {
+                    return $this->jsonResponse(['error' => "Field {$f} is required"], 400);
+                }
+            }
+
+            $hasPay = $this->bookingHasPayments($id);
+            if ($hasPay) {
+                if ((string)$data['visit_type'] !== (string)$appt['visit_type']) {
+                    return $this->jsonResponse(['error' => 'Visit type is locked while a payment exists. Use "Correct visit type" or void the payment first.'], 422);
+                }
+                if ((int)$data['patient_id'] !== (int)$appt['patient_id']) {
+                    return $this->jsonResponse(['error' => 'Patient is locked while a payment exists (would corrupt the patient ledger).'], 422);
+                }
+                if (isset($data['clinic_id']) && (int)$data['clinic_id'] !== (int)$appt['clinic_id']) {
+                    return $this->jsonResponse(['error' => 'Clinic is locked while a payment exists (payment rows freeze their clinic).'], 422);
+                }
+            }
+
+            // Closed-day: doctor/admin allowed but a reason is mandatory and
+            // it gets audited. (Secretaries can't get here.)
+            $apptClinic = !empty($appt['clinic_id']) ? (int)$appt['clinic_id'] : null;
+            $oldDate = $appt['date'];
+            $newDate = $data['date'];
+            $touchesClosedDay = $this->isDateClosed($oldDate, $apptClinic)
+                || ($newDate !== $oldDate && $this->isDateClosed($newDate, $apptClinic));
+            if ($touchesClosedDay && empty($data['reason'])) {
+                return $this->jsonResponse([
+                    'error' => 'This booking is on a closed financial day. A reason is required to edit it.',
+                    'requires_reason' => true
+                ], 422);
+            }
+
+            $endTime = $this->calculateEndTime($data['start_time']);
+            $clinicId = $hasPay
+                ? $appt['clinic_id']
+                : (isset($data['clinic_id']) && $data['clinic_id'] !== '' ? (int)$data['clinic_id'] : $appt['clinic_id']);
+
+            $this->pdo->beginTransaction();
+            try {
+                $stmt = $this->pdo->prepare("
+                    UPDATE appointments
+                       SET patient_id = ?, doctor_id = ?, clinic_id = ?, date = ?,
+                           start_time = ?, end_time = ?, visit_type = ?,
+                           notes = ?, updated_at = NOW()
+                     WHERE id = ?
+                ");
+                $stmt->execute([
+                    $data['patient_id'], $data['doctor_id'], $clinicId,
+                    $data['date'], $data['start_time'], $endTime,
+                    $data['visit_type'], $data['notes'] ?? '', $id
+                ]);
+                $this->pdo->commit();
+            } catch (\Throwable $e) {
+                $this->pdo->rollBack();
+                throw $e;
+            }
+
+            $this->writeAuditLog('appointments', $id, 'UPDATE', [
+                'patient_id' => $appt['patient_id'], 'doctor_id' => $appt['doctor_id'],
+                'clinic_id' => $appt['clinic_id'], 'date' => $appt['date'],
+                'start_time' => $appt['start_time'], 'visit_type' => $appt['visit_type'],
+            ], [
+                'patient_id' => $data['patient_id'], 'doctor_id' => $data['doctor_id'],
+                'clinic_id' => $clinicId, 'date' => $data['date'],
+                'start_time' => $data['start_time'], 'visit_type' => $data['visit_type'],
+            ], $touchesClosedDay ? ('Closed-day edit: ' . ($data['reason'] ?? '')) : 'Doctor/Admin booking edit');
+
+            return $this->jsonResponse(['ok' => true, 'message' => 'Appointment updated']);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => 'Error updating appointment: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /* Dedicated, audited correction for a wrong visit_type AFTER a payment
+       exists. Doctor/admin only. Recomputes the price from settings and,
+       when the patient has paid MORE than the new visit cost, books an
+       explicit negative "refund_adjustment" payment row for the excess
+       (correct clinic_id + patient_id). Underpayment is left as a normal
+       outstanding balance (no silent auto-charge). A reason is mandatory
+       and the whole thing is written to audit_logs. */
+    public function correctVisitType($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+            $role = $this->auth->user()['role'] ?? null;
+            if (!in_array($role, ['doctor', 'admin'], true)) {
+                return $this->jsonResponse(['error' => 'Only a doctor or admin may correct the visit type'], 403);
+            }
+
+            $appt = $this->getAppointmentDetails($id);
+            if (!$appt) {
+                return $this->jsonResponse(['error' => 'Appointment not found'], 404);
+            }
+
+            $data = json_decode(file_get_contents('php://input'), true) ?: [];
+            $newType = $data['visit_type'] ?? null;
+            $reason  = trim($data['reason'] ?? '');
+            $valid = ['New','FollowUp','Consultation','Procedure'];
+            if (!in_array($newType, $valid, true)) {
+                return $this->jsonResponse(['error' => 'Invalid visit type'], 400);
+            }
+            if ($reason === '') {
+                return $this->jsonResponse(['error' => 'A reason is required for a visit-type correction', 'requires_reason' => true], 422);
+            }
+            if ((string)$newType === (string)$appt['visit_type']) {
+                return $this->jsonResponse(['error' => 'Visit type is already ' . $newType], 400);
+            }
+
+            $oldCost = $this->visitCostFor($appt['visit_type']);
+            $newCost = $this->visitCostFor($newType);
+
+            $paidStmt = $this->pdo->prepare("
+                SELECT COALESCE(SUM(CASE WHEN is_exempt = 1 THEN 0
+                            ELSE (amount - COALESCE(discount_amount,0)) END),0)
+                  FROM payments WHERE appointment_id = ?");
+            $paidStmt->execute([$id]);
+            $netPaid = (float)$paidStmt->fetchColumn();
+
+            $clinicId = !empty($appt['clinic_id']) ? (int)$appt['clinic_id'] : null;
+            $refund = 0.0;
+            // Patient paid more than the corrected price owes → refund the excess.
+            if ($netPaid > $newCost) {
+                $refund = round($netPaid - $newCost, 2);
+            }
+
+            $this->pdo->beginTransaction();
+            try {
+                $this->pdo->prepare("UPDATE appointments SET visit_type = ?, updated_at = NOW() WHERE id = ?")
+                    ->execute([$newType, $id]);
+
+                if ($refund > 0) {
+                    $this->pdo->prepare("
+                        INSERT INTO payments
+                            (appointment_id, patient_id, clinic_id, amount, method,
+                             type, received_by, created_at, discount_reason)
+                        VALUES (?, ?, ?, ?, 'Cash', 'refund_adjustment', ?, NOW(), ?)
+                    ")->execute([
+                        $id, $appt['patient_id'], $clinicId, -1 * $refund,
+                        $this->auth->user()['id'] ?? 0,
+                        'Visit-type correction: ' . $reason
+                    ]);
+                }
+                $this->pdo->commit();
+            } catch (\Throwable $e) {
+                $this->pdo->rollBack();
+                throw $e;
+            }
+
+            $this->writeAuditLog('appointments', $id, 'UPDATE',
+                ['visit_type' => $appt['visit_type'], 'old_cost' => $oldCost, 'net_paid' => $netPaid],
+                ['visit_type' => $newType, 'new_cost' => $newCost, 'refund_booked' => $refund],
+                'Visit-type correction: ' . $reason);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'message' => 'Visit type corrected' . ($refund > 0 ? (' — refund of ' . $refund . ' booked') : ''),
+                'refund' => $refund,
+                'new_cost' => $newCost
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => 'Error correcting visit type: ' . $e->getMessage()], 500);
+        }
     }
 
     private function createDailyClosure($date, $userId, ?int $clinicId = null)

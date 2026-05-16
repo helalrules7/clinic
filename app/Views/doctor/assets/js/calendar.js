@@ -1123,11 +1123,13 @@ function showActionButtons(status) {
   switch (status) {
     case "Booked":
       document.getElementById("startVisitBtn").style.display = "inline-block";
+      document.getElementById("editApptBtn").style.display = "inline-block";
       document.getElementById("rescheduleBtn").style.display = "inline-block";
       document.getElementById("cancelBtn").style.display = "inline-block";
       break;
     case "CheckedIn":
       document.getElementById("startVisitBtn").style.display = "inline-block";
+      document.getElementById("editApptBtn").style.display = "inline-block";
       document.getElementById("rescheduleBtn").style.display = "inline-block";
       break;
     case "InProgress":
@@ -1136,6 +1138,143 @@ function showActionButtons(status) {
       break;
   }
 }
+
+/* ----------------------------------------------------------------------
+   Doctor/Admin booking edit modal. Mirrors the server FULL-LOCK policy:
+   when money_locked the visit-type stays editable only via the audited
+   "Correct visit type" action; when day_closed a reason is required.
+   ---------------------------------------------------------------------- */
+(function wireEditApptModal() {
+  document.addEventListener("DOMContentLoaded", function () {
+    const editBtn = document.getElementById("editApptBtn");
+    if (!editBtn) return;
+
+    function openEditModal() {
+      const a = selectedAppointment;
+      if (!a) return;
+      document.getElementById("editApptId").value = a.id;
+      const clinicSel = document.getElementById("editApptClinic");
+      if (clinicSel && a.clinic_id) clinicSel.value = String(a.clinic_id);
+      document.getElementById("editApptDate").value = a.date || "";
+      document.getElementById("editApptTime").value = (a.start_time || "").slice(0, 5);
+      document.getElementById("editApptVisitType").value = a.visit_type || "New";
+      document.getElementById("editApptNotes").value = a.notes || "";
+      document.getElementById("cvtNewType").value = a.visit_type || "New";
+      document.getElementById("cvtReason").value = "";
+      document.getElementById("editApptReason").value = "";
+
+      const hint = document.getElementById("editApptLockHint");
+      const vtSel = document.getElementById("editApptVisitType");
+      const vtNote = document.getElementById("editApptVisitTypeLockNote");
+      const reasonWrap = document.getElementById("editApptReasonWrap");
+      const cvtBlock = document.getElementById("correctVtBlock");
+
+      hint.style.display = "none";
+      vtSel.disabled = false;
+      vtNote.style.display = "none";
+      reasonWrap.style.display = "none";
+      cvtBlock.style.display = "none";
+
+      if (a.money_locked) {
+        // visit type + clinic are frozen; correction goes through the
+        // audited path.
+        vtSel.disabled = true;
+        vtNote.style.display = "block";
+        document.getElementById("editApptClinic").disabled = true;
+        cvtBlock.style.display = "block";
+        hint.style.display = "block";
+        hint.innerHTML =
+          '<i class="bi bi-shield-lock me-1"></i> A payment exists — visit type & clinic are locked. Use “Correct visit type” for a price-safe, audited change.';
+      } else {
+        document.getElementById("editApptClinic").disabled = false;
+      }
+
+      if (a.day_closed) {
+        reasonWrap.style.display = "block";
+        hint.style.display = "block";
+        hint.innerHTML +=
+          '<div class="mt-1"><i class="bi bi-calendar-x me-1"></i> This booking is on a CLOSED financial day — a reason is mandatory (logged).</div>';
+      }
+
+      const m = new bootstrap.Modal(document.getElementById("editApptModal"));
+      m.show();
+    }
+
+    editBtn.addEventListener("click", openEditModal);
+
+    document.getElementById("editApptSaveBtn").addEventListener("click", function () {
+      const id = document.getElementById("editApptId").value;
+      const a = selectedAppointment || {};
+      const body = {
+        patient_id: a.patient_id,
+        doctor_id: a.doctor_id,
+        clinic_id: document.getElementById("editApptClinic").value,
+        date: document.getElementById("editApptDate").value,
+        start_time: document.getElementById("editApptTime").value,
+        visit_type: document.getElementById("editApptVisitType").value,
+        notes: document.getElementById("editApptNotes").value,
+        reason: document.getElementById("editApptReason").value,
+      };
+      const btn = this;
+      btn.disabled = true;
+      fetch(`/api/appointments/${id}/edit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
+        body: JSON.stringify(body),
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          btn.disabled = false;
+          if (d.ok) {
+            bootstrap.Modal.getInstance(document.getElementById("editApptModal")).hide();
+            bootstrap.Modal.getInstance(document.getElementById("appointmentModal"))?.hide();
+            if (typeof loadCalendar === "function") loadCalendar();
+            else location.reload();
+          } else {
+            alert(d.error || "Failed to update appointment");
+          }
+        })
+        .catch(() => {
+          btn.disabled = false;
+          alert("Network error while updating the appointment");
+        });
+    });
+
+    document.getElementById("cvtApplyBtn").addEventListener("click", function () {
+      const id = document.getElementById("editApptId").value;
+      const newType = document.getElementById("cvtNewType").value;
+      const reason = document.getElementById("cvtReason").value.trim();
+      if (!reason) {
+        alert("A reason is required to correct the visit type.");
+        return;
+      }
+      const btn = this;
+      btn.disabled = true;
+      fetch(`/api/appointments/${id}/correct-visit-type`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
+        body: JSON.stringify({ visit_type: newType, reason: reason }),
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          btn.disabled = false;
+          if (d.ok) {
+            alert(d.message || "Visit type corrected");
+            bootstrap.Modal.getInstance(document.getElementById("editApptModal")).hide();
+            bootstrap.Modal.getInstance(document.getElementById("appointmentModal"))?.hide();
+            if (typeof loadCalendar === "function") loadCalendar();
+            else location.reload();
+          } else {
+            alert(d.error || "Failed to correct visit type");
+          }
+        })
+        .catch(() => {
+          btn.disabled = false;
+          alert("Network error while correcting the visit type");
+        });
+    });
+  });
+})();
 
 // Get auto-refresh state from localStorage (default: true/ON)
 function getAutoRefreshState() {

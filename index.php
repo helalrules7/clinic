@@ -291,6 +291,8 @@ try {
     $router->delete('/api/appointments/{id}', 'ApiController@deleteAppointment');
     $router->post('/api/appointments/{id}/reschedule', 'ApiController@reschedule');
     $router->post('/api/appointments/{id}/reschedule-followup', 'ApiController@rescheduleFollowup');
+    $router->post('/api/appointments/{id}/edit', 'ApiController@editAppointmentFields');
+    $router->post('/api/appointments/{id}/correct-visit-type', 'ApiController@correctVisitType');
     $router->post('/api/payments', 'ApiController@createPayment');
     $router->post('/api/daily-balance', 'ApiController@createDailyBalance');
     $router->post('/api/daily-closure', 'ApiController@createDailyClosureApi');

@@ -156,6 +156,10 @@
                     <i class="bi bi-check-circle me-2"></i>
                     Complete
                 </button>
+                <button type="button" class="btn btn-info" id="editApptBtn" style="display: none;">
+                    <i class="bi bi-pencil-square me-2"></i>
+                    Edit
+                </button>
                 <button type="button" class="btn btn-warning" id="rescheduleBtn" style="display: none;">
                     <i class="bi bi-calendar-event me-2"></i>
                     Reschedule
@@ -167,6 +171,92 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- Edit Appointment Modal (doctor/admin) -->
+<div class="modal fade" id="editApptModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Edit Appointment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editApptId">
+        <div id="editApptLockHint" class="alert alert-warning py-2 px-3 mb-3" style="display:none;font-size:0.85rem;"></div>
+
+        <div class="mb-3">
+          <label class="form-label">Clinic</label>
+          <select class="form-select" id="editApptClinic">
+            <?php foreach ($__calClinics as $__c): ?>
+              <option value="<?= (int)$__c['id'] ?>"><?= htmlspecialchars($__c['name_ar'] ?: $__c['name_en']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="row">
+          <div class="col-6 mb-3">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" id="editApptDate">
+          </div>
+          <div class="col-6 mb-3">
+            <label class="form-label">Time</label>
+            <input type="time" class="form-control" id="editApptTime">
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Visit Type</label>
+          <select class="form-select" id="editApptVisitType">
+            <option value="New">New</option>
+            <option value="FollowUp">FollowUp</option>
+            <option value="Consultation">Consultation</option>
+          </select>
+          <div class="form-text" id="editApptVisitTypeLockNote" style="display:none;color:#b45309;">
+            Locked — a payment exists. Use the “Correct visit type” section below.
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Notes</label>
+          <textarea class="form-control" id="editApptNotes" rows="2"></textarea>
+        </div>
+        <div class="mb-2" id="editApptReasonWrap" style="display:none;">
+          <label class="form-label text-danger">Reason (closed financial day)</label>
+          <input type="text" class="form-control" id="editApptReason" placeholder="Why is this closed-day booking being edited?">
+        </div>
+
+        <hr>
+        <details id="correctVtBlock">
+          <summary class="mb-2" style="cursor:pointer;font-weight:600;">
+            <i class="bi bi-arrow-repeat me-1"></i> Correct visit type (audited)
+          </summary>
+          <div class="ps-2">
+            <p class="small text-muted mb-2">
+              Use this when the visit type was picked wrong and a payment already exists.
+              Any over-payment is auto-refunded; a reason is mandatory and the change is logged.
+            </p>
+            <div class="row g-2">
+              <div class="col-6">
+                <select class="form-select form-select-sm" id="cvtNewType">
+                  <option value="New">New</option>
+                  <option value="FollowUp">FollowUp</option>
+                  <option value="Consultation">Consultation</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <input type="text" class="form-control form-control-sm" id="cvtReason" placeholder="Reason (required)">
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-warning mt-2" id="cvtApplyBtn">
+              Apply correction
+            </button>
+          </div>
+        </details>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="editApptSaveBtn">Save changes</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Cancel Appointment Modal -->
