@@ -66,6 +66,41 @@
         box-shadow: inset 0 0 40px rgba(0,0,0,.35);
     }
 
+    /* animated version label (slide 1) */
+    .wn-ver {
+        position:absolute; inset:0;
+        display:flex; flex-direction:column;
+        align-items:center; justify-content:center; gap:6px;
+        background:
+          radial-gradient(circle at 50% 45%, rgba(99,102,241,.30), transparent 60%);
+    }
+    .wn-ver-label {
+        font-size:.8rem; font-weight:700; letter-spacing:.5em;
+        text-transform:uppercase; color:#94a3b8;
+        opacity:0; transform:translateY(8px);
+        animation: wnVerLabel .8s ease-out .2s forwards;
+    }
+    .wn-ver-num {
+        font-size:3.4rem; font-weight:900; line-height:1;
+        background:linear-gradient(135deg,#818cf8 0%,#a78bfa 45%,#38bdf8 100%);
+        -webkit-background-clip:text; background-clip:text;
+        -webkit-text-fill-color:transparent; color:transparent;
+        filter:drop-shadow(0 4px 18px rgba(99,102,241,.45));
+        transform:scale(.6); opacity:0;
+        animation: wnVerNum .7s cubic-bezier(.34,1.56,.64,1) .35s forwards,
+                   wnVerGlow 2.8s ease-in-out 1.1s infinite;
+    }
+    @keyframes wnVerLabel {
+        to { opacity:1; transform:translateY(0); }
+    }
+    @keyframes wnVerNum {
+        to { opacity:1; transform:scale(1); }
+    }
+    @keyframes wnVerGlow {
+        0%,100% { filter:drop-shadow(0 4px 14px rgba(99,102,241,.35)); }
+        50%     { filter:drop-shadow(0 6px 26px rgba(56,189,248,.65)); }
+    }
+
     /* clinic badges */
     .wn-badge {
         position:absolute; padding:.4rem .8rem; border-radius:8px;
@@ -223,10 +258,12 @@
 
             <!-- 1 — Welcome -->
             <div class="wn-slide">
-              <span class="wn-kicker">Release 9.0.0</span>
+              <span class="wn-kicker">Release Highlights</span>
               <div class="wn-stage">
-                <div class="wn-badge r">Riyadh</div>
-                <div class="wn-badge k">Kafr El-Sheikh</div>
+                <div class="wn-ver">
+                  <span class="wn-ver-label">version</span>
+                  <span class="wn-ver-num">9.0.0</span>
+                </div>
               </div>
               <h3>A big update is here</h3>
               <p>Multi-clinic support, a full drawing studio, smarter patient
@@ -351,12 +388,40 @@
 
 <script>
 (function () {
-    // Bump this key whenever a future release wants the wizard to reappear
-    // once for everyone. Changed for the v9.0.0 wizard redesign.
-    const STORAGE_KEY = 'whatsNew_v9_0_0_wizard_dismissed';
+    // Display policy (per latest request):
+    //   • NOT a one-time popup any more.
+    //   • Shows once per login session, on every login, for a 2-day
+    //     window that starts the first time it is ever seen.
+    //   • "Don't show again" opts out permanently.
+    // Bump VERSION to resurface the whole wizard in a future release
+    // (it resets the first-seen timestamp + opt-out for the new value).
+    const VERSION       = 'v9_0_0';
+    const OPT_OUT_KEY   = 'whatsNew_' + VERSION + '_optOut';     // permanent
+    const FIRST_SEEN_KEY= 'whatsNew_' + VERSION + '_firstSeen';  // ms epoch
+    const SESSION_KEY   = 'whatsNew_' + VERSION + '_shownSession';
+    const WINDOW_MS     = 2 * 24 * 60 * 60 * 1000;               // 2 days
+
+    function shouldShow() {
+        try {
+            if (localStorage.getItem(OPT_OUT_KEY) === '1') return false;
+            // Once per browser session ≈ once per login.
+            if (sessionStorage.getItem(SESSION_KEY) === '1') return false;
+            const now = Date.now();
+            let first = parseInt(localStorage.getItem(FIRST_SEEN_KEY) || '0', 10);
+            if (!first) {
+                first = now;
+                localStorage.setItem(FIRST_SEEN_KEY, String(first));
+            }
+            // Stop automatically 2 days after it was first seen.
+            if (now - first > WINDOW_MS) return false;
+            return true;
+        } catch (e) {
+            return false; // storage blocked → stay silent
+        }
+    }
 
     function init() {
-        if (localStorage.getItem(STORAGE_KEY) === '1') return;
+        if (!shouldShow()) return;
         const el = document.getElementById('whatsNewV9Modal');
         if (!el || typeof bootstrap === 'undefined') return;
 
@@ -400,18 +465,21 @@
 
         const modal = new bootstrap.Modal(el, { backdrop: 'static', keyboard: true });
 
-        function dismiss() {
-            try { localStorage.setItem(STORAGE_KEY, '1'); } catch (e) {}
+        // "Don't show again" = permanent opt-out. Plain "Close" / X /
+        // backdrop only ends THIS session's showing — it returns on the
+        // next login until the 2-day window lapses.
+        el.querySelector('#wnDontShow').addEventListener('click', function () {
+            try { localStorage.setItem(OPT_OUT_KEY, '1'); } catch (e) {}
             modal.hide();
-        }
-        el.querySelector('#wnDontShow').addEventListener('click', dismiss);
-        el.querySelector('#wnClose').addEventListener('click', dismiss);
-        // Any close (X / backdrop-esc) also counts as "seen once".
-        el.addEventListener('hidden.bs.modal', () => {
-            try { localStorage.setItem(STORAGE_KEY, '1'); } catch (e) {}
-        }, { once: true });
+        });
+        el.querySelector('#wnClose').addEventListener('click', function () {
+            modal.hide();
+        });
 
         render();
+        // Mark shown for this session so it doesn't re-pop on every page
+        // navigation within the same login.
+        try { sessionStorage.setItem(SESSION_KEY, '1'); } catch (e) {}
         // Let the page settle so we don't stack on toasts/session warnings.
         setTimeout(() => { try { modal.show(); } catch (e) {} }, 800);
     }

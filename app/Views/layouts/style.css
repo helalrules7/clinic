@@ -4529,6 +4529,21 @@
             margin-top: 0px; /* Align with notice bar */
             transition: margin-top 0.3s ease;
         }
+
+        /* Title sits immediately after the sidebar-toggle (left-aligned),
+           not centred. The `space-between` on .top-bar otherwise pushes the
+           page-title into the middle; an auto right-margin makes it hug the
+           toggle and shoves .top-actions to the far right instead. */
+        .top-bar > .page-title {
+            margin-right: auto;
+            margin-left: 1rem;
+            text-align: left;
+        }
+        [dir="rtl"] .top-bar > .page-title {
+            margin-right: 1rem;
+            margin-left: auto;
+            text-align: right;
+        }
         
         .top-bar.notice-bar-hidden > .top-actions,
         .top-bar.notice-bar-hidden > .sidebar-toggle,
