@@ -735,12 +735,12 @@ window.CALENDAR_CONFIG = {
     });
 </script>
 <style>
-    /*.modal-backdrop.show{
+    .modal-backdrop.show{
         display: none !important;
     }
     body > div.modal-backdrop.fade.show{
         display: none !important;
-    }*/
+    }
     .dark .modal-content{
     background: rgba(11, 18, 32, 0.8) !important;
     }

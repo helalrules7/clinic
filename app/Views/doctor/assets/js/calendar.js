@@ -673,6 +673,15 @@ function renderAppointmentSlot(appointment) {
                        data-bs-title="View Patient Profile">
                         <i class="bi bi-person-circle"></i>
                     </a>
+                    <button class="btn btn-sm btn-outline-primary edit-appointment-btn"
+                            onclick="event.stopPropagation(); openEditAppointmentFromCard(${
+                              appointment.id
+                            })"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            data-bs-title="Edit this appointment">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
                     <button class="btn btn-sm btn-outline-danger delete-appointment-btn"
                             onclick="event.stopPropagation(); deleteAppointment(${
                               appointment.id
@@ -991,6 +1000,27 @@ function initializeTooltips() {
       trigger: "hover focus",
       delay: { show: 300, hide: 100 },
       container: "body",
+      // The booking tooltip is placed "right"; when the sidebar is in
+      // mini/collapsed mode the content (and the card) is wider, so a
+      // right-placed tooltip ran off the viewport. Let Popper flip it to
+      // the left/top/bottom and clamp it to the viewport so it can never
+      // be clipped off-screen regardless of sidebar state.
+      popperConfig: function (defaultConfig) {
+        return {
+          ...defaultConfig,
+          modifiers: [
+            ...(defaultConfig.modifiers || []),
+            {
+              name: "flip",
+              options: { fallbackPlacements: ["left", "top", "bottom"] },
+            },
+            {
+              name: "preventOverflow",
+              options: { boundary: "viewport", padding: 8 },
+            },
+          ],
+        };
+      },
     });
   });
 
@@ -1201,6 +1231,25 @@ function showActionButtons(status) {
     }
 
     editBtn.addEventListener("click", openEditModal);
+
+    // Card "Edit" button: fetch the appointment (so we get the
+    // has_payments / money_locked / day_closed flags), prime
+    // selectedAppointment, then reuse the same modal opener.
+    window.openEditAppointmentFromCard = function (id) {
+      fetch(`/api/appointments/${id}`, {
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.ok && d.data) {
+            selectedAppointment = d.data;
+            openEditModal();
+          } else {
+            alert(d.error || "Failed to load appointment");
+          }
+        })
+        .catch(() => alert("Network error while loading the appointment"));
+    };
 
     document.getElementById("editApptSaveBtn").addEventListener("click", function () {
       const id = document.getElementById("editApptId").value;
