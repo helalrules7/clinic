@@ -60,6 +60,16 @@
     let fillColor = 'transparent';
     let strokeWidth = 3;
     let fillOpacity = 1;
+
+    // Lines and arrows are pure stroke — a strokeWidth of 0 makes them
+    // invisible. updatePropPanelFromSelection() can drop the global
+    // strokeWidth to 0 when the user last selected a fill-only shape /
+    // text, so always coerce to a visible value for those two tools.
+    const DEFAULT_LINE_STROKE = 3;
+    function effectiveStrokeWidth() {
+        const n = parseFloat(strokeWidth);
+        return (!n || n <= 0) ? DEFAULT_LINE_STROKE : n;
+    }
     let autoSaveTimer = null;
     let shapeDraft = null;
     let shapeStart = null;
@@ -1096,6 +1106,7 @@
         if (!_settingsBound) {
             _settingsBound = true;
             modalEl.querySelector('#drawSettingsClose').addEventListener('click', closeSettingsPanel);
+            enableSettingsPanelDrag();
 
             body.addEventListener('input', (e) => {
                 const el = e.target;
@@ -1153,7 +1164,61 @@
         if (top + ph > wrap.clientHeight - 8) {
             top = Math.max(8, wrap.clientHeight - ph - 8);
         }
-        pop.style.transform = 'translate(' + Math.round(left) + 'px, ' + Math.round(top) + 'px)';
+        left = Math.round(left);
+        top = Math.round(top);
+        // Record the anchor as the drag baseline so a subsequent drag
+        // accumulates from here (see enableSettingsPanelDrag).
+        pop.dataset.dragX = String(left);
+        pop.dataset.dragY = String(top);
+        pop.style.transform = 'translate(' + left + 'px, ' + top + 'px)';
+    }
+
+    function enableSettingsPanelDrag() {
+        const pop = modalEl && modalEl.querySelector('#drawSettingsPop');
+        const header = pop && pop.querySelector('.draw-settings-head');
+        if (!pop || !header) return;
+
+        let dragging = false, sx = 0, sy = 0, bx = 0, by = 0;
+        const xy = (e) => (e.touches && e.touches.length)
+            ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
+            : { x: e.clientX, y: e.clientY };
+
+        function down(e) {
+            if (e.target.closest('.draw-settings-close')) return;
+            const p = xy(e);
+            dragging = true;
+            sx = p.x; sy = p.y;
+            bx = parseFloat(pop.dataset.dragX || '0');
+            by = parseFloat(pop.dataset.dragY || '0');
+            header.style.cursor = 'grabbing';
+            if (e.cancelable) e.preventDefault();
+        }
+        function move(e) {
+            if (!dragging) return;
+            const p = xy(e);
+            const nx = bx + (p.x - sx);
+            const ny = by + (p.y - sy);
+            pop.dataset.dragX = String(nx);
+            pop.dataset.dragY = String(ny);
+            pop.style.transform = 'translate(' + nx + 'px, ' + ny + 'px)';
+            if (e.cancelable) e.preventDefault();
+        }
+        function up() {
+            if (!dragging) return;
+            dragging = false;
+            header.style.cursor = 'grab';
+        }
+
+        header.style.cursor = 'grab';
+        header.style.userSelect = 'none';
+        header.style.touchAction = 'none';
+        header.addEventListener('mousedown', down);
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', up);
+        header.addEventListener('touchstart', down, { passive: false });
+        document.addEventListener('touchmove', move, { passive: false });
+        document.addEventListener('touchend', up);
+        document.addEventListener('touchcancel', up);
     }
 
     function bindLayersPanelEvents() {
@@ -1479,7 +1544,7 @@
         if (currentTool === 'rect') shapeDraft = new fabric.Rect({ ...common, width: 80, height: 60 });
         else if (currentTool === 'circle') shapeDraft = new fabric.Ellipse({ ...common, rx: 40, ry: 30 });
         else if (currentTool === 'triangle') shapeDraft = new fabric.Triangle({ ...common, width: 80, height: 70 });
-        else if (currentTool === 'line') shapeDraft = new fabric.Line([p.x, p.y, p.x + 80, p.y], { stroke: strokeColor, strokeWidth: strokeWidth, selectable: true, objectType: 'shape', medicalType: 'line', eyeSide: currentEyeSide, layerType: 'drawing' });
+        else if (currentTool === 'line') shapeDraft = new fabric.Line([p.x, p.y, p.x + 80, p.y], { stroke: strokeColor, strokeWidth: effectiveStrokeWidth(), selectable: true, objectType: 'shape', medicalType: 'line', eyeSide: currentEyeSide, layerType: 'drawing' });
 
         canvas.add(shapeDraft);
         canvas.requestRenderAll();
@@ -2070,9 +2135,11 @@
 
     function buildArrowConfig(opts) {
         opts = opts || {};
+        const reqW = parseFloat(opts.strokeWidth || strokeWidth);
         return {
             strokeColor: opts.strokeColor || strokeColor,
-            strokeWidth: opts.strokeWidth || strokeWidth,
+            // Never let an arrow be drawn with a 0-width (invisible) shaft.
+            strokeWidth: (!reqW || reqW <= 0) ? DEFAULT_LINE_STROKE : reqW,
             // null = solid; [dash, gap] arrays for dashed / dotted
             dashArray: opts.dashArray || null,
             headEnd:   opts.headEnd !== false,   // default: arrowhead at the end
