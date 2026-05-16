@@ -374,6 +374,8 @@
             <button type="button" class="draw-tool-btn" data-tool="circle" title="Circle (C)"><i class="bi bi-circle"></i></button>
             <button type="button" class="draw-tool-btn" data-tool="triangle" title="Triangle (T)"><i class="bi bi-triangle"></i></button>
             <button type="button" class="draw-tool-btn" data-tool="line" title="Line (L)"><i class="bi bi-slash-lg"></i></button>
+            <button type="button" class="draw-tool-btn" data-tool="text" title="Text Annotation (X)"><i class="bi bi-type"></i></button>
+            <button type="button" class="draw-tool-btn" data-tool="arrow" title="Arrow Annotation (A)"><i class="bi bi-arrow-right"></i></button>
           </div>
 
           <div class="vr"></div>
@@ -394,35 +396,19 @@
           <div class="vr"></div>
 
           <div class="draw-tool-group">
-            <span class="draw-tool-group__label">Template</span>
+            <span class="draw-tool-group__label">Library</span>
             <div class="dropdown">
-              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="templateDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Eye Templates">
-                <i class="bi bi-eye"></i> Templates
+              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="libraryDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Templates &amp; Stamps">
+                <i class="bi bi-collection"></i> Library
               </button>
-              <ul class="dropdown-menu" aria-labelledby="templateDropdown">
+              <ul class="dropdown-menu" aria-labelledby="libraryDropdown" style="max-height: 380px; overflow-y: auto;">
                 <li><h6 class="dropdown-header">Anatomical Templates</h6></li>
                 <li><a class="dropdown-item template-item d-flex align-items-center gap-2" href="#" data-template="corneaIris"><i class="bi bi-circle text-secondary"></i> Cornea / Iris</a></li>
                 <li><a class="dropdown-item template-item d-flex align-items-center gap-2" href="#" data-template="fundus"><i class="bi bi-eye text-secondary"></i> Fundus / Retina</a></li>
                 <li><a class="dropdown-item template-item d-flex align-items-center gap-2" href="#" data-template="opticDiscMacula"><i class="bi bi-record-circle text-warning"></i> Optic Disc + Macula</a></li>
                 <li><a class="dropdown-item template-item d-flex align-items-center gap-2" href="#" data-template="eyelids"><i class="bi bi-sunglasses text-secondary"></i> Eyelids</a></li>
                 <li><hr class="dropdown-divider"></li>
-                <li><h6 class="dropdown-header">Actions</h6></li>
-                <li><a class="dropdown-item text-danger" href="#" id="clearTemplatesBtn"><i class="bi bi-trash"></i> Clear All Templates</a></li>
-              </ul>
-            </div>
-          </div>
-
-          <div class="vr"></div>
-
-          <div class="draw-tool-group">
-            <span class="draw-tool-group__label">Annotate</span>
-            <button type="button" class="draw-tool-btn" data-tool="text" title="Text Annotation (X)"><i class="bi bi-type"></i></button>
-            <button type="button" class="draw-tool-btn" data-tool="arrow" title="Arrow Annotation (A)"><i class="bi bi-arrow-right"></i></button>
-            <div class="dropdown">
-              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="stampDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Medical Stamps">
-                <i class="bi bi-stamp"></i> Stamps
-              </button>
-              <ul class="dropdown-menu" aria-labelledby="stampDropdown" style="max-height: 300px; overflow-y: auto;">
+                <li><h6 class="dropdown-header">Medical Stamps</h6></li>
                 <li><a class="dropdown-item stamp-item d-flex align-items-center gap-2" href="#" data-stamp="cornealOpacity"><i class="bi bi-cloud text-secondary"></i> Corneal Opacity</a></li>
                 <li><a class="dropdown-item stamp-item d-flex align-items-center gap-2" href="#" data-stamp="scar"><i class="bi bi-dash-lg text-secondary"></i> Scar</a></li>
                 <li><a class="dropdown-item stamp-item d-flex align-items-center gap-2" href="#" data-stamp="ulcer"><i class="bi bi-triangle text-danger"></i> Ulcer</a></li>
@@ -435,6 +421,8 @@
                 <li><a class="dropdown-item stamp-item d-flex align-items-center gap-2" href="#" data-stamp="cataractOpacity"><i class="bi bi-cloud text-secondary"></i> Cataract Opacity</a></li>
                 <li><a class="dropdown-item stamp-item d-flex align-items-center gap-2" href="#" data-stamp="sutures"><i class="bi bi-plus text-info"></i> Sutures</a></li>
                 <li><a class="dropdown-item stamp-item d-flex align-items-center gap-2" href="#" data-stamp="inflammation"><i class="bi bi-circle-fill text-danger"></i> Inflammation</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="#" id="clearTemplatesBtn"><i class="bi bi-trash"></i> Clear All Templates</a></li>
               </ul>
             </div>
           </div>
@@ -468,8 +456,9 @@
             <span class="draw-tool-group__label">Edit</span>
             <button type="button" class="draw-tool-btn" id="drawUndoBtn" title="Undo (Ctrl+Z)"><i class="bi bi-arrow-counterclockwise"></i></button>
             <button type="button" class="draw-tool-btn" id="drawRedoBtn" title="Redo (Ctrl+Shift+Z)"><i class="bi bi-arrow-clockwise"></i></button>
-            <!-- Delete / Clear-all live on the per-element contextual menu now,
-                 so they were dropped from here to keep the toolbar one row. -->
+            <!-- Delete-selected lives on the contextual menu; Clear-all wipes
+                 the whole canvas so it stays here. -->
+            <button type="button" class="draw-tool-btn" id="drawClearBtn" title="Clear all"><i class="bi bi-x-circle"></i></button>
             <button type="button" class="draw-tool-btn" id="copyPreviousBtn" title="Copy from previous consultation drawing" style="display:none;"><i class="bi bi-clipboard-plus"></i></button>
           </div>
 
