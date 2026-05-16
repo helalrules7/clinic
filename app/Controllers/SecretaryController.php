@@ -381,11 +381,20 @@ class SecretaryController
 
             if ($denied = $this->assertBookingInScope($appointment)) return $denied;
 
-            // Delete associated payments first
-            $stmt = $this->pdo->prepare("DELETE FROM payments WHERE appointment_id = ?");
-            $stmt->execute([$id]);
+            // FULL LOCK: a booking that carries money must not be silently
+            // wiped — the old code hard-deleted the payment rows with no
+            // refund and no audit, erasing revenue (and corrupting any
+            // closed day's totals). Require the payment to be voided from
+            // the payments screen first.
+            $payCount = $this->pdo->prepare("SELECT COUNT(*) FROM payments WHERE appointment_id = ?");
+            $payCount->execute([$id]);
+            if ((int)$payCount->fetchColumn() > 0) {
+                return $this->jsonResponse([
+                    'error' => 'لا يمكن حذف حجز عليه مدفوعات. من فضلك قم بإلغاء/استرجاع الدفعة من شاشة المدفوعات أولاً.'
+                ], 422);
+            }
 
-            // Delete appointment
+            // No payments → safe to remove the appointment.
             $stmt = $this->pdo->prepare("DELETE FROM appointments WHERE id = ?");
             $stmt->execute([$id]);
 
@@ -1679,6 +1688,16 @@ class SecretaryController
             }
             if ($denied = $this->assertBookingInScope($existing)) return $denied;
 
+            // A Completed or Cancelled booking is financially settled —
+            // field edits (patient/doctor/date/visit_type) here would
+            // desync the recorded payment from the appointment. Block it.
+            $existingStatus = $existing['status'] ?? null;
+            if (in_array($existingStatus, ['Completed', 'Cancelled'], true)) {
+                return $this->jsonResponse([
+                    'error' => 'لا يمكن تعديل حجز ' . ($existingStatus === 'Completed' ? 'مكتمل' : 'ملغى')
+                ], 422);
+            }
+
             $input = json_decode(file_get_contents('php://input'), true);
 
             // Validate required fields
@@ -1736,13 +1755,20 @@ class SecretaryController
                     $id
                 ]);
                 
-                // Add additional payment if provided
+                // Add additional payment if provided. MUST go through
+                // createPaymentRecord() so the row gets a correct clinic_id
+                // and patient_id — the previous raw INSERT left both NULL,
+                // which orphaned the money out of every per-clinic report
+                // and corrupted the patient's balance.
                 if (!empty($input['additional_payment']) && $input['additional_payment'] > 0) {
-                    $stmt = $this->pdo->prepare("
-                        INSERT INTO payments (appointment_id, amount, method, created_at) 
-                        VALUES (?, ?, ?, NOW())
-                    ");
-                    $stmt->execute([$id, $input['additional_payment'], $input['payment_method'] ?? 'cash']);
+                    $this->createPaymentRecord([
+                        'appointment_id' => $id,
+                        'patient_id'     => $input['patient_id'],
+                        'amount'         => $input['additional_payment'],
+                        'method'         => $input['payment_method'] ?? 'Cash',
+                        'type'           => 'additional_payment',
+                        'received_by'    => $this->auth->user()['id'],
+                    ], $this->auth->user()['id'], false);
                 }
                 
                 $this->pdo->commit();

@@ -188,6 +188,19 @@ class ApiController
                     return $this->jsonResponse(['error' => 'Appointment not found'], 404);
                 }
 
+                // FULL LOCK: never let an appointment delete silently erase
+                // its payment rows (no refund, no audit, and it would skew
+                // a closed day's recorded totals). If money is attached,
+                // the payment must be voided from the payments screen first.
+                $payChk = $this->pdo->prepare("SELECT COUNT(*) FROM payments WHERE appointment_id = ?");
+                $payChk->execute([$id]);
+                if ((int)$payChk->fetchColumn() > 0) {
+                    $this->pdo->rollback();
+                    return $this->jsonResponse([
+                        'error' => 'Cannot delete an appointment that has payments. Void/refund the payment from the payments screen first.'
+                    ], 422);
+                }
+
                 // Delete related data first
                 // 1. Delete prescriptions
                 $stmt = $this->pdo->prepare("DELETE FROM prescriptions WHERE appointment_id = ?");
@@ -2507,10 +2520,14 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Time slot is not available'], 400);
             }
 
-            // 1. Create new appointment
+            // 1. Create new appointment. clinic_id MUST be carried over —
+            // omitting it made every rescheduled appointment land with a
+            // NULL clinic, dropping it out of that clinic's books while the
+            // original payment stayed on the old (now Rescheduled) row.
             $newAppointmentData = [
                 'patient_id' => $appointment['patient_id'],
                 'doctor_id' => $appointment['doctor_id'],
+                'clinic_id' => $appointment['clinic_id'] ?? null,
                 'booked_by' => $user['id'],
                 'source' => $appointment['source'] ?? 'Walk-in',
                 'date' => $newDate,
