@@ -585,15 +585,25 @@ body.draw-modal-open [class*="floating"]:not(.modal):not(.modal *) {
 
 /* TABLET — up to 1024px */
 @media (max-width: 1024px) {
-    /* Single scrollable row instead of wrapping (much easier to scan on a tablet). */
+    /* Single scrollable row instead of wrapping (much easier to scan on a
+       tablet). CRITICAL: override the desktop `justify-content: center`.
+       On an overflowing flex row, centering pushes the first items past
+       the left edge into a scroll region the browser won't let you reach,
+       so the toolbar looked clipped on BOTH sides and un-scrollable
+       (exactly the iPad-portrait / mobile bug). flex-start makes the row
+       start at the left and scroll normally. */
     #drawConsultationModal .draw-toolbar {
         flex-wrap: nowrap;
+        justify-content: flex-start;
         overflow-x: auto;
         overflow-y: hidden;
         -webkit-overflow-scrolling: touch;
         gap: 0.3rem;
         padding: 0.5rem 0.6rem;
         scrollbar-width: thin;
+    }
+    [dir="rtl"] #drawConsultationModal .draw-toolbar {
+        justify-content: flex-end;
     }
     #drawConsultationModal .draw-toolbar::-webkit-scrollbar { height: 5px; }
     #drawConsultationModal .draw-toolbar::-webkit-scrollbar-thumb {
