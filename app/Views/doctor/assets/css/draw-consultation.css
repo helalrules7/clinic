@@ -87,8 +87,8 @@ body.draw-modal-open #quickAccessDock {
        under the first instead of leaving a big empty gutter on the right
        (the old flex-start behaviour the user complained about). */
     justify-content: center;
-    gap: 0.3rem 0.35rem;
-    padding: 0.5rem 0.6rem;
+    gap: 0.2rem 0.22rem;
+    padding: 0.4rem 0.45rem;
     background: #ffffff;
     border-bottom: 1px solid #e2e8f0;
     box-shadow: 0 1px 2px rgba(0,0,0,0.04);
@@ -115,14 +115,12 @@ body.draw-modal-open #quickAccessDock {
     border-color: #374151;
 }
 
+/* Group titles ("Tools", "Shapes", …) are hidden — every button already
+   carries a descriptive `title` tooltip, and dropping the labels reclaims
+   enough width to keep the whole toolbar on a single row on desktop. */
 .draw-tool-group__label {
-    font-size: 0.72rem;
-    color: #64748b;
-    margin-right: 0.25rem;
-    user-select: none;
+    display: none;
 }
-
-.dark .draw-tool-group__label { color: #94a3b8; }
 
 .draw-tool-btn {
     width: 34px;
@@ -548,7 +546,10 @@ body.draw-modal-open #quickAccessDock {
 }
 
 .draw-toolbar .vr {
-    height: 30px;
+    height: 24px;
+    width: 1px;
+    margin: 0 0.05rem;
+    opacity: 0.6;
     background: #e2e8f0;
 }
 

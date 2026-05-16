@@ -468,8 +468,8 @@
             <span class="draw-tool-group__label">Edit</span>
             <button type="button" class="draw-tool-btn" id="drawUndoBtn" title="Undo (Ctrl+Z)"><i class="bi bi-arrow-counterclockwise"></i></button>
             <button type="button" class="draw-tool-btn" id="drawRedoBtn" title="Redo (Ctrl+Shift+Z)"><i class="bi bi-arrow-clockwise"></i></button>
-            <button type="button" class="draw-tool-btn" id="drawDeleteBtn" title="Delete selected"><i class="bi bi-trash"></i></button>
-            <button type="button" class="draw-tool-btn" id="drawClearBtn" title="Clear all"><i class="bi bi-x-circle"></i></button>
+            <!-- Delete / Clear-all live on the per-element contextual menu now,
+                 so they were dropped from here to keep the toolbar one row. -->
             <button type="button" class="draw-tool-btn" id="copyPreviousBtn" title="Copy from previous consultation drawing" style="display:none;"><i class="bi bi-clipboard-plus"></i></button>
           </div>
 
@@ -607,8 +607,12 @@
 
         modalEl.querySelector('#drawUndoBtn').addEventListener('click', undo);
         modalEl.querySelector('#drawRedoBtn').addEventListener('click', redo);
-        modalEl.querySelector('#drawDeleteBtn').addEventListener('click', deleteSelected);
-        modalEl.querySelector('#drawClearBtn').addEventListener('click', clearAll);
+        // Delete / Clear-all buttons were removed from the toolbar (delete is
+        // on the contextual menu); guard in case the markup is ever absent.
+        const _del = modalEl.querySelector('#drawDeleteBtn');
+        if (_del) _del.addEventListener('click', deleteSelected);
+        const _clr = modalEl.querySelector('#drawClearBtn');
+        if (_clr) _clr.addEventListener('click', clearAll);
         modalEl.querySelector('#copyPreviousBtn').addEventListener('click', copyFromPrevious);
 
         modalEl.querySelectorAll('.eye-side-btn').forEach(btn => {
