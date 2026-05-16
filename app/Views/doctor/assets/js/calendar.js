@@ -1005,18 +1005,34 @@ function initializeTooltips() {
       // right-placed tooltip ran off the viewport. Let Popper flip it to
       // the left/top/bottom and clamp it to the viewport so it can never
       // be clipped off-screen regardless of sidebar state.
+      // Popper 2 (Bootstrap 5) config. The previous attempt passed
+      // `boundary: 'viewport'` to preventOverflow — that string is NOT a
+      // valid Popper 2 boundary (it expects an element or 'clippingParents'),
+      // so it was silently ignored and the tooltip only fit "by luck of the
+      // flip", which is exactly the random behaviour reported. The viewport
+      // is controlled via `rootBoundary: 'viewport'`; `altAxis: true` also
+      // lets it shift vertically so a tall booking tooltip never clips.
       popperConfig: function (defaultConfig) {
         return {
           ...defaultConfig,
+          strategy: "fixed",
           modifiers: [
             ...(defaultConfig.modifiers || []),
             {
               name: "flip",
-              options: { fallbackPlacements: ["left", "top", "bottom"] },
+              options: {
+                fallbackPlacements: ["left", "top", "bottom"],
+                rootBoundary: "viewport",
+                padding: 8,
+              },
             },
             {
               name: "preventOverflow",
-              options: { boundary: "viewport", padding: 8 },
+              options: {
+                rootBoundary: "viewport",
+                altAxis: true,
+                padding: 8,
+              },
             },
           ],
         };
