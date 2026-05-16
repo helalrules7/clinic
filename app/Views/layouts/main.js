@@ -383,7 +383,94 @@
             });
             syncExpandedFlag();
         })();
-        
+
+        /* Mini-rail hover tooltip. Replaces the old hover peek-expand:
+           hovering a collapsed icon now shows a small arrow tooltip with
+           the page title and a one-line description, instead of widening
+           the whole sidebar. Only active while body.sidebar-mini and the
+           rail is NOT already expanded (toggle / Medical-Storage click). */
+        (function setupMiniTip() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
+            // Keyed by the LAST path segment so it works for both the
+            // /doctor/* and /secretary/* navs.
+            const DESC = {
+                dashboard: 'Overview & key stats',
+                calendar:  'Appointments & bookings',
+                patients:  'Patient records',
+                forum:     'Doctor discussions',
+                drugs:     'Drugs database',
+                payments:  'Financial management',
+                reports:   'Analytics & reports',
+                alerts:    'Notifications & alerts',
+                notes:     'Personal notes',
+                settings:  'System settings',
+                profile:   'Your account',
+            };
+
+            const tip = document.createElement('div');
+            tip.className = 'nav-mini-tip';
+            tip.innerHTML = '<b></b><span></span>';
+            document.body.appendChild(tip);
+            const tipTitle = tip.querySelector('b');
+            const tipDesc  = tip.querySelector('span');
+
+            function railIsCollapsed() {
+                if (!document.body.classList.contains('sidebar-mini')) return false;
+                // Expanded (sticky submenu) → labels are visible already.
+                if (sidebar.classList.contains('has-expanded-submenu')) return false;
+                if (document.body.classList.contains('sidebar-has-expanded-submenu')) return false;
+                return true;
+            }
+
+            function showFor(link) {
+                if (!railIsCollapsed()) return;
+                let title = (link.textContent || '').replace(/\s+/g, ' ').trim();
+                let desc = '';
+                if (link.classList.contains('nav-link-toggle')) {
+                    title = 'Medical Storage';
+                    desc = 'Prescriptions, glasses & media';
+                } else {
+                    const seg = (link.getAttribute('href') || '')
+                        .split('?')[0].replace(/\/+$/, '').split('/').pop();
+                    desc = DESC[seg] || '';
+                }
+                if (!title) return;
+                tipTitle.textContent = title;
+                tipDesc.textContent = desc;
+                tipDesc.style.display = desc ? '' : 'none';
+
+                const r = link.getBoundingClientRect();
+                tip.style.visibility = 'hidden';
+                tip.classList.add('show');
+                const isRtl =
+                    (document.documentElement.getAttribute('dir') === 'rtl') ||
+                    getComputedStyle(document.documentElement).direction === 'rtl';
+                tip.classList.toggle('rtl', isRtl);
+                const th = tip.offsetHeight;
+                const tw = tip.offsetWidth;
+                let top = r.top + r.height / 2 - th / 2;
+                top = Math.max(8, Math.min(top, window.innerHeight - th - 8));
+                tip.style.top = Math.round(top) + 'px';
+                // LTR rail is on the left → tip to the icon's right.
+                // RTL rail is on the right → tip to the icon's left.
+                tip.style.left = isRtl
+                    ? Math.round(r.left - tw - 12) + 'px'
+                    : Math.round(r.right + 12) + 'px';
+                tip.style.visibility = 'visible';
+            }
+            function hide() { tip.classList.remove('show'); }
+
+            sidebar.querySelectorAll('.nav-link').forEach((link) => {
+                link.addEventListener('mouseenter', () => showFor(link));
+                link.addEventListener('mouseleave', hide);
+                link.addEventListener('click', hide);
+            });
+            sidebar.addEventListener('scroll', hide, true);
+            window.addEventListener('resize', hide);
+        })();
+
         // Dock Stack Menu functionality (macOS-style genie effect)
         (function() {
             const medicalStorageDockItem = document.getElementById('medicalStorageDockItem');
