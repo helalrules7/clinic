@@ -1158,6 +1158,182 @@ body.draw-modal-open [class*="floating"]:not(.modal):not(.modal *) {
 }
 
 /* ============================================================================
+   Element settings popup — context-aware control panel opened from the ⚙
+   button in the contextual menu. Lives inside #drawCanvasWrap and is
+   positioned by JS just below the contextual menu.
+   ============================================================================ */
+.draw-settings-pop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 95;
+    width: 260px;
+    max-width: calc(100% - 24px);
+    max-height: 70%;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.22), 0 2px 8px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+}
+.draw-settings-pop[hidden] { display: none; }
+.dark .draw-settings-pop {
+    background: #0f172a;
+    border-color: #1f2937;
+    box-shadow: 0 14px 36px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.draw-settings-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.85rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #0f172a;
+    background: #f1f5f9;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+.dark .draw-settings-head {
+    color: #e2e8f0;
+    background: #111827;
+    border-bottom-color: #1f2937;
+}
+.draw-settings-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: rgba(15,23,42,0.06);
+    color: #0f172a;
+    cursor: pointer;
+}
+.draw-settings-close:hover { background: rgba(15,23,42,0.12); }
+.dark .draw-settings-close { background: rgba(255,255,255,0.06); color: #e2e8f0; }
+
+.draw-settings-body {
+    padding: 0.6rem 0.85rem 0.85rem;
+    overflow-y: auto;
+}
+
+.ds-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid rgba(148,163,184,0.16);
+}
+.ds-row:last-child { border-bottom: none; }
+.ds-row-col {
+    flex-direction: column;
+    align-items: stretch;
+}
+.ds-row label {
+    font-size: 0.78rem;
+    color: #475569;
+    margin: 0;
+    white-space: nowrap;
+}
+.dark .ds-row label { color: #94a3b8; }
+.ds-row label .ds-val {
+    color: #0ea5e9;
+    font-weight: 700;
+    margin-left: 0.25rem;
+}
+
+.ds-color {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 38px;
+    height: 28px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.ds-color::-webkit-color-swatch-wrapper { padding: 2px; }
+.ds-color::-webkit-color-swatch { border: none; border-radius: 4px; }
+
+.ds-range {
+    flex: 1;
+    min-width: 0;
+    accent-color: #0ea5e9;
+}
+
+.ds-seg {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 0.35rem;
+}
+.ds-seg-btn {
+    flex: 1;
+    padding: 0.35rem 0.4rem;
+    font-size: 0.74rem;
+    font-weight: 600;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #f8fafc;
+    color: #475569;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.ds-seg-btn.is-active {
+    background: #0ea5e9;
+    border-color: #0ea5e9;
+    color: #ffffff;
+}
+.dark .ds-seg-btn {
+    background: #1f2937;
+    border-color: #374151;
+    color: #94a3b8;
+}
+.dark .ds-seg-btn.is-active {
+    background: #0ea5e9;
+    border-color: #0ea5e9;
+    color: #ffffff;
+}
+
+.ds-switch {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    border: none;
+    border-radius: 999px;
+    background: #cbd5e1;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s;
+    padding: 0;
+}
+.ds-switch span {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ffffff;
+    transition: transform 0.15s;
+}
+.ds-switch.is-on { background: #0ea5e9; }
+.ds-switch.is-on span { transform: translateX(18px); }
+.dark .ds-switch { background: #374151; }
+
+@media (max-width: 640px) {
+    .draw-settings-pop { width: calc(100% - 24px); }
+}
+
+/* ============================================================================
    Attachment cards — responsive button labels.
 
    - Header buttons (Upload / Draw / Capture) collapse to icon-only on

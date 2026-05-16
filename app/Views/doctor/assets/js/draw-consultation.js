@@ -494,6 +494,9 @@
             <button type="button" class="draw-ctx-btn" data-ctx-action="toggle-lock" title="Lock / Unlock">
               <i class="bi bi-unlock"></i>
             </button>
+            <button type="button" class="draw-ctx-btn" data-ctx-action="settings" title="Element settings">
+              <i class="bi bi-sliders"></i>
+            </button>
             <span class="draw-ctx-sep draw-ctx-sep-group" aria-hidden="true"></span>
             <button type="button" class="draw-ctx-btn draw-ctx-group-only" data-ctx-action="group" title="Group">
               <i class="bi bi-collection"></i>
@@ -505,6 +508,19 @@
             <button type="button" class="draw-ctx-btn draw-ctx-btn-danger" data-ctx-action="delete" title="Delete">
               <i class="bi bi-trash"></i>
             </button>
+          </div>
+          <!-- Element settings popup — context-aware, built per object type
+               when the user clicks the ⚙ button in the contextual menu. -->
+          <div class="draw-settings-pop" id="drawSettingsPop" hidden>
+            <div class="draw-settings-head">
+              <span id="drawSettingsTitle">Settings</span>
+              <button type="button" class="draw-settings-close" id="drawSettingsClose" aria-label="Close settings">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+                  <path d="M3 3 L13 13 M13 3 L3 13"/>
+                </svg>
+              </button>
+            </div>
+            <div class="draw-settings-body" id="drawSettingsBody"></div>
           </div>
         </div>
 
@@ -683,6 +699,10 @@
         if (!menu) return;
         menu.hidden = true;
         menu.style.transform = '';
+        // The settings popup is anchored to the menu — hide it together so
+        // it never lingers over a now-deselected object.
+        const pop = modalEl && modalEl.querySelector('#drawSettingsPop');
+        if (pop) pop.hidden = true;
     }
 
     function showCtxMenu() {
@@ -850,6 +870,9 @@
                 showCtxMenu();
                 break;
             }
+            case 'settings':
+                openSettingsPanel();
+                break;
         }
     }
 
@@ -858,6 +881,279 @@
     function pinAnchoredLayers() {
         canvas.getObjects().forEach(o => { if (o.isOverlay) canvas.sendToBack(o); });
         canvas.getObjects().forEach(o => { if (o.isTemplate || o._isTemplate) canvas.sendToBack(o); });
+    }
+
+    /* ====================================================================
+       Context-aware element SETTINGS panel. Opened from the ⚙ button in
+       the contextual menu. Renders only the controls that make sense for
+       the selected object kind and applies changes live.
+       ==================================================================== */
+
+    function settingsKind(obj) {
+        if (!obj) return null;
+        if (obj.objectType === 'arrow') return 'arrow';
+        if (obj.isTemplate || obj._isTemplate) return 'template';
+        if (obj.isStamp || obj.objectType === 'medicalStamp') return 'stamp';
+        if (obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') return 'text';
+        if (obj.objectType === 'shape' || ['rect','ellipse','triangle','line'].includes(obj.type)) {
+            if (obj.medicalType === 'rect' || obj.type === 'rect') return 'rect';
+            if (obj.medicalType === 'circle' || obj.type === 'ellipse') return 'ellipse';
+            if (obj.medicalType === 'triangle' || obj.type === 'triangle') return 'triangle';
+            if (obj.medicalType === 'line' || obj.type === 'line') return 'line';
+        }
+        if (obj.type === 'path') return 'path';
+        if (obj.type === 'activeSelection' || obj.type === 'group') return 'group';
+        return 'generic';
+    }
+
+    function dashArrayFor(style, sw) {
+        sw = sw || 3;
+        if (style === 'dashed') return [Math.max(sw * 3, 8), Math.max(sw * 2, 6)];
+        if (style === 'dotted') return [1, Math.max(sw * 2, 5)];
+        return null;
+    }
+    function dashStyleOf(obj) {
+        const d = obj && obj.strokeDashArray;
+        if (!d || !d.length) return 'solid';
+        return d[0] <= 2 ? 'dotted' : 'dashed';
+    }
+
+    // --- tiny HTML row builders -------------------------------------------
+    function rowColor(id, label, value) {
+        return '<div class="ds-row"><label>' + label + '</label>' +
+            '<input type="color" class="ds-color" data-ds="' + id + '" value="' + (value || '#000000') + '"></div>';
+    }
+    function rowRange(id, label, value, min, max, step) {
+        return '<div class="ds-row"><label>' + label + ' <b class="ds-val" data-for="' + id + '">' + value + '</b></label>' +
+            '<input type="range" class="ds-range" data-ds="' + id + '" min="' + min + '" max="' + max + '" step="' + (step || 1) + '" value="' + value + '"></div>';
+    }
+    function rowSeg(id, label, options, current) {
+        let btns = options.map(o =>
+            '<button type="button" class="ds-seg-btn' + (o.v === current ? ' is-active' : '') +
+            '" data-ds-seg="' + id + '" data-v="' + o.v + '">' + o.l + '</button>'
+        ).join('');
+        return '<div class="ds-row ds-row-col"><label>' + label + '</label><div class="ds-seg">' + btns + '</div></div>';
+    }
+    function rowToggle(id, label, on) {
+        return '<div class="ds-row"><label>' + label + '</label>' +
+            '<button type="button" class="ds-switch' + (on ? ' is-on' : '') + '" data-ds-toggle="' + id + '" role="switch" aria-checked="' + (!!on) + '"><span></span></button></div>';
+    }
+
+    function buildSettingsControls(obj, kind) {
+        const sw = typeof obj.strokeWidth === 'number' ? obj.strokeWidth : 3;
+        const op = Math.round((typeof obj.opacity === 'number' ? obj.opacity : 1) * 100);
+        const ang = Math.round(obj.angle || 0);
+        let html = '';
+
+        if (kind === 'arrow') {
+            const cfg = obj.arrowConfig || {};
+            html += rowColor('color', 'Color', cfg.strokeColor || '#0f172a');
+            html += rowRange('width', 'Thickness', cfg.strokeWidth || sw, 1, 24, 1);
+            html += rowSeg('linestyle', 'Line style', [
+                { v: 'solid', l: 'Solid' }, { v: 'dashed', l: 'Dashed' }, { v: 'dotted', l: 'Dotted' }
+            ], cfg.dashArray ? (cfg.dashArray[0] <= 2 ? 'dotted' : 'dashed') : 'solid');
+            html += rowToggle('headEnd', 'Arrowhead (end)', cfg.headEnd !== false);
+            html += rowToggle('headStart', 'Arrowhead (start)', cfg.headStart === true);
+            html += rowRange('headSize', 'Head size', cfg.headSize || Math.round(Math.min(Math.max((cfg.strokeWidth||sw)*3.4,13),30)), 8, 40, 1);
+            html += rowRange('opacity', 'Opacity', op, 10, 100, 1);
+        } else if (kind === 'line') {
+            html += rowColor('stroke', 'Color', toHex(obj.stroke) || '#0f172a');
+            html += rowRange('width', 'Thickness', sw, 1, 24, 1);
+            html += rowSeg('linestyle', 'Line style', [
+                { v: 'solid', l: 'Solid' }, { v: 'dashed', l: 'Dashed' }, { v: 'dotted', l: 'Dotted' }
+            ], dashStyleOf(obj));
+            html += rowRange('opacity', 'Opacity', op, 10, 100, 1);
+        } else if (kind === 'rect' || kind === 'ellipse' || kind === 'triangle') {
+            html += rowColor('stroke', 'Border color', toHex(obj.stroke) || '#0f172a');
+            html += rowRange('width', 'Border width', sw, 0, 24, 1);
+            html += rowSeg('linestyle', 'Border style', [
+                { v: 'solid', l: 'Solid' }, { v: 'dashed', l: 'Dashed' }, { v: 'dotted', l: 'Dotted' }
+            ], dashStyleOf(obj));
+            const hasFill = obj.fill && obj.fill !== 'transparent' && obj.fill !== '';
+            html += rowToggle('hasFill', 'Fill', hasFill);
+            html += rowColor('fill', 'Fill color', hasFill ? (toHex(obj.fill) || '#ffffff') : '#ffffff');
+            if (kind === 'rect') html += rowRange('radius', 'Corner radius', Math.round(obj.rx || 0), 0, 60, 1);
+            html += rowRange('opacity', 'Opacity', op, 10, 100, 1);
+        } else if (kind === 'text') {
+            html += rowColor('fill', 'Text color', toHex(obj.fill) || '#0f172a');
+            html += rowRange('fontSize', 'Font size', Math.round(obj.fontSize || 20), 8, 96, 1);
+            html += rowSeg('fontFamily', 'Font', [
+                { v: 'Arial', l: 'Arial' }, { v: 'Georgia', l: 'Serif' }, { v: 'Courier New', l: 'Mono' }
+            ], obj.fontFamily || 'Arial');
+            html += rowSeg('textAlign', 'Align', [
+                { v: 'left', l: 'L' }, { v: 'center', l: 'C' }, { v: 'right', l: 'R' }
+            ], obj.textAlign || 'left');
+            html += rowToggle('bold', 'Bold', obj.fontWeight === 'bold' || obj.fontWeight === 700);
+            html += rowToggle('italic', 'Italic', obj.fontStyle === 'italic');
+            html += rowToggle('underline', 'Underline', !!obj.underline);
+            html += rowRange('opacity', 'Opacity', op, 10, 100, 1);
+        } else if (kind === 'path') {
+            html += rowColor('stroke', 'Color', toHex(obj.stroke) || '#0f172a');
+            html += rowRange('width', 'Thickness', sw, 1, 40, 1);
+            html += rowSeg('linestyle', 'Line style', [
+                { v: 'solid', l: 'Solid' }, { v: 'dashed', l: 'Dashed' }, { v: 'dotted', l: 'Dotted' }
+            ], dashStyleOf(obj));
+            html += rowRange('opacity', 'Opacity', op, 10, 100, 1);
+        } else if (kind === 'stamp') {
+            html += rowColor('stamp-color', 'Color', toHex(obj.stroke) || toHex(obj.fill) || '#dc2626');
+            html += rowRange('scale', 'Size', Math.round((obj.scaleX || 1) * 100), 30, 300, 5);
+            html += rowRange('angle', 'Rotation', ang, 0, 359, 1);
+            html += rowRange('opacity', 'Opacity', op, 10, 100, 1);
+        } else if (kind === 'template') {
+            html += rowRange('scale', 'Size', Math.round((obj.scaleX || 1) * 100), 30, 250, 5);
+            html += rowRange('opacity', 'Opacity', op, 10, 100, 1);
+            html += rowToggle('flipX', 'Mirror (OD/OS)', !!obj.flipX);
+        } else {
+            html += rowRange('opacity', 'Opacity', op, 10, 100, 1);
+            html += rowRange('angle', 'Rotation', ang, 0, 359, 1);
+        }
+        return html;
+    }
+
+    function toHex(c) {
+        if (!c || typeof c !== 'string') return null;
+        if (c[0] === '#') return c.length === 9 ? c.slice(0, 7) : c;
+        const m = c.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+        if (!m) return null;
+        const h = n => ('0' + parseInt(n, 10).toString(16)).slice(-2);
+        return '#' + h(m[1]) + h(m[2]) + h(m[3]);
+    }
+
+    function applySetting(id, value) {
+        if (!canvas) return;
+        let active = canvas.getActiveObject();
+        if (!active) return;
+        const kind = settingsKind(active);
+
+        // Arrows are a Group(line + heads); structural changes need a rebuild.
+        if (kind === 'arrow') {
+            const patch = {};
+            if (id === 'color') patch.strokeColor = value;
+            else if (id === 'width') patch.strokeWidth = parseFloat(value);
+            else if (id === 'linestyle') patch.dashArray = dashArrayFor(value, (active.arrowConfig||{}).strokeWidth);
+            else if (id === 'headEnd') patch.headEnd = !!value;
+            else if (id === 'headStart') patch.headStart = !!value;
+            else if (id === 'headSize') patch.headSize = parseFloat(value);
+            else if (id === 'opacity') { active.set({ opacity: value / 100 }); canvas.requestRenderAll(); pushHistoryDebounced(250); return; }
+            rebuildArrow(active, patch);
+            return;
+        }
+
+        const set = {};
+        switch (id) {
+            case 'stroke': set.stroke = value; break;
+            case 'fill': set.fill = value; break;
+            case 'hasFill': set.fill = value ? (toHex(modalEl.querySelector('[data-ds="fill"]') && modalEl.querySelector('[data-ds="fill"]').value) || '#ffffff') : 'transparent'; break;
+            case 'width': set.strokeWidth = parseFloat(value); break;
+            case 'opacity': set.opacity = value / 100; break;
+            case 'angle': set.angle = parseFloat(value); break;
+            case 'radius': set.rx = parseFloat(value); set.ry = parseFloat(value); break;
+            case 'fontSize': set.fontSize = parseFloat(value); break;
+            case 'fontFamily': set.fontFamily = value; break;
+            case 'textAlign': set.textAlign = value; break;
+            case 'bold': set.fontWeight = value ? 'bold' : 'normal'; break;
+            case 'italic': set.fontStyle = value ? 'italic' : 'normal'; break;
+            case 'underline': set.underline = !!value; break;
+            case 'flipX': set.flipX = !!value; break;
+            case 'linestyle': set.strokeDashArray = dashArrayFor(value, active.strokeWidth); break;
+            case 'scale': {
+                const s = parseFloat(value) / 100;
+                active.set({ scaleX: s, scaleY: s });
+                canvas.requestRenderAll();
+                pushHistoryDebounced(250);
+                return;
+            }
+            case 'stamp-color': set.stroke = value; if (active.fill && active.fill !== 'transparent') set.fill = value; break;
+        }
+        active.set(set);
+        canvas.requestRenderAll();
+        session.isDirty = true;
+        pushHistoryDebounced(250);
+    }
+
+    let _settingsBound = false;
+    function openSettingsPanel() {
+        const pop = modalEl && modalEl.querySelector('#drawSettingsPop');
+        const body = modalEl && modalEl.querySelector('#drawSettingsBody');
+        const titleEl = modalEl && modalEl.querySelector('#drawSettingsTitle');
+        if (!pop || !body || !canvas) return;
+        const active = canvas.getActiveObject();
+        if (!active) return;
+        const kind = settingsKind(active);
+
+        const labels = {
+            arrow: 'Arrow settings', line: 'Line settings', rect: 'Rectangle settings',
+            ellipse: 'Circle settings', triangle: 'Triangle settings', text: 'Text settings',
+            path: 'Drawing settings', stamp: 'Stamp settings', template: 'Template settings',
+            group: 'Group settings', generic: 'Element settings'
+        };
+        titleEl.textContent = labels[kind] || 'Element settings';
+        body.innerHTML = buildSettingsControls(active, kind);
+
+        pop.hidden = false;
+        positionSettingsPanel();
+
+        if (!_settingsBound) {
+            _settingsBound = true;
+            modalEl.querySelector('#drawSettingsClose').addEventListener('click', closeSettingsPanel);
+
+            body.addEventListener('input', (e) => {
+                const el = e.target;
+                if (el.classList.contains('ds-color') || el.classList.contains('ds-range')) {
+                    const id = el.dataset.ds;
+                    if (el.classList.contains('ds-range')) {
+                        const v = body.querySelector('.ds-val[data-for="' + id + '"]');
+                        if (v) v.textContent = el.value;
+                    }
+                    applySetting(id, el.value);
+                }
+            });
+            body.addEventListener('click', (e) => {
+                const seg = e.target.closest('[data-ds-seg]');
+                if (seg) {
+                    const id = seg.dataset.dsSeg;
+                    body.querySelectorAll('[data-ds-seg="' + id + '"]').forEach(b => b.classList.remove('is-active'));
+                    seg.classList.add('is-active');
+                    applySetting(id, seg.dataset.v);
+                    return;
+                }
+                const tog = e.target.closest('[data-ds-toggle]');
+                if (tog) {
+                    const on = !tog.classList.contains('is-on');
+                    tog.classList.toggle('is-on', on);
+                    tog.setAttribute('aria-checked', String(on));
+                    applySetting(tog.dataset.dsToggle, on);
+                }
+            });
+        }
+    }
+
+    function closeSettingsPanel() {
+        const pop = modalEl && modalEl.querySelector('#drawSettingsPop');
+        if (pop) pop.hidden = true;
+    }
+
+    function positionSettingsPanel() {
+        const pop = modalEl && modalEl.querySelector('#drawSettingsPop');
+        const menu = modalEl && modalEl.querySelector('#drawCtxMenu');
+        const wrap = modalEl && modalEl.querySelector('#drawCanvasWrap');
+        if (!pop || !wrap) return;
+        // Anchor just below the contextual menu, clamped to the wrap.
+        const wrapRect = wrap.getBoundingClientRect();
+        let left = 12, top = 12;
+        if (menu && !menu.hidden) {
+            const mRect = menu.getBoundingClientRect();
+            left = mRect.left - wrapRect.left;
+            top = (mRect.bottom - wrapRect.top) + 8;
+        }
+        const pw = pop.offsetWidth || 250;
+        const ph = pop.offsetHeight || 280;
+        if (left + pw > wrap.clientWidth - 8) left = wrap.clientWidth - pw - 8;
+        if (left < 8) left = 8;
+        if (top + ph > wrap.clientHeight - 8) {
+            top = Math.max(8, wrap.clientHeight - ph - 8);
+        }
+        pop.style.transform = 'translate(' + Math.round(left) + 'px, ' + Math.round(top) + 'px)';
     }
 
     function bindLayersPanelEvents() {
@@ -1772,53 +2068,130 @@
         return text;
     }
 
-    function createArrow(startPoint, endPoint) {
+    function buildArrowConfig(opts) {
+        opts = opts || {};
+        return {
+            strokeColor: opts.strokeColor || strokeColor,
+            strokeWidth: opts.strokeWidth || strokeWidth,
+            // null = solid; [dash, gap] arrays for dashed / dotted
+            dashArray: opts.dashArray || null,
+            headEnd:   opts.headEnd !== false,   // default: arrowhead at the end
+            headStart: opts.headStart === true,  // default: no head at the start
+            headSize:  opts.headSize || null,    // null = auto from stroke width
+            opacity:   typeof opts.opacity === 'number' ? opts.opacity : 1
+        };
+    }
+
+    /* Build an arrow as a Group(line [+ end head] [+ start head]).
+       Local space: the arrow lies along the x-axis centred on the origin,
+       so the End is at +length/2 and the Start at -length/2. The group is
+       then rotated by `angle` and dropped at the segment midpoint. The
+       FIX vs. the old code: the head triangle's apex must point along +x,
+       which for a fabric.Triangle (apex points up at angle 0) means
+       angle:90. The line is also shortened by the head length so it stops
+       at the head's base instead of poking through the tip. */
+    function createArrow(startPoint, endPoint, opts) {
+        const cfg = buildArrowConfig(opts);
         const dx = endPoint.x - startPoint.x;
         const dy = endPoint.y - startPoint.y;
-        const length = Math.sqrt(dx * dx + dy * dy);
+        const length = Math.max(1, Math.sqrt(dx * dx + dy * dy));
         const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-        const headLength = Math.min(20, length * 0.3);
-
         const midX = (startPoint.x + endPoint.x) / 2;
         const midY = (startPoint.y + endPoint.y) / 2;
 
-        const line = new fabric.Line([-length / 2, 0, length / 2, 0], {
-            stroke: strokeColor,
-            strokeWidth: strokeWidth,
+        const sw = cfg.strokeWidth;
+        const headLen = cfg.headSize ||
+            Math.min(Math.max(sw * 3.4, 13), 30, length * 0.42);
+        const halfBase = headLen * 0.7;
+
+        const half = length / 2;
+        // Pull the line in by ~90% of the head so the round line cap hides
+        // just under the head base (no notch, no overshoot).
+        const lineStartX = -half + (cfg.headStart ? headLen * 0.9 : 0);
+        const lineEndX   =  half - (cfg.headEnd   ? headLen * 0.9 : 0);
+
+        const parts = [];
+        parts.push(new fabric.Line([lineStartX, 0, lineEndX, 0], {
+            stroke: cfg.strokeColor,
+            strokeWidth: sw,
+            strokeLineCap: 'round',
+            strokeDashArray: cfg.dashArray,
             objectType: 'arrowLine',
-            medicalType: 'annotation',
-            layerType: 'annotation',
-            eyeSide: currentEyeSide
-        });
+            selectable: false,
+            evented: false
+        }));
 
-        const triangle = new fabric.Triangle({
-            left: length / 2,
-            top: 0,
-            originX: 'center',
-            originY: 'center',
-            width: headLength,
-            height: headLength,
-            fill: strokeColor,
-            angle: 0,
-            objectType: 'arrowHead',
-            medicalType: 'annotation',
-            layerType: 'annotation',
-            eyeSide: currentEyeSide
-        });
+        if (cfg.headEnd) {
+            parts.push(new fabric.Triangle({
+                left: half, top: 0,
+                originX: 'center', originY: 'center',
+                width: halfBase * 2, height: headLen,
+                fill: cfg.strokeColor,
+                angle: 90,            // apex → +x
+                objectType: 'arrowHead',
+                selectable: false, evented: false
+            }));
+        }
+        if (cfg.headStart) {
+            parts.push(new fabric.Triangle({
+                left: -half, top: 0,
+                originX: 'center', originY: 'center',
+                width: halfBase * 2, height: headLen,
+                fill: cfg.strokeColor,
+                angle: -90,           // apex → -x
+                objectType: 'arrowHead',
+                selectable: false, evented: false
+            }));
+        }
 
-        const group = new fabric.Group([line, triangle], {
+        const group = new fabric.Group(parts, {
             left: midX,
             top: midY,
             originX: 'center',
             originY: 'center',
             angle: angle,
+            opacity: cfg.opacity,
             objectType: 'arrow',
             medicalType: 'annotation',
             layerType: 'annotation',
             eyeSide: currentEyeSide
         });
-
+        // Persisted so the settings popup can rebuild the arrow in place.
+        group.arrowConfig = cfg;
+        group.arrowLength = length;
         return group;
+    }
+
+    // Current absolute start/end of an arrow group, accounting for any
+    // move / rotate / scale the user applied after it was created.
+    function getArrowEndpoints(group) {
+        const len = (group.arrowLength || group.width || 1) * (group.scaleX || 1);
+        const rad = (group.angle || 0) * Math.PI / 180;
+        const cx = group.left;
+        const cy = group.top;
+        const hx = Math.cos(rad) * len / 2;
+        const hy = Math.sin(rad) * len / 2;
+        return {
+            start: { x: cx - hx, y: cy - hy },
+            end:   { x: cx + hx, y: cy + hy }
+        };
+    }
+
+    // Replace an existing arrow with a fresh one that merges new settings.
+    function rebuildArrow(oldGroup, patch) {
+        if (!canvas || !oldGroup) return null;
+        const ep = getArrowEndpoints(oldGroup);
+        const merged = Object.assign({}, oldGroup.arrowConfig || {}, patch || {});
+        const fresh = createArrow(ep.start, ep.end, merged);
+        fresh.set({ eyeSide: oldGroup.eyeSide });
+        const wasActive = canvas.getActiveObject() === oldGroup;
+        canvas.remove(oldGroup);
+        canvas.add(fresh);
+        if (wasActive) canvas.setActiveObject(fresh);
+        canvas.requestRenderAll();
+        session.isDirty = true;
+        pushHistory();
+        return fresh;
     }
 
     function addMedicalStamp(stampType, point) {
