@@ -357,6 +357,7 @@ try {
     $router->delete('/api/patients/{id}', 'ApiController@deletePatient');
     $router->put('/api/patients/{id}/emergency-contact', 'ApiController@updateEmergencyContact');
     $router->post('/api/consultations', 'ApiController@createConsultation');
+    $router->get('/api/prescriptions/suggestions', 'ApiController@getPrescriptionSuggestions');
     $router->post('/api/prescriptions/meds', 'ApiController@createMedicationPrescription');
     $router->put('/api/prescriptions/meds/{id}', 'ApiController@updateMedication');
     $router->delete('/api/prescriptions/meds/{id}', 'ApiController@deleteMedication');
