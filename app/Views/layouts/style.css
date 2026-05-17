@@ -10879,6 +10879,77 @@ body.sidebar-mini .sidebar .user-avatar {
 .nav-mini-tip.rtl.show { transform: translateX(0); }
 .nav-mini-tip.rtl::before { left: auto; right: -5px; }
 
+/* Avatar preview in the collapsed mini-rail.
+   The in-sidebar .user-avatar-htooltip drops straight DOWN and is 200px
+   wide; in the 76px rail (overflow-x: hidden) it gets sliced off. So in
+   the collapsed rail we suppress that dropdown and instead show a
+   body-level fixed flyout BESIDE the rail — same mechanism as
+   .nav-mini-tip (JS-positioned, can't be clipped), so the avatar now
+   behaves like every other mini-rail item. */
+body.sidebar-mini .sidebar:not(.has-expanded-submenu) .user-avatar:hover .user-avatar-htooltip {
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+.avatar-mini-tip {
+    position: fixed;
+    z-index: 100000;
+    pointer-events: none;
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 0.6rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 0.12s ease, transform 0.12s ease;
+    text-align: center;
+}
+.avatar-mini-tip.show { opacity: 1; transform: translateX(0); }
+.avatar-mini-tip img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
+    display: block;
+    margin: 0 auto;
+}
+.avatar-mini-tip b {
+    display: block;
+    margin-top: 0.45rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+.avatar-mini-tip span {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: #94a3b8;
+    line-height: 1.25;
+}
+/* left-pointing arrow (LTR rail on the left); JS centres the flyout on
+   the avatar, so the arrow sits at the flyout's vertical middle. */
+.avatar-mini-tip::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -5px;
+    width: 10px;
+    height: 10px;
+    background: #0f172a;
+    transform: translateY(-50%) rotate(45deg);
+    border-radius: 1px;
+}
+.dark .avatar-mini-tip { background: #1e293b; }
+.dark .avatar-mini-tip::before { background: #1e293b; }
+/* RTL rail is on the right → flyout sits to the LEFT, arrow on the right */
+.avatar-mini-tip.rtl { transform: translateX(4px); }
+.avatar-mini-tip.rtl.show { transform: translateX(0); }
+.avatar-mini-tip.rtl::before { left: auto; right: -5px; }
+
 /* Sticky peek-expand: whenever the mini-rail contains an EXPANDED
    submenu, treat the whole sidebar like the hover-peek state. Works on
    tablets and any touch device where hover is unavailable.

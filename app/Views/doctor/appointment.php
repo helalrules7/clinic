@@ -111,15 +111,8 @@ if ($status === 'completed') {
                 </a>
             </p>
             <?php if (!empty($appointment['clinic_name_ar']) || !empty($appointment['clinic_name_en'])): ?>
-            <?php
-                $_clinicVisuals = [
-                    'riyadh' => ['icon' => 'bi-buildings-fill', 'color' => '#0d6efd'],
-                    'kfs'    => ['icon' => 'bi-hospital-fill',  'color' => '#10b981'],
-                ];
-                $_v = $_clinicVisuals[$appointment['clinic_code'] ?? ''] ?? ['icon' => 'bi-building', 'color' => '#ffffff'];
-            ?>
-            <p class="mb-0 mt-1" dir="rtl" style="text-align: left;">
-                <i class="bi <?= $_v['icon'] ?> me-2" style="color: <?= $_v['color'] ?>;"></i>
+            <p class="mb-0 mt-1">
+                <i class="bi bi-buildings me-2"></i>
                 <strong><?= htmlspecialchars($appointment['clinic_name_ar'] ?: $appointment['clinic_name_en']) ?></strong>
             </p>
             <?php endif; ?>

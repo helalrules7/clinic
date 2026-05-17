@@ -471,6 +471,72 @@
             window.addEventListener('resize', hide);
         })();
 
+        /* Avatar preview in the collapsed mini-rail. The in-sidebar
+           .user-avatar-htooltip drops down 200px wide and gets sliced by
+           the 76px rail's overflow. Here we show a body-level fixed
+           flyout BESIDE the rail instead — same approach as setupMiniTip
+           so the avatar behaves like every other mini-rail item. */
+        (function setupAvatarMiniPreview() {
+            const sidebar = document.getElementById('sidebar');
+            const avatar = document.getElementById('sidebarUserAvatar');
+            if (!sidebar || !avatar) return;
+
+            const imgEl = avatar.querySelector('.user-avatar-preview-image')
+                || avatar.querySelector('.user-avatar-img');
+            const imgSrc = imgEl ? (imgEl.getAttribute('src') || '') : '';
+            const name = (document.querySelector('.user-details h6')
+                || {}).textContent || '';
+            const role = (document.querySelector('.user-details small')
+                || {}).textContent || '';
+
+            const tip = document.createElement('div');
+            tip.className = 'avatar-mini-tip';
+            tip.innerHTML =
+                (imgSrc
+                    ? '<img alt="" src="' + encodeURI(imgSrc) + '">'
+                    : '') +
+                '<b></b><span></span>';
+            document.body.appendChild(tip);
+            tip.querySelector('b').textContent = name.trim();
+            const roleEl = tip.querySelector('span');
+            roleEl.textContent = role.trim();
+            roleEl.style.display = role.trim() ? '' : 'none';
+
+            function railIsCollapsed() {
+                if (!document.body.classList.contains('sidebar-mini')) return false;
+                if (sidebar.classList.contains('has-expanded-submenu')) return false;
+                if (document.body.classList.contains('sidebar-has-expanded-submenu')) return false;
+                return true;
+            }
+
+            function show() {
+                if (!railIsCollapsed()) return;
+                const r = avatar.getBoundingClientRect();
+                tip.style.visibility = 'hidden';
+                tip.classList.add('show');
+                const isRtl =
+                    (document.documentElement.getAttribute('dir') === 'rtl') ||
+                    getComputedStyle(document.documentElement).direction === 'rtl';
+                tip.classList.toggle('rtl', isRtl);
+                const th = tip.offsetHeight;
+                const tw = tip.offsetWidth;
+                let top = r.top + r.height / 2 - th / 2;
+                top = Math.max(8, Math.min(top, window.innerHeight - th - 8));
+                tip.style.top = Math.round(top) + 'px';
+                tip.style.left = isRtl
+                    ? Math.round(r.left - tw - 12) + 'px'
+                    : Math.round(r.right + 12) + 'px';
+                tip.style.visibility = 'visible';
+            }
+            function hide() { tip.classList.remove('show'); }
+
+            avatar.addEventListener('mouseenter', show);
+            avatar.addEventListener('mouseleave', hide);
+            avatar.addEventListener('click', hide);
+            sidebar.addEventListener('scroll', hide, true);
+            window.addEventListener('resize', hide);
+        })();
+
         // Dock Stack Menu functionality (macOS-style genie effect)
         (function() {
             const medicalStorageDockItem = document.getElementById('medicalStorageDockItem');
