@@ -13248,11 +13248,20 @@ class ApiController
             ");
             $allConsultations = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-            // Find appointments with similar diagnoses (>90% similarity)
+            // Find appointments whose diagnosis OR (when provided) chief
+            // complaint is ≥90% similar to the current visit. The strict
+            // threshold is intentional: this only ever surfaces drugs that
+            // were really prescribed for a near-identical case, so it can
+            // never "invent" a drug. `complaint` was accepted + selected
+            // but previously never compared — that dead parameter is now
+            // honoured as a secondary match (the documented behaviour).
             $matchingAppointmentIds = [];
             foreach ($allConsultations as $consultation) {
-                $similarity = $calculateSimilarity($diagnosis, $consultation['diagnosis']);
-                if ($similarity > 90) {
+                $dxSim = $calculateSimilarity($diagnosis, $consultation['diagnosis']);
+                $ccSim = ($complaint !== '' && !empty($consultation['chief_complaint']))
+                    ? $calculateSimilarity($complaint, $consultation['chief_complaint'])
+                    : 0;
+                if ($dxSim > 90 || $ccSim > 90) {
                     $matchingAppointmentIds[] = $consultation['appointment_id'];
                 }
             }
