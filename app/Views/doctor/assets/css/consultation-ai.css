@@ -1,0 +1,250 @@
+/* ============================================================
+   Smart Consultation — AI assists (Phase 1)
+   Scoped under .cai- so nothing collides with edit_consultation.
+   Reuses the CSS variables already declared in edit_consultation.css
+   (--bg --text --card --muted --accent --border --shadow), so dark
+   mode is inherited automatically.
+   ============================================================ */
+
+/* The persistent, unmissable "this is AI, you own the decision" badge.
+   Amber on purpose — not success-green, not error-red: it means
+   "review before trusting", which is exactly the posture we want a
+   clinician to keep toward every generated line. */
+.cai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1;
+    padding: 4px 9px;
+    border-radius: 999px;
+    color: #92400e;
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    white-space: nowrap;
+}
+.dark .cai-badge {
+    color: #fde68a;
+    background: rgba(251, 191, 36, 0.12);
+    border-color: rgba(251, 191, 36, 0.45);
+}
+
+/* AI Assistant card -------------------------------------------------- */
+.cai-card .card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.cai-section {
+    padding: 0.5rem 0;
+}
+.cai-section + .cai-section {
+    border-top: 1px solid var(--border);
+    margin-top: 0.5rem;
+}
+.cai-section-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* Read-only prior-visit summary box ---------------------------------- */
+.cai-summary-output {
+    background: var(--bg);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-top: 10px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 360px;
+    overflow-y: auto;
+}
+.cai-summary-output:empty {
+    display: none;
+}
+
+/* Preset "ask the assistant" chips ---------------------------------- */
+.cai-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.cai-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    padding: 7px 13px;
+    border-radius: 999px;
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+.cai-chip:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+}
+.cai-chip i {
+    color: var(--accent);
+}
+
+/* ICD-10 suggestion popover ----------------------------------------- */
+.cai-anchor {
+    position: relative;
+}
+.cai-icd-popover {
+    position: absolute;
+    z-index: 1050;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px var(--shadow);
+    max-height: 320px;
+    overflow-y: auto;
+    display: none;
+}
+.cai-icd-popover.show {
+    display: block;
+}
+.cai-icd-group-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    padding: 9px 14px 5px;
+}
+.cai-icd-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    border-top: 1px solid var(--border);
+    transition: background 0.15s ease;
+}
+.cai-icd-item:hover,
+.cai-icd-item:focus-visible {
+    background: var(--bg);
+    outline: none;
+}
+.cai-icd-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 700;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+.cai-icd-label {
+    flex: 1;
+    font-size: 0.85rem;
+    color: var(--text);
+}
+.cai-icd-meta {
+    font-size: 0.7rem;
+    padding: 2px 7px;
+    border-radius: 999px;
+    flex-shrink: 0;
+}
+.cai-icd-meta--history {
+    color: #166534;
+    background: rgba(22, 101, 52, 0.1);
+}
+.dark .cai-icd-meta--history {
+    color: #4ade80;
+    background: rgba(74, 222, 128, 0.12);
+}
+.cai-icd-meta--ai {
+    color: #92400e;
+    background: #fef3c7;
+}
+.dark .cai-icd-meta--ai {
+    color: #fde68a;
+    background: rgba(251, 191, 36, 0.12);
+}
+.cai-icd-empty,
+.cai-icd-error {
+    padding: 14px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-align: center;
+}
+.cai-icd-error {
+    color: var(--danger);
+}
+
+/* Reusable amber "AI — review before saving" review card ------------ */
+.cai-review {
+    border: 1px solid #fcd34d;
+    background: #fffbeb;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 10px;
+}
+.dark .cai-review {
+    background: rgba(251, 191, 36, 0.07);
+    border-color: rgba(251, 191, 36, 0.4);
+}
+.cai-review-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.cai-review-body {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 300px;
+    overflow-y: auto;
+}
+.cai-review-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+/* Inline spinner ---------------------------------------------------- */
+.cai-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: cai-spin 0.7s linear infinite;
+    vertical-align: -2px;
+}
+@keyframes cai-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 768px) {
+    .cai-icd-popover {
+        max-height: 240px;
+    }
+    .cai-chip {
+        font-size: 0.8rem;
+    }
+}

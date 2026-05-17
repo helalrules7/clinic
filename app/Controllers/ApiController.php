@@ -13591,6 +13591,317 @@ class ApiController
     }
 
     /**
+     * Centralised Groq chat-completion call for the smart-consultation
+     * assists (Phase 1). The body is lifted from chatWithAI()'s inline
+     * cURL block; the 3 pre-existing inline call-sites are deliberately
+     * left untouched (refactoring them is out of scope / risk).
+     *
+     * @param array $messages OpenAI-style [['role'=>..,'content'=>..], ..]
+     * @param array $opts     temperature|max_tokens|model|timeout|response_format
+     * @return array{ok:bool,content:string,http:int,error:string}
+     */
+    private function callGroq(array $messages, array $opts = []): array
+    {
+        $out = ['ok' => false, 'content' => '', 'http' => 0, 'error' => ''];
+
+        $groqApiKey = $_ENV['GROQ_API_KEY'] ?? getenv('GROQ_API_KEY');
+        if (!$groqApiKey || empty(trim($groqApiKey))) {
+            error_log('callGroq: GROQ_API_KEY not configured');
+            $out['error'] = 'AI service not configured.';
+            return $out;
+        }
+
+        $payload = [
+            'model'       => $opts['model'] ?? 'llama-3.3-70b-versatile',
+            'messages'    => $messages,
+            'temperature' => $opts['temperature'] ?? 0.2,
+            'max_tokens'  => $opts['max_tokens'] ?? 1200,
+        ];
+        if (!empty($opts['response_format'])) {
+            $payload['response_format'] = $opts['response_format'];
+        }
+
+        $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_HTTPHEADER     => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $groqApiKey,
+            ],
+            CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            CURLOPT_TIMEOUT        => $opts['timeout'] ?? 30,
+            CURLOPT_CONNECTTIMEOUT => 10,
+        ]);
+
+        $response  = curl_exec($ch);
+        $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        $out['http'] = (int) $httpCode;
+
+        if ($curlError) {
+            error_log('callGroq cURL error: ' . $curlError);
+            $out['error'] = 'AI service connection error.';
+            return $out;
+        }
+
+        if ($httpCode !== 200) {
+            error_log('callGroq HTTP ' . $httpCode . ' - ' . substr((string) $response, 0, 500));
+            if ($httpCode === 401) {
+                $out['error'] = 'AI service authentication failed.';
+            } elseif ($httpCode === 429) {
+                $out['error'] = 'AI service is busy (rate limit). Please try again shortly.';
+            } else {
+                $out['error'] = 'AI service error.';
+            }
+            return $out;
+        }
+
+        $decoded = json_decode((string) $response, true);
+        if (!isset($decoded['choices'][0]['message']['content'])) {
+            error_log('callGroq unexpected response: ' . substr((string) $response, 0, 500));
+            $out['error'] = 'AI service returned an invalid response.';
+            return $out;
+        }
+
+        $out['ok']      = true;
+        $out['content'] = (string) $decoded['choices'][0]['message']['content'];
+        return $out;
+    }
+
+    /**
+     * Phase 1.2 — Inline "prior-visit clinical summary".
+     *
+     * GET /api/consultation/prior-summary?appointment_id=
+     * Doctor/admin only. Resolves the patient from the appointment, reuses
+     * buildPatientHistoryContext(), and asks Groq for a STRICTLY grounded
+     * bullet recap (no invention; "not recorded" when data is absent).
+     * Read-only situational awareness — never written to the chart.
+     *
+     * @return \Psr\Http\Message\ResponseInterface JSON response
+     */
+    public function getPriorVisitSummary()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Unauthorized'], 401);
+            }
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Permission denied'], 403);
+            }
+
+            $appointmentId = isset($_GET['appointment_id']) && $_GET['appointment_id']
+                ? (int) $_GET['appointment_id'] : 0;
+            if ($appointmentId <= 0) {
+                return $this->jsonResponse(['ok' => false, 'error' => 'appointment_id is required'], 400);
+            }
+
+            $stmt = $this->pdo->prepare("SELECT id, patient_id FROM appointments WHERE id = ?");
+            $stmt->execute([$appointmentId]);
+            $appt = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if (!$appt) {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Appointment not found'], 404);
+            }
+            $patientId = (int) $appt['patient_id'];
+
+            $history = $this->buildPatientHistoryContext($patientId);
+            if (trim($history) === '') {
+                return $this->jsonResponse([
+                    'ok' => true,
+                    'data' => ['summary' => 'No prior records were found for this patient.'],
+                ]);
+            }
+
+            $system = "You are a clinical scribe assisting an ophthalmologist. "
+                . "Summarise ONLY the prior-visit data provided below. "
+                . "Rules: (1) Use ONLY facts present in the data; never infer, "
+                . "estimate or invent. (2) If a relevant item is absent, write "
+                . "'not recorded'. (3) Maximum 8 concise bullets. (4) Explicitly "
+                . "surface any trend in IOP, visual acuity (VA) or refraction if "
+                . "such values appear over time. (5) Do not give new treatment "
+                . "advice; this is a factual recap only. Output plain bullets "
+                . "each starting with '- ', no preamble, no closing remarks.";
+
+            $result = $this->callGroq([
+                ['role' => 'system', 'content' => $system],
+                ['role' => 'user', 'content' => "PRIOR VISIT DATA:\n\n" . $history],
+            ], ['temperature' => 0.2, 'max_tokens' => 900]);
+
+            if (!$result['ok']) {
+                return $this->jsonResponse(
+                    ['ok' => false, 'error' => $result['error'] ?: 'AI summary unavailable'],
+                    502
+                );
+            }
+
+            $summary = trim($result['content']);
+
+            $this->saveChatMessage($user['id'], $patientId, $appointmentId, 'user',
+                '[prior-visit summary requested]', 'smart_summary');
+            $this->saveChatMessage($user['id'], $patientId, $appointmentId, 'assistant',
+                $summary, 'smart_summary');
+
+            return $this->jsonResponse(['ok' => true, 'data' => ['summary' => $summary]]);
+
+        } catch (\Exception $e) {
+            error_log('getPriorVisitSummary error: ' . $e->getMessage());
+            return $this->jsonResponse(
+                ['ok' => false, 'error' => 'Failed to build prior-visit summary'],
+                500
+            );
+        }
+    }
+
+    /**
+     * Phase 1.3 — Diagnosis → ICD-10 suggestion.
+     *
+     * POST /api/consultation/icd10-suggest  {diagnosis, complaint?}
+     * Doctor/admin only. Clinic-history candidates (human-entered
+     * diagnosis_code on >=90%-similar past diagnoses) rank FIRST and are
+     * trusted; the AI is a secondary aid whose every code is regex-validated
+     * server-side, so no malformed code ever reaches the doctor. Nothing is
+     * auto-committed — the UI sets the single field only on explicit click.
+     *
+     * @return \Psr\Http\Message\ResponseInterface JSON response
+     */
+    public function suggestICD10Codes()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Unauthorized'], 401);
+            }
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Permission denied'], 403);
+            }
+
+            $input = json_decode(file_get_contents('php://input'), true) ?: [];
+            $diagnosis = trim($input['diagnosis'] ?? '');
+            $complaint = trim($input['complaint'] ?? '');
+            if ($diagnosis === '') {
+                return $this->jsonResponse(['ok' => false, 'error' => 'diagnosis is required'], 400);
+            }
+
+            // ICD-10-CM structural validator (category + optional subcategory).
+            $icd10Re = '/^[A-TV-Z][0-9][0-9AB](\.[0-9A-Z]{1,4})?$/';
+
+            // ---- 1. Data-driven: codes this clinic actually used for a
+            //         near-identical diagnosis (reuse the proven closures). ----
+            $normalizeText = function ($text) {
+                return mb_strtolower(trim(preg_replace('/\s+/', ' ', (string) $text)));
+            };
+            $calculateSimilarity = function ($t1, $t2) use ($normalizeText) {
+                $n1 = $normalizeText($t1);
+                $n2 = $normalizeText($t2);
+                if ($n1 === '' || $n2 === '') return 0;
+                if ($n1 === $n2) return 100;
+                similar_text($n1, $n2, $percent);
+                return $percent;
+            };
+
+            $stmt = $this->pdo->query("
+                SELECT cn.diagnosis, cn.diagnosis_code, COUNT(*) AS cnt
+                FROM consultation_notes cn
+                WHERE cn.diagnosis_code IS NOT NULL
+                  AND TRIM(cn.diagnosis_code) != ''
+                  AND cn.diagnosis IS NOT NULL
+                  AND TRIM(cn.diagnosis) != ''
+                GROUP BY cn.diagnosis, cn.diagnosis_code
+            ");
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $histAgg = [];
+            foreach ($rows as $r) {
+                if ($calculateSimilarity($diagnosis, $r['diagnosis']) >= 90) {
+                    $code = strtoupper(trim($r['diagnosis_code']));
+                    if (!preg_match($icd10Re, $code)) continue;
+                    if (!isset($histAgg[$code])) $histAgg[$code] = 0;
+                    $histAgg[$code] += (int) $r['cnt'];
+                }
+            }
+            arsort($histAgg);
+            $fromHistory = [];
+            foreach ($histAgg as $code => $cnt) {
+                $fromHistory[] = ['code' => $code, 'count' => $cnt];
+                if (count($fromHistory) >= 5) break;
+            }
+
+            // ---- 2. AI secondary suggestions (strict, JSON, validated). ----
+            $aiSuggestions = [];
+            $aiError = '';
+            $sys = "You are an ICD-10-CM coding assistant for ophthalmology. "
+                . "Given a free-text diagnosis, return the most likely OFFICIAL "
+                . "ICD-10-CM codes. NEVER invent codes or formats. If unsure, "
+                . "return fewer. Respond ONLY as JSON with this exact shape: "
+                . '{"codes":[{"code":"H25.13","label":"...","confidence":0.0}]}'
+                . " confidence is 0..1. Maximum 4 items.";
+            $usr = "Diagnosis: " . $diagnosis
+                . ($complaint !== '' ? "\nChief complaint: " . $complaint : '');
+
+            $ai = $this->callGroq([
+                ['role' => 'system', 'content' => $sys],
+                ['role' => 'user', 'content' => $usr],
+            ], [
+                'temperature'     => 0.1,
+                'max_tokens'      => 500,
+                'response_format' => ['type' => 'json_object'],
+            ]);
+
+            if ($ai['ok']) {
+                $parsed = json_decode($ai['content'], true);
+                $list = is_array($parsed['codes'] ?? null) ? $parsed['codes'] : [];
+                foreach ($list as $item) {
+                    $code = strtoupper(trim((string) ($item['code'] ?? '')));
+                    if ($code === '' || !preg_match($icd10Re, $code)) {
+                        continue; // drop anything malformed — never surface it
+                    }
+                    if (isset($histAgg[$code])) {
+                        continue; // already shown (and trusted) from history
+                    }
+                    $conf = $item['confidence'] ?? null;
+                    $aiSuggestions[] = [
+                        'code'       => $code,
+                        'label'      => trim((string) ($item['label'] ?? '')),
+                        'confidence' => is_numeric($conf) ? round((float) $conf, 2) : null,
+                    ];
+                    if (count($aiSuggestions) >= 4) break;
+                }
+            } else {
+                $aiError = $ai['error'];
+            }
+
+            // Audit trail (zero schema change — reuse ai_chat_history).
+            $this->saveChatMessage($user['id'], null, null, 'user',
+                '[icd10-suggest] ' . $diagnosis
+                    . ($complaint !== '' ? ' | cc: ' . $complaint : ''),
+                'icd10_suggest');
+            $this->saveChatMessage($user['id'], null, null, 'assistant',
+                json_encode(['from_history' => $fromHistory, 'ai' => $aiSuggestions],
+                    JSON_UNESCAPED_UNICODE),
+                'icd10_suggest');
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => [
+                    'from_history' => $fromHistory,
+                    'ai'           => $aiSuggestions,
+                    'ai_error'     => $aiError ?: null,
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            error_log('suggestICD10Codes error: ' . $e->getMessage());
+            return $this->jsonResponse(
+                ['ok' => false, 'error' => 'Failed to suggest ICD-10 codes'],
+                500
+            );
+        }
+    }
+
+    /**
      * Get chat history
      *
      * @return \Psr\Http\Message\ResponseInterface JSON response

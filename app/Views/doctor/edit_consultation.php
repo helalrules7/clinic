@@ -1,5 +1,10 @@
 <!-- Breadcrumb -->
-<link href="/app/Views/doctor/assets/css/edit_consultation.css?v=<?= file_exists(__DIR__ . '/assets/css/edit_consultation.css') ? filemtime(__DIR__ . '/assets/css/edit_consultation.css') : time() ?>" rel="stylesheet">
+<link
+    href="/app/Views/doctor/assets/css/edit_consultation.css?v=<?= file_exists(__DIR__ . '/assets/css/edit_consultation.css') ? filemtime(__DIR__ . '/assets/css/edit_consultation.css') : time() ?>"
+    rel="stylesheet">
+<link
+    href="/app/Views/doctor/assets/css/consultation-ai.css?v=<?= file_exists(__DIR__ . '/assets/css/consultation-ai.css') ? filemtime(__DIR__ . '/assets/css/consultation-ai.css') : time() ?>"
+    rel="stylesheet">
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <nav aria-label="breadcrumb">
@@ -106,7 +111,58 @@
 </div>
 <?php endif; ?>
 
-<?php 
+<!-- AI Assistant (Phase 1). Read-only situational awareness + lazy,
+     on-click only. Nothing here writes the chart or submits the form. -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card cai-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-stars text-warning"></i>
+                    AI Assistant
+                    <span class="cai-badge"><i class="bi bi-shield-check"></i>
+                        AI — review before saving</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="cai-section">
+                    <div class="cai-section-label">Prior-visit clinical summary</div>
+                    <p class="text-muted small mb-2">
+                        Grounded recap of this patient's previous records
+                        (IOP / VA / refraction trends flagged). Read-only —
+                        not added to the chart.
+                    </p>
+                    <button type="button" id="caiSummarizeBtn"
+                        class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-clipboard2-pulse"></i>
+                        Summarize prior visits
+                    </button>
+                    <div class="cai-summary-output" id="caiSummaryOutput"></div>
+                </div>
+
+                <div class="cai-section">
+                    <div class="cai-section-label">Ask the assistant</div>
+                    <div class="cai-chips">
+                        <button type="button" class="cai-chip"
+                            data-cai-prompt="Summarize this patient's prior ophthalmic visits in 5 bullets"
+                            data-cai-context="patient_history">
+                            <i class="bi bi-clock-history"></i>
+                            Summarize prior ophthalmic visits
+                        </button>
+                        <button type="button" class="cai-chip"
+                            data-cai-prompt="What might I be missing in the current consultation draft?"
+                            data-cai-context="consultation_summary">
+                            <i class="bi bi-question-circle"></i>
+                            What might I be missing?
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php
 // Get the latest consultation note for editing, or prepare for new one
 $consultation = !empty($consultationNotes) ? $consultationNotes[0] : [];
 $isEditing = !empty($consultation);
@@ -405,12 +461,23 @@ $isEditing = !empty($consultation);
 
                     <!-- Diagnosis Code -->
                     <div class="mb-3">
-                        <label for="diagnosis_code" class="form-label">
-                            <i class="bi bi-upc text-secondary"></i>
-                            Diagnosis Code (ICD-10)
-                        </label>
-                        <input type="text" class="form-control" id="diagnosis_code" name="diagnosis_code"
-                            placeholder="e.g., H25.9" value="<?= htmlspecialchars($consultation['diagnosis_code'] ?? '') ?>">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <label for="diagnosis_code" class="form-label mb-0">
+                                <i class="bi bi-upc text-secondary"></i>
+                                Diagnosis Code (ICD-10)
+                            </label>
+                            <button type="button" id="caiIcd10Btn"
+                                class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-stars"></i>
+                                Suggest ICD-10
+                            </button>
+                        </div>
+                        <div class="cai-anchor mt-1">
+                            <input type="text" class="form-control" id="diagnosis_code" name="diagnosis_code"
+                                placeholder="e.g., H25.9"
+                                value="<?= htmlspecialchars($consultation['diagnosis_code'] ?? '') ?>">
+                            <div class="cai-icd-popover" id="caiIcd10Popover"></div>
+                        </div>
                     </div>
 
                     <!-- Treatment Plan -->
@@ -453,7 +520,64 @@ $isEditing = !empty($consultation);
     </div>
 </div>
 
-<script src="/app/Views/doctor/assets/js/edit_consultation.js?v=<?= file_exists(__DIR__ . '/assets/js/edit_consultation.js') ? filemtime(__DIR__ . '/assets/js/edit_consultation.js') : time() ?>"></script>
+<!-- Common Complaints Modal -->
+<div class="modal fade" id="commonComplaintsModal" tabindex="-1" aria-labelledby="commonComplaintsModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="commonComplaintsModalLabel">
+                    <i class="bi bi-list-check me-2"></i>Most Common Cases
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="commonComplaintsLoading" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading common cases...</p>
+                </div>
+                <div id="commonComplaintsContent" style="display: none;">
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Last updated: <span id="lastUpdated"></span>
+                        </small>
+                    </div>
+                    <div id="commonComplaintsList" class="list-group"></div>
+                </div>
+                <div id="commonComplaintsError" style="display: none;" class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <span id="errorMessage"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script
+    src="/app/Views/doctor/assets/js/edit_consultation.js?v=<?= file_exists(__DIR__ . '/assets/js/edit_consultation.js') ? filemtime(__DIR__ . '/assets/js/edit_consultation.js') : time() ?>"></script>
+
+<!-- Smart Consultation — AI assists (Phase 1). Config is inline so
+     consultation-ai.js stays static/cacheable. ai-chat-widget.js MUST
+     load before consultation-ai.js (it calls initAIChatWidget). -->
+<script>
+    window.CONSULTATION_AI = {
+        appointmentId: <?= isset($appointment['id']) ? (int) $appointment['id'] : 'null' ?>,
+        patientId: <?= isset($appointment['patient_id']) ? (int) $appointment['patient_id'] : 'null' ?>,
+        csrfToken: '<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>'
+    };
+</script>
+<link rel="stylesheet"
+    href="/app/Views/doctor/assets/css/ai-chat-widget.css?v=<?= file_exists(__DIR__ . '/assets/css/ai-chat-widget.css') ? filemtime(__DIR__ . '/assets/css/ai-chat-widget.css') : time() ?>">
+<script
+    src="/app/Views/doctor/assets/js/ai-chat-widget.js?v=<?= file_exists(__DIR__ . '/assets/js/ai-chat-widget.js') ? filemtime(__DIR__ . '/assets/js/ai-chat-widget.js') : time() ?>"></script>
+<script
+    src="/app/Views/doctor/assets/js/consultation-ai.js?v=<?= file_exists(__DIR__ . '/assets/js/consultation-ai.js') ? filemtime(__DIR__ . '/assets/js/consultation-ai.js') : time() ?>"></script>
 <style>
     .modal-backdrop.show{
         display: none !important;

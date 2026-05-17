@@ -357,6 +357,14 @@ try {
     $router->delete('/api/patients/{id}', 'ApiController@deletePatient');
     $router->put('/api/patients/{id}/emergency-contact', 'ApiController@updateEmergencyContact');
     $router->post('/api/consultations', 'ApiController@createConsultation');
+    // Consultation autocomplete + common-cases modal: the methods existed
+    // but the routes were never registered, so edit_consultation.js's
+    // autocomplete and "Common Cases" modal 404'd in production.
+    $router->get('/api/consultation/suggestions', 'ApiController@getConsultationSuggestions');
+    $router->get('/api/consultation/common-complaints', 'ApiController@getCommonComplaints');
+    // Smart-consultation AI assists (Phase 1).
+    $router->get('/api/consultation/prior-summary', 'ApiController@getPriorVisitSummary');
+    $router->post('/api/consultation/icd10-suggest', 'ApiController@suggestICD10Codes');
     $router->get('/api/prescriptions/suggestions', 'ApiController@getPrescriptionSuggestions');
     $router->post('/api/prescriptions/meds', 'ApiController@createMedicationPrescription');
     $router->put('/api/prescriptions/meds/{id}', 'ApiController@updateMedication');
