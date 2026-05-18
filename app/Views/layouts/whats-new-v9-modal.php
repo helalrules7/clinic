@@ -1,12 +1,15 @@
 <?php
-// "What's New" v9.0.0 — step-by-step wizard, shown once per browser via
-// localStorage. Included from layouts/main.php (doctor/admin) and
-// secretary_main.php. Bump WIZARD_STORAGE_KEY (see <script> at the bottom)
-// in a future release to surface a fresh wizard again.
+// "What's New" v9.1.0 — step-by-step wizard. Same display policy as v9.0
+// (per-login session, 2-day window from first sight, opt-out persistent),
+// but bumping VERSION below to v9_1_0 deliberately RESETS the timer +
+// opt-out for every browser, so the new wizard surfaces fresh on the
+// next login. Included from layouts/main.php (doctor/admin) and
+// secretary_main.php. Bump VERSION again in a future release to
+// resurface the next wizard.
 ?>
 <style>
     /* ---- shell ----------------------------------------------------------- */
-    #whatsNewV9Modal .modal-dialog { max-width: 620px; }
+    #whatsNewV9Modal .modal-dialog { max-width: 640px; }
     #whatsNewV9Modal .modal-content {
         border: none;
         border-radius: 18px;
@@ -46,7 +49,7 @@
     }
     .dark .wn-slide h3 { color: #a5b4fc; }
     .wn-slide p {
-        font-size: .92rem; color: #475569; margin: 0 auto; max-width: 440px;
+        font-size: .92rem; color: #475569; margin: 0 auto; max-width: 460px;
         line-height: 1.55;
     }
     .dark .wn-slide p { color: #94a3b8; }
@@ -59,14 +62,14 @@
 
     /* ---- mockup stage ---------------------------------------------------- */
     .wn-stage {
-        height: 200px; margin: 1rem auto 0; max-width: 460px;
+        height: 210px; margin: 1rem auto 0; max-width: 480px;
         border-radius: 14px; position: relative; overflow: hidden;
         background: #0f172a;
         border: 1px solid rgba(148,163,184,.25);
         box-shadow: inset 0 0 40px rgba(0,0,0,.35);
     }
 
-    /* animated version label (slide 1) */
+    /* ---- Slide 1 — animated version label -------------------------------- */
     .wn-ver {
         position:absolute; inset:0;
         display:flex; flex-direction:column;
@@ -90,134 +93,280 @@
         animation: wnVerNum .7s cubic-bezier(.34,1.56,.64,1) .35s forwards,
                    wnVerGlow 2.8s ease-in-out 1.1s infinite;
     }
-    @keyframes wnVerLabel {
-        to { opacity:1; transform:translateY(0); }
-    }
-    @keyframes wnVerNum {
-        to { opacity:1; transform:scale(1); }
-    }
+    @keyframes wnVerLabel { to { opacity:1; transform:translateY(0); } }
+    @keyframes wnVerNum   { to { opacity:1; transform:scale(1); } }
     @keyframes wnVerGlow {
         0%,100% { filter:drop-shadow(0 4px 14px rgba(99,102,241,.35)); }
         50%     { filter:drop-shadow(0 6px 26px rgba(56,189,248,.65)); }
     }
 
-    /* clinic badges */
-    .wn-badge {
-        position:absolute; padding:.4rem .8rem; border-radius:8px;
-        font-size:.8rem; font-weight:700; color:#fff;
-        animation: wnPop 2.6s ease-in-out infinite;
+    /* ---- Slide 2 — AI Assistant card mockup ------------------------------ */
+    .wn-ai {
+        position:absolute; inset:18px;
+        background:#1e293b; border-radius:10px;
+        border:1px solid rgba(148,163,184,.18);
+        padding:14px 16px; text-align:left;
+        display:flex; flex-direction:column; gap:12px;
     }
-    .wn-badge.r { background:#166534; left:26%; top:38%; }
-    .wn-badge.k { background:#4c1d95; left:50%; top:54%; animation-delay:.6s; }
-    @keyframes wnPop {
-        0%,100% { transform: scale(.92); opacity:.55; }
-        50%     { transform: scale(1.05); opacity:1; }
+    .wn-ai-head {
+        display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    }
+    .wn-ai-icon {
+        width:30px; height:30px; border-radius:8px;
+        display:inline-flex; align-items:center; justify-content:center;
+        background:rgba(245,158,11,.18); color:#fbbf24; font-size:1rem;
+        animation: wnAiIcon 2.2s ease-in-out infinite;
+    }
+    @keyframes wnAiIcon {
+        0%,100% { box-shadow:0 0 0 0 rgba(251,191,36,0); transform:scale(1); }
+        50%     { box-shadow:0 0 0 8px rgba(251,191,36,.18); transform:scale(1.06); }
+    }
+    .wn-ai-title { font-weight:700; color:#f1f5f9; font-size:.95rem; }
+    .wn-ai-badge {
+        font-size:.66rem; font-weight:700;
+        color:#fde68a; background:rgba(251,191,36,.14);
+        border:1px solid rgba(251,191,36,.4);
+        padding:3px 8px; border-radius:999px;
+        margin-left:auto; white-space:nowrap;
+    }
+    .wn-ai-chips { display:flex; flex-wrap:wrap; gap:8px; }
+    .wn-ai-chip {
+        display:inline-flex; align-items:center; gap:6px;
+        font-size:.74rem; padding:6px 11px; border-radius:999px;
+        background:#0f172a; color:#e2e8f0;
+        border:1px solid rgba(148,163,184,.25);
+        opacity:0; transform:translateY(6px);
+        animation: wnChipIn .6s ease-out forwards;
+    }
+    .wn-ai-chip i { color:#38bdf8; }
+    .wn-ai-chip:nth-child(1) { animation-delay:.5s; }
+    .wn-ai-chip:nth-child(2) { animation-delay:.85s; }
+    @keyframes wnChipIn { to { opacity:1; transform:translateY(0); } }
+
+    /* ---- Slide 3 — Prior-visit summary bullets --------------------------- */
+    .wn-sum {
+        position:absolute; inset:18px;
+        background:#1e293b; border-radius:10px;
+        border:1px solid rgba(148,163,184,.18);
+        padding:12px 14px; text-align:left;
+        display:flex; flex-direction:column; gap:8px;
+    }
+    .wn-sum-btn {
+        align-self:flex-start;
+        display:inline-flex; align-items:center; gap:6px;
+        font-size:.74rem; padding:5px 11px; border-radius:6px;
+        color:#bfdbfe; background:rgba(59,130,246,.16);
+        border:1px solid rgba(59,130,246,.45);
+        animation: wnSumBtn 4.5s ease-in-out infinite;
+    }
+    @keyframes wnSumBtn {
+        0%,100% { box-shadow:0 0 0 0 rgba(59,130,246,0); }
+        12%     { box-shadow:0 0 0 4px rgba(59,130,246,.4); }
+        25%     { box-shadow:0 0 0 0 rgba(59,130,246,0); }
+    }
+    .wn-sum-list {
+        margin:0; padding:0; list-style:none;
+        font-size:.78rem; color:#cbd5e1; line-height:1.55;
+    }
+    .wn-sum-list li {
+        opacity:0; transform:translateY(4px);
+        animation: wnBullet 4.5s ease-out infinite;
+    }
+    .wn-sum-list li em { color:#fbbf24; font-style:normal; font-weight:700; }
+    .wn-sum-list li:nth-child(1) { animation-delay:.6s; }
+    .wn-sum-list li:nth-child(2) { animation-delay:1.0s; }
+    .wn-sum-list li:nth-child(3) { animation-delay:1.4s; }
+    .wn-sum-list li:nth-child(4) { animation-delay:1.8s; }
+    @keyframes wnBullet {
+        0%   { opacity:0; transform:translateY(4px); }
+        15%  { opacity:1; transform:translateY(0); }
+        85%  { opacity:1; transform:translateY(0); }
+        100% { opacity:0; transform:translateY(0); }
     }
 
-    /* drawing canvas */
-    .wn-canvas { position:absolute; inset:14px; background:#fff; border-radius:8px; }
-    .wn-pen {
-        position:absolute; width:22px; height:22px; color:#6366f1;
-        animation: wnPenMove 3.4s ease-in-out infinite;
+    /* ---- Slide 4 — ICD-10 popover ---------------------------------------- */
+    .wn-icd {
+        position:absolute; inset:18px;
+        background:#1e293b; border-radius:10px;
+        border:1px solid rgba(148,163,184,.18);
+        padding:12px 14px; text-align:left;
+        display:flex; flex-direction:column; gap:8px;
     }
-    .wn-ink {
-        position:absolute; left:40px; top:120px; width:0; height:4px;
-        background:#6366f1; border-radius:4px;
-        animation: wnInk 3.4s ease-in-out infinite;
+    .wn-icd-row1 {
+        display:flex; align-items:center; gap:10px;
     }
-    @keyframes wnPenMove {
-        0%   { left:34px;  top:112px; }
-        45%  { left:300px; top:60px; }
-        55%  { left:300px; top:60px; }
-        100% { left:34px;  top:112px; }
+    .wn-icd-input {
+        flex:1; font-size:.76rem; color:#e2e8f0;
+        background:#0f172a; border:1px solid rgba(148,163,184,.25);
+        border-radius:6px; padding:5px 9px;
     }
-    @keyframes wnInk {
-        0%   { width:0; }
-        45%  { width:280px; transform:translateY(-58px) rotate(-12deg); }
-        55%  { width:280px; transform:translateY(-58px) rotate(-12deg); opacity:1; }
-        70%  { opacity:0; }
-        100% { width:0; opacity:0; }
+    .wn-icd-btn {
+        display:inline-flex; align-items:center; gap:6px;
+        font-size:.72rem; padding:5px 10px; border-radius:6px;
+        color:#bfdbfe; background:rgba(59,130,246,.16);
+        border:1px solid rgba(59,130,246,.45); white-space:nowrap;
+        animation: wnSumBtn 3.6s ease-in-out infinite;
+    }
+    .wn-icd-pop {
+        background:#0f172a; border:1px solid rgba(148,163,184,.25);
+        border-radius:8px; overflow:hidden;
+        opacity:0; transform:translateY(-6px);
+        animation: wnIcdPop 3.6s ease-out infinite;
+    }
+    @keyframes wnIcdPop {
+        0%, 22% { opacity:0; transform:translateY(-6px); }
+        32%     { opacity:1; transform:translateY(0); }
+        90%     { opacity:1; transform:translateY(0); }
+        100%    { opacity:0; transform:translateY(-6px); }
+    }
+    .wn-icd-pop-label {
+        font-size:.62rem; font-weight:700; text-transform:uppercase;
+        letter-spacing:.04em; color:#94a3b8; padding:6px 10px 2px;
+    }
+    .wn-icd-r {
+        display:flex; align-items:center; gap:10px;
+        padding:6px 10px; border-top:1px solid rgba(148,163,184,.12);
+        font-size:.76rem;
+    }
+    .wn-icd-r b {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        color:#38bdf8; font-weight:700;
+    }
+    .wn-icd-r span { flex:1; color:#cbd5e1; }
+    .wn-icd-r i {
+        font-size:.62rem; padding:2px 7px; border-radius:999px;
+        background:rgba(251,191,36,.14); color:#fde68a; font-style:normal;
     }
 
-    /* contextual menu */
-    .wn-shape {
-        position:absolute; left:50%; top:54%; transform:translate(-50%,-50%);
-        width:120px; height:74px; border:2px solid #0ea5e9; border-radius:8px;
-        background:rgba(14,165,233,.12);
-        animation: wnSelect 3s ease-in-out infinite;
-    }
-    @keyframes wnSelect {
-        0%,100% { box-shadow:0 0 0 0 rgba(14,165,233,0); }
-        50%     { box-shadow:0 0 0 4px rgba(14,165,233,.35); }
-    }
-    .wn-ctx {
-        position:absolute; left:50%; top:20%; transform:translateX(-50%);
-        display:flex; gap:6px; padding:6px 8px; border-radius:999px;
-        background:#fff; box-shadow:0 8px 20px rgba(0,0,0,.3);
-        animation: wnFloat 3s ease-in-out infinite;
-    }
-    .wn-ctx i {
-        width:24px; height:24px; border-radius:50%;
+    /* ---- Slide 5 — Drawing: animated eye SVG (ophthalmology) ------------- */
+    .wn-eye-wrap {
+        position:absolute; inset:0;
         display:flex; align-items:center; justify-content:center;
-        background:#eef2ff; color:#4f46e5; font-size:.7rem;
+        background: radial-gradient(circle at 50% 50%, rgba(56,189,248,.18), transparent 70%);
     }
-    .wn-ctx i.danger { background:#fee2e2; color:#dc2626; }
-    @keyframes wnFloat {
-        0%,100% { transform:translateX(-50%) translateY(0); }
-        50%     { transform:translateX(-50%) translateY(-4px); }
+    .wn-eye {
+        width: 88%; height: 88%;
+    }
+    .wn-eye-outline {
+        fill:none; stroke:#60a5fa; stroke-width:2.5;
+        stroke-linecap:round; stroke-linejoin:round;
+        stroke-dasharray:760; stroke-dashoffset:760;
+        animation: wnEyeOutline 6s ease-in-out infinite;
+    }
+    .wn-eye-iris {
+        fill:rgba(14,165,233,.14); stroke:#0ea5e9; stroke-width:2.5;
+        stroke-dasharray:270; stroke-dashoffset:270; opacity:0;
+        animation: wnEyeIris 6s ease-in-out infinite;
+    }
+    .wn-eye-rays {
+        opacity:0; stroke:#0ea5e9; stroke-width:1;
+        animation: wnEyeRays 6s ease-in-out infinite;
+    }
+    .wn-eye-pupil { fill:#0f172a; opacity:0; animation: wnEyePupil 6s ease-in-out infinite; }
+    .wn-eye-glint { fill:#fff; opacity:0; animation: wnEyeGlint 6s ease-in-out infinite; }
+    .wn-eye-label {
+        opacity:0; animation: wnEyeLabel 6s ease-in-out infinite;
+    }
+    .wn-eye-label line { stroke:#fbbf24; stroke-width:2; stroke-linecap:round; }
+    .wn-eye-label text { fill:#fbbf24; font-weight:700; font-size:13px;
+                         font-family: ui-monospace, monospace; }
+    @keyframes wnEyeOutline {
+        0%   { stroke-dashoffset:760; opacity:1; }
+        18%  { stroke-dashoffset:0;   opacity:1; }
+        88%  { stroke-dashoffset:0;   opacity:1; }
+        100% { stroke-dashoffset:0;   opacity:0; }
+    }
+    @keyframes wnEyeIris {
+        0%,18% { stroke-dashoffset:270; opacity:1; }
+        30%    { stroke-dashoffset:0;   opacity:1; }
+        88%    { stroke-dashoffset:0;   opacity:1; }
+        100%   { stroke-dashoffset:0;   opacity:0; }
+    }
+    @keyframes wnEyeRays {
+        0%,32% { opacity:0; }
+        42%    { opacity:.6; }
+        88%    { opacity:.6; }
+        100%   { opacity:0; }
+    }
+    @keyframes wnEyePupil {
+        0%,38% { opacity:0; }
+        48%    { opacity:1; }
+        88%    { opacity:1; }
+        100%   { opacity:0; }
+    }
+    @keyframes wnEyeGlint {
+        0%,50% { opacity:0; }
+        60%    { opacity:1; }
+        88%    { opacity:1; }
+        100%   { opacity:0; }
+    }
+    @keyframes wnEyeLabel {
+        0%,62% { opacity:0; }
+        72%    { opacity:1; }
+        88%    { opacity:1; }
+        100%   { opacity:0; }
     }
 
-    /* patient row + badge */
-    .wn-row {
-        position:absolute; left:24px; right:24px; top:50%;
-        transform:translateY(-50%);
+    /* ---- Slide 6 — Bug Fixes -------------------------------------------- */
+    .wn-bugs {
+        position:absolute; inset:18px;
+        background:#1e293b; border-radius:10px;
+        border:1px solid rgba(148,163,184,.18);
+        padding:14px 16px; text-align:left;
+        list-style:none; margin:0;
+        display:flex; flex-direction:column; justify-content:center;
+        gap:0;
+    }
+    .wn-bugs li {
         display:flex; align-items:center; gap:12px;
-        background:#1e293b; padding:14px 16px; border-radius:10px;
+        padding:8px 0; color:#e2e8f0; font-size:.82rem;
     }
-    .wn-av { width:34px; height:34px; border-radius:50%; background:#3b82f6; flex:0 0 auto; }
-    .wn-lines { flex:1; }
-    .wn-lines span { display:block; height:8px; border-radius:4px; background:#334155; }
-    .wn-lines span:first-child { width:60%; margin-bottom:7px; background:#475569; }
-    .wn-lines span:last-child { width:38%; }
-    .wn-clinic-badge {
-        font-size:.72rem; font-weight:700; color:#fff; padding:.32rem .6rem;
-        border-radius:6px; background:#166534;
-        animation: wnSwap 3s steps(1) infinite;
+    .wn-bugs li + li { border-top:1px solid rgba(148,163,184,.14); }
+    .wn-bug-icon {
+        width:28px; height:28px;
+        display:inline-flex; align-items:center; justify-content:center;
+        flex-shrink:0; position:relative;
     }
-    @keyframes wnSwap {
-        0%,49%  { background:#166534; }
-        50%,100%{ background:#4c1d95; }
+    .wn-bug-icon i {
+        position:absolute; line-height:1;
     }
-
-    /* sidebar collapse */
-    .wn-app { position:absolute; inset:14px; display:flex; gap:8px; }
-    .wn-sb {
-        background:#1e293b; border-radius:8px; width:130px;
-        animation: wnCollapse 3.6s ease-in-out infinite;
-        overflow:hidden;
+    .wn-bug-icon .bi-bug-fill {
+        color:#ef4444; font-size:1.05rem;
+        animation: wnBugOut 3.6s ease-in-out infinite;
     }
-    .wn-sb b { display:block; height:10px; margin:14px 12px; border-radius:4px; background:#475569; }
-    .wn-main { flex:1; background:#1e293b; border-radius:8px; }
-    @keyframes wnCollapse {
-        0%,100% { width:130px; }
-        50%     { width:42px; }
+    .wn-bug-icon .bi-check-circle-fill {
+        color:#10b981; font-size:1.15rem; opacity:0; transform:scale(.4);
+        animation: wnBugIn 3.6s ease-in-out infinite;
     }
-
-    /* lock / safe edits */
-    .wn-lock {
-        position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-        text-align:center; color:#fbbf24;
+    @keyframes wnBugOut {
+        0%,40% { opacity:1; transform:scale(1) rotate(0); }
+        55%    { opacity:0; transform:scale(0) rotate(180deg); }
+        100%   { opacity:0; transform:scale(0) rotate(180deg); }
     }
-    .wn-lock .ico {
-        font-size:3rem;
-        animation: wnLockPulse 2.4s ease-in-out infinite;
-        display:inline-block;
+    @keyframes wnBugIn {
+        0%,50% { opacity:0; transform:scale(.4); }
+        65%    { opacity:1; transform:scale(1.15); }
+        80%    { opacity:1; transform:scale(1); }
+        100%   { opacity:1; transform:scale(1); }
     }
-    @keyframes wnLockPulse {
-        0%,100% { transform:scale(1); filter:drop-shadow(0 0 0 rgba(251,191,36,0)); }
-        50%     { transform:scale(1.12); filter:drop-shadow(0 0 14px rgba(251,191,36,.6)); }
+    .wn-bug-label { position:relative; flex:1; }
+    .wn-bug-label::after {
+        content:""; position:absolute; left:0; right:0; top:50%; height:1px;
+        background:#94a3b8; transform-origin:left; transform:scaleX(0);
+        animation: wnStrike 3.6s ease-in-out infinite;
     }
-    .wn-lock small { display:block; margin-top:8px; color:#cbd5e1; font-size:.8rem; }
+    @keyframes wnStrike {
+        0%,30% { transform:scaleX(0); opacity:.65; }
+        50%    { transform:scaleX(1); opacity:.65; }
+        62%    { transform:scaleX(1); opacity:0; }
+        100%   { transform:scaleX(1); opacity:0; }
+    }
+    .wn-bugs li:nth-child(2) .wn-bug-icon .bi-bug-fill,
+    .wn-bugs li:nth-child(2) .wn-bug-icon .bi-check-circle-fill,
+    .wn-bugs li:nth-child(2) .wn-bug-label::after { animation-delay:.45s; }
+    .wn-bugs li:nth-child(3) .wn-bug-icon .bi-bug-fill,
+    .wn-bugs li:nth-child(3) .wn-bug-icon .bi-check-circle-fill,
+    .wn-bugs li:nth-child(3) .wn-bug-label::after { animation-delay:.9s; }
 
     /* ---- dots + footer --------------------------------------------------- */
     .wn-dots { display:flex; justify-content:center; gap:7px; padding:.4rem 0 0; }
@@ -237,7 +386,9 @@
 
     @media (max-width: 575.98px) {
         #whatsNewV9Modal .wn-slide { padding: 1.2rem 1.1rem 1rem; }
-        #whatsNewV9Modal .wn-stage { height: 168px; }
+        #whatsNewV9Modal .wn-stage { height: 178px; }
+        .wn-ai-badge { display:none; }
+        .wn-sum-list { font-size:.72rem; }
     }
 </style>
 
@@ -247,7 +398,7 @@
       <div class="modal-header">
         <h5 class="modal-title">
           <i class="bi bi-stars me-2"></i>What's New
-          <span class="version-pill">v9.0.0</span>
+          <span class="version-pill">v9.1.0</span>
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -256,109 +407,179 @@
         <div class="wn-viewport">
           <div class="wn-track" id="wnTrack">
 
-            <!-- 1 — Welcome -->
+            <!-- 1 — Welcome 9.1.0 -->
             <div class="wn-slide">
               <span class="wn-kicker">Release Highlights</span>
               <div class="wn-stage">
                 <div class="wn-ver">
                   <span class="wn-ver-label">version</span>
-                  <span class="wn-ver-num">9.0.0</span>
+                  <span class="wn-ver-num">9.1.0</span>
                 </div>
               </div>
-              <h3>A big update is here</h3>
-              <p>Multi-clinic support, a full drawing studio, smarter patient
-                 lists and safer bookings. Take 30 seconds for the tour.</p>
+              <h3>Smarter Edit Consultation</h3>
+              <p>A focused update — AI right inside the consultation page,
+                 instant ICD-10 suggestions, a sharper drawing studio, and
+                 the three biggest annoyances quietly squashed.</p>
             </div>
 
-            <!-- 2 — Multi-clinic -->
+            <!-- 2 — AI Assistant on Edit Consultation -->
             <div class="wn-slide">
-              <span class="wn-kicker">Multi-Clinic</span>
+              <span class="wn-kicker">AI Assistant</span>
               <div class="wn-stage">
-                <div class="wn-badge r">Riyadh Clinic</div>
-                <div class="wn-badge k">Kafr El-Sheikh Clinic</div>
+                <div class="wn-ai">
+                  <div class="wn-ai-head">
+                    <span class="wn-ai-icon"><i class="bi bi-stars"></i></span>
+                    <span class="wn-ai-title">AI Assistant</span>
+                    <span class="wn-ai-badge">
+                      <i class="bi bi-shield-check"></i> review before saving
+                    </span>
+                  </div>
+                  <div class="wn-ai-chips">
+                    <span class="wn-ai-chip">
+                      <i class="bi bi-clock-history"></i>Summarize prior visits
+                    </span>
+                    <span class="wn-ai-chip">
+                      <i class="bi bi-question-circle"></i>What might I be missing?
+                    </span>
+                  </div>
+                </div>
               </div>
-              <h3>Two clinics, one system</h3>
-              <p>Every appointment, patient and payment is now tagged to its
-                 clinic. Pick the clinic when booking; finances stay separated
-                 per clinic automatically.</p>
+              <h3>AI right inside the consultation</h3>
+              <p>Ask the assistant about the patient's history or what your
+                 current draft is missing — every reply carries an amber
+                 "review before saving" badge so it stays a suggestion,
+                 never the chart.</p>
             </div>
 
-            <!-- 3 — Draw Consultation -->
+            <!-- 3 — Prior-Visit Summary -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Prior Visits</span>
+              <div class="wn-stage">
+                <div class="wn-sum">
+                  <button type="button" class="wn-sum-btn">
+                    <i class="bi bi-clipboard2-pulse"></i>Summarize prior visits
+                  </button>
+                  <ul class="wn-sum-list">
+                    <li>• Diagnosis: Astigmatism (2026-05-14)</li>
+                    <li>• Plan: Conjyclear forte ED + glasses</li>
+                    <li>• Slit lamp: OD/OS mild hyperaemia</li>
+                    <li>• IOP / VA / refraction: <em>not recorded</em></li>
+                  </ul>
+                </div>
+              </div>
+              <h3>One-click prior-visit recap</h3>
+              <p>The assistant reads ONLY the recorded data and bullets it
+                 out, explicitly saying "not recorded" when something is
+                 missing. Read-only — it never edits the chart.</p>
+            </div>
+
+            <!-- 4 — ICD-10 Suggestions -->
+            <div class="wn-slide">
+              <span class="wn-kicker">ICD-10</span>
+              <div class="wn-stage">
+                <div class="wn-icd">
+                  <div class="wn-icd-row1">
+                    <div class="wn-icd-input">Senile cataract, right eye</div>
+                    <button type="button" class="wn-icd-btn">
+                      <i class="bi bi-stars"></i>Suggest
+                    </button>
+                  </div>
+                  <div class="wn-icd-pop">
+                    <div class="wn-icd-pop-label">AI suggestions</div>
+                    <div class="wn-icd-r">
+                      <b>H25.13</b>
+                      <span>Unilateral age-related cataract, right</span>
+                      <i>AI 90%</i>
+                    </div>
+                    <div class="wn-icd-r">
+                      <b>H25.10</b>
+                      <span>Age-related cataract, unspecified</span>
+                      <i>AI 70%</i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h3>Instant ICD-10 suggestions</h3>
+              <p>Type the diagnosis, hit <strong>Suggest</strong>. Codes the
+                 clinic has actually used rank first; AI codes are
+                 server-validated by regex so a malformed code never reaches
+                 you. One click sets the field — never the rest of the form.</p>
+            </div>
+
+            <!-- 5 — Drawing studio (improved, eye SVG) -->
             <div class="wn-slide">
               <span class="wn-kicker">Drawing Studio</span>
               <div class="wn-stage">
-                <div class="wn-canvas"></div>
-                <div class="wn-ink"></div>
-                <div class="wn-pen"><i class="bi bi-pencil-fill" style="font-size:22px;"></i></div>
-              </div>
-              <h3>Draw the consultation</h3>
-              <p>A full-screen canvas with pen, shapes, eye templates and
-                 medical stamps — sketch findings right on the appointment and
-                 it autosaves to attachments.</p>
-            </div>
-
-            <!-- 4 — Contextual menu + settings -->
-            <div class="wn-slide">
-              <span class="wn-kicker">Smart Editing</span>
-              <div class="wn-stage">
-                <div class="wn-ctx">
-                  <i class="bi bi-arrow-up"></i>
-                  <i class="bi bi-eye"></i>
-                  <i class="bi bi-sliders"></i>
-                  <i class="danger bi bi-trash"></i>
-                </div>
-                <div class="wn-shape"></div>
-              </div>
-              <h3>Canva-style quick menu</h3>
-              <p>Select any element and a floating toolbar follows it — reorder,
-                 hide, group, delete, or open a per-element settings panel for
-                 arrows, shapes and text.</p>
-            </div>
-
-            <!-- 5 — Patient last clinic -->
-            <div class="wn-slide">
-              <span class="wn-kicker">Patient Lists</span>
-              <div class="wn-stage">
-                <div class="wn-row">
-                  <div class="wn-av"></div>
-                  <div class="wn-lines"><span></span><span></span></div>
-                  <div class="wn-clinic-badge">Last clinic</div>
+                <div class="wn-eye-wrap">
+                  <svg class="wn-eye" viewBox="0 0 320 170" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Almond / eye outline -->
+                    <path class="wn-eye-outline"
+                          d="M 30 85 Q 160 8 290 85 Q 160 162 30 85 Z"/>
+                    <!-- Iris -->
+                    <circle class="wn-eye-iris" cx="160" cy="85" r="42"/>
+                    <!-- Iris radial pattern -->
+                    <g class="wn-eye-rays">
+                      <line x1="160" y1="48"  x2="160" y2="58"/>
+                      <line x1="160" y1="112" x2="160" y2="122"/>
+                      <line x1="123" y1="85"  x2="133" y2="85"/>
+                      <line x1="187" y1="85"  x2="197" y2="85"/>
+                      <line x1="134" y1="59"  x2="141" y2="66"/>
+                      <line x1="179" y1="104" x2="186" y2="111"/>
+                      <line x1="134" y1="111" x2="141" y2="104"/>
+                      <line x1="179" y1="66"  x2="186" y2="59"/>
+                    </g>
+                    <!-- Pupil -->
+                    <circle class="wn-eye-pupil" cx="160" cy="85" r="16"/>
+                    <!-- Catch-light -->
+                    <circle class="wn-eye-glint" cx="152" cy="77" r="5"/>
+                    <!-- Annotation: OD -->
+                    <g class="wn-eye-label">
+                      <line x1="248" y1="36" x2="208" y2="68"/>
+                      <text x="252" y="34">OD</text>
+                    </g>
+                  </svg>
                 </div>
               </div>
-              <h3>See the last-visit clinic</h3>
-              <p>Table, cards and folders now show a colour-coded badge for the
-                 clinic of each patient's most recent visit, and you can group
-                 patients by clinic.</p>
+              <h3>Drawing studio, now ophthalmology-aware</h3>
+              <p>Sketch findings right on the appointment with pen, shapes,
+                 eye templates and medical stamps. Toolbar refined, arrowheads
+                 fixed, per-element settings panel — and the contextual quick
+                 menu now follows text and templates too.</p>
             </div>
 
-            <!-- 6 — Sidebar -->
+            <!-- 6 — Bug fixes -->
             <div class="wn-slide">
-              <span class="wn-kicker">Navigation</span>
+              <span class="wn-kicker">Bug Fixes</span>
               <div class="wn-stage">
-                <div class="wn-app">
-                  <div class="wn-sb"><b></b><b style="width:70%"></b><b style="width:55%"></b></div>
-                  <div class="wn-main"></div>
-                </div>
+                <ul class="wn-bugs">
+                  <li>
+                    <span class="wn-bug-icon">
+                      <i class="bi bi-bug-fill"></i>
+                      <i class="bi bi-check-circle-fill"></i>
+                    </span>
+                    <span class="wn-bug-label">Diagnosis &amp; complaint autocomplete (404 → live)</span>
+                  </li>
+                  <li>
+                    <span class="wn-bug-icon">
+                      <i class="bi bi-bug-fill"></i>
+                      <i class="bi bi-check-circle-fill"></i>
+                    </span>
+                    <span class="wn-bug-label">Common Cases modal now loads</span>
+                  </li>
+                  <li>
+                    <span class="wn-bug-icon">
+                      <i class="bi bi-bug-fill"></i>
+                      <i class="bi bi-check-circle-fill"></i>
+                    </span>
+                    <span class="wn-bug-label">Medication suggestions (+ complaint match)</span>
+                  </li>
+                </ul>
               </div>
-              <h3>Collapsible mini-sidebar</h3>
-              <p>Collapse the sidebar to a slim icon rail for more screen space —
-                 it remembers your choice and no longer flickers between pages.</p>
-            </div>
-
-            <!-- 7 — Safer bookings (final) -->
-            <div class="wn-slide">
-              <span class="wn-kicker">Financial Safety</span>
-              <div class="wn-stage">
-                <div class="wn-lock">
-                  <span class="ico"><i class="bi bi-shield-lock-fill"></i></span>
-                  <small>Paid bookings are protected</small>
-                </div>
-              </div>
-              <h3>Safer booking edits</h3>
-              <p>You can now edit a booking from the calendar. Once a payment
-                 exists the price-affecting fields lock automatically, and an
-                 audited "Correct visit type" action handles real mistakes —
-                 so the books always stay balanced.</p>
+              <h3>Three quiet bugs, gone</h3>
+              <p>The autocomplete and "Common Cases" routes were dead in
+                 production; medication suggestions ignored the chief
+                 complaint. All three now work — and medications match
+                 against complaint too, not just diagnosis.</p>
             </div>
 
           </div>
@@ -388,14 +609,13 @@
 
 <script>
 (function () {
-    // Display policy (per latest request):
-    //   • NOT a one-time popup any more.
-    //   • Shows once per login session, on every login, for a 2-day
-    //     window that starts the first time it is ever seen.
+    // Display policy:
+    //   • Once per login session, on every login, for a 2-day window
+    //     starting the first time the wizard is ever seen.
     //   • "Don't show again" opts out permanently.
-    // Bump VERSION to resurface the whole wizard in a future release
-    // (it resets the first-seen timestamp + opt-out for the new value).
-    const VERSION       = 'v9_0_0';
+    // Bumping VERSION (e.g. v9_0_0 → v9_1_0) RESETS first-seen / opt-out /
+    // session-shown for every browser, so the wizard resurfaces fresh.
+    const VERSION       = 'v9_1_0';
     const OPT_OUT_KEY   = 'whatsNew_' + VERSION + '_optOut';     // permanent
     const FIRST_SEEN_KEY= 'whatsNew_' + VERSION + '_firstSeen';  // ms epoch
     const SESSION_KEY   = 'whatsNew_' + VERSION + '_shownSession';
@@ -404,7 +624,6 @@
     function shouldShow() {
         try {
             if (localStorage.getItem(OPT_OUT_KEY) === '1') return false;
-            // Once per browser session ≈ once per login.
             if (sessionStorage.getItem(SESSION_KEY) === '1') return false;
             const now = Date.now();
             let first = parseInt(localStorage.getItem(FIRST_SEEN_KEY) || '0', 10);
@@ -412,11 +631,10 @@
                 first = now;
                 localStorage.setItem(FIRST_SEEN_KEY, String(first));
             }
-            // Stop automatically 2 days after it was first seen.
             if (now - first > WINDOW_MS) return false;
             return true;
         } catch (e) {
-            return false; // storage blocked → stay silent
+            return false;
         }
     }
 
@@ -434,7 +652,6 @@
         const endWrap = el.querySelector('#wnEnd');
         let idx = 0;
 
-        // build dots
         for (let i = 0; i < total; i++) {
             const b = document.createElement('button');
             b.type = 'button';
@@ -457,7 +674,6 @@
         nextBtn.addEventListener('click', () => go(idx + 1));
         prevBtn.addEventListener('click', () => go(idx - 1));
 
-        // keyboard arrows
         el.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowRight') go(idx + 1);
             if (e.key === 'ArrowLeft')  go(idx - 1);
@@ -465,9 +681,6 @@
 
         const modal = new bootstrap.Modal(el, { backdrop: 'static', keyboard: true });
 
-        // "Don't show again" = permanent opt-out. Plain "Close" / X /
-        // backdrop only ends THIS session's showing — it returns on the
-        // next login until the 2-day window lapses.
         el.querySelector('#wnDontShow').addEventListener('click', function () {
             try { localStorage.setItem(OPT_OUT_KEY, '1'); } catch (e) {}
             modal.hide();
@@ -477,10 +690,7 @@
         });
 
         render();
-        // Mark shown for this session so it doesn't re-pop on every page
-        // navigation within the same login.
         try { sessionStorage.setItem(SESSION_KEY, '1'); } catch (e) {}
-        // Let the page settle so we don't stack on toasts/session warnings.
         setTimeout(() => { try { modal.show(); } catch (e) {} }, 800);
     }
 

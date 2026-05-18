@@ -326,7 +326,7 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="sidebar-footer-text">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v9.0.0
+                        HClinic / Roaya Clinic v9.1.0
                     </div>
                     <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none sidebar-footer-link">Ahmed Helal</a></div>
                 </small>
