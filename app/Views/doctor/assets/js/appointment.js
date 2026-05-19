@@ -1945,6 +1945,7 @@ function viewAttachment(attachmentId, filePath, fileExt) {
 
 function showImageModal(imageUrl, attachmentId, filename) {
     filename = filename || 'View Image';
+    const safeFilenameJs = String(filename).replace(/'/g, "\\'");
     const modalHtml = `
         <div class="modal fade" id="imageModal" tabindex="-1">
             <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -1958,7 +1959,19 @@ function showImageModal(imageUrl, attachmentId, filename) {
                     </div>
                     <div class="modal-footer image-modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" onclick="downloadAttachment(${attachmentId})">
+                        <!-- Edit + Delete added to the preview modal so the doctor
+                             doesn't have to close it and hunt for the card's
+                             overlay buttons. Edit closes this modal first so
+                             the drawing modal isn't stacked on top of it. -->
+                        <button type="button" class="btn btn-danger"
+                                onclick="(function(){ bootstrap.Modal.getInstance(document.getElementById('imageModal'))?.hide(); deleteAttachment(${attachmentId}); })();">
+                            <i class="bi bi-trash me-2"></i>Delete
+                        </button>
+                        <button type="button" class="btn btn-info text-white"
+                                onclick="(function(){ bootstrap.Modal.getInstance(document.getElementById('imageModal'))?.hide(); editAttachmentDrawing(${attachmentId}, '${String(imageUrl).replace(/'/g, "\\'")}', '${safeFilenameJs}'); })();">
+                            <i class="bi bi-pencil-square me-2"></i>Edit
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="downloadAttachment(${attachmentId}, '${safeFilenameJs}')">
                             <i class="bi bi-download me-2"></i>Download
                         </button>
                     </div>
@@ -1966,11 +1979,11 @@ function showImageModal(imageUrl, attachmentId, filename) {
             </div>
         </div>
     `;
-    
+
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     const modal = new bootstrap.Modal(document.getElementById('imageModal'));
     modal.show();
-    
+
     // Clean up modal on hide
     document.getElementById('imageModal').addEventListener('hidden.bs.modal', function() {
         this.remove();
@@ -5089,10 +5102,14 @@ function attachmentsInjectCheckboxes() {
         cb.dataset.id = id;
         cb.title = 'Select for bulk delete';
 
-        // Pin the checkbox to the top-right corner of the IMAGE thumbnail when
-        // the card has one (so it sits visibly on the image itself), otherwise
-        // fall back to the card's top-right corner for document cards.
-        const thumb = card.querySelector(':scope > .mb-2.text-center');
+        // Pin the checkbox to the top-LEFT corner of the IMAGE thumbnail
+        // when the card has one (so it sits visibly on the image itself),
+        // otherwise fall back to the card's top-left corner for document
+        // cards. The wrapper class moved from `.mb-2.text-center` to
+        // `.attachment-image-wrap` when the card was redesigned — check
+        // both so older cached pages don't lose the checkbox entirely.
+        const thumb = card.querySelector(':scope > .attachment-image-wrap')
+            || card.querySelector(':scope > .mb-2.text-center');
         if (thumb) {
             thumb.classList.add('attachment-thumb-host');
             thumb.appendChild(cb);

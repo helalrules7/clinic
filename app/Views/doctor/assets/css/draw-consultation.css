@@ -903,8 +903,12 @@ body.draw-modal-open [class*="floating"]:not(.modal):not(.modal *) {
     appearance: none;
     box-sizing: border-box;
     position: absolute;
+    /* Top-LEFT overlay on the image. The right corner is now reserved
+       for the file-type badge on non-image cards (and the image itself
+       has the overlay action row at bottom-centre — keeping the top-
+       right empty made the checkbox compete with both). */
     top: 8px;
-    right: 8px;
+    left: 8px;
     width: 24px;
     height: 24px;
     margin: 0;
@@ -924,7 +928,7 @@ body.draw-modal-open [class*="floating"]:not(.modal):not(.modal *) {
 /* Document-card fallback (no thumbnail) — same offsets so it lines up. */
 .attachment-card--no-thumb > .attachment-select-checkbox {
     top: 8px;
-    right: 8px;
+    left: 8px;
 }
 
 .attachment-select-checkbox:hover {
