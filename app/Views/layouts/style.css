@@ -104,10 +104,19 @@
             z-index: 999 !important;
             transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
             overflow-y: auto;
-            /* iOS momentum scroll. `overscroll-behavior: contain` was here
-               briefly but at high page zoom it stopped touch/wheel scroll
-               chaining from sidebar -> body, leaving sidebar icons (and
-               page content) unreachable. Let the default behaviour stand. */
+            overflow-x: hidden;
+            /* The sidebar is its OWN scroll context — dragging inside it
+               should scroll the sidebar, never the page underneath, and
+               vice-versa. `overscroll-behavior: contain` stops the
+               scroll from chaining to body; `touch-action: pan-y`
+               explicitly hands vertical pan to the sidebar. (The
+               page-scroll-blocked-at-high-zoom bug we chased earlier
+               turned out to be a stuck body.modal-open class, not
+               this rule — the safety-net sweep in main.js handles
+               that case now, so isolating the sidebar's scroll is
+               safe.) */
+            overscroll-behavior: contain;
+            touch-action: pan-y;
             -webkit-overflow-scrolling: touch;
         }
         
