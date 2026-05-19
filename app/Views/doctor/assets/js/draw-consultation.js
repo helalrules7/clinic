@@ -178,6 +178,27 @@
         updateEyeSideUI();
         setTool('select');
 
+        /* Edit-attachment mode: the doctor clicked the pencil icon on an
+           existing image attachment. Pre-load it as the canvas background,
+           pin session.currentAttachmentId so the default Save now REPLACES
+           the original, and reveal the secondary "Save as new" button so
+           they can branch off if they want to keep the un-annotated copy. */
+        const ctx = session.context || {};
+        const saveAsNewBtn = modalEl.querySelector('#drawSaveAsNewBtn');
+        if (ctx.editAttachment && ctx.editAttachment.id && ctx.editAttachment.url) {
+            session.currentAttachmentId = ctx.editAttachment.id;
+            if (saveAsNewBtn) saveAsNewBtn.style.display = '';
+            loadImageOntoCanvas(ctx.editAttachment.url, {
+                objectType: 'imported-image',
+                originAttachmentId: ctx.editAttachment.id,
+                fitToCanvas: true,
+                sendToBack: true,
+                isEditTarget: true,
+            });
+        } else if (saveAsNewBtn) {
+            saveAsNewBtn.style.display = 'none';
+        }
+
         // Layers panel is CLOSED by default on every viewport — the new
         // Canva-style contextual menu (drawCtxMenu) handles the common
         // per-object actions (delete, bring forward, hide, group, …) so
@@ -459,6 +480,22 @@
           <div class="vr"></div>
 
           <div class="draw-tool-group">
+            <span class="draw-tool-group__label">Image</span>
+            <!-- Pick a file or snap one from the camera (mobile). The
+                 accept + capture combo prompts iOS / Android to offer
+                 Photo Library *or* Take Photo natively. -->
+            <button type="button" class="draw-tool-btn" id="attachImageBtn"
+                    title="Attach Image (file or camera)">
+              <i class="bi bi-card-image"></i>
+            </button>
+            <input type="file" id="attachImageInput"
+                   accept="image/*" capture="environment"
+                   hidden tabindex="-1">
+          </div>
+
+          <div class="vr"></div>
+
+          <div class="draw-tool-group">
             <span class="draw-tool-group__label">Stroke</span>
             <input type="color" class="draw-color-input" id="drawStrokeColor" value="#0f172a" title="Stroke color">
             <div class="draw-stroke-preview" aria-hidden="true"><div class="draw-stroke-preview__dot" id="drawStrokePreview"></div></div>
@@ -561,6 +598,12 @@
       <div class="modal-footer">
         <span class="text-muted small" id="drawHintText">Tip: select an object to change its colors and size, or use Delete to remove it.</span>
         <button type="button" class="btn btn-secondary" id="drawCancelBtn">Close</button>
+        <!-- "Save as new" only appears when the modal is opened to edit an
+             existing attachment (Edit button on the attachment card).
+             It writes a fresh attachment instead of replacing the original. -->
+        <button type="button" class="btn btn-outline-success" id="drawSaveAsNewBtn" style="display:none;">
+          <i class="bi bi-file-earmark-plus me-1"></i>Save as new file
+        </button>
         <button type="button" class="btn btn-success" id="drawSaveBtn">
           <i class="bi bi-cloud-arrow-up me-1"></i><span>Save now</span>
         </button>
@@ -684,8 +727,57 @@
         });
 
         modalEl.querySelector('#drawSaveBtn').addEventListener('click', () => save({ silent: false }));
+        /* "Save as new file" — only visible in edit-attachment mode. Clears
+           the current-id pointer so the existing save() falls through to
+           the UPLOAD branch (new attachment), then restores the original
+           id IF the upload succeeds AND the user might want to keep
+           editing — currently we let the new attachment become the
+           target so a subsequent Save updates the new copy (a sensible
+           default; the original stays in the attachments list as audit). */
+        const saveAsNewBtn = modalEl.querySelector('#drawSaveAsNewBtn');
+        if (saveAsNewBtn) {
+            saveAsNewBtn.addEventListener('click', async () => {
+                if (!session.context || !session.context.editAttachment) {
+                    // Defensive — button should be hidden in this case.
+                    save({ silent: false });
+                    return;
+                }
+                session.currentAttachmentId = null;
+                await save({ silent: false });
+                // After a successful save(), session.currentAttachmentId
+                // points at the NEW attachment (set inside save()) so
+                // further edits update the new copy, not the original.
+            });
+        }
         modalEl.querySelector('#drawCancelBtn').addEventListener('click', () => modal.hide());
         modalEl.querySelector('#drawCloseBtn').addEventListener('click', () => modal.hide());
+
+        /* Attach Image — file picker / camera capture. accept="image/*" +
+           capture="environment" on the input makes mobile browsers offer
+           Photo Library or Take Photo natively. */
+        const attachBtn = modalEl.querySelector('#attachImageBtn');
+        const attachInp = modalEl.querySelector('#attachImageInput');
+        if (attachBtn && attachInp) {
+            attachBtn.addEventListener('click', () => attachInp.click());
+            attachInp.addEventListener('change', (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    loadImageOntoCanvas(ev.target.result, {
+                        objectType: 'imported-image',
+                        fitToCanvas: true,
+                        sendToBack: false,
+                        isEditTarget: true,
+                    });
+                };
+                reader.onerror = () => console.error('Draw: failed to read image file');
+                reader.readAsDataURL(file);
+                // Reset value so picking the same file again still fires `change`.
+                e.target.value = '';
+                setTool('select');
+            });
+        }
 
         // Defensive: guard each binding so that one missing handler can never
         // tear down the whole toolbar (which would leave the modal open with
@@ -919,6 +1011,10 @@
         if (obj.objectType === 'arrow') return 'arrow';
         if (obj.isTemplate || obj._isTemplate) return 'template';
         if (obj.isStamp || obj.objectType === 'medicalStamp') return 'stamp';
+        /* Imported / background images (camera capture, file picker, or
+           an existing attachment opened via the Edit button on the
+           attachment card). Fabric uses obj.type === 'image' for these. */
+        if (obj.type === 'image' || obj.objectType === 'imported-image') return 'image';
         if (obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') return 'text';
         if (obj.objectType === 'shape' || ['rect','ellipse','triangle','line'].includes(obj.type)) {
             if (obj.medicalType === 'rect' || obj.type === 'rect') return 'rect';
@@ -1028,6 +1124,28 @@
             html += rowRange('scale', 'Size', Math.round((obj.scaleX || 1) * 100), 30, 250, 5);
             html += rowRange('opacity', 'Opacity', op, 10, 100, 1);
             html += rowToggle('flipX', 'Mirror (OD/OS)', !!obj.flipX);
+        } else if (kind === 'image') {
+            /* Imported / attached images. The user asked for Opacity + Location,
+               and we throw in the other natural axes (scale, rotation, mirror,
+               lock-position) so the panel matches what they get on every
+               other object type. */
+            html += rowRange('opacity', 'Opacity', op, 10, 100, 1);
+            html += rowRange('scale', 'Size', Math.round((obj.scaleX || 1) * 100), 20, 300, 5);
+            html += rowRange('angle', 'Rotation', ang, 0, 359, 1);
+            html += rowToggle('flipX', 'Flip horizontal', !!obj.flipX);
+            html += rowToggle('flipY', 'Flip vertical', !!obj.flipY);
+            html += rowToggle('imgLock', 'Lock position', !!obj.lockMovementX && !!obj.lockMovementY);
+            // Plain X/Y location row — two inputs side-by-side. Uses its
+            // own data attributes so the change handler can route both to
+            // applySetting('imgX' | 'imgY').
+            html += '<div class="ds-row ds-row-col"><label>Location (px)</label>' +
+                '<div class="ds-xy">' +
+                    '<input type="number" class="ds-num" data-ds-num="imgX" value="' +
+                        Math.round(obj.left || 0) + '" step="1">' +
+                    '<span class="ds-xy-sep">,</span>' +
+                    '<input type="number" class="ds-num" data-ds-num="imgY" value="' +
+                        Math.round(obj.top || 0) + '" step="1">' +
+                '</div></div>';
         } else {
             html += rowRange('opacity', 'Opacity', op, 10, 100, 1);
             html += rowRange('angle', 'Rotation', ang, 0, 359, 1);
@@ -1080,6 +1198,22 @@
             case 'italic': set.fontStyle = value ? 'italic' : 'normal'; break;
             case 'underline': set.underline = !!value; break;
             case 'flipX': set.flipX = !!value; break;
+            case 'flipY': set.flipY = !!value; break;
+            case 'imgLock': {
+                const lock = !!value;
+                active.set({
+                    lockMovementX: lock, lockMovementY: lock,
+                    lockScalingX: lock, lockScalingY: lock,
+                    lockRotation: lock,
+                    hasControls: !lock, hasBorders: true,
+                    selectable: true   // stay selectable so the panel can still drive it
+                });
+                canvas.requestRenderAll();
+                pushHistoryDebounced(250);
+                return;
+            }
+            case 'imgX': set.left = parseFloat(value) || 0; break;
+            case 'imgY': set.top  = parseFloat(value) || 0; break;
             case 'linestyle': set.strokeDashArray = dashArrayFor(value, active.strokeWidth); break;
             case 'scale': {
                 const s = parseFloat(value) / 100;
@@ -1110,6 +1244,7 @@
             arrow: 'Arrow settings', line: 'Line settings', rect: 'Rectangle settings',
             ellipse: 'Circle settings', triangle: 'Triangle settings', text: 'Text settings',
             path: 'Drawing settings', stamp: 'Stamp settings', template: 'Template settings',
+            image: 'Image settings',
             group: 'Group settings', generic: 'Element settings'
         };
         titleEl.textContent = labels[kind] || 'Element settings';
@@ -1132,6 +1267,11 @@
                         if (v) v.textContent = el.value;
                     }
                     applySetting(id, el.value);
+                } else if (el.classList.contains('ds-num')) {
+                    // X / Y number inputs for image position. data-ds-num
+                    // is the routing key so we don't collide with the
+                    // data-ds slider/colour family.
+                    applySetting(el.dataset.dsNum, el.value);
                 }
             });
             body.addEventListener('click', (e) => {
@@ -2721,6 +2861,65 @@
         };
     }
 
+    /**
+     * Drop an image onto the canvas. Used by:
+     *   - Phase A2: the Attach Image toolbar button (file picker)
+     *   - Phase A3: the Edit button on an existing attachment (image URL)
+     *
+     * Options:
+     *   objectType        — tag on the Fabric object so settingsKind() can
+     *                       resolve it to the 'image' settings panel.
+     *   fitToCanvas       — scale the image so it fits inside the canvas
+     *                       viewport on the longer axis (no upscaling).
+     *   sendToBack        — push it under everything else so subsequent
+     *                       annotations sit on top.
+     *   isEditTarget      — set when the image IS the attachment being
+     *                       edited; selects it on load so the user can
+     *                       reach Opacity / Location immediately.
+     */
+    function loadImageOntoCanvas(url, opts) {
+        if (!canvas || !url) return;
+        opts = opts || {};
+        try {
+            fabric.Image.fromURL(url, function (img) {
+                if (!img) return;
+                if (opts.fitToCanvas) {
+                    const cw = canvas.getWidth();
+                    const ch = canvas.getHeight();
+                    const iw = img.width || 1;
+                    const ih = img.height || 1;
+                    const s = Math.min(cw / iw, ch / ih, 1);
+                    img.scale(s);
+                    img.set({
+                        left: (cw - iw * s) / 2,
+                        top:  (ch - ih * s) / 2,
+                        originX: 'left',
+                        originY: 'top',
+                    });
+                }
+                img.set({
+                    objectType: opts.objectType || 'imported-image',
+                    originAttachmentId: opts.originAttachmentId || null,
+                });
+                // Make sure Fabric serialises our custom props on save.
+                img.toObject = (function (toObject) {
+                    return function (propertiesToInclude) {
+                        return toObject.call(this,
+                            (propertiesToInclude || []).concat(['objectType','originAttachmentId']));
+                    };
+                })(img.toObject);
+                canvas.add(img);
+                if (opts.sendToBack) canvas.sendToBack(img);
+                if (opts.isEditTarget) canvas.setActiveObject(img);
+                canvas.requestRenderAll();
+                session.isDirty = true;
+                pushHistoryDebounced(250);
+            }, { crossOrigin: 'anonymous' });
+        } catch (e) {
+            console.error('Draw: loadImageOntoCanvas failed', e);
+        }
+    }
+
     function loadDrawing(savedDrawing) {
         if (!canvas || !savedDrawing) return;
 
@@ -2969,6 +3168,10 @@
                 filename: 'consultation_drawing.png',
                 previousDrawing: opts.previousDrawing || null,
                 getPreviousDrawing: typeof opts.getPreviousDrawing === 'function' ? opts.getPreviousDrawing : null,
+                /* When set: the modal opens with the given attachment image
+                   pre-loaded onto the canvas, and the footer shows both
+                   "Save now" (replaces the original) and "Save as new file". */
+                editAttachment: opts.editAttachment || null,
             }
         });
     }
@@ -2991,6 +3194,7 @@
                 filename: 'patient_drawing.png',
                 previousDrawing: opts.previousDrawing || null,
                 getPreviousDrawing: typeof opts.getPreviousDrawing === 'function' ? opts.getPreviousDrawing : null,
+                editAttachment: opts.editAttachment || null,
             }
         });
     }

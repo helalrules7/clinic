@@ -1901,6 +1901,33 @@ function showUploadModal(appointmentId, patientId) {
     });
 }
 
+/**
+ * Open the drawing studio with an existing image attachment pre-loaded.
+ * The modal is in "edit existing" mode — its footer shows two save
+ * options (replace the original / save as a new attachment).
+ */
+function editAttachmentDrawing(attachmentId, imageUrl, filename) {
+    if (typeof DrawConsultation === 'undefined' ||
+        typeof DrawConsultation.openForAppointment !== 'function') {
+        alert('Drawing tool is not loaded yet — please retry in a moment.');
+        return;
+    }
+    const cfg = window.APPOINTMENT_CONFIG || {};
+    const appointmentId = cfg.appointmentId;
+    const patientId     = cfg.patientId;
+    if (!appointmentId || !patientId) {
+        alert('Cannot open the drawing editor: missing appointment context.');
+        return;
+    }
+    DrawConsultation.openForAppointment(appointmentId, patientId, {
+        editAttachment: {
+            id: attachmentId,
+            url: imageUrl,
+            filename: filename || 'attachment.png',
+        }
+    });
+}
+
 function viewAttachment(attachmentId, filePath, fileExt) {
     const viewUrl = `/api/attachments/view/${attachmentId}`;
     
@@ -4742,81 +4769,103 @@ function reloadAttachments(page) {
                             minute: '2-digit'
                         });
                         
+                        // Escape attributes for use in inline onclick (single quotes)
+                        const safeName = String(attachment.original_filename || '').replace(/'/g, "\\'");
+                        const safePath = String(attachment.file_path || '').replace(/'/g, "\\'");
+                        const safeViewUrl = String(viewUrl || '').replace(/'/g, "\\'");
+                        const descrTrunc = attachment.description
+                            ? (attachment.description.length > 40
+                                ? attachment.description.substring(0, 37) + '...'
+                                : attachment.description)
+                            : '';
+
                         html += `
                             <div class="col-md-6 mb-3">
-                                <div class="attachment-card p-2 border rounded" data-attachment-id="${attachment.id}" style="min-height: ${isImage ? '200px' : '140px'}; display: flex; flex-direction: column;">
+                                <div class="attachment-card p-2 rounded" data-attachment-id="${attachment.id}" style="min-height: ${isImage ? '230px' : '88px'}; display: flex; flex-direction: column;">
                                     ${isImage ? `
-                                    <div class="mb-2 text-center" style="cursor: pointer;" 
-                                         onclick="viewAttachment(${attachment.id}, '${attachment.file_path}', '${fileExt}')"
-                                         data-bs-toggle="tooltip" 
-                                         data-bs-placement="top" 
-                                         data-bs-title="View Attachement/Photo">
-                                        <img src="${viewUrl}" 
+                                    <div class="attachment-image-wrap">
+                                        <img src="${viewUrl}"
                                              alt="${attachment.original_filename}"
-                                             class="img-thumbnail" 
-                                             style="max-width: 100%; max-height: 120px; object-fit: cover; border-radius: 8px; cursor: pointer;"
+                                             onclick="viewAttachment(${attachment.id}, '${safePath}', '${fileExt}')"
                                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                        <div style="display: none; width: 100%; height: 120px; background: #f8f9fa; border-radius: 8px; align-items: center; justify-content: center; flex-direction: column;">
-                                            <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
+                                        <div style="display:none; width:100%; height:160px; background:var(--bg); align-items:center; justify-content:center; flex-direction:column;">
+                                            <i class="bi bi-image text-muted" style="font-size:2rem;"></i>
                                             <small class="text-muted">Image not available</small>
-                    </div>
-                        </div>
+                                        </div>
+                                        <div class="attachment-overlay-actions" role="group">
+                                            <button type="button" class="attachment-action-btn is-edit"
+                                                    onclick="editAttachmentDrawing(${attachment.id}, '${safeViewUrl}', '${safeName}')"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Edit (open in Drawing)" aria-label="Edit">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            <button type="button" class="attachment-action-btn is-view"
+                                                    onclick="viewAttachment(${attachment.id}, '${safePath}', '${fileExt}')"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="View" aria-label="View">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button type="button" class="attachment-action-btn is-download"
+                                                    onclick="downloadAttachment(${attachment.id}, '${safeName}')"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Download" aria-label="Download">
+                                                <i class="bi bi-download"></i>
+                                            </button>
+                                            <button type="button" class="attachment-action-btn is-delete"
+                                                    onclick="deleteAttachment(${attachment.id})"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Delete" aria-label="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                     ` : ''}
-                                    <div class="d-flex align-items-center mb-2 flex-grow-1">
-                                        <i class="bi ${iconClass} text-primary me-2" style="font-size: 1.2rem; flex-shrink: 0;"></i>
-                                        <div class="flex-grow-1">
-                                            <div class="d-flex align-items-center justify-content-between mb-1">
-                                                <h6 class="mb-0 attachment-filename" style="font-size: 0.8rem; line-height: 1.1; flex-grow: 1; min-width: 0;"
+
+                                    <div class="d-flex align-items-center" style="min-width:0;">
+                                        <i class="bi ${iconClass} text-primary me-2" style="font-size:1.1rem; flex-shrink:0;"></i>
+                                        <div class="flex-grow-1" style="min-width:0;">
+                                            <div class="d-flex align-items-center justify-content-between mb-1" style="gap:.4rem;">
+                                                <h6 class="mb-0 attachment-filename text-truncate" style="font-size:.8rem; line-height:1.15; min-width:0;"
                                                     title="${attachment.original_filename}"
-                                                    data-bs-toggle="tooltip"
-                                                    data-bs-placement="top">
+                                                    data-bs-toggle="tooltip" data-bs-placement="top">
                                                     ${displayName}
                                                 </h6>
-                                                <span class="badge ${badgeClass} ms-2" style="font-size: 0.6rem; flex-shrink: 0; font-weight: 500; border-radius: 8px;">
+                                                <span class="badge ${badgeClass}" style="font-size:.6rem; flex-shrink:0; font-weight:500; border-radius:8px;">
                                                     ${fileType}
                                                 </span>
-                            </div>
-                                            <small class="text-muted d-block" style="font-size: 0.65rem; line-height: 1.1;">
-                                                ${fileSize} KB
+                                            </div>
+                                            <small class="text-muted d-block" style="font-size:.65rem; line-height:1.15;">
+                                                ${fileSize} KB · ${createdDate}
                                             </small>
-                                            <small class="text-muted d-block" style="font-size: 0.65rem; line-height: 1.1;">
-                                                ${createdDate}
-                                </small>
-                            </div>
-                    </div>
-                                    ${attachment.description ? `
-                                    <div class="flex-grow-1">
-                                        <p class="text-muted mb-1 small" style="font-size: 0.7rem; line-height: 1.2;"
-                                           title="${attachment.description}"
-                                           data-bs-toggle="tooltip" 
-                                           data-bs-placement="bottom">
-                                           ${attachment.description.length > 40 ? attachment.description.substring(0, 37) + '...' : attachment.description}
-                                        </p>
+                                        </div>
                                     </div>
-                                    ` : '<div class="flex-grow-1"></div>'}
-                                    <div class="btn-group btn-group-sm w-100 mt-auto" role="group">
-                                        <button class="btn btn-outline-primary btn-sm" 
-                                                onclick="viewAttachment(${attachment.id}, '${attachment.file_path}', '${fileExt}')" 
-                                                style="font-size: 0.7rem; padding: 0.3rem 0.4rem; flex: 1;"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-placement="top" 
-                                                data-bs-title="View Attachement/Photo">
-                                            <i class="bi bi-eye me-1"></i>View
+
+                                    ${!isImage ? `
+                                    <div class="attachment-actions-row">
+                                        <button type="button" class="attachment-action-btn is-view"
+                                                onclick="viewAttachment(${attachment.id}, '${safePath}', '${fileExt}')"
+                                                data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="View" aria-label="View">
+                                            <i class="bi bi-eye"></i>
                                         </button>
-                                        <button class="btn btn-outline-success btn-sm" 
-                                                onclick="downloadAttachment(${attachment.id}, '${attachment.original_filename}')"
-                                                style="font-size: 0.7rem; padding: 0.3rem 0.4rem; flex: 1;">
-                                            <i class="bi bi-download me-1"></i>Download
+                                        <button type="button" class="attachment-action-btn is-download"
+                                                onclick="downloadAttachment(${attachment.id}, '${safeName}')"
+                                                data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Download" aria-label="Download">
+                                            <i class="bi bi-download"></i>
                                         </button>
-                                        <button class="btn btn-outline-danger btn-sm" 
+                                        <button type="button" class="attachment-action-btn is-delete"
                                                 onclick="deleteAttachment(${attachment.id})"
-                                                style="font-size: 0.7rem; padding: 0.3rem 0.4rem; flex: 1;">
-                                            <i class="bi bi-trash me-1"></i>Delete
-                        </button>
-                </div>
-            </div>
-        </div>
-    `;
+                                                data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Delete" aria-label="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                    ` : ''}
+
+                                    ${attachment.description ? `
+                                    <p class="text-muted mb-0 small mt-1" style="font-size:.7rem; line-height:1.25;"
+                                       title="${attachment.description}"
+                                       data-bs-toggle="tooltip" data-bs-placement="bottom">
+                                       ${descrTrunc}
+                                    </p>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
                     });
                     html += '</div>';
                     container.innerHTML = html;
