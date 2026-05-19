@@ -610,13 +610,16 @@ body.draw-modal-open [class*="floating"]:not(.modal):not(.modal *) {
         background: rgba(100, 116, 139, 0.4);
         border-radius: 4px;
     }
-    /* The toolbar above needs overflow-y:hidden so its row doesn't grow a
-       vertical scrollbar, but that ALSO clipped the Library dropdown so
-       the menu never appeared in portrait. Float the open dropdown out
-       to the viewport (Popper already gives us viewport-relative
-       coords) so it can escape the toolbar's overflow box. */
+    /* The toolbar above needs overflow-y:hidden so its row doesn't grow
+       a vertical scrollbar, but that clipped the Library dropdown so
+       the menu never appeared in portrait. The fix lives in
+       draw-consultation.js — we construct the Dropdown with
+       popperConfig.strategy='fixed' so Popper itself sets position:fixed
+       and computes viewport-correct coordinates (a plain CSS override
+       leaves Popper's transform values referencing the wrong origin and
+       the menu lands far from its toggle). Z-index here keeps the menu
+       above the rest of the modal chrome. */
     #drawConsultationModal .draw-toolbar .dropdown-menu.show {
-        position: fixed !important;
         z-index: 1080;
     }
 

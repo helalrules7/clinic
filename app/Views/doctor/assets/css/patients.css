@@ -5406,12 +5406,17 @@ div.card.folder-card[style*="linear-gradient"] {
     background: var(--bg-alt);
 }
 
-/* Main Content */
+/* Main Content
+   overflow-y was 'auto', which created a NESTED scroll container with
+   no constrained height — on touch / tablet portrait the swipe would
+   land on the inner container, find nothing to scroll, and never
+   reach the page body. Drop it so the page's natural body scroll
+   handles everything. */
 .folders-main-content {
     flex: 1;
     padding: 20px;
-    overflow-y: auto;
     background: var(--bg);
+    min-width: 0; /* allow grid items to wrap inside the flex column */
 }
 
 /* Treeview */

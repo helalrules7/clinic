@@ -877,9 +877,14 @@
     </div>
     <?php endif; ?>
     
-    <!-- Quick Access Dock (Desktop Only - Hidden for Admin) -->
+    <!-- Quick Access Dock (Desktop Only - Hidden for Admin).
+         visibility:hidden until updateDockVisibility() finishes — without
+         this the dock paints full-size for one frame and then JS shrinks
+         it to its saved minimized state, which the user sees as a shiver
+         on every page navigation. main.js removes the inline style at the
+         end of init so we get no flicker either way. -->
     <?php if ($this->getCurrentUser()['role'] !== 'admin'): ?>
-    <div class="quick-access-dock" id="quickAccessDock">
+    <div class="quick-access-dock" id="quickAccessDock" style="visibility:hidden;">
         <div class="dock-container">
             <a href="/doctor/calendar" class="dock-item" title="View Calendar">
                 <i class="bi bi-calendar3"></i>

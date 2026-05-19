@@ -5488,8 +5488,12 @@ function renderPatientsCards() {
                             <span class="badge ${genderBadgeClass}">${genderIcon}</span>
                         </div>
                         ${patient.last_clinic_id ? `
-                            <!-- Last visit clinic badge (top-right) -->
-                            <div class="position-absolute p-2" style="top: ${colorMarker ? '30px' : '0'}; right: 0;">
+                            <!-- Last-visit clinic badge — centered on the patient
+                                 image at 50% opacity. Pointer-events stay off the
+                                 wrapper so it can't intercept the card's click. -->
+                            <div class="patient-card-clinic-badge position-absolute"
+                                 style="top: 50%; left: 50%; transform: translate(-50%, -50%);
+                                        opacity: 0.5; pointer-events: none; z-index: 4;">
                                 ${renderClinicBadge(patient, { compact: true })}
                             </div>
                         ` : ''}
@@ -7398,8 +7402,12 @@ function renderFolderPatients(patients) {
                             <span class="badge ${genderBadgeClass}">${genderIcon}</span>
                         </div>
                         ${patient.last_clinic_id ? `
-                            <!-- Last visit clinic badge (top-right) -->
-                            <div class="position-absolute p-2" style="top: ${colorMarker ? '30px' : '0'}; right: 0;">
+                            <!-- Last-visit clinic badge — centered on the patient
+                                 image at 50% opacity. Pointer-events stay off the
+                                 wrapper so it can't intercept the card's click. -->
+                            <div class="patient-card-clinic-badge position-absolute"
+                                 style="top: 50%; left: 50%; transform: translate(-50%, -50%);
+                                        opacity: 0.5; pointer-events: none; z-index: 4;">
                                 ${renderClinicBadge(patient, { compact: true })}
                             </div>
                         ` : ''}

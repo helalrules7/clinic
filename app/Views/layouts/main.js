@@ -1,3 +1,39 @@
+        /* Modal-open safety net.
+           Bootstrap adds `body.modal-open { overflow: hidden }` while a
+           modal is showing — which is correct. But if a modal is force-
+           dismissed by a same-tab navigation (link click inside the
+           modal, programmatic submit, history-back, etc.) the class can
+           linger on the new page. The user then can't scroll the page
+           at all — most visible at high page zoom where the lingering
+           class is the only thing keeping content unreachable. Run as
+           soon as DOM is interactive and again on full load. */
+        (function () {
+            function sweep() {
+                var hasVisibleModal = !!document.querySelector(
+                    '.modal.show, .modal.fade.show, .modal.in');
+                if (!hasVisibleModal) {
+                    if (document.body.classList.contains('modal-open')) {
+                        document.body.classList.remove('modal-open');
+                    }
+                    if (document.body.style.overflow === 'hidden') {
+                        document.body.style.overflow = '';
+                    }
+                    if (document.body.style.paddingRight) {
+                        document.body.style.paddingRight = '';
+                    }
+                    document.querySelectorAll('.modal-backdrop').forEach(
+                        function (b) { b.remove(); });
+                }
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', sweep);
+            } else {
+                sweep();
+            }
+            window.addEventListener('load', sweep);
+            window.addEventListener('pageshow', sweep);
+        })();
+
         // Global session check interceptor for fetch requests
         (function() {
             const originalFetch = window.fetch;
@@ -8990,7 +9026,7 @@
             
             function updateDockVisibility() {
                 if (!dock) return;
-                
+
                 // Handle mobile dock (<= 768px)
                 if (isMobile()) {
                     // Remove desktop minimized class if exists
@@ -9000,9 +9036,14 @@
                         autohideBtn.style.display = 'none';
                     }
                     initMobileDock();
+                    /* Reveal the dock now that the mobile-minimized class
+                       (applied by initMobileDock) is on. The HTML rendered
+                       with inline visibility:hidden so the first paint
+                       doesn't show a full-size dock that JS then shrinks. */
+                    dock.style.visibility = '';
                     return;
                 }
-                
+
                 // Desktop: show dock and remove mobile classes (>= 769px)
                 if (window.innerWidth >= 769) {
                     dock.style.display = 'block';
@@ -9015,10 +9056,16 @@
                             autohideBtn.style.display = 'none';
                         }
                     }
-                    // Load desktop dock state
+                    // Load desktop dock state (reads localStorage for
+                    // 'dock_minimized' / 'dock_autohide' before revealing).
                     loadDockState();
+                    dock.style.visibility = '';
                 } else {
                     dock.style.display = 'none';
+                    /* Even when hidden, drop the inline visibility:hidden
+                       so a later resize back to mobile/desktop reveals
+                       the dock without us having to touch this again. */
+                    dock.style.visibility = '';
                 }
             }
             

@@ -326,6 +326,28 @@
             }
         } catch (e) { /* ignore */ }
 
+        /* Library dropdown — the narrow-viewport toolbar uses
+           overflow-y:hidden (so its row doesn't grow a vertical
+           scrollbar). Bootstrap's default Popper strategy is 'absolute',
+           which gets clipped by that ancestor. Telling Popper to use
+           'fixed' lets the menu render in the viewport coordinate space
+           with coordinates Popper computes itself — so it lands directly
+           under the toggle button instead of being miss-positioned by a
+           naive CSS position:fixed override. Must run BEFORE the first
+           click so our instance is the one Bootstrap reuses. */
+        try {
+            var libToggle = modalEl.querySelector('#libraryDropdown');
+            if (libToggle && window.bootstrap && bootstrap.Dropdown) {
+                new bootstrap.Dropdown(libToggle, {
+                    popperConfig: function (defaultConfig) {
+                        return Object.assign({}, defaultConfig, {
+                            strategy: 'fixed'
+                        });
+                    }
+                });
+            }
+        } catch (e) { /* ignore */ }
+
         // Bind events defensively: a failure here must not leave the modal in
         // a partially-initialised state (which manifests as "click the draw
         // button twice to open").
