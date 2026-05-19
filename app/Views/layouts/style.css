@@ -87,7 +87,13 @@
             position: fixed;
             top: 0;
             left: 0;
+            /* 100vh on Chrome mobile includes the URL bar area, so the
+               sidebar's tail can sit *below* the visible viewport and the
+               last nav-items / footer become unreachable. 100dvh tracks
+               the current visible height (URL bar shown or hidden) and
+               falls back to 100vh on older engines. */
             height: 100vh;
+            height: 100dvh;
             width: var(--sidebar-width);
             /* Glass effect - similar to top-bar */
             background: rgba(248, 250, 252, 0.35);
@@ -98,6 +104,10 @@
             z-index: 999 !important;
             transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
             overflow-y: auto;
+            /* iOS momentum scroll + keep swipes that don't move the sidebar
+               from rubber-banding the page underneath. */
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
         }
         
         .dark .sidebar {

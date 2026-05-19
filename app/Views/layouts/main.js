@@ -288,6 +288,14 @@
             const SIDEBAR_MODE_KEY = 'appSidebarMode'; // 'wide' | 'mini'
             const MOBILE_BP = 768;
             const TABLET_BP = 1366; // tablets (≤1366) default to mini rail
+            /* Hard floor — below this effective width the wide sidebar
+               crowds out the page (or the user has zoomed in so far that
+               main content can't breathe). We force mini regardless of
+               the saved preference; the preference re-applies as soon as
+               they zoom out / resize wider. innerWidth is reported in
+               CSS px, which shrinks proportionally with browser zoom-in,
+               so this also covers the "zoom too high" case. */
+            const FORCE_MINI_BP = 1100;
 
             const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebar = document.getElementById('sidebar');
@@ -295,6 +303,7 @@
             if (!sidebarToggle || !sidebar || !overlay) return;
 
             function isMobile() { return window.innerWidth < MOBILE_BP; }
+            function isCramped() { return window.innerWidth < FORCE_MINI_BP; }
 
             function applyMode(mode) {
                 if (mode === 'mini') document.body.classList.add('sidebar-mini');
@@ -307,12 +316,19 @@
                 return window.innerWidth < TABLET_BP ? 'mini' : 'wide';
             }
 
-            // Initial state — respect saved preference, otherwise auto by viewport.
-            const saved = (function () {
+            function readSaved() {
                 try { return localStorage.getItem(SIDEBAR_MODE_KEY); }
                 catch (e) { return null; }
-            })();
-            applyMode(saved || defaultMode());
+            }
+
+            // Effective mode: a cramped viewport ALWAYS forces mini, even
+            // if the user previously chose wide on a bigger screen.
+            function effectiveMode() {
+                if (isCramped()) return 'mini';
+                return readSaved() || defaultMode();
+            }
+
+            applyMode(effectiveMode());
 
             sidebarToggle.addEventListener('click', () => {
                 if (isMobile()) {
@@ -321,11 +337,14 @@
                     overlay.classList.toggle('show');
                     return;
                 }
-                // Desktop / tablet: toggle mini rail and persist
-                const isMini = document.body.classList.toggle('sidebar-mini');
-                const mode = isMini ? 'mini' : 'wide';
-                try { localStorage.setItem(SIDEBAR_MODE_KEY, mode); }
+                // Desktop / tablet: toggle mini rail and persist the
+                // user's intent. We still apply effectiveMode afterwards
+                // so a "wide" choice on a cramped viewport is recorded
+                // but does NOT visually override the safety floor.
+                const wantMini = !document.body.classList.contains('sidebar-mini');
+                try { localStorage.setItem(SIDEBAR_MODE_KEY, wantMini ? 'mini' : 'wide'); }
                 catch (e) { /* ignore */ }
+                applyMode(effectiveMode());
             });
 
             overlay.addEventListener('click', () => {
@@ -339,10 +358,10 @@
                     sidebar.classList.remove('show');
                     overlay.classList.remove('show');
                 }
-                // If the user never expressed a preference, follow the viewport
-                let userSaved = null;
-                try { userSaved = localStorage.getItem(SIDEBAR_MODE_KEY); } catch (e) {}
-                if (!userSaved) applyMode(defaultMode());
+                // Recompute every resize — this handles browser zoom
+                // changes (which fire resize) and viewport rotations,
+                // toggling the force-mini floor on/off automatically.
+                applyMode(effectiveMode());
             });
         })();
         
@@ -8862,23 +8881,32 @@
                         autohideBtn.style.display = 'none';
                     }
                     
-                    // Add click handler to dock container when minimized (C-Shape Radial Menu Toggle)
+                    // Add click handler to dock container when minimized
+                    // (C-Shape Radial Menu Toggle).
+                    //
+                    // We used to clone the container "to remove existing
+                    // listeners", but that detaches every handler attached
+                    // earlier in this DOMContentLoaded (medicalStorage stack
+                    // toggle, etc.) AND makes the `minimizeBtn` ref captured
+                    // above point at the old detached node — clicks on the
+                    // visible minimize button did nothing. Use a one-shot
+                    // dataset flag instead so we only attach once and keep
+                    // every other listener intact.
                     const dockContainer = dock.querySelector('.dock-container');
-                    if (dockContainer) {
-                        // Remove existing listeners by cloning
-                        const newContainer = dockContainer.cloneNode(true);
-                        dockContainer.parentNode.replaceChild(newContainer, dockContainer);
-                        
-                        newContainer.addEventListener('click', function(e) {
+                    if (dockContainer && !dockContainer.dataset.mobileInit) {
+                        dockContainer.dataset.mobileInit = '1';
+                        dockContainer.addEventListener('click', function(e) {
                             // Don't trigger if clicking on a dock item (radial menu item)
                             if (e.target.closest('.dock-item')) {
                                 return;
                             }
-                            
-                            // Toggle active state for C-Shape radial menu
+                            // Don't trigger when clicking the minimize button
+                            // itself — its own handler below collapses the
+                            // menu; we don't want this toggle to re-open it.
+                            if (e.target.closest('.dock-minimize-btn')) {
+                                return;
+                            }
                             dock.classList.toggle('active');
-                            
-                            // Update scrolled state when toggling
                             updateMobileDockScrollState();
                         });
                     }

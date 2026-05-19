@@ -610,6 +610,15 @@ body.draw-modal-open [class*="floating"]:not(.modal):not(.modal *) {
         background: rgba(100, 116, 139, 0.4);
         border-radius: 4px;
     }
+    /* The toolbar above needs overflow-y:hidden so its row doesn't grow a
+       vertical scrollbar, but that ALSO clipped the Library dropdown so
+       the menu never appeared in portrait. Float the open dropdown out
+       to the viewport (Popper already gives us viewport-relative
+       coords) so it can escape the toolbar's overflow box. */
+    #drawConsultationModal .draw-toolbar .dropdown-menu.show {
+        position: fixed !important;
+        z-index: 1080;
+    }
 
     #drawConsultationModal .draw-tool-group {
         flex-shrink: 0;
