@@ -2838,6 +2838,17 @@
 
     function startAutoSave() {
         stopAutoSave();
+        /* When the modal is opened to edit an existing attachment, the
+           default Save would REPLACE the original image — so a silent
+           autosave could overwrite the un-annotated copy without the
+           doctor ever asking for it. Skip the timer entirely in that
+           mode; the explicit "Save now" / "Save as new file" buttons
+           are the only writers. */
+        const ctx = session.context || {};
+        if (ctx.editAttachment && ctx.editAttachment.id) {
+            setAutoSaveStatus('idle', 'Autosave off — save manually');
+            return;
+        }
         autoSaveTimer = setInterval(() => save({ silent: true }), AUTO_SAVE_MS);
     }
 
@@ -3101,7 +3112,12 @@
             el.classList.add('is-error');
             el.innerHTML = `<i class="bi bi-exclamation-triangle"></i><span>${message || 'Save failed'}</span>`;
         } else {
-            el.innerHTML = '<i class="bi bi-cloud"></i><span>Not saved yet</span>';
+            // Idle. Default message is "Not saved yet"; callers can pass a
+            // custom one (e.g. "Autosave off — save manually" when editing
+            // an existing attachment, where silent autosaves are disabled
+            // so the original image can't be overwritten without intent).
+            const text = message || 'Not saved yet';
+            el.innerHTML = '<i class="bi bi-cloud"></i><span>' + text + '</span>';
         }
     }
 
