@@ -3,30 +3,24 @@
     rel="stylesheet">
 
 <!-- Drug Search Header -->
-<div class="row mb-4">
-    <div class="col-md-8">
-        <h4 class="text-primary">
-            <i class="bi bi-capsule me-2"></i>
-            Drug Search
-        </h4>
-        <p class="text-muted mb-0">Search and browse medications database</p>
-        <div class="mt-2">
-            <small class="text-muted">
-                <i class="bi bi-keyboard me-1"></i>
-                Shortcuts:
-                • Search <kbd class="me-1">F</kbd> or <kbd class="me-1">ب</kbd>
-                • Clear <kbd class="me-1">Esc</kbd>
-            </small>
+<div class="drugs-header mb-4">
+    <div class="drugs-header-main">
+        <span class="drugs-header-icon"><i class="bi bi-capsule-pill"></i></span>
+        <div class="drugs-header-text">
+            <h4 class="drugs-header-title">Drug Search</h4>
+            <p class="drugs-header-sub">Search and browse the medications database</p>
+            <div class="drugs-shortcuts">
+                <i class="bi bi-keyboard"></i>
+                <span class="drugs-shortcuts-label">Shortcuts</span>
+                <span class="kbd-pill">Search <kbd>F</kbd><kbd>ب</kbd></span>
+                <span class="kbd-pill">Clear <kbd>Esc</kbd></span>
+            </div>
         </div>
     </div>
-    <div class="col-md-4 text-end">
-        <div class="btn-group" role="group">
-            <button class="day-close-btn" id="updateDatabaseBtn" onclick="showUpdateDatabaseModal()">
-                <i class="bi bi-arrow-clockwise me-2"></i>
-                Update Database
-            </button>
-        </div>
-    </div>
+    <button class="drugs-update-btn" id="updateDatabaseBtn" onclick="showUpdateDatabaseModal()">
+        <i class="bi bi-arrow-clockwise"></i>
+        <span>Update Database</span>
+    </button>
 </div>
 
 <!-- Search Section -->
@@ -156,7 +150,7 @@
                 </div>
 
                 <!-- Results Grid -->
-                <div id="drugResults" class="row">
+                <div id="drugResults" class="row g-3">
                     <!-- Results will be populated here -->
                 </div>
 
@@ -284,19 +278,11 @@
     src="/app/Views/doctor/assets/js/drugs.js?v=<?= file_exists(__DIR__ . '/assets/js/drugs.js') ? filemtime(__DIR__ . '/assets/js/drugs.js') : time() ?>"></script>
 
 <style>
-    .modal-backdrop.show {
-        display: none !important;
-    }
-
-    body>div.modal-backdrop.fade.show {
-        display: none !important;
-    }
-
-    .dark .modal-content {
+.dark .modal-content {
         background: rgba(11, 18, 32, 0.8) !important;
     }
 
     .modal-content {
-        background: rgba(248, 250, 252, 0.8) !important;
+        background: var(--card) !important;
     }
 </style>

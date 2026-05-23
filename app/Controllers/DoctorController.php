@@ -304,7 +304,8 @@ class DoctorController
             'doctorId' => $user['id'],
             'followupAppointment' => $followupAppointment,
             'originalAppointment' => $originalAppointment,
-            'medicalHistory' => $medicalHistory
+            'medicalHistory' => $medicalHistory,
+            'autocompletePrefs' => $this->getDoctorAutocompletePrefs($user['id'])
         ]);
         
         echo $this->view->render('layouts/main', [
@@ -384,7 +385,8 @@ class DoctorController
             'appointment' => $appointment,
             'patient' => $patient,
             'consultationNotes' => $consultationNotes,
-            'doctorId' => $doctorId
+            'doctorId' => $doctorId,
+            'autocompletePrefs' => $this->getDoctorAutocompletePrefs($user['id'])
         ]);
         
         echo $this->view->render('layouts/main', [
@@ -423,7 +425,8 @@ class DoctorController
             'appointment' => $appointment,
             'patient' => $patient,
             'consultationNotes' => $consultationNotes,
-            'doctorId' => $doctorId
+            'doctorId' => $doctorId,
+            'autocompletePrefs' => $this->getDoctorAutocompletePrefs($user['id'])
         ]);
         
         echo $this->view->render('layouts/main', [
@@ -2422,12 +2425,15 @@ class DoctorController
         $paymentTypes = $this->getPaymentTypesSummary($clinicFilter);
         $payments     = $this->getTodayPayments($clinicFilter);
         $expenses     = $this->getTodayExpenses($clinicFilter);
+        // 7-day trend series for the KPI stat-card sparklines.
+        $financialTrend = $this->getFinancialTrend($clinicFilter);
 
         $content = $this->view->render('doctor/payments', [
             'dailyBalance' => $dailyBalance,
             'paymentTypes' => $paymentTypes,
             'payments' => $payments,
             'expenses' => $expenses,
+            'financialTrend' => $financialTrend,
             'userRole' => $user['role'],
             'clinics' => $clinics,
             'selectedClinicId' => $clinicFilter,
@@ -2473,6 +2479,62 @@ class DoctorController
             'content' => $content,
             'viewHelper' => $this->view
         ]);
+    }
+
+    /**
+     * 7-day financial trend series (opening / received / expenses / current)
+     * used to draw the KPI stat-card sparklines on the financial page.
+     */
+    private function getFinancialTrend(?int $clinicId = null, int $days = 7)
+    {
+        try {
+            $dates = [];
+            for ($i = $days - 1; $i >= 0; $i--) {
+                $dates[] = date('Y-m-d', strtotime("-{$i} day"));
+            }
+            $start = $dates[0];
+            $cf = $clinicId ? ' AND clinic_id = ? ' : '';
+
+            // Run one grouped query per series, map results by date.
+            $byDate = function (string $sql) use ($clinicId, $start) {
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute($clinicId ? [$start, $clinicId] : [$start]);
+                $map = [];
+                foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $r) {
+                    $map[$r['d']] = (float) $r['v'];
+                }
+                return $map;
+            };
+
+            $opening    = $byDate("SELECT DATE(created_at) d, COALESCE(SUM(amount),0) v FROM daily_balances WHERE DATE(created_at) >= ? AND balance_type='opening' {$cf} GROUP BY DATE(created_at)");
+            $additional = $byDate("SELECT DATE(created_at) d, COALESCE(SUM(amount),0) v FROM daily_balances WHERE DATE(created_at) >= ? AND balance_type='additional' {$cf} GROUP BY DATE(created_at)");
+            $withdrawal = $byDate("SELECT DATE(created_at) d, COALESCE(SUM(amount),0) v FROM daily_balances WHERE DATE(created_at) >= ? AND balance_type='withdrawal' {$cf} GROUP BY DATE(created_at)");
+            $received   = $byDate("SELECT DATE(created_at) d, COALESCE(SUM(CASE WHEN is_exempt=1 THEN 0 ELSE (amount - COALESCE(discount_amount,0)) END),0) v FROM payments WHERE DATE(created_at) >= ? {$cf} GROUP BY DATE(created_at)");
+            $expenses   = $byDate("SELECT DATE(created_at) d, COALESCE(SUM(amount),0) v FROM expenses WHERE DATE(created_at) >= ? {$cf} GROUP BY DATE(created_at)");
+
+            $tOpening = $tReceived = $tExpenses = $tCurrent = [];
+            foreach ($dates as $d) {
+                $o = $opening[$d]    ?? 0;
+                $a = $additional[$d] ?? 0;
+                $w = $withdrawal[$d] ?? 0;
+                $r = $received[$d]   ?? 0;
+                $e = $expenses[$d]   ?? 0;
+                $tOpening[]  = round($o, 2);
+                $tReceived[] = round($r, 2);
+                $tExpenses[] = round($e, 2);
+                $tCurrent[]  = round($o + $a + $r - $w - $e, 2);
+            }
+
+            return [
+                'opening'  => $tOpening,
+                'received' => $tReceived,
+                'expenses' => $tExpenses,
+                'current'  => $tCurrent,
+            ];
+        } catch (\Exception $e) {
+            $z = array_fill(0, $days, 0);
+            return ['opening' => $z, 'received' => $z, 'expenses' => $z, 'current' => $z];
+        }
     }
 
     private function getDailyBalance(?int $clinicId = null)
@@ -3417,6 +3479,47 @@ class DoctorController
     /**
      * Get doctor settings (API endpoint)
      */
+    /**
+     * Load a doctor's Auto Complete preferences for server-side injection
+     * into the Edit Consultation + Appointment views, so the autocomplete
+     * never flashes on before an async settings fetch can disable it.
+     * Each defaults to TRUE (autocomplete enabled) when no row exists.
+     *
+     * @param int $userId
+     * @return array{consultation:bool, icd10:bool, medications:bool}
+     */
+    private function getDoctorAutocompletePrefs($userId)
+    {
+        $prefs = [
+            'consultation' => true,
+            'icd10'        => true,
+            'medications'  => true,
+        ];
+        $map = [
+            'autocomplete_consultation' => 'consultation',
+            'autocomplete_icd10'        => 'icd10',
+            'autocomplete_medications'  => 'medications',
+        ];
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT setting_key, setting_value
+                FROM doctor_settings
+                WHERE user_id = ? AND setting_key IN ('autocomplete_consultation','autocomplete_icd10','autocomplete_medications')
+            ");
+            $stmt->execute([$userId]);
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $k = $map[$row['setting_key']] ?? null;
+                if ($k !== null) {
+                    // Stored as '1'/'0' (boolean setting_type).
+                    $prefs[$k] = !($row['setting_value'] === '0' || $row['setting_value'] === 0 || $row['setting_value'] === false);
+                }
+            }
+        } catch (\Exception $e) {
+            // On any error keep the safe default (all enabled).
+        }
+        return $prefs;
+    }
+
     public function getDoctorSettings()
     {
         // Start output buffering IMMEDIATELY
@@ -3601,7 +3704,12 @@ class DoctorController
             'desktop_dock_enabled',
             'mobile_dock_enabled',
             'dashboard_rearrange_mobile',
-            'sidebar_items_enabled'
+            'sidebar_items_enabled',
+            // Auto Complete preferences (Edit Consultation + medication entry).
+            // Doctor-scoped switches; default ON when no row exists.
+            'autocomplete_consultation',
+            'autocomplete_icd10',
+            'autocomplete_medications'
         ];
         
         try {

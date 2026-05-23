@@ -33,14 +33,14 @@ body.draw-modal-open #quickAccessDock {
     height: 100%;
     max-height: 100%;
     border-radius: 0;
-    background: #f1f5f9;
+    background: var(--card);
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
 .dark #drawConsultationModal .modal-content {
-    background: #0f172a;
+    background: var(--card);
 }
 
 #drawConsultationModal .modal-header {

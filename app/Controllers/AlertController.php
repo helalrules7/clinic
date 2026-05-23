@@ -68,7 +68,33 @@ class AlertController
         // Get all alerts
         $allAlerts = $this->alertModel->getByDoctor($doctorId, []);
         $totalItems = count($allAlerts);
-        
+
+        // At-a-glance status breakdown (computed across ALL alerts, not just
+        // the current page) for the overview stat cards.
+        $now = new \DateTime();
+        $stats = ['total' => $totalItems, 'active' => 0, 'past_due' => 0, 'dismissed' => 0, 'inactive' => 0];
+        foreach ($allAlerts as $a) {
+            if ((int)($a['is_dismissed'] ?? 0) === 1) {
+                $stats['dismissed']++;
+                continue;
+            }
+            if ((int)($a['is_active'] ?? 0) === 1) {
+                $dt = null;
+                try {
+                    $dt = new \DateTime(trim(($a['alert_date'] ?? '') . ' ' . ($a['alert_time'] ?? '00:00:00')));
+                } catch (\Exception $e) {
+                    $dt = null;
+                }
+                if ($dt && $dt < $now) {
+                    $stats['past_due']++;
+                } else {
+                    $stats['active']++;
+                }
+            } else {
+                $stats['inactive']++;
+            }
+        }
+
         // Calculate pagination
         $totalPages = $perPage > 0 ? ceil($totalItems / $perPage) : 1;
         $offset = ($page - 1) * $perPage;
@@ -84,6 +110,7 @@ class AlertController
         echo json_encode([
             'success' => true,
             'alerts' => $alerts,
+            'stats' => $stats,
             'pagination' => [
                 'current_page' => $page,
                 'total_pages' => $totalPages,

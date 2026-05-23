@@ -12,10 +12,13 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-cog me-2"></i>
-                        System Settings
-                    </h5>
+                    <div class="settings-page-header">
+                        <span class="settings-page-icon"><i class="fas fa-sliders-h"></i></span>
+                        <div>
+                            <h5 class="settings-page-title">System Settings</h5>
+                            <p class="settings-page-sub">Personalize your clinic, preferences, and notifications</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     <?php if (isset($_SESSION['success_message'])): ?>
@@ -294,6 +297,94 @@
                                 <div id="sidebarItemsList" class="list-group sidebar-items-list" style="max-height: 300px; overflow-y: auto;">
                                     <div class="text-center py-3 text-muted">
                                         <i class="bi bi-hourglass-split me-2"></i>Loading...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Auto Complete -->
+                        <div class="settings-section">
+                            <h5><i class="fas fa-magic me-2"></i>Auto Complete</h5>
+                            <div class="form-text mb-3" style="margin-top:-6px">
+                                Control the smart suggestions that appear while you work in the
+                                <strong>Edit Consultation</strong> page and while prescribing medications.
+                                These switches are personal to your account.
+                            </div>
+
+                            <!-- 1. Consultation field suggestions -->
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Consultation suggestions</label>
+                                        <div class="form-text">Prior-visit summary and quick-assist chips while editing a consultation.</div>
+                                        <div class="mt-2">
+                                            <div class="demo-preview ac-demo" aria-hidden="true">
+                                                <div class="ac-demo-field">
+                                                    <span class="ac-demo-typed">Knee osteo</span><span class="ac-demo-caret"></span>
+                                                </div>
+                                                <div class="ac-demo-menu ac-demo-menu--text">
+                                                    <div class="ac-demo-opt"><i class="bi bi-search"></i> Knee osteoarthritis</div>
+                                                    <div class="ac-demo-opt"><i class="bi bi-search"></i> Knee osteochondritis</div>
+                                                    <div class="ac-demo-opt"><i class="bi bi-search"></i> Knee osteonecrosis</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="toggle-switch-wrapper">
+                                        <input type="checkbox" class="toggle-switch" id="autocompleteConsultation"
+                                               onchange="updatePersonalPreference('autocomplete_consultation', this.checked)">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2. ICD-10 code suggestions -->
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">ICD-10 code suggestions</label>
+                                        <div class="form-text">The "Suggest ICD-10" helper that proposes diagnosis codes from your diagnosis text.</div>
+                                        <div class="mt-2">
+                                            <div class="demo-preview ac-demo" aria-hidden="true">
+                                                <div class="ac-demo-field">
+                                                    <span class="ac-demo-typed">Knee OA</span>
+                                                    <span class="ac-demo-btn"><i class="bi bi-stars"></i> Suggest ICD-10</span>
+                                                </div>
+                                                <div class="ac-demo-menu ac-demo-menu--icd">
+                                                    <div class="ac-demo-opt"><span class="ac-demo-code">M17.11</span> Primary OA, right knee <span class="ac-demo-tag ac-demo-tag--ai">AI 92%</span></div>
+                                                    <div class="ac-demo-opt"><span class="ac-demo-code">M17.0</span> Bilateral primary OA <span class="ac-demo-tag ac-demo-tag--hist">used 5×</span></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="toggle-switch-wrapper">
+                                        <input type="checkbox" class="toggle-switch" id="autocompleteIcd10"
+                                               onchange="updatePersonalPreference('autocomplete_icd10', this.checked)">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 3. Medication name autocomplete -->
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Medication auto complete</label>
+                                        <div class="form-text">Drug-name suggestions when adding or editing a medication on the appointment.</div>
+                                        <div class="mt-2">
+                                            <div class="demo-preview ac-demo" aria-hidden="true">
+                                                <div class="ac-demo-field">
+                                                    <i class="bi bi-capsule"></i> <span class="ac-demo-typed">Diclo</span><span class="ac-demo-caret"></span>
+                                                </div>
+                                                <div class="ac-demo-menu ac-demo-menu--med">
+                                                    <div class="ac-demo-opt"><i class="bi bi-capsule-pill"></i> Diclofenac 50&nbsp;mg</div>
+                                                    <div class="ac-demo-opt"><i class="bi bi-capsule-pill"></i> Diclofenac gel 1%</div>
+                                                    <div class="ac-demo-opt"><i class="bi bi-capsule-pill"></i> Diclomol</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="toggle-switch-wrapper">
+                                        <input type="checkbox" class="toggle-switch" id="autocompleteMedications"
+                                               onchange="updatePersonalPreference('autocomplete_medications', this.checked)">
                                     </div>
                                 </div>
                             </div>
@@ -613,16 +704,10 @@
 
 <script src="/app/Views/doctor/assets/js/settings.js?v=<?= file_exists(__DIR__ . '/assets/js/settings.js') ? filemtime(__DIR__ . '/assets/js/settings.js') : time() ?>"></script>
 <style>
-    .modal-backdrop.show{
-        display: none !important;
-    }
-    body > div.modal-backdrop.fade.show{
-        display: none !important;
-    }
-    .dark .modal-content{
+.dark .modal-content{
     background: rgba(11, 18, 32, 0.8) !important;
     }
     .modal-content{
-    background: rgba(248, 250, 252, 0.8) !important;
+    background: var(--card) !important;
     }
 </style>

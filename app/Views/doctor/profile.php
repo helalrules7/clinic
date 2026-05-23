@@ -1,30 +1,36 @@
 <link href="/app/Views/doctor/assets/css/profile.css?v=<?= file_exists(__DIR__ . '/assets/css/profile.css') ? filemtime(__DIR__ . '/assets/css/profile.css') : time() ?>" rel="stylesheet">
-<!-- Profile Header with Image -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow-sm profile-header-card">
-            <div class="card-body text-center py-4">
-                <div class="profile-image-container mb-3">
-                    <?php if (!empty($user['profile_image'])): 
-                        $profileImagePath = strpos($user['profile_image'], '/public/') === 0 ? $user['profile_image'] : '/public' . $user['profile_image'];
-                    ?>
-                        <img src="<?= htmlspecialchars($profileImagePath) ?>" 
-                             alt="Profile Picture" 
-                             class="profile-image-large"
-                             id="profileImageDisplay">
-                    <?php else: ?>
-                        <div class="profile-image-placeholder-large" id="profileImageDisplay">
-                            <?= strtoupper(substr($user['name'] ?? 'U', 0, 1)) ?>
-                        </div>
-                    <?php endif; ?>
+<!-- Profile Hero -->
+<div class="profile-hero mb-4">
+    <div class="profile-hero-banner"></div>
+    <div class="profile-hero-content">
+        <div class="profile-avatar-ring">
+            <?php if (!empty($user['profile_image'])):
+                $profileImagePath = strpos($user['profile_image'], '/public/') === 0 ? $user['profile_image'] : '/public' . $user['profile_image'];
+            ?>
+                <img src="<?= htmlspecialchars($profileImagePath) ?>"
+                     alt="Profile Picture"
+                     class="profile-image-large"
+                     id="profileImageDisplay">
+            <?php else: ?>
+                <div class="profile-image-placeholder-large" id="profileImageDisplay">
+                    <?= strtoupper(substr($user['name'] ?? 'U', 0, 1)) ?>
                 </div>
-                <h4 class="mb-1 profile-name"><?= htmlspecialchars($user['name']) ?></h4>
-                <p class="text-muted mb-0 profile-email">
-                    <?= htmlspecialchars($user['email']) ?>
-                    <?php if (isset($user['doctor_name'])): ?>
-                        <br><span class="badge bg-primary mt-2"><?= htmlspecialchars($user['doctor_name']) ?></span>
-                    <?php endif; ?>
-                </p>
+            <?php endif; ?>
+        </div>
+        <div class="profile-hero-text">
+            <h4 class="profile-name mb-1"><?= htmlspecialchars($user['name']) ?></h4>
+            <p class="profile-email mb-2"><i class="bi bi-envelope me-1"></i><?= htmlspecialchars($user['email']) ?></p>
+            <div class="profile-chips">
+                <span class="profile-chip profile-chip--role"><i class="bi bi-person-badge"></i><?= ucfirst($user['role']) ?></span>
+                <?php if (!empty($user['specialty'])): ?>
+                    <span class="profile-chip"><i class="bi bi-star-fill"></i><?= htmlspecialchars($user['specialty']) ?></span>
+                <?php endif; ?>
+                <?php if (!empty($user['doctor_name'])): ?>
+                    <span class="profile-chip"><i class="bi bi-clipboard2-pulse"></i><?= htmlspecialchars($user['doctor_name']) ?></span>
+                <?php endif; ?>
+                <span class="profile-chip <?= $user['is_active'] ? 'is-active' : 'is-inactive' ?>">
+                    <i class="bi <?= $user['is_active'] ? 'bi-check-circle-fill' : 'bi-x-circle-fill' ?>"></i><?= $user['is_active'] ? 'Active' : 'Inactive' ?>
+                </span>
             </div>
         </div>
     </div>
@@ -151,9 +157,23 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="new_password" class="form-label">New Password</label>
-                                <input type="password" class="form-control" id="new_password" name="new_password" 
+                                <input type="password" class="form-control" id="new_password" name="new_password"
                                        minlength="8" required>
-                                <div class="password-strength-container mt-2">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="confirm_password" class="form-label">Confirm New Password</label>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Password validation spans the full width of both inputs -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3 password-validation-block">
+                                <div class="password-strength-container">
                                     <div class="password-strength-bar">
                                         <div class="password-strength-fill" id="password_strength_fill"></div>
                                     </div>
@@ -164,30 +184,26 @@
                                 </div>
                                 <div class="password-requirements mt-2" id="password_requirements">
                                     <small class="form-text">
-                                        <div class="requirement" id="req_length">
-                                            <i class="bi bi-x-circle text-danger me-1"></i>
-                                            At least 8 characters
-                                        </div>
-                                        <div class="requirement" id="req_uppercase">
-                                            <i class="bi bi-x-circle text-danger me-1"></i>
-                                            One uppercase letter
-                                        </div>
-                                        <div class="requirement" id="req_lowercase">
-                                            <i class="bi bi-x-circle text-danger me-1"></i>
-                                            One lowercase letter
-                                        </div>
-                                        <div class="requirement" id="req_number">
-                                            <i class="bi bi-x-circle text-danger me-1"></i>
-                                            One number
+                                        <div class="password-requirements-grid">
+                                            <div class="requirement" id="req_length">
+                                                <i class="bi bi-x-circle text-danger me-1"></i>
+                                                At least 8 characters
+                                            </div>
+                                            <div class="requirement" id="req_uppercase">
+                                                <i class="bi bi-x-circle text-danger me-1"></i>
+                                                One uppercase letter
+                                            </div>
+                                            <div class="requirement" id="req_lowercase">
+                                                <i class="bi bi-x-circle text-danger me-1"></i>
+                                                One lowercase letter
+                                            </div>
+                                            <div class="requirement" id="req_number">
+                                                <i class="bi bi-x-circle text-danger me-1"></i>
+                                                One number
+                                            </div>
                                         </div>
                                     </small>
                                 </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="confirm_password" class="form-label">Confirm New Password</label>
-                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
                             </div>
                         </div>
                     </div>
@@ -354,16 +370,10 @@
 
 <script src="/app/Views/doctor/assets/js/profile.js?v=<?= file_exists(__DIR__ . '/assets/js/profile.js') ? filemtime(__DIR__ . '/assets/js/profile.js') : time() ?>"></script>
 <style>
-    .modal-backdrop.show{
-        display: none !important;
-    }
-    body > div.modal-backdrop.fade.show{
-        display: none !important;
-    }
-    .dark .modal-content{
+.dark .modal-content{
     background: rgba(11, 18, 32, 0.8) !important;
     }
     .modal-content{
-    background: rgba(248, 250, 252, 0.8) !important;
+    background: var(--card) !important;
     }
 </style>

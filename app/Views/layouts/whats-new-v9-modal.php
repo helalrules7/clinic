@@ -1,7 +1,7 @@
 <?php
-// "What's New" v9.1.0 — step-by-step wizard. Same display policy as v9.0
+// "What's New" v10.0.0 — step-by-step wizard. Same display policy as before
 // (per-login session, 2-day window from first sight, opt-out persistent),
-// but bumping VERSION below to v9_1_0 deliberately RESETS the timer +
+// but bumping VERSION below to v10_0_0 deliberately RESETS the timer +
 // opt-out for every browser, so the new wizard surfaces fresh on the
 // next login. Included from layouts/main.php (doctor/admin) and
 // secretary_main.php. Bump VERSION again in a future release to
@@ -14,14 +14,14 @@
         border: none;
         border-radius: 18px;
         overflow: hidden;
-        background: linear-gradient(180deg, #ffffff 0%, #f6f7fb 100%);
+        background: var(--card);
     }
     .dark #whatsNewV9Modal .modal-content {
-        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+        background: var(--card);
         color: #e2e8f0;
     }
     #whatsNewV9Modal .modal-header {
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #0ea5e9 100%);
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #4F46E5 100%);
         color: #fff;
         border-bottom: none;
         padding: 1rem 1.4rem;
@@ -85,7 +85,7 @@
     }
     .wn-ver-num {
         font-size:3.4rem; font-weight:900; line-height:1;
-        background:linear-gradient(135deg,#818cf8 0%,#a78bfa 45%,#38bdf8 100%);
+        background:linear-gradient(135deg,#818cf8 0%,#a78bfa 45%,#6366F1 100%);
         -webkit-background-clip:text; background-clip:text;
         -webkit-text-fill-color:transparent; color:transparent;
         filter:drop-shadow(0 4px 18px rgba(99,102,241,.45));
@@ -138,7 +138,7 @@
         opacity:0; transform:translateY(6px);
         animation: wnChipIn .6s ease-out forwards;
     }
-    .wn-ai-chip i { color:#38bdf8; }
+    .wn-ai-chip i { color:#6366F1; }
     .wn-ai-chip:nth-child(1) { animation-delay:.5s; }
     .wn-ai-chip:nth-child(2) { animation-delay:.85s; }
     @keyframes wnChipIn { to { opacity:1; transform:translateY(0); } }
@@ -230,7 +230,7 @@
     }
     .wn-icd-r b {
         font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        color:#38bdf8; font-weight:700;
+        color:#6366F1; font-weight:700;
     }
     .wn-icd-r span { flex:1; color:#cbd5e1; }
     .wn-icd-r i {
@@ -254,12 +254,12 @@
         animation: wnEyeOutline 6s ease-in-out infinite;
     }
     .wn-eye-iris {
-        fill:rgba(14,165,233,.14); stroke:#0ea5e9; stroke-width:2.5;
+        fill:rgba(14,165,233,.14); stroke:#4F46E5; stroke-width:2.5;
         stroke-dasharray:270; stroke-dashoffset:270; opacity:0;
         animation: wnEyeIris 6s ease-in-out infinite;
     }
     .wn-eye-rays {
-        opacity:0; stroke:#0ea5e9; stroke-width:1;
+        opacity:0; stroke:#4F46E5; stroke-width:1;
         animation: wnEyeRays 6s ease-in-out infinite;
     }
     .wn-eye-pupil { fill:#0f172a; opacity:0; animation: wnEyePupil 6s ease-in-out infinite; }
@@ -368,6 +368,68 @@
     .wn-bugs li:nth-child(3) .wn-bug-icon .bi-check-circle-fill,
     .wn-bugs li:nth-child(3) .wn-bug-label::after { animation-delay:.9s; }
 
+    /* ---- v10: new-look (light/dark glass) mockup ------------------------- */
+    .wn-theme { position:absolute; inset:16px; display:flex; gap:12px; }
+    .wn-theme-half {
+        flex:1; border-radius:12px; padding:14px; position:relative; overflow:hidden;
+        border:1px solid rgba(148,163,184,.25);
+        display:flex; flex-direction:column; gap:9px;
+    }
+    .wn-theme-light { background:linear-gradient(160deg,#eef2ff 0%,#f8fafc 70%); }
+    .wn-theme-dark  { background:linear-gradient(160deg,#1e293b 0%,#0b1220 70%); }
+    .wn-theme-dot { width:26px; height:26px; border-radius:8px;
+        background:linear-gradient(135deg,#6366f1,#8b5cf6); box-shadow:0 6px 14px rgba(99,102,241,.45); }
+    .wn-theme-bar { height:8px; border-radius:99px; background:rgba(99,102,241,.55); width:80%;
+        animation:wnThemeBar 2.6s ease-in-out infinite; }
+    .wn-theme-bar.short { width:55%; opacity:.6; animation-delay:.3s; }
+    .wn-theme-light .wn-theme-bar { background:rgba(99,102,241,.35); }
+    .wn-theme-tag { position:absolute; bottom:10px; right:12px; font-size:.66rem; font-weight:700;
+        letter-spacing:.04em; text-transform:uppercase; }
+    .wn-theme-light .wn-theme-tag { color:#6366f1; }
+    .wn-theme-dark  .wn-theme-tag { color:#a5b4fc; }
+    @keyframes wnThemeBar { 0%,100% { transform:scaleX(.85); transform-origin:left; } 50% { transform:scaleX(1); } }
+
+    /* ---- v10: Patients Board mockup -------------------------------------- */
+    .wn-board { position:absolute; inset:16px; display:flex; gap:10px; }
+    .wn-board-col {
+        flex:1; background:rgba(148,163,184,.10); border:1px solid rgba(148,163,184,.20);
+        border-radius:10px; padding:8px; display:flex; flex-direction:column; gap:7px;
+    }
+    .wn-board-col-head {
+        font-size:.66rem; font-weight:700; color:#fff; text-align:center;
+        background:var(--c,#6366f1); border-radius:6px; padding:3px 0; letter-spacing:.03em;
+    }
+    .wn-board-card { height:24px; border-radius:6px; background:#fff; border:1px solid rgba(148,163,184,.3);
+        box-shadow:0 1px 3px rgba(15,23,42,.12); }
+    .dark .wn-board-card { background:#0f172a; border-color:rgba(148,163,184,.22); }
+    .wn-board-card--drag {
+        border:1px solid #6366f1; box-shadow:0 8px 18px rgba(99,102,241,.4);
+        animation:wnBoardDrag 3.2s ease-in-out infinite;
+    }
+    @keyframes wnBoardDrag {
+        0%,12%   { transform:translate(0,0) rotate(0); opacity:1; }
+        45%,55%  { transform:translate(0,-34px) rotate(-3deg); opacity:.92; }
+        88%,100% { transform:translate(0,0) rotate(0); opacity:1; }
+    }
+
+    /* ---- v10: Auto Complete settings mockup ------------------------------ */
+    .wn-acset { position:absolute; inset:20px; display:flex; flex-direction:column; gap:10px;
+        justify-content:center; }
+    .wn-acset-row {
+        display:flex; align-items:center; justify-content:space-between; gap:12px;
+        background:rgba(148,163,184,.10); border:1px solid rgba(148,163,184,.2);
+        border-radius:10px; padding:10px 14px; font-size:.8rem; color:#e2e8f0;
+    }
+    .wn-acset-row span:first-child { color:#cbd5e1; }
+    .wn-acset-sw { width:38px; height:21px; border-radius:99px; background:#475569; position:relative;
+        flex-shrink:0; transition:background .3s; }
+    .wn-acset-sw::after { content:''; position:absolute; top:2px; left:2px; width:17px; height:17px;
+        border-radius:50%; background:#fff; transition:left .3s; }
+    .wn-acset-sw.on { background:linear-gradient(135deg,#6366f1,#818cf8); }
+    .wn-acset-sw.on::after { left:19px; }
+    .wn-acset-sw.on { animation:wnSwPulse 2.8s ease-in-out infinite; }
+    @keyframes wnSwPulse { 0%,100% { box-shadow:0 0 0 0 rgba(99,102,241,0); } 50% { box-shadow:0 0 0 5px rgba(99,102,241,.18); } }
+
     /* ---- dots + footer --------------------------------------------------- */
     .wn-dots { display:flex; justify-content:center; gap:7px; padding:.4rem 0 0; }
     .wn-dots button {
@@ -398,7 +460,7 @@
       <div class="modal-header">
         <h5 class="modal-title">
           <i class="bi bi-stars me-2"></i>What's New
-          <span class="version-pill">v9.1.0</span>
+          <span class="version-pill">v10.0.0</span>
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -407,179 +469,101 @@
         <div class="wn-viewport">
           <div class="wn-track" id="wnTrack">
 
-            <!-- 1 — Welcome 9.1.0 -->
+            <!-- 1 — Welcome v10.0.0 -->
             <div class="wn-slide">
-              <span class="wn-kicker">Release Highlights</span>
+              <span class="wn-kicker">Major Release</span>
               <div class="wn-stage">
                 <div class="wn-ver">
                   <span class="wn-ver-label">version</span>
-                  <span class="wn-ver-num">9.1.0</span>
+                  <span class="wn-ver-num">10.0.0</span>
                 </div>
               </div>
-              <h3>Smarter Edit Consultation</h3>
-              <p>A focused update — AI right inside the consultation page,
-                 instant ICD-10 suggestions, a sharper drawing studio, and
-                 the three biggest annoyances quietly squashed.</p>
+              <h3>A bold new HClinic</h3>
+              <p>Version 10 is our biggest update yet — a complete visual
+                 redesign, a brand-new Patients Board, and full control over
+                 smart Auto Complete. Here's a quick tour.</p>
             </div>
 
-            <!-- 2 — AI Assistant on Edit Consultation -->
+            <!-- 2 — New look: Glass / Indigo, Dark + Light -->
             <div class="wn-slide">
-              <span class="wn-kicker">AI Assistant</span>
+              <span class="wn-kicker">New Design</span>
               <div class="wn-stage">
-                <div class="wn-ai">
-                  <div class="wn-ai-head">
-                    <span class="wn-ai-icon"><i class="bi bi-stars"></i></span>
-                    <span class="wn-ai-title">AI Assistant</span>
-                    <span class="wn-ai-badge">
-                      <i class="bi bi-shield-check"></i> review before saving
-                    </span>
+                <div class="wn-theme">
+                  <div class="wn-theme-half wn-theme-light">
+                    <span class="wn-theme-dot"></span>
+                    <div class="wn-theme-bar"></div>
+                    <div class="wn-theme-bar short"></div>
+                    <span class="wn-theme-tag">Light</span>
                   </div>
-                  <div class="wn-ai-chips">
-                    <span class="wn-ai-chip">
-                      <i class="bi bi-clock-history"></i>Summarize prior visits
-                    </span>
-                    <span class="wn-ai-chip">
-                      <i class="bi bi-question-circle"></i>What might I be missing?
-                    </span>
+                  <div class="wn-theme-half wn-theme-dark">
+                    <span class="wn-theme-dot"></span>
+                    <div class="wn-theme-bar"></div>
+                    <div class="wn-theme-bar short"></div>
+                    <span class="wn-theme-tag">Dark</span>
                   </div>
                 </div>
               </div>
-              <h3>AI right inside the consultation</h3>
-              <p>Ask the assistant about the patient's history or what your
-                 current draft is missing — every reply carries an amber
-                 "review before saving" badge so it stays a suggestion,
-                 never the chart.</p>
+              <h3>A premium new look</h3>
+              <p>The whole app moves to a unified glassmorphism design system
+                 in a refined <strong>Indigo</strong> palette — frosted cards,
+                 cleaner depth and spacing, and a gorgeous <strong>Dark
+                 mode</strong> that's easy on the eyes during long clinics.
+                 Everything feels calmer and more consistent, page to page.</p>
             </div>
 
-            <!-- 3 — Prior-Visit Summary -->
+            <!-- 3 — Patients Board -->
             <div class="wn-slide">
-              <span class="wn-kicker">Prior Visits</span>
+              <span class="wn-kicker">New Feature</span>
               <div class="wn-stage">
-                <div class="wn-sum">
-                  <button type="button" class="wn-sum-btn">
-                    <i class="bi bi-clipboard2-pulse"></i>Summarize prior visits
-                  </button>
-                  <ul class="wn-sum-list">
-                    <li>• Diagnosis: Astigmatism (2026-05-14)</li>
-                    <li>• Plan: Conjyclear forte ED + glasses</li>
-                    <li>• Slit lamp: OD/OS mild hyperaemia</li>
-                    <li>• IOP / VA / refraction: <em>not recorded</em></li>
-                  </ul>
-                </div>
-              </div>
-              <h3>One-click prior-visit recap</h3>
-              <p>The assistant reads ONLY the recorded data and bullets it
-                 out, explicitly saying "not recorded" when something is
-                 missing. Read-only — it never edits the chart.</p>
-            </div>
-
-            <!-- 4 — ICD-10 Suggestions -->
-            <div class="wn-slide">
-              <span class="wn-kicker">ICD-10</span>
-              <div class="wn-stage">
-                <div class="wn-icd">
-                  <div class="wn-icd-row1">
-                    <div class="wn-icd-input">Senile cataract, right eye</div>
-                    <button type="button" class="wn-icd-btn">
-                      <i class="bi bi-stars"></i>Suggest
-                    </button>
+                <div class="wn-board">
+                  <div class="wn-board-col">
+                    <div class="wn-board-col-head" style="--c:#6366f1">New</div>
+                    <div class="wn-board-card"></div>
+                    <div class="wn-board-card"></div>
                   </div>
-                  <div class="wn-icd-pop">
-                    <div class="wn-icd-pop-label">AI suggestions</div>
-                    <div class="wn-icd-r">
-                      <b>H25.13</b>
-                      <span>Unilateral age-related cataract, right</span>
-                      <i>AI 90%</i>
-                    </div>
-                    <div class="wn-icd-r">
-                      <b>H25.10</b>
-                      <span>Age-related cataract, unspecified</span>
-                      <i>AI 70%</i>
-                    </div>
+                  <div class="wn-board-col">
+                    <div class="wn-board-col-head" style="--c:#f59e0b">Awaiting</div>
+                    <div class="wn-board-card wn-board-card--drag"></div>
+                  </div>
+                  <div class="wn-board-col">
+                    <div class="wn-board-col-head" style="--c:#10b981">Done</div>
+                    <div class="wn-board-card"></div>
                   </div>
                 </div>
               </div>
-              <h3>Instant ICD-10 suggestions</h3>
-              <p>Type the diagnosis, hit <strong>Suggest</strong>. Codes the
-                 clinic has actually used rank first; AI codes are
-                 server-validated by regex so a malformed code never reaches
-                 you. One click sets the field — never the rest of the form.</p>
+              <h3>Meet the Patients Board</h3>
+              <p>Organize your patients on a beautiful <strong>Trello-style
+                 board</strong>. Drag cards between your own workflow columns,
+                 group patients by stage, search and filter instantly, and
+                 open a full profile in one click. Your whole clinic, at a
+                 glance — with a quick overview that drills into detail.</p>
             </div>
 
-            <!-- 5 — Drawing studio (improved, eye SVG) -->
+            <!-- 4 — Auto Complete settings -->
             <div class="wn-slide">
-              <span class="wn-kicker">Drawing Studio</span>
+              <span class="wn-kicker">Settings</span>
               <div class="wn-stage">
-                <div class="wn-eye-wrap">
-                  <svg class="wn-eye" viewBox="0 0 320 170" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Almond / eye outline -->
-                    <path class="wn-eye-outline"
-                          d="M 30 85 Q 160 8 290 85 Q 160 162 30 85 Z"/>
-                    <!-- Iris -->
-                    <circle class="wn-eye-iris" cx="160" cy="85" r="42"/>
-                    <!-- Iris radial pattern -->
-                    <g class="wn-eye-rays">
-                      <line x1="160" y1="48"  x2="160" y2="58"/>
-                      <line x1="160" y1="112" x2="160" y2="122"/>
-                      <line x1="123" y1="85"  x2="133" y2="85"/>
-                      <line x1="187" y1="85"  x2="197" y2="85"/>
-                      <line x1="134" y1="59"  x2="141" y2="66"/>
-                      <line x1="179" y1="104" x2="186" y2="111"/>
-                      <line x1="134" y1="111" x2="141" y2="104"/>
-                      <line x1="179" y1="66"  x2="186" y2="59"/>
-                    </g>
-                    <!-- Pupil -->
-                    <circle class="wn-eye-pupil" cx="160" cy="85" r="16"/>
-                    <!-- Catch-light -->
-                    <circle class="wn-eye-glint" cx="152" cy="77" r="5"/>
-                    <!-- Annotation: OD -->
-                    <g class="wn-eye-label">
-                      <line x1="248" y1="36" x2="208" y2="68"/>
-                      <text x="252" y="34">OD</text>
-                    </g>
-                  </svg>
+                <div class="wn-acset">
+                  <div class="wn-acset-row">
+                    <span>Consultation suggestions</span>
+                    <span class="wn-acset-sw on"></span>
+                  </div>
+                  <div class="wn-acset-row">
+                    <span>ICD-10 code suggestions</span>
+                    <span class="wn-acset-sw on"></span>
+                  </div>
+                  <div class="wn-acset-row">
+                    <span>Medication auto complete</span>
+                    <span class="wn-acset-sw"></span>
+                  </div>
                 </div>
               </div>
-              <h3>Drawing studio, now ophthalmology-aware</h3>
-              <p>Sketch findings right on the appointment with pen, shapes,
-                 eye templates and medical stamps. Toolbar refined, arrowheads
-                 fixed, per-element settings panel — and the contextual quick
-                 menu now follows text and templates too.</p>
-            </div>
-
-            <!-- 6 — Bug fixes -->
-            <div class="wn-slide">
-              <span class="wn-kicker">Bug Fixes</span>
-              <div class="wn-stage">
-                <ul class="wn-bugs">
-                  <li>
-                    <span class="wn-bug-icon">
-                      <i class="bi bi-bug-fill"></i>
-                      <i class="bi bi-check-circle-fill"></i>
-                    </span>
-                    <span class="wn-bug-label">Diagnosis &amp; complaint autocomplete (404 → live)</span>
-                  </li>
-                  <li>
-                    <span class="wn-bug-icon">
-                      <i class="bi bi-bug-fill"></i>
-                      <i class="bi bi-check-circle-fill"></i>
-                    </span>
-                    <span class="wn-bug-label">Common Cases modal now loads</span>
-                  </li>
-                  <li>
-                    <span class="wn-bug-icon">
-                      <i class="bi bi-bug-fill"></i>
-                      <i class="bi bi-check-circle-fill"></i>
-                    </span>
-                    <span class="wn-bug-label">Medication suggestions (+ complaint match)</span>
-                  </li>
-                </ul>
-              </div>
-              <h3>Three quiet bugs, gone</h3>
-              <p>The autocomplete and "Common Cases" routes were dead in
-                 production; medication suggestions ignored the chief
-                 complaint. All three now work — and medications match
-                 against complaint too, not just diagnosis.</p>
+              <h3>You're in control of Auto Complete</h3>
+              <p>A new <strong>Auto Complete</strong> section in Settings lets
+                 you turn the smart suggestions on or off — consultation
+                 assists, ICD-10 codes, and medication name lookup — each with
+                 a live animated preview. Set it once; it follows you across
+                 the Edit Consultation page and prescribing.</p>
             </div>
 
           </div>
@@ -615,7 +599,7 @@
     //   • "Don't show again" opts out permanently.
     // Bumping VERSION (e.g. v9_0_0 → v9_1_0) RESETS first-seen / opt-out /
     // session-shown for every browser, so the wizard resurfaces fresh.
-    const VERSION       = 'v9_1_0';
+    const VERSION       = 'v10_0_0';
     const OPT_OUT_KEY   = 'whatsNew_' + VERSION + '_optOut';     // permanent
     const FIRST_SEEN_KEY= 'whatsNew_' + VERSION + '_firstSeen';  // ms epoch
     const SESSION_KEY   = 'whatsNew_' + VERSION + '_shownSession';

@@ -6,28 +6,27 @@ $pageSubtitle = 'Review and close daily operations for ' . date('F j, Y', strtot
 
 <link href="/app/Views/doctor/assets/css/daily_closure.css?v=<?= file_exists(__DIR__ . '/assets/css/daily_closure.css') ? filemtime(__DIR__ . '/assets/css/daily_closure.css') : time() ?>" rel="stylesheet">
 <div class="container-fluid">
-    <!-- Page Header -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <h2 class="mb-1">Daily Closure</h2>
-            <p class="text-muted mb-0">Review and close daily operations for <?= date('F j, Y', strtotime($today)) ?></p>
-        </div>
-        <div class="col-md-6 text-end">
-            <?php if (!$isClosed): ?>
-            <button class="btn btn-success btn-lg" 
-                    onclick="closeDay()" 
-                    id="closeDayBtn"
-                    title="Close the day">
-                <i class="bi bi-check-circle me-2"></i>
-                Close Day
-            </button>
-            <?php else: ?>
-            <div class="alert alert-info d-inline-block">
-                <i class="bi bi-info-circle me-2"></i>
-                Day is already closed
+    <!-- Page Header / Toolbar -->
+    <div class="dc-toolbar mb-4">
+        <div class="dc-toolbar-text">
+            <span class="dc-toolbar-icon"><i class="bi bi-calendar-check"></i></span>
+            <div>
+                <h2 class="dc-toolbar-title">Daily Closure</h2>
+                <p class="dc-toolbar-sub">Review and close daily operations for <?= date('F j, Y', strtotime($today)) ?></p>
             </div>
-            <?php endif; ?>
         </div>
+        <?php if (!$isClosed): ?>
+        <button class="dc-close-btn" onclick="closeDay()" id="closeDayBtn" title="Close the day">
+            <i class="bi bi-check-circle"></i>
+            <span>Close Day</span>
+            <kbd>C</kbd>
+        </button>
+        <?php else: ?>
+        <div class="dc-closed-badge">
+            <i class="bi bi-lock-fill"></i>
+            Day is already closed
+        </div>
+        <?php endif; ?>
     </div>
 
     <!-- Daily Summary Cards -->
@@ -500,16 +499,10 @@ document.addEventListener('keydown', function(e) {
 </script>
 
 <style>
-    .modal-backdrop.show{
-        display: none !important;
-    }
-    body > div.modal-backdrop.fade.show{
-        display: none !important;
-    }
-    .dark .modal-content{
-    background: rgba(11, 18, 32, 0.8) !important;
+.dark .modal-content{
+    background: var(--card) !important;
     }
     .modal-content{
-    background: rgba(248, 250, 252, 0.8) !important;
+    background: var(--card) !important;
     }
 </style>

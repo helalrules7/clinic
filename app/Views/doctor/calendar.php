@@ -27,7 +27,8 @@
 <div class="row mb-4">
     <div class="col-md-6">
         <div class="d-flex align-items-center">
-            <h4 class="mb-0 me-3">Calendar</h4>
+            <span class="cal-title-icon"><i class="bi bi-calendar3"></i></span>
+            <h4 class="cal-title mb-0 me-3">Calendar</h4>
             <div class="d-flex align-items-center ms-3" style="padding-bottom: 10px !important;">
                 <label class="form-label mb-0 me-2" for="calendarAutoRefresh">
                     <small class="text-muted">Auto-refresh</small>
@@ -735,16 +736,10 @@ window.CALENDAR_CONFIG = {
     });
 </script>
 <style>
-    .modal-backdrop.show{
-        display: none !important;
-    }
-    body > div.modal-backdrop.fade.show{
-        display: none !important;
-    }
-    .dark .modal-content{
-    background: rgba(11, 18, 32, 0.8) !important;
+.dark .modal-content{
+    background: var(--card) !important;
     }
     .modal-content{
-    background: rgba(248, 250, 252, 0.8) !important;
+    background: var(--card) !important;
     }
 </style>

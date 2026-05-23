@@ -4,21 +4,17 @@
    ============================================ */
 
 
-/* Alert Modal Glass Effect - Same as sidebar */
+/* Alert Modal surface — match the app-wide Glass/Indigo modal (design-system.css).
+   The old rgba(248,250,252,0.35) was only 35% opaque, so the dark page backdrop
+   bled straight through into a muddy gray. Use the strong glass token
+   (light ≈78% white / dark ≈85% navy) + the standard strong blur so it reads as a
+   clean frosted surface in BOTH themes. The token adapts per theme, so no separate
+   .dark background override is needed. */
 #alertModal .modal-content {
-    /* Glass effect - similar to sidebar */
-    background: rgba(248, 250, 252, 0.35) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(226, 232, 240, 0.3) !important;
-    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
+    background: var(--card) !important;
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: var(--glass-shadow-lg);
     color: var(--text) !important;
-}
-
-.dark #alertModal .modal-content {
-    background: rgba(11, 18, 32, 0.40) !important;
-    border: 1px solid rgba(51, 65, 85, 0.3) !important;
-    box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 }
 
 #alertModal .modal-header {

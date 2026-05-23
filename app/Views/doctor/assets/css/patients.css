@@ -1372,16 +1372,14 @@
 /* Search Modal Styles */
 .modal-content {
     /* Glass effect - similar to sidebar */
-    background: rgba(248, 250, 252, 0.35) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: var(--card) !important;
     border: 1px solid rgba(226, 232, 240, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
     color: var(--text) !important;
 }
 
 .dark .modal-content {
-    background: rgba(11, 18, 32, 0.40) !important;
+    background: var(--card) !important;
     border: 1px solid rgba(51, 65, 85, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 }
@@ -1654,16 +1652,14 @@ kbd[lang="ar"] {
 /* Add Patient Modal Styling - Glass Effect */
 #addPatientModal .modal-content {
     /* Glass effect - similar to sidebar */
-    background: rgba(248, 250, 252, 0.35) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: var(--card) !important;
     border: 1px solid rgba(226, 232, 240, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
     color: var(--text) !important;
 }
 
 .dark #addPatientModal .modal-content {
-    background: rgba(11, 18, 32, 0.40) !important;
+    background: var(--card) !important;
     border: 1px solid rgba(51, 65, 85, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 }
@@ -1831,7 +1827,7 @@ kbd[lang="ar"] {
 /* Delete Patient Modal Styles */
 #deletePatientModal .modal-content,
 #deletePatientConfirmModal .modal-content {
-    background-color: var(--bg);
+    background: var(--card);
     color: var(--text);
 }
 
@@ -5139,7 +5135,7 @@ div.card.folder-card[style*="linear-gradient"] {
 
 /* Create Sub-folder Button - Special Styling */
 .create-subfolder-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) !important;
+    background: linear-gradient(135deg, var(--ds-primary) 0%, var(--ds-accent-2) 50%, #A78BFA 100%) !important;
     background-size: 200% 200% !important;
     color: white !important;
     border: none !important;

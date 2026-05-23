@@ -6,33 +6,39 @@
 ?>
 <link href="/app/Views/doctor/assets/css/medications.css?v=<?= file_exists(__DIR__ . '/assets/css/medications.css') ? filemtime(__DIR__ . '/assets/css/medications.css') : time() ?>" rel="stylesheet">
 <div class="container-fluid py-4">
+    <!-- Page header -->
+    <div class="mstore-header mb-4">
+        <span class="mstore-header-icon"><i class="bi bi-capsule-pill"></i></span>
+        <div class="mstore-header-text">
+            <h4 class="mstore-header-title">Medication Prescriptions</h4>
+            <p class="mstore-header-sub">Browse prescriptions grouped by patient</p>
+        </div>
+    </div>
+
     <!-- Patient Filter Section -->
-    <div class="card mb-4" style="background: var(--card); border: 1px solid var(--border); position: relative; z-index: 100;">
+    <div class="card mstore-filter mb-4">
         <div class="card-body">
-            <div class="row align-items-end">
-                <div class="col-md-8" style="position: relative; z-index: 10000;">
-                    <label for="patientSearch" class="form-label" style="color: var(--text); font-weight: 600;">
-                        <i class="bi bi-search me-2"></i>Filter by Patient Name
-                    </label>
-                    <input 
-                        type="text" 
-                        id="patientSearch" 
-                        class="form-control" 
-                        placeholder="Type patient name to search..."
-                        autocomplete="off"
-                        style="background: var(--card); border: 2px solid var(--border); color: var(--text); position: relative; z-index: 1;"
-                    >
-                    <div id="autocompleteResults" class="autocomplete-dropdown" style="z-index: 9999 !important;"></div>
+            <label for="patientSearch" class="mstore-filter-label">
+                <i class="bi bi-search me-2"></i>Filter by Patient Name
+            </label>
+            <div class="row align-items-center g-3">
+                <div class="col-md-8 mstore-search-col">
+                    <div class="mstore-search-field">
+                        <i class="bi bi-search mstore-search-ic"></i>
+                        <input type="text" id="patientSearch" class="form-control mstore-search-input"
+                            placeholder="Type patient name to search..." autocomplete="off">
+                        <div id="autocompleteResults" class="autocomplete-dropdown"></div>
+                    </div>
                 </div>
                 <div class="col-md-4">
                     <div id="filterActiveSection" style="display: none;">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-primary" id="selectedPatientBadge" style="font-size: 0.9rem; padding: 0.5rem 0.75rem;">
-                                <i class="bi bi-person-fill me-1"></i>
+                            <span class="mstore-filter-chip" id="selectedPatientBadge">
+                                <i class="bi bi-person-fill"></i>
                                 <span id="selectedPatientName"></span>
                             </span>
                             <button id="clearFilterBtn" class="btn btn-outline-danger btn-sm">
-                                <i class="bi bi-x-circle me-1"></i>Clear Filter
+                                <i class="bi bi-x-circle me-1"></i>Clear
                             </button>
                         </div>
                     </div>
@@ -46,28 +52,22 @@
         <!-- Prescription cards will be loaded here -->
     </div>
 
-    <!-- Load More Button with Horizontal Line -->
-    <div class="mt-5 mb-4" id="loadMoreContainer">
-        <div class="d-flex align-items-center">
-            <div class="flex-grow-1" style="height: 1px; background: var(--border);"></div>
-            <div class="px-4">
-                <button id="loadMoreBtn" class="btn btn-primary btn-lg" style="display: none;">
-                    <i class="bi bi-arrow-down-circle me-2"></i>
-                    Load More
-                </button>
-                <div id="loadingIndicator" class="spinner-border text-primary" role="status" style="display: none;">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-            <div class="flex-grow-1" style="height: 1px; background: var(--border);"></div>
+    <!-- Load More -->
+    <div class="mstore-loadmore" id="loadMoreContainer">
+        <button id="loadMoreBtn" class="btn btn-primary btn-lg" style="display: none;">
+            <i class="bi bi-arrow-down-circle me-2"></i>
+            Load More
+        </button>
+        <div id="loadingIndicator" class="spinner-border text-primary" role="status" style="display: none;">
+            <span class="visually-hidden">Loading...</span>
         </div>
     </div>
 
     <!-- Empty State -->
-    <div id="emptyState" class="text-center py-5" style="display: none;">
-        <i class="bi bi-capsule" style="font-size: 4rem; color: var(--muted);"></i>
-        <h4 class="mt-3" style="color: var(--text);">No medication prescriptions found</h4>
-        <p style="color: var(--muted);">No medication prescriptions are available at this time.</p>
+    <div id="emptyState" class="mstore-empty" style="display: none;">
+        <span class="mstore-empty-icon"><i class="bi bi-capsule"></i></span>
+        <h4 class="mstore-empty-title">No medication prescriptions found</h4>
+        <p class="mstore-empty-sub">No medication prescriptions are available at this time.</p>
     </div>
 </div>
 
@@ -99,16 +99,10 @@
 
 <script src="/app/Views/doctor/assets/js/medications.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/medications.js') ? filemtime(__DIR__ . '/../doctor/assets/js/medications.js') : time() ?>"></script>
 <style>
-    .modal-backdrop.show{
-        display: none !important;
-    }
-    body > div.modal-backdrop.fade.show{
-        display: none !important;
-    }
-    .dark .modal-content{
-    background: rgba(11, 18, 32, 0.8) !important;
+.dark .modal-content{
+    background: var(--card) !important;
     }
     .modal-content{
-    background: rgba(248, 250, 252, 0.8) !important;
+    background: var(--card) !important;
     }
 </style>

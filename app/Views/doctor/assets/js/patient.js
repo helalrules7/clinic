@@ -3963,7 +3963,7 @@ function renderPatientFilesPagination(pag) {
 
     html += `<li class="page-item ${current === 1 ? 'disabled' : ''}">
         <a class="page-link" href="#" onclick="patientFilesChangePage(${current - 1}); return false;" aria-label="Previous">
-            <i class="bi bi-chevron-right"></i>
+            <i class="bi ${document.documentElement.dir === 'rtl' ? 'bi-chevron-right' : 'bi-chevron-left'}"></i>
         </a>
     </li>`;
 
@@ -3985,7 +3985,7 @@ function renderPatientFilesPagination(pag) {
 
     html += `<li class="page-item ${current === total ? 'disabled' : ''}">
         <a class="page-link" href="#" onclick="patientFilesChangePage(${current + 1}); return false;" aria-label="Next">
-            <i class="bi bi-chevron-left"></i>
+            <i class="bi ${document.documentElement.dir === 'rtl' ? 'bi-chevron-left' : 'bi-chevron-right'}"></i>
         </a>
     </li>`;
 

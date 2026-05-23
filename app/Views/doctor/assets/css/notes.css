@@ -3,25 +3,9 @@
    Notes Page Styles (from notes/index.php)
    ============================================ */
    :root {
-    --bg: #f8fafc;
-    --text: #0f172a;
-    --card: #ffffff;
-    --muted: #475569;
-    --accent: #0ea5e9;
-    --success: #10b981;
-    --danger: #ef4444;
-    --border: #e2e8f0;
     }
     
     .dark {
-    --bg: #0b1220;
-    --text: #f8fafc;
-    --card: #1e293b;
-    --muted: #cbd5e1;
-    --accent: #38bdf8;
-    --success: #4ade80;
-    --danger: #fb7185;
-    --border: #334155;
     }
     
     .notes-container {
@@ -860,9 +844,7 @@
     #deleteNoteModal .modal-content,
     #deleteAllNotesModal .modal-content {
     /* Glass effect - similar to sidebar */
-    background: rgba(248, 250, 252, 0.7) !important;
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+    background: var(--card) !important;
     border: 1px solid rgba(226, 232, 240, 0.4) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.15);
     color: var(--text) !important;
@@ -870,7 +852,7 @@
     
     .dark #deleteNoteModal .modal-content,
     .dark #deleteAllNotesModal .modal-content {
-    background: rgba(11, 18, 32, 0.40) !important;
+    background: var(--card) !important;
     border: 1px solid rgba(51, 65, 85, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
     }
@@ -1381,3 +1363,150 @@
     
     
     
+/* ===================================================================== */
+/* ORTHO PER-PAGE PARITY (notes, 2026-05-22) — missing visual polish ported  */
+/* verbatim from the ortho fork (additive, last-wins; markup classes match). */
+/* ===================================================================== */
+.notes-toolbar-head { display: flex; align-items: center; gap: .85rem; min-width: 0; }
+
+.notes-toolbar-icon {
+    flex: 0 0 auto; width: 48px; height: 48px; border-radius: var(--r-md);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 1.4rem;
+    color: #fff; background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    box-shadow: 0 10px 24px var(--ds-primary-soft);
+}
+
+.notes-toolbar h5 { color: var(--text) !important; font-weight: 800; letter-spacing: -.02em; margin: 0; }
+
+.note-widget:hover .note-widget-resize { opacity: .9; }
+
+/* Colour-picker + alert dropdowns → glass */
+.note-color-picker-dropdown,
+.note-alert-picker-dropdown {
+    background: var(--glass-bg-strong) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(165%); backdrop-filter: blur(18px) saturate(165%);
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--r-md) !important;
+    box-shadow: var(--glass-shadow-lg) !important;
+}
+
+/* Container reset button → glass token */
+.notes-container-reset,
+.dark .notes-container-reset {
+    background: var(--glass-bg) !important; border: 1px solid var(--glass-border);
+    color: var(--text) !important; border-radius: var(--r-md);
+}
+
+/* ---- Dashboard embed: keep the board compact inside its card ---- */
+.notes-embed .notes-toolbar { display: none; }
+
+.notes-embed .notes-container {
+    min-height: 320px; border-radius: var(--r-lg) !important; padding: 1rem;
+}
+
+/* =====================================================================
+   NOTES — Indigo glass redesign (appended; wins by order).
+   Shared by the full Notes page AND the dashboard embed (same markup).
+   Sticky-note colours are kept (the note paradigm); the chrome + polish
+   are re-skinned to the design system.
+   ===================================================================== */
+
+/* Toolbar → glass header bar with an indigo icon tile */
+.notes-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem;
+    padding: 1rem 1.25rem;
+    background: var(--glass-bg-strong);
+    -webkit-backdrop-filter: blur(18px) saturate(165%);
+    backdrop-filter: blur(18px) saturate(165%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-xl);
+    box-shadow: var(--glass-shadow);
+}
+.notes-toolbar-head { display: flex; align-items: center; gap: .85rem; min-width: 0; }
+.notes-toolbar-icon {
+    flex: 0 0 auto; width: 48px; height: 48px; border-radius: var(--r-md);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 1.4rem;
+    color: #fff; background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    box-shadow: 0 10px 24px var(--ds-primary-soft);
+}
+.notes-toolbar h5 { color: var(--text) !important; font-weight: 800; letter-spacing: -.02em; margin: 0; }
+.notes-actions { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.color-picker-container {
+    display: inline-flex; align-items: center; gap: .6rem;
+    padding: 6px 12px; border-radius: var(--r-pill);
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+}
+.color-picker-label { margin: 0; font-size: .8rem; font-weight: 600; color: var(--muted); }
+
+/* Toolbar colour swatches */
+.color-option { width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--glass-border); box-shadow: var(--shadow-sm); }
+.color-option:hover { transform: scale(1.15); }
+.color-option.active { border-color: var(--ds-primary); box-shadow: 0 0 0 3px var(--ds-primary-soft); transform: scale(1.08); }
+
+/* Board: cleaner frosted canvas over the aurora */
+.notes-container {
+    background:
+        radial-gradient(900px 500px at 100% -10%, color-mix(in srgb, var(--ds-primary) 8%, transparent), transparent 60%),
+        var(--glass-bg) !important;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--r-xl) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04), var(--glass-shadow) !important;
+}
+
+/* Note widget polish (colours retained per .color-* rules above) */
+.note-widget {
+    border-radius: var(--r-lg) !important;
+    border-width: 1px !important;
+    box-shadow: var(--glass-shadow-lg) !important;
+}
+.note-widget:hover { transform: translateY(-3px); box-shadow: var(--glass-shadow-lg), 0 0 0 1px var(--ds-primary-soft) !important; }
+.note-widget-header { border-bottom: 1px solid rgba(255,255,255,.18); }
+.note-widget-title {
+    font-weight: 700; letter-spacing: -.01em; background: transparent; border: 0;
+}
+.note-widget-title:focus { outline: none; }
+.note-widget-btn {
+    border-radius: var(--r-sm); transition: transform .15s var(--ds-ease, ease), background .15s ease;
+}
+.note-widget-btn:hover { transform: translateY(-1px); }
+.note-widget-footer { font-size: .7rem; opacity: .85; }
+.note-widget-resize { opacity: .55; transition: opacity .2s ease; }
+.note-widget:hover .note-widget-resize { opacity: .9; }
+
+/* Colour-picker + alert dropdowns → glass */
+.note-color-picker-dropdown,
+.note-alert-picker-dropdown {
+    background: var(--glass-bg-strong) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(165%); backdrop-filter: blur(18px) saturate(165%);
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--r-md) !important;
+    box-shadow: var(--glass-shadow-lg) !important;
+}
+.color-option-dropdown { border-radius: 7px; border: 2px solid var(--glass-border); }
+.color-option-dropdown:hover { transform: scale(1.12); }
+
+/* Empty state → premium icon chip */
+.empty-state { color: var(--muted); }
+.empty-state i {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 88px; height: 88px; border-radius: var(--r-xl);
+    font-size: 2.6rem; color: var(--ds-primary); background: var(--ds-primary-soft);
+    margin-bottom: 1rem;
+}
+.empty-state h4 { color: var(--text); font-weight: 700; }
+
+/* Container reset button → glass token */
+.notes-container-reset,
+.dark .notes-container-reset {
+    background: var(--glass-bg) !important; border: 1px solid var(--glass-border);
+    color: var(--text) !important; border-radius: var(--r-md);
+}
+.notes-container-reset:hover { background: var(--ds-primary-soft) !important; color: var(--ds-primary) !important; }
+
+/* ---- Dashboard embed: keep the board compact inside its card ---- */
+.notes-embed .notes-toolbar { display: none; }
+.notes-embed .notes-container {
+    min-height: 320px; border-radius: var(--r-lg) !important; padding: 1rem;
+}

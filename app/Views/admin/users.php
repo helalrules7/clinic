@@ -294,36 +294,16 @@
 <style>
 /* Dark/Light Mode Variables - Matching Doctor View */
 :root {
-    --bg: #f8fafc;
-    --bg-alt: #f1f5f9;
     --bg-dark: #ffffff;
-    --text: #0f172a;
     --text-muted: #475569;
-    --accent: #0ea5e9;
-    --accent-rgb: 14, 165, 233;
-    --border: #e2e8f0;
-    --muted: #475569;
-    --card: #ffffff;
-    --success: #10b981;
-    --danger: #ef4444;
     --warning: #f59e0b;
     --info: #06b6d4;
     --shadow: rgba(0, 0, 0, 0.1);
 }
 
 .dark {
-    --bg: #0b1220;
-    --bg-alt: #1e293b;
     --bg-dark: #1e293b;
-    --text: #f8fafc;
     --text-muted: #94a3b8;
-    --accent: #38bdf8;
-    --accent-rgb: 56, 189, 248;
-    --border: #334155;
-    --muted: #94a3b8;
-    --card: #1e293b;
-    --success: #4ade80;
-    --danger: #fb7185;
     --warning: #fbbf24;
     --info: #22d3ee;
     --shadow: rgba(0, 0, 0, 0.3);

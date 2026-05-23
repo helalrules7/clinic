@@ -1826,16 +1826,41 @@ class ApiController
         header('Content-Type: application/json; charset=utf-8');
         http_response_code($statusCode);
 
-        // Encode to JSON - use JSON_FORCE_OBJECT for arrays to preserve null values
-        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR);
+        // Strip invalid UTF-8 first. Legacy rows (drug names / notes pasted
+        // from mixed sources) can carry malformed byte sequences; combined
+        // with JSON_PARTIAL_OUTPUT_ON_ERROR that produced a *truncated* body,
+        // which the browser then failed to parse ("Unexpected EOF"). Cleaning
+        // up front means json_encode succeeds on the full payload.
+        $data = $this->sanitizeUtf8($data);
+
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         if ($json === false) {
-            $data = ['error' => 'JSON encoding failed: ' . json_last_error_msg()];
+            $data = ['ok' => false, 'error' => 'JSON encoding failed: ' . json_last_error_msg(), 'data' => []];
             $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
 
         // Output JSON and exit
         echo $json;
         exit;
+    }
+
+    /**
+     * Recursively coerce every string in a payload to valid UTF-8, dropping
+     * malformed byte sequences so json_encode can never truncate the output.
+     */
+    private function sanitizeUtf8($value)
+    {
+        if (is_string($value)) {
+            return mb_convert_encoding($value, 'UTF-8', 'UTF-8');
+        }
+        if (is_array($value)) {
+            $out = [];
+            foreach ($value as $k => $v) {
+                $out[$k] = $this->sanitizeUtf8($v);
+            }
+            return $out;
+        }
+        return $value;
     }
 
     private function getRouterParam($name, $default = null)
@@ -10568,19 +10593,22 @@ class ApiController
                 $lon = 30.9397;
             }
 
-            // OpenWeatherMap API key
-            $apiKey = $_ENV['OPENWEATHER_API_KEY'] ?? '4d8fb5b93d4af21d66a2948710284366';
-
-            // Fetch 5-day forecast from OpenWeatherMap
-            $forecastUrl = "https://api.openweathermap.org/data/2.5/forecast?lat={$lat}&lon={$lon}&units=metric&cnt=40&appid={$apiKey}";
+            // Open-Meteo: 7-day daily forecast + current snapshot (no API key;
+            // provides is_day, sunrise/sunset and precipitation probability — the
+            // fields the redesigned forecast window needs).
+            $url = "https://api.open-meteo.com/v1/forecast?latitude={$lat}&longitude={$lon}"
+                 . "&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day"
+                 . "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset"
+                 . "&timezone=auto&forecast_days=7";
 
             $ch = curl_init();
             curl_setopt_array($ch, [
-                CURLOPT_URL => $forecastUrl,
+                CURLOPT_URL => $url,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_TIMEOUT => 10,
                 CURLOPT_FOLLOWLOCATION => true,
-                CURLOPT_SSL_VERIFYPEER => false
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; WeatherApp)'
             ]);
 
             $response = curl_exec($ch);
@@ -10596,74 +10624,46 @@ class ApiController
 
             $data = json_decode($response, true);
 
-            if (!$data || !isset($data['list'])) {
+            if (!$data || !isset($data['daily']['time'])) {
                 return $this->jsonResponse([
                     'success' => false,
                     'error' => 'Invalid forecast data'
                 ], 500);
             }
 
-            // Group forecasts by day and get daily averages/max/min
-            $dailyForecasts = [];
-            $currentDate = null;
-            $dayData = [];
-
-            foreach ($data['list'] as $item) {
-                $date = date('Y-m-d', $item['dt']);
-
-                if ($currentDate !== $date) {
-                    if ($currentDate !== null && !empty($dayData)) {
-                        // Calculate daily averages
-                        $dailyForecasts[] = [
-                            'date' => $currentDate,
-                            'temperature' => round(array_sum(array_column($dayData, 'temp')) / count($dayData)),
-                            'tempMax' => round(max(array_column($dayData, 'temp'))),
-                            'tempMin' => round(min(array_column($dayData, 'temp'))),
-                            'humidity' => round(array_sum(array_column($dayData, 'humidity')) / count($dayData)),
-                            'windSpeed' => round(array_sum(array_column($dayData, 'windSpeed')) / count($dayData)),
-                            'condition' => ucfirst($dayData[0]['condition']),
-                            'icon' => $dayData[0]['icon'],
-                            'uvIndex' => round(array_sum(array_column($dayData, 'uvIndex')) / count($dayData)),
-                            'clouds' => round(array_sum(array_column($dayData, 'clouds')) / count($dayData))
-                        ];
-                    }
-                    $currentDate = $date;
-                    $dayData = [];
-                }
-
-                $dayData[] = [
-                    'temp' => $item['main']['temp'],
-                    'humidity' => $item['main']['humidity'],
-                    'windSpeed' => ($item['wind']['speed'] ?? 0) * 3.6, // Convert m/s to km/h
-                    'condition' => $item['weather'][0]['description'] ?? 'clear',
-                    'icon' => $item['weather'][0]['icon'] ?? '01d',
-                    'uvIndex' => $this->estimateUVIndex($item),
-                    'clouds' => $item['clouds']['all'] ?? 0
+            $d = $data['daily'];
+            $count = count($d['time']);
+            $forecast = [];
+            for ($i = 0; $i < $count; $i++) {
+                $code = $d['weather_code'][$i] ?? 0;
+                $forecast[] = [
+                    'date' => $d['time'][$i],
+                    'condition' => $this->mapWeatherCodeToCondition($code),
+                    'icon' => $this->getWeatherIconFromCode($code, 1),
+                    'tempMax' => round($d['temperature_2m_max'][$i] ?? 0),
+                    'tempMin' => round($d['temperature_2m_min'][$i] ?? 0),
+                    'precipitation' => isset($d['precipitation_probability_max'][$i]) ? round($d['precipitation_probability_max'][$i]) : null,
                 ];
             }
 
-            // Add last day
-            if ($currentDate !== null && !empty($dayData)) {
-                $dailyForecasts[] = [
-                    'date' => $currentDate,
-                    'temperature' => round(array_sum(array_column($dayData, 'temp')) / count($dayData)),
-                    'tempMax' => round(max(array_column($dayData, 'temp'))),
-                    'tempMin' => round(min(array_column($dayData, 'temp'))),
-                    'humidity' => round(array_sum(array_column($dayData, 'humidity')) / count($dayData)),
-                    'windSpeed' => round(array_sum(array_column($dayData, 'windSpeed')) / count($dayData)),
-                    'condition' => ucfirst($dayData[0]['condition']),
-                    'icon' => $dayData[0]['icon'],
-                    'uvIndex' => round(array_sum(array_column($dayData, 'uvIndex')) / count($dayData)),
-                    'clouds' => round(array_sum(array_column($dayData, 'clouds')) / count($dayData))
-                ];
-            }
-
-            // Limit to 4 days
-            $dailyForecasts = array_slice($dailyForecasts, 0, 4);
+            $cur = $data['current'] ?? [];
+            $curCode = $cur['weather_code'] ?? 0;
+            $current = [
+                'temperature' => round($cur['temperature_2m'] ?? 0),
+                'condition' => $this->mapWeatherCodeToCondition($curCode),
+                'humidity' => round($cur['relative_humidity_2m'] ?? 0),
+                'windSpeed' => round($cur['wind_speed_10m'] ?? 0),
+                'isDay' => (int)($cur['is_day'] ?? 1),
+                'location' => $this->getLocationNameFromCoordinates($lat, $lon),
+                'sunrise' => $d['sunrise'][0] ?? null,
+                'sunset' => $d['sunset'][0] ?? null,
+                'precipitation' => isset($d['precipitation_probability_max'][0]) ? round($d['precipitation_probability_max'][0]) : null,
+            ];
 
             return $this->jsonResponse([
                 'success' => true,
-                'forecast' => $dailyForecasts
+                'current' => $current,
+                'forecast' => $forecast
             ]);
 
         } catch (\Exception $e) {

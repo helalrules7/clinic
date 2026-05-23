@@ -242,6 +242,102 @@
     </div>
 </div>
 
+<!-- Patient Board — notes attached to this patient's board card -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-chat-square-text me-2"></i>Patient Board</h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted small mb-2">
+            Notes added here attach to this patient's board card and are visible from the board.
+        </p>
+        <div id="patientBoardNotes" class="visit-board-notes mb-2">
+            <div class="text-center text-muted small py-2"><span class="spinner-border spinner-border-sm" role="status"></span></div>
+        </div>
+        <textarea id="patientBoardInput" class="form-control" rows="2" maxlength="3900"
+                  placeholder="Write a note for the patient board…"></textarea>
+        <button id="patientBoardSend" class="btn btn-primary btn-sm mt-2" type="button" disabled>
+            <i class="bi bi-send me-1"></i>Add to board
+        </button>
+        <div class="text-danger small mt-2 d-none" id="patientBoardError"></div>
+    </div>
+</div>
+<link rel="stylesheet"
+      href="/app/Views/doctor/assets/css/comment-media.css?v=<?= file_exists(__DIR__ . '/assets/css/comment-media.css') ? filemtime(__DIR__ . '/assets/css/comment-media.css') : time() ?>">
+<style>
+    .visit-board-notes { max-height: 340px; overflow-y: auto; }
+    .visit-note { display: flex; gap: .6rem; border: 1px solid var(--glass-border, #e2e8f0); border-radius: var(--r-md, 12px); padding: 10px 12px; margin-bottom: 8px; background: var(--card); }
+    .visit-note-av { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
+    .visit-note-av--ini { display: inline-flex; align-items: center; justify-content: center; background: var(--ds-primary); color: #fff; font-weight: 800; font-size: .75rem; }
+    .visit-note-main { flex: 1 1 auto; min-width: 0; }
+    .visit-note-meta { font-size: .72rem; color: var(--muted, #64748b); margin-bottom: 3px; }
+    .visit-note-author { font-weight: 700; color: var(--text); }
+    .visit-note-body { font-size: .85rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word; color: var(--text); }
+</style>
+<script src="/app/Views/doctor/assets/js/comment-media.js?v=<?= file_exists(__DIR__ . '/assets/js/comment-media.js') ? filemtime(__DIR__ . '/assets/js/comment-media.js') : time() ?>"></script>
+<script>
+(function () {
+    const PID  = <?= (int)($patient['id'] ?? 0) ?>;
+    const CSRF = '<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>';
+    const CM   = window.CommentMedia;
+    const listEl  = document.getElementById('patientBoardNotes');
+    const input   = document.getElementById('patientBoardInput');
+    const sendBtn = document.getElementById('patientBoardSend');
+    const errEl   = document.getElementById('patientBoardError');
+    if (!PID || !listEl) return;
+
+    const esc = (s) => CM ? CM.escapeHtml(s) : (s == null ? '' : String(s));
+    const fmt = (ts) => { if (!ts) return ''; const d = new Date(String(ts).replace(' ', 'T')); return isNaN(d) ? ts : d.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }); };
+
+    const composer = (CM && input) ? CM.attachComposer({
+        textarea: input, getCsrf: () => CSRF,
+        onError: (m) => { errEl.textContent = m; errEl.classList.remove('d-none'); },
+        onChange: () => { sendBtn.disabled = !composer.hasContent() || composer.isUploading(); },
+        onSubmit: () => sendBtn.click()
+    }) : null;
+
+    async function load() {
+        try {
+            const r = await fetch('/api/comments/board_card/' + PID, { credentials: 'same-origin' });
+            const j = await r.json();
+            const rows = (j.data || []).filter(x => !x.deleted_at);
+            if (!rows.length) { listEl.innerHTML = '<p class="text-muted small mb-0">No board notes yet.</p>'; return; }
+            listEl.innerHTML = rows.slice(-12).map(r => {
+                const img = CM ? CM.avatarSrc(r.author_image) : null;
+                const av = img
+                    ? `<img class="visit-note-av" src="${esc(img)}" alt="">`
+                    : `<span class="visit-note-av visit-note-av--ini">${esc(CM ? CM.initials(r.author_name) : '?')}</span>`;
+                const body = CM ? CM.renderBody(r.body, r.mentions) : esc(r.body);
+                const atts = CM ? CM.renderAttachments(r.attachments) : '';
+                return `<div class="visit-note">${av}<div class="visit-note-main"><div class="visit-note-meta"><span class="visit-note-author">${esc(r.author_name || 'User')}</span> · ${esc(fmt(r.created_at))}</div><div class="visit-note-body">${body}</div>${atts}</div></div>`;
+            }).join('');
+            listEl.scrollTop = listEl.scrollHeight;
+        } catch (e) { listEl.innerHTML = '<p class="text-danger small mb-0">Failed to load notes.</p>'; }
+    }
+
+    if (!composer) input.addEventListener('input', () => { sendBtn.disabled = input.value.trim() === ''; });
+    sendBtn.addEventListener('click', async () => {
+        const body = composer ? composer.getBody() : input.value.trim();
+        const ids  = composer ? composer.getAttachmentIds() : [];
+        if (!body && !ids.length) return;
+        if (composer && composer.isUploading()) { errEl.textContent = 'Wait for the upload to finish'; errEl.classList.remove('d-none'); return; }
+        errEl.classList.add('d-none'); sendBtn.disabled = true;
+        try {
+            const r = await fetch('/api/comments/board_card/' + PID, {
+                method: 'POST', credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF },
+                body: JSON.stringify({ body: body, attachment_ids: ids })
+            });
+            const j = await r.json();
+            if (!j.ok) throw new Error(j.error || 'Failed to add note');
+            if (composer) composer.reset(); else input.value = '';
+            await load();
+        } catch (e) { errEl.textContent = e.message; errEl.classList.remove('d-none'); sendBtn.disabled = false; }
+    });
+    load();
+})();
+</script>
+
 <!-- Prescriptions History -->
 <?php if (!empty($allMedications) || !empty($allGlasses)): ?>
 <div class="card mb-4">
@@ -1057,9 +1153,67 @@
                                     </div>
             <?php endforeach; ?>
                                     </div>
+                                    <nav id="appointmentTimelinePagination" class="appointments-pagination mt-3 d-flex justify-content-center" aria-label="Appointment history pagination"></nav>
                                     </div>
                                     </div>
                                 <?php endif; ?>
+
+<script>
+/* Client-side pagination for the Appointment History timeline — keeps the page
+   short when a patient has many visits. Items are server-rendered; we page
+   through them in the DOM. */
+(function () {
+    const PER_PAGE = 5;
+    const timeline = document.querySelector('.appointment-timeline');
+    const navEl = document.getElementById('appointmentTimelinePagination');
+    if (!timeline || !navEl) return;
+    const items = Array.prototype.slice.call(timeline.children)
+        .filter(el => el.classList && el.classList.contains('appointment-timeline-item'));
+    const total = items.length;
+    if (total <= PER_PAGE) return;
+    const totalPages = Math.ceil(total / PER_PAGE);
+    let current = 1;
+
+    function pageWindow() {
+        const set = new Set([1, totalPages, current, current - 1, current + 1]);
+        if (current <= 3) { set.add(2); set.add(3); }
+        if (current >= totalPages - 2) { set.add(totalPages - 1); set.add(totalPages - 2); }
+        const pages = [...set].filter(p => p >= 1 && p <= totalPages).sort((a, b) => a - b);
+        const out = []; let prev = 0;
+        pages.forEach(p => { if (p - prev > 1) out.push('...'); out.push(p); prev = p; });
+        return out;
+    }
+
+    function render() {
+        items.forEach((it, i) => {
+            if (Math.floor(i / PER_PAGE) + 1 === current) it.style.removeProperty('display');
+            else it.style.setProperty('display', 'none', 'important');
+        });
+        const rtl = document.documentElement.dir === 'rtl';
+        const prevIcon = rtl ? 'bi-chevron-right' : 'bi-chevron-left';
+        const nextIcon = rtl ? 'bi-chevron-left' : 'bi-chevron-right';
+        let h = '<ul class="pagination mb-0">';
+        h += `<li class="page-item ${current === 1 ? 'disabled' : ''}"><a class="page-link" href="#" data-pg="${current - 1}" aria-label="Previous"><i class="bi ${prevIcon}"></i></a></li>`;
+        pageWindow().forEach(p => {
+            if (p === '...') { h += '<li class="page-item disabled"><span class="page-link">…</span></li>'; }
+            else { h += `<li class="page-item ${p === current ? 'active' : ''}"><a class="page-link" href="#" data-pg="${p}">${p}</a></li>`; }
+        });
+        h += `<li class="page-item ${current === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" data-pg="${current + 1}" aria-label="Next"><i class="bi ${nextIcon}"></i></a></li>`;
+        h += '</ul>';
+        navEl.innerHTML = h;
+        navEl.querySelectorAll('a.page-link[data-pg]').forEach(a => {
+            a.addEventListener('click', e => {
+                e.preventDefault();
+                const pg = parseInt(a.getAttribute('data-pg'), 10);
+                if (isNaN(pg) || pg < 1 || pg > totalPages || pg === current) return;
+                current = pg; render();
+                (timeline.closest('.card') || timeline).scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+    }
+    render();
+})();
+</script>
 
 <!-- Medical History -->
 <div class="card mb-4">
@@ -1829,7 +1983,7 @@
         </h5>
     </div>
     <div class="card-body">
-        <div class="timeline">
+        <div class="timeline" id="patientTimeline">
             <?php foreach ($timeline as $event): ?>
                 <div class="timeline-item">
                     <div class="timeline-marker bg-<?= $this->getTimelineEventColor($event['event_type']) ?>">
@@ -1856,6 +2010,66 @@
 
 <?php endif; ?>
 
+
+<script>
+/* Client-side pagination for the Patient Timeline — keeps the page short when a
+   patient accumulates many events. Items are server-rendered; we page through
+   them in the DOM and self-create the pagination nav after the list. */
+(function () {
+    const PER_PAGE = 5;
+    const timeline = document.getElementById('patientTimeline');
+    if (!timeline) return;
+    const items = Array.prototype.slice.call(timeline.children)
+        .filter(el => el.classList && el.classList.contains('timeline-item'));
+    const total = items.length;
+    if (total <= PER_PAGE) return;
+    const totalPages = Math.ceil(total / PER_PAGE);
+    let current = 1;
+
+    const navEl = document.createElement('nav');
+    navEl.className = 'appointments-pagination mt-3 d-flex justify-content-center';
+    navEl.setAttribute('aria-label', 'Patient timeline pagination');
+    timeline.insertAdjacentElement('afterend', navEl);
+
+    function pageWindow() {
+        const set = new Set([1, totalPages, current, current - 1, current + 1]);
+        if (current <= 3) { set.add(2); set.add(3); }
+        if (current >= totalPages - 2) { set.add(totalPages - 1); set.add(totalPages - 2); }
+        const pages = [...set].filter(p => p >= 1 && p <= totalPages).sort((a, b) => a - b);
+        const out = []; let prev = 0;
+        pages.forEach(p => { if (p - prev > 1) out.push('...'); out.push(p); prev = p; });
+        return out;
+    }
+    function render() {
+        items.forEach((it, i) => {
+            if (Math.floor(i / PER_PAGE) + 1 === current) it.style.removeProperty('display');
+            else it.style.setProperty('display', 'none', 'important');
+        });
+        const rtl = document.documentElement.dir === 'rtl';
+        const prevIcon = rtl ? 'bi-chevron-right' : 'bi-chevron-left';
+        const nextIcon = rtl ? 'bi-chevron-left' : 'bi-chevron-right';
+        let h = '<ul class="pagination mb-0">';
+        h += `<li class="page-item ${current === 1 ? 'disabled' : ''}"><a class="page-link" href="#" data-pg="${current - 1}" aria-label="Previous"><i class="bi ${prevIcon}"></i></a></li>`;
+        pageWindow().forEach(p => {
+            if (p === '...') { h += '<li class="page-item disabled"><span class="page-link">…</span></li>'; }
+            else { h += `<li class="page-item ${p === current ? 'active' : ''}"><a class="page-link" href="#" data-pg="${p}">${p}</a></li>`; }
+        });
+        h += `<li class="page-item ${current === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" data-pg="${current + 1}" aria-label="Next"><i class="bi ${nextIcon}"></i></a></li>`;
+        h += '</ul>';
+        navEl.innerHTML = h;
+        navEl.querySelectorAll('a.page-link[data-pg]').forEach(a => {
+            a.addEventListener('click', e => {
+                e.preventDefault();
+                const pg = parseInt(a.getAttribute('data-pg'), 10);
+                if (isNaN(pg) || pg < 1 || pg > totalPages || pg === current) return;
+                current = pg; render();
+                (timeline.closest('.card') || timeline).scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+    }
+    render();
+})();
+</script>
 
 <?php include __DIR__ . '/alert_modal.php'; ?>
 <script>
@@ -1892,17 +2106,11 @@ window.PATIENT_CONFIG = {
     });
 </script>
 <style>
-    .modal-backdrop.show{
-        display: none !important;
-    }
-    body > div.modal-backdrop.fade.show{
-        display: none !important;
-    }
-    .dark .modal-content{
-    background: rgba(11, 18, 32, 0.8) !important;
+.dark .modal-content{
+    background: var(--card) !important;
     }
     .modal-content{
-    background: rgba(248, 250, 252, 0.8) !important;
+    background: var(--card) !important;
     }
 </style>
 <script>

@@ -2706,6 +2706,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Make modals draggable
 function initializeDraggableModals() {
+    /* Drag/center/animation unified in layouts/modal-kit.js. No-op. */
+    return;
   const modals = document.querySelectorAll(".modal");
 
   modals.forEach((modal) => {

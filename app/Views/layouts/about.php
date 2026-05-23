@@ -1468,7 +1468,7 @@
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     background: linear-gradient(135deg, 
         #1e40af 0%, 
-        #0ea5e9 25%, 
+        #4F46E5 25%, 
         #059669 50%, 
         #10b981 75%, 
         #1e40af 100%) !important;

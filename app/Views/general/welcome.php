@@ -45,29 +45,20 @@
     
     <style>
         :root {
-            --bg: #f8fafc;
-            --text: #0f172a;
-            --card: #ffffff;
-            --muted: #475569;
-            --accent: #0ea5e9;
-            --success: #10b981;
-            --danger: #ef4444;
-            --border: #e2e8f0;
             --bg-gradient-light: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
             --bg-gradient-dark: linear-gradient(135deg, #0b1220 0%, #16213e 100%);
+            /* Indigo palette (standalone page — no design-system tokens.css here) */
+            --bg: #F8FAFC; --card: #FFFFFF; --text: #0F172A; --muted: #64748B;
+            --accent: #4F46E5; --accent-rgb: 79, 70, 229;
+            --success: #10B981; --danger: #EF4444; --border: #E2E8F0;
         }
-        
+
         .dark {
-            --bg: #0b1220;
-            --text: #f8fafc;
-            --card: #1e293b;
-            --muted: #cbd5e1;
-            --accent: #38bdf8;
-            --success: #4ade80;
-            --danger: #fb7185;
-            --border: #334155;
+            --bg: #070B14; --card: #131A29; --text: #F8FAFC; --muted: #94A3B8;
+            --accent: #6366F1; --accent-rgb: 99, 102, 241;
+            --success: #34D399; --danger: #FB7185; --border: #334155;
         }
-        
+
         * {
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
@@ -208,7 +199,7 @@
         }
         
         body.dark .enter-btn:hover {
-            background: linear-gradient(135deg, #0ea5e9 0%, var(--accent) 100%);
+            background: linear-gradient(135deg, #4F46E5 0%, var(--accent) 100%);
             box-shadow: 0 15px 30px rgba(56, 189, 248, 0.4);
         }
         

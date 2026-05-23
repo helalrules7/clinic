@@ -336,9 +336,7 @@
 
 /* Modal Styles - Glass Effect */
 .modal-content {
-    background: rgba(248, 250, 252, 0.35) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: var(--card) !important;
     border: 1px solid rgba(226, 232, 240, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
     border-radius: 12px;
@@ -347,7 +345,7 @@
 }
 
 [data-theme="dark"] .modal-content {
-    background: rgba(11, 18, 32, 0.40) !important;
+    background: var(--card) !important;
     border: 1px solid rgba(51, 65, 85, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 }
@@ -781,3 +779,164 @@
     height: 60%;
     opacity: 1;
 }
+/* ===================================================================== */
+/* ORTHO PER-PAGE PARITY (profile, 2026-05-22) — missing visual polish ported  */
+/* verbatim from the ortho fork (additive, last-wins; markup classes match). */
+/* ===================================================================== */
+/* =====================================================================
+   PROFILE — Indigo glass redesign (appended; wins by order)
+   ===================================================================== */
+
+/* Hero banner with overlapping avatar ring + identity chips */
+.profile-hero {
+    position: relative;
+    border-radius: var(--r-xl);
+    overflow: hidden;
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+}
+
+.profile-hero-banner {
+    height: 128px;
+    background:
+        radial-gradient(120% 160% at 100% -20%, rgba(56,189,248,.55) 0%, transparent 55%),
+        radial-gradient(120% 160% at 0% 120%, rgba(139,92,246,.45) 0%, transparent 55%),
+        linear-gradient(125deg, var(--ds-primary-hover) 0%, var(--ds-primary) 45%, var(--ds-info) 120%);
+}
+
+.profile-hero-content {
+    display: flex; align-items: center; gap: 1.25rem;
+    padding: 1rem 1.5rem 1.35rem; flex-wrap: wrap;
+}
+
+.profile-avatar-ring {
+    flex: 0 0 auto; margin-top: -72px; padding: 5px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    box-shadow: 0 14px 32px var(--ds-primary-soft);
+}
+
+.profile-hero .profile-image-large,
+.profile-hero .profile-image-placeholder-large {
+    display: block; width: 120px; height: 120px; border: 4px solid var(--card); margin: 0;
+}
+
+.profile-hero .profile-image-placeholder-large {
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+}
+
+.profile-hero-text { flex: 1 1 auto; min-width: 0; }
+
+.profile-hero .profile-name { font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; color: var(--text) !important; }
+
+.profile-hero .profile-email { color: var(--muted) !important; font-size: .9rem; }
+
+.profile-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.profile-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: var(--r-pill);
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    font-size: .78rem; font-weight: 700; color: var(--muted);
+}
+
+.profile-chip i { font-size: .85rem; }
+
+.profile-chip--role { color: var(--ds-primary); background: var(--ds-primary-soft); border-color: color-mix(in srgb, var(--ds-primary) 25%, transparent); }
+
+.profile-chip.is-active { color: var(--success); background: var(--ds-chip-success-bg); border-color: color-mix(in srgb, var(--success) 30%, transparent); }
+
+.profile-chip.is-inactive { color: var(--danger); background: var(--ds-chip-danger-bg); border-color: color-mix(in srgb, var(--danger) 30%, transparent); }
+
+.profile-edit-btn {
+    flex: 0 0 auto; align-self: center;
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    color: #fff; border: 0; border-radius: var(--r-md); font-weight: 700; padding: .55rem 1.1rem;
+    box-shadow: 0 8px 20px var(--ds-primary-soft);
+    transition: transform .15s var(--ds-ease, ease), box-shadow .15s ease, filter .15s ease;
+}
+
+.profile-edit-btn:hover { transform: translateY(-2px); filter: brightness(1.07); color: #fff; box-shadow: 0 12px 26px var(--ds-primary-soft); }
+
+/* Cards */
+.col-lg-8 .card { border-radius: var(--r-xl) !important; }
+
+.col-lg-8 .card > .card-header { background: transparent !important; border-bottom: 1px solid var(--glass-border) !important; }
+
+.card-header-title { color: var(--text) !important; font-weight: 700; letter-spacing: -.01em; }
+
+.card-header-title i { color: var(--ds-primary); }
+
+/* Read-only info fields → glass tiles (only those holding a plaintext value) */
+.card-body .mb-3:has(> .form-control-plaintext) {
+    height: 100%;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-md);
+    padding: .7rem .9rem;
+}
+
+.card-body .mb-3 > .form-label.fw-bold {
+    font-size: .68rem; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted) !important; font-weight: 700; margin-bottom: .15rem;
+}
+
+/* Change Password — token inputs + indigo strength track */
+#changePasswordForm .form-control { border-radius: var(--r-md); border-color: var(--glass-border); background: var(--glass-bg); color: var(--text); }
+
+#changePasswordForm .form-control:focus { border-color: var(--ds-primary); box-shadow: 0 0 0 .2rem var(--ds-primary-soft); }
+
+#changePasswordForm .btn-primary { background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2)); border: 0; font-weight: 700; box-shadow: 0 8px 20px var(--ds-primary-soft); }
+
+.profile-image-preview, .profile-image-placeholder { border-radius: 50%; }
+
+#editProfileModal .form-control, #editProfileModal .form-select { border-radius: var(--r-md); border-color: var(--glass-border); background: var(--glass-bg); color: var(--text); }
+
+#editProfileModal .form-control:focus, #editProfileModal .form-select:focus { border-color: var(--ds-primary); box-shadow: 0 0 0 .2rem var(--ds-primary-soft); }
+
+/* Even, uniform info tiles — equal spacing below every field + equal heights */
+.col-lg-8 .card-body .mb-3:has(> .form-control-plaintext) {
+    min-height: 88px;
+    margin-bottom: 1rem !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Full-width password validation block (spans both inputs) */
+.password-validation-block {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-md);
+    padding: .9rem 1.05rem;
+}
+
+.password-validation-block .password-strength-bar { margin-bottom: .25rem; }
+
+.password-requirements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: .4rem 1.25rem;
+    margin-top: .35rem;
+}
+
+.password-requirements-grid .requirement { display: flex; align-items: center; }
+
+/* Profile hero responsive (parity port from ortho, 2026-05-23) */
+@media (max-width: 575.98px) {
+    .profile-hero-content { justify-content: center; text-align: center; }
+    .profile-chips { justify-content: center; }
+    .profile-edit-btn { width: 100%; justify-content: center; }
+}
+
+/* =====================================================================
+   PROFILE IMAGE GRADIENT RING + PLAINTEXT GLASS PARITY (ortho, 2026-05-23)
+   ===================================================================== */
+.profile-image-preview-wrapper {
+    border: 0;
+    padding: 4px;
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    box-shadow: 0 10px 24px var(--ds-primary-soft);
+}
+.form-control-plaintext { color: var(--text); font-weight: 600; font-size: .98rem; padding: 0; }
+.password-strength-bar { background: var(--ds-surface-2) !important; border-radius: var(--r-pill); overflow: hidden; }

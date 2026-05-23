@@ -24,6 +24,8 @@ if (file_exists($vendorAutoload)) {
 // Load Controllers
 require_once __DIR__ . '/app/Controllers/SecretaryController.php';
 require_once __DIR__ . '/app/Controllers/AlertController.php';
+require_once __DIR__ . '/app/Controllers/BoardController.php';
+require_once __DIR__ . '/app/Controllers/CommentsController.php';
 // require_once __DIR__ . '/app/Controllers/NotesController.php';
 
 // Load environment variables
@@ -126,6 +128,7 @@ try {
     
     // Doctor routes
     $router->get('/doctor/dashboard', 'DoctorController@dashboard');
+    $router->get('/doctor/board', 'BoardController@index');
     $router->get('/doctor/calendar', 'DoctorController@calendar');
     $router->get('/doctor/organizer', 'DoctorController@organizer');
     $router->get('/doctor/patients', 'DoctorController@patients');
@@ -306,6 +309,35 @@ try {
     $router->get('/api/test-export', 'ApiController@testExport');
     $router->get('/api/simple-export', 'ApiController@simpleExport');
     $router->get('/api/dashboard-summary', 'ApiController@getDashboardSummary');
+
+    // Patient Board — two-level (overview → detail) + legacy single-Kanban. See BoardController.
+    $router->get('/api/board/boards',                          'BoardController@listBoards');
+    $router->post('/api/board/boards',                         'BoardController@createBoard');
+    $router->put('/api/board/boards/{id}',                     'BoardController@updateBoard');
+    $router->delete('/api/board/boards/{id}',                  'BoardController@deleteBoard');
+    $router->get('/api/board/boards/{id}/cards',               'BoardController@boardCards');
+    $router->post('/api/board/boards/{id}/patients',           'BoardController@addPatient');
+    $router->delete('/api/board/boards/{id}/patients/{pid}',   'BoardController@removePatient');
+    $router->put('/api/board/patients/{pid}',                  'BoardController@quickEditPatient');
+    $router->get('/api/board/columns',                  'BoardController@listColumns');
+    $router->post('/api/board/columns',                 'BoardController@createColumn');
+    $router->put('/api/board/columns/{id}',             'BoardController@updateColumn');
+    $router->delete('/api/board/columns/{id}',          'BoardController@deleteColumn');
+    $router->get('/api/board/cards',                    'BoardController@listCards');
+    $router->post('/api/board/move',                    'BoardController@move');
+    $router->get('/api/board/auto-place/{patient_id}',  'BoardController@autoPlace');
+
+    // Generic comments + @-mentions + attachments — see CommentsController.
+    // Specific routes first so /api/comments/attachments/{id} isn't captured
+    // by the generic /api/comments/{type}/{id} pattern.
+    $router->get('/api/users/search',                   'CommentsController@searchUsers');
+    $router->post('/api/comments/attachments',          'CommentsController@uploadAttachment');
+    $router->get('/api/comments/attachments/{id}',      'CommentsController@viewAttachment');
+    $router->get('/api/comments/{type}/{id}',           'CommentsController@listFor');
+    $router->post('/api/comments/{type}/{id}',          'CommentsController@create');
+    $router->patch('/api/comments/{id}',                'CommentsController@patch');
+    $router->delete('/api/comments/{id}',               'CommentsController@delete');
+
     $router->get('/api/upcoming-appointments', 'ApiController@getUpcomingAppointments');
     $router->get('/api/missed-appointments', 'ApiController@getMissedAppointments');
     $router->get('/api/recent-activity', 'ApiController@getRecentActivity');

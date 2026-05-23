@@ -64,11 +64,13 @@
             animation: pageLoad 0.2s ease-out;
         }
 
-        /* Prevent content flash during navigation */
+        /* Keep .main-content CONTEXT-FREE: do NOT add transform / will-change /
+           filter / backface-visibility / opacity / a positioned z-index here.
+           Any of those makes it a CSS stacking context, which traps Bootstrap
+           modals (authored inside the page content) UNDER the body-level
+           .modal-backdrop — the "overlay covers the modal" bug that the
+           per-view `.modal-backdrop.show{display:none}` band-aids were hiding. */
         .main-content {
-            will-change: opacity;
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
             padding-top: 0rem !important;
         }
         
@@ -101,7 +103,10 @@
             -webkit-backdrop-filter: blur(10px);
             border-right: 1px solid rgba(226, 232, 240, 0.3);
             box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
-            z-index: 999 !important;
+            /* Topmost on mobile: above the dim overlay (1000) and the sticky
+               top-bar (999) so the open drawer covers the header and every
+               nav item is tappable. */
+            z-index: 1001 !important;
             transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
             overflow-y: auto;
             overflow-x: hidden;
@@ -6477,7 +6482,12 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
+            /* Must sit ABOVE the sticky top-bar (z-index 999) so the whole
+               screen dims behind the drawer, but BELOW the sidebar (1001)
+               so the sidebar stays tappable. (Previously 999 — tied with the
+               sidebar/top-bar, so DOM order let it paint over the sidebar and
+               block taps on mobile.) */
+            z-index: 1000;
             display: none;
         }
         
@@ -7631,19 +7641,66 @@
             }
         }
         
+        /* =====================================================================
+           GLOBAL MODAL POLISH (ported from ortho fork, 2026-05-22) — applies to
+           every Bootstrap modal: token-driven chrome, frosted dimmed backdrop,
+           consistent header/footer/body padding, bolder title, close-button hover
+           spin, and a subtle entrance lift. (The legacy translucent-glass block
+           below still wins for .modal-content bg via !important — kept as in ortho.)
+           ===================================================================== */
+        .modal-content {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28),
+                        0 6px 16px rgba(15, 23, 42, 0.10);
+            overflow: hidden; /* clip header/footer fills to the rounded corners */
+        }
+        .dark .modal-content {
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.60),
+                        0 6px 16px rgba(0, 0, 0, 0.45);
+        }
+        .modal-header,
+        .modal-footer {
+            border-color: var(--border);
+        }
+        .modal-header { padding: 1rem 1.25rem; }
+        .modal-body   { padding: 1.25rem; }
+        .modal-footer { padding: 0.85rem 1.25rem; gap: 0.5rem; }
+        .modal-title  { font-weight: 700; }
+        .modal-content .btn-close { transition: transform .15s ease; }
+        .modal-content .btn-close:hover { transform: rotate(90deg); }
+        .dark .modal-content .btn-close { filter: invert(1) grayscale(1) brightness(1.4); }
+
+        /* Native backdrop: dimmed and (where supported) frosted. */
+        .modal-backdrop { background-color: #0b1220; }
+        .modal-backdrop.show { opacity: 0.80; }
+        @supports ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+            .modal-backdrop.show {
+                opacity: 0.90;
+                backdrop-filter: blur(20px) saturate(200%);
+                -webkit-backdrop-filter: blur(20px) saturate(200%);
+            }
+        }
+        /* Subtle entrance lift for the dialog. */
+        .modal.fade .modal-dialog {
+            transition: transform .2s ease-out, opacity .2s ease-out;
+            transform: translateY(14px);
+        }
+        .modal.show .modal-dialog { transform: none; }
+
         /* Global Modal Glass Effect - Same as sidebar */
         .modal-content {
             /* Glass effect - similar to sidebar */
-            background: rgba(248, 250, 252, 0.35) !important;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            background: var(--card) !important;
             border: 1px solid rgba(226, 232, 240, 0.3) !important;
             box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
             color: var(--text) !important;
         }
         
         .dark .modal-content {
-            background: rgba(11, 18, 32, 0.40) !important;
+            background: var(--card) !important;
             border: 1px solid rgba(51, 65, 85, 0.3) !important;
             box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
         }
@@ -11117,3 +11174,203 @@ body.sidebar-mini.sidebar-has-expanded-submenu .main-content {
     /* Slightly tighter page padding so the rail doesn't squeeze the grid. */
     body.sidebar-mini .main-content { padding: 1rem; }
 }
+
+/* === ORTHO SIDEBAR PARITY (2026-05-22) — 3 rules missing vs ortho fork === */
+/* dark-mode fix for the settings sidebar-items list (#sidebarItemsList) */
+.dark #sidebarItemsList .list-group-item { background: transparent; color: var(--text); border-color: var(--border); }
+.dark #sidebarItemsList .list-group-item .text-muted { color: var(--muted) !important; }
+/* mini (collapsed) sidebar: keep top-bar height aligned with the mini rail header */
+body.sidebar-mini .top-bar { min-height: 130px; }
+
+/* =====================================================================
+   WEATHER FORECAST WINDOW (.wf-window) + sun-icon animation PARITY (ortho)
+   (2026-05-23) frosted-glass forecast modal shared by dashboard card +
+   header weather. Animated sun icon globally.
+   ===================================================================== */
+.weather-forecast-popover { --weather-card-bg: transparent; }
+/* ===== Weather Forecast Window — frosted-glass (image-3 style) ========== */
+.weather-forecast-popover {
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 12, 24, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 18px;
+    animation: fadeIn .25s ease;
+}
+.wf-window {
+    position: relative;
+    width: min(430px, 94vw);
+    max-height: 92vh;
+    overflow-y: auto;
+    border-radius: 28px;
+    padding: 24px 22px 22px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(26px) saturate(160%);
+    -webkit-backdrop-filter: blur(26px) saturate(160%);
+    animation: slideUp .3s ease;
+}
+.wf-window::-webkit-scrollbar { width: 0; }
+.wf-close {
+    position: absolute;
+    top: 16px; inset-inline-end: 16px;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background .2s ease, transform .2s ease;
+}
+.wf-close:hover { background: rgba(255, 255, 255, 0.25); transform: rotate(90deg); }
+
+/* Current block */
+.wf-current-top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 4px 14px;
+}
+.wf-current-icon { width: 84px; height: 84px; flex-shrink: 0; display:flex; align-items:center; justify-content:center; filter: drop-shadow(0 8px 16px rgba(0,0,0,.3)); }
+.wf-current-icon .weather-svg-icon { width: 84px; height: 84px; }
+.wf-current-info { min-width: 0; }
+.wf-current-time { font-size: .82rem; opacity: .8; margin-bottom: 2px; }
+.wf-current-main { font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
+.wf-current-loc { font-size: .85rem; opacity: .82; margin-top: 3px; display:flex; align-items:center; gap:5px; }
+
+/* Sun row pill */
+.wf-sun {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: rgba(10, 14, 26, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    font-size: .84rem;
+}
+.wf-sun-item { display: flex; align-items: center; gap: 7px; font-weight: 600; }
+.wf-sun-item i { font-size: 1rem; opacity: .9; }
+.wf-sun-mid { flex: 1; text-align: center; opacity: .75; font-size: .78rem; position: relative; }
+.wf-sun-mid::before, .wf-sun-mid::after {
+    content: ""; position: absolute; top: 50%; width: 22%; height: 1px;
+    background: rgba(255,255,255,.25);
+}
+.wf-sun-mid::before { inset-inline-start: 6px; }
+.wf-sun-mid::after { inset-inline-end: 6px; }
+
+/* Rain pill */
+.wf-rain {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: rgba(10, 14, 26, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    font-weight: 600;
+    font-size: .92rem;
+}
+.wf-rain i { font-size: 1.2rem; }
+
+/* Humidity / Wind */
+.wf-stats {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 6px;
+    margin-bottom: 16px;
+    font-size: .92rem;
+}
+.wf-stats .label { opacity: .72; }
+.wf-stats .value { font-weight: 700; }
+
+/* 7-day strip */
+.wf-forecast {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+}
+.wf-forecast::-webkit-scrollbar { height: 0; }
+.wf-day {
+    flex: 1 0 auto;
+    min-width: 56px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 999px;
+    padding: 12px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: background .2s ease, transform .2s ease;
+}
+.wf-day:hover { background: rgba(255,255,255,0.16); transform: translateY(-2px); }
+.wf-day.is-today { background: rgba(255, 255, 255, 0.22); }
+.wf-day-name { font-size: .8rem; font-weight: 600; opacity: .9; }
+.wf-day.is-today .wf-day-name { font-weight: 800; }
+.wf-day-icon { width: 34px; height: 34px; }
+.wf-day-icon .weather-svg-icon { width: 34px; height: 34px; }
+.wf-day-hi { font-size: .92rem; font-weight: 700; }
+.wf-day-lo { font-size: .82rem; opacity: .65; }
+
+.weather-forecast-loading,
+.weather-forecast-error {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    color: #fff; padding: 30px 10px; font-size: .9rem; opacity: .9;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+}
+
+@media (max-width: 768px) {
+    .wf-window { width: 94vw; }
+    .wf-current-main { font-size: 1.4rem; }
+}
+
+
+/* ===================================================================
+   Weather sun-icon animation (GLOBAL) — used by the top-bar weather and
+   the forecast window on every page. Rays collapse/expand (twinkle) and
+   the sun surface glows. (The dashboard card has the same rule locally.)
+   =================================================================== */
+.sunny-long-ray {
+    transform-origin: 50% 50%;
+    transform-box: fill-box;
+    animation: sunRayPulse 3s ease-in-out infinite;
+}
+.sunny-short-ray {
+    transform-origin: 50% 50%;
+    transform-box: fill-box;
+    animation: sunRayPulse 3s ease-in-out infinite;
+    animation-delay: 1.5s;
+}
+.sunny-body {
+    transform-origin: 50% 50%;
+    transform-box: fill-box;
+    animation: sunGlow 3s ease-in-out infinite;
+}
+@keyframes sunRayPulse {
+    0%, 100% { transform: scale(0.78); opacity: 0.55; }
+    50%      { transform: scale(1.05); opacity: 1; }
+}
+@keyframes sunGlow {
+    0%, 100% { filter: drop-shadow(0 0 1px rgba(237, 201, 81, 0.45)); }
+    50%      { filter: drop-shadow(0 0 7px rgba(237, 201, 81, 0.95)); }
+}
+
+/* Notice-bar weather popover card is clickable → opens forecast (2026-05-23) */
+.weather-popover-clickable { cursor: pointer; transition: transform .15s ease; }
+.weather-popover-clickable:hover { transform: translateY(-2px); }

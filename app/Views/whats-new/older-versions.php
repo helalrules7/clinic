@@ -52,7 +52,7 @@
             --subtitle-light: #6c757d;
             --subtitle-dark: #cbd5e1;
             --accent-light: #667eea;
-            --accent-dark: #38bdf8;
+            --accent-dark: #6366F1;
             --shadow-light: rgba(0, 0, 0, 0.1);
             --shadow-dark: rgba(0, 0, 0, 0.5);
             --border-light: #e5e7eb;

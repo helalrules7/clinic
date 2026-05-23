@@ -1766,27 +1766,11 @@ window.addEventListener('beforeunload', () => {
 <style>
 /* CSS Variables for Dark Mode */
 :root {
-    --bg: #f8fafc;
-    --text: #0f172a;
-    --card: #ffffff;
-    --muted: #475569;
-    --accent: #0ea5e9;
-    --success: #10b981;
-    --danger: #ef4444;
-    --border: #e2e8f0;
     --shadow: rgba(0, 0, 0, 0.1);
     --success-rgb: 16, 185, 129;
 }
 
 .dark {
-    --bg: #0b1220;
-    --text: #f8fafc;
-    --card: #1e293b;
-    --muted: #94a3b8;
-    --accent: #38bdf8;
-    --success: #4ade80;
-    --danger: #fb7185;
-    --border: #334155;
     --shadow: rgba(0, 0, 0, 0.3);
     --success-rgb: 74, 222, 128;
 }
@@ -2148,9 +2132,7 @@ window.addEventListener('beforeunload', () => {
 
 .modal-content {
     /* Glass effect - similar to sidebar */
-    background: rgba(248, 250, 252, 0.35) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: var(--card) !important;
     border: 1px solid rgba(226, 232, 240, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
     border-radius: 12px;
@@ -2158,7 +2140,7 @@ window.addEventListener('beforeunload', () => {
 }
 
 .dark .modal-content {
-    background: rgba(11, 18, 32, 0.70) !important;
+    background: var(--card) !important;
     border: 1px solid rgba(51, 65, 85, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 }
@@ -2599,7 +2581,7 @@ input[readonly] {
 }
 
 .dark .badge.bg-info {
-    background-color: #0ea5e9 !important;
+    background-color: #4F46E5 !important;
 }
 
 .dark .badge.bg-warning {

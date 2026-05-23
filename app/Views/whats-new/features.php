@@ -52,7 +52,7 @@
             --subtitle-light: #6c757d;
             --subtitle-dark: #cbd5e1;
             --accent-light: #667eea;
-            --accent-dark: #38bdf8;
+            --accent-dark: #6366F1;
             --shadow-light: rgba(0, 0, 0, 0.1);
             --shadow-dark: rgba(0, 0, 0, 0.5);
             --success-light: #10b981;
@@ -172,13 +172,13 @@
         
         @media (prefers-color-scheme: dark) {
             .version-badge {
-                background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+                background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
                 box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
             }
         }
         
         body.dark .version-badge {
-            background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+            background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
             box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
         }
         
@@ -244,7 +244,7 @@
             }
             
             .feature-card::before {
-                background: linear-gradient(90deg, #38bdf8 0%, #0ea5e9 100%);
+                background: linear-gradient(90deg, #6366F1 0%, #4F46E5 100%);
             }
         }
         
@@ -255,7 +255,7 @@
         }
         
         body.dark .feature-card::before {
-            background: linear-gradient(90deg, #38bdf8 0%, #0ea5e9 100%);
+            background: linear-gradient(90deg, #6366F1 0%, #4F46E5 100%);
         }
         
         .feature-card:hover {

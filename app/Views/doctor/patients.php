@@ -519,7 +519,7 @@
         </div>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive" style="max-height: calc(100vh); overflow-x: auto;">
+        <div class="table-responsive" style="overflow-x: auto;">
             <table class="table table-hover mb-0">
                 <thead class="table-dark">
                     <tr>
@@ -1575,17 +1575,11 @@
     });
 </script>
 <style>
-    .modal-backdrop.show{
-        display: none !important;
-    }
-    body > div.modal-backdrop.fade.show{
-        display: none !important;
-    }
-    .dark .modal-content{
-    background: rgba(11, 18, 32, 0.8) !important;
+.dark .modal-content{
+    background: var(--card) !important;
     }
     .modal-content{
-    background: rgba(248, 250, 252, 0.8) !important;
+    background: var(--card) !important;
     }
 .dark .btn-outline-primary, .btn-outline-primary, .dark .btn-outline-success, .btn-outline-success, .dark .btn-outline-danger, .btn-outline-danger{
 color: white !important;

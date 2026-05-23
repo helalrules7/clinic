@@ -43,13 +43,18 @@
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
-    <!-- Cairo Font -->
+    <!-- Cairo Font + Plus Jakarta Sans (LTR doctor/admin UI font) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <!-- Doctor Pages Consolidated CSS -->
     <link href="/app/Views/layouts/style.css?v=<?= filemtime(__DIR__ . '/style.css') ?>" rel="stylesheet">
+    <!-- Unified Glass / Indigo design system (loaded AFTER style.css so its tokens win) -->
+    <link href="/app/Views/layouts/design-system/tokens.css?v=<?= file_exists(__DIR__ . '/design-system/tokens.css') ? filemtime(__DIR__ . '/design-system/tokens.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/layouts/design-system/design-system.css?v=<?= file_exists(__DIR__ . '/design-system/design-system.css') ? filemtime(__DIR__ . '/design-system/design-system.css') : time() ?>" rel="stylesheet">
+    <!-- Shared modal kit (center + animate + drag affordance) — after design-system so it wins -->
+    <link href="/app/Views/layouts/modal-kit.css?v=<?= file_exists(__DIR__ . '/modal-kit.css') ? filemtime(__DIR__ . '/modal-kit.css') : time() ?>" rel="stylesheet">
     <!-- Timepicker UI CSS (Local) -->
     <link href="/app/Views/layouts/timepicker-ui-main/css/main.css?v=<?= file_exists(__DIR__ . '/timepicker-ui-main/css/main.css') ? filemtime(__DIR__ . '/timepicker-ui-main/css/main.css') : time() ?>" rel="stylesheet">
     
@@ -168,6 +173,12 @@
                     <a href="/doctor/patients" class="nav-link <?= $this->isActiveRoute('/doctor/patients') ? 'active' : '' ?>">
                         <i class="bi bi-people"></i>
                         Patients
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/doctor/board" class="nav-link <?= $this->isActiveRoute('/doctor/board') ? 'active' : '' ?>">
+                        <i class="bi bi-kanban"></i>
+                        Patients Board
                     </a>
                 </div>
                 <div class="nav-item">
@@ -326,7 +337,7 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="sidebar-footer-text">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v9.1.0
+                        HClinic / Roaya Clinic v10.0.0
                     </div>
                     <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none sidebar-footer-link">Ahmed Helal</a></div>
                 </small>
@@ -1018,6 +1029,8 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Shared modal kit: unified pointer-drag + center + showConfirm/AlertModal (after Bootstrap) -->
+    <script src="/app/Views/layouts/modal-kit.js?v=<?= file_exists(__DIR__ . '/modal-kit.js') ? filemtime(__DIR__ . '/modal-kit.js') : time() ?>"></script>
     <!-- Timepicker UI JS -->
     <script type="module">
         // Load TimepickerUI from local files

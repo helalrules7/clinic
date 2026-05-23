@@ -5,30 +5,12 @@
 
 /* CSS Variables for Dark Mode */
 :root {
-    --bg: #f8fafc;
-    --text: #0f172a;
-    --card: #ffffff;
-    --muted: #475569;
-    --accent: #0ea5e9;
-    --success: #10b981;
-    --danger: #ef4444;
-    --border: #e2e8f0;
     --shadow: rgba(0, 0, 0, 0.1);
-    --accent-rgb: 14, 165, 233;
     --success-rgb: 16, 185, 129;
 }
 
 .dark {
-    --bg: #0b1220;
-    --text: #f8fafc;
-    --card: #1e293b;
-    --muted: #94a3b8;
-    --accent: #38bdf8;
-    --success: #4ade80;
-    --danger: #fb7185;
-    --border: #334155;
     --shadow: rgba(0, 0, 0, 0.3);
-    --accent-rgb: 56, 189, 248;
     --success-rgb: 74, 222, 128;
 }
 

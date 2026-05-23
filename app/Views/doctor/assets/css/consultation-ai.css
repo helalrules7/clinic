@@ -248,3 +248,35 @@
         font-size: 0.8rem;
     }
 }
+
+/* =====================================================================
+   Chief Complaint / Diagnosis history typeahead dropdown (CommentMedia-
+   style, theme-aware). Body-appended + fixed so it never clips.
+   ===================================================================== */
+.cai-suggest-menu {
+    position: fixed;
+    z-index: 12000;
+    overflow-y: auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--glass-shadow-lg, 0 16px 48px rgba(15, 23, 42, 0.18));
+    padding: 4px;
+}
+.cai-suggest-item {
+    padding: 8px 11px;
+    border-radius: 7px;
+    font-size: 0.86rem;
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background .12s ease;
+}
+.cai-suggest-item + .cai-suggest-item { margin-top: 2px; }
+.cai-suggest-item:hover,
+.cai-suggest-item.is-active {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--accent);
+}

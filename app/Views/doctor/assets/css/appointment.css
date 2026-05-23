@@ -4,26 +4,10 @@
 
 /* CSS Variables for Dark Mode */
 :root {
-    --bg: #f8fafc;
-    --text: #0f172a;
-    --card: #ffffff;
-    --muted: #475569;
-    --accent: #0ea5e9;
-    --success: #10b981;
-    --danger: #ef4444;
-    --border: #e2e8f0;
     --shadow: rgba(0, 0, 0, 0.1);
 }
 
 .dark {
-    --bg: #0b1220;
-    --text: #f8fafc;
-    --card: #1e293b;
-    --muted: #94a3b8;
-    --accent: #38bdf8;
-    --success: #4ade80;
-    --danger: #fb7185;
-    --border: #334155;
     --shadow: rgba(0, 0, 0, 0.3);
 }
 
@@ -208,7 +192,7 @@
 }
 
 .status-badge.bg-primary {
-    background-color: #0d6efd !important;
+    background-color: var(--ds-primary) !important;
     color: white;
 }
 
@@ -536,7 +520,7 @@
 
 /* Dark Mode Modal Styles - Glass Effect */
 .dark .modal-content {
-    background: rgba(11, 18, 32, 0.40) !important;
+    background: var(--card) !important;
     border: 1px solid rgba(51, 65, 85, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
     color: var(--text) !important;
@@ -739,7 +723,7 @@
 .drug-suggestion-badge:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    background-color: #0d6efd !important;
+    background-color: var(--ds-primary) !important;
 }
 
 .drug-suggestion-badge:active {
@@ -3091,3 +3075,187 @@
     transition: all 0.2s ease;
     font-weight: 500;
 }
+/* ===================================================================== */
+/* ORTHO PER-PAGE PARITY (appointment, 2026-05-22) — missing visual polish ported  */
+/* verbatim from the ortho fork (additive, last-wins; markup classes match). */
+/* ===================================================================== */
+.appointment-header:not(.missed):not(.completed) {
+    background: linear-gradient(135deg, rgba(79,70,229,.92) 0%, rgba(99,102,241,.55) 60%, rgba(14,165,233,.5) 100%) !important;
+}
+
+.dark .appointment-header:not(.missed):not(.completed) {
+    background: linear-gradient(135deg, rgba(30,27,75,.92) 0%, rgba(49,46,129,.6) 60%, rgba(14,116,144,.5) 100%) !important;
+}
+
+/* Cards → glass */
+.card { border-radius: var(--r-xl) !important; }
+
+.card > .card-header {
+    background: transparent !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.card > .card-header h5,
+.card > .card-header h6 { color: var(--text); font-weight: 700; letter-spacing: -.01em; }
+
+.card > .card-header h5 i,
+.card > .card-header h6 i { color: var(--ds-primary); }
+
+/* Tables → glass headers */
+.card .table > thead th { background: var(--glass-bg) !important; color: var(--muted) !important; border-color: var(--glass-border) !important; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; font-size: .72rem; }
+
+.card .table td { border-color: var(--glass-border); vertical-align: middle; }
+
+/* =====================================================================
+   CLINICAL DASHBOARD POPOVER — glass / indigo REDESIGN (2026-05-23)
+   Same premium treatment as the dashboard's Unified Clinical Dashboard,
+   scoped to the appointment-page popover. Markup is JS-built; per-metric
+   colour comes from the ci-iop/ci-va/ci-cataract/ci-dryeye classes added
+   to each card. Appended last so it supersedes the older popover rules.
+   ===================================================================== */
+
+/* popover chrome → premium frosted modal */
+.unified-clinical-dashboard-popover-content {
+    background: var(--glass-bg-strong) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--r-xl) !important;
+    box-shadow: var(--glass-shadow-lg) !important;
+}
+.unified-clinical-dashboard-popover-header {
+    background: transparent !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+}
+.unified-clinical-dashboard-popover-header h3 {
+    color: var(--text) !important; font-weight: 800; letter-spacing: -.02em;
+}
+.unified-clinical-dashboard-popover-body { background: transparent !important; }
+
+/* per-metric accent colours */
+.unified-clinical-dashboard-popover-body .ci-iop      { --ci-c: #6366F1; }
+.unified-clinical-dashboard-popover-body .ci-va       { --ci-c: #0EA5E9; }
+.unified-clinical-dashboard-popover-body .ci-cataract { --ci-c: #8B5CF6; }
+.unified-clinical-dashboard-popover-body .ci-dryeye   { --ci-c: #14B8A6; }
+
+/* indicator tiles → glass + colour glow + icon chip + accent bar */
+.unified-clinical-dashboard-popover-body .clinical-indicator-card {
+    position: relative; overflow: hidden; height: 100%;
+    padding: 18px 18px 16px; border-radius: var(--r-xl);
+    background:
+        linear-gradient(155deg, color-mix(in srgb, var(--ci-c, #6366F1) 20%, transparent) 0%, transparent 58%),
+        var(--glass-bg-strong);
+    -webkit-backdrop-filter: blur(18px) saturate(165%);
+    backdrop-filter: blur(18px) saturate(165%);
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: var(--glass-shadow) !important;
+    transition: transform .2s var(--ds-ease, ease), box-shadow .2s ease, border-color .2s ease;
+}
+.unified-clinical-dashboard-popover-body .clinical-indicator-card::before {
+    content: ""; position: absolute; inset-block-start: -40%; inset-inline-end: -20%;
+    width: 150px; height: 150px; border-radius: 50%;
+    background: radial-gradient(circle, var(--ci-c, #6366F1) 0%, transparent 70%);
+    opacity: .20; filter: blur(6px); pointer-events: none;
+    transition: opacity .25s ease, transform .25s ease;
+}
+.unified-clinical-dashboard-popover-body .clinical-indicator-card::after {
+    content: ""; position: absolute; inset-inline: 0; inset-block-end: 0; height: 3px;
+    background: linear-gradient(90deg, var(--ci-c, #6366F1), transparent); opacity: .9;
+}
+.unified-clinical-dashboard-popover-body .clinical-indicator-card:hover {
+    transform: translateY(-4px); box-shadow: var(--glass-shadow-lg) !important;
+    border-color: color-mix(in srgb, var(--ci-c, #6366F1) 40%, var(--glass-border)) !important;
+}
+.unified-clinical-dashboard-popover-body .clinical-indicator-card:hover::before { opacity: .38; transform: scale(1.12); }
+
+.unified-clinical-dashboard-popover-body .clinical-indicator-header {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; gap: 9px;
+    font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--muted); margin-bottom: .9rem;
+}
+.unified-clinical-dashboard-popover-body .clinical-indicator-header i {
+    width: 36px; height: 36px; border-radius: 12px; margin: 0 !important;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    color: var(--ci-c, #6366F1);
+    background: color-mix(in srgb, var(--ci-c, #6366F1) 16%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ci-c, #6366F1) 25%, transparent);
+}
+.unified-clinical-dashboard-popover-body .clinical-indicator-value {
+    position: relative; z-index: 1;
+    font-size: 1.35rem; font-weight: 800; letter-spacing: -.02em; color: var(--text);
+    margin-bottom: .4rem; line-height: 1.2;
+}
+.unified-clinical-dashboard-popover-body .clinical-indicator-status,
+.unified-clinical-dashboard-popover-body .clinical-indicator-trend { position: relative; z-index: 1; }
+.unified-clinical-dashboard-popover-body .trend-text { font-size: .8rem; color: var(--muted); font-weight: 600; }
+.unified-clinical-dashboard-popover-body .trend-indicator { font-size: 1.1rem; font-weight: 800; line-height: 1; }
+
+/* mini-trend + summary → glass */
+.unified-clinical-dashboard-popover-body .mini-trend-card {
+    height: 100%; padding: 16px; border-radius: var(--r-lg);
+    background: var(--glass-bg) !important; border: 1px solid var(--glass-border) !important;
+    box-shadow: var(--glass-shadow) !important;
+    transition: transform .2s var(--ds-ease, ease), box-shadow .2s ease;
+}
+.unified-clinical-dashboard-popover-body .mini-trend-card:hover { transform: translateY(-2px); box-shadow: var(--glass-shadow-lg) !important; }
+.unified-clinical-dashboard-popover-body .mini-trend-label {
+    font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted);
+}
+.unified-clinical-dashboard-popover-body .clinical-summary-box {
+    position: relative; overflow: hidden;
+    padding: 16px 18px 16px 22px; border-radius: var(--r-lg);
+    background: var(--glass-bg) !important; border: 1px solid var(--glass-border) !important;
+    box-shadow: var(--glass-shadow) !important;
+}
+.unified-clinical-dashboard-popover-body .clinical-summary-box::before {
+    content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 4px;
+    background: linear-gradient(180deg, var(--ds-primary), var(--ds-accent-2));
+}
+.unified-clinical-dashboard-popover-body .clinical-summary-box p { color: var(--text); line-height: 1.65; }
+
+/* section sub-headers inside the popover → indigo icon */
+.unified-clinical-dashboard-popover-body h6 { color: var(--text); font-weight: 700; letter-spacing: -.01em; }
+.unified-clinical-dashboard-popover-body h6 > i { color: var(--ds-primary); }
+
+/* alerts inside the popover → glass, semantic left border */
+.unified-clinical-dashboard-popover-body .alert {
+    border: 1px solid var(--glass-border); border-inline-start: 4px solid var(--ds-info);
+    background: var(--glass-bg); color: var(--text); border-radius: var(--r-md);
+}
+.unified-clinical-dashboard-popover-body .alert-warning { border-inline-start-color: var(--ds-warning); }
+.unified-clinical-dashboard-popover-body .alert-danger  { border-inline-start-color: var(--danger); }
+
+/* dark — premium navy glass */
+.dark .unified-clinical-dashboard-popover-body .clinical-indicator-card {
+    background:
+        linear-gradient(155deg, color-mix(in srgb, var(--ci-c, #6366F1) 26%, transparent) 0%, transparent 60%),
+        rgba(8, 12, 22, .82);
+    border-color: rgba(99, 102, 241, .18) !important;
+}
+.dark .unified-clinical-dashboard-popover-body .mini-trend-card,
+.dark .unified-clinical-dashboard-popover-body .clinical-summary-box {
+    background: rgba(8, 12, 22, .55) !important; border-color: rgba(99, 102, 241, .16) !important;
+}
+
+/* =====================================================================
+   Drug-name autocomplete dropdown — theme-aware (dark / light).
+   Replaces the old hardcoded bg-white + #f8f9fa hover.
+   ===================================================================== */
+.drug-suggest-dropdown {
+    background: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--text);
+    border-radius: 0 0 10px 10px;
+}
+.drug-suggest-dropdown .suggestion-item {
+    color: var(--text);
+    transition: background .12s ease;
+}
+.drug-suggest-dropdown .suggestion-item + .suggestion-item { border-top: 1px solid var(--border); }
+.drug-suggest-dropdown .suggestion-item:hover,
+.drug-suggest-dropdown .suggestion-item.is-active {
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.drug-suggest-dropdown .suggestion-item .fw-bold { color: var(--accent) !important; }
+.drug-suggest-dropdown .text-muted { color: var(--muted) !important; }

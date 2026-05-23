@@ -1040,6 +1040,8 @@ function showDeleteModal(type, id, name, date) {
 
 // Make modal draggable function
 function makeModalDraggable(modalElement) {
+    /* Drag/center/animation unified in layouts/modal-kit.js. No-op. */
+    return;
     const modalDialog = modalElement.querySelector('.modal-dialog');
     if (!modalDialog) return;
     

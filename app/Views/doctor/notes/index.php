@@ -8,12 +8,12 @@
 
 <div class="container-fluid">
     <div class="notes-toolbar">
-        <div>
-            <h5 class="mb-0" style="color: var(--text);">
-                <i class="bi bi-sticky me-2"></i>
-                My Notes
-            </h5>
-            <small class="text-muted" style="color: var(--text) !important;">Create and organize your personal notes</small>
+        <div class="notes-toolbar-head">
+            <span class="notes-toolbar-icon"><i class="bi bi-sticky-fill"></i></span>
+            <div>
+                <h5 class="mb-0">My Notes</h5>
+                <small class="text-muted">Create and organize your personal notes</small>
+            </div>
         </div>
         <div class="notes-actions">
             <div class="color-picker-container">
@@ -2163,6 +2163,8 @@ async function performDeleteAllNotes() {
 
 // Make modal draggable
 function makeNotesModalDraggable(modalElement) {
+    /* Drag/center/animation unified in layouts/modal-kit.js. No-op. */
+    return;
     const modalDialog = modalElement.querySelector('.modal-dialog');
     if (!modalDialog) return;
     
@@ -2364,16 +2366,10 @@ function resetContainerSize() {
 </script>
 
 <style>
-    .modal-backdrop.show{
-        display: none !important;
-    }
-    body > div.modal-backdrop.fade.show{
-        display: none !important;
-    }
-    .dark .modal-content{
-    background: rgba(11, 18, 32, 0.8) !important;
+.dark .modal-content{
+    background: var(--card) !important;
     }
     .modal-content{
-    background: rgba(248, 250, 252, 0.8) !important;
+    background: var(--card) !important;
     }
 </style>

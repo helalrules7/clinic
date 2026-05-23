@@ -1,26 +1,10 @@
     /* CSS Variables for Dark Mode */
     :root {
-        --bg: #f8fafc;
-        --text: #0f172a;
-        --card: #ffffff;
-        --muted: #475569;
-        --accent: #0ea5e9;
-        --success: #10b981;
-        --danger: #ef4444;
-        --border: #e2e8f0;
         --shadow: rgba(0, 0, 0, 0.1);
         --success-rgb: 16, 185, 129;
     }
     
     .dark {
-        --bg: #0b1220;
-        --text: #f8fafc;
-        --card: #1e293b;
-        --muted: #94a3b8;
-        --accent: #38bdf8;
-        --success: #4ade80;
-        --danger: #fb7185;
-        --border: #334155;
         --shadow: rgba(0, 0, 0, 0.3);
         --success-rgb: 74, 222, 128;
     }
@@ -588,9 +572,7 @@
     
     .modal-content {
         /* Glass effect - similar to sidebar */
-        background: rgba(248, 250, 252, 0.35) !important;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        background: var(--card) !important;
         border: 1px solid rgba(226, 232, 240, 0.3) !important;
         box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
         border-radius: 12px;
@@ -638,7 +620,7 @@
     }
     
     .dark .modal-content {
-        background: rgba(11, 18, 32, 0.40) !important;
+        background: var(--card) !important;
         border: 1px solid rgba(51, 65, 85, 0.3) !important;
         box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
     }
@@ -1295,7 +1277,7 @@
     }
     
     .badge.bg-primary {
-        background-color: #0d6efd !important;
+        background-color: var(--ds-primary) !important;
         color: white;
     }
     
@@ -2918,3 +2900,64 @@
         padding: 0.75rem;
     }
 }
+
+/* ===================================================================== */
+/* ORTHO PER-PAGE PARITY (calendar, 2026-05-22) — missing visual polish ported  */
+/* verbatim from the ortho fork (additive, last-wins; markup classes match). */
+/* ===================================================================== */
+/* =====================================================================
+   CALENDAR — Indigo glass redesign (appended; wins by order)
+   ===================================================================== */
+.cal-title-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; border-radius: var(--r-md); margin-inline-end: .75rem;
+    font-size: 1.3rem; color: #fff;
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    box-shadow: 0 8px 20px var(--ds-primary-soft);
+}
+
+.cal-title { font-weight: 800; letter-spacing: -.02em; color: var(--text); }
+
+/* Calendar card → glass */
+.card { border-radius: var(--r-xl) !important; }
+
+.card > .card-header {
+    background: transparent !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+}
+
+#currentDateDisplay { color: var(--text); font-weight: 700; letter-spacing: -.01em; }
+
+.filter-time-btn.active,
+.filter-time-btn:active {
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    border-color: transparent; color: #fff;
+    box-shadow: 0 6px 16px var(--ds-primary-soft);
+}
+
+/* Toolbar buttons — keep semantic colors but unify radius/weight */
+#goToDateBtn, #addAppointmentBtn, #todayBtn, #prevDayBtn, #nextDayBtn { border-radius: var(--r-md); font-weight: 600; }
+
+#addAppointmentBtn {
+    background: linear-gradient(135deg, var(--success), #34D399); border: 0; color: #fff;
+    box-shadow: 0 8px 18px rgba(16,185,129,.25);
+}
+
+.btn-group #todayBtn, .btn-group #prevDayBtn, .btn-group #nextDayBtn {
+    border-color: var(--glass-border); color: var(--text); background: var(--glass-bg);
+}
+
+.btn-group #todayBtn:hover, .btn-group #prevDayBtn:hover, .btn-group #nextDayBtn:hover {
+    background: var(--ds-primary-soft); color: var(--ds-primary); border-color: color-mix(in srgb, var(--ds-primary) 40%, var(--glass-border));
+}
+
+/* Calendar filter-time-btn + date-picker glass parity (ortho, 2026-05-23) */
+.filter-time-btn {
+    border-radius: var(--r-pill) !important;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    color: var(--text);
+    font-weight: 600;
+    transition: transform .15s var(--ds-ease, ease), background .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.date-picker-tooltip .form-control { border-radius: var(--r-md); border-color: var(--glass-border); }

@@ -357,6 +357,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Make modals draggable
     function initializeDraggableModals() {
+    /* Drag/center/animation unified in layouts/modal-kit.js. No-op. */
+    return;
         const modals = document.querySelectorAll('.modal');
         
         modals.forEach(modal => {
@@ -992,12 +994,12 @@ function showUpdateNotification() {
     border-radius: 12px;
     border: none;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    background: var(--bg);
+    background: var(--card);
     color: var(--text);
 }
 
 .modal-header {
-    background: linear-gradient(135deg, var(--accent), #0ea5e9);
+    background: linear-gradient(135deg, var(--accent), #4F46E5);
     color: white;
     border-radius: 12px 12px 0 0;
     border-bottom: none;
@@ -1075,7 +1077,7 @@ function showUpdateNotification() {
 
 /* Dark mode modal styles */
 [data-theme="dark"] .modal-content {
-    background: var(--bg);
+    background: var(--card);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     border: 1px solid var(--border);
 }
@@ -1354,7 +1356,7 @@ function showUpdateNotification() {
 
 /* Search Modal Styles */
 .modal-content {
-    background-color: var(--bg);
+    background: var(--card);
     border-color: var(--border);
     color: var(--text);
 }
@@ -1598,10 +1600,6 @@ kbd[lang="ar"] {
         position: static;
         margin-top: 10px;
     }
-}
-
-body > div.modal-backdrop.fade.show{
-    display: none !important;
 }
 
 /* Modal z-index and centering */

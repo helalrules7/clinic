@@ -1,0 +1,875 @@
+/* =========================================================================
+   Patient Board — two-level (overview → detail), Trello-inspired.
+   Uses the project design tokens (--bg/--card/--border/--text/--muted/
+   --accent/--success/--danger) defined in layouts/style.css, and the
+   global `.dark` class on <html> for dark mode.
+   ========================================================================= */
+
+.board-page {
+    --bd-radius: 14px;
+    --bd-radius-sm: 10px;
+    --bd-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 14px rgba(15, 23, 42, 0.05);
+    --bd-shadow-hover: 0 8px 26px rgba(15, 23, 42, 0.12);
+    --bd-gap: 16px;
+    /* Card-size scale (overridden per data-size). Default "md" makes the
+       patient card ~20% taller than its natural content height. */
+    --board-col-min: 260px;
+    --patient-col-min: 300px;
+    --patient-card-h: 188px;
+    color: var(--text);
+    font-family: inherit;
+    padding-bottom: 32px;
+}
+.board-page[data-size="sm"] {
+    --board-col-min: 215px;
+    --patient-col-min: 258px;
+    --patient-card-h: 158px;
+}
+.board-page[data-size="lg"] {
+    --board-col-min: 320px;
+    --patient-col-min: 360px;
+    --patient-card-h: 226px;
+}
+.dark .board-page {
+    --bd-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.35);
+    --bd-shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* ---- Embedded mode (inside the dashboard card) -------------------------- */
+.board-page--embedded { padding-bottom: 0; }
+.board-page--embedded #boardOverviewHead .board-head-titles { display: none; }
+.board-page--embedded #boardOverviewHead { justify-content: flex-end; }
+.board-page--embedded .board-head { margin-bottom: 14px; }
+
+/* ---- Header -------------------------------------------------------------- */
+
+.board-head { margin-bottom: 20px; }
+.board-head-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.board-head-titles { min-width: 0; }
+.board-head-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text);
+}
+.board-head-title i { color: var(--accent); }
+.board-head-sub {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.board-head-count {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 1px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+.board-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ---- Breadcrumb --------------------------------------------------------- */
+
+.board-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+.board-crumb-back {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .15s ease, transform .15s ease;
+}
+.board-crumb-back:hover { background: var(--bg); transform: translateX(2px); }
+.board-crumb-link {
+    background: none; border: 0; padding: 0;
+    color: var(--accent); cursor: pointer; font: inherit;
+}
+.board-crumb-link:hover { text-decoration: underline; }
+.board-crumb-sep { font-size: 0.7rem; opacity: 0.6; }
+.board-crumb-current { color: var(--text); font-weight: 600; }
+
+/* ---- Detail title bits -------------------------------------------------- */
+
+.board-detail-swatch {
+    width: 14px; height: 14px;
+    border-radius: 5px;
+    display: inline-block;
+    background: var(--accent);
+    flex-shrink: 0;
+}
+.board-pill {
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 1px 12px;
+}
+
+/* ---- Search / sort controls -------------------------------------------- */
+
+.board-search {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+.board-search > i {
+    position: absolute;
+    inset-inline-end: 12px;
+    color: var(--muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+.board-search-input {
+    width: clamp(200px, 26vw, 320px);
+    padding: 9px 36px 9px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--text);
+    font-size: 0.88rem;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.board-search-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.board-search--block { display: flex; width: 100%; margin-bottom: 12px; }
+.board-search--block .board-search-input { width: 100%; }
+
+.board-sort {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+.board-sort > i {
+    position: absolute;
+    inset-inline-start: 12px;
+    color: var(--muted);
+    pointer-events: none;
+    font-size: 0.9rem;
+}
+.board-sort-select {
+    appearance: none;
+    padding: 9px 34px 9px 30px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--text);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.board-sort-select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* ---- Card-size segmented control ---------------------------------------- */
+
+.board-size {
+    display: inline-flex;
+    align-items: stretch;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--card);
+}
+.board-size-btn {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    padding: 8px 11px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    transition: background .15s ease, color .15s ease;
+}
+.board-size-btn + .board-size-btn { border-inline-start: 1px solid var(--border); }
+.board-size-btn:hover:not(.is-active) { background: var(--bg); color: var(--text); }
+.board-size-btn.is-active { background: var(--accent); color: #fff; }
+.board-size-btn:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* Per-size element scaling (the grid column widths + patient card height are
+   driven by the --*-col-min / --patient-card-h vars on .board-page). */
+.board-page[data-size="sm"] .board-card { padding: 14px; }
+.board-page[data-size="lg"] .board-card { padding: 22px; }
+.board-page[data-size="sm"] .board-card-name { font-size: 0.95rem; }
+.board-page[data-size="lg"] .board-card-name { font-size: 1.12rem; }
+.board-page[data-size="sm"] .patient-avatar { width: 38px; height: 38px; font-size: 0.85rem; }
+.board-page[data-size="lg"] .patient-avatar { width: 50px; height: 50px; font-size: 1.05rem; }
+.board-page[data-size="sm"] .patient-name { font-size: 0.9rem; }
+.board-page[data-size="lg"] .patient-name { font-size: 1.06rem; }
+
+/* ---- Buttons ------------------------------------------------------------ */
+
+.board-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 9px 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s ease, box-shadow .15s ease, transform .1s ease, border-color .15s ease;
+    white-space: nowrap;
+    color: var(--text);
+    background: var(--card);
+    border-color: var(--border);
+}
+.board-btn:hover { transform: translateY(-1px); }
+.board-btn:active { transform: translateY(0); }
+.board-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.board-btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+.board-btn-primary:hover { box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 40%, transparent); }
+.board-btn-ghost {
+    background: var(--card);
+    color: var(--text);
+    border-color: var(--border);
+}
+.board-btn-ghost:hover { background: var(--bg); }
+.board-btn-danger {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #fff;
+}
+.board-btn-danger:hover { box-shadow: 0 6px 16px color-mix(in srgb, var(--danger) 40%, transparent); }
+.board-btn[disabled] { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+/* ---- Overview grid (board cards) --------------------------------------- */
+
+.board-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--board-col-min), 1fr));
+    gap: var(--bd-gap);
+}
+
+.board-card {
+    --card-accent: var(--accent);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--bd-radius);
+    box-shadow: var(--bd-shadow);
+    cursor: pointer;
+    text-align: start;
+    overflow: hidden;
+    transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+    animation: bd-fade-up .3s ease both;
+}
+.board-card::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background: var(--card-accent);
+}
+.board-card:hover {
+    box-shadow: var(--bd-shadow-hover);
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--card-accent) 50%, var(--border));
+}
+.board-card:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--card-accent) 35%, transparent);
+}
+.board-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+.board-card-name {
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+.board-card-name .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--card-accent);
+    flex-shrink: 0;
+}
+.board-card-name .txt {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.board-card-menu {
+    background: transparent;
+    border: 0;
+    color: var(--muted);
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s ease, color .15s ease;
+}
+.board-card-menu:hover { background: var(--bg); color: var(--text); }
+.board-card-desc {
+    color: var(--muted);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 1.1em;
+}
+.board-card-foot {
+    margin-top: auto;
+    padding-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+.board-count-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--card-accent);
+    background: color-mix(in srgb, var(--card-accent) 14%, transparent);
+    border-radius: 999px;
+    padding: 3px 12px;
+}
+.board-count-badge.is-empty {
+    color: var(--muted);
+    background: color-mix(in srgb, var(--muted) 14%, transparent);
+}
+.board-card-open {
+    font-size: 0.8rem;
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0;
+    transform: translateX(6px);
+    transition: opacity .18s ease, transform .18s ease;
+}
+.board-card:hover .board-card-open { opacity: 1; transform: translateX(0); }
+
+/* ---- Patient grid (detail) --------------------------------------------- */
+
+.patient-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--patient-col-min), 1fr));
+    gap: var(--bd-gap);
+    align-items: start;
+}
+
+.patient-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--bd-radius);
+    box-shadow: var(--bd-shadow);
+    overflow: hidden;
+    transition: box-shadow .18s ease, transform .18s ease;
+    animation: bd-fade-up .3s ease both;
+    display: flex;
+    flex-direction: column;
+    min-height: var(--patient-card-h);
+}
+.patient-card:hover { box-shadow: var(--bd-shadow-hover); transform: translateY(-2px); }
+.patient-card.is-recent { border-color: color-mix(in srgb, var(--success) 55%, var(--border)); }
+
+.patient-card-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px 10px;
+}
+.patient-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--success));
+}
+.patient-id-main { min-width: 0; flex: 1; }
+.patient-name {
+    font-weight: 700;
+    font-size: 0.98rem;
+    color: var(--text);
+    margin: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.patient-sub {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 0.78rem;
+}
+.patient-sub .sep { opacity: 0.4; }
+.recent-flag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--success);
+    font-weight: 600;
+}
+
+.patient-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 16px 12px;
+}
+.patient-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.76rem;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 9px;
+}
+.patient-chip i { font-size: 0.82rem; opacity: 0.8; }
+.patient-chip[dir="ltr"] { direction: ltr; }
+
+.patient-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 60%, transparent);
+    margin-top: auto; /* push actions to the bottom so the taller card fills nicely */
+}
+.patient-action {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    transition: background .15s ease, color .15s ease;
+}
+.patient-action:hover { background: var(--card); color: var(--text); }
+.patient-action.is-danger:hover { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
+.patient-action.is-open:hover { color: var(--accent); }
+.patient-action:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.patient-action-spacer { flex: 1; }
+.patient-notes-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: background .15s ease, color .15s ease;
+}
+.patient-notes-toggle:hover { background: var(--card); color: var(--accent); }
+.patient-notes-toggle .count {
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 0 7px;
+    font-size: 0.72rem;
+}
+
+/* ---- Per-card notes (comments) ----------------------------------------- */
+
+.patient-notes {
+    border-top: 1px solid var(--border);
+    padding: 12px 16px 14px;
+    background: color-mix(in srgb, var(--bg) 55%, transparent);
+}
+.patient-notes[hidden] { display: none; }
+.note-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.note-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 10px;
+    animation: bd-fade-up .2s ease both;
+}
+.note-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+.note-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    object-fit: cover;
+    background: var(--bg);
+}
+.note-avatar--initials {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--success));
+}
+.note-id { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.25; }
+.note-author { font-weight: 600; font-size: 0.78rem; color: var(--text); }
+.note-time { font-size: 0.68rem; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; }
+.note-time i { font-size: 0.7rem; }
+.note-body {
+    font-size: 0.82rem;
+    color: var(--text);
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.note-del {
+    border: 0; background: transparent; color: var(--muted);
+    cursor: pointer; font-size: 0.78rem; padding: 2px 4px; border-radius: 6px;
+    flex-shrink: 0; align-self: flex-start;
+}
+.note-del:hover { color: var(--danger); }
+.note-empty { font-size: 0.8rem; color: var(--muted); text-align: center; padding: 6px 0 10px; }
+.note-link { color: var(--accent); font-weight: 600; text-decoration: none; }
+.note-link:hover { text-decoration: underline; }
+.note-more {
+    border: 0; background: transparent; color: var(--accent);
+    cursor: pointer; font-size: 0.78rem; font-weight: 600; padding: 2px 0; margin-bottom: 8px;
+}
+.note-more:hover { text-decoration: underline; }
+.note-compose { display: flex; gap: 8px; align-items: flex-end; }
+.note-input {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--text);
+    padding: 8px 10px;
+    font-size: 0.82rem;
+    resize: vertical;
+    min-height: 38px;
+    max-height: 120px;
+    font-family: inherit;
+}
+.note-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.note-send {
+    border: 0;
+    background: var(--accent);
+    color: #fff;
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: box-shadow .15s ease;
+}
+.note-send:hover { box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 40%, transparent); }
+.note-send[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+/* CommentMedia composer glue: it inserts a .cm-composer (with a content-
+   editable .cm-editor) and hides the original textarea, so the wrapper
+   becomes the flex child that must grow. */
+.note-compose .cm-composer { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.note-compose .cm-composer .cm-editor { width: 100%; box-sizing: border-box; }
+
+/* ---- Empty / state blocks ---------------------------------------------- */
+
+.board-state {
+    text-align: center;
+    padding: 56px 20px;
+    max-width: 460px;
+    margin: 0 auto;
+    animation: bd-fade-up .35s ease both;
+}
+.board-illustration { width: 180px; height: auto; margin-bottom: 8px; }
+.board-state-icon { font-size: 2.6rem; color: var(--muted); opacity: 0.5; display: block; margin-bottom: 10px; }
+.board-state-title { font-size: 1.15rem; font-weight: 700; color: var(--text); margin: 4px 0 6px; }
+.board-state-text { color: var(--muted); font-size: 0.9rem; margin: 0 0 16px; line-height: 1.6; }
+
+/* ---- Skeletons ---------------------------------------------------------- */
+
+.skel {
+    background: linear-gradient(90deg,
+        color-mix(in srgb, var(--muted) 12%, transparent) 25%,
+        color-mix(in srgb, var(--muted) 22%, transparent) 37%,
+        color-mix(in srgb, var(--muted) 12%, transparent) 63%);
+    background-size: 400% 100%;
+    animation: bd-shimmer 1.3s ease infinite;
+    border-radius: 6px;
+}
+.skel-line { height: 12px; margin-bottom: 10px; }
+.skel-pill { height: 22px; width: 70px; border-radius: 999px; }
+.skel-avatar { width: 44px; height: 44px; border-radius: 50%; }
+.skel-w40 { width: 40%; } .skel-w60 { width: 60%; } .skel-w70 { width: 70%; }
+.skel-w90 { width: 90%; }
+.board-skel-card,
+.patient-skel-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--bd-radius);
+    padding: 18px;
+    box-shadow: var(--bd-shadow);
+}
+.board-skel-foot { margin-top: 14px; }
+.patient-skel-head { display: flex; gap: 12px; align-items: center; margin-bottom: 14px; }
+.patient-skel-lines { flex: 1; }
+.patient-skel-lines .skel-line:last-child { margin-bottom: 0; }
+
+/* ---- Add-patient results ------------------------------------------------ */
+
+.add-patient-results {
+    max-height: 340px;
+    overflow-y: auto;
+    margin: 0 -4px;
+    padding: 0 4px;
+}
+.add-result {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    text-align: start;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+    margin-bottom: 8px;
+    transition: border-color .15s ease, background .15s ease;
+}
+.add-result:hover { border-color: var(--accent); background: var(--bg); }
+.add-result:focus-visible {
+    outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.add-result .ar-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--success));
+    color: #fff; font-weight: 700; font-size: 0.85rem;
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.add-result .ar-main { flex: 1; min-width: 0; }
+.add-result .ar-name { font-weight: 600; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.add-result .ar-meta { font-size: 0.76rem; color: var(--muted); }
+.add-result .ar-add { color: var(--accent); font-size: 1.1rem; flex-shrink: 0; }
+.add-result.is-current { opacity: 0.6; pointer-events: none; }
+.add-loading { text-align: center; color: var(--muted); padding: 16px; font-size: 0.85rem; }
+
+/* ---- Color picker in board modal --------------------------------------- */
+
+.board-color-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.board-color-dot {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: transform .12s ease, box-shadow .12s ease;
+}
+.board-color-dot:hover { transform: scale(1.1); }
+.board-color-dot.is-selected {
+    border-color: var(--card);
+    box-shadow: 0 0 0 2px var(--text);
+}
+.board-color-dot:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+/* ---- Form bits ---------------------------------------------------------- */
+
+.board-page .form-label { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+.req { color: var(--danger); }
+.board-form-error {
+    margin-top: 12px;
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+    color: var(--danger);
+    border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+}
+.board-muted { color: var(--muted); }
+.board-edit-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.board-edit-footer-end { display: flex; gap: 8px; }
+.board-edit-delete { color: var(--danger); }
+.board-edit-delete:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); }
+
+/* ---- Board modal form fields ------------------------------------------
+   Modal shell (radius/shadow/backdrop/dark-mode) is handled globally in
+   layouts/style.css. Here we only theme the form inputs in the board modals. */
+#boardEditModal .form-control,
+#patientEditModal .form-control,
+#patientEditModal .form-select,
+#boardEditModal textarea {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+#boardEditModal .form-control:focus,
+#patientEditModal .form-control:focus,
+#patientEditModal .form-select:focus,
+#boardEditModal textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+/* ---- Toast (reuses a fixed stack) -------------------------------------- */
+
+.board-toast-stack {
+    position: fixed;
+    bottom: 22px;
+    inset-inline-end: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 11000;
+}
+.board-toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-inline-start: 4px solid var(--accent);
+    padding: 12px 16px;
+    border-radius: 10px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+    font-size: 0.86rem;
+    min-width: 240px;
+    max-width: 360px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity .25s ease, transform .25s ease;
+}
+.board-toast.is-shown { opacity: 1; transform: none; }
+.board-toast.is-success { border-inline-start-color: var(--success); }
+.board-toast.is-success i { color: var(--success); }
+.board-toast.is-error { border-inline-start-color: var(--danger); }
+.board-toast.is-error i { color: var(--danger); }
+.board-toast.is-info i { color: var(--accent); }
+.board-toast i { font-size: 1.1rem; flex-shrink: 0; }
+
+/* ---- Animations --------------------------------------------------------- */
+
+@keyframes bd-fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes bd-shimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .board-card, .patient-card, .note-item, .board-state, .board-toast { animation: none; }
+    .board-card:hover, .patient-card:hover { transform: none; }
+    .skel { animation: none; }
+}
+
+/* ---- Responsive --------------------------------------------------------- */
+
+@media (max-width: 992px) {
+    .board-head-row { align-items: stretch; }
+    .board-head-actions { width: 100%; }
+    .board-search-input { width: 100%; flex: 1; }
+    .board-search { flex: 1; }
+}
+@media (max-width: 768px) {
+    .board-head-title { font-size: 1.25rem; }
+    .board-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+    .patient-grid { grid-template-columns: 1fr; }
+    .board-head-actions { flex-wrap: wrap; }
+    .board-btn span { display: inline; }
+}
+@media (max-width: 560px) {
+    .board-grid { grid-template-columns: 1fr; }
+    .board-head-actions .board-btn { flex: 1; justify-content: center; }
+    .board-search { width: 100%; flex-basis: 100%; }
+    .board-sort { flex: 1; }
+    .board-sort-select { width: 100%; }
+    .board-toast-stack { inset-inline: 12px; bottom: 12px; }
+    .board-toast { max-width: none; }
+    .patient-action { width: 38px; height: 38px; }
+}

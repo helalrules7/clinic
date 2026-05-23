@@ -1,0 +1,917 @@
+/* =====================================================================
+   DESIGN SYSTEM — components & utilities
+   Token-driven, Dark/Light, RTL-safe (logical properties only).
+   Loaded after style.css/sec-style.css (so it unifies shared components)
+   and after tokens.css (so it consumes the Indigo palette + glass tokens).
+
+   GLASS SAFETY: backdrop-filter is applied ONLY to elements that never
+   contain a Bootstrap modal (modals, sidebar, top-bar, .ds-* dashboard
+   primitives, buttons, .glass utilities). It is intentionally NOT placed
+   on generic `.card`, because a card can be a modal's DOM ancestor and
+   backdrop-filter would create a containing block that traps the fixed
+   modal under the backdrop (the historical "overlay covers modal" bug).
+   ===================================================================== */
+
+/* ---- base ---------------------------------------------------------- */
+body { font-family: var(--font-ui); }
+
+/* Bootstrap's .text-muted keeps its light-mode dark-grey value under our
+   `.dark` class (we don't use data-bs-theme), so muted text goes invisible
+   on dark surfaces. Pin it to the token in dark mode, app-wide. */
+.dark .text-muted { color: var(--muted) !important; }
+
+/* Popovers — glass + token (shared control; e.g. settings help "!" icons) */
+.popover {
+    background: var(--glass-bg-strong);
+    -webkit-backdrop-filter: blur(18px) saturate(165%);
+    backdrop-filter: blur(18px) saturate(165%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-md);
+    box-shadow: var(--glass-shadow-lg);
+    --bs-popover-bg: transparent;
+    --bs-popover-border-color: transparent;
+    max-width: 300px;
+}
+.popover .popover-header {
+    background: transparent;
+    border-bottom: 1px solid var(--glass-border);
+    color: var(--text);
+    font-weight: 700;
+}
+.popover .popover-body { color: var(--text); }
+.popover .popover-arrow::before { border-top-color: var(--glass-border); border-bottom-color: var(--glass-border); }
+.popover .popover-arrow::after { border-top-color: var(--glass-bg-strong); border-bottom-color: var(--glass-bg-strong); }
+
+/* =====================================================================
+   TOOLTIPS — one glass + Indigo treatment for every tooltip:
+   Bootstrap tooltips, the mini-rail nav tooltip, and the sidebar avatar
+   flyout (overrides the legacy solid-slate styles in style.css).
+   ===================================================================== */
+.tooltip { --bs-tooltip-bg: transparent; --bs-tooltip-opacity: 1; }
+.tooltip .tooltip-inner {
+    background: var(--glass-bg-strong);
+    -webkit-backdrop-filter: blur(16px) saturate(165%);
+    backdrop-filter: blur(16px) saturate(165%);
+    border: 1px solid var(--glass-border);
+    color: var(--text);
+    border-radius: var(--r-md);
+    box-shadow: var(--glass-shadow-lg);
+    padding: .5rem .75rem;
+    font-size: .8rem; font-weight: 600;
+}
+.tooltip.bs-tooltip-top .tooltip-arrow::before { border-top-color: var(--glass-border); }
+.tooltip.bs-tooltip-bottom .tooltip-arrow::before { border-bottom-color: var(--glass-border); }
+.tooltip.bs-tooltip-start .tooltip-arrow::before { border-left-color: var(--glass-border); }
+.tooltip.bs-tooltip-end .tooltip-arrow::before { border-right-color: var(--glass-border); }
+
+/* Mini-rail item tooltip → glass + indigo title accent */
+.nav-mini-tip, .dark .nav-mini-tip {
+    background: var(--glass-bg-strong);
+    -webkit-backdrop-filter: blur(18px) saturate(165%);
+    backdrop-filter: blur(18px) saturate(165%);
+    border: 1px solid var(--glass-border);
+    color: var(--text);
+    border-radius: var(--r-md);
+    box-shadow: var(--glass-shadow-lg);
+}
+.nav-mini-tip b { color: var(--text); }
+.nav-mini-tip span { color: var(--muted); }
+.nav-mini-tip::before, .dark .nav-mini-tip::before {
+    background: var(--glass-bg-strong);
+    border-left: 1px solid var(--glass-border); border-bottom: 1px solid var(--glass-border);
+}
+.nav-mini-tip.rtl::before { border-left: 0; border-right: 1px solid var(--glass-border); border-top: 1px solid var(--glass-border); border-bottom: 0; }
+
+/* Sidebar avatar flyout → premium glass card (the hover preview) */
+.avatar-mini-tip, .dark .avatar-mini-tip {
+    background: var(--glass-bg-strong);
+    -webkit-backdrop-filter: blur(22px) saturate(170%);
+    backdrop-filter: blur(22px) saturate(170%);
+    border: 1px solid var(--glass-border);
+    color: var(--text);
+    border-radius: var(--r-lg);
+    box-shadow: var(--glass-shadow-lg);
+    padding: 8px;
+}
+.avatar-mini-tip img {
+    border-radius: var(--r-md);
+    box-shadow: 0 8px 22px var(--ds-primary-soft);
+    outline: 2px solid color-mix(in srgb, var(--ds-primary) 45%, transparent);
+    outline-offset: 2px;
+}
+.avatar-mini-tip b { color: var(--text); margin-top: .6rem; font-size: .9rem; }
+.avatar-mini-tip span {
+    display: inline-block; margin-top: 6px;
+    padding: 2px 12px; border-radius: var(--r-pill);
+    background: var(--ds-primary-soft); color: var(--ds-primary) !important;
+    font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+}
+.avatar-mini-tip::before, .dark .avatar-mini-tip::before {
+    background: var(--glass-bg-strong);
+    border-left: 1px solid var(--glass-border); border-bottom: 1px solid var(--glass-border);
+}
+.avatar-mini-tip.rtl::before { border-left: 0; border-right: 1px solid var(--glass-border); border-top: 1px solid var(--glass-border); border-bottom: 0; }
+
+/* Sidebar avatar coloring — indigo→violet gradient + soft ring/glow */
+.sidebar .user-avatar {
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--ds-primary) 45%, transparent), 0 6px 16px var(--ds-primary-soft);
+}
+.sidebar .user-avatar-fallback { background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2)); }
+.sidebar .user-avatar:hover { box-shadow: 0 0 0 2px var(--ds-primary), 0 8px 22px var(--ds-primary-soft); }
+
+:where(a, button, .btn, .form-control, .form-select, [tabindex]):focus-visible {
+    outline: 2px solid var(--ds-primary);
+    outline-offset: 2px;
+    border-radius: var(--r-sm);
+}
+
+/* ---- glass utilities ---------------------------------------------- */
+.glass {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+    backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+}
+.glass-strong {
+    background: var(--glass-bg-strong);
+    -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
+    backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow-lg);
+}
+
+/* ---- unified components (visual props only; layout untouched) ----- */
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-md);
+}
+
+/* Modals: SOLID opaque surface (white in light / dark-navy in dark) — no glass
+   translucency. Project-wide decision: a frosted modal over the dark page backdrop
+   read as muddy gray, so every .modal-content uses var(--card) and per-page glass
+   overrides were stripped. Keep a subtle border + soft shadow for depth. */
+.modal-content {
+    background: var(--card);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-xl);
+    box-shadow: var(--glass-shadow-lg);
+}
+
+/* Buttons — Indigo primary, glassy/secondary, unified radius. */
+.btn { border-radius: var(--r-md); font-weight: 600; transition: transform .15s var(--ds-ease), box-shadow .15s var(--ds-ease), background .15s ease; }
+.btn:active { transform: translateY(1px); }
+.btn-primary {
+    background: var(--ds-primary);
+    border-color: var(--ds-primary);
+    color: #fff;
+}
+.btn-primary:hover, .btn-primary:focus {
+    background: var(--ds-primary-hover);
+    border-color: var(--ds-primary-hover);
+    color: #fff;
+    box-shadow: 0 6px 18px var(--ds-primary-soft);
+}
+.btn-outline-secondary, .btn-outline-primary, .btn-light {
+    -webkit-backdrop-filter: blur(10px) saturate(160%);
+    backdrop-filter: blur(10px) saturate(160%);
+}
+
+/* Inputs — token border + Indigo focus ring + unified radius. */
+.form-control, .form-select {
+    border-radius: var(--r-md);
+    border-color: var(--border);
+    background-color: var(--card);
+    color: var(--text);
+}
+.form-control:focus, .form-select:focus {
+    border-color: var(--ds-primary);
+    box-shadow: 0 0 0 .2rem var(--ds-primary-soft);
+}
+
+/* Status chips — pill, soft tinted bg. Use .ds-badge for new code. */
+.ds-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px;
+    border-radius: var(--r-pill);
+    font-size: 12px; font-weight: 600; line-height: 1.4;
+    background: var(--ds-chip-muted-bg); color: var(--text);
+}
+.ds-badge.is-success { background: var(--ds-chip-success-bg); color: var(--success); }
+.ds-badge.is-warning { background: var(--ds-chip-warning-bg); color: var(--ds-warning); }
+.ds-badge.is-danger  { background: var(--ds-chip-danger-bg);  color: var(--danger); }
+.ds-badge.is-info    { background: var(--ds-chip-info-bg);    color: var(--ds-primary); }
+
+/* ---- empty state -------------------------------------------------- */
+.ds-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; gap: 10px; padding: 40px 24px; color: var(--muted);
+}
+.ds-empty .ds-empty-icon {
+    width: 64px; height: 64px; border-radius: var(--r-lg);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 28px; color: var(--ds-primary); background: var(--ds-primary-soft);
+}
+.ds-empty .ds-empty-title { font-size: 16px; font-weight: 600; color: var(--text); }
+.ds-empty .ds-empty-sub { font-size: 13px; }
+
+/* ---- glass page header with gradient icon tile (instant page identity) --- */
+.ds-pagehead {
+    display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+}
+.ds-pagehead-icon {
+    width: 52px; height: 52px; border-radius: var(--r-lg);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; color: #fff;
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    box-shadow: 0 10px 24px var(--ds-primary-soft);
+    flex-shrink: 0;
+}
+.ds-pagehead-title { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; color: var(--text); }
+.ds-pagehead-sub { margin: .15rem 0 0; font-size: .9rem; color: var(--muted); }
+.ds-pagehead-actions { margin-inline-start: auto; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+
+/* =====================================================================
+   DASHBOARD PRIMITIVES  (.ds-*)  — used by the redesigned doctor dashboard
+   ===================================================================== */
+
+.ds-stack { display: flex; flex-direction: column; gap: 24px; }
+.ds-section { margin-block: 0; }
+.ds-section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; margin-block-end: 14px;
+}
+.ds-section-title { font-size: 18px; font-weight: 600; color: var(--text); margin: 0; }
+.ds-section-link {
+    font-size: 13px; font-weight: 600; color: var(--ds-primary);
+    text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+}
+.ds-section-link:hover { color: var(--ds-primary-hover); }
+
+/* Hero */
+.ds-hero {
+    position: relative; overflow: hidden;
+    border-radius: var(--r-xl);
+    padding: 36px 40px;
+    color: #fff;
+    background:
+        radial-gradient(130% 150% at 100% -10%, rgba(56,189,248,.55) 0%, transparent 52%),
+        radial-gradient(120% 140% at 0% 120%, rgba(139,92,246,.45) 0%, transparent 55%),
+        linear-gradient(125deg, #4338CA 0%, #6366F1 42%, #0EA5E9 100%);
+    box-shadow: 0 24px 60px rgba(79, 70, 229, 0.35);
+}
+.dark .ds-hero {
+    background:
+        radial-gradient(130% 150% at 100% -10%, rgba(56,189,248,.30) 0%, transparent 52%),
+        radial-gradient(120% 140% at 0% 120%, rgba(139,92,246,.35) 0%, transparent 55%),
+        linear-gradient(125deg, #1E1B4B 0%, #3730A3 45%, #0E7490 100%);
+    box-shadow: 0 24px 70px rgba(0,0,0,.5);
+}
+.ds-hero::after {
+    content: ""; position: absolute; inset-block-start: -45%; inset-inline-end: -8%;
+    width: 360px; height: 360px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,.22), transparent 70%);
+    pointer-events: none;
+}
+.ds-hero h1 { font-size: 30px; font-weight: 800; letter-spacing: -.02em; margin: 0 0 8px; }
+.ds-hero p { margin: 0; opacity: .94; font-size: 15px; max-width: 640px; }
+.ds-hero p strong { font-weight: 800; }
+.ds-hero .ds-hero-actions { margin-block-start: 22px; display: flex; flex-wrap: wrap; gap: 10px; }
+.ds-hero .btn { backdrop-filter: blur(8px); font-weight: 700; padding: 10px 18px; }
+.ds-hero .btn-light { background: rgba(255,255,255,.95); color: #312E81; border: 0; }
+.ds-hero .btn-outline-light { border-color: rgba(255,255,255,.6); color: #fff; }
+
+/* KPI grid + cards */
+.ds-kpi-grid {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+.kpi-card {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+    backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--glass-shadow);
+    padding: 18px;
+    transition: transform .18s var(--ds-ease), box-shadow .18s var(--ds-ease);
+}
+.kpi-card:hover { transform: translateY(-3px); box-shadow: var(--glass-shadow-lg); }
+.kpi-card .kpi-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.kpi-card .kpi-icon {
+    width: 40px; height: 40px; border-radius: var(--r-md);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--ds-primary); background: var(--ds-primary-soft);
+}
+.kpi-card .kpi-value { font-size: 28px; font-weight: 700; color: var(--text); margin-block: 8px 2px; }
+.kpi-card .kpi-label { font-size: 13px; color: var(--muted); }
+.kpi-card .kpi-trend { font-size: 12px; font-weight: 600; }
+.kpi-card .kpi-trend.up { color: var(--success); }
+.kpi-card .kpi-trend.down { color: var(--danger); }
+
+/* Patient flow (Trello-style stages) */
+.ds-flow { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.flow-stage {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--r-lg); padding: 16px;
+    border-top: 3px solid var(--stage-color, var(--ds-primary));
+    box-shadow: var(--shadow-sm);
+}
+.flow-stage .flow-name { font-size: 13px; font-weight: 600; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.flow-stage .flow-count { font-size: 26px; font-weight: 700; color: var(--text); margin-block: 6px; }
+.flow-stage .flow-avatars { display: flex; align-items: center; }
+.flow-stage .flow-avatars img, .flow-stage .flow-avatars .flow-avatar {
+    width: 26px; height: 26px; border-radius: 50%; object-fit: cover;
+    border: 2px solid var(--card); margin-inline-start: -8px; background: var(--ds-surface-2);
+}
+.flow-stage .flow-avatars :first-child { margin-inline-start: 0; }
+
+/* Timeline (today's schedule) */
+.ds-timeline { display: flex; flex-direction: column; }
+.timeline-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; border-block-end: 1px solid var(--border);
+}
+.timeline-item:last-child { border-block-end: 0; }
+.timeline-item .ti-time { font-size: 13px; font-weight: 600; color: var(--muted); min-width: 70px; }
+.timeline-item .ti-body { flex: 1 1 auto; min-width: 0; }
+.timeline-item .ti-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.timeline-item .ti-type { font-size: 12px; color: var(--muted); }
+
+/* Board preview cards */
+.ds-boards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.board-preview-card {
+    border-radius: var(--r-lg); padding: 16px; color: #fff;
+    background: linear-gradient(135deg, var(--bp-c1, #4F46E5), var(--bp-c2, #6366F1));
+    box-shadow: var(--shadow-md); min-height: 110px;
+    display: flex; flex-direction: column; justify-content: space-between;
+}
+.board-preview-card .bp-name { font-size: 15px; font-weight: 700; }
+.board-preview-card .bp-count { font-size: 12px; opacity: .9; }
+
+/* Recent patients */
+.ds-recent { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.ds-recent-patient {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--r-md); padding: 12px; box-shadow: var(--shadow-sm);
+}
+.ds-recent-patient img, .ds-recent-patient .rp-avatar {
+    width: 42px; height: 42px; border-radius: 50%; object-fit: cover; background: var(--ds-surface-2);
+}
+.ds-recent-patient .rp-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.ds-recent-patient .rp-meta { font-size: 12px; color: var(--muted); }
+
+/* Insight cards */
+.ds-insights { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.insight-card {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+    backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-lg); padding: 16px; box-shadow: var(--glass-shadow);
+}
+.insight-card .ic-label { font-size: 13px; color: var(--muted); }
+.insight-card .ic-value { font-size: 22px; font-weight: 700; color: var(--text); margin-block-start: 6px; }
+
+/* A glass surface wrapper for sections that hold lists/timelines */
+.ds-panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--r-lg); padding: 18px; box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 575.98px) {
+    .ds-hero { padding: 22px 20px; }
+    .kpi-card .kpi-value { font-size: 24px; }
+}
+
+/* =====================================================================
+   Tables — unified, token-driven, dark/light. Uses Bootstrap's own table
+   CSS variables so hover/striped states adapt correctly. (Per-page table
+   internals were consolidated here.) Scoped table fixes (#clinicsTable,
+   #bmTable) in style.css remain more specific and still win.
+   ===================================================================== */
+.table {
+    color: var(--text);
+    --bs-table-color: var(--text);
+    --bs-table-bg: transparent;
+    --bs-table-border-color: var(--border);
+    --bs-table-hover-color: var(--text);
+    --bs-table-hover-bg: var(--ds-primary-soft);
+    --bs-table-striped-color: var(--text);
+    --bs-table-striped-bg: var(--ds-surface-2);
+}
+.table thead th {
+    background: var(--ds-surface-2);
+    color: var(--muted);
+    border-bottom-color: var(--border);
+    font-weight: 600;
+}
+.table td, .table th { border-color: var(--border); }
+
+/* =====================================================================
+   AURORA VISUAL IDENTITY
+   The piece that makes the glass actually read: an immersive gradient
+   backdrop on <body> (never on .main-content → no stacking-context trap),
+   plus pronounced frosted glass on the chrome and content surfaces.
+   Light = airy/clinical; Dark = deep premium command-center.
+   ===================================================================== */
+body {
+    background:
+        radial-gradient(1150px 640px at 100% -10%, rgba(99, 102, 241, 0.28), transparent 56%),
+        radial-gradient(980px 560px at -10% 4%, rgba(14, 165, 233, 0.22), transparent 54%),
+        radial-gradient(900px 600px at 50% 118%, rgba(139, 92, 246, 0.20), transparent 60%),
+        var(--bg);
+    background-attachment: fixed;
+}
+.dark body {
+    background:
+        radial-gradient(1150px 640px at 100% -10%, rgba(99, 102, 241, 0.40), transparent 56%),
+        radial-gradient(980px 560px at -10% 4%, rgba(56, 189, 248, 0.24), transparent 54%),
+        radial-gradient(900px 600px at 50% 118%, rgba(139, 92, 246, 0.34), transparent 62%),
+        linear-gradient(165deg, #0B1326 0%, #070B14 55%, #04060D 100%);
+    background-attachment: fixed;
+}
+/* Theme the root element too, so over-scroll / rubber-band areas (above the
+   top bar, below the content) never flash white — body's fixed aurora doesn't
+   paint that region. `.dark` lives on <html>, so var(--bg) resolves per theme. */
+html { background: var(--bg); }
+
+/* Modals drag from the HEADER (modal-kit), so ONLY the header shows the move
+   cursor. Several per-page sheets set `.modal-content { cursor: move }`, which
+   made every input/select inside the body show a "move" cursor — override it. */
+.modal-content { cursor: auto !important; }
+.modal-header { cursor: move; }
+.modal-header button, .modal-header .btn-close { cursor: pointer; }
+.field.menu .custom-select-toggle { cursor: pointer; }
+.field.menu.locked .custom-select-toggle,
+.field.menu .custom-select-toggle:disabled { cursor: not-allowed; }
+.field.menu select, .field.menu menu, .field.menu menu li { cursor: pointer; }
+
+/* Let the aurora show through the content area (it sits on <body>). */
+.main-content { background: transparent; }
+
+/* Chrome — sidebar + top bar float as frosted glass over the aurora. */
+.sidebar, .dark .sidebar {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(22px) saturate(165%);
+    backdrop-filter: blur(22px) saturate(165%);
+    border-inline-end: 1px solid var(--glass-border);
+}
+/* Top bar = SAME glass as the sidebar, identical in every state (base /
+   scrolled / dark) so the colour never shifts while scrolling and the two
+   surfaces read as one continuous frosted panel. */
+.top-bar, .dark .top-bar,
+.top-bar.scrolled, .dark .top-bar.scrolled {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(22px) saturate(165%);
+    backdrop-filter: blur(22px) saturate(165%);
+    border-bottom: 1px solid var(--glass-border);
+    box-shadow: none;
+}
+/* Keep the header height stable on scroll (the notice bar stays visible),
+   so nothing jumps and the bottom edge stays aligned with the sidebar. */
+.top-bar.scrolled { padding-top: calc(1rem + 20px); }
+
+/* Unified sidebar ACTIVE item — one consistent treatment on every page and
+   both layouts (doctor LTR + secretary RTL). Indigo→violet gradient pill with
+   a soft glow; covers top-level links AND active submenu links so submenu
+   pages (Medications / Media) match the rest. Overrides the per-layout
+   `.nav-link.active { background: var(--accent) }` so it never varies. */
+.sidebar .nav-link.active,
+.sidebar .nav-submenu-link.active {
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2)) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 20px var(--ds-primary-soft);
+}
+.sidebar .nav-link.active i,
+.sidebar .nav-submenu-link.active i { color: #fff !important; }
+/* Parent of an active submenu gets a subtle accent (not a full pill). */
+.sidebar .nav-item.has-submenu.active > .nav-link-toggle { color: var(--ds-primary); }
+
+/* Submenu chevron sits flush at the RIGHT edge of the item. The base
+   `.submenu-arrow { margin-right: 0 }` was being overridden by the more
+   specific `.nav-link i { margin-right: .75rem }` (the arrow is an <i>),
+   leaving it inset / next to the label. Force it fully right here. */
+.sidebar .nav-item.has-submenu > .nav-link-toggle { display: flex; align-items: center; width: 100%; }
+.sidebar .nav-link-toggle .submenu-arrow {
+    margin-inline-start: auto !important;
+    margin-inline-end: 0 !important;
+}
+
+/* Content surfaces become frosted glass over the aurora. These classes
+   never wrap a Bootstrap modal, so backdrop-filter is safe here (unlike
+   generic .card, which can be a modal ancestor). */
+.dashboard-card,
+.ds-panel,
+.ds-recent-patient,
+.flow-stage {
+    background: var(--glass-bg-strong);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid var(--glass-border);
+}
+/* Generic cards: translucent tint (no filter → safe as modal ancestors)
+   so the aurora gently shows through and they share the glass language. */
+.card {
+    background: color-mix(in srgb, var(--card) 86%, transparent);
+}
+@supports not (background: color-mix(in srgb, white 50%, transparent)) {
+    .card { background: var(--card); }
+}
+
+/* =====================================================================
+   COLLAPSE / EXPAND TOGGLE — wears the same indigo→violet identity as the
+   sidebar active items, so the chrome reads as one system. Overrides the
+   legacy `background: var(--accent)` + green hover from style.css /
+   sec-style.css (this sheet loads after both). Both layouts, both themes.
+   ===================================================================== */
+.sidebar-toggle,
+#sidebarToggle {
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    color: #fff;
+    border: 0;
+    box-shadow: 0 6px 16px var(--ds-primary-soft);
+    transition: transform .15s var(--ds-ease), box-shadow .15s var(--ds-ease), filter .15s ease;
+}
+.sidebar-toggle i,
+#sidebarToggle i { color: #fff; }
+.sidebar-toggle:hover,
+#sidebarToggle:hover {
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    color: #fff;
+    filter: brightness(1.1);
+    transform: scale(1.06);
+    box-shadow: 0 9px 22px var(--ds-primary-soft);
+}
+.sidebar-toggle:active,
+#sidebarToggle:active { transform: scale(0.95); }
+
+/* =====================================================================
+   DARK MODE — premium card surfaces. Deeper, richer near-black navy with
+   an indigo-tinted hairline, a soft top inner-highlight (glass edge) and a
+   layered drop shadow, so every card-like surface lifts off the aurora.
+   One treatment for all similar cards → consistent across pages.
+   These selectors never wrap a Bootstrap modal except generic `.card`,
+   where we set background/border/shadow ONLY (no filter/transform) so the
+   modal stacking-context rule still holds.
+   ===================================================================== */
+.dark .dashboard-card,
+.dark .ds-panel,
+.dark .ds-recent-patient,
+.dark .flow-stage,
+.dark .insight-card,
+.dark .kpi-card,
+.dark .stats-card,
+.dark .stats-card-weather {
+    background:
+        linear-gradient(165deg, rgba(40, 51, 74, 0.55) 0%, rgba(9, 13, 24, 0.74) 100%),
+        rgba(8, 12, 22, 0.82);
+    border: 1px solid rgba(99, 102, 241, 0.18);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 18px 44px rgba(0, 0, 0, 0.55);
+}
+.dark .card {
+    background:
+        linear-gradient(165deg, rgba(40, 51, 74, 0.42) 0%, rgba(9, 13, 24, 0.62) 100%),
+        rgba(10, 14, 25, 0.70);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 16px 40px rgba(0, 0, 0, 0.5);
+}
+@supports not (background: color-mix(in srgb, white 50%, transparent)) {
+    .dark .card { background: rgba(10, 14, 25, 0.92); }
+}
+
+/* Keep a card's direct children clipped to its corner radius so a solid
+   child background (header / body / table) never paints a square corner
+   past the rounded card edge — the "extra background at the corner" bug,
+   which shows up when the card is overflow:visible (e.g. dropdown cards). */
+.card > :first-child {
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+}
+.card > :last-child {
+    border-bottom-left-radius: inherit;
+    border-bottom-right-radius: inherit;
+}
+
+/* =====================================================================
+   UNIFIED PAGINATION — one glass + Indigo treatment for every page
+   (replaces Bootstrap's white/blue default). Separated rounded pills;
+   active = indigo gradient; disabled = muted ghost. Covers Bootstrap
+   markup (.pagination > .page-item > .page-link) used across pages.
+   ===================================================================== */
+.pagination {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    --bs-pagination-bg: transparent;
+    --bs-pagination-border-color: transparent;
+}
+.pagination .page-link,
+.pagination .page-item .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    height: 38px;
+    padding: 0 12px;
+    margin: 0;
+    border-radius: var(--r-md) !important;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    color: var(--text);
+    font-weight: 600;
+    line-height: 1;
+    transition: transform .15s var(--ds-ease, ease), background .15s ease, color .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.pagination .page-link:hover {
+    background: var(--ds-primary-soft);
+    color: var(--ds-primary);
+    border-color: color-mix(in srgb, var(--ds-primary) 40%, var(--glass-border));
+    transform: translateY(-1px);
+    z-index: 1;
+}
+.pagination .page-link:focus {
+    box-shadow: 0 0 0 .2rem var(--ds-primary-soft);
+    z-index: 2;
+}
+.pagination .page-item.active .page-link,
+.pagination .page-link.active {
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 6px 16px var(--ds-primary-soft);
+}
+.pagination .page-item.disabled .page-link,
+.pagination .page-link.disabled {
+    background: transparent;
+    border-color: var(--glass-border);
+    color: var(--muted);
+    opacity: .5;
+    pointer-events: none;
+}
+
+/* =====================================================================
+   SHARED STAT CARD (.fin-stat) + sparkline minichart + type chip
+   (.fin-type) — reused by Financial Management + Daily Closure (and any
+   future page). Per-metric color via --kpi-c / --type-c. Same visual
+   language as the dashboard mini-stat cards. NOT modal ancestors → glass
+   (backdrop-filter) is safe here.
+   ===================================================================== */
+.fin-stats-grid {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.fin-stat--opening  { --kpi-c: #6366F1; }
+.fin-stat--received { --kpi-c: #10B981; }
+.fin-stat--expenses { --kpi-c: #EF4444; }
+.fin-stat--current  { --kpi-c: #0EA5E9; }
+
+.fin-stat {
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column; gap: 4px;
+    min-height: 132px; padding: 18px 20px;
+    background:
+        linear-gradient(155deg, color-mix(in srgb, var(--kpi-c, #6366F1) 20%, transparent) 0%, transparent 60%),
+        var(--glass-bg-strong);
+    -webkit-backdrop-filter: blur(18px) saturate(165%);
+    backdrop-filter: blur(18px) saturate(165%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-xl);
+    box-shadow: var(--glass-shadow);
+    transition: transform .2s var(--ds-ease, ease), box-shadow .2s ease, border-color .2s ease;
+}
+.fin-stat::before {
+    content: ""; position: absolute; inset-block-start: -45%; inset-inline-end: -20%;
+    width: 160px; height: 160px; border-radius: 50%;
+    background: radial-gradient(circle, var(--kpi-c, #6366F1) 0%, transparent 70%);
+    opacity: .2; filter: blur(6px); pointer-events: none;
+    transition: opacity .25s ease, transform .25s ease;
+}
+.fin-stat::after {
+    content: ""; position: absolute; inset-inline: 0; inset-block-end: 0; height: 3px;
+    background: linear-gradient(90deg, var(--kpi-c, #6366F1), transparent); opacity: .9;
+}
+.fin-stat:hover {
+    transform: translateY(-5px); box-shadow: var(--glass-shadow-lg);
+    border-color: color-mix(in srgb, var(--kpi-c, #6366F1) 40%, var(--glass-border));
+}
+.fin-stat:hover::before { opacity: .4; transform: scale(1.15); }
+
+.fin-stat-top { display: flex; align-items: flex-start; justify-content: space-between; gap: .6rem; position: relative; z-index: 2; }
+.fin-stat-ic {
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 13px;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 1.3rem;
+    color: var(--kpi-c, #6366F1);
+    background: color-mix(in srgb, var(--kpi-c, #6366F1) 16%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kpi-c, #6366F1) 25%, transparent);
+}
+.fin-stat-value { font-size: 1.7rem; font-weight: 800; letter-spacing: -.02em; color: var(--text); line-height: 1.1; }
+.fin-stat-label { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+
+/* sparkline minichart along the bottom, tinted with the metric color */
+.fin-stat-spark {
+    position: absolute; inset-inline: 0; inset-block-end: 0; height: 40px;
+    opacity: .6; z-index: 1; pointer-events: none; overflow: hidden;
+    border-radius: 0 0 var(--r-xl) var(--r-xl);
+}
+.fin-stat-spark svg { width: 100%; height: 100%; display: block; }
+.fin-stat-spark .sparkline-path { fill: none; stroke: var(--kpi-c, #6366F1); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.fin-stat-spark .sparkline-area { fill: var(--kpi-c, #6366F1); opacity: .16; stroke: none; }
+@supports not (background: color-mix(in srgb, white 50%, transparent)) {
+    .fin-stat { background: var(--glass-bg-strong); }
+    .fin-stat-ic { background: var(--ds-primary-soft); }
+}
+
+/* Type chips (payment-type breakdown) */
+.fin-types { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.fin-type {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+    padding: 14px 16px; border-radius: var(--r-lg);
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    border-inline-start: 3px solid var(--type-c, var(--ds-primary));
+    transition: transform .18s var(--ds-ease, ease), box-shadow .18s ease;
+}
+.fin-type:hover { transform: translateY(-3px); box-shadow: var(--glass-shadow); }
+.fin-type-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+    color: var(--type-c, var(--ds-primary));
+}
+.fin-type-tag::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--type-c, var(--ds-primary)); }
+.fin-type-count { font-size: 1.5rem; font-weight: 800; color: var(--text); line-height: 1.1; }
+.fin-type-amount { font-size: .78rem; font-weight: 600; color: var(--muted); }
+.fin-type--booking      { --type-c: #6366F1; }
+.fin-type--followup     { --type-c: #10B981; }
+.fin-type--consultation { --type-c: #0EA5E9; }
+.fin-type--procedure    { --type-c: #F59E0B; }
+.fin-type--other        { --type-c: #64748B; }
+.fin-type--withdrawals  { --type-c: #A855F7; }
+.fin-type--expenses     { --type-c: #EF4444; }
+
+/* =====================================================================
+   MEDICAL STORAGE GALLERIES — shared chrome for Medications + Media pages
+   (header, glass filter + pill search + autocomplete, empty state,
+   load-more divider). Card visuals (.prescription-card / .media-card) stay
+   per-page since they differ (icon thumbnail vs real image).
+   ===================================================================== */
+.mstore-header { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.mstore-header-icon {
+    flex: 0 0 auto; width: 56px; height: 56px; border-radius: var(--r-lg);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 1.7rem;
+    color: #fff; background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    box-shadow: 0 10px 24px var(--ds-primary-soft);
+}
+.mstore-header-title { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; color: var(--text); }
+.mstore-header-sub { margin: .15rem 0 0; font-size: .9rem; color: var(--muted); }
+
+/* Filter card stacks above the gallery so the dropdown overlays it */
+.mstore-filter { position: relative; z-index: 100; }
+.mstore-search-col { position: relative; z-index: 1000; }
+.mstore-filter-label { display: block; font-weight: 600; color: var(--text); margin-bottom: .5rem; }
+.mstore-search-field { position: relative; }
+.mstore-search-ic {
+    position: absolute; inset-block-start: 50%; inset-inline-start: 16px; transform: translateY(-50%);
+    color: var(--muted); font-size: 1.05rem; pointer-events: none;
+}
+.mstore-search-input.form-control {
+    height: 50px; padding-inline-start: 44px; border-radius: var(--r-pill);
+    background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text);
+}
+.mstore-search-input.form-control::placeholder { color: var(--muted); opacity: .85; }
+.mstore-search-input.form-control:focus {
+    border-color: var(--ds-primary); background: var(--card); box-shadow: 0 0 0 .2rem var(--ds-primary-soft);
+}
+.mstore-search-field:focus-within .mstore-search-ic { color: var(--ds-primary); }
+.mstore-filter-chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
+    border-radius: var(--r-pill); background: var(--ds-primary-soft); color: var(--ds-primary);
+    font-weight: 700; font-size: .85rem; border: 1px solid color-mix(in srgb, var(--ds-primary) 22%, transparent);
+}
+
+/* Autocomplete dropdown — glass (was duplicated in both page CSS files) */
+.autocomplete-dropdown {
+    position: absolute; top: calc(100% + 6px); inset-inline: 0;
+    background: var(--glass-bg-strong);
+    -webkit-backdrop-filter: blur(18px) saturate(165%); backdrop-filter: blur(18px) saturate(165%);
+    border: 1px solid var(--glass-border); border-radius: var(--r-md);
+    max-height: 320px; overflow-y: auto; z-index: 9999;
+    box-shadow: var(--glass-shadow-lg); display: none;
+}
+.autocomplete-item {
+    padding: .7rem 1rem; cursor: pointer; border-bottom: 1px solid var(--glass-border);
+    transition: background-color .15s ease, color .15s ease; color: var(--text);
+}
+.autocomplete-item:last-child { border-bottom: 0; }
+.autocomplete-item:hover, .autocomplete-item.active { background: var(--ds-primary-soft); color: var(--ds-primary); }
+.autocomplete-item .patient-name { font-weight: 600; font-size: .95rem; }
+.autocomplete-item .patient-info { font-size: .85rem; color: var(--muted); margin-top: .2rem; }
+.autocomplete-item.active .patient-info { color: var(--ds-primary); }
+
+/* Empty state */
+.mstore-empty { text-align: center; padding: 3.5rem 1.5rem; }
+.mstore-empty-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 84px; height: 84px; border-radius: var(--r-xl); font-size: 2.4rem;
+    color: var(--ds-primary); background: var(--ds-primary-soft); margin-bottom: 1rem;
+}
+.mstore-empty-title { font-size: 1.15rem; font-weight: 700; color: var(--text); margin: 0 0 .35rem; }
+.mstore-empty-sub { font-size: .9rem; color: var(--muted); margin: 0; }
+
+/* Load-more divider + button */
+.mstore-loadmore { display: flex; align-items: center; gap: 1.25rem; margin: 2.5rem 0; }
+.mstore-loadmore::before, .mstore-loadmore::after { content: ""; flex: 1; height: 1px; background: var(--glass-border); }
+.mstore-loadmore .btn { border-radius: var(--r-pill); }
+
+/* =====================================================================
+   FIRED-ALERT TOAST — Indigo glass (overrides the legacy dodgerblue toast
+   in style.css; this sheet loads later). The slide-in/out animations from
+   style.css are kept; only the colour identity + glow are re-skinned.
+   ===================================================================== */
+.alert-toast-glass {
+    position: relative;
+    overflow: hidden;
+    background: var(--glass-bg-strong) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(175%);
+    backdrop-filter: blur(22px) saturate(175%);
+    border: 1px solid color-mix(in srgb, var(--ds-primary) 45%, var(--glass-border)) !important;
+    border-radius: var(--r-lg) !important;
+    color: var(--text) !important;
+    padding: 0.9rem 1.05rem !important;
+}
+.dark .alert-toast-glass {
+    background: var(--glass-bg-strong) !important;
+    border: 1px solid color-mix(in srgb, var(--ds-primary) 55%, var(--glass-border)) !important;
+}
+/* leading accent bar */
+.alert-toast-glass::before {
+    content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 4px;
+    background: linear-gradient(180deg, var(--ds-primary), var(--ds-accent-2));
+}
+/* re-skin the pulsing glow (same @keyframes names used by style.css) */
+@keyframes toastGlow {
+    0%, 100% { box-shadow: 0 12px 30px var(--ds-primary-soft), 0 0 0 1px color-mix(in srgb, var(--ds-primary) 22%, transparent); }
+    50%      { box-shadow: 0 16px 42px color-mix(in srgb, var(--ds-primary) 38%, transparent), 0 0 0 1px color-mix(in srgb, var(--ds-primary) 42%, transparent); }
+}
+@keyframes toastGlowDark {
+    0%, 100% { box-shadow: 0 14px 34px color-mix(in srgb, var(--ds-primary) 30%, transparent), 0 0 0 1px color-mix(in srgb, var(--ds-primary) 30%, transparent); }
+    50%      { box-shadow: 0 18px 48px color-mix(in srgb, var(--ds-primary) 45%, transparent), 0 0 0 1px color-mix(in srgb, var(--ds-primary) 50%, transparent); }
+}
+/* icon chip */
+.alert-toast-glass .alert-toast-icon {
+    flex: 0 0 auto; width: 42px; height: 42px; border-radius: 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 1.2rem;
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    box-shadow: 0 6px 16px var(--ds-primary-soft);
+}
+.alert-toast-glass .alert-message-content { font-weight: 600; color: var(--text); line-height: 1.4; }
+.alert-toast-glass small { color: var(--muted) !important; }
+
+/* buttons → indigo / glass */
+.alert-toast-glass .view-patient-btn,
+.dark .alert-toast-glass .view-patient-btn {
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2)) !important;
+    border: 0 !important; color: #fff !important;
+    border-radius: var(--r-md) !important; font-weight: 700 !important;
+    box-shadow: 0 4px 12px var(--ds-primary-soft) !important;
+}
+.alert-toast-glass .view-patient-btn:hover,
+.dark .alert-toast-glass .view-patient-btn:hover {
+    filter: brightness(1.08); transform: translateY(-1px);
+    box-shadow: 0 7px 18px var(--ds-primary-soft) !important;
+}
+.snooze-btn, .dark .snooze-btn {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    color: var(--text) !important;
+    border-radius: var(--r-md) !important; font-weight: 600 !important;
+}
+.snooze-btn:hover, .dark .snooze-btn:hover {
+    background: var(--ds-primary-soft) !important;
+    color: var(--ds-primary) !important;
+    border-color: color-mix(in srgb, var(--ds-primary) 40%, var(--glass-border)) !important;
+}
+/* Danger (breaking) variant keeps its red identity but on-token */
+.alert-toast-glass.alert-toast-danger::before { background: linear-gradient(180deg, var(--danger), #F97316); }
+.alert-toast-glass.alert-toast-danger .alert-toast-icon { background: linear-gradient(135deg, var(--danger), #F97316); box-shadow: 0 6px 16px rgba(239,68,68,.35); }
+
+/* Shared gallery card chrome (overlay text + glass count badge) used by
+   both .prescription-card and .media-card. */
+.mstore-count-badge {
+    position: absolute; inset-block-start: 12px; inset-inline-end: 12px; z-index: 2;
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 5px 11px; border-radius: var(--r-pill);
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2)); color: #fff;
+    font-size: .8rem; font-weight: 700; box-shadow: 0 4px 12px var(--ds-primary-soft);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}

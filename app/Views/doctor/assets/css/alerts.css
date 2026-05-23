@@ -119,16 +119,14 @@
 }
 
 .alerts-modal-glass .modal-content {
-    background: rgba(248, 250, 252, 0.7) !important;
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+    background: var(--card) !important;
     border: 1px solid rgba(226, 232, 240, 0.4) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.15);
     color: var(--text) !important;
 }
 
 .dark .alerts-modal-glass .modal-content {
-    background: rgba(11, 18, 32, 0.40) !important;
+    background: var(--card) !important;
     border: 1px solid rgba(51, 65, 85, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
     color: var(--text) !important;
@@ -294,4 +292,112 @@
 
 .btn-outline-warning:hover{
     color:white !important;
+}
+/* =====================================================================
+   ALERTS PAGE PARITY PORT FROM ORTHO (2026-05-23, styles only)
+   Card-based alert list + KPI header. Generic (no medical content).
+   ===================================================================== */
+/* Alerts list card — glass (inherits design-system .card surface) */
+.alerts-list-card { border-radius: var(--r-xl) !important; }
+.alerts-list-card > .card-header {
+    background: transparent !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+    color: var(--text) !important;
+    padding: 1.1rem 1.25rem;
+}
+.alerts-list-card > .card-header h5 { color: var(--text) !important; font-weight: 700; letter-spacing: -.01em; }
+.alerts-list-card > .card-header h5 i { color: var(--ds-primary); }
+.alerts-list-card > .card-body { background: transparent !important; }
+
+/* ALERTS — Indigo glass redesign (header, card list, status pills) */
+.alerts-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.alerts-header-main { display: flex; align-items: center; gap: 1rem; min-width: 0; }
+.alerts-header-icon {
+    flex: 0 0 auto; width: 56px; height: 56px; border-radius: var(--r-lg);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 1.7rem;
+    color: #fff; background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    box-shadow: 0 10px 24px var(--ds-primary-soft);
+}
+.alerts-header-title { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; color: var(--text); }
+.alerts-header-sub { margin: .15rem 0 0; font-size: .9rem; color: var(--muted); }
+.alerts-create-btn { border-radius: var(--r-md); font-weight: 700; }
+
+/* Alert card list */
+.alerts-card-list { display: flex; flex-direction: column; gap: 12px; }
+.alert-card {
+    --c: var(--ds-primary);
+    position: relative; display: flex; align-items: center; gap: 14px;
+    padding: 16px 18px 16px 20px;
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    border-radius: var(--r-lg); box-shadow: var(--glass-shadow); overflow: hidden;
+    transition: transform .18s var(--ds-ease, ease), box-shadow .18s ease, border-color .18s ease;
+}
+.alert-card::before {
+    content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 4px;
+    background: var(--c);
+}
+.alert-card:hover {
+    transform: translateY(-2px); box-shadow: var(--glass-shadow-lg);
+    border-color: color-mix(in srgb, var(--c) 40%, var(--glass-border));
+}
+.alert-card.is-active   { --c: #10B981; }
+.alert-card.is-pastdue  { --c: #F59E0B; }
+.alert-card.is-inactive { --c: #64748B; }
+.alert-card.is-dismissed { --c: #64748B; opacity: .62; }
+
+.alert-card-icon {
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 13px;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 1.25rem;
+    color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 25%, transparent);
+}
+.alert-card-main { flex: 1 1 auto; min-width: 0; }
+.alert-card-message {
+    font-size: .98rem; font-weight: 600; color: var(--text); line-height: 1.4;
+    margin-bottom: .5rem; word-break: break-word;
+}
+.alert-card-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+.alert-meta-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: var(--r-pill);
+    background: var(--glass-bg-strong); border: 1px solid var(--glass-border);
+    font-size: .76rem; font-weight: 600; color: var(--muted); white-space: nowrap;
+    text-decoration: none;
+}
+.alert-meta-chip i { font-size: .82rem; }
+.alert-meta-patient { color: var(--ds-primary); }
+.alert-meta-patient:hover { background: var(--ds-primary-soft); border-color: color-mix(in srgb, var(--ds-primary) 35%, var(--glass-border)); }
+
+.alert-card-side { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.alert-status-pill {
+    display: inline-flex; align-items: center; padding: 4px 12px; border-radius: var(--r-pill);
+    font-size: .74rem; font-weight: 700; letter-spacing: .02em;
+    background: color-mix(in srgb, var(--c, var(--ds-primary)) 16%, transparent);
+    color: var(--c, var(--ds-primary));
+    border: 1px solid color-mix(in srgb, var(--c, var(--ds-primary)) 30%, transparent);
+}
+.alert-status-pill.is-active   { --c: #10B981; }
+.alert-status-pill.is-pastdue  { --c: #F59E0B; }
+.alert-status-pill.is-inactive,
+.alert-status-pill.is-dismissed { --c: #64748B; }
+
+/* Icon action buttons */
+.alert-card-actions { display: inline-flex; gap: 6px; }
+.alert-act {
+    width: 34px; height: 34px; border-radius: var(--r-md);
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--glass-border); background: var(--glass-bg-strong);
+    color: var(--muted); cursor: pointer; font-size: .95rem; text-decoration: none;
+    transition: transform .15s var(--ds-ease, ease), background .15s ease, color .15s ease, border-color .15s ease;
+}
+.alert-act:hover { transform: translateY(-1px); }
+.alert-act.act-info:hover, .alert-act:not([class*="act-"]):hover { background: var(--ds-primary-soft); color: var(--ds-primary); border-color: color-mix(in srgb, var(--ds-primary) 40%, var(--glass-border)); }
+.alert-act.act-ok:hover { background: var(--ds-chip-success-bg); color: var(--success); border-color: color-mix(in srgb, var(--success) 40%, var(--glass-border)); }
+.alert-act.act-warn:hover { background: var(--ds-chip-warning-bg); color: var(--ds-warning); border-color: color-mix(in srgb, var(--ds-warning) 40%, var(--glass-border)); }
+.alert-act.act-danger:hover { background: var(--ds-chip-danger-bg); color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, var(--glass-border)); }
+
+@media (max-width: 640px) {
+    .alert-card { flex-wrap: wrap; }
+    .alert-card-side { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
+    .alerts-create-btn { width: 100%; }
 }

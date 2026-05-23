@@ -2767,16 +2767,14 @@ body::before {
         /* Global Modal Glass Effect - Same as sidebar */
         .modal-content {
             /* Glass effect - similar to sidebar */
-            background: rgba(248, 250, 252, 0.35) !important;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            background: var(--card) !important;
             border: 1px solid rgba(226, 232, 240, 0.3) !important;
             box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
             color: var(--text) !important;
         }
         
         .dark .modal-content {
-            background: rgba(11, 18, 32, 0.40) !important;
+            background: var(--card) !important;
             border: 1px solid rgba(51, 65, 85, 0.3) !important;
             box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
         }

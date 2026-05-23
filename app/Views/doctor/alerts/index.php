@@ -1,21 +1,63 @@
 <link href="/app/Views/doctor/assets/css/alerts.css?v=<?= file_exists(__DIR__ . '/assets/css/alerts.css') ? filemtime(__DIR__ . '/assets/css/alerts.css') : time() ?>" rel="stylesheet">
 <div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="mb-0">
-                <i class="bi bi-bell me-2"></i>Alerts Management
-            </h2>
-            <p class="text-muted mb-0">Manage your notifications and reminders</p>
+    <!-- Page header -->
+    <div class="alerts-header mb-4">
+        <div class="alerts-header-main">
+            <span class="alerts-header-icon"><i class="bi bi-bell-fill"></i></span>
+            <div class="alerts-header-text">
+                <h2 class="alerts-header-title">Alerts Management</h2>
+                <p class="alerts-header-sub">Manage your notifications and reminders</p>
+            </div>
         </div>
-        <button class="btn btn-primary" onclick="openAlertModal(null, null)">
+        <button class="btn btn-primary alerts-create-btn" onclick="openAlertModal(null, null)">
             <i class="bi bi-plus-circle me-2"></i>Create New Alert
         </button>
     </div>
 
+    <!-- Overview stat cards -->
+    <div class="fin-stats-grid mb-4" id="alertsStatsGrid">
+        <div class="fin-stat" style="--kpi-c: #6366F1;">
+            <div class="fin-stat-top">
+                <div class="fin-stat-text">
+                    <div class="fin-stat-value" id="alertsStatTotal">0</div>
+                    <div class="fin-stat-label">Total Alerts</div>
+                </div>
+                <span class="fin-stat-ic"><i class="bi bi-bell"></i></span>
+            </div>
+        </div>
+        <div class="fin-stat" style="--kpi-c: #10B981;">
+            <div class="fin-stat-top">
+                <div class="fin-stat-text">
+                    <div class="fin-stat-value" id="alertsStatActive">0</div>
+                    <div class="fin-stat-label">Active</div>
+                </div>
+                <span class="fin-stat-ic"><i class="bi bi-bell-fill"></i></span>
+            </div>
+        </div>
+        <div class="fin-stat" style="--kpi-c: #F59E0B;">
+            <div class="fin-stat-top">
+                <div class="fin-stat-text">
+                    <div class="fin-stat-value" id="alertsStatPastDue">0</div>
+                    <div class="fin-stat-label">Past Due</div>
+                </div>
+                <span class="fin-stat-ic"><i class="bi bi-alarm"></i></span>
+            </div>
+        </div>
+        <div class="fin-stat" style="--kpi-c: #64748B;">
+            <div class="fin-stat-top">
+                <div class="fin-stat-text">
+                    <div class="fin-stat-value" id="alertsStatDismissed">0</div>
+                    <div class="fin-stat-label">Dismissed</div>
+                </div>
+                <span class="fin-stat-ic"><i class="bi bi-check2-circle"></i></span>
+            </div>
+        </div>
+    </div>
+
     <!-- Alerts List -->
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-2">
+    <div class="card alerts-list-card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
                 <h5 class="mb-0">
                     <i class="bi bi-list-ul me-2"></i>All Alerts
                 </h5>
@@ -117,6 +159,7 @@ function loadAlerts(page = 1, limit = 10) {
     fetch(url)
         .then(response => response.json())
         .then(data => {
+            updateAlertStats(data.stats);
             if (data.success && data.alerts && data.alerts.length > 0) {
                 // If pagination data exists, use it
                 if (data.pagination) {
@@ -179,96 +222,71 @@ function renderAlerts(alerts) {
         return;
     }
     
-    let html = '<div class="table-responsive"><table class="table table-hover"><thead><tr>';
-    html += '<th>Message</th><th>Date & Time</th><th>Patient</th><th>Repeat</th><th>Status</th><th>Actions</th>';
-    html += '</tr></thead><tbody>';
-    
+    let html = '<div class="alerts-card-list">';
+
     alerts.forEach(alert => {
-        const patientName = alert.patient_first_name && alert.patient_last_name 
-            ? `${alert.patient_first_name} ${alert.patient_last_name}` 
+        const patientName = alert.patient_first_name && alert.patient_last_name
+            ? `${alert.patient_first_name} ${alert.patient_last_name}`
             : 'N/A';
         const alertDateTime = new Date(`${alert.alert_date}T${alert.alert_time}`);
         const dateStr = alertDateTime.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
         const timeStr = alertDateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        
-        // Determine alert status (same logic as patient.php)
+
         const isActive = alert.is_active == 1;
         const isDismissed = alert.is_dismissed == 1;
         const isPast = alertDateTime && alertDateTime < new Date();
-        
-        // Determine alert status class for styling
-        let alertStatusClass = '';
-        if (isDismissed) {
-            alertStatusClass = 'alert-dismissed';
-        } else if (isActive) {
-            alertStatusClass = 'alert-active';
-        } else {
-            alertStatusClass = 'alert-inactive';
-        }
-        
-        const statusBadge = isDismissed 
-            ? '<span class="badge bg-secondary">Dismissed</span>' 
-            : (isActive 
-                ? (isPast 
-                    ? '<span class="badge bg-warning">Past Due</span>' 
-                    : '<span class="badge bg-success">Active</span>')
-                : '<span class="badge bg-secondary">Inactive</span>');
-        
-        // Add click handler to status badge for quick dismiss (if active and not dismissed)
-        const statusBadgeClickable = isDismissed 
-            ? statusBadge
-            : (isActive 
-                ? `<span class="badge ${isPast ? 'bg-warning' : 'bg-success'}" style="cursor: pointer;" onclick="dismissAlert(${alert.id})" title="Click to dismiss">${isPast ? 'Past Due' : 'Active'}</span>`
-                : statusBadge);
-        
-        const repeatInfo = alert.repeat_count > 0 
-            ? `${alert.current_repeat}/${alert.repeat_count}` 
-            : 'Infinite';
-        
+
+        // Status → key / label / icon (drives the card's accent color via CSS)
+        let statusKey, statusLabel, statusIcon;
+        if (isDismissed) { statusKey = 'dismissed'; statusLabel = 'Dismissed'; statusIcon = 'bi-check2-circle'; }
+        else if (isActive && isPast) { statusKey = 'pastdue'; statusLabel = 'Past Due'; statusIcon = 'bi-alarm-fill'; }
+        else if (isActive) { statusKey = 'active'; statusLabel = 'Active'; statusIcon = 'bi-bell-fill'; }
+        else { statusKey = 'inactive'; statusLabel = 'Inactive'; statusIcon = 'bi-bell-slash'; }
+
+        // Active alerts: status pill is clickable to dismiss
+        const statusPill = (!isDismissed && isActive)
+            ? `<span class="alert-status-pill is-${statusKey}" style="cursor:pointer;" onclick="dismissAlert(${alert.id})" title="Click to dismiss">${statusLabel}</span>`
+            : `<span class="alert-status-pill is-${statusKey}">${statusLabel}</span>`;
+
+        const repeatInfo = alert.repeat_count > 0 ? `${alert.current_repeat}/${alert.repeat_count}` : 'Infinite';
+        const repeatExtra = alert.repeat_interval > 0 ? ` · every ${alert.repeat_interval}d` : '';
+
         html += `
-            <tr class="${alertStatusClass}">
-                <td><div class="alert-message-content" style="word-wrap: break-word;">${alert.message}</div></td>
-                <td>
-                    <i class="bi bi-calendar me-1"></i>${dateStr}<br>
-                    <i class="bi bi-clock me-1"></i>${timeStr}
-                </td>
-                <td>
-                    ${alert.patient_id ? `
-                        <a href="/doctor/patients/${alert.patient_id}" class="text-decoration-none">
-                            <i class="bi bi-person me-1"></i>${escapeHtml(patientName)}
-                        </a>
-                    ` : '<span class="text-muted">-</span>'}
-                </td>
-                <td>${repeatInfo}${alert.repeat_interval > 0 ? ` (every ${alert.repeat_interval} days)` : ''}</td>
-                <td>${statusBadgeClickable}</td>
-                <td>
-                    <div class="btn-group btn-group-sm">
-                        ${alert.patient_id ? `
-                            <a href="/doctor/patients/${alert.patient_id}" class="btn btn-outline-primary" title="View Patient">
-                                <i class="bi bi-person"></i>
-                            </a>
-                        ` : ''}
-                        ${!isDismissed ? `
-                            <button class="btn ${isActive ? 'btn-outline-warning' : 'btn-outline-success'}" 
-                                    onclick="toggleAlertStatus(${alert.id}, ${isActive ? 0 : 1})" 
-                                    title="${isActive ? 'Deactivate' : 'Activate'} Alert">
-                                <i class="bi ${isActive ? 'bi-pause-circle' : 'bi-play-circle'}"></i>
-                            </button>
-                        ` : ''}
-                        <button class="btn btn-outline-info" onclick="editAlert(${alert.id})" title="Edit Alert">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-outline-danger" onclick="showDeleteConfirmation(${alert.id})" title="Delete">
-                            <i class="bi bi-trash"></i>
-                        </button>
+            <div class="alert-card is-${statusKey}">
+                <span class="alert-card-icon"><i class="bi ${statusIcon}"></i></span>
+                <div class="alert-card-main">
+                    <div class="alert-card-message">${alert.message}</div>
+                    <div class="alert-card-meta">
+                        <span class="alert-meta-chip"><i class="bi bi-calendar-event"></i>${dateStr}</span>
+                        <span class="alert-meta-chip"><i class="bi bi-clock"></i>${timeStr}</span>
+                        ${alert.patient_id ? `<a href="/doctor/patients/${alert.patient_id}" class="alert-meta-chip alert-meta-patient"><i class="bi bi-person"></i>${escapeHtml(patientName)}</a>` : ''}
+                        <span class="alert-meta-chip"><i class="bi bi-arrow-repeat"></i>${repeatInfo}${repeatExtra}</span>
                     </div>
-                </td>
-            </tr>
+                </div>
+                <div class="alert-card-side">
+                    ${statusPill}
+                    <div class="alert-card-actions">
+                        ${alert.patient_id ? `<a href="/doctor/patients/${alert.patient_id}" class="alert-act" title="View Patient"><i class="bi bi-person"></i></a>` : ''}
+                        ${!isDismissed ? `<button class="alert-act ${isActive ? 'act-warn' : 'act-ok'}" onclick="toggleAlertStatus(${alert.id}, ${isActive ? 0 : 1})" title="${isActive ? 'Deactivate' : 'Activate'} Alert"><i class="bi ${isActive ? 'bi-pause-circle' : 'bi-play-circle'}"></i></button>` : ''}
+                        <button class="alert-act act-info" onclick="editAlert(${alert.id})" title="Edit Alert"><i class="bi bi-pencil"></i></button>
+                        <button class="alert-act act-danger" onclick="showDeleteConfirmation(${alert.id})" title="Delete"><i class="bi bi-trash"></i></button>
+                    </div>
+                </div>
+            </div>
         `;
     });
-    
-    html += '</tbody></table></div>';
+
+    html += '</div>';
     container.innerHTML = html;
+}
+
+function updateAlertStats(stats) {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = (v ?? 0); };
+    stats = stats || { total: 0, active: 0, past_due: 0, dismissed: 0 };
+    set('alertsStatTotal', stats.total);
+    set('alertsStatActive', stats.active);
+    set('alertsStatPastDue', stats.past_due);
+    set('alertsStatDismissed', stats.dismissed);
 }
 
 function renderAlertsPagination(pagination) {
@@ -451,6 +469,8 @@ function initializeAlertsModalsDraggable() {
 }
 
 function makeAlertsModalDraggable(modalElement) {
+    /* Drag/center/animation unified in layouts/modal-kit.js. No-op. */
+    return;
     const modalDialog = modalElement.querySelector('.modal-dialog');
     if (!modalDialog) return;
     

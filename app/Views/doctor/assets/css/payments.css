@@ -5,26 +5,10 @@
 
 
    :root {
-    --bg: #f8fafc;
-    --text: #0f172a;
-    --card: #ffffff;
-    --muted: #475569;
-    --accent: #0ea5e9;
-    --success: #10b981;
-    --danger: #ef4444;
-    --border: #e2e8f0;
     --shadow: rgba(0, 0, 0, 0.1);
 }
 
 .dark {
-    --bg: #0b1220;
-    --text: #f8fafc;
-    --card: #1e293b;
-    --muted: #94a3b8;
-    --accent: #38bdf8;
-    --success: #4ade80;
-    --danger: #fb7185;
-    --border: #334155;
     --shadow: rgba(0, 0, 0, 0.3);
 }
 
@@ -326,15 +310,13 @@
 /* Modal Styles */
 .modal-content {
     /* Glass effect - similar to sidebar */
-    background: rgba(248, 250, 252, 0.35) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: var(--card) !important;
     border: 1px solid rgba(226, 232, 240, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
 }
 
 .dark .modal-content {
-    background: rgba(11, 18, 32, 0.40) !important;
+    background: var(--card) !important;
     border: 1px solid rgba(51, 65, 85, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 }
@@ -446,16 +428,14 @@ kbd {
 /* Search Modal Styles */
 .modal-content {
     /* Glass effect - similar to sidebar */
-    background: rgba(248, 250, 252, 0.35) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: var(--card) !important;
     border: 1px solid rgba(226, 232, 240, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
     color: var(--text) !important;
 }
 
 .dark .modal-content {
-    background: rgba(11, 18, 32, 0.40) !important;
+    background: var(--card) !important;
     border: 1px solid rgba(51, 65, 85, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 }
@@ -1046,4 +1026,116 @@ kbd {
 .field.menu.open .control::before {
     height: 60%;
     opacity: 1;
+}
+/* ===================================================================== */
+/* ORTHO PER-PAGE PARITY (payments, 2026-05-22) — missing visual polish ported  */
+/* verbatim from the ortho fork (additive, last-wins; markup classes match). */
+/* ===================================================================== */
+/* =====================================================================
+   FINANCIAL MANAGEMENT — Indigo glass redesign (appended; wins by order)
+   Token-driven, Dark/Light, RTL-safe. Stat cards get dashboard-style
+   sparkline minicharts.
+   ===================================================================== */
+
+/* ---- Toolbar ---------------------------------------------------- */
+.fin-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap;
+}
+
+.fin-toolbar-actions { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+
+.fin-dayclose-btn {
+    position: relative; overflow: hidden;
+    display: inline-flex; align-items: center; gap: .55rem;
+    padding: .7rem 1.3rem; border: 0; border-radius: var(--r-md);
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    color: #fff; font-weight: 700; text-decoration: none;
+    box-shadow: 0 10px 24px var(--ds-primary-soft);
+    transition: transform .2s var(--ds-ease, ease), box-shadow .2s ease, filter .2s ease;
+}
+
+.fin-dayclose-btn i { font-size: 1.15rem; }
+
+.fin-dayclose-btn::before {
+    content: ""; position: absolute; inset-block: 0; inset-inline-start: -120%;
+    width: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+    transition: inset-inline-start .55s ease;
+}
+
+.fin-dayclose-btn:hover::before { inset-inline-start: 120%; }
+
+.fin-dayclose-btn:hover { transform: translateY(-2px); filter: brightness(1.06); color: #fff; box-shadow: 0 14px 30px var(--ds-primary-soft); }
+
+.fin-clinic-filter {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: 4px 12px 4px 14px; border-radius: var(--r-pill);
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+}
+
+.fin-clinic-filter > .bi { color: var(--ds-primary); }
+
+.fin-clinic-filter .form-select {
+    border: 0; background: transparent; box-shadow: none; min-width: 160px;
+    color: var(--text); font-weight: 600; padding-inline: 4px 24px;
+}
+
+.fin-clinic-filter .form-select:focus { box-shadow: none; }
+
+.fin-action-btn {
+    display: inline-flex; align-items: center; gap: .15rem;
+    border-radius: var(--r-md); font-weight: 700; border: 1px solid transparent;
+}
+
+.fin-action-btn kbd {
+    margin-inline-start: .4rem; background: rgba(255,255,255,.22); color: inherit;
+    border: 0; border-radius: 5px; padding: 1px 6px; font-size: .72rem; font-weight: 700; box-shadow: none;
+}
+
+.fin-action-expense { background: linear-gradient(135deg, var(--ds-warning), #FBBF24); color: #1f2937; }
+
+.fin-action-expense:hover { filter: brightness(1.05); color: #1f2937; }
+
+.fin-action-search { background: linear-gradient(135deg, var(--ds-info), #38BDF8); color: #fff; }
+
+.fin-action-search:hover { filter: brightness(1.05); color: #fff; }
+
+.fin-action-expense kbd, .fin-action-search kbd { background: rgba(0,0,0,.14); }
+
+/* NOTE: the reusable stat-card (.fin-stat* + sparkline) and payment-type
+   chip (.fin-type*) components were promoted to design-system.css so the
+   daily-closure sub-page reuses them. Only payments-specific chrome stays here. */
+
+/* ---- Section cards + tables ------------------------------------ */
+.container-fluid > .card,
+.card.mb-4 {
+    border-radius: var(--r-xl) !important;
+}
+
+.card > .card-header {
+    background: transparent !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.card > .card-header h5 { color: var(--text); font-weight: 700; letter-spacing: -.01em; }
+
+.card > .card-header h5 i { color: var(--ds-primary); }
+
+.table > thead.table-dark th,
+.table > thead.table-light th,
+.table > thead th {
+    background: var(--glass-bg) !important;
+    color: var(--muted) !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+    font-weight: 700; text-transform: uppercase; letter-spacing: .03em; font-size: .72rem;
+}
+
+.table tbody td { border-color: var(--glass-border); vertical-align: middle; }
+
+.fin-action-btn, .fin-clinic-filter { flex: 1 1 auto; }
+
+/* Finance toolbar responsive (parity port from ortho, 2026-05-23) */
+@media (max-width: 768px) {
+    .fin-toolbar-actions { width: 100%; }
+    .fin-action-btn, .fin-clinic-filter { flex: 1 1 auto; }
 }

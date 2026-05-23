@@ -1129,16 +1129,14 @@
 /* Modal and Form Styles - Glass Effect */
 .modal-content {
     /* Glass effect - similar to sidebar */
-    background: rgba(248, 250, 252, 0.35) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: var(--card) !important;
     border: 1px solid rgba(226, 232, 240, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
     color: var(--text) !important;
 }
 
 .dark .modal-content {
-    background: rgba(11, 18, 32, 0.40) !important;
+    background: var(--card) !important;
     border: 1px solid rgba(51, 65, 85, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 }
@@ -1895,9 +1893,9 @@ div.form-text {
 
 /* Dark mode support for doctor badge */
 [data-bs-theme="dark"] .doctor-badge {
-    background: linear-gradient(135deg, #0d6efd, #0a58ca);
-    border-color: #0a58ca;
-    box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-primary-hover));
+    border-color: var(--ds-primary-hover);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
 }
 
 /* Treating Doctor Avatar Styles */
@@ -2523,3 +2521,184 @@ div.form-text {
         width: 100%;
     }
 }
+/* =====================================================================
+   ORTHO PATIENT-PAGE PARITY (2026-05-22) — visual polish ported from the
+   ortho fork: glass card-headers, indigo .nav-tabs, glass tables, the
+   responsive button group, and the prescription/appointment/medical-history
+   timeline glass surfaces + indigo accents. Appended last so it wins over
+   roaya's older per-component versions (markup classes are identical).
+   ===================================================================== */
+.card > .card-header { background: transparent !important; border-bottom: 1px solid var(--glass-border) !important; }
+
+.card > .card-header h5 { color: var(--text); font-weight: 700; letter-spacing: -.01em; }
+
+.card > .card-header h5 i { color: var(--ds-primary); }
+
+/* Tabs → indigo underline */
+.nav-tabs { border-bottom: 1px solid var(--glass-border); }
+
+.nav-tabs .nav-link,
+.dark .nav-tabs .nav-link {
+    color: var(--muted); border: 0; border-radius: var(--r-md) var(--r-md) 0 0; font-weight: 600;
+    transition: color .15s ease, background .15s ease;
+}
+
+.nav-tabs .nav-link:hover,
+.dark .nav-tabs .nav-link:hover { color: var(--ds-primary); background: var(--ds-primary-soft); }
+
+.nav-tabs .nav-link.active,
+.dark .nav-tabs .nav-link.active {
+    color: var(--ds-primary) !important; background: transparent !important;
+    border-bottom: 2px solid var(--ds-primary) !important;
+}
+
+/* Tables → glass headers */
+.card .table > thead th { background: var(--glass-bg) !important; color: var(--muted) !important; border-color: var(--glass-border) !important; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; font-size: .72rem; }
+
+.card .table td { border-color: var(--glass-border); vertical-align: middle; }
+
+.btn-group-responsive > .btn {
+    width: 100%;
+    margin: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: .55rem .8rem;
+    border-radius: var(--r-md);
+    font-weight: 600;
+    font-size: .88rem;
+    line-height: 1.1;
+    white-space: nowrap;
+    box-shadow: var(--shadow-sm);
+    transition: transform .15s var(--ds-ease), box-shadow .2s var(--ds-ease), filter .2s var(--ds-ease);
+}
+
+.btn-group-responsive > .btn i { font-size: 1rem; }
+
+.btn-group-responsive > .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--glass-shadow);
+    filter: brightness(1.04);
+}
+
+.btn-group-responsive > .btn:active { transform: translateY(0); }
+
+/* ── History timelines → full width + glass surfaces + indigo accents ─ */
+/* (a) Full-width. NOTE: design-system.css makes the dashboard primitive
+   `.timeline-item` a flex row, which shrink-wraps our `.timeline-content`.
+   Re-assert block flow + remove its divider so content fills its track. */
+.timeline-item,
+.prescription-timeline-item,
+.appointment-timeline-item,
+.medical-history-view .timeline-item {
+    display: block !important;
+    align-items: initial;
+    gap: 0;
+    border-block-end: 0 !important;
+}
+
+.prescription-timeline,
+.appointment-timeline { padding-inline-start: 26px !important; }
+
+/* drop the generic 60px item padding here — these markers sit at -22px, not 0 */
+.prescription-timeline-item,
+.appointment-timeline-item { padding-inline-start: 0 !important; }
+
+.prescription-timeline-item,
+.appointment-timeline-item,
+.medical-history-view .timeline-item { box-sizing: border-box; width: 100%; }
+
+.prescription-timeline-item .timeline-content,
+.appointment-timeline-item .timeline-content,
+.medical-history-view .timeline-content {
+    box-sizing: border-box;
+    width: auto;
+    display: block;
+    background: var(--card) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-inline-start: 3px solid var(--ds-primary) !important;
+    border-radius: var(--r-lg) !important;
+    box-shadow: var(--glass-shadow);
+    transition: transform .18s var(--ds-ease), box-shadow .2s var(--ds-ease), border-color .2s var(--ds-ease);
+}
+
+.prescription-timeline-item .timeline-content:hover,
+.appointment-timeline-item .timeline-content:hover,
+.medical-history-view .timeline-content:hover {
+    transform: translateX(4px);
+    box-shadow: var(--glass-shadow-lg);
+    border-inline-start-color: var(--ds-accent-2) !important;
+}
+
+/* preserve follow-up's distinct (sky) accent */
+.appointment-timeline-item.followup-appointment .timeline-content,
+.appointment-timeline-item.followup-appointment .timeline-content:hover {
+    border-inline-start-color: var(--ds-info) !important;
+}
+
+/* (b) Soft indigo section headers (replace heavy black gradients) */
+.prescription-header,
+.appointment-header,
+.dark .prescription-header,
+.dark .appointment-header {
+    background: linear-gradient(135deg, var(--ds-primary-soft) 0%, transparent 72%) !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.prescription-header:hover,
+.appointment-header:hover,
+.dark .prescription-header:hover,
+.dark .appointment-header:hover { background: var(--ds-primary-soft) !important; }
+
+.prescription-header.collapsed,
+.appointment-header.collapsed { border-bottom: none !important; }
+
+/* Marker polish — keep their semantic status colour, add ring + glow */
+.prescription-timeline-item .timeline-marker,
+.appointment-timeline-item .timeline-marker,
+.medical-history-view .timeline-marker {
+    border: 3px solid var(--card) !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, .18) !important;
+}
+
+.prescription-timeline-item .timeline-marker i,
+.appointment-timeline-item .timeline-marker i,
+.medical-history-view .timeline-marker i { color: #fff !important; }
+
+/* Vertical spines → indigo gradient */
+.timeline::before,
+.prescription-timeline::before,
+.appointment-timeline::before,
+.dark .timeline::before,
+.dark .prescription-timeline::before,
+.dark .appointment-timeline::before {
+    background: linear-gradient(to bottom, var(--ds-primary), var(--ds-accent-2)) !important;
+    opacity: .5;
+}
+
+/* Medical-history arrow connector → match glass surface */
+.medical-history-view .timeline-content::before { border-color: transparent var(--glass-border) transparent transparent !important; }
+
+.medical-history-view .timeline-content::after { border-color: transparent var(--card) transparent transparent !important; }
+
+/* ── Actions buttons → equal-width responsive tile GRID (ortho parity) ──
+   roaya only had @media .btn-group-responsive rules (no base), so on desktop
+   the inline d-flex + width:100% buttons stacked into an ugly column. This
+   base grid rule (display:grid !important overrides the inline flex) gives the
+   ortho responsive tile grid; auto-fit handles mobile too. */
+.btn-group-responsive {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px !important;
+    align-items: stretch;
+}
+
+/* =====================================================================
+   PATIENT HEADER + CARD GLASS PARITY (ortho, 2026-05-23, styles only)
+   Indigo header overlay (was purple) + rounder cards + header shadow.
+   ===================================================================== */
+.card { border-radius: var(--r-xl) !important; }
+.patient-profile-header-wrapper { border-radius: var(--r-xl); overflow: hidden; box-shadow: var(--glass-shadow-lg); }
+.patient-profile-header-overlay { background: linear-gradient(135deg, rgba(79,70,229,.74) 0%, rgba(99,102,241,.66) 45%, rgba(14,165,233,.58) 100%) !important; }
+.dark .patient-profile-header-overlay { background: linear-gradient(135deg, rgba(30,27,75,.84) 0%, rgba(49,46,129,.74) 50%, rgba(14,116,144,.58) 100%) !important; }

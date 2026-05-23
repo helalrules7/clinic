@@ -412,3 +412,26 @@
 #imageGalleryModal{
     z-index: 1000001 !important;
 }
+/* =====================================================================
+   MEDIA GALLERY GLASS PARITY (ortho, 2026-05-23, styles only)
+   Glass media cards + indigo gradient count badge (was black).
+   ===================================================================== */
+.media-card {
+    border-radius: var(--r-lg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    transition: transform .25s var(--ds-ease, ease), box-shadow .25s ease, border-color .25s ease;
+}
+.media-card:hover,
+.dark .media-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--glass-shadow-lg);
+    border-color: color-mix(in srgb, var(--ds-primary) 45%, var(--glass-border));
+}
+.media-count-badge,
+.dark .media-count-badge {
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    border: 0;
+    box-shadow: 0 4px 12px var(--ds-primary-soft);
+    border-radius: var(--r-pill);
+}

@@ -8,112 +8,85 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
     rel="stylesheet">
 
 <div class="container-fluid">
-    <!-- Page Header -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <a href="/doctor/daily-closure" class="btn day-close-btn">
-                <i class="bi bi-calendar-check me-2"></i>
-                Day Close
-            </a>
-        </div>
-        <div class="col-md-6 text-end">
-            <div class="d-flex gap-2 justify-content-end align-items-center flex-wrap">
-                <!-- Clinic filter (doctor only — secretaries are server-side pinned) -->
-                <form method="get" id="financeClinicFilterForm" class="d-flex align-items-center gap-2 me-2">
-                    <label for="financeClinicFilter" class="form-label mb-0 text-muted small">
-                        <i class="bi bi-building me-1"></i>Clinic:
-                    </label>
-                    <select id="financeClinicFilter" name="clinic_id" class="form-select form-select-sm" style="min-width: 180px;"
-                            onchange="document.getElementById('financeClinicFilterForm').submit()">
-                        <option value="" <?= empty($selectedClinicId) ? 'selected' : '' ?>>All Clinics</option>
-                        <?php foreach (($clinics ?? []) as $_clinic): ?>
-                            <option value="<?= (int)$_clinic['id'] ?>" <?= ($selectedClinicId == $_clinic['id']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($_clinic['name_en'] ?: $_clinic['name_ar']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </form>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dailyBalanceModal"
-                    title="Add Daily Balance">
-                    <i class="bi bi-plus-circle me-2"></i>
-                    Add Balance
-                    <span class="ms-2">
-                        <kbd>B</kbd>
-                    </span>
-                </button>
-                <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#expenseModal"
-                    title="Add Expense">
-                    <i class="bi bi-dash-circle me-2"></i>
-                    Add Expense
-                    <span class="ms-2">
-                        <kbd>E</kbd>
-                    </span>
-                </button>
-                <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#searchModal"
-                    title="Search Transactions">
-                    <i class="bi bi-search me-2"></i>
-                    Search
-                    <span class="ms-2">
-                        <kbd>S</kbd>
-                    </span>
-                </button>
-            </div>
+    <!-- Page Header / Toolbar -->
+    <div class="fin-toolbar mb-4">
+        <a href="/doctor/daily-closure" class="fin-dayclose-btn">
+            <i class="bi bi-calendar-check"></i>
+            <span>Day Close</span>
+        </a>
+        <div class="fin-toolbar-actions">
+            <!-- Clinic filter (doctor only — secretaries are server-side pinned) -->
+            <form method="get" id="financeClinicFilterForm" class="fin-clinic-filter">
+                <i class="bi bi-building"></i>
+                <select id="financeClinicFilter" name="clinic_id" class="form-select form-select-sm"
+                        onchange="document.getElementById('financeClinicFilterForm').submit()">
+                    <option value="" <?= empty($selectedClinicId) ? 'selected' : '' ?>>All Clinics</option>
+                    <?php foreach (($clinics ?? []) as $_clinic): ?>
+                        <option value="<?= (int)$_clinic['id'] ?>" <?= ($selectedClinicId == $_clinic['id']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($_clinic['name_en'] ?: $_clinic['name_ar']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </form>
+            <button class="btn btn-primary fin-action-btn" data-bs-toggle="modal" data-bs-target="#dailyBalanceModal"
+                title="Add Daily Balance">
+                <i class="bi bi-plus-circle me-2"></i>Add Balance <kbd>B</kbd>
+            </button>
+            <button class="btn fin-action-btn fin-action-expense" data-bs-toggle="modal" data-bs-target="#expenseModal"
+                title="Add Expense">
+                <i class="bi bi-dash-circle me-2"></i>Add Expense <kbd>E</kbd>
+            </button>
+            <button class="btn fin-action-btn fin-action-search" data-bs-toggle="modal" data-bs-target="#searchModal"
+                title="Search Transactions">
+                <i class="bi bi-search me-2"></i>Search <kbd>S</kbd>
+            </button>
         </div>
     </div>
 
     <!-- Daily Balance Overview -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card border-primary">
-                <div class="card-body text-center">
-                    <div class="text-primary mb-2">
-                        <i class="bi bi-wallet2" style="font-size: 2rem;"></i>
-                    </div>
-                    <h4 class="text-primary mb-1" id="openingBalance">
-                        <?= number_format($dailyBalance['opening_balance'], 2) ?> EGP
-                    </h4>
-                    <p class="text-muted mb-0">Opening Balance</p>
+    <?php
+        $__trend = is_array($financialTrend ?? null) ? $financialTrend : ['opening' => [], 'received' => [], 'expenses' => [], 'current' => []];
+    ?>
+    <div class="fin-stats-grid mb-4">
+        <div class="fin-stat fin-stat--opening">
+            <div class="fin-stat-top">
+                <div class="fin-stat-text">
+                    <div class="fin-stat-value" id="openingBalance"><?= number_format($dailyBalance['opening_balance'], 2) ?> EGP</div>
+                    <div class="fin-stat-label">Opening Balance</div>
                 </div>
+                <span class="fin-stat-ic"><i class="bi bi-wallet2"></i></span>
             </div>
+            <div class="fin-stat-spark" data-spark='<?= htmlspecialchars(json_encode(array_map("floatval", $__trend["opening"] ?? [])), ENT_QUOTES) ?>'></div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-success">
-                <div class="card-body text-center">
-                    <div class="text-success mb-2">
-                        <i class="bi bi-arrow-down-circle" style="font-size: 2rem;"></i>
-                    </div>
-                    <h4 class="text-success mb-1" id="totalReceived">
-                        <?= number_format($dailyBalance['total_received'], 2) ?> EGP
-                    </h4>
-                    <p class="text-muted mb-0">Total Received</p>
+        <div class="fin-stat fin-stat--received">
+            <div class="fin-stat-top">
+                <div class="fin-stat-text">
+                    <div class="fin-stat-value" id="totalReceived"><?= number_format($dailyBalance['total_received'], 2) ?> EGP</div>
+                    <div class="fin-stat-label">Total Received</div>
                 </div>
+                <span class="fin-stat-ic"><i class="bi bi-arrow-down-circle"></i></span>
             </div>
+            <div class="fin-stat-spark" data-spark='<?= htmlspecialchars(json_encode(array_map("floatval", $__trend["received"] ?? [])), ENT_QUOTES) ?>'></div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-danger">
-                <div class="card-body text-center">
-                    <div class="text-danger mb-2">
-                        <i class="bi bi-arrow-up-circle" style="font-size: 2rem;"></i>
-                    </div>
-                    <h4 class="text-danger mb-1" id="totalExpenses">
-                        <?= number_format($dailyBalance['total_expenses'], 2) ?> EGP
-                    </h4>
-                    <p class="text-muted mb-0">Total Expenses</p>
+        <div class="fin-stat fin-stat--expenses">
+            <div class="fin-stat-top">
+                <div class="fin-stat-text">
+                    <div class="fin-stat-value" id="totalExpenses"><?= number_format($dailyBalance['total_expenses'], 2) ?> EGP</div>
+                    <div class="fin-stat-label">Total Expenses</div>
                 </div>
+                <span class="fin-stat-ic"><i class="bi bi-arrow-up-circle"></i></span>
             </div>
+            <div class="fin-stat-spark" data-spark='<?= htmlspecialchars(json_encode(array_map("floatval", $__trend["expenses"] ?? [])), ENT_QUOTES) ?>'></div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-info">
-                <div class="card-body text-center">
-                    <div class="text-info mb-2">
-                        <i class="bi bi-calculator" style="font-size: 2rem;"></i>
-                    </div>
-                    <h4 class="text-info mb-1" id="currentBalance">
-                        <?= number_format($dailyBalance['current_balance'], 2) ?> EGP
-                    </h4>
-                    <p class="text-muted mb-0">Current Balance</p>
+        <div class="fin-stat fin-stat--current">
+            <div class="fin-stat-top">
+                <div class="fin-stat-text">
+                    <div class="fin-stat-value" id="currentBalance"><?= number_format($dailyBalance['current_balance'], 2) ?> EGP</div>
+                    <div class="fin-stat-label">Current Balance</div>
                 </div>
+                <span class="fin-stat-ic"><i class="bi bi-calculator"></i></span>
             </div>
+            <div class="fin-stat-spark" data-spark='<?= htmlspecialchars(json_encode(array_map("floatval", $__trend["current"] ?? [])), ENT_QUOTES) ?>'></div>
         </div>
     </div>
 
@@ -128,68 +101,41 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-2">
-                            <div class="text-center">
-                                <div class="badge bg-primary fs-6 mb-2">New Booking</div>
-                                <h4 id="BookingCount"><?= $paymentTypes['Booking']['count'] ?? 0 ?></h4>
-                                <small
-                                    class="text-muted"><?= number_format($paymentTypes['Booking']['total'] ?? 0, 2) ?>
-                                    EGP</small>
-                            </div>
+                    <div class="fin-types">
+                        <div class="fin-type fin-type--booking">
+                            <span class="fin-type-tag">New Booking</span>
+                            <span class="fin-type-count" id="BookingCount"><?= $paymentTypes['Booking']['count'] ?? 0 ?></span>
+                            <span class="fin-type-amount"><?= number_format($paymentTypes['Booking']['total'] ?? 0, 2) ?> EGP</span>
                         </div>
-                        <div class="col-md-2">
-                            <div class="text-center">
-                                <div class="badge bg-success fs-6 mb-2">Follow-up</div>
-                                <h4 id="FollowUpCount"><?= $paymentTypes['FollowUp']['count'] ?? 0 ?></h4>
-                                <small
-                                    class="text-muted"><?= number_format($paymentTypes['FollowUp']['total'] ?? 0, 2) ?>
-                                    EGP</small>
-                            </div>
+                        <div class="fin-type fin-type--followup">
+                            <span class="fin-type-tag">Follow-up</span>
+                            <span class="fin-type-count" id="FollowUpCount"><?= $paymentTypes['FollowUp']['count'] ?? 0 ?></span>
+                            <span class="fin-type-amount"><?= number_format($paymentTypes['FollowUp']['total'] ?? 0, 2) ?> EGP</span>
                         </div>
-                        <div class="col-md-2">
-                            <div class="text-center">
-                                <div class="badge bg-info fs-6 mb-2">Consultation</div>
-                                <h4 id="ConsultationCount"><?= $paymentTypes['Consultation']['count'] ?? 0 ?></h4>
-                                <small
-                                    class="text-muted"><?= number_format($paymentTypes['Consultation']['total'] ?? 0, 2) ?>
-                                    EGP</small>
-                            </div>
+                        <div class="fin-type fin-type--consultation">
+                            <span class="fin-type-tag">Consultation</span>
+                            <span class="fin-type-count" id="ConsultationCount"><?= $paymentTypes['Consultation']['count'] ?? 0 ?></span>
+                            <span class="fin-type-amount"><?= number_format($paymentTypes['Consultation']['total'] ?? 0, 2) ?> EGP</span>
                         </div>
-                        <div class="col-md-2">
-                            <div class="text-center">
-                                <div class="badge bg-warning fs-6 mb-2">Procedure</div>
-                                <h4 id="ProcedureCount"><?= $paymentTypes['Procedure']['count'] ?? 0 ?></h4>
-                                <small
-                                    class="text-muted"><?= number_format($paymentTypes['Procedure']['total'] ?? 0, 2) ?>
-                                    EGP</small>
-                            </div>
+                        <div class="fin-type fin-type--procedure">
+                            <span class="fin-type-tag">Procedure</span>
+                            <span class="fin-type-count" id="ProcedureCount"><?= $paymentTypes['Procedure']['count'] ?? 0 ?></span>
+                            <span class="fin-type-amount"><?= number_format($paymentTypes['Procedure']['total'] ?? 0, 2) ?> EGP</span>
                         </div>
-                        <div class="col-md-2">
-                            <div class="text-center">
-                                <div class="badge bg-secondary fs-6 mb-2">Other</div>
-                                <h4 id="OtherCount"><?= $paymentTypes['Other']['count'] ?? 0 ?></h4>
-                                <small class="text-muted"><?= number_format($paymentTypes['Other']['total'] ?? 0, 2) ?>
-                                    EGP</small>
-                            </div>
+                        <div class="fin-type fin-type--other">
+                            <span class="fin-type-tag">Other</span>
+                            <span class="fin-type-count" id="OtherCount"><?= $paymentTypes['Other']['count'] ?? 0 ?></span>
+                            <span class="fin-type-amount"><?= number_format($paymentTypes['Other']['total'] ?? 0, 2) ?> EGP</span>
                         </div>
-                        <div class="col-md-2">
-                            <div class="text-center">
-                                <div class="badge bg-warning fs-6 mb-2">Withdrawals</div>
-                                <h4 id="withdrawalsCount"><?= $dailyBalance['withdrawals_count'] ?? 0 ?></h4>
-                                <small
-                                    class="text-muted"><?= number_format($dailyBalance['total_withdrawals'] ?? 0, 2) ?>
-                                    EGP</small>
-                            </div>
+                        <div class="fin-type fin-type--withdrawals">
+                            <span class="fin-type-tag">Withdrawals</span>
+                            <span class="fin-type-count" id="withdrawalsCount"><?= $dailyBalance['withdrawals_count'] ?? 0 ?></span>
+                            <span class="fin-type-amount"><?= number_format($dailyBalance['total_withdrawals'] ?? 0, 2) ?> EGP</span>
                         </div>
-                        <div class="col-md-2">
-                            <div class="text-center">
-                                <div class="badge bg-danger fs-6 mb-2">Expenses</div>
-                                <h4><?= count($expenses) ?></h4>
-                                <small
-                                    class="text-muted"><?= number_format(array_sum(array_column($expenses, 'amount')), 2) ?>
-                                    EGP</small>
-                            </div>
+                        <div class="fin-type fin-type--expenses">
+                            <span class="fin-type-tag">Expenses</span>
+                            <span class="fin-type-count"><?= count($expenses) ?></span>
+                            <span class="fin-type-amount"><?= number_format(array_sum(array_column($expenses, 'amount')), 2) ?> EGP</span>
                         </div>
                     </div>
                 </div>
@@ -1088,23 +1034,17 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
         display: none !important;
     }*/
     .dark .modal-content {
-        background: rgba(11, 18, 32, 0.8) !important;
+        background: var(--card) !important;
     }
 
     .modal-content {
-        background: rgba(248, 250, 252, 0.8) !important;
+        background: var(--card) !important;
     }
 
-    .modal-backdrop.show{
-        display: none !important;
-    }
-    body > div.modal-backdrop.fade.show{
-        display: none !important;
-    }
-    .dark .modal-content{
-    background: rgba(11, 18, 32, 0.8) !important;
+.dark .modal-content{
+    background: var(--card) !important;
     }
     .modal-content{
-    background: rgba(248, 250, 252, 0.8) !important;
+    background: var(--card) !important;
     }
 </style>

@@ -569,7 +569,12 @@ $isEditing = !empty($consultation);
     window.CONSULTATION_AI = {
         appointmentId: <?= isset($appointment['id']) ? (int) $appointment['id'] : 'null' ?>,
         patientId: <?= isset($appointment['patient_id']) ? (int) $appointment['patient_id'] : 'null' ?>,
-        csrfToken: '<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>'
+        csrfToken: '<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>',
+        // Doctor Auto Complete preferences (Settings → Auto Complete). Default ON.
+        autocomplete: {
+            consultation: <?= (!isset($autocompletePrefs) || !empty($autocompletePrefs['consultation'])) ? 'true' : 'false' ?>,
+            icd10: <?= (!isset($autocompletePrefs) || !empty($autocompletePrefs['icd10'])) ? 'true' : 'false' ?>
+        }
     };
 </script>
 <link rel="stylesheet"
@@ -579,16 +584,10 @@ $isEditing = !empty($consultation);
 <script
     src="/app/Views/doctor/assets/js/consultation-ai.js?v=<?= file_exists(__DIR__ . '/assets/js/consultation-ai.js') ? filemtime(__DIR__ . '/assets/js/consultation-ai.js') : time() ?>"></script>
 <style>
-    .modal-backdrop.show{
-        display: none !important;
-    }
-    body > div.modal-backdrop.fade.show{
-        display: none !important;
-    }
-    .dark .modal-content{
-    background: rgba(11, 18, 32, 0.8) !important;
+.dark .modal-content{
+    background: var(--card) !important;
     }
     .modal-content{
-    background: rgba(248, 250, 252, 0.8) !important;
+    background: var(--card) !important;
     }
 </style>

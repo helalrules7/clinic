@@ -27,6 +27,11 @@
     
     <!-- Doctor Pages Consolidated CSS -->
     <link href="/app/Views/layouts/sec-style.css?v=<?= filemtime(__DIR__ . '/sec-style.css') ?>" rel="stylesheet">
+    <!-- Unified Glass / Indigo design system (loaded AFTER sec-style.css so its tokens win) -->
+    <link href="/app/Views/layouts/design-system/tokens.css?v=<?= file_exists(__DIR__ . '/design-system/tokens.css') ? filemtime(__DIR__ . '/design-system/tokens.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/layouts/design-system/design-system.css?v=<?= file_exists(__DIR__ . '/design-system/design-system.css') ? filemtime(__DIR__ . '/design-system/design-system.css') : time() ?>" rel="stylesheet">
+    <!-- Shared modal kit (center + animate + drag affordance) — after design-system so it wins -->
+    <link href="/app/Views/layouts/modal-kit.css?v=<?= file_exists(__DIR__ . '/modal-kit.css') ? filemtime(__DIR__ . '/modal-kit.css') : time() ?>" rel="stylesheet">
 
     <!-- Prevent flash of wrong theme -->
     <script>
@@ -226,7 +231,7 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="text-muted">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v9.1.0
+                        HClinic / Roaya Clinic v10.0.0
                     </div>
                     <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none" style="color: var(--accent);">Ahmed Helal</a></div>
                 </small>
@@ -351,6 +356,8 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Shared modal kit: unified pointer-drag + center + showConfirm/AlertModal (after Bootstrap) -->
+    <script src="/app/Views/layouts/modal-kit.js?v=<?= file_exists(__DIR__ . '/modal-kit.js') ? filemtime(__DIR__ . '/modal-kit.js') : time() ?>"></script>
     <script src="/app/Views/layouts/clinics-loader.js?v=<?= filemtime(__DIR__ . '/clinics-loader.js') ?>"></script>
 
     <script>
@@ -576,6 +583,8 @@
 
         // Make modals draggable globally
         function initializeDraggableModals() {
+    /* Drag/center/animation unified in layouts/modal-kit.js. No-op. */
+    return;
             const modals = document.querySelectorAll('.modal');
             
             modals.forEach(modal => {

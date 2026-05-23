@@ -591,10 +591,6 @@ label{
     color: dodgerblue !important;
 }
 
-body > div.modal-backdrop.fade.show{
-    display: none !important;
-}
-
 /* Modal z-index and centering */
 .modal {
     z-index: 1000002 !important;

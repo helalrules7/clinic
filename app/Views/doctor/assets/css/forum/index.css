@@ -5,28 +5,10 @@
 
 /* CSS Variables - These should match main.php but are included here for completeness */
 :root {
-    --bg: #f8fafc;
-    --text: #0f172a;
-    --card: #ffffff;
-    --muted: #475569;
-    --accent: #0ea5e9;
-    --success: #10b981;
-    --danger: #ef4444;
-    --border: #e2e8f0;
-    --bg-alt: #f1f5f9;
     --bg-dark: #e2e8f0;
 }
 
 .dark {
-    --bg: #0b1220;
-    --text: #f8fafc;
-    --card: #1e293b;
-    --muted: #cbd5e1;
-    --accent: #38bdf8;
-    --success: #4ade80;
-    --danger: #fb7185;
-    --border: #334155;
-    --bg-alt: #1e293b;
     --bg-dark: #0f172a;
 }
 

@@ -6,27 +6,11 @@
 
 
    :root {
-    --bg: #f8fafc;
-    --text: #0f172a;
-    --card: #ffffff;
-    --muted: #475569;
-    --accent: #0ea5e9;
-    --success: #10b981;
-    --danger: #ef4444;
-    --border: #e2e8f0;
     --sidebar-width: 280px;
     --user-info-bg: rgb(248, 250, 252);
 }
 
 .dark {
-    --bg: #0b1220;
-    --text: #f8fafc;
-    --card: #1e293b;
-    --muted: #cbd5e1;
-    --accent: #38bdf8;
-    --success: #4ade80;
-    --danger: #fb7185;
-    --border: #334155;
     --user-info-bg: rgb(30, 41, 59);
 }
 .organizer-calendar {
@@ -776,16 +760,14 @@ transform: scale(1.1);
 
 /* Modal Glass Effect - Same as appointment.php */
 .organizer-modal-glass .modal-content {
-background: rgba(248, 250, 252, 0.7) !important;
-backdrop-filter: blur(15px);
--webkit-backdrop-filter: blur(15px);
+background: var(--card) !important;
 border: 1px solid rgba(226, 232, 240, 0.4) !important;
 box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.15);
 color: var(--text) !important;
 }
 
 .dark .organizer-modal-glass .modal-content {
-background: rgba(11, 18, 32, 0.40) !important;
+background: var(--card) !important;
 border: 1px solid rgba(51, 65, 85, 0.3) !important;
 box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 color: var(--text) !important;

@@ -5,26 +5,10 @@
    ============================================ */
 
    :root {
-    --bg: #f8fafc;
-    --text: #0f172a;
-    --card: #ffffff;
-    --muted: #475569;
-    --accent: #0ea5e9;
-    --success: #10b981;
-    --danger: #ef4444;
-    --border: #e2e8f0;
     --sidebar-width: 280px;
 }
 
 .dark {
-    --bg: #0b1220;
-    --text: #f8fafc;
-    --card: #1e293b;
-    --muted: #cbd5e1;
-    --accent: #38bdf8;
-    --success: #4ade80;
-    --danger: #fb7185;
-    --border: #334155;
 }
 
 .card {
@@ -355,16 +339,14 @@
 /* Update Database Modal Dark Mode Support */
 #settingsUpdateDatabaseModal .modal-content {
     /* Glass effect - similar to sidebar */
-    background: rgba(248, 250, 252, 0.35) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: var(--card) !important;
     border: 1px solid rgba(226, 232, 240, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
     color: var(--text) !important;
 }
 
 .dark #settingsUpdateDatabaseModal .modal-content {
-    background: rgba(11, 18, 32, 0.40) !important;
+    background: var(--card) !important;
     border: 1px solid rgba(51, 65, 85, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 }
@@ -778,4 +760,255 @@
     100% {
         transform: scale(1);
     }
+}
+/* =====================================================================
+   Auto Complete settings — animated mockups (.ac-demo)
+   Pure-CSS: blinking caret + staggered suggestion-menu reveal on a loop.
+   Tokens-driven so it matches the Glass/Indigo design system + dark mode.
+   ===================================================================== */
+.ac-demo {
+    height: auto;
+    min-height: 132px;
+    padding: 14px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+}
+.ac-demo-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 0.82rem;
+    color: var(--text);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.ac-demo-field > .bi { color: var(--accent); }
+.ac-demo-typed { font-weight: 600; }
+.ac-demo-caret {
+    width: 1.5px;
+    height: 15px;
+    background: var(--accent);
+    display: inline-block;
+    animation: acCaret 1s steps(1) infinite;
+}
+@keyframes acCaret { 50% { opacity: 0; } }
+
+.ac-demo-btn {
+    margin-inline-start: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #8b5cf6));
+    border-radius: 999px;
+    padding: 3px 9px;
+    white-space: nowrap;
+}
+
+.ac-demo-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px;
+    box-shadow: var(--shadow-md, 0 4px 24px rgba(15,23,42,.06));
+}
+.ac-demo-opt {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.76rem;
+    color: var(--text);
+    padding: 5px 8px;
+    border-radius: 6px;
+    background: transparent;
+    opacity: 0;
+    transform: translateY(-6px);
+    animation: acReveal 4.2s ease-in-out infinite;
+}
+.ac-demo-opt > .bi { color: var(--muted); font-size: 0.85rem; }
+/* first option reads as the "highlighted" match */
+.ac-demo-opt:first-child {
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
+}
+.ac-demo-opt:first-child > .bi { color: var(--accent); }
+.ac-demo-opt:nth-child(1) { animation-delay: 0.15s; }
+.ac-demo-opt:nth-child(2) { animation-delay: 0.45s; }
+.ac-demo-opt:nth-child(3) { animation-delay: 0.75s; }
+@keyframes acReveal {
+    0%, 8%    { opacity: 0; transform: translateY(-6px); }
+    18%, 82%  { opacity: 1; transform: translateY(0); }
+    94%, 100% { opacity: 0; transform: translateY(-6px); }
+}
+
+/* ICD-10 variant: mono code chip + AI/history tags */
+.ac-demo-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 700;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    border-radius: 5px;
+    padding: 1px 6px;
+    font-size: 0.72rem;
+}
+.ac-demo-menu--icd .ac-demo-opt:first-child { background: transparent; color: var(--text); }
+.ac-demo-tag {
+    margin-inline-start: auto;
+    font-size: 0.64rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 1px 7px;
+    white-space: nowrap;
+}
+.ac-demo-tag--ai   { color: var(--accent);  background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.ac-demo-tag--hist { color: var(--success); background: color-mix(in srgb, var(--success) 16%, transparent); }
+
+/* ===================================================================== */
+/* ORTHO PER-PAGE PARITY (settings, 2026-05-22) — missing visual polish ported  */
+/* verbatim from the ortho fork (additive, last-wins; markup classes match). */
+/* ===================================================================== */
+/* =====================================================================
+   SETTINGS — Indigo glass redesign (appended; wins by order).
+   ===================================================================== */
+
+/* Page header (card header) → glass with an indigo icon tile */
+.container-fluid > .row > .col-12 > .card { border-radius: var(--r-xl) !important; }
+
+.settings-page-header {
+    display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+}
+
+.settings-page-icon {
+    flex: 0 0 auto; width: 52px; height: 52px; border-radius: var(--r-lg);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem;
+    color: #fff; background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    box-shadow: 0 10px 24px var(--ds-primary-soft);
+}
+
+.settings-page-title { margin: 0; font-size: 1.4rem; font-weight: 800; letter-spacing: -.02em; color: var(--text); }
+
+.settings-page-sub { margin: .1rem 0 0; font-size: .88rem; color: var(--muted); }
+
+.card > .card-header { background: transparent !important; border-bottom: 1px solid var(--glass-border) !important; }
+
+.settings-section > h5 {
+    display: flex; align-items: center; gap: .65rem;
+    border-bottom: 1px solid var(--glass-border) !important;
+    padding-bottom: .75rem; margin-bottom: 1.1rem;
+    font-weight: 700; letter-spacing: -.01em; color: var(--text);
+}
+
+.settings-section > h5 > i {
+    flex: 0 0 auto; width: 34px; height: 34px; border-radius: 10px;
+    display: inline-flex; align-items: center; justify-content: center; font-size: .95rem;
+    color: var(--ds-primary); background: var(--ds-primary-soft); margin: 0 !important;
+}
+
+.setting-item:hover {
+    border-color: color-mix(in srgb, var(--ds-primary) 35%, var(--glass-border));
+    box-shadow: var(--glass-shadow);
+}
+
+.setting-item .form-label { color: var(--text); font-weight: 600; }
+
+.setting-item .form-text { color: var(--muted); }
+
+/* Help (!) icon → popover trigger */
+.setting-help {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; margin-inline-start: 8px; padding: 0;
+    border: 0; border-radius: 50%;
+    background: var(--ds-primary-soft); color: var(--ds-primary);
+    font-size: .72rem; font-weight: 800; line-height: 1; cursor: pointer;
+    vertical-align: middle; flex: 0 0 auto;
+    transition: background .15s ease, transform .15s ease, color .15s ease;
+}
+
+.setting-help:hover, .setting-help:focus { background: var(--ds-primary); color: #fff; transform: scale(1.12); outline: none; }
+
+.setting-item .form-text.is-help-hidden { display: none; }
+
+/* Inputs */
+.settings-section .form-control,
+.settings-section .form-select {
+    border-radius: var(--r-md); border-color: var(--glass-border);
+    background-color: var(--glass-bg); color: var(--text);
+}
+
+.settings-section .form-control:focus,
+.settings-section .form-select:focus {
+    border-color: var(--ds-primary); box-shadow: 0 0 0 .2rem var(--ds-primary-soft);
+}
+
+.settings-section .input-group-text {
+    background: var(--glass-bg); border-color: var(--glass-border); color: var(--muted);
+    border-radius: 0 var(--r-md) var(--r-md) 0;
+}
+
+/* Demo previews (animated mockups) → glass, dark/light aware */
+.demo-preview {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--r-md) !important;
+}
+
+/* Sticky save bar */
+.settings-section ~ .d-flex.justify-content-end {
+    position: sticky; bottom: 0; z-index: 5;
+    margin-inline: -.25rem; padding: 1rem .25rem;
+    background: linear-gradient(0deg, var(--bg) 55%, transparent);
+}
+
+.settings-section ~ .d-flex.justify-content-end .btn-primary {
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2)); border: 0; font-weight: 700;
+    box-shadow: 0 8px 20px var(--ds-primary-soft);
+}
+
+/* Settings section responsive (parity port from ortho, 2026-05-23) */
+@media (max-width: 575.98px) {
+    .settings-section { padding: 1rem; }
+}
+
+/* =====================================================================
+   SETTINGS GLASS CARDS PARITY (ortho, 2026-05-23, styles only)
+   .settings-section + .setting-item become glass cards; toggle gradient.
+   ===================================================================== */
+.settings-section {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-lg);
+    padding: 1.25rem 1.4rem;
+    margin-bottom: 1.5rem;
+}
+.setting-item {
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-md);
+    padding: .9rem 1.1rem;
+    margin-bottom: .85rem;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.setting-item:hover {
+    border-color: color-mix(in srgb, var(--ds-primary) 35%, var(--glass-border));
+    box-shadow: var(--glass-shadow);
+}
+.toggle-switch:checked,
+.dark .toggle-switch:checked {
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2)) !important;
+}
+/* responsive (kept LAST so it wins on mobile) */
+@media (max-width: 575.98px) {
+    .settings-section { padding: 1rem; }
 }

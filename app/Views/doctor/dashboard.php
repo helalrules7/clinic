@@ -1,4 +1,15 @@
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+<!-- Welcome / overview hero (B1) -->
+<?php $h = (int) date('H'); $heroGreet = $h < 12 ? 'Good morning' : ($h < 18 ? 'Good afternoon' : 'Good evening'); ?>
+<div class="ds-hero mb-4">
+    <h1><?= $heroGreet ?>, <?= htmlspecialchars($_SESSION['user']['name'] ?? 'Doctor') ?> 👋</h1>
+    <p>Here's today's overview — <strong><?= $stats['total'] ?? 0 ?></strong> appointment<?= (($stats['total'] ?? 0) == 1 ? '' : 's') ?> today, <strong><?= $stats['completed'] ?? 0 ?></strong> completed.</p>
+    <div class="ds-hero-actions">
+        <a href="/doctor/calendar" class="btn btn-light"><i class="bi bi-calendar3 me-1"></i> View Schedule</a>
+        <button type="button" class="btn btn-outline-light" onclick="quickActionAddPatient()"><i class="bi bi-person-plus me-1"></i> Add Patient</button>
+    </div>
+</div>
+
 <div class="row stats-cards-wrapper">
     <!-- Statistics Cards -->
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
@@ -101,12 +112,26 @@
         <div class="stats-card-wrapper">
             <div class="stats-card stats-card-weather">
                 <div class="stats-card-content">
-                    <div class="weather-card-inner">
+                    <!-- Weather widget — day/night themed gradient (see dashboard.js).
+                         roaya keeps its Pollen Index + Dry Eye Risk as glass pills below. -->
+                    <div class="weather-widget weather-widget--day" id="weatherWidget"
+                         role="button" tabindex="0" title="View weather details &amp; forecast"
+                         aria-label="View weather details and forecast">
                         <!-- Weather Section -->
-                        <div class="weather-main">
-                            <button class="weather-forecast-btn" id="weatherForecastBtn" title="5-Day Forecast">
-                                <i class="bi bi-calendar3"></i>
-                            </button>
+                        <div class="weather-widget-top">
+                            <div class="weather-widget-body">
+                                <div class="weather-widget-primary">
+                                    <div class="weather-desc" id="weatherDesc">Loading…</div>
+                                    <div class="weather-temp" id="weatherTemp">--<span class="weather-deg">°</span></div>
+                                </div>
+                                <div class="weather-widget-meta">
+                                    <div class="weather-date" id="weatherDate">—</div>
+                                    <div class="weather-location" id="weatherLocation">
+                                        <i class="bi bi-geo-alt-fill"></i>
+                                        <span>Detecting location...</span>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="weather-icon-container" id="weatherIconContainer">
                                 <div class="weather-icon-loading">
                                     <div class="spinner-border spinner-border-sm text-light" role="status">
@@ -114,17 +139,9 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="weather-info">
-                                <div class="weather-temp" id="weatherTemp">--°C</div>
-                                <div class="weather-desc" id="weatherDesc">Loading...</div>
-                                <div class="weather-location" id="weatherLocation">
-                                    <i class="bi bi-geo-alt-fill"></i>
-                                    <span>Detecting location...</span>
-                                </div>
-                            </div>
                         </div>
 
-                        <!-- Health Indices -->
+                        <!-- Health Indices (kept + restyled as glass pills) -->
                         <div class="health-indices">
                             <!-- Pollen Index -->
                             <div class="health-index pollen-index">
@@ -164,7 +181,11 @@
 <!-- Ophthalmology News Bar -->
 <div class="news-bar-wrapper mb-3">
     <div class="news-bar">
-        <span class="label">Ophthalmology News</span>
+        <span class="label">
+            <i class="bi bi-broadcast"></i>
+            <span class="news-bar-live"></span>
+            Ophthalmology News
+        </span>
         <div class="ticker-wrap">
             <div class="ticker" id="newsTicker">
                 <span>Loading ophthalmology news...</span>
@@ -173,278 +194,6 @@
     </div>
 </div>
 
-<!-- Quick Actions - New iOS-style Cards -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow dashboard-card">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">
-                    <i class="bi bi-lightning-charge me-2"></i>
-                    Quick Actions
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="quick-actions-wrapper" id="quickActionsWrapper">
-                    <!-- Navigation Arrows -->
-                    <button class="quick-actions-nav nav-left hidden" id="qaNavLeft" aria-label="Scroll left">
-                        <i class="bi bi-chevron-left"></i>
-                    </button>
-                    <button class="quick-actions-nav nav-right" id="qaNavRight" aria-label="Scroll right">
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-
-                    <div class="quick-actions-grid" id="quickActionsGrid">
-                    <!-- Patients Card -->
-                    <div class="quick-action-card patients-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                            <i class="bi bi-people-fill"></i>
-                            <span class="qa-logo-name">Patients</span>
-                        </div>
-                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/patients'">
-                            <span class="qa-icon">
-                                <i class="bi bi-person-lines-fill"></i>
-                            </span>
-                            <span class="qa-label">View</span>
-                        </div>
-                        <div class="qa-box qa-box2" onclick="quickActionAddPatient()">
-                            <span class="qa-icon">
-                                <i class="bi bi-person-plus-fill"></i>
-                            </span>
-                            <span class="qa-label">Add</span>
-                        </div>
-                    </div>
-
-                    <!-- Calendar Card -->
-                    <div class="quick-action-card calendar-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                            <i class="bi bi-calendar3"></i>
-                            <span class="qa-logo-name">Calendar</span>
-                        </div>
-                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/calendar'">
-                            <span class="qa-icon">
-                                <i class="bi bi-calendar3"></i>
-                            </span>
-                            <span class="qa-label">View</span>
-                        </div>
-                        <div class="qa-box qa-box2" onclick="quickActionAddAppointment()">
-                            <span class="qa-icon">
-                                <i class="bi bi-calendar-plus-fill"></i>
-                            </span>
-                            <span class="qa-label">Add</span>
-                        </div>
-                    </div>
-
-                    <!-- Discussion Card -->
-                    <div class="quick-action-card discussion-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                            <i class="bi bi-chat-dots-fill"></i>
-                            <span class="qa-logo-name">Discussion</span>
-                        </div>
-                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/discussions'">
-                            <span class="qa-icon">
-                                <i class="bi bi-chat-left-text-fill"></i>
-                            </span>
-                            <span class="qa-label">View</span>
-                        </div>
-                        <div class="qa-box qa-box2" onclick="quickActionAddDiscussion()">
-                            <span class="qa-icon">
-                                <i class="bi bi-chat-quote-fill"></i>
-                            </span>
-                            <span class="qa-label">Add</span>
-                        </div>
-                    </div>
-
-                    <!-- Financial Card -->
-                    <div class="quick-action-card financial-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                            <i class="bi bi-wallet2"></i>
-                            <span class="qa-logo-name">Financial</span>
-                        </div>
-                        <div class="qa-box qa-box1" onclick="quickActionAddBalance()">
-                            <span class="qa-icon">
-                                <i class="bi bi-plus-circle-fill"></i>
-                            </span>
-                            <span class="qa-label">Balance</span>
-                        </div>
-                        <div class="qa-box qa-box2" style="width:55% !important" onclick="quickActionAddExpense()">
-                            <span class="qa-icon">
-                                <i class="bi bi-dash-circle-fill"></i>
-                            </span>
-                            <span class="qa-label">Expense</span>
-                        </div>
-                    </div>
-
-                    <!-- Notes Card -->
-                    <div class="quick-action-card notes-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                            <i class="bi bi-journal-text"></i>
-                            <span class="qa-logo-name">Notes</span>
-                        </div>
-                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/notes'">
-                            <span class="qa-icon">
-                                <i class="bi bi-card-checklist"></i>
-                            </span>
-                            <span class="qa-label">View</span>
-                        </div>
-                        <div class="qa-box qa-box2" onclick="quickActionAddNote()">
-                            <span class="qa-icon">
-                                <i class="bi bi-journal-plus"></i>
-                            </span>
-                            <span class="qa-label">Add</span>
-                        </div>
-                    </div>
-
-                    <!-- Alerts Card -->
-                    <div class="quick-action-card alerts-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                            <i class="bi bi-bell-fill"></i>
-                            <span class="qa-logo-name">Alerts</span>
-                        </div>
-                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/alerts'">
-                            <span class="qa-icon">
-                                <i class="bi bi-alarm-fill"></i>
-                            </span>
-                            <span class="qa-label">View</span>
-                        </div>
-                        <div class="qa-box qa-box2" onclick="quickActionAddAlert()">
-                            <span class="qa-icon">
-                                <i class="bi bi-plus-circle-fill"></i>
-                            </span>
-                            <span class="qa-label">Add</span>
-                        </div>
-                    </div>
-
-                    <!-- Profile Card (View only) -->
-                    <div class="quick-action-card profile-card single-action-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                            <i class="bi bi-person-circle"></i>
-                            <span class="qa-logo-name">Profile</span>
-                        </div>
-                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/profile'">
-                            <span class="qa-icon">
-                                <i class="bi bi bi-person-vcard"></i>
-                            </span>
-                            <span class="qa-label">View</span>
-                        </div>
-                    </div>
-
-                    <!-- Drugs Card (View only) -->
-                    <div class="quick-action-card drugs-card single-action-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                            <i class="bi bi-capsule"></i>
-                            <span class="qa-logo-name">Drugs</span>
-                        </div>
-                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/drugs'">
-                            <span class="qa-icon">
-                                <i class="bi bi-eye-fill"></i>
-                            </span>
-                            <span class="qa-label">View</span>
-                        </div>
-                    </div>
-
-                    <!-- Settings Card (View only) -->
-                    <div class="quick-action-card settings-card single-action-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                            <i class="bi bi-gear-fill"></i>
-                            <span class="qa-logo-name">Settings</span>
-                        </div>
-                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/settings'">
-                            <span class="qa-icon">
-                                <i class="bi bi-eye-fill"></i>
-                            </span>
-                            <span class="qa-label">View</span>
-                        </div>
-                    </div>
-
-                    <!-- Organizer Card (View only) -->
-                    <div class="quick-action-card organizer-card single-action-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                            <i class="bi bi-kanban-fill"></i>
-                            <span class="qa-logo-name">Organizer</span>
-                        </div>
-                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/organizer'">
-                            <span class="qa-icon">
-                                <i class="bi bi-eye-fill"></i>
-                            </span>
-                            <span class="qa-label">View</span>
-                        </div>
-                    </div>
-
-                    <!-- Media Card (View only) -->
-                    <div class="quick-action-card media-card single-action-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                            <i class="bi bi-images"></i>
-                            <span class="qa-logo-name">Media</span>
-                        </div>
-                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/media'">
-                            <span class="qa-icon">
-                                <i class="bi bi-eye-fill"></i>
-                            </span>
-                            <span class="qa-label">View</span>
-                        </div>
-                    </div>
-
-                    <!-- Medical Prescriptions Card (View only) -->
-                    <div class="quick-action-card medical-rx-card single-action-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                            <i class="bi bi-file-earmark-medical-fill"></i>
-                            <span class="qa-logo-name">Medical Rx</span>
-                        </div>
-                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/medications'">
-                            <span class="qa-icon">
-                                <i class="bi bi-prescription"></i>
-                            </span>
-                            <span class="qa-label">View</span>
-                        </div>
-                    </div>
-
-                    <!-- Glasses Prescriptions Card (View only) -->
-                    <div class="quick-action-card glasses-rx-card single-action-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                            <i class="bi bi-eyeglasses"></i>
-                            <span class="qa-logo-name">Glasses Rx</span>
-                        </div>
-                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/glasses'">
-                            <span class="qa-icon">
-                                <i class="bi bi-eye-fill"></i>
-                            </span>
-                            <span class="qa-label">View</span>
-                        </div>
-                    </div>
-
-                    <!-- Reports Card (View only) -->
-                    <div class="quick-action-card reports-card single-action-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                            <i class="bi bi-bar-chart-fill"></i>
-                            <span class="qa-logo-name">Reports</span>
-                        </div>
-                        <div class="qa-box qa-box1" onclick="window.location.href='/doctor/reports'">
-                            <span class="qa-icon">
-                                <i class="bi bi-clipboard2-data"></i>
-                            </span>
-                            <span class="qa-label">View</span>
-                        </div>
-                    </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Upcoming Appointments and Recent Activity - Equal Width Layout -->
 <div class="row mb-4" id="upcomingAppointmentsRow">
@@ -500,6 +249,39 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Patient Boards -->
+<div class="row mb-4 dashboard-card-row" data-card-id="patient-boards">
+    <div class="col-12">
+        <div class="card shadow dashboard-card" data-card-id="patient-boards">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-columns-gap me-2"></i>
+                    Patient Boards
+                </h6>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="/doctor/board" class="btn btn-sm btn-primary">
+                        <i class="bi bi-box-arrow-up-right me-1"></i>Open full page
+                    </a>
+                    <div class="d-flex align-items-center gap-1 me-2">
+                        <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardUp('patient-boards')" title="Move up">
+                            <i class="bi bi-arrow-up"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardDown('patient-boards')" title="Move down">
+                            <i class="bi bi-arrow-down"></i>
+                        </button>
+                        <div class="dashboard-card-drag-handle" title="Drag to reorder">
+                            <i class="bi bi-grip-vertical"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <?php $boardEmbedded = true; $user = $user ?? $this->getCurrentUser(); include __DIR__ . '/board.php'; ?>
             </div>
         </div>
     </div>
@@ -1024,17 +806,11 @@
             max-width: 95% !important;
         }
     }
-    .modal-backdrop.show{
-        display: none !important;
-    }
-    body > div.modal-backdrop.fade.show{
-        display: none !important;
-    }
-    .dark .modal-content{
-    background: rgba(11, 18, 32, 0.8) !important;
+.dark .modal-content{
+    background: var(--card) !important;
     }
     .modal-content{
-    background: rgba(248, 250, 252, 0.8) !important;
+    background: var(--card) !important;
     }
 </style>
 

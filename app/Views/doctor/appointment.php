@@ -445,7 +445,7 @@ if ($status === 'completed') {
                                     </button>
                                     <?php endif; ?>
                                     <button class="btn btn-outline-danger btn-sm" 
-                                            onclick="deleteConsultationNote(<?= $note['id'] ?>, '<?= addslashes($note['chief_complaint'] ?? 'Consultation Note') ?>')"
+                                            onclick="deleteConsultationNote(<?= (int) $note['id'] ?>, <?= htmlspecialchars(json_encode($note['chief_complaint'] ?? 'Consultation Note'), ENT_QUOTES) ?>)"
                                             title="Delete this note">
                                         <i class="bi bi-trash"></i>
                                     </button>
@@ -806,7 +806,7 @@ if ($status === 'completed') {
                         </button>
                         <?php endif; ?>
                         <?php if ($hasDiagnosis): ?>
-                        <button class="btn btn-sm btn-info" onclick="showPrescriptionSuggestions(<?= $appointment['id'] ?>, '<?= addslashes($latestNote['diagnosis']) ?>', '<?= addslashes($latestNote['chief_complaint'] ?? '') ?>')" title="Get prescription suggestions based on diagnosis">
+                        <button class="btn btn-sm btn-info" onclick="showPrescriptionSuggestions(<?= (int) $appointment['id'] ?>, <?= htmlspecialchars(json_encode($latestNote['diagnosis'] ?? ''), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($latestNote['chief_complaint'] ?? ''), ENT_QUOTES) ?>)" title="Get prescription suggestions based on diagnosis">
                             <i class="bi bi-lightbulb me-1"></i>Suggest
                         </button>
                         <?php endif; ?>
@@ -822,14 +822,14 @@ if ($status === 'completed') {
                     <div class="prescription-card p-3 mb-3" data-medication-id="<?= $med['id'] ?>" data-drug-name="<?= htmlspecialchars($med['drug_name']) ?>">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <div class="d-flex align-items-center gap-2 flex-wrap">
-                            <h6 class="text-primary mb-0" onclick="showDrugPopoverFromName('<?= addslashes($med['drug_name']) ?>', event)" style="cursor: pointer;"><?= htmlspecialchars($med['drug_name']) ?></h6>
+                            <h6 class="text-primary mb-0" onclick="showDrugPopoverFromName(<?= htmlspecialchars(json_encode($med['drug_name']), ENT_QUOTES) ?>, event)" style="cursor: pointer;"><?= htmlspecialchars($med['drug_name']) ?></h6>
                                 <span class="drug-price-badge badge bg-success text-white" data-drug-name="<?= htmlspecialchars($med['drug_name']) ?>" style="display: none;">
                                     <i class="bi bi-currency-exchange me-1"></i>
                                     <span class="drug-price-value">Loading...</span>
                                 </span>
                             </div>
                             <div class="btn-group btn-group-sm" role="group">
-                                <button class="btn btn-outline-primary" onclick="event.stopPropagation(); editMedication(<?= $med['id'] ?>, '<?= addslashes($med['drug_name']) ?>', '<?= addslashes($med['notes'] ?? '') ?>')" title="Edit Medication">
+                                <button class="btn btn-outline-primary" onclick="event.stopPropagation(); editMedication(<?= (int) $med['id'] ?>, <?= htmlspecialchars(json_encode($med['drug_name']), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($med['notes'] ?? ''), ENT_QUOTES) ?>)" title="Edit Medication">
                                     <i class="bi bi-pencil"></i>
                                 </button>
                                 <button class="btn btn-outline-danger" onclick="event.stopPropagation(); deleteMedication(<?= $med['id'] ?>)" title="Delete Medication">
@@ -970,12 +970,13 @@ if ($status === 'completed') {
         <!-- Medical Attachments -->
         <div class="card mb-4">
             <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="bi bi-paperclip me-2"></i>
-                        Images & Attachments
-                    </h5>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <!-- LEFT: title + bulk actions (select / delete) stay in place -->
                     <div class="d-flex align-items-center gap-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-paperclip me-2"></i>
+                            Images & Attachments
+                        </h5>
                         <div class="btn-group btn-group-sm" role="group" aria-label="Bulk actions">
                             <button class="btn btn-sm btn-outline-secondary" type="button" id="attachmentsSelectAllBtn"
                                     onclick="attachmentsToggleSelectAll()"
@@ -989,19 +990,20 @@ if ($status === 'completed') {
                                 <span class="badge bg-danger ms-1 d-none" id="attachmentsSelectedBadge">0</span>
                             </button>
                         </div>
-                        <div class="btn-group btn-group-sm" role="group" aria-label="Add attachment">
-                            <button class="btn btn-sm btn-primary" onclick="showUploadModal(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)" title="Upload an existing file">
-                                <i class="bi bi-cloud-upload me-1"></i>Upload
-                            </button>
-                            <button class="btn btn-sm btn-draw-consultation" type="button"
-                                    onclick="DrawConsultation && DrawConsultation.openForAppointment(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)"
-                                    title="Open the drawing canvas">
-                                <i class="bi bi-pencil-square me-1"></i>Draw
-                            </button>
-                            <button class="btn btn-sm btn-success" onclick="openCameraModal(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)" title="Take a photo using the camera">
-                                <i class="bi bi-camera me-1"></i>Capture
-                            </button>
-                        </div>
+                    </div>
+                    <!-- RIGHT: add-attachment actions pushed to the right edge of the header -->
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Add attachment">
+                        <button class="btn btn-sm btn-primary" onclick="showUploadModal(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)" title="Upload an existing file">
+                            <i class="bi bi-cloud-upload me-1"></i>Upload
+                        </button>
+                        <button class="btn btn-sm btn-draw-consultation" type="button"
+                                onclick="DrawConsultation && DrawConsultation.openForAppointment(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)"
+                                title="Open the drawing canvas">
+                            <i class="bi bi-pencil-square me-1"></i>Draw
+                        </button>
+                        <button class="btn btn-sm btn-success" onclick="openCameraModal(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)" title="Take a photo using the camera">
+                            <i class="bi bi-camera me-1"></i>Capture
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1283,99 +1285,179 @@ if ($status === 'completed') {
             </div>
         </div>
 
+<!-- Add to Patient Board (board-card visit notes) -->
+<!-- Visit note → patient board card comments (tagged "Visit #id") -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-chat-square-text me-2"></i>Add to Patient Board</h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted small mb-2">
+            Notes added here attach to this patient's board card, tagged
+            <strong>Visit #<?= (int)($appointment['id'] ?? 0) ?></strong> (clickable from the board).
+        </p>
+        <div id="visitBoardNotes" class="visit-board-notes mb-2">
+            <div class="text-center text-muted small py-2"><span class="spinner-border spinner-border-sm" role="status"></span></div>
+        </div>
+        <textarea id="visitCommentInput" class="form-control" rows="2" maxlength="3900"
+                  placeholder="Write a note for the patient board…"></textarea>
+        <button id="visitCommentSend" class="btn btn-primary btn-sm mt-2" type="button" disabled>
+            <i class="bi bi-send me-1"></i>Add to board
+        </button>
+        <div class="text-danger small mt-2 d-none" id="visitCommentError"></div>
     </div>
 </div>
+<link rel="stylesheet"
+      href="/app/Views/doctor/assets/css/comment-media.css?v=<?= file_exists(__DIR__ . '/assets/css/comment-media.css') ? filemtime(__DIR__ . '/assets/css/comment-media.css') : time() ?>">
+<style>
+    .visit-board-notes { max-height: 340px; overflow-y: auto; }
+    .visit-note { display: flex; gap: .6rem; border: 1px solid var(--glass-border, #e2e8f0); border-radius: var(--r-md, 12px); padding: 10px 12px; margin-bottom: 8px; background: var(--card); }
+    .visit-note-av { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
+    .visit-note-av--ini { display: inline-flex; align-items: center; justify-content: center; background: var(--ds-primary); color: #fff; font-weight: 800; font-size: .75rem; }
+    .visit-note-main { flex: 1 1 auto; min-width: 0; }
+    .visit-note-meta { font-size: .72rem; color: var(--muted, #64748b); margin-bottom: 3px; }
+    .visit-note-author { font-weight: 700; color: var(--text); }
+    .visit-note-body { font-size: .85rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word; color: var(--text); }
+</style>
+<script src="/app/Views/doctor/assets/js/comment-media.js?v=<?= file_exists(__DIR__ . '/assets/js/comment-media.js') ? filemtime(__DIR__ . '/assets/js/comment-media.js') : time() ?>"></script>
+<script>
+(function () {
+    const PID  = <?= (int)($appointment['patient_id'] ?? $patient['id'] ?? 0) ?>;
+    const APPT = <?= (int)($appointment['id'] ?? 0) ?>;
+    const CSRF = '<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>';
+    const CM   = window.CommentMedia;
+    const listEl  = document.getElementById('visitBoardNotes');
+    const input   = document.getElementById('visitCommentInput');
+    const sendBtn = document.getElementById('visitCommentSend');
+    const errEl   = document.getElementById('visitCommentError');
+    if (!PID || !listEl) return;
 
+    const esc = (s) => CM ? CM.escapeHtml(s) : (s == null ? '' : String(s));
+    const fmt = (ts) => { if (!ts) return ''; const d = new Date(String(ts).replace(' ', 'T')); return isNaN(d) ? ts : d.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }); };
 
-<!-- Patient Medical History Carousel -->
+    const composer = (CM && input) ? CM.attachComposer({
+        textarea: input, getCsrf: () => CSRF,
+        onError: (m) => { errEl.textContent = m; errEl.classList.remove('d-none'); },
+        onChange: () => { sendBtn.disabled = !composer.hasContent() || composer.isUploading(); },
+        onSubmit: () => sendBtn.click()
+    }) : null;
+
+    async function load() {
+        try {
+            const r = await fetch('/api/comments/board_card/' + PID, { credentials: 'same-origin' });
+            const j = await r.json();
+            const rows = (j.data || []).filter(x => !x.deleted_at);
+            if (!rows.length) { listEl.innerHTML = '<p class="text-muted small mb-0">No board notes yet.</p>'; return; }
+            listEl.innerHTML = rows.slice(-8).map(r => {
+                const img = CM ? CM.avatarSrc(r.author_image) : null;
+                const av = img
+                    ? `<img class="visit-note-av" src="${esc(img)}" alt="">`
+                    : `<span class="visit-note-av visit-note-av--ini">${esc(CM ? CM.initials(r.author_name) : '?')}</span>`;
+                const body = CM ? CM.renderBody(r.body, r.mentions) : esc(r.body);
+                const atts = CM ? CM.renderAttachments(r.attachments) : '';
+                return `<div class="visit-note">${av}<div class="visit-note-main"><div class="visit-note-meta"><span class="visit-note-author">${esc(r.author_name || 'User')}</span> · ${esc(fmt(r.created_at))}</div><div class="visit-note-body">${body}</div>${atts}</div></div>`;
+            }).join('');
+            listEl.scrollTop = listEl.scrollHeight;
+        } catch (e) { listEl.innerHTML = '<p class="text-danger small mb-0">Failed to load notes.</p>'; }
+    }
+
+    if (!composer) input.addEventListener('input', () => { sendBtn.disabled = input.value.trim() === ''; });
+    sendBtn.addEventListener('click', async () => {
+        const note = composer ? composer.getBody() : input.value.trim();
+        const ids  = composer ? composer.getAttachmentIds() : [];
+        if (!note && !ids.length) return;
+        if (composer && composer.isUploading()) { errEl.textContent = 'Wait for the upload to finish'; errEl.classList.remove('d-none'); return; }
+        errEl.classList.add('d-none'); sendBtn.disabled = true;
+        const tag = `[Visit #${APPT}](/doctor/appointments/${APPT})`;
+        const body = note ? `${tag} ${note}` : tag;
+        try {
+            const r = await fetch('/api/comments/board_card/' + PID, {
+                method: 'POST', credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF },
+                body: JSON.stringify({ body: body, attachment_ids: ids })
+            });
+            const j = await r.json();
+            if (!j.ok) throw new Error(j.error || 'Failed to add note');
+            if (composer) composer.reset(); else input.value = '';
+            await load();
+        } catch (e) { errEl.textContent = e.message; errEl.classList.remove('d-none'); sendBtn.disabled = false; }
+    });
+    load();
+})();
+</script>
+
+<!-- Patient Medical History -->
 <?php if (!empty($medicalHistory)): ?>
-<div class="medical-history-wrapper mb-4">
-    <div class="medical-history-head">
-        <h2>
-            <i class="bi bi-clipboard-heart me-2"></i>
-            Patient Medical History
-            <span class="badge bg-primary ms-2"><?= count($medicalHistory) ?></span>
-        </h2>
-        <div class="controls">
-            <button id="medicalHistoryPrev" class="nav-btn" aria-label="Prev">‹</button>
-            <button id="medicalHistoryNext" class="nav-btn" aria-label="Next">›</button>
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-clipboard-heart me-2"></i>
+                Patient Medical History
+            </h5>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#aiToolsModal" title="AI assistant tools">
+                    <i class="bi bi-stars me-1"></i>AI Tools
+                </button>
+                <span class="badge bg-primary"><?= count($medicalHistory) ?></span>
+            </div>
         </div>
     </div>
-    <div class="medical-history-slider">
-        <div class="medical-history-track" id="medicalHistoryTrack">
-            <?php foreach ($medicalHistory as $index => $history): ?>
-            <article class="medical-history-card <?= $index === 0 ? 'active' : '' ?>" data-index="<?= $index ?>">
-                <div class="medical-history-card__bg" style="background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);"></div>
-                <div class="medical-history-card__content">
-                    <div class="medical-history-card__icon">
+    <div class="card-body p-0">
+        <div class="mh-list">
+            <?php foreach ($medicalHistory as $history): ?>
+            <?php
+                // Notes: prefer the `notes` field (new format), else combine legacy fields.
+                $notesText = '';
+                if (!empty($history['notes'])) {
+                    $notesText = htmlspecialchars(str_replace(["\r\n", "\r", "\n"], ' ', $history['notes']));
+                } elseif (($history['entry_type'] ?? '') !== 'new_format') {
+                    $oldFormatNotes = [];
+                    if (!empty($history['allergies']))        $oldFormatNotes[] = 'Allergies: ' . htmlspecialchars($history['allergies']);
+                    if (!empty($history['medications']))      $oldFormatNotes[] = 'Medications: ' . htmlspecialchars($history['medications']);
+                    if (!empty($history['systemic_history'])) $oldFormatNotes[] = 'Systemic: ' . htmlspecialchars($history['systemic_history']);
+                    if (!empty($history['prior_surgeries']))  $oldFormatNotes[] = 'Surgeries: ' . htmlspecialchars($history['prior_surgeries']);
+                    if (!empty($history['family_history']))   $oldFormatNotes[] = 'Family: ' . htmlspecialchars($history['family_history']);
+                    if (!empty($oldFormatNotes)) $notesText = htmlspecialchars(implode(' | ', $oldFormatNotes));
+                }
+                if ($notesText !== '') {
+                    foreach (['Chief Complaint','Plan','History of Present Illness','Allergies','Medications','Systemic','Surgeries','Family','Diagnosis','Treatment'] as $title) {
+                        $notesText = preg_replace('/\b(' . preg_quote($title, '/') . '):\s*/i', '<strong class="mh-key">$1:</strong> ', $notesText);
+                    }
+                }
+            ?>
+            <div class="mh-item">
+                <div class="mh-item-head">
+                    <span class="mh-item-title">
                         <i class="bi bi-clipboard-heart"></i>
-                    </div>
-                    <div class="medical-history-card__details">
-                        <h3 class="medical-history-card__title">
-                            <?php if (!empty($history['condition_name'])): ?>
-                                <?= htmlspecialchars($history['condition_name']) ?>
-                            <?php else: ?>
-                                Medical Record #<?= $history['id'] ?>
-                            <?php endif; ?>
-                        </h3>
-                        <div class="medical-history-card__meta">
-                            <small class="text-muted">
-                                <i class="bi bi-calendar me-1"></i>
-                                <?php if (!empty($history['diagnosis_date'])): ?>
-                                    <?= date('M d, Y', strtotime($history['diagnosis_date'])) ?>
-                                <?php else: ?>
-                                    <?= date('M d, Y', strtotime($history['created_at'])) ?>
-                                <?php endif; ?>
-                                <?php if (!empty($history['doctor_name'])): ?>
-                                    • by <?= htmlspecialchars($history['doctor_name']) ?>
-                                <?php endif; ?>
-                            </small>
-                        </div>
-                        <?php 
-                        // Always show notes if available - prioritize notes field, then fallback to old format fields
-                        $notesText = '';
-                        if (!empty($history['notes'])) {
-                            // Use notes field directly if available (for new_format entries)
-                            $notesText = htmlspecialchars(str_replace(["\r\n", "\r", "\n"], ' ', $history['notes']));
-                        } elseif ($history['entry_type'] !== 'new_format') {
-                            // For old format, combine all fields
-                            $oldFormatNotes = [];
-                            if (!empty($history['allergies'])) $oldFormatNotes[] = 'Allergies: ' . htmlspecialchars($history['allergies']);
-                            if (!empty($history['medications'])) $oldFormatNotes[] = 'Medications: ' . htmlspecialchars($history['medications']);
-                            if (!empty($history['systemic_history'])) $oldFormatNotes[] = 'Systemic: ' . htmlspecialchars($history['systemic_history']);
-                            if (!empty($history['ocular_history'])) $oldFormatNotes[] = 'Ocular: ' . htmlspecialchars($history['ocular_history']);
-                            if (!empty($history['prior_surgeries'])) $oldFormatNotes[] = 'Surgeries: ' . htmlspecialchars($history['prior_surgeries']);
-                            if (!empty($history['family_history'])) $oldFormatNotes[] = 'Family: ' . htmlspecialchars($history['family_history']);
-                            if (!empty($oldFormatNotes)) {
-                                $notesText = htmlspecialchars(implode(' | ', $oldFormatNotes));
-                            }
-                        }
-                        if (!empty($notesText)): 
-                            // Highlight all titles before ":" with dodgerblue color and bold
-                            // Match common medical history titles followed by colon and space
-                            $titles = [
-                                'Chief Complaint', 'Plan', 'History of Present Illness', 
-                                'Allergies', 'Medications', 'Systemic', 'Ocular', 
-                                'Surgeries', 'Family', 'Diagnosis', 'Treatment'
-                            ];
-                            
-                            // Create pattern that matches titles followed by colon (with word boundary)
-                            foreach ($titles as $title) {
-                                $pattern = '/\b(' . preg_quote($title, '/') . '):\s*/i';
-                                $notesText = preg_replace($pattern, '<strong style="color: dodgerblue;">$1:</strong> ', $notesText);
-                            }
-                        ?>
-                            <p class="medical-history-card__desc"><?= $notesText ?></p>
-                        <?php endif; ?>
-                    </div>
+                        <?= !empty($history['condition_name']) ? htmlspecialchars($history['condition_name']) : 'Medical Record #' . (int)$history['id'] ?>
+                    </span>
+                    <small class="mh-item-date">
+                        <?= date('M d, Y', strtotime($history['diagnosis_date'] ?? $history['created_at'])) ?>
+                        <?php if (!empty($history['doctor_name'])): ?> · <?= htmlspecialchars($history['doctor_name']) ?><?php endif; ?>
+                    </small>
                 </div>
-            </article>
+                <?php if ($notesText !== ''): ?>
+                <div class="mh-item-notes"><?= $notesText ?></div>
+                <?php endif; ?>
+            </div>
             <?php endforeach; ?>
         </div>
     </div>
-    <div class="medical-history-dots" id="medicalHistoryDots"></div>
 </div>
+<style>
+    .mh-list { max-height: 360px; overflow-y: auto; }
+    .mh-item { padding: 12px 16px; border-bottom: 1px solid var(--border, #e2e8f0); }
+    .mh-item:last-child { border-bottom: 0; }
+    .mh-item-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .mh-item-title { font-weight: 600; font-size: .9rem; display: inline-flex; align-items: center; gap: 6px; }
+    .mh-item-title i { color: var(--accent, #0ea5e9); }
+    .mh-item-date { color: var(--muted, #64748b); font-size: .72rem; white-space: nowrap; }
+    .mh-item-notes { font-size: .82rem; color: var(--text, #0f172a); margin-top: 4px; line-height: 1.55; }
+    .mh-key { color: var(--accent, #0ea5e9); }
+</style>
 <?php endif; ?>
+
 <!-- Forum Topics Section -->
 <div class="card mt-4">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -1394,6 +1476,9 @@ if ($status === 'completed') {
     </div>
 </div>
 
+    </div>
+</div>
+
 <?php include __DIR__ . '/alert_modal.php'; ?>
 <script>
 // Initialize APPOINTMENT_CONFIG with PHP variables
@@ -1402,6 +1487,8 @@ if ($status === 'completed') {
 
 window.APPOINTMENT_CONFIG = {
     appointmentId: <?= isset($appointment['id']) ? (int)$appointment['id'] : 'null' ?>,
+    // Doctor Auto Complete preference (Settings → Auto Complete). Default ON.
+    autocompleteMedications: <?= (!isset($autocompletePrefs) || !empty($autocompletePrefs['medications'])) ? 'true' : 'false' ?>,
     appointmentDate: '<?= isset($appointment['date']) ? date('Y-m-d', strtotime($appointment['date'])) : 'null' ?>',
     appointmentTime: '<?= isset($appointment['start_time']) ? date('H:i:s', strtotime($appointment['start_time'])) : 'null' ?>',
     appointmentStatus: '<?= isset($appointment['status']) ? htmlspecialchars($appointment['status']) : 'null' ?>',
@@ -1428,6 +1515,65 @@ window.APPOINTMENT_CONFIG = {
 </script>
 <link rel="stylesheet" href="/app/Views/doctor/assets/css/ai-chat-widget.css?v=<?= file_exists(__DIR__ . '/assets/css/ai-chat-widget.css') ? filemtime(__DIR__ . '/assets/css/ai-chat-widget.css') : time() ?>">
 <link rel="stylesheet" href="/app/Views/doctor/assets/css/draw-consultation.css?v=<?= file_exists(__DIR__ . '/assets/css/draw-consultation.css') ? filemtime(__DIR__ . '/assets/css/draw-consultation.css') : time() ?>">
+<!-- AI Tools modal — roaya's consultation AI Assistant (from edit_consultation), in an ortho-style modal -->
+<div class="modal fade" id="aiToolsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content cai-card">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-stars text-warning me-1"></i> AI Assistant
+                    <span class="cai-badge ms-2"><i class="bi bi-shield-check"></i> AI — review before saving</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="cai-section">
+                    <div class="cai-section-label">Prior-visit clinical summary</div>
+                    <p class="text-muted small mb-2">
+                        Grounded recap of this patient's previous records
+                        (IOP / VA / refraction trends flagged). Read-only —
+                        not added to the chart.
+                    </p>
+                    <button type="button" id="caiSummarizeBtn"
+                        class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-clipboard2-pulse"></i>
+                        Summarize prior visits
+                    </button>
+                    <div class="cai-summary-output" id="caiSummaryOutput"></div>
+                </div>
+
+                <div class="cai-section">
+                    <div class="cai-section-label">Ask the assistant</div>
+                    <div class="cai-chips">
+                        <button type="button" class="cai-chip"
+                            data-cai-prompt="Summarize this patient's prior ophthalmic visits in 5 bullets"
+                            data-cai-context="patient_history">
+                            <i class="bi bi-clock-history"></i>
+                            Summarize prior ophthalmic visits
+                        </button>
+                        <button type="button" class="cai-chip"
+                            data-cai-prompt="What might I be missing in the current consultation draft?"
+                            data-cai-context="consultation_summary">
+                            <i class="bi bi-question-circle"></i>
+                            What might I be missing?
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI assistant config + scripts (shared with the consultation page) -->
+<script>
+    window.CONSULTATION_AI = {
+        appointmentId: <?= isset($appointment['id']) ? (int) $appointment['id'] : 'null' ?>,
+        patientId: <?= isset($appointment['patient_id']) ? (int) $appointment['patient_id'] : (isset($patient['id']) ? (int) $patient['id'] : 'null') ?>,
+        csrfToken: '<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>'
+    };
+</script>
+<link rel="stylesheet" href="/app/Views/doctor/assets/css/consultation-ai.css?v=<?= file_exists(__DIR__ . '/assets/css/consultation-ai.css') ? filemtime(__DIR__ . '/assets/css/consultation-ai.css') : time() ?>">
+<script defer src="/app/Views/doctor/assets/js/consultation-ai.js?v=<?= file_exists(__DIR__ . '/assets/js/consultation-ai.js') ? filemtime(__DIR__ . '/assets/js/consultation-ai.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/appointment.js?v=<?= file_exists(__DIR__ . '/assets/js/appointment.js') ? filemtime(__DIR__ . '/assets/js/appointment.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/ai-chat-widget.js?v=<?= file_exists(__DIR__ . '/assets/js/ai-chat-widget.js') ? filemtime(__DIR__ . '/assets/js/ai-chat-widget.js') : time() ?>"></script>
 <script src="/app/Views/layouts/vendor/fabric.min.js?v=<?= file_exists(dirname(__DIR__) . '/layouts/vendor/fabric.min.js') ? filemtime(dirname(__DIR__) . '/layouts/vendor/fabric.min.js') : '5.3.1' ?>"></script>
@@ -1437,10 +1583,10 @@ window.APPOINTMENT_CONFIG = {
 </script>
 <style>
     .dark .modal-content{
-    background: rgba(11, 18, 32, 0.8) !important;
+    background: var(--card) !important;
     }
     .modal-content{
-    background: rgba(248, 250, 252, 0.8) !important;
+    background: var(--card) !important;
     }
 </style>
 <script>

@@ -1100,3 +1100,37 @@ document.addEventListener('shown.bs.modal', function(e) {
         initCustomSelects();
     }, 100);
 });
+// ============================================
+// Financial stat-card sparkline minicharts (parity port from ortho, 2026-05-23)
+// ============================================
+function finGenerateSparklineSVG(data) {
+    if (!Array.isArray(data) || data.length < 2) {
+        data = [(data && data[0]) || 0, (data && data[0]) || 0];
+    }
+    const width = 100, height = 36, padding = 2;
+    const min = Math.min(...data);
+    const max = Math.max(...data);
+    const range = (max - min) || 1;
+    const points = data.map((value, i) => {
+        const x = padding + (i / (data.length - 1)) * (width - padding * 2);
+        const y = height - padding - ((value - min) / range) * (height - padding * 2);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    const linePath = `M ${points.join(' L ')}`;
+    const areaPath = `M ${padding},${height} L ${points.join(' L ')} L ${width - padding},${height} Z`;
+    return `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">`
+        + `<path class="sparkline-area" d="${areaPath}"/>`
+        + `<path class="sparkline-path" d="${linePath}"/></svg>`;
+}
+
+function initFinSparklines() {
+    document.querySelectorAll('.fin-stat-spark[data-spark]').forEach(el => {
+        let data = [];
+        try { data = JSON.parse(el.getAttribute('data-spark')) || []; } catch (e) { data = []; }
+        el.innerHTML = finGenerateSparklineSVG(data);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(initFinSparklines, 100);
+});

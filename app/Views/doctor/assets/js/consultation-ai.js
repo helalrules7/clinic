@@ -354,20 +354,147 @@
         });
     }
 
-    function init() {
-        // The floating chat widget (Feature 1.1). Safe no-op if its
-        // script failed to load.
-        if (typeof window.initAIChatWidget === 'function') {
-            try {
-                window.initAIChatWidget(
-                    CFG.patientId || null,
-                    CFG.appointmentId || null
-                );
-            } catch (e) { /* widget optional */ }
+    // Doctor Auto Complete preferences (Settings → Auto Complete). Both
+    // default ON when the config is absent (e.g. older cached page).
+    var AC = (CFG && CFG.autocomplete) || {};
+    var acConsultation = AC.consultation !== false;
+    var acIcd10 = AC.icd10 !== false;
+
+    /* ---------------------------------------------------------------
+     * Feature — Chief Complaint + Diagnosis history typeahead.
+     * Suggests previously-recorded values (from /api/consultation/
+     * suggestions) as the doctor types. Gated by the "Consultation
+     * suggestions" Auto-Complete switch (only called from the
+     * acConsultation branch of init()).
+     * --------------------------------------------------------------- */
+    function initFieldSuggestions() {
+        wireFieldSuggest('chief_complaint');
+        wireFieldSuggest('diagnosis');
+    }
+
+    function wireFieldSuggest(field) {
+        var el = document.getElementById(field);
+        if (!el || el.dataset.caiSuggest) { return; }
+        el.dataset.caiSuggest = '1';
+        el.setAttribute('autocomplete', 'off');
+
+        var menu = document.createElement('div');
+        menu.className = 'cai-suggest-menu';
+        menu.hidden = true;
+        document.body.appendChild(menu);
+
+        var items = [], active = -1, deb = null, lastQ = '';
+
+        function hide() { menu.hidden = true; items = []; active = -1; }
+        function position() {
+            var r = el.getBoundingClientRect();
+            menu.style.left = r.left + 'px';
+            menu.style.width = r.width + 'px';
+            var below = window.innerHeight - r.bottom;
+            if (below < 200 && r.top > below) {
+                menu.style.top = 'auto';
+                menu.style.bottom = (window.innerHeight - r.top + 4) + 'px';
+                menu.style.maxHeight = Math.min(260, r.top - 12) + 'px';
+            } else {
+                menu.style.bottom = 'auto';
+                menu.style.top = (r.bottom + 4) + 'px';
+                menu.style.maxHeight = Math.min(260, below - 12) + 'px';
+            }
         }
-        initPriorSummary();
-        initICD10();
-        initChips();
+        function paint() {
+            Array.prototype.forEach.call(menu.children, function (c, i) {
+                c.classList.toggle('is-active', i === active);
+            });
+        }
+        function render() {
+            if (!items.length) { hide(); return; }
+            menu.innerHTML = items.map(function (s, i) {
+                return '<div class="cai-suggest-item' + (i === 0 ? ' is-active' : '') +
+                       '" data-i="' + i + '">' + escapeHtml(s) + '</div>';
+            }).join('');
+            active = 0; position(); menu.hidden = false;
+        }
+        function choose(i) {
+            var s = items[i]; if (s == null) { return; }
+            applyToField(field, s, { append: false });
+            hide();
+        }
+
+        el.addEventListener('input', function () {
+            var q = el.value.trim();
+            if (q.length < 3) { hide(); return; }
+            if (q === lastQ && !menu.hidden) { return; }
+            lastQ = q;
+            clearTimeout(deb);
+            deb = setTimeout(function () {
+                aiFetch('/api/consultation/suggestions?field=' +
+                        encodeURIComponent(field) + '&query=' + encodeURIComponent(q))
+                    .then(function (r) {
+                        if (!r.ok || !r.data) { hide(); return; }
+                        // value can equal the query exactly → nothing to add
+                        items = r.data.map(function (x) {
+                            return (x && x.suggestion != null) ? x.suggestion : x;
+                        }).filter(function (s) {
+                            return s && s.trim().toLowerCase() !== q.toLowerCase();
+                        });
+                        render();
+                    }).catch(hide);
+            }, 200);
+        });
+
+        el.addEventListener('keydown', function (e) {
+            if (menu.hidden) { return; }
+            if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(active + 1, items.length - 1); paint(); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(active - 1, 0); paint(); }
+            else if (e.key === 'Enter' && active > -1) { e.preventDefault(); choose(active); }
+            else if (e.key === 'Escape') { hide(); }
+        });
+        el.addEventListener('blur', function () { setTimeout(hide, 150); });
+
+        menu.addEventListener('mousedown', function (e) {
+            var it = e.target.closest('.cai-suggest-item'); if (!it) { return; }
+            e.preventDefault(); choose(parseInt(it.dataset.i, 10));
+        });
+        window.addEventListener('scroll', function () { if (!menu.hidden) hide(); }, true);
+    }
+
+    function init() {
+        // Consultation smart-assists (prior-visit summary + quick chips + the
+        // floating chat widget) are gated by the "Consultation suggestions"
+        // switch. ICD-10 is gated by its own switch.
+        if (acConsultation) {
+            // The floating chat widget (Feature 1.1). Safe no-op if its
+            // script failed to load.
+            if (typeof window.initAIChatWidget === 'function') {
+                try {
+                    window.initAIChatWidget(
+                        CFG.patientId || null,
+                        CFG.appointmentId || null
+                    );
+                } catch (e) { /* widget optional */ }
+            }
+            initPriorSummary();
+            initChips();
+            initFieldSuggestions();   // Chief Complaint + Diagnosis typeahead
+        } else {
+            // Switch is OFF — hide the assist UI so nothing dangles.
+            hideEl('caiSummarizeBtn');
+            hideEl('aiChatWidget');
+            document.querySelectorAll('.cai-chip').forEach(function (c) {
+                c.style.display = 'none';
+            });
+        }
+
+        if (acIcd10) {
+            initICD10();
+        } else {
+            hideEl('caiIcd10Btn');
+        }
+    }
+
+    function hideEl(id) {
+        var el = document.getElementById(id);
+        if (el) { el.style.display = 'none'; }
     }
 
     if (document.readyState === 'loading') {

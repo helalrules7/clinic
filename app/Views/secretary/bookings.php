@@ -1089,27 +1089,11 @@ kbd[lang="ar"] {
 /* Default (Light) Mode */
 /* CSS Variables for Dark Mode */
 :root {
-    --bg: #f8fafc;
-    --text: #0f172a;
-    --card: #ffffff;
-    --muted: #475569;
-    --accent: #0ea5e9;
-    --success: #10b981;
-    --danger: #ef4444;
-    --border: #e2e8f0;
     --shadow: rgba(0, 0, 0, 0.1);
     --success-rgb: 16, 185, 129;
 }
 
 .dark {
-    --bg: #0b1220;
-    --text: #f8fafc;
-    --card: #1e293b;
-    --muted: #94a3b8;
-    --accent: #38bdf8;
-    --success: #4ade80;
-    --danger: #fb7185;
-    --border: #334155;
     --shadow: rgba(0, 0, 0, 0.3);
     --success-rgb: 74, 222, 128;
 }
@@ -1921,7 +1905,7 @@ input[readonly] {
 }
 
 .dark .badge.bg-info {
-    background-color: #0ea5e9 !important;
+    background-color: #4F46E5 !important;
 }
 
 .dark .badge.bg-warning {
@@ -2510,6 +2494,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Make modals draggable
     function initializeDraggableModals() {
+    /* Drag/center/animation unified in layouts/modal-kit.js. No-op. */
+    return;
         const modals = document.querySelectorAll('.modal');
         
         modals.forEach(modal => {
@@ -4987,10 +4973,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .btn-group>.btn-group:not(:first-child), .btn-group>:not(.btn-check:first-child)+.btn{
     margin-right: 10px !important;
-}
-
-body > div.modal-backdrop.fade.show{
-    display: none !important;
 }
 
 /* Modal z-index and centering */

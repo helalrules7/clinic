@@ -352,6 +352,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Make modals draggable
     function initializeDraggableModals() {
+    /* Drag/center/animation unified in layouts/modal-kit.js. No-op. */
+    return;
         const modals = document.querySelectorAll('.modal');
         
         modals.forEach(modal => {
@@ -566,10 +568,6 @@ label {
 .btn-group .btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-body > div.modal-backdrop.fade.show{
-    display: none !important;
 }
 
 /* Modal z-index and centering */

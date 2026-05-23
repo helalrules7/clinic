@@ -11,26 +11,19 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     
     <style>
+        /* Indigo palette (standalone page — no design-system tokens.css here) */
         :root {
-            --bg: #f8fafc;
-            --text: #0f172a;
-            --card: #ffffff;
-            --muted: #475569;
-            --accent: #0ea5e9;
-            --danger: #ef4444;
-            --border: #e2e8f0;
+            --bg: #F8FAFC; --card: #FFFFFF; --text: #0F172A; --muted: #64748B;
+            --accent: #4F46E5; --accent-rgb: 79, 70, 229;
+            --success: #10B981; --danger: #EF4444; --border: #E2E8F0;
         }
-        
+
         [data-theme="dark"] {
-            --bg: #0b1220;
-            --text: #e5e7eb;
-            --card: #111827;
-            --muted: #9aa4b2;
-            --accent: #38bdf8;
-            --danger: #f87171;
-            --border: #1f2937;
+            --bg: #070B14; --card: #131A29; --text: #F8FAFC; --muted: #94A3B8;
+            --accent: #6366F1; --accent-rgb: 99, 102, 241;
+            --success: #34D399; --danger: #FB7185; --border: #334155;
         }
-        
+
         body {
             background: var(--bg);
             color: var(--text);

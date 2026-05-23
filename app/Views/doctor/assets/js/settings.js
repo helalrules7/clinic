@@ -314,6 +314,11 @@ async function loadPersonalPreferences() {
             }
             updateToggleSwitch('pushNotificationsEnabled', personalPreferences.push_notifications_enabled || false, 'pushNotificationsEnabledStatus');
             updateToggleSwitch('dashboardRearrangeMobile', personalPreferences.dashboard_rearrange_mobile || false, 'dashboardRearrangeMobileStatus');
+
+            // Auto Complete switches — default ON (enabled) when no row saved yet.
+            updateToggleSwitch('autocompleteConsultation', personalPreferences.autocomplete_consultation !== false);
+            updateToggleSwitch('autocompleteIcd10', personalPreferences.autocomplete_icd10 !== false);
+            updateToggleSwitch('autocompleteMedications', personalPreferences.autocomplete_medications !== false);
             
             // Load push subscriptions
             loadPushSubscriptions();
@@ -756,7 +761,7 @@ async function loadSidebarItems() {
         { key: 'dashboard', label: 'Dashboard', icon: 'bi-speedometer2', fixed: true },
         { key: 'calendar', label: 'Calendar', icon: 'bi-calendar3', fixed: true },
         { key: 'patients', label: 'Patients', icon: 'bi-people', fixed: true },
-        { key: 'organizer', label: 'Organizer', icon: 'bi-calendar-month', fixed: false },
+        { key: 'board', label: 'Patients Board', icon: 'bi-kanban', fixed: false },
         { key: 'forum', label: 'Discussion', icon: 'bi-chat-dots', fixed: false },
         { key: 'drugs', label: 'Drugs Database', icon: 'bi-capsule', fixed: false },
         { key: 'payments', label: 'Financial Management', icon: 'bi-credit-card', fixed: false },

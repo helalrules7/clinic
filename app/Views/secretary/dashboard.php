@@ -1,6 +1,17 @@
 <link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 
+<!-- بطاقة الترحيب / النظرة العامة (B1) -->
+<?php $h = (int) date('H'); $heroGreet = $h < 12 ? 'صباح الخير' : 'مساء الخير'; ?>
+<div class="ds-hero mb-4">
+    <h1 class="arabic-text"><?= $heroGreet ?>، <?= htmlspecialchars($_SESSION['user']['name'] ?? 'المستخدم') ?> 👋</h1>
+    <p class="arabic-text">نظرة على اليوم — <strong><?= $stats['total_appointments'] ?? 0 ?></strong> موعد اليوم، منها <strong><?= $stats['completed'] ?? 0 ?></strong> مكتمل.</p>
+    <div class="ds-hero-actions">
+        <a href="/secretary/bookings" class="btn btn-light arabic-text"><i class="bi bi-calendar3 me-1"></i> عرض المواعيد</a>
+        <button type="button" class="btn btn-outline-light arabic-text" onclick="quickActionAddBooking()"><i class="bi bi-calendar-plus me-1"></i> حجز جديد</button>
+    </div>
+</div>
+
 <div class="row stats-cards-wrapper">
     <!-- Statistics Cards -->
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
@@ -119,130 +130,6 @@
 
 
 
-<!-- Quick Actions - New iOS-style Cards -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow dashboard-card">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary arabic-text">
-                    <i class="bi bi-lightning-charge me-2"></i>
-                    الإجراءات السريعة
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="quick-actions-wrapper" id="quickActionsWrapper">
-                    <!-- Navigation Arrows -->
-                    <button class="quick-actions-nav nav-left hidden" id="qaNavLeft" aria-label="Scroll left">
-                        <i class="bi bi-chevron-left"></i>
-                    </button>
-                    <button class="quick-actions-nav nav-right" id="qaNavRight" aria-label="Scroll right">
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                    <div class="quick-actions-grid" id="quickActionsGrid">
-                            <!-- Bookings Card -->
-                    <div class="quick-action-card calendar-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                                    <i class="bi bi-calendar-check"></i>
-                                    <span class="qa-logo-name">الحجوزات</span>
-                        </div>
-                                <div class="qa-box qa-box1" onclick="window.location.href='/secretary/bookings'">
-                            <span class="qa-icon">
-                                <i class="bi bi-calendar3"></i>
-                            </span>
-                                    <span class="qa-label">عرض</span>
-                        </div>
-                                <div class="qa-box qa-box2" onclick="quickActionAddBooking()">
-                            <span class="qa-icon">
-                                <i class="bi bi-calendar-plus-fill"></i>
-                            </span>
-                                    <span class="qa-label">حجز</span>
-                        </div>
-                    </div>
-
-                            <!-- Patients Card -->
-                            <div class="quick-action-card patients-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                                    <i class="bi bi-people-fill"></i>
-                                    <span class="qa-logo-name">المرضى</span>
-                        </div>
-                                <div class="qa-box qa-box1" onclick="window.location.href='/secretary/patients'">
-                            <span class="qa-icon">
-                                        <i class="bi bi-person-lines-fill"></i>
-                            </span>
-                                    <span class="qa-label">عرض</span>
-                        </div>
-                                <div class="qa-box qa-box2" onclick="quickActionAddPatient()">
-                            <span class="qa-icon">
-                                        <i class="bi bi-person-plus-fill"></i>
-                            </span>
-                                    <span class="qa-label">إضافة</span>
-                        </div>
-                    </div>
-
-                            <!-- Payments Card -->
-                    <div class="quick-action-card financial-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                                    <i class="bi bi-credit-card"></i>
-                                    <span class="qa-logo-name">المدفوعات</span>
-                        </div>
-                                <div class="qa-box qa-box1" onclick="window.location.href='/secretary/payments'">
-                            <span class="qa-icon">
-                                        <i class="bi bi-wallet2"></i>
-                            </span>
-                                    <span class="qa-label">عرض</span>
-                        </div>
-                                <div class="qa-box qa-box2" onclick="quickActionAddBalance()">
-                            <span class="qa-icon">
-                                        <i class="bi bi-plus-circle-fill"></i>
-                            </span>
-                                    <span class="qa-label">رصيد</span>
-                        </div>
-                    </div>
-
-                            <!-- Expenses Card -->
-                            <div class="quick-action-card expenses-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                                    <i class="bi bi-dash-circle"></i>
-                                    <span class="qa-logo-name">المصروفات</span>
-                        </div>
-                                <div class="qa-box qa-box1" onclick="window.location.href='/secretary/payments'">
-                            <span class="qa-icon">
-                                        <i class="bi bi-eye-fill"></i>
-                            </span>
-                                    <span class="qa-label">عرض</span>
-                        </div>
-                                <div class="qa-box qa-box2" onclick="quickActionAddExpense()">
-                            <span class="qa-icon">
-                                        <i class="bi bi-dash-circle-fill"></i>
-                            </span>
-                                    <span class="qa-label">إضافة</span>
-                        </div>
-                    </div>
-
-                    <!-- Profile Card (View only) -->
-                    <div class="quick-action-card profile-card single-action-card">
-                        <div class="qa-background"></div>
-                        <div class="qa-logo">
-                            <i class="bi bi-person-circle"></i>
-                                    <span class="qa-logo-name">الملف الشخصي</span>
-                        </div>
-                                <div class="qa-box qa-box1" onclick="window.location.href='/secretary/profile'">
-                            <span class="qa-icon">
-                                        <i class="bi bi-person-vcard"></i>
-                            </span>
-                                    <span class="qa-label">عرض</span>
-                        </div>
-                    </div>
-                        </div>
-                        </div>
-                    </div>
-                        </div>
-                        </div>
-                    </div>
 
 <div class="row mb-4">
     <!-- Today's Appointments -->
@@ -899,6 +786,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Make modals draggable
     function initializeDraggableModals() {
+    /* Drag/center/animation unified in layouts/modal-kit.js. No-op. */
+    return;
         const modals = document.querySelectorAll('.modal');
         
         modals.forEach(modal => {
@@ -1341,13 +1230,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     .btn-group .btn-outline-info {
         color: white !important;
-        background: #0ea5e9 !important;
-        border: 1px solid #0ea5e9 !important;
+        background: #4F46E5 !important;
+        border: 1px solid #4F46E5 !important;
         border-radius: 10px !important;
     }
     
     .btn-group .btn-outline-info:hover {
-        background: #0ea5e9 !important;
+        background: #4F46E5 !important;
         color: white !important;
     }
     
@@ -1534,10 +1423,6 @@ document.addEventListener('DOMContentLoaded', function() {
 .dark .stats-card-weather .stats-card-content {
     background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(56, 189, 248, 0.08) 100%), var(--card) !important;
     border-color: rgba(56, 189, 248, 0.4) !important;
-}
-
-body > div.modal-backdrop.fade.show{
-    display: none !important;
 }
 
 /* Modal z-index and centering */

@@ -408,7 +408,4 @@
     color: var(--muted) !important;
 }
 
-body > div.modal-backdrop.fade.show {
-    display: none !important;
-}
 </style>

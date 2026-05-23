@@ -128,16 +128,10 @@
 <script src="/app/Views/doctor/assets/js/organizer.js?v=<?= file_exists(__DIR__ . '/assets/js/organizer.js') ? filemtime(__DIR__ . '/assets/js/organizer.js') : time() ?>"></script>
 
 <style>
-    .modal-backdrop.show{
-        display: none !important;
-    }
-    body > div.modal-backdrop.fade.show{
-        display: none !important;
-    }
-    .dark .modal-content{
-    background: rgba(11, 18, 32, 0.8) !important;
+.dark .modal-content{
+    background: var(--card) !important;
     }
     .modal-content{
-    background: rgba(248, 250, 252, 0.8) !important;
+    background: var(--card) !important;
     }
 </style>

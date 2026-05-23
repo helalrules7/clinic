@@ -742,6 +742,8 @@ function clearAlertPatientSelection() {
 
 // Make alertModal draggable (separate from main.php to avoid conflicts)
 function initializeAlertModalDraggable() {
+    /* Drag/center/animation unified in layouts/modal-kit.js. No-op. */
+    return;
     const modal = document.getElementById('alertModal');
     if (!modal) return;
     

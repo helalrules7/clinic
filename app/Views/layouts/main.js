@@ -639,23 +639,13 @@
             });
         }
         
-        // Notice-bar scroll effect - hide when scrolling down (works on all devices)
+        // Notice bar stays visible at all times (per request): the
+        // Next-Appointment / weather / date-time controls must NOT disappear
+        // on scroll. Ensure the hide classes are never applied.
         const noticeBar = document.querySelector('.notice-bar');
         if (noticeBar && topBar) {
-            let lastScrollTop = 0;
-            window.addEventListener('scroll', () => {
-                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                if (scrollTop > lastScrollTop && scrollTop > 50) {
-                    // Scrolling down - hide notice bar
-                    noticeBar.classList.add('scrolled');
-                    topBar.classList.add('notice-bar-hidden');
-                } else {
-                    // Scrolling up or at top - show notice bar
-                    noticeBar.classList.remove('scrolled');
-                    topBar.classList.remove('notice-bar-hidden');
-                }
-                lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
-            }, { passive: true });
+            noticeBar.classList.remove('scrolled');
+            topBar.classList.remove('notice-bar-hidden');
         }
 
         // Update date and time in notice bar
@@ -1621,10 +1611,7 @@
             popover.innerHTML = `
                 <div class="weather-popover-content">
                     <div class="weather-popover-body">
-                        <div class="weather-card-inner">
-                            <button class="weather-forecast-btn" id="noticeBarWeatherForecastBtn" title="4-Day Forecast">
-                                <i class="bi bi-calendar3"></i>
-                            </button>
+                        <div class="weather-card-inner weather-popover-clickable" title="View 5-day forecast">
                             <!-- Weather Section -->
                             <div class="weather-main">
                                 <div class="weather-icon-container" id="weatherPopoverIconContainer">
@@ -1685,8 +1672,16 @@
             // Position popover
             positionWeatherPopover();
             
-            // Setup forecast button
-            setupNoticeBarWeatherForecastButton();
+            // The whole popover card opens the unified forecast window
+            const popoverCard = popover.querySelector('.weather-card-inner');
+            if (popoverCard) {
+                popoverCard.style.cursor = 'pointer';
+                popoverCard.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeWeatherPopover();
+                    openWeatherForecastWindow();
+                });
+            }
             
             // Update current weather
             if (currentWeather) {
@@ -2091,12 +2086,132 @@
         }
 
         // Add event listener for forecast button after popover is created
+        function wfResolveIconType(condition, isNight) {
+            const lc = (condition || '').toLowerCase();
+            for (const [key, value] of Object.entries(noticeBarWeatherIconMap)) {
+                if (lc.includes(key)) {
+                    if (isNight) {
+                        if (value === 'sun') return 'moon';
+                        if (value === 'partly-cloudy') return 'partly-cloudy-night';
+                        if (value === 'rain') return 'rain-night';
+                        if (value === 'snow') return 'snow-night';
+                    }
+                    return value;
+                }
+            }
+            return isNight ? 'moon' : 'sun';
+        }
+        function wfIcon(condition, isNight) {
+            return renderNoticeBarWeatherIcon(wfResolveIconType(condition, isNight))
+                .replace('style="width:16px;height:16px;"', '');
+        }
+        function wfFormatTime(iso) {
+            if (!iso) return '--';
+            const d = new Date(iso);
+            if (isNaN(d)) return '--';
+            return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase();
+        }
+        function wfDayLength(sunrise, sunset) {
+            if (!sunrise || !sunset) return '';
+            const a = new Date(sunrise), b = new Date(sunset);
+            if (isNaN(a) || isNaN(b)) return '';
+            let mins = Math.max(0, Math.round((b - a) / 60000));
+            const h = Math.floor(mins / 60); mins = mins % 60;
+            return `${h} h ${mins} m`;
+        }
+        function wfCloseBtn() { return '<button class="wf-close" id="wfClose" aria-label="Close"><i class="bi bi-x-lg"></i></button>'; }
+
+        let weatherForecastWindow = null;
+        function closeWeatherForecastWindow() {
+            if (weatherForecastWindow) { weatherForecastWindow.remove(); weatherForecastWindow = null; }
+        }
+        function openWeatherForecastWindow() {
+            if (weatherForecastWindow) { closeWeatherForecastWindow(); return; }
+            let lat = 31.1117, lon = 30.9397;
+            try {
+                const s = JSON.parse(localStorage.getItem('dashboard_weather_data') || 'null');
+                if (s && s.latitude && s.longitude) { lat = s.latitude; lon = s.longitude; }
+            } catch (_) {}
+
+            const overlay = document.createElement('div');
+            overlay.className = 'weather-forecast-popover';
+            overlay.id = 'weatherForecastWindow';
+            overlay.innerHTML = `
+                <div class="wf-window" id="weatherForecastBody">
+                    ${wfCloseBtn()}
+                    <div class="weather-forecast-loading">
+                        <div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div>
+                        <span>Loading forecast…</span>
+                    </div>
+                </div>`;
+            document.body.appendChild(overlay);
+            weatherForecastWindow = overlay;
+
+            overlay.querySelector('#wfClose').addEventListener('click', closeWeatherForecastWindow);
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) closeWeatherForecastWindow(); });
+            const esc = (e) => { if (e.key === 'Escape') { closeWeatherForecastWindow(); document.removeEventListener('keydown', esc); } };
+            document.addEventListener('keydown', esc);
+
+            wfFetchAndRender(lat, lon);
+        }
+        function wfBindClose() { const b = document.getElementById('wfClose'); if (b) b.addEventListener('click', closeWeatherForecastWindow); }
+        async function wfFetchAndRender(lat, lon) {
+            const body = document.getElementById('weatherForecastBody');
+            try {
+                const r = await fetch(`/api/weather-forecast?lat=${lat}&lon=${lon}`);
+                const d = await r.json();
+                if (!d.success || !d.forecast) throw new Error(d.error || 'Failed to load forecast');
+                wfRenderWindow(d);
+            } catch (e) {
+                if (body) body.innerHTML = wfCloseBtn() + `<div class="weather-forecast-error"><i class="bi bi-exclamation-triangle-fill"></i><span>${e.message}</span></div>`;
+                wfBindClose();
+            }
+        }
+        function wfRenderWindow(data) {
+            const body = document.getElementById('weatherForecastBody');
+            if (!body) return;
+            const cur = data.current || {}, forecast = data.forecast || [];
+            const isNight = (cur.isDay !== undefined && cur.isDay !== null) ? (Number(cur.isDay) === 0) : isNoticeBarNightTime();
+            const nowStr = new Date().toLocaleString('en-US', { weekday: 'long', hour: 'numeric', minute: '2-digit' });
+
+            let days = '';
+            forecast.forEach((day, i) => {
+                const d = new Date(day.date);
+                const name = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
+                days += `<div class="wf-day ${i === 0 ? 'is-today' : ''}"><div class="wf-day-name">${name}</div><div class="wf-day-icon">${wfIcon(day.condition, false)}</div><div class="wf-day-hi">${Math.round(day.tempMax)}°</div><div class="wf-day-lo">${Math.round(day.tempMin)}°</div></div>`;
+            });
+            const rain = (cur.precipitation !== null && cur.precipitation !== undefined)
+                ? `<div class="wf-rain"><i class="bi bi-cloud-rain"></i> Rain: ${cur.precipitation}%</div>` : '';
+            const sun = (cur.sunrise || cur.sunset)
+                ? `<div class="wf-sun"><span class="wf-sun-item"><i class="bi bi-sunrise"></i> ${wfFormatTime(cur.sunrise)}</span><span class="wf-sun-mid">${wfDayLength(cur.sunrise, cur.sunset)}</span><span class="wf-sun-item">${wfFormatTime(cur.sunset)} <i class="bi bi-sunset"></i></span></div>` : '';
+
+            body.innerHTML = wfCloseBtn() + `
+                <div class="wf-current-top">
+                    <div class="wf-current-icon">${wfIcon(cur.condition, isNight)}</div>
+                    <div class="wf-current-info">
+                        <div class="wf-current-time">${nowStr}</div>
+                        <div class="wf-current-main">${cur.condition || 'Clear'} ${Math.round(cur.temperature || 0)}°C</div>
+                        <div class="wf-current-loc"><i class="bi bi-geo-alt-fill"></i> ${cur.location || 'Unknown'}</div>
+                    </div>
+                </div>
+                ${sun}
+                ${rain}
+                <div class="wf-stats">
+                    <span><span class="label">Humidity:</span> <span class="value">${cur.humidity != null ? cur.humidity + '%' : '--'}</span></span>
+                    <span><span class="label">Wind:</span> <span class="value">${cur.windSpeed != null ? cur.windSpeed + ' km/h' : '--'}</span></span>
+                </div>
+                <div class="wf-forecast">${days}</div>`;
+            wfBindClose();
+        }
+        // Expose so the dashboard weather card (dashboard.js) can open the same window.
+        window.openWeatherForecastWindow = openWeatherForecastWindow;
+
         function setupNoticeBarWeatherForecastButton() {
             const forecastBtn = document.getElementById('noticeBarWeatherForecastBtn');
             if (forecastBtn) {
                 forecastBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    showNoticeBarWeatherForecastPopover();
+                    openWeatherForecastWindow();
                 });
             }
         }
@@ -7763,7 +7878,7 @@
                 'dashboard': '/doctor/dashboard',
                 'calendar': '/doctor/calendar',
                 'patients': '/doctor/patients',
-                'organizer': '/doctor/organizer',
+                'board': '/doctor/board',
                 'drugs': '/doctor/drugs',
                 'payments': '/doctor/payments',
                 'reports': '/doctor/reports',
@@ -8957,12 +9072,19 @@
                         });
                     });
                     
-                    // Close dock when clicking minimize button
+                    // Mobile dock launcher / minimize button.
                     if (minimizeBtn) {
                         minimizeBtn.addEventListener('click', function(e) {
                             e.preventDefault();
                             e.stopPropagation();
-                            dock.classList.remove('active');
+                            // In mobile-minimized state THIS button is the
+                            // launcher, so tapping it must OPEN the dock; when
+                            // expanded it collapses. It previously only ever
+                            // removed 'active', so tapping the minimized
+                            // launcher did nothing → the dock could never be
+                            // opened on mobile. Toggle fixes both directions.
+                            dock.classList.toggle('active');
+                            updateMobileDockScrollState();
                         });
                     }
                     
@@ -9382,6 +9504,8 @@
         
         // Make modals draggable globally
     function initializeDraggableModals() {
+    /* Drag/center/animation unified in layouts/modal-kit.js. No-op. */
+    return;
         const modals = document.querySelectorAll('.modal');
         
         modals.forEach(modal => {

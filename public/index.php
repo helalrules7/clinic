@@ -24,6 +24,8 @@ if (file_exists($vendorAutoload)) {
 // Load Controllers
 require_once __DIR__ . '/app/Controllers/SecretaryController.php';
 require_once __DIR__ . '/app/Controllers/AlertController.php';
+require_once __DIR__ . '/app/Controllers/BoardController.php';
+require_once __DIR__ . '/app/Controllers/CommentsController.php';
 // require_once __DIR__ . '/app/Controllers/NotesController.php';
 
 // Load environment variables
@@ -126,6 +128,7 @@ try {
     
     // Doctor routes
     $router->get('/doctor/dashboard', 'DoctorController@dashboard');
+    $router->get('/doctor/board', 'BoardController@index');
     $router->get('/doctor/calendar', 'DoctorController@calendar');
     $router->get('/doctor/organizer', 'DoctorController@organizer');
     $router->get('/doctor/patients', 'DoctorController@patients');
@@ -291,6 +294,8 @@ try {
     $router->delete('/api/appointments/{id}', 'ApiController@deleteAppointment');
     $router->post('/api/appointments/{id}/reschedule', 'ApiController@reschedule');
     $router->post('/api/appointments/{id}/reschedule-followup', 'ApiController@rescheduleFollowup');
+    $router->post('/api/appointments/{id}/edit', 'ApiController@editAppointmentFields');
+    $router->post('/api/appointments/{id}/correct-visit-type', 'ApiController@correctVisitType');
     $router->post('/api/payments', 'ApiController@createPayment');
     $router->post('/api/daily-balance', 'ApiController@createDailyBalance');
     $router->post('/api/daily-closure', 'ApiController@createDailyClosureApi');
@@ -304,6 +309,35 @@ try {
     $router->get('/api/test-export', 'ApiController@testExport');
     $router->get('/api/simple-export', 'ApiController@simpleExport');
     $router->get('/api/dashboard-summary', 'ApiController@getDashboardSummary');
+
+    // Patient Board — two-level (overview → detail) + legacy single-Kanban. See BoardController.
+    $router->get('/api/board/boards',                          'BoardController@listBoards');
+    $router->post('/api/board/boards',                         'BoardController@createBoard');
+    $router->put('/api/board/boards/{id}',                     'BoardController@updateBoard');
+    $router->delete('/api/board/boards/{id}',                  'BoardController@deleteBoard');
+    $router->get('/api/board/boards/{id}/cards',               'BoardController@boardCards');
+    $router->post('/api/board/boards/{id}/patients',           'BoardController@addPatient');
+    $router->delete('/api/board/boards/{id}/patients/{pid}',   'BoardController@removePatient');
+    $router->put('/api/board/patients/{pid}',                  'BoardController@quickEditPatient');
+    $router->get('/api/board/columns',                  'BoardController@listColumns');
+    $router->post('/api/board/columns',                 'BoardController@createColumn');
+    $router->put('/api/board/columns/{id}',             'BoardController@updateColumn');
+    $router->delete('/api/board/columns/{id}',          'BoardController@deleteColumn');
+    $router->get('/api/board/cards',                    'BoardController@listCards');
+    $router->post('/api/board/move',                    'BoardController@move');
+    $router->get('/api/board/auto-place/{patient_id}',  'BoardController@autoPlace');
+
+    // Generic comments + @-mentions + attachments — see CommentsController.
+    // Specific routes first so /api/comments/attachments/{id} isn't captured
+    // by the generic /api/comments/{type}/{id} pattern.
+    $router->get('/api/users/search',                   'CommentsController@searchUsers');
+    $router->post('/api/comments/attachments',          'CommentsController@uploadAttachment');
+    $router->get('/api/comments/attachments/{id}',      'CommentsController@viewAttachment');
+    $router->get('/api/comments/{type}/{id}',           'CommentsController@listFor');
+    $router->post('/api/comments/{type}/{id}',          'CommentsController@create');
+    $router->patch('/api/comments/{id}',                'CommentsController@patch');
+    $router->delete('/api/comments/{id}',               'CommentsController@delete');
+
     $router->get('/api/upcoming-appointments', 'ApiController@getUpcomingAppointments');
     $router->get('/api/missed-appointments', 'ApiController@getMissedAppointments');
     $router->get('/api/recent-activity', 'ApiController@getRecentActivity');
@@ -355,6 +389,15 @@ try {
     $router->delete('/api/patients/{id}', 'ApiController@deletePatient');
     $router->put('/api/patients/{id}/emergency-contact', 'ApiController@updateEmergencyContact');
     $router->post('/api/consultations', 'ApiController@createConsultation');
+    // Consultation autocomplete + common-cases modal: the methods existed
+    // but the routes were never registered, so edit_consultation.js's
+    // autocomplete and "Common Cases" modal 404'd in production.
+    $router->get('/api/consultation/suggestions', 'ApiController@getConsultationSuggestions');
+    $router->get('/api/consultation/common-complaints', 'ApiController@getCommonComplaints');
+    // Smart-consultation AI assists (Phase 1).
+    $router->get('/api/consultation/prior-summary', 'ApiController@getPriorVisitSummary');
+    $router->post('/api/consultation/icd10-suggest', 'ApiController@suggestICD10Codes');
+    $router->get('/api/prescriptions/suggestions', 'ApiController@getPrescriptionSuggestions');
     $router->post('/api/prescriptions/meds', 'ApiController@createMedicationPrescription');
     $router->put('/api/prescriptions/meds/{id}', 'ApiController@updateMedication');
     $router->delete('/api/prescriptions/meds/{id}', 'ApiController@deleteMedication');

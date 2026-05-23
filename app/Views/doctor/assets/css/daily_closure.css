@@ -4,26 +4,10 @@
    ============================================ */
 
    :root {
-    --bg: #f8fafc;
-    --text: #0f172a;
-    --card: #ffffff;
-    --muted: #475569;
-    --accent: #0ea5e9;
-    --success: #10b981;
-    --danger: #ef4444;
-    --border: #e2e8f0;
     --shadow: rgba(0, 0, 0, 0.1);
 }
 
 .dark {
-    --bg: #0b1220;
-    --text: #f8fafc;
-    --card: #1e293b;
-    --muted: #94a3b8;
-    --accent: #38bdf8;
-    --success: #4ade80;
-    --danger: #fb7185;
-    --border: #334155;
     --shadow: rgba(0, 0, 0, 0.3);
 }
 
@@ -87,9 +71,9 @@
 
 .form-control:focus, .form-select:focus {
     background-color: var(--card) !important;
-    border-color: var(--accent) !important;
+    border-color: var(--ds-primary) !important;
     color: var(--text) !important;
-    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25) !important;
+    box-shadow: 0 0 0 0.2rem var(--ds-primary-soft) !important;
 }
 
 .form-control::placeholder {
@@ -272,15 +256,13 @@
 /* Modal Styles */
 .modal-content {
     /* Glass effect - similar to sidebar */
-    background: rgba(248, 250, 252, 0.35) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: var(--card) !important;
     border: 1px solid rgba(226, 232, 240, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
 }
 
 .dark .modal-content {
-    background: rgba(11, 18, 32, 0.40) !important;
+    background: var(--card) !important;
     border: 1px solid rgba(51, 65, 85, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 }
@@ -391,16 +373,14 @@ h6, h5, h4, h3, h2, h1 {
 /* Search Modal Styles */
 .modal-content {
     /* Glass effect - similar to sidebar */
-    background: rgba(248, 250, 252, 0.35) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: var(--card) !important;
     border: 1px solid rgba(226, 232, 240, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
     color: var(--text) !important;
 }
 
 .dark .modal-content {
-    background: rgba(11, 18, 32, 0.40) !important;
+    background: var(--card) !important;
     border: 1px solid rgba(51, 65, 85, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 }
@@ -452,3 +432,118 @@ kbd {
         font-size: 0.875rem !important;
     }
 }
+
+/* ===================================================================== */
+/* ORTHO PER-PAGE PARITY (daily_closure, 2026-05-22) — missing visual polish ported  */
+/* verbatim from the ortho fork (additive, last-wins; markup classes match). */
+/* ===================================================================== */
+/* ============================================================
+   DAILY CLOSURE — Indigo glass redesign.
+   Token-driven: inherits the design-system palette (this file no longer
+   redefines :root/.dark — that previously reverted the page to sky-blue).
+   Stat cards reuse the shared .fin-stat component (design-system.css).
+   ============================================================ */
+
+/* ---- Toolbar --------------------------------------------------- */
+.dc-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap;
+}
+
+.dc-toolbar-text { display: flex; align-items: center; gap: 1rem; min-width: 0; }
+
+.dc-toolbar-icon {
+    flex: 0 0 auto; width: 54px; height: 54px; border-radius: var(--r-lg);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem;
+    color: #fff; background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    box-shadow: 0 10px 24px var(--ds-primary-soft);
+}
+
+.dc-toolbar-title { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; color: var(--text) !important; }
+
+.dc-toolbar-sub { margin: .15rem 0 0; font-size: .9rem; color: var(--muted); }
+
+.dc-close-btn {
+    position: relative; overflow: hidden;
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .8rem 1.5rem; border: 0; border-radius: var(--r-md);
+    background: linear-gradient(135deg, var(--success), #34D399);
+    color: #fff; font-weight: 700; font-size: 1rem; cursor: pointer;
+    box-shadow: 0 10px 24px rgba(16, 185, 129, .25);
+    transition: transform .2s var(--ds-ease, ease), box-shadow .2s ease, filter .2s ease;
+}
+
+.dc-close-btn i { font-size: 1.15rem; }
+
+.dc-close-btn::before {
+    content: ""; position: absolute; inset-block: 0; inset-inline-start: -120%;
+    width: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+    transition: inset-inline-start .55s ease;
+}
+
+.dc-close-btn:hover::before { inset-inline-start: 120%; }
+
+.dc-close-btn:hover { transform: translateY(-2px); filter: brightness(1.05); color: #fff; box-shadow: 0 14px 30px rgba(16, 185, 129, .32); }
+
+.dc-close-btn kbd {
+    margin-inline-start: .4rem; background: rgba(255,255,255,.22); color: #fff;
+    border: 0; border-radius: 5px; padding: 1px 6px; font-size: .72rem; font-weight: 700; box-shadow: none;
+}
+
+.dc-closed-badge {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .7rem 1.2rem; border-radius: var(--r-pill);
+    background: var(--ds-chip-info-bg); color: var(--ds-primary); font-weight: 700;
+    border: 1px solid color-mix(in srgb, var(--ds-primary) 22%, transparent);
+}
+
+.card > .card-header {
+    background: transparent !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.card > .card-header h5 { color: var(--text) !important; font-weight: 700; letter-spacing: -.01em; }
+
+.card > .card-header h5 i { color: var(--ds-primary); }
+
+/* ---- Glass summary tiles (replace Bootstrap bg-opacity pastels) - */
+[class*="bg-opacity-10"].rounded,
+.modal-body .bg-light {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-lg) !important;
+    color: var(--text) !important;
+}
+
+.bg-primary.bg-opacity-10 { border-inline-start: 3px solid var(--ds-primary); }
+
+.bg-success.bg-opacity-10 { border-inline-start: 3px solid var(--success); }
+
+.bg-warning.bg-opacity-10 { border-inline-start: 3px solid var(--ds-warning); }
+
+.bg-danger.bg-opacity-10  { border-inline-start: 3px solid var(--danger); }
+
+.bg-info.bg-opacity-10    { border-inline-start: 3px solid var(--ds-info); }
+
+/* ---- Tables → glass headers ------------------------------------ */
+.table > thead th,
+.table > tfoot th,
+.table-light th, .table-dark th {
+    background: var(--glass-bg) !important;
+    color: var(--muted) !important;
+    border-color: var(--glass-border) !important;
+    font-weight: 700; text-transform: uppercase; letter-spacing: .03em; font-size: .72rem;
+}
+
+.dc-close-btn, .dc-closed-badge { width: 100%; justify-content: center; }
+
+/* Daily-closure responsive toolbar (parity port from ortho, 2026-05-23) */
+@media (max-width: 768px) {
+    .dc-toolbar { gap: .85rem; }
+    .dc-close-btn, .dc-closed-badge { width: 100%; justify-content: center; }
+    .table-responsive { font-size: .875rem; }
+}
+
+/* Daily-closure card radius + table cell alignment (ortho parity, 2026-05-23) */
+.card { border-radius: var(--r-xl) !important; }
+.table td { vertical-align: middle; }

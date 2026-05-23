@@ -8,34 +8,14 @@
 <style>
 /* CSS Variables for Dark/Light Mode - Matching Doctor View */
 :root {
-    --bg: #f8fafc;
-    --bg-alt: #f1f5f9;
-    --text: #0f172a;
-    --card: #ffffff;
-    --muted: #475569;
-    --accent: #0ea5e9;
-    --accent-rgb: 14, 165, 233;
-    --success: #10b981;
-    --danger: #ef4444;
     --warning: #f59e0b;
     --info: #06b6d4;
-    --border: #e2e8f0;
     --shadow: rgba(0, 0, 0, 0.1);
 }
 
 .dark {
-    --bg: #0b1220;
-    --bg-alt: #1e293b;
-    --text: #f8fafc;
-    --card: #1e293b;
-    --muted: #94a3b8;
-    --accent: #38bdf8;
-    --accent-rgb: 56, 189, 248;
-    --success: #4ade80;
-    --danger: #fb7185;
     --warning: #fbbf24;
     --info: #22d3ee;
-    --border: #334155;
     --shadow: rgba(0, 0, 0, 0.3);
 }
 

@@ -875,6 +875,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Make modals draggable
     function initializeDraggableModals() {
+    /* Drag/center/animation unified in layouts/modal-kit.js. No-op. */
+    return;
         const modals = document.querySelectorAll('.modal');
         
         modals.forEach(modal => {
@@ -2037,26 +2039,10 @@ kbd[lang="ar"] {
 }
 
 :root {
-    --bg: #f8fafc;
-    --text: #0f172a;
-    --card: #ffffff;
-    --muted: #475569;
-    --accent: #0ea5e9;
-    --success: #10b981;
-    --danger: #ef4444;
-    --border: #e2e8f0;
     --sidebar-width: 280px;
 }
 
 .dark {
-    --bg: #0b1220;
-    --text: #f8fafc;
-    --card: #1e293b;
-    --muted: #cbd5e1;
-    --accent: #38bdf8;
-    --success: #4ade80;
-    --danger: #fb7185;
-    --border: #334155;
 }
 /* Statistics Cards Styling */
 .stat-card {
@@ -2200,7 +2186,7 @@ kbd[lang="ar"] {
 
 /* Search Modal Styles */
 .modal-content {
-    background-color: var(--bg);
+    background: var(--card);
     border-color: var(--border);
     color: var(--text);
 }
@@ -2492,7 +2478,7 @@ kbd[lang="ar"] {
 
 /* Add Patient Modal Styling */
 #addPatientModal .modal-content {
-    background-color: var(--bg);
+    background: var(--card);
     border-color: var(--border);
     color: var(--text);
 }
@@ -2660,7 +2646,7 @@ kbd[lang="ar"] {
 /* Delete Patient Modal Styles */
 #deletePatientModal .modal-content,
 #deletePatientConfirmModal .modal-content {
-    background-color: var(--bg);
+    background: var(--card);
     color: var(--text);
 }
 

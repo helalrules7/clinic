@@ -247,28 +247,33 @@ class DrugSearch {
     
     createDrugCard(drug) {
         const card = document.createElement('div');
-        card.className = 'col-md-6 col-lg-4 mb-3';
-        
+        card.className = 'col-md-6 col-lg-4';
+
+        const hasPrice = drug.price !== undefined && drug.price !== null && drug.price !== '';
+
         card.innerHTML = `
             <div class="drug-card">
                 <div class="drug-card-header">
-                    <div>
+                    <span class="drug-card-ic"><i class="bi bi-capsule"></i></span>
+                    <div class="drug-card-headings">
                         <h5 class="drug-name">${drug.drug_name}</h5>
-                        <p class="drug-ingredient">${drug.active_ingredient}</p>
+                        <p class="drug-ingredient">${drug.active_ingredient || ''}</p>
                     </div>
-                    <div class="drug-price">${drug.price ? 'EGP ' + drug.price : 'Price N/A'}</div>
+                    <span class="drug-price ${hasPrice ? '' : 'is-na'}">
+                        ${hasPrice ? '<span class="drug-price-cur">EGP</span> ' + drug.price : 'N/A'}
+                    </span>
                 </div>
                 <div class="drug-details">
                     <div class="detail-item">
-                        <span class="detail-label">Company</span>
+                        <span class="detail-label"><i class="bi bi-building me-1"></i>Company</span>
                         <span class="detail-value">${drug.Company || 'N/A'}</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">Category</span>
+                        <span class="detail-label"><i class="bi bi-tag me-1"></i>Category</span>
                         <span class="detail-value">${drug.category || 'N/A'}</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">Route</span>
+                        <span class="detail-label"><i class="bi bi-signpost-2 me-1"></i>Route</span>
                         <span class="detail-value">${drug.administration_route || 'N/A'}</span>
                     </div>
                 </div>

@@ -3558,13 +3558,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Chart.js Configuration for Dashboard
         const chartColors = {
-            primary: '#007bff',
-            success: '#28a745',
-            danger: '#dc3545',
-            warning: '#ffc107',
-            info: '#17a2b8',
-            secondary: '#6c757d'
+            primary: '#6366F1',   // Indigo (design-system)
+            success: '#10B981',   // Emerald
+            danger: '#EF4444',    // Red
+            warning: '#F59E0B',   // Amber
+            info: '#0EA5E9',      // Sky
+            secondary: '#64748B', // Slate
+            male: '#3B82F6',      // Blue
+            female: '#EC4899'     // Pink
         };
+
+        // hex (#rrggbb) → rgba string with the given alpha.
+        function chartHexToRgba(hex, alpha) {
+            const h = (hex || '#6366F1').replace('#', '');
+            const r = parseInt(h.substring(0, 2), 16);
+            const g = parseInt(h.substring(2, 4), 16);
+            const b = parseInt(h.substring(4, 6), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        // Scriptable backgroundColor: soft vertical gradient fading the line
+        // colour from a tinted top to near-transparent bottom. Returns a flat
+        // tint until Chart.js has computed the chart area.
+        function chartAreaGradient(hex, topAlpha = 0.34, bottomAlpha = 0.01) {
+            return function (context) {
+                const chart = context.chart;
+                const { ctx, chartArea } = chart;
+                if (!chartArea) return chartHexToRgba(hex, topAlpha * 0.4);
+                const g = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                g.addColorStop(0, chartHexToRgba(hex, topAlpha));
+                g.addColorStop(1, chartHexToRgba(hex, bottomAlpha));
+                return g;
+            };
+        }
+        window.chartAreaGradient = chartAreaGradient;
+        window.chartHexToRgba = chartHexToRgba;
 
         // Get current theme colors dynamically
         function getCurrentThemeColors() {
@@ -3572,22 +3600,22 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (isDark) {
                 return {
-                    text: '#ffffff',
-                    muted: '#ffffff',
-                    grid: 'rgba(255, 255, 255, 0.15)',
-                    border: 'rgba(255, 255, 255, 0.3)',
-                    background: '#1e293b',
-                    tooltipBg: 'rgba(0, 0, 0, 0.95)',
-                    tooltipText: '#ffffff'
+                    text: '#F1F5F9',
+                    muted: '#94A3B8',
+                    grid: 'rgba(148, 163, 184, 0.16)',
+                    border: 'rgba(99, 102, 241, 0.35)',
+                    background: '#0C111F',
+                    tooltipBg: 'rgba(12, 17, 31, 0.96)',
+                    tooltipText: '#F1F5F9'
                 };
             } else {
                 return {
                     text: '#0f172a',
-                    muted: '#475569',
-                    grid: 'rgba(0, 0, 0, 0.1)',
-                    border: 'rgba(0, 0, 0, 0.2)',
+                    muted: '#64748B',
+                    grid: 'rgba(15, 23, 42, 0.07)',
+                    border: 'rgba(99, 102, 241, 0.30)',
                     background: '#ffffff',
-                    tooltipBg: 'rgba(255, 255, 255, 0.95)',
+                    tooltipBg: 'rgba(255, 255, 255, 0.96)',
                     tooltipText: '#0f172a'
                 };
             }
@@ -3616,19 +3644,36 @@ document.addEventListener('DOMContentLoaded', function() {
         // Define chart functions
         window.getCommonOptions = function() {
             const themeColors = getCurrentThemeColors();
+            const fontFamily = "'Plus Jakarta Sans', 'Cairo', 'Segoe UI', Tahoma, sans-serif";
             return {
                 responsive: true,
                 maintainAspectRatio: false,
+                // Smooth index-mode hover: the whole vertical slice lights up.
+                interaction: { mode: 'index', intersect: false },
+                animation: { duration: 800, easing: 'easeOutQuart' },
+                layout: { padding: { top: 6, right: 6, bottom: 0, left: 0 } },
+                // Premium line/point defaults — clean lines, points appear on hover.
+                elements: {
+                    line: { borderWidth: 3, tension: 0.4, borderCapStyle: 'round', borderJoinStyle: 'round' },
+                    point: {
+                        radius: 0,
+                        hoverRadius: 6,
+                        hoverBorderWidth: 3,
+                        hitRadius: 14,
+                        hoverBackgroundColor: themeColors.background
+                    }
+                },
                 plugins: {
                     legend: {
                         position: 'top',
+                        align: 'end',
                         labels: {
                             usePointStyle: true,
-                            padding: 20,
-                            font: {
-                                size: 12,
-                                family: "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-                            },
+                            pointStyle: 'circle',
+                            boxWidth: 8,
+                            boxHeight: 8,
+                            padding: 18,
+                            font: { size: 12, weight: '600', family: fontFamily },
                             color: themeColors.text
                         }
                     },
@@ -3638,42 +3683,44 @@ document.addEventListener('DOMContentLoaded', function() {
                         bodyColor: themeColors.tooltipText,
                         borderColor: themeColors.border,
                         borderWidth: 1,
-                        cornerRadius: 8,
+                        cornerRadius: 12,
+                        padding: 12,
+                        caretSize: 6,
+                        usePointStyle: true,
+                        boxPadding: 6,
                         displayColors: true,
-                        titleFont: {
-                            family: "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-                            size: 13,
-                            weight: 'bold'
-                        },
-                        bodyFont: {
-                            family: "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-                            size: 12
-                        }
+                        titleFont: { family: fontFamily, size: 13, weight: 'bold' },
+                        bodyFont: { family: fontFamily, size: 12 }
                     }
                 },
                 scales: {
                     x: {
-                        grid: {
-                            color: themeColors.grid,
-                            drawBorder: false
-                        },
+                        border: { display: false },
+                        grid: { display: false, drawBorder: false },
                         ticks: {
-                            color: themeColors.text,
-                            font: {
-                                family: "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-                            }
+                            color: themeColors.muted,
+                            maxRotation: 0,
+                            autoSkip: true,
+                            maxTicksLimit: 8,
+                            padding: 8,
+                            font: { size: 11, family: fontFamily }
                         }
                     },
                     y: {
+                        beginAtZero: true,
+                        border: { display: false },
                         grid: {
                             color: themeColors.grid,
-                            drawBorder: false
+                            drawBorder: false,
+                            drawTicks: false,
+                            lineWidth: 1,
+                            borderDash: [4, 5]
                         },
                         ticks: {
-                            color: themeColors.text,
-                            font: {
-                                family: "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-                            }
+                            color: themeColors.muted,
+                            padding: 10,
+                            maxTicksLimit: 6,
+                            font: { size: 11, family: fontFamily }
                         }
                     }
                 }
@@ -3801,29 +3848,35 @@ document.addEventListener('DOMContentLoaded', function() {
                         {
                             label: 'Total Patients',
                             data: totalPatients,
-                            borderColor: themeColors.text, // Use theme text color for total
-                            backgroundColor: themeColors.text + '20',
+                            borderColor: chartColors.primary, // Indigo
+                            backgroundColor: chartAreaGradient(chartColors.primary, 0.30),
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: chartColors.primary,
                             tension: 0.4,
-                            fill: false,
-                            borderWidth: 2
+                            fill: true,
+                            borderWidth: 3
                         },
                         {
                             label: 'Male',
                             data: malePatients,
-                            borderColor: '#1E90FF', // Dodgerblue
-                            backgroundColor: '#1E90FF' + '20',
+                            borderColor: chartColors.male,
+                            backgroundColor: chartAreaGradient(chartColors.male, 0.12),
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: chartColors.male,
                             tension: 0.4,
-                            fill: false,
-                            borderWidth: 2
+                            fill: true,
+                            borderWidth: 2.5
                         },
                         {
                             label: 'Female',
                             data: femalePatients,
-                            borderColor: '#FF1493', // Hot pink
-                            backgroundColor: '#FF1493' + '20',
+                            borderColor: chartColors.female,
+                            backgroundColor: chartAreaGradient(chartColors.female, 0.12),
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: chartColors.female,
                             tension: 0.4,
-                            fill: false,
-                            borderWidth: 2
+                            fill: true,
+                            borderWidth: 2.5
                         }
                     ]
                 },
@@ -4198,7 +4251,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             label: 'Total Appointments',
                             data: totalAppointments,
                             borderColor: chartColors.primary,
-                            backgroundColor: chartColors.primary + '20',
+                            backgroundColor: chartAreaGradient(chartColors.primary, 0.34),
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: chartColors.primary,
                             tension: 0.4,
                             fill: true
                         },
@@ -4206,17 +4261,21 @@ document.addEventListener('DOMContentLoaded', function() {
                             label: 'Completed',
                             data: completed,
                             borderColor: chartColors.success,
-                            backgroundColor: chartColors.success + '20',
+                            backgroundColor: chartAreaGradient(chartColors.success, 0.16),
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: chartColors.success,
                             tension: 0.4,
-                            fill: false
+                            fill: true
                         },
                         {
                             label: 'Missed',
                             data: missed,
-                            borderColor: '#ef4444',
-                            backgroundColor: '#ef4444' + '20',
+                            borderColor: chartColors.danger,
+                            backgroundColor: chartAreaGradient(chartColors.danger, 0.14),
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: chartColors.danger,
                             tension: 0.4,
-                            fill: false
+                            fill: true
                         }
                     ]
                 },
@@ -5601,9 +5660,11 @@ function getLevelText(score) {
 
 // Update weather card UI
 function updateWeatherCard(weatherData) {
+    const widget = document.getElementById('weatherWidget');
     const iconContainer = document.getElementById('weatherIconContainer');
     const tempElement = document.getElementById('weatherTemp');
     const descElement = document.getElementById('weatherDesc');
+    const dateElement = document.getElementById('weatherDate');
     const locationElement = document.getElementById('weatherLocation');
     const pollenValue = document.getElementById('pollenIndexValue');
     const pollenBar = document.getElementById('pollenIndexFill');
@@ -5614,20 +5675,35 @@ function updateWeatherCard(weatherData) {
         return;
     }
 
+    // Day / night theme — prefer the API's is_day, fall back to local hour.
+    const isNight = (weatherData.isDay !== undefined && weatherData.isDay !== null)
+        ? (Number(weatherData.isDay) === 0)
+        : isNightTime();
+    if (widget) {
+        widget.classList.toggle('weather-widget--night', isNight);
+        widget.classList.toggle('weather-widget--day', !isNight);
+    }
+
     // Update weather display
     const iconType = getWeatherIconType(weatherData.condition || 'clear');
     iconContainer.innerHTML = renderWeatherIcon(iconType);
 
     if (tempElement) {
-        tempElement.textContent = `${Math.round(weatherData.temperature || 0)}°C`;
+        tempElement.innerHTML = `${Math.round(weatherData.temperature || 0)}<span class="weather-deg">°</span>`;
     }
 
     if (descElement) {
         descElement.textContent = weatherData.condition || 'Clear';
     }
 
+    if (dateElement) {
+        dateElement.textContent = new Date().toLocaleDateString('en-US', {
+            weekday: 'long', day: 'numeric', month: 'long'
+        });
+    }
+
     if (locationElement) {
-        locationElement.innerHTML = `<i class="bi bi-geo-alt"></i> ${weatherData.location || 'Unknown'}`;
+        locationElement.innerHTML = `<i class="bi bi-geo-alt-fill"></i> <span>${weatherData.location || 'Unknown'}</span>`;
     }
 
     // Calculate and update health indices
@@ -5958,9 +6034,21 @@ function renderWeatherForecast(forecast) {
 // Initialize weather on page load - load last after all dashboard content
 document.addEventListener('DOMContentLoaded', function() {
     // Forecast button handler
-    const forecastBtn = document.getElementById('weatherForecastBtn');
-    if (forecastBtn) {
-        forecastBtn.addEventListener('click', showWeatherForecastPopover);
+    // The whole weather card opens the unified ortho-style frosted forecast window
+    // (defined in main.js); fall back to the legacy popover if it isn't available.
+    const weatherWidget = document.getElementById('weatherWidget');
+    if (weatherWidget) {
+        const openForecast = function() {
+            if (typeof window.openWeatherForecastWindow === 'function') {
+                window.openWeatherForecastWindow();
+            } else {
+                showWeatherForecastPopover();
+            }
+        };
+        weatherWidget.addEventListener('click', openForecast);
+        weatherWidget.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openForecast(); }
+        });
     }
 
     // Load weather data from cache first (fast)

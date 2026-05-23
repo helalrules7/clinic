@@ -150,7 +150,7 @@ function showPrescriptionModal(appointmentId) {
                                     <label class="form-label">Drug Name <span class="text-danger">*</span></label>
                                     <div class="position-relative">
                                         <input type="text" class="form-control" name="drug_name" id="drugNameInput" required autocomplete="off">
-                                        <div id="drugSuggestions" class="position-absolute w-100 bg-white border border-top-0 rounded-bottom shadow-sm" style="z-index: 1050; display: none; max-height: 200px; overflow-y: auto;"></div>
+                                        <div id="drugSuggestions" class="position-absolute w-100 border border-top-0 rounded-bottom shadow-sm drug-suggest-dropdown" style="z-index: 1050; display: none; max-height: 200px; overflow-y: auto;"></div>
                                     </div>
                                 </div>
                                 <div class="col-md-4 mb-3" style="display: none;">
@@ -562,10 +562,20 @@ async function loadMostUsedDrugs(containerId = 'mostUsedDrugs', targetInputId = 
 
 // Setup autocomplete functionality for drug name input
 function setupDrugNameAutocomplete() {
+    // Doctor Auto Complete preference (Settings → Auto Complete → Medication
+    // auto complete). Default ON when config is absent. When OFF, skip wiring
+    // the typeahead so no drug suggestions appear while prescribing.
+    const acMeds = !(window.APPOINTMENT_CONFIG && window.APPOINTMENT_CONFIG.autocompleteMedications === false);
+    if (!acMeds) {
+        const sc = document.getElementById('drugSuggestions');
+        if (sc) { sc.style.display = 'none'; }
+        return;
+    }
+
     const drugNameInput = document.getElementById('drugNameInput');
     const suggestionsContainer = document.getElementById('drugSuggestions');
     let searchTimeout;
-    
+
     drugNameInput.addEventListener('input', function() {
         const searchTerm = this.value.trim();
         
@@ -628,15 +638,8 @@ function setupDrugNameAutocomplete() {
                     document.getElementById('drugNameInput').value = drug.drug_name;
                     suggestionsContainer.style.display = 'none';
                 });
-                
-                suggestionItem.addEventListener('mouseenter', function() {
-                        this.style.backgroundColor = '#f8f9fa';
-                    });
-                    
-                suggestionItem.addEventListener('mouseleave', function() {
-                        this.style.backgroundColor = '';
-                    });
-                    
+                // Hover styling is theme-aware via CSS (.drug-suggest-dropdown
+                // .suggestion-item:hover) so it works in dark + light modes.
                 suggestionsContainer.appendChild(suggestionItem);
                 });
                 
@@ -5952,7 +5955,7 @@ function renderClinicalDashboardInPopover(data, container) {
             `${iop.value} mmHg${iop.target !== null && iop.target !== undefined ? ` (Target: ${iop.target} mmHg)` : ''}` : 
             '--';
         html += `<div class="col-md-6 col-lg-3">
-            <div class="clinical-indicator-card" ${iop.appointment_id ? `onclick="window.location.href='/doctor/appointments/${iop.appointment_id}'" style="cursor: pointer;"` : ''}>
+            <div class="clinical-indicator-card ci-iop" ${iop.appointment_id ? `onclick="window.location.href='/doctor/appointments/${iop.appointment_id}'" style="cursor: pointer;"` : ''}>
                 <div class="clinical-indicator-header">
                     <i class="bi bi-eyedropper me-2"></i>
                     <span>IOP Status</span>
@@ -5972,7 +5975,7 @@ function renderClinicalDashboardInPopover(data, container) {
         const trendClass = va.trend === '↑' ? 'text-danger' : (va.trend === '↓' ? 'text-success' : 'text-muted');
         const displayValue = va.last && va.last.length > 30 ? va.last.substring(0, 30) + '...' : (va.last || '--');
         html += `<div class="col-md-6 col-lg-3">
-            <div class="clinical-indicator-card" ${va.appointment_id ? `onclick="window.location.href='/doctor/appointments/${va.appointment_id}'" style="cursor: pointer;"` : ''}>
+            <div class="clinical-indicator-card ci-va" ${va.appointment_id ? `onclick="window.location.href='/doctor/appointments/${va.appointment_id}'" style="cursor: pointer;"` : ''}>
                 <div class="clinical-indicator-header">
                     <i class="bi bi-eye me-2"></i>
                     <span>Visual Acuity</span>
@@ -5996,7 +5999,7 @@ function renderClinicalDashboardInPopover(data, container) {
             badgeClass = 'bg-warning text-dark';
         }
         html += `<div class="col-md-6 col-lg-3">
-            <div class="clinical-indicator-card" ${cataract.appointment_id ? `onclick="window.location.href='/doctor/appointments/${cataract.appointment_id}'" style="cursor: pointer;"` : ''}>
+            <div class="clinical-indicator-card ci-cataract" ${cataract.appointment_id ? `onclick="window.location.href='/doctor/appointments/${cataract.appointment_id}'" style="cursor: pointer;"` : ''}>
                 <div class="clinical-indicator-header">
                     <i class="bi bi-scissors me-2"></i>
                     <span>Cataract Status</span>
@@ -6022,7 +6025,7 @@ function renderClinicalDashboardInPopover(data, container) {
             `OSDI: ${dryEye.osdi_score}${dryEye.severity ? ` (${dryEye.severity})` : ''}` : 
             '--';
         html += `<div class="col-md-6 col-lg-3">
-            <div class="clinical-indicator-card" ${dryEye.appointment_id ? `onclick="window.location.href='/doctor/appointments/${dryEye.appointment_id}'" style="cursor: pointer;"` : ''}>
+            <div class="clinical-indicator-card ci-dryeye" ${dryEye.appointment_id ? `onclick="window.location.href='/doctor/appointments/${dryEye.appointment_id}'" style="cursor: pointer;"` : ''}>
                 <div class="clinical-indicator-header">
                     <i class="bi bi-droplet me-2"></i>
                     <span>Dry Eye Status</span>
@@ -6180,6 +6183,8 @@ function formatTime(timeStr) {
 
 // Make all modals draggable
 function makeModalDraggable(modalElement) {
+    /* Drag/center/animation unified in layouts/modal-kit.js. No-op. */
+    return;
     const modalDialog = modalElement.querySelector('.modal-dialog');
     if (!modalDialog) return;
     

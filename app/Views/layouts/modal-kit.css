@@ -1,0 +1,83 @@
+/* =====================================================================
+   MODAL KIT  —  shared behaviour for EVERY Bootstrap modal, all pages.
+   Loaded (after style.css / sec-style.css) by layouts/main.php and
+   layouts/secretary_main.php, so these rules win and are the single
+   source of truth for modal centering + animation + drag affordance.
+
+   What it gives every modal:
+     1. Always centered on screen (vertical + horizontal).
+     2. Smooth open / close animation (rise + subtle scale + fade).
+     3. The header is a drag handle (movement itself is in modal-kit.js).
+
+   OVERLAY-SAFETY (the "backdrop covers the modal" bug):
+     That bug is a STACKING-CONTEXT trap — it appears when a modal
+     ANCESTOR (.main-content, body, …) gets a transform / filter /
+     opacity / will-change / positioned z-index. These rules only ever
+     touch elements INSIDE .modal (.modal-dialog / .modal-content /
+     .modal-header). The drag transform lives on .modal-dialog, which is
+     where Bootstrap itself puts its entrance transform — safe.
+
+   Exclusions:
+     - #drawConsultationModal : full-viewport canvas tool, not a dialog.
+     - .modal-fullscreen*     : Bootstrap full-screen modals.
+     - [data-no-drag]         : per-modal opt-out hook.
+     - the global search       : it is a .global-search-* overlay, NOT a
+                                 .modal, so nothing here matches it.
+   ===================================================================== */
+
+/* ---- 1. Centering --------------------------------------------------- */
+/* Mirrors Bootstrap's .modal-dialog-centered for every dialog, so a modal
+   is centered whether or not its markup carries that class. */
+.modal:not(#drawConsultationModal):not([class*="modal-fullscreen"]) .modal-dialog {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - var(--bs-modal-margin, 1.75rem) * 2);
+}
+
+/* ---- 2. Open / close animation ------------------------------------- */
+/* Bootstrap fades the .modal opacity; we add a rise + subtle scale on the
+   dialog. On close, the dialog keeps its (possibly dragged) position and
+   the whole modal fades out — so the close is animated from wherever it is. */
+.modal.fade:not(#drawConsultationModal):not([class*="modal-fullscreen"]) .modal-dialog {
+    transition: transform .28s cubic-bezier(.22, .61, .36, 1), opacity .2s ease-out;
+    transform: translateY(26px) scale(.97);
+    opacity: 0;
+}
+.modal.show:not(#drawConsultationModal):not([class*="modal-fullscreen"]) .modal-dialog {
+    transform: none;
+    opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+    .modal.fade:not(#drawConsultationModal) .modal-dialog {
+        transition: opacity .15s linear;
+        transform: none;
+    }
+}
+
+/* While actively dragging, kill the transition so the dialog tracks the
+   pointer 1:1, and stop text selection inside it. */
+.modal .modal-dialog.mk-dragging {
+    transition: none !important;
+    user-select: none;
+}
+
+/* ---- 3. Drag affordance on the header ------------------------------ */
+.modal:not(#drawConsultationModal):not([class*="modal-fullscreen"]) .modal-header {
+    cursor: move;            /* fallback */
+    cursor: grab;
+    touch-action: none;      /* let pointer-drag work on touch (no scroll) */
+}
+.modal:not(#drawConsultationModal) .modal-header.mk-grabbing {
+    cursor: grabbing;
+}
+/* Interactive header controls keep normal behaviour and never start a drag. */
+.modal .modal-header .btn-close,
+.modal .modal-header button,
+.modal .modal-header a,
+.modal .modal-header input,
+.modal .modal-header select,
+.modal .modal-header textarea,
+.modal .modal-header label {
+    cursor: pointer;
+    touch-action: auto;
+}

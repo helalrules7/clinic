@@ -34,7 +34,7 @@
 .prescription-thumbnail {
     width: 100%;
     height: 280px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--ds-primary) 0%, var(--ds-accent-2) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -144,16 +144,14 @@
 /* Prescription Preview Modal Styles - Glass Effect */
 #prescriptionPreviewModal .modal-content {
     /* Glass effect - similar to sidebar */
-    background: rgba(248, 250, 252, 0.35) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: var(--card) !important;
     border: 1px solid rgba(226, 232, 240, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.08);
     color: var(--text) !important;
 }
 
 .dark #prescriptionPreviewModal .modal-content {
-    background: rgba(11, 18, 32, 0.40) !important;
+    background: var(--card) !important;
     border: 1px solid rgba(51, 65, 85, 0.3) !important;
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.3);
 }
@@ -519,4 +517,36 @@
 
 #prescriptionPreviewModal{
     z-index: 1000001 !important;
+}
+/* ===================================================================== */
+/* ORTHO PER-PAGE PARITY (medications, 2026-05-22) — missing visual polish ported  */
+/* verbatim from the ortho fork (additive, last-wins; markup classes match). */
+/* ===================================================================== */
+.prescription-card:hover,
+.dark .prescription-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--glass-shadow-lg);
+    border-color: color-mix(in srgb, var(--ds-primary) 45%, var(--glass-border));
+}
+
+.prescription-count-badge,
+.dark .prescription-count-badge {
+    background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2));
+    border: 0;
+    box-shadow: 0 4px 12px var(--ds-primary-soft);
+    border-radius: var(--r-pill);
+}
+
+/* =====================================================================
+   MEDICATIONS PRESCRIPTION-CARD GLASS PARITY (ortho, 2026-05-23, styles only)
+   ===================================================================== */
+.prescription-card {
+    border-radius: var(--r-lg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    transition: transform .25s var(--ds-ease, ease), box-shadow .25s ease, border-color .25s ease;
+}
+.prescription-thumbnail {
+    height: 250px;
+    background: radial-gradient(120% 120% at 0% 0%, color-mix(in srgb, var(--ds-accent-2) 80%, transparent) 0%, transparent 55%), linear-gradient(135deg, var(--ds-primary) 0%, #7C3AED 58%, #0EA5E9 135%);
 }

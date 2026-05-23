@@ -1,0 +1,136 @@
+/* =====================================================================
+   DESIGN SYSTEM — TOKENS  (single source of truth)
+   Loaded AFTER style.css / sec-style.css so it re-skins the whole app to
+   the Indigo identity by overriding the legacy palette tokens, while
+   adding the new glass / geometry / type tokens used by design-system.css.
+
+   Palette: Indigo on slate neutrals. Dark mode via `.dark` on <html>.
+   Font is direction-aware: Plus Jakarta Sans for LTR (doctor/admin),
+   Cairo for RTL (secretary) — Arabic always falls back to Cairo.
+   ===================================================================== */
+
+:root {
+    /* ---- legacy tokens (overridden so existing components adopt Indigo) ---- */
+    --bg: #F8FAFC;
+    --card: #FFFFFF;
+    --text: #0F172A;
+    --muted: #64748B;
+    --accent: #4F46E5;          /* was sky #0ea5e9 → Indigo */
+    --accent-rgb: 79, 70, 229;
+    --success: #10B981;
+    --danger: #EF4444;
+    --border: #E2E8F0;
+    --bg-alt: #F1F5F9;
+
+    /* ---- new design-system tokens ---- */
+    --ds-primary: #4F46E5;
+    --ds-primary-hover: #4338CA;
+    --ds-primary-soft: rgba(79, 70, 229, 0.10);
+    --ds-accent-2: #6366F1;
+    --ds-surface-2: #F1F5F9;
+    --ds-warning: #F59E0B;
+    --ds-info: #0EA5E9;
+
+    /* status chip tints (soft bg / strong text) */
+    --ds-chip-success-bg: rgba(16, 185, 129, 0.12);
+    --ds-chip-warning-bg: rgba(245, 158, 11, 0.14);
+    --ds-chip-danger-bg:  rgba(239, 68, 68, 0.12);
+    --ds-chip-info-bg:    rgba(79, 70, 229, 0.12);
+    --ds-chip-muted-bg:   rgba(100, 116, 139, 0.14);
+
+    /* glass */
+    --glass-bg: rgba(255, 255, 255, 0.50);
+    --glass-bg-strong: rgba(255, 255, 255, 0.78);
+    --glass-border: rgba(226, 232, 240, 0.70);
+    --glass-blur: 16px;
+    --glass-blur-strong: 24px;
+    --glass-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+    --glass-shadow-lg: 0 16px 48px rgba(15, 23, 42, 0.12);
+
+    /* geometry */
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+    --r-xl: 22px;
+    --r-pill: 999px;
+
+    /* shadows */
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 4px 24px rgba(15, 23, 42, 0.06);
+    --shadow-lg: 0 16px 48px rgba(15, 23, 42, 0.12);
+
+    /* typography — direction-aware UI font (see [dir] overrides below) */
+    --font-en: 'Plus Jakarta Sans', 'Cairo', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --font-ar: 'Cairo', 'Segoe UI', Tahoma, system-ui, sans-serif;
+    --font-ui: var(--font-en);
+
+    /* motion */
+    --ds-ease: cubic-bezier(.22, .61, .36, 1);
+
+    /* ---- Bootstrap 5.3 bridge: remap its primary palette to Indigo so the
+       30+ files using .text-primary / .bg-primary / .border-primary /
+       .alert-primary / .link-primary / spinners / form-check etc. all adopt
+       the brand without per-utility overrides. Bootstrap derives those
+       utilities from --bs-primary-rgb, so this one block cascades widely. */
+    --bs-primary: #4F46E5;
+    --bs-primary-rgb: 79, 70, 229;
+    --bs-primary-text-emphasis: #3730A3;
+    --bs-primary-bg-subtle: #E0E7FF;
+    --bs-primary-border-subtle: #C7D2FE;
+    --bs-link-color: #4F46E5;
+    --bs-link-color-rgb: 79, 70, 229;
+    --bs-link-hover-color: #4338CA;
+    --bs-link-hover-color-rgb: 67, 56, 202;
+}
+
+.dark {
+    --bg: #070B14;              /* deeper, near-black navy */
+    --card: #131A29;           /* sits above the darker bg */
+    --text: #F8FAFC;
+    --muted: #94A3B8;
+    --accent: #6366F1;          /* Indigo (dark) */
+    --accent-rgb: 99, 102, 241;
+    --success: #34D399;
+    --danger: #FB7185;
+    --border: #334155;
+    --bg-alt: #0B1220;
+
+    --ds-primary: #6366F1;
+    --ds-primary-hover: #818CF8;
+    --ds-primary-soft: rgba(99, 102, 241, 0.16);
+    --ds-accent-2: #818CF8;
+    --ds-surface-2: #0A1322;
+    --ds-warning: #FBBF24;
+    --ds-info: #38BDF8;
+
+    --ds-chip-success-bg: rgba(52, 211, 153, 0.16);
+    --ds-chip-warning-bg: rgba(251, 191, 36, 0.16);
+    --ds-chip-danger-bg:  rgba(251, 113, 133, 0.16);
+    --ds-chip-info-bg:    rgba(99, 102, 241, 0.18);
+    --ds-chip-muted-bg:   rgba(148, 163, 184, 0.16);
+
+    --glass-bg: rgba(15, 21, 38, 0.55);
+    --glass-bg-strong: rgba(12, 17, 31, 0.85);
+    --glass-border: rgba(99, 102, 241, 0.18);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    --glass-shadow-lg: 0 20px 56px rgba(0, 0, 0, 0.55);
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.40);
+    --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.40);
+    --shadow-lg: 0 20px 56px rgba(0, 0, 0, 0.55);
+
+    /* Bootstrap bridge — Indigo (dark) */
+    --bs-primary: #6366F1;
+    --bs-primary-rgb: 99, 102, 241;
+    --bs-primary-text-emphasis: #A5B4FC;
+    --bs-primary-bg-subtle: #1E1B4B;
+    --bs-primary-border-subtle: #312E81;
+    --bs-link-color: #818CF8;
+    --bs-link-color-rgb: 129, 140, 248;
+    --bs-link-hover-color: #A5B4FC;
+    --bs-link-hover-color-rgb: 165, 180, 252;
+}
+
+/* Direction-aware UI font: secretary layout is <html dir="rtl"> → Cairo. */
+[dir="rtl"] { --font-ui: var(--font-ar); }
+[dir="ltr"] { --font-ui: var(--font-en); }
