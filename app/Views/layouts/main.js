@@ -360,8 +360,24 @@
             function isMobile() { return window.innerWidth < MOBILE_BP; }
             function isCramped() { return window.innerWidth < FORCE_MINI_BP; }
 
+            let _sidebarAnimTimer = null;
             function applyMode(mode) {
-                if (mode === 'mini') document.body.classList.add('sidebar-mini');
+                const wantMini = (mode === 'mini');
+                const isMini = document.body.classList.contains('sidebar-mini');
+                if (wantMini === isMini) return; // no state change → no transition, skip
+                // The collapse animates width (sidebar) + margin-left (main-content),
+                // which reflows the page every frame AND forces every backdrop-filter
+                // glass surface to re-blur its shifting backdrop — measured at ~1/3 of
+                // frames dropping below 30fps on the glass-heavy dashboard. Drop the
+                // blur for just the duration of the slide (imperceptible during a fast
+                // transition, restored the instant it ends) → collapse stays at 60fps.
+                document.body.classList.add('sidebar-animating');
+                if (_sidebarAnimTimer) clearTimeout(_sidebarAnimTimer);
+                _sidebarAnimTimer = setTimeout(() => {
+                    document.body.classList.remove('sidebar-animating');
+                    _sidebarAnimTimer = null;
+                }, 280); // 0.2s transition + buffer
+                if (wantMini) document.body.classList.add('sidebar-mini');
                 else document.body.classList.remove('sidebar-mini');
             }
 
@@ -8138,6 +8154,34 @@
             const p = Math.min(1, Math.max(0, window.pageYOffset / max));
             sttRingBar.style.strokeDashoffset = (STT_RING_C * (1 - p)).toFixed(2);
         }
+
+        // All scroll-driven DOM work runs inside ONE requestAnimationFrame tick,
+        // with every layout READ done before any WRITE. The previous code read
+        // documentElement.scrollHeight synchronously on every scroll event (which
+        // can fire many times per frame) right after mutating classes — forcing a
+        // reflow each time. Batching to one rAF/frame and reading-before-writing
+        // removes that forced reflow, which is what made roaya feel janky vs ortho
+        // (ortho has no progress ring, so it never paid this cost).
+        let _sttScrollScheduled = false;
+        function onScrollTick() {
+            if (_sttScrollScheduled) return;
+            _sttScrollScheduled = true;
+            requestAnimationFrame(() => {
+                _sttScrollScheduled = false;
+                // ---- READS (batched, before any write) ----
+                const y = window.pageYOffset;
+                const el = document.documentElement;
+                const max = (el.scrollHeight - el.clientHeight) || 1;
+                const ringP = Math.min(1, Math.max(0, y / max));
+                const wantShow = y > 300;
+                const isMobile = window.innerWidth <= 768;
+                const dockVisible = !!mobileDock && isMobile;
+                // ---- WRITES ----
+                if (scrollToTopBtn) scrollToTopBtn.classList.toggle('show', wantShow);
+                if (dockVisible) mobileDock.classList.toggle('dock-above-button', wantShow);
+                if (sttRingBar) sttRingBar.style.strokeDashoffset = (STT_RING_C * (1 - ringP)).toFixed(2);
+            });
+        }
         
         // Load and apply personal preferences
         async function loadAndApplyPersonalPreferences() {
@@ -8162,18 +8206,12 @@
                                 scrollToTopBtn.style.display = 'none';
                             } else {
                                 scrollToTopBtn.style.display = '';
-                                // Show/hide button based on scroll position
-                                window.addEventListener('scroll', () => {
-                                    if (window.pageYOffset > 300) {
-                                        scrollToTopBtn.classList.add('show');
-                                    } else {
-                                        scrollToTopBtn.classList.remove('show');
-                                    }
-                                    // Update mobile dock position + scroll-progress ring
-                                    updateMobileDockPosition();
-                                    updateScrollProgress();
-                                }, { passive: true });
-                                updateScrollProgress();
+                                // Show/hide button, mobile-dock position and the
+                                // scroll-progress ring are all handled together in
+                                // one rAF-throttled tick (see onScrollTick above) to
+                                // avoid per-scroll layout thrashing.
+                                window.addEventListener('scroll', onScrollTick, { passive: true });
+                                onScrollTick();
                                 
                                 // Scroll to top when button is clicked
                                 scrollToTopBtn.addEventListener('click', () => {
