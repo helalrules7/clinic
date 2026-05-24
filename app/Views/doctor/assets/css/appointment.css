@@ -1731,6 +1731,15 @@
     z-index: 1000002;
 }
 
+/* While a custom-select is open inside a modal, let the dropdown spill out of the
+   modal instead of being clipped by the modal's scroll container. */
+.modal:has(.field.menu.open),
+.modal-dialog:has(.field.menu.open),
+.modal-content:has(.field.menu.open),
+.modal-body:has(.field.menu.open) {
+    overflow: visible !important;
+}
+
 /* Ensure menu appears above modal backdrop (backdrop z-index is usually 1040) */
 .modal .field.menu.open menu {
     z-index: 1000001 !important;

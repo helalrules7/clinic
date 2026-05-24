@@ -447,6 +447,126 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load upcoming appointments on page load
     loadUpcomingAppointments(upcomingCurrentPage, upcomingPerPage);
+
+    // Load the at-a-glance mini widgets (status donut / board snapshot / revenue)
+    loadDashMiniWidgets();
+
+    function loadDashMiniWidgets() {
+        loadDashStatusDonut();
+        loadDashBoardSnapshot();
+        loadDashRevenue();
+    }
+
+    const DASH_STATUS_COLORS = {
+        Booked: '#3b82f6', CheckedIn: '#22c55e', InProgress: '#f59e0b',
+        Completed: '#06b6d4', Rescheduled: '#a78bfa'
+    };
+    const DASH_STATUS_LABELS = {
+        Booked: 'Booked', CheckedIn: 'Checked In', InProgress: 'In Progress',
+        Completed: 'Completed', Rescheduled: 'Rescheduled'
+    };
+
+    function dashDonutSvg(segments, total, centerNum, centerSub) {
+        const C = 2 * Math.PI * 42;
+        let off = 0;
+        const segs = segments.filter(s => s.value > 0).map(s => {
+            const len = total > 0 ? (s.value / total) * C : 0;
+            const c = `<circle cx="60" cy="60" r="42" fill="none" stroke="${s.color}" stroke-width="13"
+                stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}"
+                transform="rotate(-90 60 60)" class="dash-donut-seg"/>`;
+            off += len;
+            return c;
+        }).join('');
+        return `<svg viewBox="0 0 120 120" class="dash-donut">
+            <circle cx="60" cy="60" r="42" fill="none" stroke="var(--border)" stroke-width="13" opacity="0.35"/>
+            ${segs}
+            <text x="60" y="57" text-anchor="middle" class="dash-donut-num">${centerNum}</text>
+            <text x="60" y="75" text-anchor="middle" class="dash-donut-sub">${centerSub}</text>
+        </svg>`;
+    }
+
+    function loadDashStatusDonut() {
+        const body = document.getElementById('dashStatusBody');
+        if (!body) return;
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        const y = now.getFullYear(), m = now.getMonth() + 1;
+        const todayStr = `${y}-${pad(m)}-${pad(now.getDate())}`;
+        fetch(`/api/organizer/month?year=${y}&month=${m}`)
+            .then(r => r.json())
+            .then(res => {
+                const byDate = (res && res.ok && res.data && res.data.dataByDate) ? res.data.dataByDate : {};
+                const appts = (byDate[todayStr] && byDate[todayStr].appointments) ? byDate[todayStr].appointments : [];
+                const counts = {};
+                appts.forEach(a => { counts[a.status] = (counts[a.status] || 0) + 1; });
+                const total = appts.length;
+                if (total === 0) {
+                    body.innerHTML = '<div class="dash-mini-empty"><i class="bi bi-calendar-check"></i><span>No appointments today</span></div>';
+                    return;
+                }
+                const order = ['Booked', 'CheckedIn', 'InProgress', 'Completed', 'Rescheduled'];
+                const segments = order.map(s => ({ value: counts[s] || 0, color: DASH_STATUS_COLORS[s] }));
+                const legend = order.filter(s => counts[s]).map(s =>
+                    `<div class="dash-legend-item"><span class="dash-legend-dot" style="background:${DASH_STATUS_COLORS[s]}"></span>`
+                    + `<span class="dash-legend-lbl">${DASH_STATUS_LABELS[s]}</span><span class="dash-legend-val">${counts[s]}</span></div>`
+                ).join('');
+                body.innerHTML = `<div class="dash-donut-wrap">${dashDonutSvg(segments, total, total, total === 1 ? 'appt' : 'appts')}</div>`
+                    + `<div class="dash-legend">${legend}</div>`;
+            })
+            .catch(() => { body.innerHTML = '<div class="dash-mini-empty">—</div>'; });
+    }
+
+    function loadDashBoardSnapshot() {
+        const body = document.getElementById('dashBoardBody');
+        if (!body) return;
+        fetch('/api/board/snapshot')
+            .then(r => r.json())
+            .then(res => {
+                const cols = (res && res.ok && Array.isArray(res.data)) ? res.data : [];
+                if (!cols.length) {
+                    body.innerHTML = '<div class="dash-mini-empty"><i class="bi bi-columns-gap"></i><span>No board columns</span></div>';
+                    return;
+                }
+                const totalCards = cols.reduce((s, c) => s + (c.count || 0), 0);
+                const rows = cols.map(c => {
+                    const pct = totalCards > 0 ? Math.round((c.count / totalCards) * 100) : 0;
+                    return `<div class="dash-board-row">
+                        <span class="dash-board-name"><span class="dash-board-dot" style="background:${c.color}"></span>${escapeHtml(c.name)}</span>
+                        <span class="dash-board-bar"><span class="dash-board-fill" style="width:${pct}%;background:${c.color}"></span></span>
+                        <span class="dash-board-count">${c.count}</span>
+                    </div>`;
+                }).join('');
+                body.innerHTML = `<div class="dash-board-list">${rows}</div>`;
+            })
+            .catch(() => { body.innerHTML = '<div class="dash-mini-empty">—</div>'; });
+    }
+
+    function loadDashRevenue() {
+        const body = document.getElementById('dashRevenueBody');
+        if (!body) return;
+        fetch('/api/dashboard-summary')
+            .then(r => r.json())
+            .then(res => {
+                const d = (res && res.ok && res.data) ? res.data : null;
+                const bal = d && d.dailyBalance ? d.dailyBalance : null;
+                if (!bal) { body.innerHTML = '<div class="dash-mini-empty">—</div>'; return; }
+                const received = Number(bal.total_received || 0);
+                const tx = Number(bal.transactions_count || 0);
+                const balance = Number(bal.current_balance || 0);
+                const fmt = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
+                body.innerHTML = `
+                    <div class="dash-rev-main">
+                        <span class="dash-rev-amt">${fmt(received)}</span>
+                        <span class="dash-rev-cur">EGP</span>
+                    </div>
+                    <div class="dash-rev-sub">Received today</div>
+                    <div class="dash-rev-foot">
+                        <span><i class="bi bi-receipt"></i> ${tx} ${tx === 1 ? 'transaction' : 'transactions'}</span>
+                        <span><i class="bi bi-wallet2"></i> ${fmt(balance)} balance</span>
+                    </div>`;
+            })
+            .catch(() => { body.innerHTML = '<div class="dash-mini-empty">—</div>'; });
+    }
     
     // Handle per page change for upcoming appointments (removed - pagination selector removed from UI)
     // Note: Per page selector has been removed from the UI, default value of 10 is used
@@ -479,83 +599,82 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('upcomingAppointmentsContainer');
         
         if (!appointments || appointments.length === 0) {
-            container.innerHTML = '<p class="text-muted text-center py-3">No upcoming appointments</p>';
+            container.innerHTML = '<div class="appt-empty"><i class="bi bi-calendar-check"></i><p>No upcoming appointments</p><a href="/doctor/calendar" class="btn btn-sm btn-primary"><i class="bi bi-calendar-plus me-1"></i>Schedule one</a></div>';
             return;
         }
-        
+
+        // --- helpers for the enhanced item ---
+        const apptInitials = (f, l) => (((f || '').charAt(0) + (l || '').charAt(0)).toUpperCase() || '?');
+        const apptRelDate = (ds) => {
+            const d = new Date(ds + 'T00:00:00'); const t = new Date(); t.setHours(0, 0, 0, 0);
+            const tm = new Date(t); tm.setDate(tm.getDate() + 1);
+            const dd = new Date(d); dd.setHours(0, 0, 0, 0);
+            if (dd.getTime() === t.getTime()) return 'Today';
+            if (dd.getTime() === tm.getTime()) return 'Tomorrow';
+            return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        };
+        const apptTimeUntil = (ds, st) => {
+            if (!ds || !st) return '';
+            const ms = new Date(`${ds}T${st}`).getTime() - Date.now();
+            if (ms <= 0) return '';
+            const mins = Math.round(ms / 60000);
+            if (mins < 60) return `in ${mins} min`;
+            const hrs = Math.floor(mins / 60), rem = mins % 60;
+            if (hrs < 24) return rem ? `in ${hrs}h ${rem}m` : `in ${hrs}h`;
+            return `in ${Math.floor(hrs / 24)}d`;
+        };
+        const apptVisitIcon = (t) => ({ New: 'bi-stars', FollowUp: 'bi-arrow-repeat', Procedure: 'bi-clipboard2-pulse' }[t] || 'bi-calendar2-event');
+        const STATUS_C = { Booked: '#3b82f6', CheckedIn: '#22c55e', InProgress: '#f59e0b', Completed: '#06b6d4', Cancelled: '#ef4444', NoShow: '#94a3b8', Rescheduled: '#a855f7' };
+        const actionFor = (st) => ({ Booked: 'Check in', CheckedIn: 'Start visit', InProgress: 'Continue' }[st] || '');
+
         let html = '<div class="list-group list-group-flush">';
-        appointments.forEach(appointment => {
+        appointments.forEach((appointment, idx) => {
             const statusBadgeClass = getStatusBadgeClass(appointment.status);
-            const formattedDate = new Date(appointment.date).toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-            const formattedStartTime = appointment.start_time ? appointment.start_time.substring(0, 5) : '';
-            const formattedEndTime = appointment.end_time ? appointment.end_time.substring(0, 5) : '';
-            
+            const sColor = STATUS_C[appointment.status] || '#64748b';
+            const relDate = apptRelDate(appointment.date);
+            const startT = appointment.start_time ? appointment.start_time.substring(0, 5) : '';
+            const endT = appointment.end_time ? appointment.end_time.substring(0, 5) : '';
+            const initials = apptInitials(appointment.first_name, appointment.last_name);
+            const until = apptTimeUntil(appointment.date, appointment.start_time);
+            const isNext = idx === 0 && until !== '';
+            const vIcon = apptVisitIcon(appointment.visit_type);
+            const action = actionFor(appointment.status);
+            const active = appointment.status && ['completed', 'rescheduled', 'cancelled', 'noshow'].indexOf(appointment.status.toLowerCase()) === -1;
+
             html += `
-                <div class="list-group-item d-flex justify-content-between align-items-start border-0 px-0 pb-3 mb-2" style="border-bottom: 1px solid var(--border) !important;">
-                    <div class="flex-grow-1">
-                        <h6 class="mb-1">
-                            <a href="/doctor/patients/${appointment.patient_id}" 
-                               class="patient-name-link"
-                               data-bs-toggle="tooltip" 
-                               data-bs-placement="top" 
-                               data-bs-title="View Patient Profile">
-                                ${escapeHtml((appointment.first_name || '') + ' ' + (appointment.last_name || ''))}
-                            </a>
-                        </h6>
-                        <small class="text-muted appointment-time-link" 
-                               style="cursor: pointer; color: dodgerblue;" 
-                               onclick="window.location.href='/doctor/calendar?date=${appointment.date}&appointment_id=${appointment.id}'"
-                               onmouseover="this.style.fontWeight='bold' !important; this.style.color='dodgerblue' !important; this.style.textDecoration='none' !important;"
-                               onmouseout="this.style.fontWeight='normal' !important; this.style.color='dodgerblue' !important; this.style.textDecoration='none' !important;"
-                               data-bs-toggle="tooltip" 
-                               data-bs-placement="top" 
-                               data-bs-title="Navigate to Appointment in your calendar">
-                            <i class="bi bi-clock me-1"></i>
-                            ${formattedStartTime} - ${formattedEndTime}
-                        </small>
-                        <br>
-                        <small class="text-muted">
-                            <i class="bi bi-calendar me-1"></i>
-                            ${formattedDate}
-                        </small>
-                        ${appointment.status && appointment.status.toLowerCase() !== 'completed' && appointment.status.toLowerCase() !== 'rescheduled' ? `
-                        <div class="appointment-progress-container mt-2" data-appointment-id="${appointment.id}" data-date="${appointment.date}" data-start-time="${appointment.start_time}" data-end-time="${appointment.end_time}">
-                            <div class="glass-progress-bar">
-                                <div class="glass-progress-fill" style="width: 0%;"></div>
-                                <div class="glass-progress-text">00:00</div>
+                <div class="list-group-item appt-list-item appt-card border-0 mb-2 ${isNext ? 'appt-next' : ''}" style="--appt-color:${sColor}">
+                    <div class="appt-row">
+                        <div class="appt-avatar" style="background:${sColor}" title="${escapeHtml((appointment.first_name || '') + ' ' + (appointment.last_name || ''))}">${escapeHtml(initials)}</div>
+                        <div class="appt-main">
+                            <div class="appt-name-row">
+                                <a href="/doctor/patients/${appointment.patient_id}" class="appt-name patient-name-link"
+                                   data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="View Patient Profile">
+                                    ${escapeHtml((appointment.first_name || '') + ' ' + (appointment.last_name || ''))}
+                                </a>
+                                ${isNext ? '<span class="appt-nextup-chip"><i class="bi bi-stars"></i> Next up</span>' : ''}
                             </div>
+                            <div class="appt-meta">
+                                <span class="appt-meta-time" onclick="window.location.href='/doctor/calendar?date=${appointment.date}&appointment_id=${appointment.id}'" title="Open in calendar"><i class="bi bi-clock"></i> ${startT}${endT ? ' - ' + endT : ''}</span>
+                                <span class="appt-meta-sep">·</span>
+                                <span class="appt-meta-date">${relDate}</span>
+                                <span class="appt-meta-vtype"><i class="bi ${vIcon}"></i> ${escapeHtml(appointment.visit_type || '')}</span>
+                            </div>
+                            ${active ? `
+                            <div class="appointment-progress-container mt-2" data-appointment-id="${appointment.id}" data-date="${appointment.date}" data-start-time="${appointment.start_time}" data-end-time="${appointment.end_time}">
+                                <div class="glass-progress-bar">
+                                    <div class="glass-progress-fill" style="width: 0%;"></div>
+                                    <div class="glass-progress-text">00:00</div>
+                                </div>
+                            </div>` : ''}
                         </div>
-                        ` : ''}
-                    </div>
-                    <div class="d-flex flex-column align-items-end gap-2">
-                        <div class="text-end">
-                            <span class="badge ${statusBadgeClass}">
-                                ${appointment.status}
-                            </span>
-                            <br>
-                            <small class="text-muted">
-                                ${appointment.visit_type || ''}
-                            </small>
-                        </div>
-                        <div class="btn-group btn-group-sm" role="group">
-                            <a href="/doctor/appointments/${appointment.id}" 
-                               class="btn btn-outline-primary"
-                               data-bs-toggle="tooltip" 
-                               data-bs-placement="top" 
-                               data-bs-title="View Appointment Details">
-                                <i class="bi bi-calendar-event me-1"></i><span class="btn-text">Appointment</span>
-                            </a>
-                            <a href="/doctor/patients/${appointment.patient_id}" 
-                               class="btn btn-outline-info"
-                               data-bs-toggle="tooltip" 
-                               data-bs-placement="top" 
-                               data-bs-title="View Patient Profile">
-                                <i class="bi bi-person-circle me-1"></i><span class="btn-text">Patient</span>
-                            </a>
+                        <div class="appt-side">
+                            <span class="badge ${statusBadgeClass}">${appointment.status}</span>
+                            ${until ? `<span class="appt-until">${until}</span>` : ''}
+                            <div class="appt-actions">
+                                ${action ? `<a href="/doctor/appointments/${appointment.id}" class="btn btn-sm btn-primary appt-act-primary" title="${action}"><i class="bi bi-play-circle me-1"></i>${action}</a>` : ''}
+                                <a href="/doctor/appointments/${appointment.id}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Appointment Details"><i class="bi bi-calendar-event"></i></a>
+                                <a href="/doctor/patients/${appointment.patient_id}" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Patient Profile"><i class="bi bi-person-circle"></i></a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -736,13 +855,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const formattedEndTime = appointment.end_time ? appointment.end_time.substring(0, 5) : '';
             
             html += `
-                <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 pb-3 mb-2" style="border-bottom: 1px solid var(--border) !important;">
+                <div class="list-group-item appt-list-item d-flex justify-content-between align-items-center border-0 mb-1">
                     <div class="flex-grow-1">
                         <h6 class="mb-1">
-                            <a href="/doctor/patients/${appointment.patient_id}" 
+                            <a href="/doctor/patients/${appointment.patient_id}"
                                class="patient-name-link"
-                               data-bs-toggle="tooltip" 
-                               data-bs-placement="top" 
+                               data-bs-toggle="tooltip"
+                               data-bs-placement="top"
                                data-bs-title="View Patient Profile">
                                 ${escapeHtml((appointment.first_name || '') + ' ' + (appointment.last_name || ''))}
                             </a>
@@ -1550,16 +1669,18 @@ document.addEventListener('DOMContentLoaded', function() {
     let dashboardCardDragging = null;
     let dashboardCardDragOffset = { x: 0, y: 0 };
     
-    // Default card order
+    // Default card order — Recent Activities sits right after the Unified Clinical
+    // Dashboard and before Missed Appointments.
     const DEFAULT_CARD_ORDER = [
         'quick-actions',
+        'patient-boards',
         'notes-dashboard',
         'unified-clinical-dashboard',
+        'recent-activity',
         'today-alerts',
         'upcoming-appointments',
-        'missed-appointments',
         'visual-analytics',
-        'recent-activity'
+        'missed-appointments'
     ];
     
     // Initialize drag and drop for dashboard cards
@@ -1849,7 +1970,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Validate order - filter out invalid IDs and ensure all default cards are included
                 const validOrder = order.filter(id => DEFAULT_CARD_ORDER.includes(id));
                 const missingCards = DEFAULT_CARD_ORDER.filter(id => !validOrder.includes(id));
-                const finalOrder = [...validOrder, ...missingCards];
+                // Insert any missing/new card (e.g. recent-activity for existing users)
+                // at its DEFAULT position — right after its default predecessor — instead
+                // of dumping it at the end, so the intended order is preserved.
+                const finalOrder = [...validOrder];
+                missingCards.forEach(id => {
+                    const defIdx = DEFAULT_CARD_ORDER.indexOf(id);
+                    let insertAt = finalOrder.length;
+                    for (let i = defIdx - 1; i >= 0; i--) {
+                        const pos = finalOrder.indexOf(DEFAULT_CARD_ORDER[i]);
+                        if (pos !== -1) { insertAt = pos + 1; break; }
+                    }
+                    finalOrder.splice(insertAt, 0, id);
+                });
                 
                 // Apply order - find the container that holds all cards
                 const cards = Array.from(document.querySelectorAll('.dashboard-card-row'));
@@ -5684,9 +5817,22 @@ function updateWeatherCard(weatherData) {
         widget.classList.toggle('weather-widget--day', !isNight);
     }
 
-    // Update weather display
-    const iconType = getWeatherIconType(weatherData.condition || 'clear');
-    iconContainer.innerHTML = renderWeatherIcon(iconType);
+    // Update weather display — animated WeatherFx icon (fallback to legacy)
+    if (window.WeatherFx) {
+        iconContainer.innerHTML = WeatherFx.iconHTML(weatherData, 72);
+    } else {
+        const iconType = getWeatherIconType(weatherData.condition || 'clear');
+        iconContainer.innerHTML = renderWeatherIcon(iconType);
+    }
+
+    // Animated scene behind the whole widget (UV + advisory live in the popover/forecast
+    // to keep this dashboard card compact and aligned with the sibling stat cards).
+    if (window.WeatherFx && widget) {
+        widget.classList.add('wx-hero');
+        const old = widget.querySelector(':scope > .wx-scene');
+        if (old) old.remove();
+        widget.insertAdjacentHTML('afterbegin', WeatherFx.sceneHTML(weatherData));
+    }
 
     if (tempElement) {
         tempElement.innerHTML = `${Math.round(weatherData.temperature || 0)}<span class="weather-deg">°</span>`;
@@ -6051,19 +6197,29 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Load weather data from cache first (fast)
-    // Then update in background after all other content loads
-    setTimeout(() => {
-        initWeatherCard(true); // Load cached data first
-    }, 100);
-    
-    // Update weather data after all dashboard content loads (last thing to load)
-    setTimeout(() => {
-        initWeatherCard(false); // Force fresh fetch
-    }, 2000); // Wait 2 seconds for other content to load first
+    // Weather loading is intentionally NON-BLOCKING so it never delays the rest of
+    // the dashboard. `/api/weather` makes a server-side external call that can be slow
+    // on a cold cache and would otherwise contend with the dashboard's own requests
+    // (especially on a single-threaded dev server). So:
+    //   1) paint instantly from the localStorage cache (no network), then
+    //   2) do the real network refresh only once the page is idle and the rest of
+    //      the dashboard has finished loading.
+    const cachedWeather = (typeof loadWeatherFromStorage === 'function') ? loadWeatherFromStorage() : null;
+    if (cachedWeather && cachedWeather.data) {
+        updateWeatherCard(cachedWeather.data);
+    }
+
+    const refreshWeather = () => initWeatherCard();
+    window.addEventListener('load', () => {
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(refreshWeather, { timeout: 5000 });
+        } else {
+            setTimeout(refreshWeather, 2500);
+        }
+    });
 
     // Refresh weather every 15 minutes
-    setInterval(() => initWeatherCard(false), 15 * 60 * 1000);
+    setInterval(refreshWeather, 15 * 60 * 1000);
 
     // Load Unified Clinical Dashboard
     loadUnifiedClinicalDashboard();

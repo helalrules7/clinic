@@ -25,7 +25,7 @@
                 <div class="mini-stat-chart" id="chartTotalAppointmentsToday"></div>
                 <div class="mini-stat-trend trend-up">
                     <i class="bi bi-calendar-day"></i>
-                    <span>Today</span>
+                    <span> Today</span>
                 </div>
             </div>
         </div>
@@ -227,27 +227,42 @@
         </div>
     </div>
 
-    <!-- Recent Activity - 50% width -->
+    <!-- At-a-glance widgets (2x2) — replaces the old Recent Activities slot here -->
     <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-4">
-        <div class="card shadow dashboard-card h-100">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">
-                    <i class="bi bi-activity me-2"></i>
-                    Recent Activities
-                </h6>
-                <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#allActivitiesModal">
-                        <i class="bi bi-list-ul me-1"></i>View All
-                    </button>
+        <div class="dash-mini-grid h-100">
+            <!-- Today's appointment status donut -->
+            <div class="dash-mini-card" id="dashStatusCard">
+                <div class="dash-mini-head"><i class="bi bi-pie-chart-fill"></i><span>Today's Status</span></div>
+                <div class="dash-mini-body" id="dashStatusBody">
+                    <div class="dash-mini-spinner"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>
                 </div>
             </div>
-            <div class="card-body">
-                <div id="recentActivityContainer">
-                    <div class="text-center py-3">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
+
+            <!-- Patients Board snapshot (per-column counts; click → full board) -->
+            <div class="dash-mini-card dash-mini-clickable" id="dashBoardCard" role="button" tabindex="0"
+                 onclick="window.location.href='/doctor/board'" title="Open Patients Board">
+                <div class="dash-mini-head"><i class="bi bi-columns-gap"></i><span>Board Snapshot</span></div>
+                <div class="dash-mini-body" id="dashBoardBody">
+                    <div class="dash-mini-spinner"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>
+                </div>
+            </div>
+
+            <!-- Today's revenue -->
+            <div class="dash-mini-card" id="dashRevenueCard">
+                <div class="dash-mini-head"><i class="bi bi-cash-coin"></i><span>Today's Revenue</span></div>
+                <div class="dash-mini-body" id="dashRevenueBody">
+                    <div class="dash-mini-spinner"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>
+                </div>
+            </div>
+
+            <!-- Quick actions -->
+            <div class="dash-mini-card" id="dashQuickCard">
+                <div class="dash-mini-head"><i class="bi bi-lightning-charge-fill"></i><span>Quick Actions</span></div>
+                <div class="dash-mini-body dash-quick-actions">
+                    <a href="/doctor/calendar" class="dash-quick-tile dqt-indigo"><i class="bi bi-calendar-plus"></i><span>New Appointment</span></a>
+                    <a href="/doctor/patients?new=1" class="dash-quick-tile dqt-teal"><i class="bi bi-person-plus"></i><span>New Patient</span></a>
+                    <a href="/doctor/board" class="dash-quick-tile dqt-violet"><i class="bi bi-columns-gap"></i><span>Open Board</span></a>
+                    <a href="/doctor/calendar" class="dash-quick-tile dqt-amber"><i class="bi bi-calendar3"></i><span>Calendar</span></a>
                 </div>
             </div>
         </div>
@@ -597,6 +612,45 @@
     </div>
 </div>
 
+
+<!-- Recent Activities (full width, reorderable) -->
+<div class="row mb-4 dashboard-card-row" data-card-id="recent-activity">
+    <div class="col-12">
+        <div class="card shadow dashboard-card" data-card-id="recent-activity">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-activity me-2"></i>
+                    Recent Activities
+                </h6>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#allActivitiesModal">
+                        <i class="bi bi-list-ul me-1"></i>View All
+                    </button>
+                    <div class="d-flex align-items-center gap-1 me-2">
+                        <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardUp('recent-activity')" title="Move up">
+                            <i class="bi bi-arrow-up"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardDown('recent-activity')" title="Move down">
+                            <i class="bi bi-arrow-down"></i>
+                        </button>
+                        <div class="dashboard-card-drag-handle" title="Drag to reorder">
+                            <i class="bi bi-grip-vertical text-muted"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="recentActivityContainer">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="row mb-4 dashboard-card-row" data-card-id="missed-appointments">
     <!-- Missed Appointments -->

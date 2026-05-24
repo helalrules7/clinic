@@ -55,6 +55,8 @@
     <link href="/app/Views/layouts/design-system/design-system.css?v=<?= file_exists(__DIR__ . '/design-system/design-system.css') ? filemtime(__DIR__ . '/design-system/design-system.css') : time() ?>" rel="stylesheet">
     <!-- Shared modal kit (center + animate + drag affordance) — after design-system so it wins -->
     <link href="/app/Views/layouts/modal-kit.css?v=<?= file_exists(__DIR__ . '/modal-kit.css') ? filemtime(__DIR__ . '/modal-kit.css') : time() ?>" rel="stylesheet">
+    <!-- Shared weather visuals (animated scene/icons + eye-care advisory + UV) -->
+    <link href="/app/Views/layouts/weather-fx.css?v=<?= file_exists(__DIR__ . '/weather-fx.css') ? filemtime(__DIR__ . '/weather-fx.css') : time() ?>" rel="stylesheet">
     <!-- Timepicker UI CSS (Local) -->
     <link href="/app/Views/layouts/timepicker-ui-main/css/main.css?v=<?= file_exists(__DIR__ . '/timepicker-ui-main/css/main.css') ? filemtime(__DIR__ . '/timepicker-ui-main/css/main.css') : time() ?>" rel="stylesheet">
     
@@ -1037,6 +1039,8 @@
         import { TimepickerUI } from "/app/Views/layouts/timepicker-ui-main/timepicker-loader.js";
         // TimepickerUI is already exposed globally by the loader
     </script>
+    <!-- Shared weather visuals/logic — must load before main.js + dashboard.js use it -->
+    <script src="/app/Views/layouts/weather-fx.js?v=<?= filemtime(__DIR__ . '/weather-fx.js') ?>"></script>
     <script src="/app/Views/layouts/main.js?v=<?= filemtime(__DIR__ . '/main.js') ?>"></script>
     <script src="/app/Views/layouts/clinics-loader.js?v=<?= filemtime(__DIR__ . '/clinics-loader.js') ?>"></script>
     

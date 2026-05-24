@@ -1308,15 +1308,29 @@
             fetchNoticeBarWeatherData(DEFAULT_LAT, DEFAULT_LON);
         }
 
-        // Initialize weather on page load
-        setTimeout(() => {
-            initNoticeBarWeatherSimple();
-        }, 100);
-
-        // Refresh weather every 15 minutes
-        setInterval(() => {
-            initNoticeBarWeatherSimple();
-        }, 15 * 60 * 1000);
+        // Initialize weather — render from cache instantly (no network), then do the
+        // real refresh only once the page is idle. `/api/weather` triggers a server-side
+        // external call that can be slow on a cold cache; deferring it keeps it from
+        // blocking the rest of the page's requests (notably the dashboard data loads).
+        (function () {
+            const cached = loadNoticeBarWeatherFromStorage();
+            if (cached && cached.data) {
+                updateNoticeBarWeather(cached.data);
+            } else {
+                updateWeatherWarnings(null);
+            }
+            const DEFAULT_LAT = 31.1117, DEFAULT_LON = 30.9397;
+            const refresh = () => fetchNoticeBarWeatherData(DEFAULT_LAT, DEFAULT_LON);
+            window.addEventListener('load', () => {
+                if ('requestIdleCallback' in window) {
+                    requestIdleCallback(refresh, { timeout: 5000 });
+                } else {
+                    setTimeout(refresh, 2500);
+                }
+            });
+            // Refresh weather every 15 minutes
+            setInterval(refresh, 15 * 60 * 1000);
+        })();
 
         // Initialize next appointment on page load
         if (document.getElementById('noticeBarNextAppointment')) {
@@ -1353,25 +1367,37 @@
             popover.className = 'clock-calendar-popover';
             popover.id = 'clockCalendarPopover';
             
-            // Check if dark mode is active
-            const isDarkMode = document.body.classList.contains('dark');
-            
-            // Generate SVG with different colors based on theme
-            // Dark mode: Original template colors with opacity (rgba)
-            // Light mode: Dark colors with opacity
-            const outerCircleStroke = isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(30, 41, 59, 0.3)';
-            const innerCircleStroke = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(30, 41, 59, 0.15)';
-            const hourMarkerStroke = isDarkMode ? 'rgba(255,255,255,0.4)' : 'rgba(30, 41, 59, 0.6)';
-            const minuteMarkerStroke = isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(30, 41, 59, 0.4)';
-            const centerDotFill = isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(30, 41, 59, 0.5)';
-            
+            // Working-hours arc (clinic day = 14:00–23:00, i.e. 2 → 11 on the dial).
+            // Angle for hour H on a 12h dial (12 at top): (H*30 - 90) deg.
+            const workArcPath = (() => {
+                const R = 122, cx = 160, cy = 160;
+                const pt = (h) => {
+                    const a = (h * 30 - 90) * Math.PI / 180;
+                    return [cx + R * Math.cos(a), cy + R * Math.sin(a)];
+                };
+                const [sx, sy] = pt(2);   // 2 PM
+                const [ex, ey] = pt(11);  // 11 PM
+                // 2→11 clockwise spans 270° → large-arc-flag=1, sweep-flag=1
+                return `M ${sx.toFixed(1)} ${sy.toFixed(1)} A ${R} ${R} 0 1 1 ${ex.toFixed(1)} ${ey.toFixed(1)}`;
+            })();
+
+            // Hour numbers (12 at top, clockwise) at radius 108
+            const hourNumbers = Array.from({length: 12}, (_, i) => {
+                const num = i === 0 ? 12 : i;
+                const angle = (i * 30 - 90) * Math.PI / 180;
+                const x = 160 + 108 * Math.cos(angle);
+                const y = 160 + 108 * Math.sin(angle);
+                return `<text class="cf-num" x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" dominant-baseline="central">${num}</text>`;
+            }).join('');
+
             popover.innerHTML = `
                 <div class="clock-calendar-popover-content">
                     <div class="clock-calendar-column clock-column">
                         <div class="clock">
                             <svg class="clock-face" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="160" cy="160" r="150" fill="none" stroke="${outerCircleStroke}" stroke-width="2"/>
-                                <circle cx="160" cy="160" r="140" fill="none" stroke="${innerCircleStroke}" stroke-width="1"/>
+                                <!-- White dial face -->
+                                <circle class="cf-bg" cx="160" cy="160" r="152"/>
+                                <circle class="cf-ring" cx="160" cy="160" r="150"/>
                                 <!-- Hour markers -->
                                 ${Array.from({length: 12}, (_, i) => {
                                     const angle = (i * 30 - 90) * Math.PI / 180;
@@ -1379,7 +1405,7 @@
                                     const y1 = 160 + 130 * Math.sin(angle);
                                     const x2 = 160 + 145 * Math.cos(angle);
                                     const y2 = 160 + 145 * Math.sin(angle);
-                                    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${hourMarkerStroke}" stroke-width="2"/>`;
+                                    return `<line class="cf-tick-h" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
                                 }).join('')}
                                 <!-- Minute markers -->
                                 ${Array.from({length: 60}, (_, i) => {
@@ -1389,16 +1415,35 @@
                                         const y1 = 160 + 135 * Math.sin(angle);
                                         const x2 = 160 + 142 * Math.cos(angle);
                                         const y2 = 160 + 142 * Math.sin(angle);
-                                        return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${minuteMarkerStroke}" stroke-width="1"/>`;
+                                        return `<line class="cf-tick-m" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
                                     }
                                     return '';
                                 }).join('')}
+                                <!-- Hour numbers -->
+                                ${hourNumbers}
+                                <!-- Working-hours arc (2 PM – 11 PM) -->
+                                <path class="work-arc" d="${workArcPath}"/>
                                 <!-- Center dot -->
-                                <circle cx="160" cy="160" r="8" fill="${centerDotFill}"/>
+                                <circle class="cf-center" cx="160" cy="160" r="8"/>
                             </svg>
                             <div class="hour hand" id="clockHour"></div>
                             <div class="minute hand" id="clockMinute"></div>
                             <div class="seconds hand" id="clockSeconds"></div>
+                        </div>
+                        <div class="clock-extras">
+                            <div class="clock-digital">
+                                <span class="clock-digital-time" id="clockDigitalTime">--:--:--</span>
+                                <span class="clock-digital-date" id="clockDigitalDate"></span>
+                            </div>
+                            <div class="clock-stats" id="clockStats">
+                                <div class="clock-stat"><span class="clock-stat-num" id="clockStatTotal">–</span><span class="clock-stat-label">Today</span></div>
+                                <div class="clock-stat is-done"><span class="clock-stat-num" id="clockStatDone">–</span><span class="clock-stat-label">Done</span></div>
+                                <div class="clock-stat is-left"><span class="clock-stat-num" id="clockStatLeft">–</span><span class="clock-stat-label">Left</span></div>
+                            </div>
+                            <div class="clock-next is-empty" id="clockNext">
+                                <i class="bi bi-hourglass-split"></i>
+                                <span class="clock-next-text">Loading…</span>
+                            </div>
                         </div>
                     </div>
                     <div class="clock-calendar-column calendar-column">
@@ -1429,13 +1474,18 @@
             
             document.body.appendChild(popover);
             clockCalendarPopover = popover;
-            
+            clockCalendarPopover._intervals = [];
+
             // Initialize clock
             initAnalogClock();
-            
-            // Initialize calendar
+            initDigitalClock();
+
+            // Initialize calendar (renders the grid; appointment dots/counts fill in async)
             initCalendar();
-            
+
+            // Load appointment data: next-appt countdown + today's stats + calendar dots
+            initClockData();
+
             // Position popover
             positionClockCalendarPopover();
             
@@ -1462,23 +1512,31 @@
         }
 
         function closeClockCalendarPopover() {
-            if (clockCalendarPopover) {
-                clockCalendarPopover.remove();
-                clockCalendarPopover = null;
+            // Resolve from the DOM too, so a stale variable can never wedge the toggle.
+            const el = clockCalendarPopover || document.getElementById('clockCalendarPopover');
+            if (el) {
+                // Clear all timers started for this popover (clock, digital, countdown)
+                if (Array.isArray(el._intervals)) {
+                    el._intervals.forEach(id => clearInterval(id));
+                }
+                el.remove();
             }
+            clockCalendarPopover = null;
             const backdrop = document.querySelector('.clock-calendar-popover-backdrop');
             if (backdrop) {
                 backdrop.remove();
             }
+            const tip = document.getElementById('calDayTooltip');
+            if (tip) tip.remove();
         }
 
         function initAnalogClock() {
             const hour = document.getElementById('clockHour');
             const minute = document.getElementById('clockMinute');
             const seconds = document.getElementById('clockSeconds');
-            
+
             if (!hour || !minute || !seconds) return;
-            
+
             function updateClock() {
                 const date_now = new Date();
                 const hr = date_now.getHours();
@@ -1493,14 +1551,129 @@
                 minute.style.transform = "rotate(" + calc_min + "deg)";
                 seconds.style.transform = "rotate(" + calc_sec + "deg)";
             }
-            
+
             updateClock();
             const clockInterval = setInterval(updateClock, 1000);
-            
-            // Store interval to clear later
-            if (clockCalendarPopover) {
-                clockCalendarPopover.dataset.clockInterval = clockInterval;
+            if (clockCalendarPopover && clockCalendarPopover._intervals) {
+                clockCalendarPopover._intervals.push(clockInterval);
             }
+        }
+
+        // Digital time + date readout under the analog clock
+        function initDigitalClock() {
+            const timeEl = document.getElementById('clockDigitalTime');
+            const dateEl = document.getElementById('clockDigitalDate');
+            if (!timeEl) return;
+
+            const tick = () => {
+                const now = new Date();
+                let h = now.getHours();
+                const m = String(now.getMinutes()).padStart(2, '0');
+                const s = String(now.getSeconds()).padStart(2, '0');
+                const ampm = h >= 12 ? 'PM' : 'AM';
+                h = h % 12 || 12;
+                timeEl.innerHTML = `${h}:${m}:${s}<span class="ampm">${ampm}</span>`;
+                if (dateEl) {
+                    dateEl.textContent = now.toLocaleDateString('en-US', {
+                        weekday: 'long', month: 'long', day: 'numeric'
+                    });
+                }
+            };
+            tick();
+            const id = setInterval(tick, 1000);
+            if (clockCalendarPopover && clockCalendarPopover._intervals) {
+                clockCalendarPopover._intervals.push(id);
+            }
+        }
+
+        // Status → dot colour (matches the calendar page badge palette)
+        const CLOCK_STATUS_COLORS = {
+            Booked: '#3b82f6',
+            CheckedIn: '#22c55e',
+            InProgress: '#f59e0b',
+            Completed: '#06b6d4',
+            Rescheduled: '#a78bfa'
+        };
+        const CLOCK_STATUS_LABELS = {
+            Booked: 'Booked',
+            CheckedIn: 'Checked In',
+            InProgress: 'In Progress',
+            Completed: 'Completed',
+            Rescheduled: 'Rescheduled'
+        };
+
+        function clockFmtTime(t) {
+            if (!t) return '';
+            const [hh, mm] = t.split(':');
+            let h = parseInt(hh, 10);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${mm} ${ampm}`;
+        }
+
+        // Rich, colour-organised tooltip for a calendar day's appointments
+        function showCalDayTooltip(li, dateStr, appts) {
+            if (!appts || !appts.length) return;
+            let tip = document.getElementById('calDayTooltip');
+            if (!tip) {
+                tip = document.createElement('div');
+                tip.id = 'calDayTooltip';
+                tip.className = 'cal-day-tooltip';
+                document.body.appendChild(tip);
+            }
+            const d = new Date(dateStr + 'T12:00:00');
+            const head = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            const sorted = appts.slice().sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
+            const MAX = 8;
+            const rows = sorted.slice(0, MAX).map(a => {
+                const c = CLOCK_STATUS_COLORS[a.status] || '#94a3b8';
+                const label = CLOCK_STATUS_LABELS[a.status] || a.status || '';
+                const name = a.patient_name || 'Patient';
+                return `<div class="cal-tip-item" style="border-left-color:${c}">`
+                    + `<span class="cal-tip-time">${clockFmtTime(a.start_time)}</span>`
+                    + `<span class="cal-tip-name">${escapeHtml(name)}</span>`
+                    + `<span class="cal-tip-status" style="color:${c}">${escapeHtml(label)}</span>`
+                    + `</div>`;
+            }).join('');
+            const more = sorted.length > MAX ? `<div class="cal-tip-more">+${sorted.length - MAX} more</div>` : '';
+            tip.innerHTML = `<div class="cal-tip-head"><span>${head}</span>`
+                + `<span class="cal-tip-count">${appts.length} appt${appts.length > 1 ? 's' : ''}</span></div>`
+                + `<div class="cal-tip-list">${rows}${more}</div>`;
+            tip.style.display = 'block';
+
+            // Position above the cell, flip below if there's no room
+            const r = li.getBoundingClientRect();
+            const tr = tip.getBoundingClientRect();
+            let top = r.top - tr.height - 10;
+            if (top < 8) top = r.bottom + 10;
+            let left = r.left + r.width / 2 - tr.width / 2;
+            left = Math.max(8, Math.min(left, window.innerWidth - tr.width - 8));
+            tip.style.top = top + 'px';
+            tip.style.left = left + 'px';
+        }
+
+        function hideCalDayTooltip() {
+            const tip = document.getElementById('calDayTooltip');
+            if (tip) tip.style.display = 'none';
+        }
+
+        // Fetch + cache a month's appointment data (organizer/month → dataByDate)
+        function getClockMonthData(year, month1) {
+            // month1 is 1-based
+            if (!clockCalendarPopover) return Promise.resolve({});
+            if (!clockCalendarPopover._monthCache) clockCalendarPopover._monthCache = {};
+            const key = `${year}-${month1}`;
+            if (clockCalendarPopover._monthCache[key]) {
+                return Promise.resolve(clockCalendarPopover._monthCache[key]);
+            }
+            return fetch(`/api/organizer/month?year=${year}&month=${month1}`)
+                .then(r => r.json())
+                .then(res => {
+                    const byDate = (res && res.ok && res.data && res.data.dataByDate) ? res.data.dataByDate : {};
+                    clockCalendarPopover._monthCache[key] = byDate;
+                    return byDate;
+                })
+                .catch(() => ({}));
         }
 
         function initCalendar() {
@@ -1519,7 +1692,20 @@
                 "July", "August", "September", "October", "November", "December"
             ];
 
-            const manipulate = () => {
+            const pad = (n) => String(n).padStart(2, '0');
+
+            // Build the dots + count markup for a given day's appointments
+            const dayMarkup = (appts) => {
+                const count = appts.length;
+                if (!count) return '';
+                const dots = appts.slice(0, 3).map(a => {
+                    const c = CLOCK_STATUS_COLORS[a.status] || '#94a3b8';
+                    return `<span class="cal-dot" style="background:${c}"></span>`;
+                }).join('');
+                return `<span class="cal-dots">${dots}</span><span class="cal-count">${count > 99 ? '99+' : count}</span>`;
+            };
+
+            const render = (byDate) => {
                 let dayone = new Date(year, month, 1).getDay();
                 let lastdate = new Date(year, month + 1, 0).getDate();
                 let dayend = new Date(year, month, lastdate).getDay();
@@ -1531,13 +1717,19 @@
                     lit += `<li class="inactive">${monthlastdate - i + 1}</li>`;
                 }
 
+                const realNow = new Date();
                 for (let i = 1; i <= lastdate; i++) {
-                    let isToday = i === date.getDate()
-                        && month === new Date().getMonth()
-                        && year === new Date().getFullYear()
-                        ? "active"
-                        : "";
-                    lit += `<li class="${isToday}">${i}</li>`;
+                    const isToday = i === realNow.getDate()
+                        && month === realNow.getMonth()
+                        && year === realNow.getFullYear();
+                    const dateStr = `${year}-${pad(month + 1)}-${pad(i)}`;
+                    const appts = (byDate[dateStr] && byDate[dateStr].appointments) ? byDate[dateStr].appointments : [];
+                    const classes = ['cal-day'];
+                    if (isToday) classes.push('active');
+                    if (appts.length) classes.push('has-appts');
+                    const title = appts.length ? `${appts.length} appointment${appts.length > 1 ? 's' : ''}` : 'No appointments';
+                    lit += `<li class="${classes.join(' ')}" data-date="${dateStr}" title="${title}">`
+                        + `${dayMarkup(appts)}<span class="cal-daynum">${i}</span></li>`;
                 }
 
                 for (let i = dayend; i < 6; i++) {
@@ -1546,9 +1738,28 @@
 
                 currdate.innerText = `${months[month]} ${year}`;
                 day.innerHTML = lit;
+
+                // Day click → open that day in the full calendar; hover → rich tooltip
+                day.querySelectorAll('li.cal-day').forEach(li => {
+                    const d = li.getAttribute('data-date');
+                    const appts = (byDate[d] && byDate[d].appointments) ? byDate[d].appointments : [];
+                    li.addEventListener('click', () => {
+                        if (d) window.location.href = `/doctor/calendar?date=${d}`;
+                    });
+                    if (appts.length) {
+                        li.addEventListener('mouseenter', () => showCalDayTooltip(li, d, appts));
+                        li.addEventListener('mouseleave', hideCalDayTooltip);
+                    }
+                });
             };
 
-            manipulate();
+            const loadMonth = () => {
+                // Render immediately (no dots) so navigation feels instant, then fill in
+                render({});
+                getClockMonthData(year, month + 1).then(render);
+            };
+
+            loadMonth();
 
             prenexIcons.forEach(icon => {
                 icon.addEventListener("click", () => {
@@ -1562,16 +1773,93 @@
                         date = new Date();
                     }
 
-                    manipulate();
+                    loadMonth();
                 });
             });
+        }
+
+        // Today's stats (Total / Done / Left) + next-appointment live countdown
+        function initClockData() {
+            // --- Today's stats from the current month's data ---
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+            getClockMonthData(now.getFullYear(), now.getMonth() + 1).then(byDate => {
+                const appts = (byDate[todayStr] && byDate[todayStr].appointments) ? byDate[todayStr].appointments : [];
+                const total = appts.length;
+                const done = appts.filter(a => a.status === 'Completed').length;
+                const left = total - done;
+                const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+                set('clockStatTotal', total);
+                set('clockStatDone', done);
+                set('clockStatLeft', left);
+            });
+
+            // --- Next appointment countdown (live) ---
+            const nextEl = document.getElementById('clockNext');
+            if (!nextEl) return;
+
+            const renderEmpty = (msg) => {
+                nextEl.classList.add('is-empty');
+                nextEl.style.cursor = '';
+                nextEl.onclick = null;
+                nextEl.innerHTML = `<i class="bi bi-calendar-check"></i><span class="clock-next-text">${msg}</span>`;
+            };
+
+            fetch('/api/upcoming-appointments?page=1&per_page=50')
+                .then(r => r.json())
+                .then(res => {
+                    const items = (res && res.ok && res.data && res.data.items) ? res.data.items : [];
+                    // first item whose full datetime is still in the future
+                    let next = null;
+                    for (const a of items) {
+                        if (!a.date || !a.start_time) continue;
+                        const dt = new Date(`${a.date}T${a.start_time}`);
+                        if (dt.getTime() > Date.now()) { next = { dt, a }; break; }
+                    }
+                    if (!next) { renderEmpty('No upcoming appointments'); return; }
+
+                    const name = `${next.a.first_name || ''} ${next.a.last_name || ''}`.trim() || 'Patient';
+                    const apptId = next.a.id;
+
+                    const fmtEta = (ms) => {
+                        if (ms <= 0) return 'now';
+                        const mins = Math.round(ms / 60000);
+                        if (mins < 60) return `in ${mins} min`;
+                        const hrs = Math.floor(mins / 60);
+                        const rem = mins % 60;
+                        if (hrs < 24) return rem ? `in ${hrs}h ${rem}m` : `in ${hrs}h`;
+                        const days = Math.floor(hrs / 24);
+                        return `in ${days} day${days > 1 ? 's' : ''}`;
+                    };
+
+                    const paint = () => {
+                        const eta = fmtEta(next.dt.getTime() - Date.now());
+                        nextEl.classList.remove('is-empty');
+                        nextEl.innerHTML = `<i class="bi bi-hourglass-split"></i>`
+                            + `<span class="clock-next-text">Next: <span class="clock-next-name">${escapeHtml(name)}</span> `
+                            + `<span class="clock-next-eta">${eta}</span></span>`;
+                    };
+                    paint();
+                    if (apptId) {
+                        nextEl.style.cursor = 'pointer';
+                        nextEl.onclick = () => { window.location.href = `/doctor/appointments/${apptId}`; };
+                    }
+                    const id = setInterval(paint, 1000);
+                    if (clockCalendarPopover && clockCalendarPopover._intervals) {
+                        clockCalendarPopover._intervals.push(id);
+                    }
+                })
+                .catch(() => renderEmpty('Error loading appointments'));
         }
 
         // Open popover on click
         if (noticeBarDateTimeColumn) {
             noticeBarDateTimeColumn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (clockCalendarPopover) {
+                // Toggle based on what's actually in the DOM (not just the variable),
+                // so the first click always opens even if the variable went stale.
+                if (document.getElementById('clockCalendarPopover')) {
                     closeClockCalendarPopover();
                 } else {
                     createClockCalendarPopover();
@@ -1613,7 +1901,7 @@
                     <div class="weather-popover-body">
                         <div class="weather-card-inner weather-popover-clickable" title="View 5-day forecast">
                             <!-- Weather Section -->
-                            <div class="weather-main">
+                            <div class="weather-main wx-hero">
                                 <div class="weather-icon-container" id="weatherPopoverIconContainer">
                                     <div class="weather-icon-loading">
                                         <div class="spinner-border spinner-border-sm text-light" role="status">
@@ -1661,11 +1949,17 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- UV index meter -->
+                            <div id="weatherPopoverUv" class="weather-popover-uv"></div>
+
+                            <!-- Eye-care advisory -->
+                            <div id="weatherPopoverAdvisory" class="weather-popover-advisory"></div>
                         </div>
                     </div>
                 </div>
             `;
-            
+
             document.body.appendChild(popover);
             weatherPopover = popover;
             
@@ -1743,16 +2037,34 @@
 
             if (!iconContainer) return;
 
-            // Use dashboard.js functions if available, otherwise use notice bar functions
-            let iconType, largeIcon;
-            if (typeof getWeatherIconType !== 'undefined' && typeof renderWeatherIcon !== 'undefined') {
-                iconType = getWeatherIconType(weatherData.condition || 'clear');
-                largeIcon = renderWeatherIcon(iconType).replace('style="width:16px;height:16px;"', 'style="width:120px;height:120px;"');
+            // Animated WeatherFx icon (falls back to the legacy icon if unavailable)
+            if (window.WeatherFx) {
+                iconContainer.innerHTML = WeatherFx.iconHTML(weatherData, 110);
             } else {
-                iconType = getNoticeBarWeatherIconType(weatherData.condition || 'clear');
-                largeIcon = renderNoticeBarWeatherIcon(iconType).replace('style="width:16px;height:16px;"', 'style="width:120px;height:120px;"');
+                let iconType, largeIcon;
+                if (typeof getWeatherIconType !== 'undefined' && typeof renderWeatherIcon !== 'undefined') {
+                    iconType = getWeatherIconType(weatherData.condition || 'clear');
+                    largeIcon = renderWeatherIcon(iconType).replace('style="width:16px;height:16px;"', 'style="width:120px;height:120px;"');
+                } else {
+                    iconType = getNoticeBarWeatherIconType(weatherData.condition || 'clear');
+                    largeIcon = renderNoticeBarWeatherIcon(iconType).replace('style="width:16px;height:16px;"', 'style="width:120px;height:120px;"');
+                }
+                iconContainer.innerHTML = largeIcon;
             }
-            iconContainer.innerHTML = largeIcon;
+
+            // Animated scene background behind the hero + eye-care advisory + UV meter
+            if (window.WeatherFx) {
+                const hero = document.querySelector('#weatherPopover .weather-main');
+                if (hero) {
+                    const old = hero.querySelector('.wx-scene');
+                    if (old) old.remove();
+                    hero.insertAdjacentHTML('afterbegin', WeatherFx.sceneHTML(weatherData));
+                }
+                const uvBox = document.getElementById('weatherPopoverUv');
+                if (uvBox) uvBox.innerHTML = WeatherFx.uvMeterHTML(weatherData.uvIndex);
+                const advBox = document.getElementById('weatherPopoverAdvisory');
+                if (advBox) advBox.innerHTML = WeatherFx.advisoryHTML(weatherData);
+            }
 
             if (tempElement) {
                 tempElement.textContent = `${Math.round(weatherData.temperature || 0)}°C`;
@@ -2174,20 +2486,29 @@
             const isNight = (cur.isDay !== undefined && cur.isDay !== null) ? (Number(cur.isDay) === 0) : isNoticeBarNightTime();
             const nowStr = new Date().toLocaleString('en-US', { weekday: 'long', hour: 'numeric', minute: '2-digit' });
 
+            const fx = window.WeatherFx;
+
             let days = '';
             forecast.forEach((day, i) => {
                 const d = new Date(day.date);
                 const name = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
-                days += `<div class="wf-day ${i === 0 ? 'is-today' : ''}"><div class="wf-day-name">${name}</div><div class="wf-day-icon">${wfIcon(day.condition, false)}</div><div class="wf-day-hi">${Math.round(day.tempMax)}°</div><div class="wf-day-lo">${Math.round(day.tempMin)}°</div></div>`;
+                const dayIcon = fx ? fx.iconHTML({ condition: day.condition, isDay: 1 }, 36) : wfIcon(day.condition, false);
+                days += `<div class="wf-day ${i === 0 ? 'is-today' : ''}"><div class="wf-day-name">${name}</div><div class="wf-day-icon">${dayIcon}</div><div class="wf-day-hi">${Math.round(day.tempMax)}°</div><div class="wf-day-lo">${Math.round(day.tempMin)}°</div></div>`;
             });
             const rain = (cur.precipitation !== null && cur.precipitation !== undefined)
                 ? `<div class="wf-rain"><i class="bi bi-cloud-rain"></i> Rain: ${cur.precipitation}%</div>` : '';
             const sun = (cur.sunrise || cur.sunset)
                 ? `<div class="wf-sun"><span class="wf-sun-item"><i class="bi bi-sunrise"></i> ${wfFormatTime(cur.sunrise)}</span><span class="wf-sun-mid">${wfDayLength(cur.sunrise, cur.sunset)}</span><span class="wf-sun-item">${wfFormatTime(cur.sunset)} <i class="bi bi-sunset"></i></span></div>` : '';
 
+            const curIcon = fx ? fx.iconHTML(cur, 64) : wfIcon(cur.condition, isNight);
+            const scene = fx ? fx.sceneHTML(cur) : '';
+            const uv = (fx && cur.uvIndex != null) ? `<div class="wf-uv">${fx.uvMeterHTML(cur.uvIndex)}</div>` : '';
+            const advisory = fx ? `<div class="wf-advisory">${fx.advisoryHTML(cur)}</div>` : '';
+
             body.innerHTML = wfCloseBtn() + `
-                <div class="wf-current-top">
-                    <div class="wf-current-icon">${wfIcon(cur.condition, isNight)}</div>
+                <div class="wf-current-top wx-hero">
+                    ${scene}
+                    <div class="wf-current-icon">${curIcon}</div>
                     <div class="wf-current-info">
                         <div class="wf-current-time">${nowStr}</div>
                         <div class="wf-current-main">${cur.condition || 'Clear'} ${Math.round(cur.temperature || 0)}°C</div>
@@ -2200,6 +2521,8 @@
                     <span><span class="label">Humidity:</span> <span class="value">${cur.humidity != null ? cur.humidity + '%' : '--'}</span></span>
                     <span><span class="label">Wind:</span> <span class="value">${cur.windSpeed != null ? cur.windSpeed + ' km/h' : '--'}</span></span>
                 </div>
+                ${uv}
+                ${advisory}
                 <div class="wf-forecast">${days}</div>`;
             wfBindClose();
         }
@@ -2351,11 +2674,29 @@
             const container = document.getElementById('appointmentsPopoverBody');
             if (!container) return;
 
+            const APPT_C = { Booked: '#3b82f6', CheckedIn: '#22c55e', InProgress: '#f59e0b', Completed: '#06b6d4', Rescheduled: '#a855f7' };
+            const apptVIcon = (t) => ({ New: 'bi-stars', FollowUp: 'bi-arrow-repeat', Procedure: 'bi-clipboard2-pulse' }[t] || 'bi-calendar2-event');
+            const apptUntil = (ds, st) => {
+                if (!ds || !st) return '';
+                const ms = new Date(`${ds}T${st}`).getTime() - Date.now();
+                if (ms <= 0) return '';
+                const mins = Math.round(ms / 60000);
+                if (mins < 60) return `in ${mins} min`;
+                const hrs = Math.floor(mins / 60), rem = mins % 60;
+                if (hrs < 24) return rem ? `in ${hrs}h ${rem}m` : `in ${hrs}h`;
+                return `in ${Math.floor(hrs / 24)}d`;
+            };
+
             let html = '<div class="appointments-list">';
-            
-            appointments.forEach(appointment => {
+
+            appointments.forEach((appointment, idx) => {
                 const patientName = `${appointment.first_name || ''} ${appointment.last_name || ''}`.trim() || 'Unknown';
-                
+                const sColor = APPT_C[appointment.status] || '#64748b';
+                const initials = (((appointment.first_name || '').charAt(0) + (appointment.last_name || '').charAt(0)).toUpperCase()) || '?';
+                const until = apptUntil(appointment.date, appointment.start_time);
+                const isNext = idx === 0 && until !== '';
+                const vIcon = apptVIcon(appointment.visit_type);
+
                 // Format time (convert 24h to 12h format)
                 let timeStr = '';
                 if (appointment.start_time) {
@@ -2393,16 +2734,20 @@
                 const calendarDate = appointment.date || '';
                 
                 html += `
-                    <div class="appointment-item" data-appointment-id="${appointment.id}">
+                    <div class="appointment-item ${isNext ? 'is-next' : ''}" data-appointment-id="${appointment.id}" style="--appt-color:${sColor}">
+                        <div class="appointment-item-avatar" style="background:${sColor}">${escapeHtml(initials)}</div>
                         <div class="appointment-item-content" onclick="window.location.href='/doctor/appointments/${appointment.id}'">
                             <div class="appointment-item-header">
-                                <div class="appointment-item-patient">${escapeHtml(patientName)}</div>
+                                <div class="appointment-item-patient">${escapeHtml(patientName)}${isNext ? '<span class="appt-pop-next"><i class="bi bi-stars"></i> Next up</span>' : ''}</div>
                                 <div class="appointment-item-time">${timeStr}</div>
                             </div>
-                            <div class="appointment-item-date">${dateStr}</div>
-                            ${appointment.visit_type ? `<div class="appointment-item-type">${escapeHtml(appointment.visit_type)}</div>` : ''}
+                            <div class="appointment-item-meta">
+                                <span class="appointment-item-date"><i class="bi bi-calendar3"></i> ${dateStr}</span>
+                                ${appointment.visit_type ? `<span class="appointment-item-type"><i class="bi ${vIcon}"></i> ${escapeHtml(appointment.visit_type)}</span>` : ''}
+                                ${until ? `<span class="appt-pop-until">${until}</span>` : ''}
+                            </div>
                         </div>
-                        <button class="appointment-item-calendar-btn" 
+                        <button class="appointment-item-calendar-btn"
                                 onclick="event.stopPropagation(); window.location.href='/doctor/calendar?date=${calendarDate}&appointment_id=${appointment.id}'"
                                 data-bs-toggle="tooltip"
                                 data-bs-placement="top"

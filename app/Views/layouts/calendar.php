@@ -399,6 +399,16 @@ let currentDate = new Date();
 // Ensure currentDate is set to today at noon to avoid timezone issues
 const today = new Date();
 currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0);
+
+// Honor a ?date=YYYY-MM-DD query param (e.g. clicking a day in the clock popover)
+(function () {
+    const qsDate = new URLSearchParams(window.location.search).get('date');
+    if (qsDate && /^\d{4}-\d{2}-\d{2}$/.test(qsDate)) {
+        const p = qsDate.split('-').map(Number);
+        const d = new Date(p[0], p[1] - 1, p[2], 12, 0, 0);
+        if (!isNaN(d.getTime())) currentDate = d;
+    }
+})();
 let selectedAppointment = null;
 let refreshInterval;
 let preselectedPatient = <?= $preselectedPatient ? json_encode($preselectedPatient) : 'null' ?>;

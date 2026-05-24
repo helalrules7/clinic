@@ -5478,6 +5478,19 @@ canvas {
     box-shadow: inset 0 0 0 1px var(--glass-border);
 }
 
+/* Appointment list rows (Upcoming / Missed): a little padding so the rounded
+   hover highlight has breathing room instead of a flush full-width band. */
+.appt-list-item {
+    padding: 0.6rem 0.75rem !important;
+    border-radius: 12px !important;
+    transition: background-color .15s ease, box-shadow .15s ease;
+}
+.appt-list-item:hover {
+    background-color: var(--ds-primary-soft) !important;
+    box-shadow: inset 0 0 0 1px var(--glass-border);
+    border-radius: 12px !important;
+}
+
 /* --- Charts on glass: transparent container, glass-in-glass chart cards --- */
 .chart-container {
     background-color: transparent !important;
@@ -5981,3 +5994,176 @@ canvas {
 
 /* Whole weather card is clickable → opens forecast (2026-05-23) */
 .weather-widget { cursor: pointer; }
+
+/* ============================================================================
+   Dashboard at-a-glance mini widgets (2x2 grid next to Upcoming Appointments)
+   ============================================================================ */
+.dash-mini-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 1fr;
+    gap: 1rem;
+}
+.dash-mini-card {
+    position: relative;
+    overflow: hidden;
+    padding: 16px 18px;
+    border-radius: var(--r-xl, 18px);
+    background:
+        linear-gradient(155deg, color-mix(in srgb, var(--dash-accent) 22%, transparent) 0%, transparent 60%),
+        var(--glass-bg-strong);
+    -webkit-backdrop-filter: blur(18px) saturate(165%);
+    backdrop-filter: blur(18px) saturate(165%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    display: flex;
+    flex-direction: column;
+    min-height: 168px;
+    transition: transform .2s var(--ds-ease, ease), box-shadow .2s ease, border-color .2s ease;
+    animation: dashMiniIn .45s cubic-bezier(.22,.61,.36,1) both;
+    --dash-accent: #6366f1;
+}
+/* colour glow blob (top-right) — same language as the clinical tiles */
+.dash-mini-card::before {
+    content: ""; position: absolute; inset-block-start: -38%; inset-inline-end: -18%;
+    width: 150px; height: 150px; border-radius: 50%;
+    background: radial-gradient(circle, var(--dash-accent) 0%, transparent 70%);
+    opacity: .20; filter: blur(6px); pointer-events: none;
+    transition: opacity .25s ease, transform .25s ease;
+}
+/* bottom accent bar */
+.dash-mini-card::after {
+    content: ""; position: absolute; inset-inline: 0; inset-block-end: 0; height: 3px;
+    background: linear-gradient(90deg, var(--dash-accent), transparent); opacity: .9;
+}
+.dash-mini-card > * { position: relative; z-index: 1; }
+.dash-mini-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--glass-shadow-lg);
+    border-color: color-mix(in srgb, var(--dash-accent) 40%, var(--glass-border));
+}
+.dash-mini-card:hover::before { opacity: .38; transform: scale(1.12); }
+#dashStatusCard   { --dash-accent: #6366F1; animation-delay: .02s; }
+#dashBoardCard    { --dash-accent: #8B5CF6; animation-delay: .08s; }
+#dashRevenueCard  { --dash-accent: #14B8A6; animation-delay: .14s; }
+#dashQuickCard    { --dash-accent: #F59E0B; animation-delay: .20s; }
+.dash-mini-clickable { cursor: pointer; }
+@keyframes dashMiniIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.dash-mini-head {
+    display: flex; align-items: center; gap: 11px;
+    font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--muted); margin-bottom: .9rem;
+}
+.dash-mini-head i {
+    width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    color: var(--dash-accent);
+    background: color-mix(in srgb, var(--dash-accent) 16%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dash-accent) 25%, transparent);
+}
+.dash-mini-body { flex: 1; display: flex; flex-direction: column; min-height: 0; justify-content: center; }
+.dash-mini-spinner { flex: 1; display: grid; place-items: center; }
+.dash-mini-empty {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0.4rem; color: var(--muted); font-size: 0.78rem; text-align: center;
+}
+.dash-mini-empty i { font-size: 1.5rem; opacity: 0.6; }
+
+/* Status donut */
+.dash-donut-wrap { display: flex; justify-content: center; }
+.dash-donut { width: 116px; height: 116px; filter: drop-shadow(0 4px 12px rgba(15,23,42,0.3)); animation: dashDonutIn .5s ease both; }
+@keyframes dashDonutIn { from { opacity: 0; transform: scale(.85) rotate(-12deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+.dash-donut-seg { transition: stroke-dasharray .7s cubic-bezier(.22,.61,.36,1); }
+.dash-donut-num { font-size: 30px; font-weight: 800; fill: var(--text); }
+.dash-donut-sub { font-size: 10px; fill: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.dash-legend { display: flex; flex-direction: column; gap: 0.2rem; margin-top: 0.5rem; }
+.dash-legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; }
+.dash-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dash-legend-lbl { color: var(--muted); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dash-legend-val { color: var(--text); font-weight: 700; }
+
+/* Board snapshot */
+.dash-board-list { display: flex; flex-direction: column; gap: 0.5rem; justify-content: center; flex: 1; }
+.dash-board-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.5rem; }
+.dash-board-name { display: flex; align-items: center; gap: 0.35rem; font-size: 0.74rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92px; }
+.dash-board-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dash-board-bar { height: 6px; border-radius: 99px; background: var(--bg); overflow: hidden; }
+.dash-board-fill { display: block; height: 100%; border-radius: 99px; transition: width .6s ease; }
+.dash-board-count { font-size: 0.78rem; font-weight: 700; color: var(--text); min-width: 16px; text-align: right; }
+
+/* Revenue */
+.dash-rev-main { display: flex; align-items: baseline; gap: 0.35rem; margin-top: 0.2rem; }
+.dash-rev-amt {
+    font-size: 2.9rem; font-weight: 800; line-height: 1;
+    background: linear-gradient(135deg, #14b8a6, #0ea5e9);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.dash-rev-cur { font-size: 0.9rem; font-weight: 700; color: var(--muted); }
+.dash-rev-sub { font-size: 0.82rem; color: var(--muted); margin-top: 0.2rem; }
+.dash-rev-foot { margin-top: auto; padding-top: 0.6rem; display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.72rem; color: var(--muted); }
+.dash-rev-foot i { color: var(--accent, #6366f1); margin-right: 0.25rem; }
+
+/* Quick actions */
+.dash-quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; flex: 1; }
+.dash-quick-tile {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem;
+    border-radius: 12px; padding: 0.5rem 0.3rem; text-decoration: none;
+    color: #fff; font-size: 0.7rem; font-weight: 600; text-align: center;
+    transition: transform .15s ease, filter .15s ease;
+}
+.dash-quick-tile i { font-size: 1.1rem; }
+.dash-quick-tile:hover { transform: translateY(-2px); filter: brightness(1.08); color: #fff; }
+.dqt-indigo { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+.dqt-teal   { background: linear-gradient(135deg, #14b8a6, #0d9488); }
+.dqt-violet { background: linear-gradient(135deg, #a855f7, #7c3aed); }
+.dqt-amber  { background: linear-gradient(135deg, #f59e0b, #d97706); }
+
+@media (max-width: 575px) {
+    .dash-mini-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================================================================
+   Upcoming Appointments — enhanced item cards
+   ============================================================================ */
+.appt-card {
+    position: relative;
+    border-left: 3px solid var(--appt-color, var(--border)) !important;
+}
+.appt-card.appt-next {
+    background: var(--ds-primary-soft) !important;
+    box-shadow: inset 0 0 0 1px var(--appt-color);
+}
+.appt-row { display: flex; align-items: flex-start; gap: 0.75rem; }
+.appt-avatar {
+    width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+    display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+}
+.appt-main { flex: 1; min-width: 0; }
+.appt-name-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.appt-name { font-weight: 700; color: var(--text); text-decoration: none; font-size: 0.95rem; }
+.appt-name:hover { color: var(--accent, #6366f1); }
+.appt-nextup-chip {
+    display: inline-flex; align-items: center; gap: 0.2rem;
+    background: var(--accent, #6366f1); color: #fff;
+    font-size: 0.62rem; font-weight: 700; letter-spacing: .03em;
+    padding: 1px 7px; border-radius: 99px;
+}
+.appt-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem; font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
+.appt-meta-time { cursor: pointer; color: var(--accent, #6366f1); white-space: nowrap; }
+.appt-meta-time:hover { text-decoration: underline; }
+.appt-meta-sep { opacity: 0.45; }
+.appt-meta-vtype { display: inline-flex; align-items: center; gap: 0.2rem; white-space: nowrap; }
+.appt-side { display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; flex-shrink: 0; }
+.appt-until { font-size: 0.72rem; font-weight: 700; color: var(--accent, #6366f1); white-space: nowrap; }
+.appt-actions { display: flex; gap: 0.3rem; }
+.appt-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0.7rem; padding: 2rem 1rem; color: var(--muted); text-align: center;
+}
+.appt-empty i { font-size: 2.6rem; opacity: 0.5; }
+.appt-empty p { margin: 0; }
+@media (max-width: 575px) {
+    .appt-actions .btn-text { display: none; }
+}

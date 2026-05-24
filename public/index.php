@@ -319,6 +319,7 @@ try {
     $router->post('/api/board/boards/{id}/patients',           'BoardController@addPatient');
     $router->delete('/api/board/boards/{id}/patients/{pid}',   'BoardController@removePatient');
     $router->put('/api/board/patients/{pid}',                  'BoardController@quickEditPatient');
+    $router->get('/api/board/snapshot',                 'BoardController@snapshot');
     $router->get('/api/board/columns',                  'BoardController@listColumns');
     $router->post('/api/board/columns',                 'BoardController@createColumn');
     $router->put('/api/board/columns/{id}',             'BoardController@updateColumn');

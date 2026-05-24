@@ -970,28 +970,26 @@ if ($status === 'completed') {
         <!-- Medical Attachments -->
         <div class="card mb-4">
             <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <!-- LEFT: title + bulk actions (select / delete) stay in place -->
-                    <div class="d-flex align-items-center gap-3">
-                        <h5 class="mb-0">
-                            <i class="bi bi-paperclip me-2"></i>
-                            Images & Attachments
-                        </h5>
-                        <div class="btn-group btn-group-sm" role="group" aria-label="Bulk actions">
-                            <button class="btn btn-sm btn-outline-secondary" type="button" id="attachmentsSelectAllBtn"
-                                    onclick="attachmentsToggleSelectAll()"
-                                    title="Select all on this page">
-                                <i class="bi bi-check2-square"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" type="button" id="attachmentsDeleteSelectedBtn"
-                                    onclick="attachmentsConfirmDeleteSelected()" disabled
-                                    title="Delete selected items">
-                                <i class="bi bi-trash"></i>
-                                <span class="badge bg-danger ms-1 d-none" id="attachmentsSelectedBadge">0</span>
-                            </button>
-                        </div>
+                <!-- Row 1: icon + title -->
+                <h5 class="mb-3">
+                    <i class="bi bi-paperclip me-2"></i>
+                    Images & Attachments
+                </h5>
+                <!-- Row 2: select/delete at the far left, add-attachment actions at the far right -->
+                <div class="d-flex justify-content-between align-items-center gap-2">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Bulk actions">
+                        <button class="btn btn-sm btn-outline-secondary" type="button" id="attachmentsSelectAllBtn"
+                                onclick="attachmentsToggleSelectAll()"
+                                title="Select all on this page">
+                            <i class="bi bi-check2-square"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" type="button" id="attachmentsDeleteSelectedBtn"
+                                onclick="attachmentsConfirmDeleteSelected()" disabled
+                                title="Delete selected items">
+                            <i class="bi bi-trash"></i>
+                            <span class="badge bg-danger ms-1 d-none" id="attachmentsSelectedBadge">0</span>
+                        </button>
                     </div>
-                    <!-- RIGHT: add-attachment actions pushed to the right edge of the header -->
                     <div class="btn-group btn-group-sm" role="group" aria-label="Add attachment">
                         <button class="btn btn-sm btn-primary" onclick="showUploadModal(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)" title="Upload an existing file">
                             <i class="bi bi-cloud-upload me-1"></i>Upload

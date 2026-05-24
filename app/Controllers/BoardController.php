@@ -106,6 +106,33 @@ class BoardController
         $this->json(['ok' => true, 'data' => $cols]);
     }
 
+    /**
+     * Lightweight per-column card counts for the dashboard "Board Snapshot" widget.
+     * One query: columns LEFT JOIN assignments, grouped.
+     */
+    public function snapshot()
+    {
+        $this->requireApi();
+        $stmt = $this->pdo->query("
+            SELECT c.id, c.name, c.color, c.sort_order,
+                   COUNT(a.patient_id) AS card_count
+            FROM patient_board_columns c
+            LEFT JOIN patient_board_assignments a ON a.column_id = c.id
+            GROUP BY c.id, c.name, c.color, c.sort_order
+            ORDER BY c.sort_order ASC, c.id ASC
+        ");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $cols = array_map(function ($r) {
+            return [
+                'id'    => (int) $r['id'],
+                'name'  => $r['name'],
+                'color' => $r['color'] ?: '#64748b',
+                'count' => (int) $r['card_count'],
+            ];
+        }, $rows);
+        $this->json(['ok' => true, 'data' => $cols]);
+    }
+
     public function createColumn()
     {
         $this->requireApi(['doctor', 'admin']);

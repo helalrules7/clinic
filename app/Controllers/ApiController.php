@@ -10597,7 +10597,7 @@ class ApiController
             // provides is_day, sunrise/sunset and precipitation probability — the
             // fields the redesigned forecast window needs).
             $url = "https://api.open-meteo.com/v1/forecast?latitude={$lat}&longitude={$lon}"
-                 . "&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day"
+                 . "&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,uv_index,is_day"
                  . "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset"
                  . "&timezone=auto&forecast_days=7";
 
@@ -10653,6 +10653,7 @@ class ApiController
                 'condition' => $this->mapWeatherCodeToCondition($curCode),
                 'humidity' => round($cur['relative_humidity_2m'] ?? 0),
                 'windSpeed' => round($cur['wind_speed_10m'] ?? 0),
+                'uvIndex' => round($cur['uv_index'] ?? 0),
                 'isDay' => (int)($cur['is_day'] ?? 1),
                 'location' => $this->getLocationNameFromCoordinates($lat, $lon),
                 'sunrise' => $d['sunrise'][0] ?? null,
