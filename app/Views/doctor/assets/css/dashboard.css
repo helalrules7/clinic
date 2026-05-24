@@ -6084,7 +6084,7 @@ canvas {
 
 /* Board snapshot */
 .dash-board-list { display: flex; flex-direction: column; gap: 0.5rem; justify-content: center; flex: 1; }
-.dash-board-row { display: grid; grid-template-columns: 1fr 52px auto; align-items: center; gap: 0.5rem; }
+.dash-board-row { display: grid; grid-template-columns: minmax(0, auto) minmax(28px, 1fr) auto; align-items: center; gap: 0.5rem; }
 .dash-board-name { display: flex; align-items: center; gap: 0.35rem; font-size: 0.74rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .dash-board-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .dash-board-bar { height: 6px; border-radius: 99px; background: var(--bg); overflow: hidden; }
