@@ -2707,11 +2707,10 @@ function changePage(page) {
     updatePaginationInfo();
     renderPaginationNav();
     
-    // Smooth scroll to table top
-    document.querySelector('.card').scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start' 
-    });
+    // Scroll the table top just below the fixed header so the first row shows
+    const _tableCard = document.querySelector('.card');
+    if (window.scrollListToTop) window.scrollListToTop(_tableCard);
+    else if (_tableCard) _tableCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // Change items per page

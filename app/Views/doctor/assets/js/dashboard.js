@@ -777,23 +777,12 @@ document.addEventListener('DOMContentLoaded', function() {
         upcomingCurrentPage = page;
         loadUpcomingAppointments(upcomingCurrentPage, upcomingPerPage);
         
-        // Smooth scroll to the beginning of the Upcoming Appointments row
+        // Scroll the list top just below the fixed header so the first record shows
         setTimeout(() => {
-            const row = document.getElementById('upcomingAppointmentsRow');
-            if (row) {
-                row.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } else {
-                // Fallback: scroll to container if row not found
-                const container = document.getElementById('upcomingAppointmentsContainer');
-                if (container) {
-                    const card = container.closest('.card');
-                    if (card) {
-                        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    } else {
-                        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                }
-            }
+            const card = document.getElementById('upcomingAppointmentsContainer');
+            const target = (card && card.closest('.card')) || document.getElementById('upcomingAppointmentsRow');
+            if (window.scrollListToTop) window.scrollListToTop(target);
+            else if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100); // Small delay to ensure DOM is updated after data loads
     };
     
@@ -996,8 +985,13 @@ document.addEventListener('DOMContentLoaded', function() {
     window.loadMissedAppointmentsPage = function(page) {
         missedCurrentPage = page;
         loadMissedAppointments(missedCurrentPage, missedPerPage);
-        // Scroll to top of container
-        document.getElementById('missedAppointmentsContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Scroll the list top just below the fixed header so the first record shows
+        setTimeout(() => {
+            const c = document.getElementById('missedAppointmentsContainer');
+            const target = (c && c.closest('.card')) || c;
+            if (window.scrollListToTop) window.scrollListToTop(target);
+            else if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
     };
     
     // Function to mark missed appointment as completed (shows modal)
@@ -1669,17 +1663,16 @@ document.addEventListener('DOMContentLoaded', function() {
     let dashboardCardDragging = null;
     let dashboardCardDragOffset = { x: 0, y: 0 };
     
-    // Default card order — Recent Activities sits right after the Unified Clinical
-    // Dashboard and before Missed Appointments.
+    // Canonical dashboard card order (must match the DB normalization + DOM):
+    // Patient Boards → Notes → Visual Analytics → Alerts → Unified Clinical Dashboard
+    // → Recent Activities → Missed Appointments.
     const DEFAULT_CARD_ORDER = [
-        'quick-actions',
         'patient-boards',
         'notes-dashboard',
+        'visual-analytics',
+        'today-alerts',
         'unified-clinical-dashboard',
         'recent-activity',
-        'today-alerts',
-        'upcoming-appointments',
-        'visual-analytics',
         'missed-appointments'
     ];
     
@@ -1976,14 +1969,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 const finalOrder = [...validOrder];
                 missingCards.forEach(id => {
                     const defIdx = DEFAULT_CARD_ORDER.indexOf(id);
-                    let insertAt = finalOrder.length;
+                    let insertAt = -1;
+                    // Place after the nearest preceding default card that's already placed…
                     for (let i = defIdx - 1; i >= 0; i--) {
                         const pos = finalOrder.indexOf(DEFAULT_CARD_ORDER[i]);
                         if (pos !== -1) { insertAt = pos + 1; break; }
                     }
+                    // …otherwise before the nearest following default card (so e.g.
+                    // patient-boards lands right before notes-dashboard instead of at the end).
+                    if (insertAt === -1) {
+                        for (let i = defIdx + 1; i < DEFAULT_CARD_ORDER.length; i++) {
+                            const pos = finalOrder.indexOf(DEFAULT_CARD_ORDER[i]);
+                            if (pos !== -1) { insertAt = pos; break; }
+                        }
+                    }
+                    if (insertAt === -1) insertAt = finalOrder.length;
                     finalOrder.splice(insertAt, 0, id);
                 });
-                
+
                 // Apply order - find the container that holds all cards
                 const cards = Array.from(document.querySelectorAll('.dashboard-card-row'));
                 if (cards.length === 0) return;

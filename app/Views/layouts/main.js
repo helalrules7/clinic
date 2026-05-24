@@ -1,3 +1,22 @@
+        /* Shared pagination scroll helper. Used by every paginated list so that
+           changing a page scrolls the list's TOP just below the fixed header (so the
+           first record is clearly visible) instead of jarringly jumping elsewhere. */
+        window.scrollListToTop = function (target) {
+            if (typeof target === 'string') target = document.getElementById(target) || document.querySelector(target);
+            if (!target) return;
+            // Measure any bar pinned to the very top of the viewport
+            let headerH = 0;
+            document.querySelectorAll('.top-bar, .notice-bar, .navbar.fixed-top').forEach(function (el) {
+                const cs = getComputedStyle(el);
+                if (cs.position === 'fixed' || cs.position === 'sticky') {
+                    const r = el.getBoundingClientRect();
+                    if (r.top <= 1) headerH = Math.max(headerH, r.bottom);
+                }
+            });
+            const y = target.getBoundingClientRect().top + window.pageYOffset - headerH - 16;
+            window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+        };
+
         /* Modal-open safety net.
            Bootstrap adds `body.modal-open { overflow: hidden }` while a
            modal is showing — which is correct. But if a modal is force-

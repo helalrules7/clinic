@@ -1534,11 +1534,11 @@ function changeReportPage(page) {
     renderReportTable();
     renderReportPagination();
     
-    // Scroll to table
-    document.getElementById('reportDataTable').scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start' 
-    });
+    // Scroll the table top just below the fixed header so the first row shows
+    const _rt = document.getElementById('reportDataTable');
+    const _rtCard = (_rt && _rt.closest('.card')) || _rt;
+    if (window.scrollListToTop) window.scrollListToTop(_rtCard);
+    else if (_rtCard) _rtCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // Make function global
