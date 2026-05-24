@@ -177,6 +177,19 @@
         return `<div class="wx-scene wx-scene--${key} ${day ? 'wx--day' : 'wx--night'}">${inner}</div>`;
     }
 
+    // Clean SVG sun (circular disc + 8 attached rays that spin) — robust at any size.
+    function wxSunSvg() {
+        let rays = '';
+        for (let i = 0; i < 8; i++) {
+            const a = (i * 45) * Math.PI / 180;
+            const x1 = (50 + 29 * Math.cos(a)).toFixed(1), y1 = (50 + 29 * Math.sin(a)).toFixed(1);
+            const x2 = (50 + 44 * Math.cos(a)).toFixed(1), y2 = (50 + 44 * Math.sin(a)).toFixed(1);
+            rays += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+        }
+        return `<svg class="wxi-svg-sun" viewBox="0 0 100 100"><g class="wxi-sun-rays">${rays}</g>`
+            + `<circle class="wxi-sun-disc" cx="50" cy="50" r="20"/></svg>`;
+    }
+
     // --- Animated CSS weather icon ---
     function iconHTML(d, sizePx) {
         const key = normCondition(d && d.condition);
@@ -184,11 +197,11 @@
         const size = sizePx || 56;
         let type, body = '';
         if (key === 'clear') {
-            if (day) { type = 'sun'; body = '<span class="wxi-sun"><span class="wxi-rays"></span><span class="wxi-disc"></span></span>'; }
+            if (day) { type = 'sun'; body = wxSunSvg(); }
             else { type = 'moon'; body = '<span class="wxi-moon"></span><span class="wxi-twinkle wxi-twinkle--1"></span><span class="wxi-twinkle wxi-twinkle--2"></span>'; }
         } else if (key === 'partly') {
             type = day ? 'partly-day' : 'partly-night';
-            body = (day ? '<span class="wxi-sun wxi-sun--sm"><span class="wxi-rays"></span><span class="wxi-disc"></span></span>'
+            body = (day ? '<span class="wxi-sun-sm">' + wxSunSvg() + '</span>'
                         : '<span class="wxi-moon wxi-moon--sm"></span>')
                  + '<span class="wxi-cloud"></span>';
         } else if (key === 'clouds' || key === 'fog') {

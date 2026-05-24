@@ -167,22 +167,17 @@
 .wx-icon > * { position: absolute; }
 
 /* Sun */
-.wxi-sun { inset: 0; display: grid; place-items: center; }
-.wxi-disc {
-    position: relative;
-    width: 46%; height: 46%;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #ffe79a 0%, #ffb43d 75%);
-    box-shadow: 0 0 calc(var(--wx-size) * 0.18) rgba(255, 176, 60, 0.7);
+/* SVG sun — circular disc + 8 attached rays that spin (robust at any size) */
+.wxi-svg-sun { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.wxi-sun-rays {
+    stroke: #ffc24d; stroke-width: 6; stroke-linecap: round;
+    transform-origin: 50px 50px;
+    animation: wx-spin 14s linear infinite;
 }
-.wxi-rays {
-    width: 100%; height: 100%;
-    background: repeating-conic-gradient(rgba(255, 191, 84, 0.95) 0deg 5deg, transparent 5deg 30deg);
-    -webkit-mask: radial-gradient(circle, transparent 0 54%, #000 56% 72%, transparent 74%);
-            mask: radial-gradient(circle, transparent 0 54%, #000 56% 72%, transparent 74%);
-    animation: wx-spin 16s linear infinite;
-}
-.wxi-sun--sm { width: 64%; height: 64%; top: -6%; left: -6%; }
+.wxi-sun-disc { fill: #ffb43d; filter: drop-shadow(0 0 5px rgba(255, 176, 60, 0.65)); }
+/* partly-day: small sun tucked top-left behind the cloud */
+.wxi-sun-sm { position: absolute; width: 58%; height: 58%; top: -4%; left: -4%; }
+.wxi-sun-sm .wxi-svg-sun { inset: 0; }
 
 /* Moon */
 .wxi-moon {
