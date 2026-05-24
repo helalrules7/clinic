@@ -10521,7 +10521,9 @@ class ApiController
                 mkdir($cacheDir, 0755, true);
             }
 
-            $cacheKey = $lat && $lon ? md5("weather_{$lat}_{$lon}") : 'weather_default';
+            // v2 cache namespace — current weather now comes from Open-Meteo (to match the
+            // forecast window); bumping the key bypasses any stale OpenWeatherMap cache.
+            $cacheKey = $lat && $lon ? md5("weather_v2_{$lat}_{$lon}") : 'weather_v2_default';
             $cacheFile = "{$cacheDir}/{$cacheKey}.json";
             $cacheExpiry = 15 * 60; // 15 minutes
 
@@ -10543,17 +10545,20 @@ class ApiController
                 $lon = 30.9397; // Kafr El Sheikh longitude
             }
 
-            // OpenWeatherMap API key - use environment variable or default
-            $apiKey = $_ENV['OPENWEATHER_API_KEY'] ?? '4d8fb5b93d4af21d66a2948710284366';
+            // Use Open-Meteo as the PRIMARY source so the current condition / UV / location
+            // MATCH the 7-day forecast window (which also uses Open-Meteo). Fall back to
+            // OpenWeatherMap only if Open-Meteo is unreachable.
+            $weatherData = $this->fetchWeatherFromOpenMeteo($lat, $lon);
 
-            // Use OpenWeatherMap ONLY (for testing, no fallbacks)
-            $weatherData = $this->fetchWeatherFromOpenWeatherMap($lat, $lon, $apiKey);
+            if (!$weatherData) {
+                $apiKey = $_ENV['OPENWEATHER_API_KEY'] ?? '4d8fb5b93d4af21d66a2948710284366';
+                $weatherData = $this->fetchWeatherFromOpenWeatherMap($lat, $lon, $apiKey);
+            }
 
-            // If OpenWeatherMap fails, return error (no fallback)
             if (!$weatherData) {
                 return $this->jsonResponse([
                     'success' => false,
-                    'error' => 'Failed to fetch weather data from OpenWeatherMap API'
+                    'error' => 'Failed to fetch weather data'
                 ], 500);
             }
 
@@ -11016,6 +11021,7 @@ class ApiController
                 'location' => $locationName,
                 'country' => '',
                 'uvIndex' => round($current['uv_index'] ?? 5),
+                'isDay' => (int) ($current['is_day'] ?? 1),
                 'feelsLike' => round($current['temperature_2m'] ?? 20),
                 'pressure' => 1013, // Open-Meteo doesn't provide pressure in free tier
                 'visibility' => 10,

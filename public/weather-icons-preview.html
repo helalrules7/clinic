@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity — Weather Icons Preview</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- WeatherFx Stylesheet -->
+    <link rel="stylesheet" href="/app/Views/layouts/weather-fx.css">
+    
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-light: #f8fafc;
+            --text-dark: #f8fafc;
+            --text-light: #0f172a;
+            --primary: #3b82f6;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #0b0f19;
+            color: #f8fafc;
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0;
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-toggle {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            padding: 0.6rem 1.2rem;
+            border-radius: 99px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-toggle:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-toggle.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(12px);
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .state-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-transform: capitalize;
+            margin: 0;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 99px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-day {
+            background: rgba(234, 179, 8, 0.2);
+            color: #facc15;
+            border: 1px solid rgba(234, 179, 8, 0.3);
+        }
+
+        .badge-night {
+            background: rgba(129, 140, 248, 0.2);
+            color: #a5b4fc;
+            border: 1px solid rgba(129, 140, 248, 0.3);
+        }
+
+        .badge-neutral {
+            background: rgba(148, 163, 184, 0.2);
+            color: #cbd5e1;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .tile-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .tile {
+            border-radius: 12px;
+            padding: 1rem;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid transparent;
+        }
+
+        .tile-light {
+            background: #ffffff;
+            color: #0f172a;
+            border-color: #e2e8f0;
+        }
+
+        .tile-dark {
+            background: #1e293b;
+            color: #f8fafc;
+            border-color: #334155;
+        }
+
+        .tile-label {
+            position: absolute;
+            top: 6px;
+            left: 8px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.5;
+        }
+
+        .icon-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            width: 100%;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .icon-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .icon-size-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            opacity: 0.6;
+        }
+
+        /* Simulator for reduced motion override */
+        body.wx-reduced-motion *,
+        body.wx-reduced-motion *::before,
+        body.wx-reduced-motion *::after {
+            animation-duration: 0s !important;
+            animation-delay: 0s !important;
+            transition-duration: 0s !important;
+            transition-delay: 0s !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>Weather Icons Preview</h1>
+                <p style="margin: 0.3rem 0 0 0; opacity: 0.7;">Visual validation matrix for 3D/animated weather icons</p>
+            </div>
+            <div class="controls">
+                <button id="motionToggle" class="btn-toggle">
+                    <span class="indicator">●</span> Reduced Motion: <span class="status">OFF</span>
+                </button>
+            </div>
+        </header>
+
+        <main id="preview-grid" class="grid">
+            <!-- Grid will be populated by JS -->
+        </main>
+    </div>
+
+    <!-- WeatherFx Script -->
+    <script src="/app/Views/layouts/weather-fx.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const grid = document.getElementById('preview-grid');
+            const motionToggle = document.getElementById('motionToggle');
+
+            // Toggle reduced motion class
+            motionToggle.addEventListener('click', () => {
+                const isReduced = document.body.classList.toggle('wx-reduced-motion');
+                motionToggle.classList.toggle('active', isReduced);
+                motionToggle.querySelector('.status').innerText = isReduced ? 'ON' : 'OFF';
+            });
+
+            // List of weather states to render
+            const states = [
+                { key: 'clear', isDay: true, label: 'Clear Day' },
+                { key: 'clear', isDay: false, label: 'Clear Night' },
+                { key: 'partly', isDay: true, label: 'Partly Cloudy Day' },
+                { key: 'partly', isDay: false, label: 'Partly Cloudy Night' },
+                { key: 'clouds', isDay: true, label: 'Clouds (Overcast)', neutral: true },
+                { key: 'fog', isDay: true, label: 'Fog / Mist', neutral: true },
+                { key: 'drizzle', isDay: true, label: 'Drizzle (Light Rain)', neutral: true },
+                { key: 'rain', isDay: true, label: 'Rain', neutral: true },
+                { key: 'snow', isDay: true, label: 'Snow', neutral: true },
+                { key: 'thunder', isDay: true, label: 'Thunderstorm', neutral: true }
+            ];
+
+            const sizes = [36, 64, 72, 110];
+
+            states.forEach(state => {
+                const card = document.createElement('div');
+                card.className = 'card';
+
+                const badgeClass = state.neutral ? 'badge-neutral' : (state.isDay ? 'badge-day' : 'badge-night');
+                const badgeLabel = state.neutral ? 'Neutral' : (state.isDay ? 'Day' : 'Night');
+
+                let cardHtml = `
+                    <div class="card-header">
+                        <h3 class="state-title">${state.label}</h3>
+                        <span class="badge ${badgeClass}">${badgeLabel}</span>
+                    </div>
+                    <div class="tile-container">
+                        <!-- Light Background Tile -->
+                        <div class="tile tile-light">
+                            <span class="tile-label">Light Background</span>
+                            <div class="icon-row">
+                `;
+
+                // Render each size on Light tile
+                sizes.forEach(size => {
+                    const iconData = { condition: state.key, isDay: state.isDay ? 1 : 0 };
+                    const iconMarkup = WeatherFx.iconHTML(iconData, size);
+                    cardHtml += `
+                        <div class="icon-wrapper">
+                            ${iconMarkup}
+                            <span class="icon-size-label">${size}px</span>
+                        </div>
+                    `;
+                });
+
+                cardHtml += `
+                            </div>
+                        </div>
+                        <!-- Dark Background Tile -->
+                        <div class="tile tile-dark">
+                            <span class="tile-label">Dark Background</span>
+                            <div class="icon-row">
+                `;
+
+                // Render each size on Dark tile
+                sizes.forEach(size => {
+                    const iconData = { condition: state.key, isDay: state.isDay ? 1 : 0 };
+                    const iconMarkup = WeatherFx.iconHTML(iconData, size);
+                    cardHtml += `
+                        <div class="icon-wrapper">
+                            ${iconMarkup}
+                            <span class="icon-size-label">${size}px</span>
+                        </div>
+                    `;
+                });
+
+                cardHtml += `
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                card.innerHTML = cardHtml;
+                grid.appendChild(card);
+            });
+        });
+    </script>
+</body>
+</html>
