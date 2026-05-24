@@ -10598,6 +10598,18 @@ class ApiController
                 $lon = 30.9397;
             }
 
+            // Cache the forecast for 30 min — avoids hammering / rate-limiting Open-Meteo
+            // (the current-weather endpoint now uses Open-Meteo too).
+            $cacheDir = __DIR__ . '/../../storage/cache';
+            if (!is_dir($cacheDir)) { @mkdir($cacheDir, 0755, true); }
+            $cacheFile = "{$cacheDir}/forecast_" . md5("{$lat}_{$lon}") . ".json";
+            if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < 30 * 60) {
+                $cached = json_decode(file_get_contents($cacheFile), true);
+                if ($cached) {
+                    return $this->jsonResponse(array_merge(['success' => true, 'cached' => true], $cached));
+                }
+            }
+
             // Open-Meteo: 7-day daily forecast + current snapshot (no API key;
             // provides is_day, sunrise/sunset and precipitation probability — the
             // fields the redesigned forecast window needs).
@@ -10621,10 +10633,17 @@ class ApiController
             curl_close($ch);
 
             if ($httpCode !== 200 || !$response) {
+                // Open-Meteo failed (rate-limit/network) — serve the last good cache if any.
+                if (file_exists($cacheFile)) {
+                    $stale = json_decode(file_get_contents($cacheFile), true);
+                    if ($stale) {
+                        return $this->jsonResponse(array_merge(['success' => true, 'stale' => true], $stale));
+                    }
+                }
                 return $this->jsonResponse([
                     'success' => false,
                     'error' => 'Failed to fetch weather forecast'
-                ], 500);
+                ], 503);
             }
 
             $data = json_decode($response, true);
@@ -10666,11 +10685,10 @@ class ApiController
                 'precipitation' => isset($d['precipitation_probability_max'][0]) ? round($d['precipitation_probability_max'][0]) : null,
             ];
 
-            return $this->jsonResponse([
-                'success' => true,
-                'current' => $current,
-                'forecast' => $forecast
-            ]);
+            $payload = ['current' => $current, 'forecast' => $forecast];
+            @file_put_contents($cacheFile, json_encode($payload));
+
+            return $this->jsonResponse(array_merge(['success' => true], $payload));
 
         } catch (\Exception $e) {
             return $this->jsonResponse([

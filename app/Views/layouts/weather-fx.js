@@ -26,7 +26,9 @@
         if (c.includes('rain') || c.includes('shower')) return 'rain';
         if (c.includes('fog') || c.includes('mist') || c.includes('haze') || c.includes('smoke') || c.includes('rime')) return 'fog';
         if (c.includes('overcast')) return 'clouds';
-        if (c.includes('partly') || c.includes('scattered') || c.includes('few') || (c.includes('mainly') && c.includes('clear'))) return 'partly';
+        // "Mainly Clear" is treated as CLEAR (sun only) — not partly — so it doesn't pull
+        // the sun+cloud icon. Genuine partly/scattered/few-clouds stay 'partly'.
+        if (c.includes('partly') || c.includes('scattered') || c.includes('few')) return 'partly';
         if (c.includes('broken')) return 'clouds';
         if (c.includes('cloud')) return 'clouds';
         if (c.includes('clear') || c.includes('sun')) return 'clear';
