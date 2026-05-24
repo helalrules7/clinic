@@ -8118,7 +8118,7 @@
         
         function updateMobileDockPosition() {
             if (!mobileDock || window.innerWidth > 768) return;
-            
+
             if (scrollToTopBtn && scrollToTopBtn.classList.contains('show')) {
                 // Back to top button is visible - move dock above it by 10px
                 mobileDock.classList.add('dock-above-button');
@@ -8126,6 +8126,17 @@
                 // Back to top button is hidden - use its exact position
                 mobileDock.classList.remove('dock-above-button');
             }
+        }
+
+        // Fill the back-to-top ring proportionally to how far the page is scrolled.
+        const sttRingBar = scrollToTopBtn ? scrollToTopBtn.querySelector('.stt-ring-bar') : null;
+        const STT_RING_C = 122.52; // 2π·19.5
+        function updateScrollProgress() {
+            if (!sttRingBar) return;
+            const el = document.documentElement;
+            const max = (el.scrollHeight - el.clientHeight) || 1;
+            const p = Math.min(1, Math.max(0, window.pageYOffset / max));
+            sttRingBar.style.strokeDashoffset = (STT_RING_C * (1 - p)).toFixed(2);
         }
         
         // Load and apply personal preferences
@@ -8158,9 +8169,11 @@
                                     } else {
                                         scrollToTopBtn.classList.remove('show');
                                     }
-                                    // Update mobile dock position
+                                    // Update mobile dock position + scroll-progress ring
                                     updateMobileDockPosition();
-                                });
+                                    updateScrollProgress();
+                                }, { passive: true });
+                                updateScrollProgress();
                                 
                                 // Scroll to top when button is clicked
                                 scrollToTopBtn.addEventListener('click', () => {

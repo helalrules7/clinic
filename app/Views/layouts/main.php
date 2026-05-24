@@ -856,8 +856,12 @@
     <!-- Forum Toast Container (Top Right) -->
     <div id="forumToastContainer"></div>
     
-    <!-- Scroll to Top Button -->
+    <!-- Scroll to Top Button (with scroll-progress ring) -->
     <button class="scroll-to-top" id="scrollToTop" aria-label="Scroll to top">
+        <svg class="stt-ring" viewBox="0 0 44 44" aria-hidden="true">
+            <circle class="stt-ring-track" cx="22" cy="22" r="19.5"></circle>
+            <circle class="stt-ring-bar" cx="22" cy="22" r="19.5"></circle>
+        </svg>
         <i class="bi bi-arrow-up"></i>
     </button>
     
