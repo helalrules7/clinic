@@ -11646,3 +11646,34 @@ body.sidebar-mini .top-bar { min-height: 130px; }
 /* Notice-bar weather popover card is clickable → opens forecast (2026-05-23) */
 .weather-popover-clickable { cursor: pointer; transition: transform .15s ease; }
 .weather-popover-clickable:hover { transform: translateY(-2px); }
+/* =====================================================================
+   SIDEBAR SUBMENU — layout-stable + chevron pinned far right
+   ===================================================================== */
+
+/* (1) peek-expand → overlay, don't push the content */
+body.sidebar-mini:has(.sidebar .nav-item.has-submenu.expanded) .main-content,
+body.sidebar-mini.sidebar-has-expanded-submenu .main-content {
+    margin-left: var(--sidebar-mini-width) !important;
+}
+body.sidebar-mini .sidebar:has(.nav-item.has-submenu.expanded),
+body.sidebar-mini .sidebar.has-expanded-submenu {
+    z-index: 1050;
+    box-shadow: 6px 0 28px rgba(0, 0, 0, 0.35);
+}
+
+/* (2) chevron pinned to the far right in every state */
+.sidebar .nav-link.nav-link-toggle {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+}
+.sidebar .nav-link.nav-link-toggle .submenu-arrow {
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    position: static !important;
+}
+body.sidebar-mini .sidebar:has(.nav-item.has-submenu.expanded) .submenu-arrow,
+body.sidebar-mini .sidebar.has-expanded-submenu .submenu-arrow {
+    margin-left: auto !important;
+    margin-right: 0 !important;
+}
