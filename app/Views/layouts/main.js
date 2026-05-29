@@ -379,6 +379,14 @@
                 }, 280); // 0.2s transition + buffer
                 if (wantMini) document.body.classList.add('sidebar-mini');
                 else document.body.classList.remove('sidebar-mini');
+                // Re-sync submenu open/closed state to match the new mode:
+                // collapse all in mini (so the peek-overlay CSS stays off and
+                // doesn't hide the page content); expand the submenu of the
+                // active sub-page in expanded mode. Helper is exposed by the
+                // submenu IIFE below.
+                if (typeof window.__sidebarSyncSubmenu === 'function') {
+                    window.__sidebarSyncSubmenu();
+                }
             }
 
             function defaultMode() {
@@ -463,15 +471,36 @@
                 });
             });
 
-            // Auto-expand if any submenu item is active
-            const activeSubmenuItems = document.querySelectorAll('.nav-submenu-link.active');
-            activeSubmenuItems.forEach(item => {
-                const navItem = item.closest('.nav-item.has-submenu');
-                if (navItem) {
-                    navItem.classList.add('expanded');
+            // Keep submenu open/closed state in sync with the sidebar mode.
+            // - In mini mode: ALL submenus are collapsed so the rail stays
+            //   clean. (If a submenu has `.expanded` while body is mini, the
+            //   peek-overlay CSS widens the sidebar visually while
+            //   .main-content's margin stays at mini width → page content
+            //   hides behind the sidebar. We only want that overlay when the
+            //   user explicitly clicks a parent icon to peek-expand on
+            //   demand, not unconditionally on page load.)
+            // - In expanded mode: the submenu containing the active sub-page
+            //   is auto-expanded so the user can see where they are.
+            //
+            // Exposed as window.__sidebarSyncSubmenu so applyMode() can
+            // call it on every mode change (toggle, resize, etc.), not just
+            // at first page load.
+            function syncSubmenuForMode() {
+                const isMini = document.body.classList.contains('sidebar-mini');
+                if (isMini) {
+                    document.querySelectorAll('.sidebar .nav-item.has-submenu.expanded').forEach(item => {
+                        item.classList.remove('expanded');
+                    });
+                } else {
+                    document.querySelectorAll('.nav-submenu-link.active').forEach(item => {
+                        const navItem = item.closest('.nav-item.has-submenu');
+                        if (navItem) navItem.classList.add('expanded');
+                    });
                 }
-            });
-            syncExpandedFlag();
+                syncExpandedFlag();
+            }
+            window.__sidebarSyncSubmenu = syncSubmenuForMode;
+            syncSubmenuForMode();
         })();
 
         /* Mini-rail hover tooltip. Replaces the old hover peek-expand:
