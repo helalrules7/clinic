@@ -36,6 +36,8 @@ import NotesDocs from './pages/modules/NotesDocs';
 import ProfileDocs from './pages/modules/ProfileDocs';
 import PatientProfileDocs from './pages/modules/PatientProfileDocs';
 import SettingsDocs from './pages/modules/SettingsDocs';
+import BoardsDocs from './pages/modules/BoardsDocs';
+import DrawingDocs from './pages/modules/DrawingDocs';
 import AdminModuleDocs from './pages/modules/AdminModuleDocs';
 
 function App() {
@@ -83,6 +85,8 @@ function App() {
                     <Route path="doctors-pages/profile" element={<ProfileDocs />} />
                     <Route path="doctors-pages/patient-profile" element={<PatientProfileDocs />} />
                     <Route path="doctors-pages/settings" element={<SettingsDocs />} />
+                    <Route path="doctors-pages/board" element={<BoardsDocs />} />
+                    <Route path="doctors-pages/drawing" element={<DrawingDocs />} />
                     <Route path="admin-module" element={<AdminModuleDocs />} />
                 </Route>
             </Routes>

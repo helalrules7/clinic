@@ -157,13 +157,21 @@ export default function Layout() {
 
     return (
         <div className={clsx(
-            "min-h-screen bg-gray-50 dark:bg-dark-900 flex",
+            "relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/40 dark:from-dark-900 dark:via-slate-950 dark:to-violet-950/40 flex",
             isSidebarOpen && "md:overflow-hidden"
         )}>
+            {/* Decorative background — subtle mesh orbs for a modern feel.
+                Fixed so they don't scroll; pointer-events-none so they don't block clicks. */}
+            <div className="pointer-events-none fixed inset-0 overflow-hidden -z-0">
+                <div className="absolute -top-32 -right-32 w-[36rem] h-[36rem] rounded-full bg-indigo-300/25 dark:bg-indigo-600/15 blur-[120px]" />
+                <div className="absolute top-1/3 -left-40 w-[32rem] h-[32rem] rounded-full bg-violet-300/20 dark:bg-violet-600/12 blur-[120px]" />
+                <div className="absolute bottom-0 right-1/4 w-[28rem] h-[28rem] rounded-full bg-fuchsia-300/15 dark:bg-fuchsia-600/10 blur-[120px]" />
+            </div>
+
             <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
             <div className={clsx(
-                "flex-1 flex flex-col min-w-0 md:ps-[300px] transition-all duration-300",
+                "relative z-10 flex-1 flex flex-col min-w-0 md:ps-[300px] transition-all duration-300",
                 isSidebarOpen && "md:overflow-hidden"
             )}>
                 <Navbar onMenuClick={() => setIsSidebarOpen(true)} />

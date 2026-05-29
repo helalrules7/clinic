@@ -137,7 +137,47 @@ export default function ApiDocs() {
                     <Endpoint method="GET" url="/api/dashboard-summary" desc={t('sections.api.dashboard.endpoints.summary')} />
                     <Endpoint method="GET" url="/api/dashboard-charts" desc={t('sections.api.dashboard.endpoints.charts')} />
                     <Endpoint method="GET" url="/api/recent-activity" desc={t('sections.api.dashboard.endpoints.activity')} />
+                    <Endpoint method="GET" url="/api/board/snapshot" desc={t('sections.api.dashboard.endpoints.board_snapshot')} />
                     <Endpoint method="GET" url="/api/secretary/dashboard" desc={t('sections.api.dashboard.endpoints.secretary')} />
+                </div>
+            </Section>
+
+            <Section title={t('sections.api.board.title')} id="board" className="mb-16">
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+                    {t('sections.api.board.content')}
+                </p>
+                <div className="space-y-3">
+                    <Endpoint method="GET" url="/api/board/boards" desc={t('sections.api.board.endpoints.list_boards')} />
+                    <Endpoint method="POST" url="/api/board/boards" desc={t('sections.api.board.endpoints.create_board')} />
+                    <Endpoint method="PUT" url="/api/board/boards/{id}" desc={t('sections.api.board.endpoints.update_board')} />
+                    <Endpoint method="DELETE" url="/api/board/boards/{id}" desc={t('sections.api.board.endpoints.delete_board')} />
+                    <Endpoint method="GET" url="/api/board/boards/{id}/cards" desc={t('sections.api.board.endpoints.board_cards')} />
+                    <Endpoint method="POST" url="/api/board/boards/{id}/patients" desc={t('sections.api.board.endpoints.add_patient')} />
+                    <Endpoint method="DELETE" url="/api/board/boards/{id}/patients/{pid}" desc={t('sections.api.board.endpoints.remove_patient')} />
+                    <Endpoint method="PUT" url="/api/board/patients/{pid}" desc={t('sections.api.board.endpoints.quick_edit_patient')} />
+                    <Endpoint method="GET" url="/api/board/columns" desc={t('sections.api.board.endpoints.list_columns')} />
+                    <Endpoint method="POST" url="/api/board/columns" desc={t('sections.api.board.endpoints.create_column')} />
+                    <Endpoint method="PUT" url="/api/board/columns/{id}" desc={t('sections.api.board.endpoints.update_column')} />
+                    <Endpoint method="DELETE" url="/api/board/columns/{id}" desc={t('sections.api.board.endpoints.delete_column')} />
+                    <Endpoint method="GET" url="/api/board/cards" desc={t('sections.api.board.endpoints.list_cards')} />
+                    <Endpoint method="POST" url="/api/board/move" desc={t('sections.api.board.endpoints.move_card')} />
+                    <Endpoint method="GET" url="/api/board/auto-place/{patient_id}" desc={t('sections.api.board.endpoints.auto_place')} />
+                    <Endpoint method="GET" url="/api/board/snapshot" desc={t('sections.api.board.endpoints.snapshot')} />
+                </div>
+            </Section>
+
+            <Section title={t('sections.api.comments.title')} id="comments" className="mb-16">
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+                    {t('sections.api.comments.content')}
+                </p>
+                <div className="space-y-3">
+                    <Endpoint method="GET" url="/api/comments/{type}/{id}" desc={t('sections.api.comments.endpoints.list_for_entity')} />
+                    <Endpoint method="POST" url="/api/comments/{type}/{id}" desc={t('sections.api.comments.endpoints.create_for_entity')} />
+                    <Endpoint method="PUT" url="/api/comments/{id}" desc={t('sections.api.comments.endpoints.update')} />
+                    <Endpoint method="DELETE" url="/api/comments/{id}" desc={t('sections.api.comments.endpoints.delete')} />
+                    <Endpoint method="POST" url="/api/comments/attachments" desc={t('sections.api.comments.endpoints.upload_attachment')} />
+                    <Endpoint method="GET" url="/api/comments/attachments/{id}" desc={t('sections.api.comments.endpoints.view_attachment')} />
+                    <Endpoint method="DELETE" url="/api/comments/attachments/{id}" desc={t('sections.api.comments.endpoints.delete_attachment')} />
                 </div>
             </Section>
 

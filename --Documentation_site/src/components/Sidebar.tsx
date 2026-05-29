@@ -111,11 +111,27 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose:
 
     const SidebarContent = () => (
         <div className="h-full flex flex-col p-4 overflow-y-auto w-full">
-            <div className="flex items-center justify-between mb-8 px-2">
-                <h1 className="text-xl font-bold bg-gradient-to-r from-primary-400 to-purple-500 bg-clip-text text-transparent truncate">
-                    {t('common.title')}
-                </h1>
-                <button onClick={onClose} className="md:hidden p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+            <div className="flex items-center justify-between mb-6 px-2 py-3 rounded-xl bg-gradient-to-br from-indigo-500/10 via-violet-500/5 to-transparent border border-indigo-500/15 dark:border-indigo-400/10">
+                <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/30 flex items-center justify-center">
+                        <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white">
+                            <path d="M12 2 L4 6 v6 c0 5 3.5 9 8 10 c4.5-1 8-5 8-10 V6 z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+                            <circle cx="12" cy="11" r="2.5" fill="currentColor" />
+                        </svg>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <h1 className="text-sm font-bold tracking-tight bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 dark:from-indigo-300 dark:via-violet-300 dark:to-fuchsia-300 bg-clip-text text-transparent truncate leading-tight">
+                            {t('common.title')}
+                        </h1>
+                        <div className="flex items-center gap-1 mt-0.5">
+                            <span className="inline-flex items-center gap-1 px-1.5 rounded text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
+                                <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                                v10.1.0
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <button onClick={onClose} className="md:hidden p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors flex-shrink-0">
                     <X size={20} />
                 </button>
             </div>
@@ -170,8 +186,8 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose:
                                                             clsx(
                                                                 'block px-3 py-2 text-sm rounded-md transition-colors',
                                                                 isActive
-                                                                    ? 'text-primary-600 dark:text-primary-400 font-medium bg-primary-50 dark:bg-primary-900/20'
-                                                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                                                                    ? 'text-indigo-700 dark:text-indigo-200 font-semibold bg-gradient-to-r from-indigo-500/15 via-violet-500/8 to-transparent border-s-2 border-indigo-500 shadow-sm shadow-indigo-500/10'
+                                                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/80 dark:hover:bg-white/5 hover:translate-x-0.5 transition-all'
                                                             )
                                                         }
                                                     >
@@ -196,8 +212,8 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose:
                                     clsx(
                                         'flex items-center gap-3 px-3 py-2 rounded-md transition-colors mb-1',
                                         isActive
-                                            ? 'text-primary-600 dark:text-primary-400 font-medium bg-primary-50 dark:bg-primary-900/20'
-                                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                                            ? 'text-indigo-700 dark:text-indigo-200 font-semibold bg-gradient-to-r from-indigo-500/15 via-violet-500/8 to-transparent border-s-2 border-indigo-500 shadow-sm shadow-indigo-500/10'
+                                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/80 dark:hover:bg-white/5 hover:translate-x-0.5 transition-all'
                                     )
                                 }
                             >
@@ -216,7 +232,7 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose:
 
             <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-800 px-2">
                 <p className="text-xs text-center text-gray-400 mb-1">
-                    v7.1.4 • © 2025 Roaya
+                    v10.1.0 · © 2026 Roaya
                 </p>
                 <p className="text-xs text-center text-gray-400">
                     By <a href="https://ahmedhelal.dev" target="_blank" rel="noopener noreferrer" className="hover:text-primary-500 transition-colors">Ahmed Helal</a>

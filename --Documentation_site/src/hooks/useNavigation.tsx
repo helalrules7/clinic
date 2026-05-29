@@ -72,6 +72,8 @@ export function useNavigation() {
                 { to: '/doctors-pages/media', label: t('nav.media') },
                 { to: '/doctors-pages/alerts', label: t('nav.alerts') },
                 { to: '/doctors-pages/notes', label: t('nav.notes') },
+                { to: '/doctors-pages/board', label: t('nav.board') },
+                { to: '/doctors-pages/drawing', label: t('nav.drawing') },
                 { to: '/doctors-pages/settings', label: t('nav.settings') },
             ]
         },

@@ -173,7 +173,7 @@ export default function NoticeBarDocs() {
                     </p>
                     <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-lg bg-gray-50 dark:bg-black/40 mb-6">
                         <img
-                            src="/docs/opth/assets/images/doctors_pages/notice-bar/calcs/00-opt-opt-opt-opt-opt-opt-opt-opt-opt-opt-opt.jpg"
+                            src="/docs/opth/assets/images/doctors_pages/notice-bar/calcs/00-opt-opt-opt-opt-opt-opt-opt-opt-opt-opt-opt-opt-opt.jpg"
                             alt="Ophthalmology Tools Overview"
                             className="w-full h-auto"
                         />

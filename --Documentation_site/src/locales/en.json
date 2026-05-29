@@ -62,14 +62,16 @@
         "profile": "Profile",
         "settings": "Settings",
         "changelog": "Change Log",
-        "medical_ai_assistant": "Medical AI Assistant"
+        "medical_ai_assistant": "Medical AI Assistant",
+        "board": "Patients Board",
+        "drawing": "Draw Consultation"
     },
     "sections": {
         "home": {
             "hero": {
                 "title": "Roaya Clinic System",
                 "subtitle": "The next-generation management platform for modern ophthalmology clinics. Streamlined. Secure. Intelligent.",
-                "badge": "v8.0.0 Stable"
+                "badge": "v10.1.0 Stable"
             },
             "cards": {
                 "doctor_portal": "Doctor Portal",
@@ -208,6 +210,37 @@
                         "dark_mode_desc": "Improved dark mode support across all components, ensuring proper contrast and readability in low-light environments.",
                         "z_index": "Fixed Modals Z-Index Across System",
                         "z_index_desc": "All modals now appear on top of all UI elements, including the sidebar. Additionally, all modals are now draggable, providing better user experience and flexibility."
+                    }
+                }
+            },
+            "v10_highlights": {
+                "badge": "What's New · v10.1.0",
+                "title": "A bigger, smoother, smarter v10",
+                "subtitle": "Six headline upgrades that reshape how doctors and staff work day-to-day — from a compact sidebar that gets out of the way to a Kanban board for patient flow, an AI-assisted consultation panel, and a drawing canvas for clinical sketches.",
+                "items": {
+                    "mini_sidebar": {
+                        "title": "Mini Sidebar",
+                        "description": "A compact icon rail that disappears into the background. Click any item with a submenu to peek-expand it as an overlay — your page content stays put."
+                    },
+                    "patient_boards": {
+                        "title": "Patients Board",
+                        "description": "Kanban-style workflow tracking patients across clinic stages. Customizable columns, drag-and-drop, color coding, and a live snapshot widget on the dashboard."
+                    },
+                    "design_system": {
+                        "title": "Glass / Indigo Design System",
+                        "description": "Unified design tokens, glass surfaces, consistent rounded corners, and a refreshed color palette across every page — light and dark modes."
+                    },
+                    "settings": {
+                        "title": "Personal Settings & Auto Complete",
+                        "description": "Each doctor controls their own assist toggles for consultation suggestions, ICD-10 prompts, and medication typeahead — with sidebar-items, dock, and back-to-top preferences."
+                    },
+                    "ai_tools": {
+                        "title": "AI-Powered Assistance",
+                        "description": "Floating consultation AI chat, prior-visit summaries, ICD-10 code suggestions from your diagnosis text, and prescription suggestions based on common-case matches."
+                    },
+                    "drawing_tools": {
+                        "title": "Draw Consultation Canvas",
+                        "description": "Annotate clinical findings with a built-in pen / eraser / color tool. Persisted per appointment, ready to share or print with the consultation summary."
                     }
                 }
             }
@@ -1039,7 +1072,7 @@
         "api": {
             "hero": {
                 "title": "API Reference",
-                "subtitle": "Internal API endpoints for managing clinic data programmatically.",
+                "subtitle": "Internal REST endpoints for managing clinic data programmatically. Covering all routes through v10.1.0.",
                 "badge": "REST"
             },
             "auth": {
@@ -1141,7 +1174,8 @@
                     "summary": "Get dashboard summary statistics.",
                     "charts": "Get chart data for dashboard visualizations.",
                     "activity": "Get recent activity feed.",
-                    "secretary": "Get secretary dashboard data with appointments and payments."
+                    "secretary": "Get secretary dashboard data with appointments and payments.",
+                    "board_snapshot": "Per-column patient counts for the dashboard Board Snapshot mini-widget"
                 }
             },
             "attachments": {
@@ -1381,6 +1415,41 @@
                     "followup": "Get follow-up appointment information.",
                     "original": "Get original appointment details.",
                     "reschedule_followup": "Reschedule a follow-up appointment."
+                }
+            },
+            "board": {
+                "title": "Patients Board",
+                "content": "Kanban-style workflow board for tracking patient progress through clinic stages. Boards have customizable columns with color coding; cards can be dragged between columns or boards.",
+                "endpoints": {
+                    "list_boards": "List all boards (id, name, description, sort_order)",
+                    "create_board": "Create a new board",
+                    "update_board": "Update board name / description / sort order",
+                    "delete_board": "Delete a board (cascades cards)",
+                    "board_cards": "List all cards in a given board, grouped by column",
+                    "add_patient": "Add a patient to a board (as a new card in the first column)",
+                    "remove_patient": "Remove a patient from a board",
+                    "quick_edit_patient": "Quick-edit patient data from a board card (name, phone, tags)",
+                    "list_columns": "List all columns for the current board",
+                    "create_column": "Create a new column on a board",
+                    "update_column": "Update column name / color / sort order",
+                    "delete_column": "Delete a column (must be empty)",
+                    "list_cards": "List all cards (cross-board) for the doctor",
+                    "move_card": "Move a card between columns or boards (drag-and-drop persistence)",
+                    "auto_place": "Auto-place a patient into the most-fitting board/column based on the patient's recent activity + tags",
+                    "snapshot": "Per-column patient counts for the dashboard \"Board Snapshot\" mini-widget (lightweight, one query)"
+                }
+            },
+            "comments": {
+                "title": "Comments & Mentions",
+                "content": "Threaded comments with @mentions and file attachments. Used by the Patients Board (board cards) but extensible to any commentable entity via the polymorphic {type}/{id} URL.",
+                "endpoints": {
+                    "list_for_entity": "List all comments for a given entity (type = board_card, etc.)",
+                    "create_for_entity": "Create a new comment on an entity (supports @user mentions which trigger notifications)",
+                    "update": "Edit an existing comment (only the author can edit)",
+                    "delete": "Delete a comment (cascades attachments)",
+                    "upload_attachment": "Upload a file attachment to a comment (image, audio, document; with HTTP Range support for streaming)",
+                    "view_attachment": "View / download an attachment (Range-aware, 206 Partial Content for media seek)",
+                    "delete_attachment": "Delete an attachment"
                 }
             }
         },
@@ -6528,7 +6597,7 @@
         "changelog": {
             "hero": {
                 "title": "Change Log",
-                "subtitle": "Complete version history and feature updates from v1.0 to v8.0.0",
+                "subtitle": "Complete version history and feature updates from v1.0 to v10.1.0",
                 "badge": "Version History"
             },
             "notice": {
@@ -6537,7 +6606,7 @@
             },
             "overview": {
                 "title": "Overview",
-                "content": "This page documents all major features, improvements, and changes introduced in each version of the HClinic / Roaya Clinic Management System. The changelog is organized chronologically from the latest version (v8.0.0) to the initial release (v1.0)."
+                "content": "This page documents all major features, improvements, and changes introduced in each version of the HClinic / Roaya Clinic Management System. The changelog is organized chronologically from the latest version (v10.1.0) to the initial release (v1.0)."
             },
             "v7_1_3": {
                 "content": "- Implement toggle status functionality for alerts\n- Enhance timepicker functionality and theme synchronization in alert modal\n- Integrate timepicker UI for enhanced alert time selection\n- Enhance alert handling and user experience"
@@ -6659,6 +6728,145 @@
             "github": {
                 "title": "GitHub History",
                 "description": "For detailed commit history and development timeline, please refer to the GitHub repository. The changelog above summarizes major features and improvements introduced in each version."
+            },
+            "v9_0_0": {
+                "content": "- Introduced two-clinic shared-data architecture with cross-clinic patient access and read-only protection for shared rows\n- Added Draw Consultation canvas with annotation tools (pen, eraser, color palette, undo/redo) for clinical drawings on the appointment page\n- Finance Phase 0-3: complete financial management workflow with payments, expenses, daily balances, and reports\n- Polished drawing controls, dropdown UI, and modal interactions for better usability\n- Introduced the \"What's New\" wizard for in-app version announcements with a step-by-step feature tour\n- Enhanced status-change modal and other dropdowns to prevent clipping when opened inside cards (via :has(.field.menu.open) overflow override)"
+            },
+            "v9_1_0": {
+                "content": "- Enhanced sidebar labels for improved navigation clarity (Patients Board, Discussions, Forum)\n- Reset the \"What's New\" wizard timer so the v9.1 release surfaces fresh to all users on their next login\n- Various UI fixes and polish across settings, modals, and forms\n- Bumped app version markers across layouts and footers"
+            },
+            "v10_0_0": {
+                "content": "- Launched the unified Glass / Indigo design system with shared tokens (CSS custom properties) and design-system.css for consistent surfaces, shadows, radius, and motion\n- Introduced Patients Board: Kanban-style workflow with customizable columns, drag-and-drop cards, per-column color coding, sort order persistence, and a dedicated full-page view\n- Added Comments / @mentions / attachments on board cards: in-thread replies, audio recording with cross-browser fallback (Safari MP4 + Chrome WebM), in-page image lightbox with arrow-key navigation\n- New \"Auto Complete\" settings section with 3 personal toggles to gate the consultation AI assists, ICD-10 suggestions, and medication name typeahead — each with its own animated demo mockup\n- Updated all modals project-wide to solid var(--card) background (no glass muddiness), consistent rounded corners, and refined shadows\n- Refreshed the What's New wizard with v10 milestones and reset its timer to resurface to all users\n- Doctor profile dropdown polish; status dropdown overflow fix (overflow:visible via :has(.field.menu.open) on modal ancestors)\n- Images & Attachments header restructured to two rows (title on top; bulk actions far-left, add buttons far-right)\n- Mobile sidebar / overlay z-index fix (sidebar 1001 !important, overlay 1000, top-bar 999) — drawer is now tappable above the dim overlay\n- Mobile dock launcher fix: tapping the minimized launcher now correctly toggles the dock open instead of just closing it\n- HTTP Range (206) support added on attachment streaming for Safari media seek"
+            },
+            "v10_1_0": {
+                "content": "- Enhanced clock popover (notice-bar click): solid white dial in both themes, working-hours arc (2 PM–11 PM), digital time, live next-appointment countdown, today's stats, mini-calendar with per-day appointment counts/dots and rich hover tooltips\n- Introduced Weather FX: animated condition + day/night scenes, animated CSS weather icons (rays, raindrops, snow), eye-care advisory (UV index + pollen + dry-eye risk), UV meter, 7-day forecast modal with hourly breakdown\n- Dashboard restructure: new 2×2 at-a-glance mini-grid (Today's Status donut, Board Snapshot, Today's Revenue, Quick Actions) sitting beside Upcoming Appointments; Recent Activities relocated to a full-width reorderable card; persistent card-order in doctor_settings\n- Upcoming Appointments card polish: avatar initials with status-colour accents, \"Next up\" highlight chip, time-until indicator, visit-type icons, inline status actions, rounded-hover rows, nicer empty state\n- New /api/board/snapshot endpoint returning per-column patient counts for the dashboard Board Snapshot mini-widget\n- Back-to-top scroll-progress ring that fills proportionally to scroll depth + dynamic minimized dock that lifts above the button when both are visible\n- Performance fix (scroll/collapse jank): rAF-batched scroll handler + suppress backdrop-filter only during the ~0.2s sidebar slide → collapse frames dropping below 30fps reduced from 32% to 4% (measured on the live dashboard)\n- Performance: OPcache interned_strings_buffer 8→16 MB + validate_timestamps Off (with a now-mandatory `systemctl reload php8.2-fpm` after every PHP deploy)\n- Security cleanup: 27 publicly-downloadable .bak.* source files + storage.zip (93 MB) + composer.phar + drugs_export.csv deleted; .htaccess deny rule added for *.bak / *.zip / *.phar / *.sql / *.env / *.log; oversized user avatars batch-resized to 256×256 (saved ~1.6 MB per page load for affected doctors)\n- Sidebar peek-overlay fix: on page load, the auto-expand of the active sub-page's parent submenu no longer triggers the overlay in mini-mode — the rail stays clean unless the user explicitly clicks/hovers a parent\n- Notification cleanup: \"What's New\" wizard auto-popup disabled site-wide"
+            }
+        },
+        "boards": {
+            "hero": {
+                "title": "Patients Board",
+                "subtitle": "Kanban-style workflow tracking patients across clinic stages with drag-and-drop cards, comments, mentions, attachments, and a live snapshot widget on the dashboard.",
+                "badge": "Doctor Module · v10"
+            },
+            "overview": {
+                "title": "Overview",
+                "content": "The Patients Board gives every doctor a visual workflow board they own. Cards represent patients; columns represent stages (e.g. New Consultation → Awaiting Imaging → Surgical Pre-op → Post-op → Long-term Follow-up). Drag a card between columns to move the patient through your process — sort order is persisted per column, so the board state is exactly as you left it next time you open the app."
+            },
+            "key_features": {
+                "title": "Key Features",
+                "items": {
+                    "columns": {
+                        "title": "Customizable Columns",
+                        "description": "Create, rename, color-code, and reorder columns to match your specialty's workflow. Defaults are seeded for ortho and ophthalmology."
+                    },
+                    "drag_drop": {
+                        "title": "Drag & Drop",
+                        "description": "Move cards between columns with a smooth drag-and-drop interaction. Position is saved server-side immediately, no save button needed."
+                    },
+                    "colors": {
+                        "title": "Color Coding",
+                        "description": "Each column has its own accent color that propagates to its cards, so you can read the board's state at a glance."
+                    },
+                    "comments": {
+                        "title": "Threaded Comments",
+                        "description": "Discuss a case in-thread on the card itself. Comments are scoped to the card, with edit/delete only allowed for the author."
+                    },
+                    "mentions": {
+                        "title": "@Mentions",
+                        "description": "Mention any team member with @ to send them an instant notification. They land directly on the card thread."
+                    },
+                    "attachments": {
+                        "title": "Attachments",
+                        "description": "Upload images, audio recordings, or documents to a comment. HTTP Range support means audio scrubs correctly on Safari."
+                    },
+                    "filters": {
+                        "title": "Filters & Search",
+                        "description": "Filter by tag, color, or date moved. Search by patient name from the board header."
+                    },
+                    "autoplace": {
+                        "title": "Auto-place",
+                        "description": "Tap auto-place on a patient and the system drops them into the most-fitting column based on their tags and recent activity."
+                    },
+                    "permissions": {
+                        "title": "Role-aware",
+                        "description": "Board access is scoped per doctor; admins see all boards. Sub-roles inherit appropriate read/write rights from the role table."
+                    }
+                }
+            },
+            "card_detail": {
+                "title": "Card Detail · Comments + Mentions + Attachments",
+                "content": "Click any card to open its detail view. You'll see the patient summary at the top, then a chronological comments thread below. Mentions trigger notifications; attachments stream with HTTP Range so audio seek and image lightboxes work cross-browser.",
+                "bullets": {
+                    "threaded": "Threaded comments scoped to the card",
+                    "mentions": "@mentions send instant notifications to the mentioned user",
+                    "attachments": "Image, audio, and document attachments per comment",
+                    "audio": "Cross-browser audio with Safari MP4 + Chrome WebM fallbacks",
+                    "lightbox": "In-page image lightbox with arrow-key navigation"
+                }
+            },
+            "snapshot": {
+                "title": "Dashboard Snapshot Widget",
+                "content": "The doctor dashboard's at-a-glance grid includes a Board Snapshot widget — per-column patient counts in one lightweight query, with a click-through to the full board."
+            },
+            "api": {
+                "title": "API Reference",
+                "content": "Sixteen endpoints power the board: list/create/update/delete boards and columns, manage cards and patient assignments, move cards, auto-place patients, and the lightweight snapshot for the dashboard.",
+                "cta": "See full /api/board/* reference →"
+            }
+        },
+        "drawing": {
+            "hero": {
+                "title": "Draw Consultation",
+                "subtitle": "An in-browser annotation canvas for clinical drawings — sketch findings directly on the appointment page, then include the drawing in the consultation summary.",
+                "badge": "Doctor Module · v10"
+            },
+            "overview": {
+                "title": "Overview",
+                "content": "Draw Consultation gives doctors a focused annotation surface tied to each appointment. Open it from the appointment page, sketch anatomical findings (e.g. lesion locations, surgical plans, gonioscopy findings), and the drawing is saved to the appointment record automatically. Use it for pre-op planning, post-op documentation, or for any visual note that's faster to draw than to describe."
+            },
+            "tools": {
+                "title": "Tools",
+                "items": {
+                    "pen": {
+                        "title": "Pen",
+                        "description": "Pressure-friendly stroke with configurable width. Default 2px works well for fine detail."
+                    },
+                    "eraser": {
+                        "title": "Eraser",
+                        "description": "Stroke-aware eraser removes whole paths instead of pixel-erasing."
+                    },
+                    "colors": {
+                        "title": "Color Palette",
+                        "description": "Six accent colors keyed to common annotation conventions (red = pathology, blue = plan, green = healed, etc.)."
+                    },
+                    "undo": {
+                        "title": "Undo / Redo",
+                        "description": "Unlimited undo / redo per session; persisted history on save."
+                    },
+                    "layers": {
+                        "title": "Layers",
+                        "description": "Stack annotation passes (e.g. pre-op plan vs intraoperative finding) on independent layers."
+                    },
+                    "autosave": {
+                        "title": "Auto-save",
+                        "description": "Saved per appointment; resumes exactly where you left off next time the appointment is opened."
+                    }
+                }
+            },
+            "workflow": {
+                "title": "Workflow",
+                "content": "Drawings are first-class artifacts in the appointment record. Open the canvas, sketch, save — done."
+            },
+            "outputs": {
+                "title": "Outputs",
+                "png": {
+                    "title": "Persisted PNG",
+                    "description": "Each drawing is saved as a PNG attached to the appointment. Accessible from the appointment's Images & Attachments section and from the consultation summary."
+                },
+                "summary": {
+                    "title": "Consultation Summary",
+                    "description": "Drawings appear inline in the consultation summary view and the printed prescription, so the visual findings travel with the rest of the record."
+                }
             }
         }
     }

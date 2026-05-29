@@ -61,9 +61,49 @@ export default function ChangeLog() {
                 </p>
             </Section>
 
+            {/* Version 10.1.0 — perf + polish round (clock popover, Weather FX, dashboard widgets, jank fix, security) */}
+            <VersionSection
+                version="v10.1.0"
+                date="2026-05-30"
+                badgeColor="bg-gradient-to-r from-emerald-500 to-teal-600"
+                icon={<Sparkles size={20} />}
+            >
+                {t('sections.changelog.v10_1_0.content')}
+            </VersionSection>
+
+            {/* Version 10.0.0 — Glass/Indigo design system, Patient Boards, comments, Auto Complete, white modals */}
+            <VersionSection
+                version="v10.0.0"
+                date="2026-05-23"
+                badgeColor="bg-gradient-to-r from-indigo-600 to-violet-600"
+                icon={<Sparkles size={20} />}
+            >
+                {t('sections.changelog.v10_0_0.content')}
+            </VersionSection>
+
+            {/* Version 9.1.0 — sidebar labels + What's New reset */}
+            <VersionSection
+                version="v9.1.0"
+                date="2026-05-18"
+                badgeColor="bg-gradient-to-r from-blue-500 to-cyan-600"
+                icon={<Sparkles size={20} />}
+            >
+                {t('sections.changelog.v9_1_0.content')}
+            </VersionSection>
+
+            {/* Version 9.0.0 — two-clinic architecture, Draw Consultation, Finance Phases 0-3, What's New wizard */}
+            <VersionSection
+                version="v9.0.0"
+                date="2026-05-14"
+                badgeColor="bg-gradient-to-r from-sky-500 to-blue-600"
+                icon={<Sparkles size={20} />}
+            >
+                {t('sections.changelog.v9_0_0.content')}
+            </VersionSection>
+
             {/* Version 8.0.0 */}
-            <VersionSection 
-                version="v8.0.0" 
+            <VersionSection
+                version="v8.0.0"
                 date="2025-12-25"
                 badgeColor="bg-gradient-to-r from-indigo-500 to-purple-600"
                 icon={<Sparkles size={20} />}

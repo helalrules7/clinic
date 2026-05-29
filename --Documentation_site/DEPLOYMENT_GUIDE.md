@@ -3,7 +3,7 @@
 ## Remote Server Information
 - **IP Address:** `45.93.138.184`
 - **SSH User:** `root`
-- **SSH Key Path:** `/var/www/html/clinic_2/keys/OpenSSHPrivate`
+- **SSH Key Path:** `/keys/OpenSSHPrivate`
 - **Remote Path:** `/home/AhmedHelal/web/hclinic.clinic/public_html/docs/opth`
 - **Remote Owner:** `AhmedHelal:www-data`
 
