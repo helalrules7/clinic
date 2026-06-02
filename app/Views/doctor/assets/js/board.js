@@ -30,8 +30,56 @@
     const ME   = CFG.currentUser || {};
     const CAN_MANAGE = ME.role === 'doctor' || ME.role === 'admin';
 
-    const COLORS = ['#0ea5e9', '#10b981', '#f59e0b', '#a855f7', '#ef4444',
-                    '#22c55e', '#3b82f6', '#ec4899', '#64748b', '#14b8a6'];
+    // Expanded swatch palette (16 colors covering the full hue wheel).
+    const COLORS = [
+        '#0ea5e9', // sky
+        '#06b6d4', // cyan
+        '#14b8a6', // teal
+        '#10b981', // emerald
+        '#22c55e', // green
+        '#84cc16', // lime
+        '#eab308', // yellow
+        '#f59e0b', // amber
+        '#f97316', // orange
+        '#ef4444', // red
+        '#f43f5e', // rose
+        '#ec4899', // pink
+        '#d946ef', // fuchsia
+        '#a855f7', // purple
+        '#6366f1', // indigo
+        '#3b82f6', // blue
+        '#64748b', // slate (neutral)
+        '#475569', // darker slate
+    ];
+
+    // Curated icon palette for boards. Each value is a Bootstrap Icons class
+    // name. Order roughly follows clinical workflow stages.
+    const ICONS = [
+        'bi-kanban',              // default — generic board
+        'bi-clipboard-pulse',     // new consultation
+        'bi-person-plus',         // intake / registration
+        'bi-clipboard2-check',    // assessment complete
+        'bi-camera',              // imaging
+        'bi-droplet-half',        // labs
+        'bi-eye',                 // ophthalmology
+        'bi-heart-pulse',         // cardiology / vitals
+        'bi-activity',            // monitoring
+        'bi-bandaid',             // surgical
+        'bi-hospital',            // inpatient
+        'bi-house-heart',         // discharged
+        'bi-clock-history',       // follow-up
+        'bi-arrow-repeat',        // returning patient
+        'bi-prescription2',       // prescription
+        'bi-graph-up-arrow',      // progress / outcome
+        'bi-stars',               // VIP / priority
+        'bi-flag',                // flagged / urgent
+        'bi-exclamation-triangle',// urgent
+        'bi-check2-circle',       // completed
+        'bi-bookmark-star',       // bookmarked / starred
+        'bi-people',              // group / cohort
+        'bi-pin-angle',           // pinned
+        'bi-hourglass-split',     // waiting / pending
+    ];
 
     // ---- DOM ---------------------------------------------------------------
     const $ = (id) => document.getElementById(id);
@@ -289,15 +337,49 @@
                </button>`
             : '';
 
+        // Patient preview rows — up to 2 shown, then "+N Others" if more.
+        // Whole card remains a single click target → open the board.
+        const previews = Array.isArray(b.patients) ? b.patients : [];
+        const MAX_ROWS = 2;
+        let previewHtml = '';
+        if (previews.length > 0) {
+            const visible = previews.slice(0, MAX_ROWS);
+            const overflow = count - visible.length;
+            const rows = visible.map((p) => {
+                const initials = escapeHtml(p.initials || 'P');
+                const name = escapeHtml(p.name || 'Patient');
+                const cm = p.comments_count | 0;
+                const at = p.attachments_count | 0;
+                return `
+                    <div class="board-card-patient" aria-hidden="true">
+                        <span class="bcp-avatar" data-pid="${p.patient_id | 0}">${initials}</span>
+                        <span class="bcp-name">${name}</span>
+                        <span class="bcp-meta">
+                            <span class="bcp-icon" title="${cm} comments"><i class="bi bi-chat"></i> ${cm}</span>
+                            <span class="bcp-icon" title="${at} attachments"><i class="bi bi-paperclip"></i> ${at}</span>
+                        </span>
+                    </div>`;
+            }).join('');
+            const more = overflow > 0
+                ? `<div class="board-card-patient bcp-more" aria-hidden="true">
+                       <span class="bcp-avatar bcp-avatar-more">+${overflow}</span>
+                       <span class="bcp-name">${overflow} ${overflow === 1 ? 'other' : 'others'}</span>
+                   </div>`
+                : '';
+            previewHtml = `<div class="board-card-patients">${rows}${more}</div>`;
+        }
+
+        const iconClass = (b.icon && /^bi-[a-z0-9-]+$/.test(b.icon)) ? b.icon : 'bi-kanban';
         el.innerHTML = `
             <div class="board-card-top">
                 <h3 class="board-card-name">
-                    <span class="dot"></span>
+                    <span class="board-icon-chip" aria-hidden="true"><i class="bi ${iconClass}"></i></span>
                     <span class="txt">${escapeHtml(b.name)}</span>
                 </h3>
                 ${manageBtn}
             </div>
-            <p class="board-card-desc">${escapeHtml(b.description || '')}</p>
+            ${b.description ? `<p class="board-card-desc">${escapeHtml(b.description)}</p>` : ''}
+            ${previewHtml}
             <div class="board-card-foot">
                 <span class="board-count-badge ${count === 0 ? 'is-empty' : ''}">
                     <i class="bi bi-people-fill"></i> ${count} ${count === 1 ? 'patient' : 'patients'}
@@ -305,6 +387,12 @@
                 <span class="board-card-open">Open <i class="bi bi-arrow-right"></i></span>
             </div>
         `;
+
+        // Stable per-patient accent color on the avatar based on patient_id.
+        el.querySelectorAll('.bcp-avatar[data-pid]').forEach((node) => {
+            const pid = parseInt(node.getAttribute('data-pid'), 10) || 0;
+            node.style.setProperty('--bcp-accent', avatarHue(pid));
+        });
 
         el.addEventListener('click', (e) => {
             if (e.target.closest('.board-card-menu')) return;
@@ -317,6 +405,15 @@
         if (menu) menu.addEventListener('click', (e) => { e.stopPropagation(); openBoardEditor(b); });
 
         return el;
+    }
+
+    // Stable HSL hue per patient (used by mini-row avatar bg).
+    const AVATAR_PALETTE = [
+        '#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ec4899',
+        '#a855f7', '#14b8a6', '#3b82f6', '#ef4444', '#84cc16',
+    ];
+    function avatarHue(pid) {
+        return AVATAR_PALETTE[(pid >>> 0) % AVATAR_PALETTE.length];
     }
 
     // =====================================================================
@@ -351,8 +448,19 @@
         crumbName.textContent = board.name;
         detailDesc.textContent = board.description || '';
         detailDesc.hidden = !board.description;
-        detailSwatch.style.background = board.color || '#0ea5e9';
+        applySwatchChip(detailSwatch, board);
         loadCards();
+    }
+
+    // Render the detail header swatch as a colored icon chip (replaces the
+    // legacy plain colored dot). Used in detail header + post-save refresh.
+    function applySwatchChip(el, board) {
+        if (!el) return;
+        el.style.setProperty('--card-accent', board.color || '#0ea5e9');
+        const icon = (board.icon && /^bi-[a-z0-9-]+$/.test(board.icon)) ? board.icon : 'bi-kanban';
+        el.innerHTML = '<i class="bi ' + icon + '"></i>';
+        el.classList.add('board-icon-chip');
+        el.style.background = '';   // override legacy inline bg from earlier renders
     }
 
     function loadCards() {
@@ -476,6 +584,7 @@
     // =====================================================================
     function buildColorRow(selected) {
         const row = $('boardColorRow');
+        if (!row) return;
         row.innerHTML = '';
         COLORS.forEach((c) => {
             const dot = document.createElement('button');
@@ -491,9 +600,47 @@
                     d.classList.remove('is-selected'); d.setAttribute('aria-checked', 'false');
                 });
                 dot.classList.add('is-selected'); dot.setAttribute('aria-checked', 'true');
+                syncIconPreview();
             });
             row.appendChild(dot);
         });
+    }
+
+    function buildIconRow(selected) {
+        const row = $('boardIconRow');
+        if (!row) return;
+        row.innerHTML = '';
+        ICONS.forEach((ic) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'board-icon-swatch' + (ic === selected ? ' is-selected' : '');
+            btn.innerHTML = '<i class="bi ' + ic + '"></i>';
+            btn.setAttribute('role', 'radio');
+            btn.setAttribute('aria-checked', ic === selected ? 'true' : 'false');
+            btn.setAttribute('aria-label', ic.replace(/^bi-/, '').replace(/-/g, ' '));
+            btn.title = btn.getAttribute('aria-label');
+            btn.addEventListener('click', () => {
+                $('boardEditIcon').value = ic;
+                row.querySelectorAll('.board-icon-swatch').forEach((d) => {
+                    d.classList.remove('is-selected'); d.setAttribute('aria-checked', 'false');
+                });
+                btn.classList.add('is-selected'); btn.setAttribute('aria-checked', 'true');
+                syncIconPreview();
+            });
+            row.appendChild(btn);
+        });
+        syncIconPreview();
+    }
+
+    // Live preview chip inside the modal so the user sees what the
+    // color + icon combination will look like before saving.
+    function syncIconPreview() {
+        const prev = $('boardEditPreview');
+        if (!prev) return;
+        const color = ($('boardEditColor') && $('boardEditColor').value) || '#0ea5e9';
+        const icon  = ($('boardEditIcon')  && $('boardEditIcon').value)  || 'bi-kanban';
+        prev.style.setProperty('--card-accent', color);
+        prev.innerHTML = '<i class="bi ' + icon + '"></i>';
     }
 
     function openBoardEditor(board) {
@@ -504,8 +651,11 @@
         $('boardEditName').value = board ? (board.name || '') : '';
         $('boardEditDesc').value = board ? (board.description || '') : '';
         const color = board ? (board.color || '#0ea5e9') : '#0ea5e9';
+        const icon  = board && /^bi-[a-z0-9-]+$/.test(board.icon || '') ? board.icon : 'bi-kanban';
         $('boardEditColor').value = color;
+        $('boardEditIcon').value  = icon;
         buildColorRow(color);
+        buildIconRow(icon);
 
         const delBtn = $('boardEditDelete');
         delBtn.hidden = !(board && CAN_MANAGE && !board.is_default);
@@ -520,6 +670,7 @@
             name: $('boardEditName').value.trim(),
             description: $('boardEditDesc').value.trim(),
             color: $('boardEditColor').value || '#0ea5e9',
+            icon:  $('boardEditIcon').value  || 'bi-kanban',
         };
         if (!payload.name) { err.textContent = 'Board name is required.'; err.hidden = false; return; }
 
@@ -538,9 +689,14 @@
             return loadBoards({ silent: true }).then(() => {
                 if (state.current && String(state.current.id) === String(id)) {
                     const fresh = state.boards.find((b) => String(b.id) === String(id));
-                    if (fresh) { state.current = fresh; detailName.textContent = fresh.name;
-                        crumbName.textContent = fresh.name; detailDesc.textContent = fresh.description || '';
-                        detailDesc.hidden = !fresh.description; detailSwatch.style.background = fresh.color; }
+                    if (fresh) {
+                        state.current = fresh;
+                        detailName.textContent = fresh.name;
+                        crumbName.textContent = fresh.name;
+                        detailDesc.textContent = fresh.description || '';
+                        detailDesc.hidden = !fresh.description;
+                        applySwatchChip(detailSwatch, fresh);
+                    }
                 }
             });
         }).catch((e) => { err.textContent = e.message; err.hidden = false; })
@@ -826,7 +982,18 @@
                 ${window.CommentMedia ? CommentMedia.renderAttachments(r.attachments) : ''}
             `;
             const del = item.querySelector('.note-del');
-            if (del) del.addEventListener('click', () => deleteNote(r.id, listEl, c));
+            if (del) del.addEventListener('click', async () => {
+                const ok = typeof window.mkConfirmModal === 'function'
+                    ? await window.mkConfirmModal({
+                        title: 'Delete note?',
+                        message: 'This board note will be removed. This action cannot be undone.',
+                        confirmText: 'Delete',
+                        confirmClass: 'btn-danger',
+                        icon: 'bi-trash',
+                    })
+                    : window.confirm('Delete this note?');
+                if (ok) deleteNote(r.id, listEl, c);
+            });
             listEl.appendChild(item);
         });
     }

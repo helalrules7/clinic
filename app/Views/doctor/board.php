@@ -191,10 +191,21 @@
                         <textarea class="form-control" id="boardEditDesc" maxlength="255" rows="2"
                                   placeholder="A short description of this stage (optional)"></textarea>
                     </div>
-                    <div class="mb-1">
+                    <div class="mb-3">
                         <label class="form-label">Board color</label>
                         <div class="board-color-row" id="boardColorRow" role="radiogroup" aria-label="Board color"></div>
                         <input type="hidden" id="boardEditColor" value="#0ea5e9">
+                    </div>
+                    <div class="mb-1">
+                        <div class="board-icon-row-head">
+                            <label class="form-label mb-0">Board icon</label>
+                            <span class="board-edit-preview-wrap">
+                                <span class="board-edit-preview-label">Preview</span>
+                                <span class="board-icon-chip" id="boardEditPreview" aria-hidden="true"><i class="bi bi-kanban"></i></span>
+                            </span>
+                        </div>
+                        <div class="board-icon-row" id="boardIconRow" role="radiogroup" aria-label="Board icon"></div>
+                        <input type="hidden" id="boardEditIcon" value="bi-kanban">
                     </div>
                     <div class="board-form-error" id="boardEditError" hidden></div>
                 </div>

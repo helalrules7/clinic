@@ -98,7 +98,7 @@ class BoardController
     {
         $this->requireApi();
         $stmt = $this->pdo->query("
-            SELECT id, clinic_id, doctor_id, name, color, sort_order, is_system
+            SELECT id, clinic_id, doctor_id, name, color, icon, sort_order, is_system
             FROM patient_board_columns
             ORDER BY sort_order ASC, id ASC
         ");
@@ -369,31 +369,196 @@ class BoardController
         $this->json(['ok' => true, 'data' => ['moved_at' => $fresh->fetchColumn()]]);
     }
 
+    /**
+     * One-click auto-place: scores every column for the patient based on
+     *  (a) tag ↔ column-name keyword overlap,
+     *  (b) most recent appointment (visit_type / status / recency),
+     *  (c) total non-cancelled visit count,
+     *  (d) per-column heuristics on common seed-column keywords,
+     * and assigns the patient to the highest-scoring column (replacing any
+     * existing assignment). Returns the chosen column + a human reason list.
+     */
     public function autoPlace($patientId)
     {
-        $this->requireApi();
+        $user = $this->requireApi();
         $patientId = (int) $patientId;
         if ($patientId <= 0) {
             $this->json(['ok' => false, 'error' => 'bad patient_id'], 400);
         }
-        $defaultCol = $this->pdo->query("
-            SELECT id FROM patient_board_columns
-            WHERE is_system = 1
-            ORDER BY sort_order ASC LIMIT 1
-        ")->fetchColumn();
-        if (!$defaultCol) {
-            $this->json(['ok' => false, 'error' => 'no default column'], 500);
+
+        // Patient must exist.
+        $patStmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
+        $patStmt->execute([$patientId]);
+        if (!$patStmt->fetch()) {
+            $this->json(['ok' => false, 'error' => 'patient not found'], 404);
         }
-        $defaultCol = (int) $defaultCol;
-        $user = $this->auth->user();
+
+        // Load all columns (caller's view: every clinic column is a candidate).
+        $cols = $this->pdo->query("
+            SELECT id, name, sort_order, is_system
+            FROM patient_board_columns
+            ORDER BY sort_order ASC, id ASC
+        ")->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        if (!$cols) {
+            $this->json(['ok' => false, 'error' => 'no columns configured'], 422);
+        }
+
+        // ---- Patient signals --------------------------------------------
+        // Tags (defensive: tag system may not be installed everywhere).
+        $patientTags = [];
+        try {
+            $tagStmt = $this->pdo->prepare("
+                SELECT LOWER(t.name) AS name
+                FROM patient_tag_assignments pta
+                JOIN patient_tags t ON t.id = pta.tag_id
+                WHERE pta.patient_id = ?
+            ");
+            $tagStmt->execute([$patientId]);
+            foreach ($tagStmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $r) {
+                $patientTags[] = trim((string) $r['name']);
+            }
+        } catch (\Throwable $e) { /* tag table absent → no tag signal */ }
+
+        // Last non-cancelled appointment.
+        $lastAppt = null;
+        try {
+            $lastStmt = $this->pdo->prepare("
+                SELECT visit_type, status, date
+                FROM appointments
+                WHERE patient_id = ?
+                  AND status NOT IN ('Cancelled','NoShow')
+                ORDER BY date DESC, start_time DESC
+                LIMIT 1
+            ");
+            $lastStmt->execute([$patientId]);
+            $lastAppt = $lastStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        } catch (\Throwable $e) { /* missing column / table → no recency signal */ }
+
+        // Visit count + future booked flag.
+        $visitCount = 0; $hasFuture = false;
+        try {
+            $cs = $this->pdo->prepare("
+                SELECT
+                    SUM(CASE WHEN status NOT IN ('Cancelled','NoShow') THEN 1 ELSE 0 END) AS visit_count,
+                    SUM(CASE WHEN date >= CURRENT_DATE AND status NOT IN ('Cancelled','NoShow') THEN 1 ELSE 0 END) AS future
+                FROM appointments WHERE patient_id = ?
+            ");
+            $cs->execute([$patientId]);
+            $row = $cs->fetch(PDO::FETCH_ASSOC) ?: [];
+            $visitCount = (int) ($row['visit_count'] ?? 0);
+            $hasFuture  = ((int) ($row['future'] ?? 0)) > 0;
+        } catch (\Throwable $e) { /* appointment shape differs → ignore */ }
+
+        // ---- Score each column ------------------------------------------
+        $tok = function (string $s): array {
+            return array_values(array_filter(
+                preg_split('/[\s\-_\/&·,.()]+/u', mb_strtolower($s)),
+                fn($t) => $t !== ''
+            ));
+        };
+        $best = ['col' => null, 'score' => -1, 'reasons' => []];
+
+        foreach ($cols as $col) {
+            $score = 0; $reasons = [];
+            $nameTokens = $tok($col['name']);
+
+            // (a) tag overlap with column name
+            foreach ($patientTags as $tagName) {
+                if (in_array($tagName, ['priority', 'vip', 'starred'], true)) continue;
+                $tagTokens = $tok($tagName);
+                $overlap = array_intersect($tagTokens, $nameTokens);
+                if (!empty($overlap)) {
+                    $score += 50;
+                    $reasons[] = 'tag "' . $tagName . '" matches column';
+                }
+            }
+
+            // (b) recent activity heuristics
+            if ($lastAppt) {
+                $vt = strtolower((string) ($lastAppt['visit_type'] ?? ''));
+                $st = strtolower((string) ($lastAppt['status'] ?? ''));
+                if (in_array('follow', $nameTokens, true) || in_array('followup', $nameTokens, true)) {
+                    if (str_contains($vt, 'follow')) { $score += 40; $reasons[] = 'last visit was a follow-up'; }
+                }
+                if (in_array('post', $nameTokens, true) || in_array('postop', $nameTokens, true)) {
+                    if (str_contains($vt, 'procedure') || str_contains($vt, 'surgery')) {
+                        $score += 35; $reasons[] = 'recent procedure/surgery';
+                    }
+                }
+                if (in_array('pre', $nameTokens, true) || in_array('preop', $nameTokens, true) || in_array('surgical', $nameTokens, true)) {
+                    foreach ($patientTags as $t) {
+                        if (str_contains($t, 'surg')) { $score += 35; $reasons[] = 'surgical tag → pre-op column'; break; }
+                    }
+                }
+                if (in_array('imaging', $nameTokens, true) || in_array('investigations', $nameTokens, true) || in_array('investigation', $nameTokens, true)) {
+                    foreach ($patientTags as $t) {
+                        if (str_contains($t, 'imag') || str_contains($t, 'scan') || str_contains($t, 'mri') || str_contains($t, 'ct')) {
+                            $score += 30; $reasons[] = 'imaging tag → imaging column'; break;
+                        }
+                    }
+                }
+                if (in_array('discharge', $nameTokens, true) || in_array('completed', $nameTokens, true) || in_array('long-term', $nameTokens, true)) {
+                    if ($st === 'completed' && !$hasFuture) {
+                        $score += 25; $reasons[] = 'no future appointments → long-term/discharge column';
+                    }
+                }
+            }
+
+            // (c) visit count
+            if ($visitCount === 0 && (in_array('new', $nameTokens, true) || in_array('consultation', $nameTokens, true))) {
+                $score += 25; $reasons[] = 'first-time patient → new consultation column';
+            }
+            if ($visitCount >= 4 && (in_array('follow', $nameTokens, true) || in_array('long-term', $nameTokens, true) || in_array('long', $nameTokens, true))) {
+                $score += 15; $reasons[] = 'returning patient (' . $visitCount . ' visits)';
+            }
+
+            // (d) ultra-weak fallback marker for the default system column
+            if ($score === 0 && (int) ($col['is_system'] ?? 0) === 1 && $best['score'] <= 0) {
+                $score = 1;
+            }
+
+            if ($score > $best['score']) {
+                $best = ['col' => $col, 'score' => $score, 'reasons' => $reasons];
+            }
+        }
+
+        if (!$best['col']) {
+            // Absolute fallback: lowest sort_order.
+            $best['col'] = $cols[0];
+            $best['reasons'] = ['no signal — placed in default column'];
+        }
+        $targetCol = (int) $best['col']['id'];
+        $confidence = max(0.05, min(1.0, $best['score'] / 100));
+
+        // ---- Upsert (replaces existing assignment) ----------------------
         $up = $this->pdo->prepare("
             INSERT INTO patient_board_assignments
                 (patient_id, column_id, sort_order, moved_at, moved_by)
             VALUES (?, ?, 0, CURRENT_TIMESTAMP, ?)
-            ON DUPLICATE KEY UPDATE patient_id = patient_id
+            ON DUPLICATE KEY UPDATE
+                column_id  = VALUES(column_id),
+                sort_order = 0,
+                moved_at   = CURRENT_TIMESTAMP,
+                moved_by   = VALUES(moved_by)
         ");
-        $up->execute([$patientId, $defaultCol, $user['id'] ?? null]);
-        $this->json(['ok' => true, 'data' => ['column_id' => $defaultCol]]);
+        $up->execute([$patientId, $targetCol, $user['id'] ?? null]);
+
+        try {
+            $this->pdo->prepare("
+                INSERT INTO timeline_events (event_type, actor_user_id, patient_id, payload, created_at)
+                VALUES ('board_auto_place', ?, ?, ?, CURRENT_TIMESTAMP)
+            ")->execute([
+                $user['id'] ?? null, $patientId,
+                json_encode(['to_column_id' => $targetCol, 'score' => $best['score'], 'reasons' => $best['reasons']]),
+            ]);
+        } catch (\Throwable $e) { /* timeline_events optional */ }
+
+        $this->json(['ok' => true, 'data' => [
+            'column_id'   => $targetCol,
+            'column_name' => $best['col']['name'],
+            'confidence'  => round($confidence, 2),
+            'reasons'     => $best['reasons'],
+        ]]);
     }
 
     // =====================================================================
@@ -416,7 +581,7 @@ class BoardController
     private function boardRow(int $id): ?array
     {
         $stmt = $this->pdo->prepare("
-            SELECT id, name, description, color, sort_order, is_system
+            SELECT id, name, description, color, icon, sort_order, is_system
             FROM patient_board_columns WHERE id = ?
         ");
         $stmt->execute([$id]);
@@ -429,23 +594,77 @@ class BoardController
     {
         $this->requireApi();
         $rows = $this->pdo->query("
-            SELECT col.id, col.name, col.description, col.color,
+            SELECT col.id, col.name, col.description, col.color, col.icon,
                    col.sort_order, col.is_system,
                    COUNT(pba.patient_id) AS patient_count
             FROM patient_board_columns col
             LEFT JOIN patient_board_assignments pba ON pba.column_id = col.id
-            GROUP BY col.id, col.name, col.description, col.color,
+            GROUP BY col.id, col.name, col.description, col.color, col.icon,
                      col.sort_order, col.is_system
             ORDER BY col.sort_order ASC, col.id ASC
         ")->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
         $default = $this->defaultBoardId();
+
+        // Top-3 patient previews per column (ROW_NUMBER over sort_order/moved_at)
+        $previews = [];
+        try {
+            $stmt = $this->pdo->query("
+                SELECT * FROM (
+                    SELECT
+                        pba.column_id,
+                        p.id AS patient_id,
+                        p.first_name,
+                        p.last_name,
+                        (SELECT COUNT(*) FROM comments c
+                            WHERE c.commentable_type = 'board_card'
+                              AND c.commentable_id = p.id
+                              AND c.deleted_at IS NULL) AS comments_count,
+                        (SELECT COUNT(*) FROM comment_attachments ca
+                            JOIN comments c2 ON c2.id = ca.comment_id
+                            WHERE c2.commentable_type = 'board_card'
+                              AND c2.commentable_id = p.id
+                              AND c2.deleted_at IS NULL) AS attachments_count,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY pba.column_id
+                            ORDER BY pba.sort_order ASC, pba.moved_at DESC, p.id DESC
+                        ) AS rn
+                    FROM patient_board_assignments pba
+                    JOIN patients p ON p.id = pba.patient_id
+                ) t
+                WHERE t.rn <= 3
+                ORDER BY t.column_id, t.rn
+            ");
+            $previewRows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            foreach ($previewRows as $pr) {
+                $cid = (int) $pr['column_id'];
+                $first = trim((string) ($pr['first_name'] ?? ''));
+                $last  = trim((string) ($pr['last_name'] ?? ''));
+                $initials = strtoupper(
+                    mb_substr($first !== '' ? $first : 'P', 0, 1) .
+                    ($last !== '' ? mb_substr($last, 0, 1) : '')
+                );
+                $previews[$cid][] = [
+                    'patient_id'        => (int) $pr['patient_id'],
+                    'name'              => trim($first . ' ' . $last),
+                    'initials'          => $initials,
+                    'comments_count'    => (int) $pr['comments_count'],
+                    'attachments_count' => (int) $pr['attachments_count'],
+                ];
+            }
+        } catch (\Throwable $e) {
+            // ROW_NUMBER requires MariaDB 10.2+ / MySQL 8 — should be present, but degrade
+            // gracefully: skip previews and still return per-column counts.
+            $previews = [];
+        }
+
         foreach ($rows as &$r) {
             $r['id']            = (int) $r['id'];
             $r['sort_order']    = (int) $r['sort_order'];
             $r['is_system']     = (int) $r['is_system'];
             $r['patient_count'] = (int) $r['patient_count'];
             $r['is_default']    = ($r['id'] === $default);
+            $r['patients']      = $previews[$r['id']] ?? [];
         }
         $this->json(['ok' => true, 'data' => $rows]);
     }
@@ -528,6 +747,7 @@ class BoardController
         $name  = trim((string) ($b['name'] ?? ''));
         $desc  = trim((string) ($b['description'] ?? ''));
         $color = trim((string) ($b['color'] ?? '#0ea5e9'));
+        $icon  = trim((string) ($b['icon']  ?? 'bi-kanban'));
         if ($name === '' || mb_strlen($name) > 80) {
             $this->json(['ok' => false, 'error' => 'Board name is required (1–80 characters)'], 400);
         }
@@ -537,7 +757,17 @@ class BoardController
         if (!preg_match('/^#[0-9a-fA-F]{3,8}$/', $color)) {
             $color = '#0ea5e9';
         }
-        return ['name' => $name, 'description' => ($desc === '' ? null : $desc), 'color' => $color];
+        // Icon: must be a Bootstrap Icons class name (lowercase + hyphens + digits)
+        // prefixed `bi-`. Length-capped to match the DB column.
+        if (!preg_match('/^bi-[a-z0-9][a-z0-9-]{0,36}$/', $icon)) {
+            $icon = 'bi-kanban';
+        }
+        return [
+            'name'        => $name,
+            'description' => ($desc === '' ? null : $desc),
+            'color'       => $color,
+            'icon'        => $icon,
+        ];
     }
 
     /** POST /api/board/boards */
@@ -547,10 +777,10 @@ class BoardController
         $d = $this->validateBoardInput($this->readBody());
         $next = (int) $this->pdo->query("SELECT COALESCE(MAX(sort_order),0)+10 FROM patient_board_columns")->fetchColumn();
         $ins = $this->pdo->prepare("
-            INSERT INTO patient_board_columns (name, description, color, sort_order, is_system)
-            VALUES (?, ?, ?, ?, 0)
+            INSERT INTO patient_board_columns (name, description, color, icon, sort_order, is_system)
+            VALUES (?, ?, ?, ?, ?, 0)
         ");
-        $ins->execute([$d['name'], $d['description'], $d['color'], $next]);
+        $ins->execute([$d['name'], $d['description'], $d['color'], $d['icon'], $next]);
         $this->json(['ok' => true, 'data' => ['id' => (int) $this->pdo->lastInsertId()]]);
     }
 
@@ -565,9 +795,9 @@ class BoardController
         $d = $this->validateBoardInput($this->readBody());
         $this->pdo->prepare("
             UPDATE patient_board_columns
-            SET name = ?, description = ?, color = ?
+            SET name = ?, description = ?, color = ?, icon = ?
             WHERE id = ?
-        ")->execute([$d['name'], $d['description'], $d['color'], $id]);
+        ")->execute([$d['name'], $d['description'], $d['color'], $d['icon'], $id]);
         $this->json(['ok' => true]);
     }
 

@@ -184,12 +184,6 @@
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="/doctor/forum" class="nav-link <?= $this->isActiveRoute('/doctor/forum') ? 'active' : '' ?>">
-                        <i class="bi bi-chat-dots"></i>
-                        Discussions
-                    </a>
-                </div>
-                <div class="nav-item">
                     <a href="/doctor/drugs" class="nav-link <?= $this->isActiveRoute('/doctor/drugs') ? 'active' : '' ?>">
                         <i class="bi bi-capsule"></i>
                         Drugs Database
@@ -339,7 +333,7 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="sidebar-footer-text">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v10.0.0
+                        HClinic / Roaya Clinic v10.1.0
                     </div>
                     <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none sidebar-footer-link">Ahmed Helal</a></div>
                 </small>
@@ -853,9 +847,6 @@
         <?= $content ?>
     </div>
     
-    <!-- Forum Toast Container (Top Right) -->
-    <div id="forumToastContainer"></div>
-    
     <!-- Scroll to Top Button (with scroll-progress ring) -->
     <button class="scroll-to-top" id="scrollToTop" aria-label="Scroll to top">
         <svg class="stt-ring" viewBox="0 0 44 44" aria-hidden="true">
@@ -911,6 +902,10 @@
                 <i class="bi bi-people"></i>
                 <span class="htooltip">Patient List</span>
             </a>
+            <a href="/doctor/board" class="dock-item" title="Patients Board">
+                <i class="bi bi-kanban"></i>
+                <span class="htooltip">Patients Board</span>
+            </a>
             <a href="/doctor/drugs" class="dock-item" title="Drugs">
                 <i class="bi bi-capsule"></i>
                 <span class="htooltip">Drugs</span>
@@ -918,10 +913,6 @@
             <a href="/doctor/notes" class="dock-item" title="Notes">
                 <i class="bi bi-sticky"></i>
                 <span class="htooltip">Notes</span>
-            </a>
-            <a href="/doctor/forum" class="dock-item" title="Doctor Forum">
-                <i class="bi bi-chat-dots"></i>
-                <span class="htooltip">Doctor Forum</span>
             </a>
             <a href="/doctor/payments" class="dock-item" title="Financial">
                 <i class="bi bi-credit-card"></i>

@@ -119,12 +119,48 @@
 /* ---- Detail title bits -------------------------------------------------- */
 
 .board-detail-swatch {
-    width: 14px; height: 14px;
-    border-radius: 5px;
-    display: inline-block;
-    background: var(--accent);
+    /* Detail-header chip — JS sets --card-accent + injects the <i>. Same
+       visual language as page-title icons (colored tile, white glyph). The
+       `var(--card-accent, var(--accent))` fallback pattern is critical:
+       inheriting from a parent that sets --card-accent must win, but a
+       standalone chip still gets a sane default. */
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg,
+        var(--card-accent, var(--accent)),
+        color-mix(in oklab, var(--card-accent, var(--accent)) 70%, #fff));
+    color: #fff;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--card-accent, var(--accent)) 32%, transparent);
     flex-shrink: 0;
+    font-size: 1.1rem;
 }
+.board-detail-swatch i { font-size: 1.1rem; line-height: 1; color: #fff; }
+
+/* Reusable board icon chip — used in card titles, detail header preview,
+   and the modal live preview. INHERITS --card-accent from the parent (do
+   NOT redeclare here — the parent .board-card sets it per column color, and
+   redeclaring would reset it to the page default and every chip would look
+   identical). */
+.board-icon-chip {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg,
+        var(--card-accent, var(--accent)),
+        color-mix(in oklab, var(--card-accent, var(--accent)) 70%, #fff));
+    color: #fff;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--card-accent, var(--accent)) 30%, transparent);
+    flex-shrink: 0;
+    font-size: 0.92rem;
+}
+.board-icon-chip i { line-height: 1; color: #fff; }
+.dark .board-icon-chip { box-shadow: 0 2px 10px color-mix(in srgb, var(--card-accent, var(--accent)) 45%, transparent); }
+.dark .board-detail-swatch { box-shadow: 0 4px 18px color-mix(in srgb, var(--card-accent, var(--accent)) 45%, transparent); }
 .board-pill {
     font-size: 0.8rem;
     font-weight: 600;
@@ -289,13 +325,32 @@
 
 .board-card {
     --card-accent: var(--accent);
+    /* Per-theme tint strength — overridden in .dark below */
+    --card-tint-top: 14%;
+    --card-tint-mid: 5%;
+    /* Glass — translucent surface that lets the tint show through */
+    --card-glass-bg: rgba(255, 255, 255, 0.62);
     position: relative;
     display: flex;
     flex-direction: column;
     gap: 8px;
     padding: 18px;
-    background: var(--card);
-    border: 1px solid var(--border);
+    /* Stack: top-down accent gradient over a glassy translucent base */
+    background-image:
+        linear-gradient(
+            180deg,
+            color-mix(in oklab, var(--card-accent) var(--card-tint-top), transparent) 0%,
+            color-mix(in oklab, var(--card-accent) var(--card-tint-mid), transparent) 55%,
+            transparent 100%
+        );
+    background-color: var(--card-glass-bg);
+    /* Gentle blur only — board overview renders 10-30+ cards; heavy
+       blur+saturate stacks compositor cost per card and brings back the
+       scroll jank we fixed in roaya-perf-jank-fix.md. 6px reads as glass
+       without per-frame GPU pressure. Saturate is dropped. */
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid color-mix(in srgb, var(--card-accent) 18%, var(--border));
     border-radius: var(--bd-radius);
     box-shadow: var(--bd-shadow);
     cursor: pointer;
@@ -303,6 +358,11 @@
     overflow: hidden;
     transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
     animation: bd-fade-up .3s ease both;
+}
+.dark .board-card {
+    --card-tint-top: 22%;
+    --card-tint-mid: 8%;
+    --card-glass-bg: rgba(15, 21, 38, 0.58);
 }
 .board-card::before {
     content: "";
@@ -339,9 +399,13 @@
     min-width: 0;
 }
 .board-card-name .dot {
+    /* Legacy — kept for any caller still rendering a dot; new code uses .board-icon-chip */
     width: 10px; height: 10px; border-radius: 50%;
     background: var(--card-accent);
     flex-shrink: 0;
+}
+.board-card-name .board-icon-chip {
+    /* Inherits --card-accent set on the parent .board-card */
 }
 .board-card-name .txt {
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -371,6 +435,80 @@
     overflow: hidden;
     min-height: 1.1em;
 }
+/* Patient preview mini-rows inside each board card */
+.board-card-patients {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+}
+.board-card-patient {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--card-accent) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--card-accent) 14%, transparent);
+    font-size: 0.82rem;
+    color: var(--text);
+    min-width: 0;
+}
+.dark .board-card-patient {
+    background: color-mix(in srgb, var(--card-accent) 14%, transparent);
+    border-color: color-mix(in srgb, var(--card-accent) 22%, transparent);
+}
+.bcp-avatar {
+    --bcp-accent: var(--card-accent);
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.7rem;
+    color: #fff;
+    background: var(--bcp-accent);
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--bcp-accent) 40%, transparent);
+}
+.bcp-avatar-more {
+    background: color-mix(in srgb, var(--card-accent) 70%, var(--muted));
+    box-shadow: none;
+    font-size: 0.65rem;
+}
+.bcp-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+}
+.bcp-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 0.7rem;
+    flex-shrink: 0;
+}
+.bcp-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+.bcp-icon i { font-size: 0.78rem; }
+.board-card-patient.bcp-more {
+    background: transparent;
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--card-accent) 30%, var(--border));
+    color: var(--muted);
+    justify-content: flex-start;
+}
+
 .board-card-foot {
     margin-top: auto;
     padding-top: 8px;
@@ -602,11 +740,32 @@
     word-break: break-word;
 }
 .note-del {
-    border: 0; background: transparent; color: var(--muted);
-    cursor: pointer; font-size: 0.78rem; padding: 2px 4px; border-radius: 6px;
-    flex-shrink: 0; align-self: flex-start;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 3px 6px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    align-self: flex-start;
+    opacity: .7;
+    transition: opacity .15s ease, background .15s ease, color .15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px; height: 26px;
 }
-.note-del:hover { color: var(--danger); }
+.note-del:hover {
+    opacity: 1;
+    color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+.note-del:focus-visible {
+    opacity: 1; outline: none;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger) 40%, transparent);
+}
+.note-del:disabled { opacity: .4; cursor: not-allowed; }
 .note-empty { font-size: 0.8rem; color: var(--muted); text-align: center; padding: 6px 0 10px; }
 .note-link { color: var(--accent); font-weight: 600; text-decoration: none; }
 .note-link:hover { text-decoration: underline; }
@@ -739,7 +898,7 @@
 
 /* ---- Color picker in board modal --------------------------------------- */
 
-.board-color-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.board-color-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .board-color-dot {
     width: 30px; height: 30px;
     border-radius: 50%;
@@ -755,6 +914,66 @@
 .board-color-dot:focus-visible {
     outline: none;
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+/* ---- Icon picker -------------------------------------------------------- */
+
+.board-icon-row-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+.board-edit-preview-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+.board-edit-preview-label { font-weight: 500; }
+.board-icon-row {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 4px;
+}
+@media (max-width: 480px) {
+    .board-icon-row { grid-template-columns: repeat(6, 1fr); }
+}
+.board-icon-swatch {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 9px;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform .12s ease, background .15s ease, border-color .15s ease, color .15s ease;
+    font-size: 1.05rem;
+    padding: 0;
+}
+.board-icon-swatch:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+    color: var(--accent);
+}
+.board-icon-swatch.is-selected {
+    background: linear-gradient(135deg, var(--accent),
+        color-mix(in oklab, var(--accent) 70%, #fff));
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 3px 12px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.board-icon-swatch:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 /* ---- Form bits ---------------------------------------------------------- */

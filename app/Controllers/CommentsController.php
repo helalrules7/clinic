@@ -416,9 +416,9 @@ class CommentsController
         }
         $file = $_FILES['file'];
 
-        // 12 MB cap — a phone photo or ~1 min of compressed audio.
-        if ($file['size'] > 12 * 1024 * 1024) {
-            $this->json(['ok' => false, 'error' => 'file too large (max 12MB)'], 400);
+        // 25 MB cap — phone photos, ~1 min of compressed audio, or clinical PDFs/Office docs.
+        if ($file['size'] > 25 * 1024 * 1024) {
+            $this->json(['ok' => false, 'error' => 'file too large (max 25MB)'], 400);
         }
 
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
@@ -433,10 +433,32 @@ class CommentsController
         $audioMimes = ['audio/webm', 'video/webm', 'audio/ogg', 'audio/mpeg', 'audio/mp3',
                        'audio/mp4', 'video/mp4', 'audio/x-m4a', 'audio/aac', 'audio/wav', 'audio/x-wav'];
 
+        // Documents: PDF, MS Office (.doc/.xls/.ppt), OOXML (.docx/.xlsx/.pptx), plain text.
+        $documentMimes = [
+            'application/pdf',
+            'application/msword',                                              // .doc
+            'application/vnd.ms-excel',                                        // .xls
+            'application/vnd.ms-powerpoint',                                   // .ppt
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',   // .docx
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',         // .xlsx
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+            'application/vnd.ms-office', 'application/CDFV2',                  // legacy MS Office sniffs
+            'text/plain',
+        ];
+        $ooxmlExts = ['docx', 'xlsx', 'pptx'];
+        $extLower  = strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION));
+
         if (in_array($mime, $imageMimes, true)) {
             $kind = 'image';
         } elseif (in_array($mime, $audioMimes, true)) {
             $kind = 'audio';
+        } elseif (in_array($mime, $documentMimes, true)) {
+            $kind = 'file';
+        } elseif (in_array($mime, ['application/zip', 'application/octet-stream'], true)
+                  && in_array($extLower, $ooxmlExts, true)) {
+            // OOXML containers are ZIPs — accept ONLY when the extension whitelist agrees,
+            // never raw application/zip alone (prevents arbitrary-archive uploads).
+            $kind = 'file';
         } else {
             $this->json(['ok' => false, 'error' => 'unsupported file type: ' . $mime], 400);
         }
@@ -483,8 +505,18 @@ class CommentsController
             'audio/webm' => 'webm', 'video/webm' => 'webm', 'audio/ogg' => 'ogg',
             'audio/mpeg' => 'mp3', 'audio/mp3' => 'mp3', 'audio/mp4' => 'm4a',
             'audio/x-m4a' => 'm4a', 'audio/aac' => 'aac', 'audio/wav' => 'wav', 'audio/x-wav' => 'wav',
+            'application/pdf' => 'pdf',
+            'application/msword' => 'doc',
+            'application/vnd.ms-excel' => 'xls',
+            'application/vnd.ms-powerpoint' => 'ppt',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'   => 'docx',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'         => 'xlsx',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation' => 'pptx',
+            'text/plain' => 'txt',
         ];
         if (isset($map[$mime])) return $map[$mime];
+        // For zip/octet-stream containers that survived the OOXML allowlist check,
+        // trust the original extension (already restricted to docx/xlsx/pptx).
         $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
         return preg_match('/^[a-z0-9]{1,5}$/', $ext) ? $ext : 'bin';
     }

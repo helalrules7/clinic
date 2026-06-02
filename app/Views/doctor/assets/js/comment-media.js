@@ -100,10 +100,33 @@
     }
 
     // ---- attachment rendering -------------------------------------------
+    // Document → bootstrap-icon class + tint key, by extension.
+    var DOC_ICONS = {
+        pdf:  { icon: 'bi-file-earmark-pdf-fill',         tint: 'pdf'   },
+        doc:  { icon: 'bi-file-earmark-word-fill',        tint: 'word'  },
+        docx: { icon: 'bi-file-earmark-word-fill',        tint: 'word'  },
+        xls:  { icon: 'bi-file-earmark-spreadsheet-fill', tint: 'excel' },
+        xlsx: { icon: 'bi-file-earmark-spreadsheet-fill', tint: 'excel' },
+        ppt:  { icon: 'bi-file-earmark-ppt-fill',         tint: 'ppt'   },
+        pptx: { icon: 'bi-file-earmark-ppt-fill',         tint: 'ppt'   },
+        txt:  { icon: 'bi-file-earmark-text-fill',        tint: 'txt'   },
+    };
+    function fileMeta(name) {
+        var ext = (name || '').split('.').pop().toLowerCase();
+        return DOC_ICONS[ext] || { icon: 'bi-file-earmark-fill', tint: 'generic', ext: ext };
+    }
+    function humanSize(bytes) {
+        if (!bytes) return '';
+        var u = ['B', 'KB', 'MB', 'GB']; var i = 0;
+        while (bytes >= 1024 && i < u.length - 1) { bytes /= 1024; i++; }
+        return (bytes < 10 && i > 0 ? bytes.toFixed(1) : Math.round(bytes)) + ' ' + u[i];
+    }
+
     function renderAttachments(atts) {
         if (!atts || !atts.length) return '';
         var imgs = atts.filter(function (a) { return a.kind === 'image'; });
         var auds = atts.filter(function (a) { return a.kind === 'audio'; });
+        var docs = atts.filter(function (a) { return a.kind === 'file'; });
         var html = '';
 
         if (imgs.length) {
@@ -112,6 +135,22 @@
                 // handler opens it in an in-page lightbox instead of a new tab.
                 return '<a class="cm-att-img" href="' + escapeAttr(a.url) + '">' +
                        '<img src="' + escapeAttr(a.url) + '" alt="' + escapeAttr(a.name || 'image') + '" loading="lazy"></a>';
+            }).join('') + '</div>';
+        }
+        if (docs.length) {
+            html += '<div class="cm-att-files">' + docs.map(function (a) {
+                var m = fileMeta(a.name);
+                var size = humanSize(a.size);
+                return '<a class="cm-att-file cm-att-file--' + m.tint + '" ' +
+                            'href="' + escapeAttr(a.url) + '" download="' + escapeAttr(a.name || '') + '" ' +
+                            'target="_blank" rel="noopener">' +
+                            '<span class="cm-att-file__icon"><i class="bi ' + m.icon + '"></i></span>' +
+                            '<span class="cm-att-file__body">' +
+                                '<span class="cm-att-file__name">' + escapeHtml(a.name || 'file') + '</span>' +
+                                (size ? '<span class="cm-att-file__size">' + escapeHtml(size) + '</span>' : '') +
+                            '</span>' +
+                            '<span class="cm-att-file__dl" aria-hidden="true"><i class="bi bi-download"></i></span>' +
+                       '</a>';
             }).join('') + '</div>';
         }
         auds.forEach(function (a) {
@@ -303,18 +342,38 @@
         bar.className = 'cm-toolbar';
         bar.innerHTML =
             '<button type="button" class="cm-tool" data-act="image" title="Add a photo"><i class="bi bi-image"></i></button>' +
+            '<button type="button" class="cm-tool" data-act="document" title="Attach a document (PDF, Word, Excel, PPT, TXT)"><i class="bi bi-paperclip"></i></button>' +
             (supportsMedia ? '<button type="button" class="cm-tool" data-act="camera" title="Take a photo"><i class="bi bi-camera"></i></button>' : '') +
             (supportsMedia && window.MediaRecorder ? '<button type="button" class="cm-tool" data-act="audio" title="Record audio"><i class="bi bi-mic"></i></button>' : '') +
             '<button type="button" class="cm-tool" data-act="mention" title="Mention a colleague"><i class="bi bi-at"></i></button>';
         wrap.appendChild(bar);
 
-        // hidden file input (gallery)
+        // hidden file input — image picker
         var fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.accept = 'image/*';
         fileInput.multiple = true;
         fileInput.style.display = 'none';
         wrap.appendChild(fileInput);
+
+        // hidden file input — document picker (separate so each button gets
+        // the right native chooser hint and accept filter)
+        var docInput = document.createElement('input');
+        docInput.type = 'file';
+        docInput.accept = [
+            '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt',
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'text/plain',
+        ].join(',');
+        docInput.multiple = true;
+        docInput.style.display = 'none';
+        wrap.appendChild(docInput);
 
         // pending-attachment preview strip
         var strip = document.createElement('div');
@@ -336,8 +395,15 @@
                 chip.className = 'cm-prev cm-prev--' + a.kind;
                 if (a.kind === 'image') {
                     chip.innerHTML = '<img src="' + escapeAttr(a.url) + '" alt="">';
-                } else {
+                } else if (a.kind === 'audio') {
                     chip.innerHTML = '<i class="bi bi-mic-fill"></i><span>Audio</span>';
+                } else if (a.kind === 'file') {
+                    var m = fileMeta(a.name);
+                    chip.classList.add('cm-prev--file', 'cm-prev--' + m.tint);
+                    chip.innerHTML = '<i class="bi ' + m.icon + '"></i>' +
+                                     '<span class="cm-prev-name">' + escapeHtml(a.name || 'file') + '</span>';
+                } else {
+                    chip.innerHTML = '<i class="bi bi-paperclip"></i>';
                 }
                 var x = document.createElement('button');
                 x.type = 'button'; x.className = 'cm-prev-x'; x.innerHTML = '<i class="bi bi-x"></i>';
@@ -350,14 +416,29 @@
 
         function addUploaded(att) { pending.push(att); renderPreviews(); onChange(); }
 
+        // Classify a File by MIME + extension. Returns 'image' | 'file' | null.
+        var DOC_EXT_RE = /\.(pdf|docx?|xlsx?|pptx?|txt)$/i;
+        function classifyFile(f) {
+            if (/^image\//.test(f.type)) return 'image';
+            if (/^(application\/(pdf|msword|vnd\.(ms-excel|ms-powerpoint|ms-office)|vnd\.openxmlformats-officedocument\.|CDFV2)|text\/plain)/.test(f.type)
+                || DOC_EXT_RE.test(f.name || '')) return 'file';
+            return null;
+        }
+
         function handleFiles(files) {
             Array.prototype.forEach.call(files, function (f) {
-                if (!/^image\//.test(f.type)) return;
-                var holder = { id: 'tmp', kind: 'image', url: URL.createObjectURL(f), name: f.name, uploading: true };
+                var kind = classifyFile(f);
+                if (!kind) return;
+                var holder = kind === 'image'
+                    ? { id: 'tmp', kind: 'image', url: URL.createObjectURL(f), name: f.name, size: f.size, uploading: true }
+                    : { id: 'tmp', kind: 'file',  url: '#', name: f.name, size: f.size, uploading: true };
                 pending.push(holder); renderPreviews(); onChange();
                 uploadFile(f, csrf()).then(function (j) {
                     var idx = pending.indexOf(holder);
-                    if (!j || !j.ok) { if (idx > -1) pending.splice(idx, 1); renderPreviews(); onChange(); toast('Upload failed'); return; }
+                    if (!j || !j.ok) {
+                        if (idx > -1) pending.splice(idx, 1); renderPreviews(); onChange();
+                        toast((j && j.error) || 'Upload failed'); return;
+                    }
                     if (idx > -1) pending[idx] = j.attachment;
                     renderPreviews(); onChange();
                 }).catch(function () {
@@ -376,12 +457,14 @@
         bar.addEventListener('click', function (e) {
             var btn = e.target.closest('.cm-tool'); if (!btn) return;
             var act = btn.dataset.act;
-            if (act === 'image')   fileInput.click();
-            if (act === 'camera')  openCamera();
-            if (act === 'audio')   toggleAudio(btn);
-            if (act === 'mention') { insertAtCaret('@'); onInput(); onChange(); }
+            if (act === 'image')    fileInput.click();
+            if (act === 'document') docInput.click();
+            if (act === 'camera')   openCamera();
+            if (act === 'audio')    toggleAudio(btn);
+            if (act === 'mention')  { insertAtCaret('@'); onInput(); onChange(); }
         });
         fileInput.addEventListener('change', function () { if (fileInput.files) handleFiles(fileInput.files); fileInput.value = ''; });
+        docInput.addEventListener('change',  function () { if (docInput.files)  handleFiles(docInput.files);  docInput.value  = ''; });
 
         // ---- camera capture (getUserMedia → canvas → blob)
         function openCamera() {

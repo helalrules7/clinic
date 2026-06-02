@@ -410,6 +410,12 @@
                             <stop offset="100%" stop-color="#cbd5e1" />
                         </linearGradient>
                     </defs>
+                    <!-- Cloud rendered BEFORE the sun group so the sun paints
+                         on top — natural "partly cloudy" reading (luminous
+                         body peeks through the cloud). SVG has no z-index,
+                         only source order. -->
+                    <path d="M 28,70 A 14,14 0 0,1 40,48 A 18,18 0 0,1 70,50 A 13,13 0 0,1 80,70 Z" fill="#0f172a" opacity="0.12" transform="translate(0, 3)" />
+                    <path d="M 28,70 A 14,14 0 0,1 40,48 A 18,18 0 0,1 70,50 A 13,13 0 0,1 80,70 Z" fill="url(#wx-pd-cloud-grad)" stroke="rgba(255, 255, 255, 0.9)" stroke-width="1" class="wx-cloud-front" />
                     <g class="wx-pd-sun" transform="translate(18, 14) scale(0.68)">
                         <g class="wx-sun-rays">
                             <rect x="47" y="5" width="6" height="15" rx="3" fill="url(#wx-pd-ray-grad)" />
@@ -424,8 +430,6 @@
                         <circle cx="50" cy="50" r="19" fill="url(#wx-pd-sun-grad)" />
                         <path d="M 37,37 A 19,19 0 0,1 63,37 A 16,16 0 0,0 37,37 Z" fill="#ffffff" opacity="0.4" />
                     </g>
-                    <path d="M 28,70 A 14,14 0 0,1 40,48 A 18,18 0 0,1 70,50 A 13,13 0 0,1 80,70 Z" fill="#0f172a" opacity="0.12" transform="translate(0, 3)" />
-                    <path d="M 28,70 A 14,14 0 0,1 40,48 A 18,18 0 0,1 70,50 A 13,13 0 0,1 80,70 Z" fill="url(#wx-pd-cloud-grad)" stroke="rgba(255, 255, 255, 0.9)" stroke-width="1" class="wx-cloud-front" />
                 </svg>`;
             } else {
                 type = 'partly-night';
@@ -443,16 +447,19 @@
                             <stop offset="100%" stop-color="#94a3b8" />
                         </linearGradient>
                     </defs>
+                    <!-- Stars stay at the back; cloud paints next; moon
+                         paints LAST so it sits in front of the cloud
+                         (consistent with the partly-day day arrangement). -->
                     <g class="wx-moon-stars">
                         <path class="wx-star-1" d="M 22,22 Q 22,24 24,24 Q 22,24 22,26 Q 22,24 20,24 Q 22,24 22,22 Z" fill="#fff" />
                         <path class="wx-star-2" d="M 76,20 Q 76,22 78,22 Q 76,22 76,24 Q 76,22 74,22 Q 76,22 76,20 Z" fill="#fff" />
                     </g>
+                    <path d="M 28,70 A 14,14 0 0,1 40,48 A 18,18 0 0,1 70,50 A 13,13 0 0,1 80,70 Z" fill="#0f172a" opacity="0.18" transform="translate(0, 3)" />
+                    <path d="M 28,70 A 14,14 0 0,1 40,48 A 18,18 0 0,1 70,50 A 13,13 0 0,1 80,70 Z" fill="url(#wx-pn-cloud-grad)" stroke="rgba(255, 255, 255, 0.9)" stroke-width="1" class="wx-cloud-front" />
                     <g class="wx-pn-moon" transform="translate(14, 10) scale(0.72)">
                         <path d="M 62,28 A 24,24 0 1,0 62,68 A 20,20 0 1,1 62,28 Z" fill="url(#wx-pn-moon-grad)" />
                         <path d="M 62,28 A 24,24 0 0,0 42,48 A 20,20 0 0,1 62,28 Z" fill="#ffffff" opacity="0.2" />
                     </g>
-                    <path d="M 28,70 A 14,14 0 0,1 40,48 A 18,18 0 0,1 70,50 A 13,13 0 0,1 80,70 Z" fill="#0f172a" opacity="0.18" transform="translate(0, 3)" />
-                    <path d="M 28,70 A 14,14 0 0,1 40,48 A 18,18 0 0,1 70,50 A 13,13 0 0,1 80,70 Z" fill="url(#wx-pn-cloud-grad)" stroke="rgba(255, 255, 255, 0.9)" stroke-width="1" class="wx-cloud-front" />
                 </svg>`;
             }
         } else if (key === 'clouds') {

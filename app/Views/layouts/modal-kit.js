@@ -240,4 +240,11 @@
     if (typeof window.showAlertModal !== 'function') {
         window.showAlertModal = function (opts) { return runDialog(opts, false); };
     }
+    // Collision-proof aliases. patients.js declares its own legacy
+    // `function showConfirmModal(title, message, onConfirm, ...)` at the
+    // top level (hoists to window before this script runs and wins the
+    // `typeof` guard above), so callers that want the modal-kit Promise
+    // API should use these names instead.
+    window.mkConfirmModal = function (opts) { return runDialog(opts, true); };
+    window.mkAlertModal   = function (opts) { return runDialog(opts, false); };
 })();

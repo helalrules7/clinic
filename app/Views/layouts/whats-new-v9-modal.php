@@ -1,7 +1,7 @@
 <?php
-// "What's New" v10.0.0 — step-by-step wizard. Same display policy as before
+// "What's New" v10.1.0 — step-by-step wizard. Same display policy as before
 // (per-login session, 2-day window from first sight, opt-out persistent),
-// but bumping VERSION below to v10_0_0 deliberately RESETS the timer +
+// but bumping VERSION below to v10_1_0 deliberately RESETS the timer +
 // opt-out for every browser, so the new wizard surfaces fresh on the
 // next login. Included from layouts/main.php (doctor/admin) and
 // secretary_main.php. Bump VERSION again in a future release to
@@ -460,7 +460,7 @@
       <div class="modal-header">
         <h5 class="modal-title">
           <i class="bi bi-stars me-2"></i>What's New
-          <span class="version-pill">v10.0.0</span>
+          <span class="version-pill">v10.1.0</span>
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -469,13 +469,13 @@
         <div class="wn-viewport">
           <div class="wn-track" id="wnTrack">
 
-            <!-- 1 — Welcome v10.0.0 -->
+            <!-- 1 — Welcome v10.1.0 -->
             <div class="wn-slide">
               <span class="wn-kicker">Major Release</span>
               <div class="wn-stage">
                 <div class="wn-ver">
                   <span class="wn-ver-label">version</span>
-                  <span class="wn-ver-num">10.0.0</span>
+                  <span class="wn-ver-num">10.1.0</span>
                 </div>
               </div>
               <h3>A bold new HClinic</h3>
@@ -599,13 +599,17 @@
     //   • "Don't show again" opts out permanently.
     // Bumping VERSION (e.g. v9_0_0 → v9_1_0) RESETS first-seen / opt-out /
     // session-shown for every browser, so the wizard resurfaces fresh.
-    const VERSION       = 'v10_0_0';
+    const VERSION       = 'v10_1_0';
     const OPT_OUT_KEY   = 'whatsNew_' + VERSION + '_optOut';     // permanent
     const FIRST_SEEN_KEY= 'whatsNew_' + VERSION + '_firstSeen';  // ms epoch
     const SESSION_KEY   = 'whatsNew_' + VERSION + '_shownSession';
     const WINDOW_MS     = 2 * 24 * 60 * 60 * 1000;               // 2 days
 
     function shouldShow() {
+        // v10.1.0+ — auto-show DISABLED so the wizard doesn't pop on
+        // login. Markup + gate logic preserved; to re-enable for a
+        // future release, delete this `return false;` and bump VERSION.
+        return false;
         try {
             if (localStorage.getItem(OPT_OUT_KEY) === '1') return false;
             if (sessionStorage.getItem(SESSION_KEY) === '1') return false;

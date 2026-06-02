@@ -4449,8 +4449,6 @@ window.currentPatientInfo = {
 // Load alerts when page loads
 document.addEventListener('DOMContentLoaded', function() {
     loadPatientAlerts();
-    loadPatientForumTopics();
-    
     // Reload alerts after alert modal is closed (if alert was created/updated)
     const alertModal = document.getElementById('alertModal');
     if (alertModal) {
@@ -4462,74 +4460,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-
-// Forum Topics Section
-async function loadPatientForumTopics() {
-    const patientId = window.PATIENT_CONFIG.patientId;
-    if (!patientId) return;
-    
-    try {
-        const response = await fetch(`/api/forum/topics/patient/${patientId}`);
-        const data = await response.json();
-        
-        if (data.success) {
-            renderPatientForumTopics(data.topics);
-        }
-    } catch (error) {
-        console.error('Error loading forum topics:', error);
-    }
-}
-
-function renderPatientForumTopics(topics) {
-    const container = document.getElementById('patientForumTopics');
-    if (!container) return;
-    
-    if (topics.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-4">
-                <p class="text-muted">No forum topics yet for this patient.</p>
-                <button class="btn btn-primary btn-sm" onclick="createPatientForumTopic()">
-                    <i class="bi bi-plus-circle me-1"></i>Create Topic
-                </button>
-            </div>
-        `;
-        return;
-    }
-    
-    let html = '<div class="list-group">';
-    topics.forEach(topic => {
-        const timeAgo = getTimeAgo(topic.created_at);
-        html += `
-            <a href="/doctor/forum/topic/${topic.id}" class="list-group-item list-group-item-action">
-                <div class="d-flex w-100 justify-content-between">
-                    <h6 class="mb-1">${escapeHtml(topic.title)}</h6>
-                    <small>${timeAgo}</small>
-                </div>
-                <p class="mb-1">${escapeHtml(topic.content.substring(0, 100))}${topic.content.length > 100 ? '...' : ''}</p>
-                <small><i class="bi bi-chat"></i> ${topic.replies_count || 0} replies</small>
-            </a>
-        `;
-    });
-    html += '</div>';
-    html += `
-        <div class="mt-3 text-center">
-            <button class="btn btn-primary btn-sm" onclick="createPatientForumTopic()">
-                <i class="bi bi-plus-circle me-1"></i>Create New Topic
-            </button>
-        </div>
-    `;
-    
-    container.innerHTML = html;
-}
-
-function createPatientForumTopic() {
-    const patientId = window.PATIENT_CONFIG ? window.PATIENT_CONFIG.patientId : null;
-    if (patientId) {
-        window.location.href = `/doctor/forum?patient_id=${patientId}&create=true`;
-    } else {
-        window.location.href = `/doctor/forum?create=true`;
-    }
-}
 
 function getTimeAgo(dateString) {
     const now = new Date();
@@ -5625,3 +5555,85 @@ document.addEventListener('DOMContentLoaded', function() {
         loadPatientProfileHeader();
     }, 200);
 });
+
+/**
+ * Tiny visible toast for patient.js (the page doesn't include the global
+ * showToast helper). Falls back to window.showToast when present.
+ */
+function patientToast(kind, title, body) {
+    if (typeof window.showToast === 'function') {
+        try { return window.showToast(kind, title, body); } catch (_) { /* fall through */ }
+    }
+    var color = kind === 'error'   ? '#ef4444'
+              : kind === 'success' ? '#10b981'
+              :                       '#4f46e5';
+    var holder = document.getElementById('__patientToastHolder');
+    if (!holder) {
+        holder = document.createElement('div');
+        holder.id = '__patientToastHolder';
+        holder.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:11000;display:flex;flex-direction:column;gap:.5rem;pointer-events:none;';
+        document.body.appendChild(holder);
+    }
+    var t = document.createElement('div');
+    t.style.cssText =
+        'pointer-events:auto;min-width:260px;max-width:380px;padding:.75rem .9rem;border-radius:12px;' +
+        'background:rgba(248,250,252,0.95);color:#0F172A;border:1px solid ' + color + ';' +
+        'box-shadow:0 8px 28px rgba(15,23,42,0.18);font-size:.88rem;' +
+        'transform:translateX(20px);opacity:0;transition:transform .25s ease,opacity .25s ease;';
+    if (document.documentElement.classList.contains('dark')) {
+        t.style.background = 'rgba(11,18,32,0.95)';
+        t.style.color = '#F8FAFC';
+    }
+    t.innerHTML =
+        '<div style="display:flex;align-items:center;gap:.4rem;font-weight:600;color:' + color + ';">' +
+            '<i class="bi ' + (kind === 'error' ? 'bi-exclamation-circle-fill'
+                              : kind === 'success' ? 'bi-check-circle-fill'
+                                                   : 'bi-info-circle-fill') + '"></i>' +
+            (title || '') +
+        '</div>' +
+        (body ? '<div style="margin-top:.2rem;line-height:1.35;opacity:.85;">' + body + '</div>' : '');
+    holder.appendChild(t);
+    requestAnimationFrame(function () { t.style.transform = 'translateX(0)'; t.style.opacity = '1'; });
+    setTimeout(function () {
+        t.style.transform = 'translateX(20px)'; t.style.opacity = '0';
+        setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 280);
+    }, kind === 'error' ? 6000 : 4200);
+}
+
+/**
+ * One-click "Auto-place on Board" — calls /api/board/auto-place/{id} which
+ * scores every column for the patient (tags + recent activity + visit count)
+ * and drops them in the highest-scoring one. Shows a toast with the chosen
+ * column + reasoning.
+ */
+async function autoPlacePatientOnBoard(patientId, btnEl) {
+    if (!patientId) return;
+    const restore = (btnEl && btnEl.innerHTML) || '';
+    if (btnEl) {
+        btnEl.disabled = true;
+        btnEl.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Placing…';
+    }
+    try {
+        const res = await fetch('/api/board/auto-place/' + patientId, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok || !j.ok) {
+            const msg = (j && j.error) || ('Auto-place failed (HTTP ' + res.status + ')');
+            patientToast('error', 'Auto-place failed', msg);
+            return;
+        }
+        const d = j.data || {};
+        const reasons = (d.reasons || []).join(' · ') || 'placed in default column';
+        const conf = d.confidence ? ' (' + Math.round(d.confidence * 100) + '% match)' : '';
+        const title = 'Moved to “' + (d.column_name || 'Board') + '”' + conf;
+        patientToast('success', title, reasons);
+    } catch (err) {
+        patientToast('error', 'Auto-place failed', (err && err.message) || 'network error');
+    } finally {
+        if (btnEl) { btnEl.disabled = false; btnEl.innerHTML = restore; }
+    }
+}
+window.autoPlacePatientOnBoard = autoPlacePatientOnBoard;

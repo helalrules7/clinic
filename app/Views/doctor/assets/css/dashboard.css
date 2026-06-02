@@ -229,7 +229,10 @@
     opacity: 0.5;
     z-index: 1;
     overflow: hidden;
-    border-radius: 0 0 16px 16px;
+    /* Match the card's --r-xl (22px) so the bottom corners line up. The
+       prior 16px hard-code was 6px shy of the card radius and visible at
+       the bottom of every stat card. */
+    border-radius: 0 0 var(--r-xl) var(--r-xl);
 }
 
 .stats-cards-wrapper .mini-stat-chart svg {
@@ -1004,11 +1007,6 @@
     background: radial-gradient(circle at 100% 107%, #3b82f6 0%, #6366f1 30%, #8b5cf6 60%, #a855f7 100%);
 }
 
-/* Discussion card gradient - Pink/Rose theme */
-.discussion-card .qa-background {
-    background: radial-gradient(circle at 100% 107%, #ec4899 0%, #f43f5e 30%, #fb7185 60%, #fda4af 100%);
-}
-
 /* Financial card gradient - Green/Emerald theme */
 .financial-card .qa-background {
     background: radial-gradient(circle at 100% 107%, #059669 0%, #10b981 30%, #34d399 60%, #6ee7b7 100%);
@@ -1070,13 +1068,6 @@
 }
 .calendar-card .qa-box2::before {
     background: radial-gradient(circle at 30% 107%, #ddd6fe 0%, #8b5cf6 60%, #7c3aed 100%);
-}
-
-.discussion-card .qa-box1::before {
-    background: radial-gradient(circle at 30% 107%, #fce7f3 0%, #ec4899 60%, #db2777 100%);
-}
-.discussion-card .qa-box2::before {
-    background: radial-gradient(circle at 30% 107%, #ffe4e6 0%, #f43f5e 60%, #e11d48 100%);
 }
 
 .financial-card .qa-box1::before {
@@ -5528,6 +5519,20 @@ canvas {
 .stats-cards-wrapper .mini-stat-card {
     position: relative;
     overflow: hidden;
+    /* Triple-clip: overflow:hidden alone is not enough when backdrop-filter
+       + a blurred ::before glow blob promote the card to a separate
+       compositor layer (the blob's blur halo escapes the rounded corners,
+       most visibly at the top-right where the blob is anchored). The user
+       observed the bleed "fixes itself on hover" — that's because the hover
+       transform creates a paint-containment region. These three together
+       make the clip strict on every compositor pass, without needing hover:
+         • isolation: isolate — fresh stacking context
+         • contain: paint    — declarative "do not paint outside my box"
+         • clip-path: inset() — hard rounded-rect clip honored on GPU layers */
+    isolation: isolate;
+    contain: paint;
+    will-change: transform;
+    clip-path: inset(0 round var(--r-xl));
     background:
         linear-gradient(155deg, color-mix(in srgb, var(--kpi-c, #6366F1) 22%, transparent) 0%, transparent 58%),
         var(--glass-bg-strong);
@@ -5634,6 +5639,11 @@ canvas {
 .clinical-indicator-card {
     position: relative;
     overflow: hidden;
+    /* Same fix as .mini-stat-card — see comment there. */
+    isolation: isolate;
+    contain: paint;
+    will-change: transform;
+    clip-path: inset(0 round var(--r-xl));
     height: 100%;
     padding: 18px 18px 16px;
     border-radius: var(--r-xl);

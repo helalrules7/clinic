@@ -988,7 +988,7 @@ class AdminController
             $mediaFiles = [];
             
             // Scan all subdirectories in storage/uploads
-            $directories = ['attachments', 'documents', 'forum', 'photos', 'temp'];
+            $directories = ['attachments', 'documents', 'photos', 'temp'];
             
             foreach ($directories as $dir) {
                 $fullPath = $storagePath . $dir;
@@ -1097,7 +1097,7 @@ class AdminController
         $storagePath = __DIR__ . '/../../storage/uploads/';
         $deleted = 0;
         
-        $directories = ['attachments', 'documents', 'forum', 'photos', 'temp'];
+        $directories = ['attachments', 'documents', 'photos', 'temp'];
         
         foreach ($directories as $dir) {
             $fullPath = $storagePath . $dir;
@@ -1153,7 +1153,7 @@ class AdminController
                 throw new \Exception('Cannot create backup file');
             }
             
-            $directories = ['attachments', 'documents', 'forum', 'photos', 'temp'];
+            $directories = ['attachments', 'documents', 'photos', 'temp'];
             $fileCount = 0;
             
             foreach ($directories as $dir) {
@@ -1573,7 +1573,7 @@ class AdminController
             
             // Backup media files
             $storagePath = __DIR__ . '/../../storage/uploads/';
-            $directories = ['attachments', 'documents', 'forum', 'photos', 'temp'];
+            $directories = ['attachments', 'documents', 'photos', 'temp'];
             
             foreach ($directories as $dir) {
                 $fullPath = $storagePath . $dir;

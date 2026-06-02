@@ -171,72 +171,65 @@
                 </h5>
             </div>
             <div class="card-body">
-                <div class="btn-group-responsive d-flex flex-wrap gap-2">
-                    <button class="btn btn-primary" 
+                <div class="patient-actions-row">
+                    <button class="btn btn-primary"
                             onclick="bookNewAppointment(<?= $patient['id'] ?>)"
-                                    data-bs-toggle="tooltip" 
-                            data-bs-placement="bottom" 
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="bottom"
                             data-bs-title="Schedule a new appointment for this patient">
-                        <i class="bi bi-calendar-plus me-2"></i>
-                        <span class="d-none d-lg-inline">Book Appointment</span>
-                        <span class="d-lg-none">Book</span>
-                            </button>
-                    <button class="btn btn-success" 
+                        <i class="bi bi-calendar-plus me-2"></i>Book
+                    </button>
+                    <button class="btn btn-success"
                             onclick="printPatientSummary()"
-                                data-bs-toggle="tooltip" 
-                            data-bs-placement="bottom" 
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="bottom"
                             data-bs-title="Print patient summary report">
-                        <i class="bi bi-printer me-2"></i>
-                        <span class="d-none d-lg-inline">Print Summary</span>
-                        <span class="d-lg-none">Print</span>
+                        <i class="bi bi-printer me-2"></i>Print
                     </button>
-                    <button class="btn btn-info" 
+                    <button class="btn btn-info"
                             onclick="exportPatientData()"
-                            data-bs-toggle="tooltip" 
-                            data-bs-placement="bottom" 
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="bottom"
                             data-bs-title="Export patient data to file">
-                        <i class="bi bi-download me-2"></i>
-                        <span class="d-none d-lg-inline">Export Data</span>
-                        <span class="d-lg-none">Export</span>
+                        <i class="bi bi-download me-2"></i>Export
                     </button>
-                    <button class="btn btn-outline-secondary" 
+                    <button class="btn btn-violet"
+                            onclick="autoPlacePatientOnBoard(<?= (int)$patient['id'] ?>, this)"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="bottom"
+                            data-bs-title="Drop this patient into the most-fitting board column based on tags + recent activity">
+                        <i class="bi bi-magic me-2"></i>Auto-place
+                    </button>
+                    <button class="btn btn-secondary"
                             onclick="editPatient(<?= $patient['id'] ?>)"
-                            data-bs-toggle="tooltip" 
-                            data-bs-placement="bottom" 
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="bottom"
                             data-bs-title="Edit patient information and details">
-                        <i class="bi bi-pencil me-2"></i>
-                        <span class="d-none d-lg-inline">Edit Patient</span>
-                        <span class="d-lg-none">Edit</span>
+                        <i class="bi bi-pencil me-2"></i>Edit
                     </button>
-                    <button class="btn btn-primary" 
-                            id="patientIOPTrendBtn" 
+                    <button class="btn btn-primary"
+                            id="patientIOPTrendBtn"
                             data-patient-id="<?= htmlspecialchars($patient['id']) ?>"
-                            data-bs-toggle="tooltip" 
-                            data-bs-placement="bottom" 
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="bottom"
                             data-bs-title="Analyze IOP trend for this patient">
-                        <i class="bi bi-graph-up me-2"></i>
-                        <span class="d-none d-lg-inline">IOP Trend Analysis</span>
-                        <span class="d-lg-none">IOP Trend</span>
+                        <i class="bi bi-graph-up me-2"></i>IOP Trend
                     </button>
-                    <button class="btn btn-warning" 
+                    <button class="btn btn-warning"
                             onclick="openAlertModal(<?= $patient['id'] ?>, null)"
-                            data-bs-toggle="tooltip" 
-                            data-bs-placement="bottom" 
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="bottom"
                             data-bs-title="Create an alert for this patient">
-                        <i class="bi bi-bell me-2"></i>
-                        <span class="d-none d-lg-inline">Set Alert</span>
-                        <span class="d-lg-none">Alert</span>
-                        </button>
-                    <button class="btn btn-info" 
-                            onclick="showUnifiedClinicalDashboardPopover(<?= $patient['id'] ?>)"
-                            data-bs-toggle="tooltip" 
-                            data-bs-placement="bottom" 
-                            data-bs-title="View unified clinical dashboard for this patient">
-                        <i class="bi bi-clipboard-pulse me-2"></i>
-                        <span class="d-none d-lg-inline">Clinical Dashboard</span>
-                        <span class="d-lg-none">Dashboard</span>
+                        <i class="bi bi-bell me-2"></i>Alert
                     </button>
-                    </div>
+                    <button class="btn btn-info"
+                            onclick="showUnifiedClinicalDashboardPopover(<?= $patient['id'] ?>)"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="bottom"
+                            data-bs-title="View unified clinical dashboard for this patient">
+                        <i class="bi bi-clipboard-pulse me-2"></i>Dashboard
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -273,6 +266,26 @@
     .visit-note-meta { font-size: .72rem; color: var(--muted, #64748b); margin-bottom: 3px; }
     .visit-note-author { font-weight: 700; color: var(--text); }
     .visit-note-body { font-size: .85rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word; color: var(--text); }
+    .visit-note { position: relative; }
+    .visit-note-del {
+        flex: 0 0 auto;
+        align-self: flex-start;
+        background: transparent;
+        border: 0;
+        color: var(--muted, #64748b);
+        width: 28px; height: 28px;
+        border-radius: 8px;
+        cursor: pointer;
+        opacity: .7;
+        transition: opacity .15s ease, background .15s ease, color .15s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .9rem;
+    }
+    .visit-note-del:hover { opacity: 1; background: color-mix(in srgb, var(--danger, #ef4444) 12%, transparent); color: var(--danger, #ef4444); }
+    .visit-note-del:focus-visible { opacity: 1; outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger, #ef4444) 40%, transparent); }
+    .visit-note-del:disabled { opacity: .5; cursor: not-allowed; }
 </style>
 <script src="/app/Views/doctor/assets/js/comment-media.js?v=<?= file_exists(__DIR__ . '/assets/js/comment-media.js') ? filemtime(__DIR__ . '/assets/js/comment-media.js') : time() ?>"></script>
 <script>
@@ -309,11 +322,48 @@
                     : `<span class="visit-note-av visit-note-av--ini">${esc(CM ? CM.initials(r.author_name) : '?')}</span>`;
                 const body = CM ? CM.renderBody(r.body, r.mentions) : esc(r.body);
                 const atts = CM ? CM.renderAttachments(r.attachments) : '';
-                return `<div class="visit-note">${av}<div class="visit-note-main"><div class="visit-note-meta"><span class="visit-note-author">${esc(r.author_name || 'User')}</span> · ${esc(fmt(r.created_at))}</div><div class="visit-note-body">${body}</div>${atts}</div></div>`;
+                const del  = r.can_edit
+                    ? `<button type="button" class="visit-note-del" data-cid="${r.id}" aria-label="Delete note" title="Delete note"><i class="bi bi-trash"></i></button>`
+                    : '';
+                return `<div class="visit-note">${av}<div class="visit-note-main"><div class="visit-note-meta"><span class="visit-note-author">${esc(r.author_name || 'User')}</span> · ${esc(fmt(r.created_at))}</div><div class="visit-note-body">${body}</div>${atts}</div>${del}</div>`;
             }).join('');
             listEl.scrollTop = listEl.scrollHeight;
         } catch (e) { listEl.innerHTML = '<p class="text-danger small mb-0">Failed to load notes.</p>'; }
     }
+
+    // Delegated delete handler — confirms via the themed modal-kit dialog,
+    // then DELETE /api/comments/{id} and reload. Gated server-side to
+    // author/admin; the trash button only renders when r.can_edit.
+    listEl.addEventListener('click', async (ev) => {
+        const btn = ev.target.closest('.visit-note-del');
+        if (!btn) return;
+        const cid = btn.getAttribute('data-cid');
+        if (!cid) return;
+        const ok = typeof window.mkConfirmModal === 'function'
+            ? await window.mkConfirmModal({
+                title: 'Delete note?',
+                message: 'This board note will be removed. This action cannot be undone.',
+                confirmText: 'Delete',
+                confirmClass: 'btn-danger',
+                icon: 'bi-trash',
+            })
+            : window.confirm('Delete this note?');
+        if (!ok) return;
+        btn.disabled = true;
+        try {
+            const r = await fetch('/api/comments/' + cid, {
+                method: 'DELETE', credentials: 'same-origin',
+                headers: { 'X-CSRF-Token': CSRF, 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const j = await r.json().catch(() => ({}));
+            if (!r.ok || !j.ok) throw new Error((j && j.error) || ('HTTP ' + r.status));
+            await load();
+        } catch (e) {
+            btn.disabled = false;
+            errEl.textContent = 'Delete failed: ' + (e.message || 'unknown');
+            errEl.classList.remove('d-none');
+        }
+    });
 
     if (!composer) input.addEventListener('input', () => { sendBtn.disabled = input.value.trim() === ''; });
     sendBtn.addEventListener('click', async () => {
@@ -1024,29 +1074,33 @@
                                     </div>
                                 <?php endif; ?>
                                 
-                        <!-- Medications Prescriptions -->
+                        <!-- Medications Prescriptions (style mirrors Prescriptions History) -->
                         <?php if (!empty($appointment['medications'])): ?>
-                                    <div class="mb-3">
-                            <h6 class="text-success mb-2">
-                                <i class="bi bi-capsule me-2"></i>Medications Prescribed
-                                <span class="badge bg-success ms-2"><?= count($appointment['medications']) ?></span>
-                                        </h6>
-                            <div class="row g-2">
-                                <?php foreach ($appointment['medications'] as $med): ?>
-                                <div class="col-md-6">
-                                    <div class="card border-success border-start border-3">
-                                        <div class="card-body p-2">
-                                            <h6 class="card-title mb-1 text-success"><?= htmlspecialchars($med['drug_name']) ?></h6>
-                                            <?php if (!empty($med['notes'])): ?>
-                                            <p class="card-text small mb-0 text-muted"><?= htmlspecialchars($med['notes']) ?></p>
-                                    <?php endif; ?>
+                            <div class="mb-3">
+                                <h6 class="text-success mb-2">
+                                    <i class="bi bi-capsule me-2"></i>Medications Prescribed
+                                    <span class="badge bg-success ms-2"><?= count($appointment['medications']) ?></span>
+                                </h6>
+                                <div class="medications-list">
+                                    <?php foreach ($appointment['medications'] as $med): ?>
+                                        <div class="medication-item p-3 mb-2 rounded" style="background: var(--bg-alt); border-left: 3px solid var(--success);">
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-1 text-success">
+                                                    <i class="bi bi-capsule me-2"></i>
+                                                    <?= htmlspecialchars($med['drug_name']) ?>
+                                                </h6>
+                                                <?php if (!empty($med['notes'])): ?>
+                                                    <p class="mb-0 text-muted small">
+                                                        <i class="bi bi-sticky me-1"></i>
+                                                        <?= htmlspecialchars($med['notes']) ?>
+                                                    </p>
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
-                                    </div>
-                                        </div>
-                                <?php endforeach; ?>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                                 
                         <!-- Glasses Prescriptions -->
                         <?php if (!empty($appointment['glasses'])): ?>
@@ -1953,29 +2007,9 @@
     </div>
 </div>
 
-<!-- Forum Topics Section -->
-<div class="card mt-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">
-            <i class="bi bi-chat-dots me-2"></i>Forum Topics
-        </h5>
-    </div>
-    <div class="card-body">
-        <div id="patientForumTopics">
-            <div class="text-center py-4">
-                <div class="spinner-border spinner-border-sm" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<br>
-
 <!-- Patient Timeline -->
 <?php if (!empty($timeline)): ?>
-<div class="card">
+<div class="card mb-4">
     <div class="card-header">
         <h5 class="mb-0">
             <i class="bi bi-clock-history me-2"></i>

@@ -142,12 +142,6 @@
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="/doctor/forum" class="nav-link <?= $this->isActiveRoute('/doctor/forum') ? 'active' : '' ?>">
-                        <i class="bi bi-chat-dots"></i>
-                        Discussions
-                    </a>
-                </div>
-                <div class="nav-item">
                     <a href="/doctor/drugs" class="nav-link <?= $this->isActiveRoute('/doctor/drugs') ? 'active' : '' ?>">
                         <i class="bi bi-capsule"></i>
                         Drugs Database
@@ -523,9 +517,6 @@
         <?= $content ?>
     </div>
     
-    <!-- Forum Toast Container (Top Right) -->
-    <div id="forumToastContainer"></div>
-    
     <!-- Scroll to Top Button -->
     <button class="scroll-to-top" id="scrollToTop" aria-label="Scroll to top">
         <i class="bi bi-arrow-up"></i>
@@ -579,10 +570,6 @@
             <a href="/doctor/notes" class="dock-item" title="Notes">
                 <i class="bi bi-sticky"></i>
                 <span class="htooltip">Notes</span>
-            </a>
-            <a href="/doctor/forum" class="dock-item" title="Doctor Forum">
-                <i class="bi bi-chat-dots"></i>
-                <span class="htooltip">Doctor Forum</span>
             </a>
             <a href="/doctor/payments" class="dock-item" title="Financial">
                 <i class="bi bi-credit-card"></i>

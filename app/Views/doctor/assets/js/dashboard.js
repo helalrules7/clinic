@@ -201,12 +201,6 @@ function quickActionAddPatient() {
     // Navigate to patients page and trigger add patient modal
     window.location.href = '/doctor/patients?openModal=addPatient';
 }
-
-function quickActionPostDiscussion() {
-    // Navigate to forum page and trigger new topic modal
-    window.location.href = '/doctor/forum?openModal=newTopic';
-}
-
 function quickActionEditProfile() {
     // Navigate to profile page
     window.location.href = '/doctor/profile';

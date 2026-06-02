@@ -396,3 +396,110 @@ body.cm-lb-open { overflow: hidden; }
     padding: 5px 12px;
 }
 .cm-audio-dl:hover { filter: brightness(1.05); color: #fff; }
+
+/* ------------------------------------------------------------------ */
+/* Document attachments (PDF, Word, Excel, PowerPoint, plain text)    */
+/* ------------------------------------------------------------------ */
+.cm-att-files {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
+}
+.cm-att-file {
+    --cm-file-tint: #6366f1;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--cm-file-tint) 8%, var(--card, #fff));
+    border: 1px solid color-mix(in srgb, var(--cm-file-tint) 28%, var(--border, #e2e8f0));
+    color: var(--text, #0F172A);
+    text-decoration: none;
+    transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+    min-width: 0;
+}
+.cm-att-file:hover {
+    transform: translateY(-1px);
+    background: color-mix(in srgb, var(--cm-file-tint) 14%, var(--card, #fff));
+    box-shadow: 0 4px 18px color-mix(in srgb, var(--cm-file-tint) 25%, transparent);
+    color: var(--text, #0F172A);
+}
+.cm-att-file__icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--cm-file-tint) 18%, transparent);
+    color: var(--cm-file-tint);
+    font-size: 1.25rem;
+}
+.cm-att-file__body {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+.cm-att-file__name {
+    font-weight: 600;
+    font-size: 0.88rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.cm-att-file__size {
+    font-size: 0.72rem;
+    color: var(--muted, #64748B);
+}
+.cm-att-file__dl {
+    color: var(--cm-file-tint);
+    font-size: 1rem;
+    opacity: 0.7;
+    transition: opacity .15s ease;
+    flex-shrink: 0;
+}
+.cm-att-file:hover .cm-att-file__dl { opacity: 1; }
+
+/* Per-type accent tints */
+.cm-att-file--pdf   { --cm-file-tint: #ef4444; }
+.cm-att-file--word  { --cm-file-tint: #2563eb; }
+.cm-att-file--excel { --cm-file-tint: #16a34a; }
+.cm-att-file--ppt   { --cm-file-tint: #f97316; }
+.cm-att-file--txt   { --cm-file-tint: #64748b; }
+
+.dark .cm-att-file {
+    background: color-mix(in srgb, var(--cm-file-tint) 14%, var(--ds-surface-2, #0a1322));
+    border-color: color-mix(in srgb, var(--cm-file-tint) 30%, var(--glass-border, #1f2937));
+    color: var(--text, #F8FAFC);
+}
+.dark .cm-att-file:hover {
+    background: color-mix(in srgb, var(--cm-file-tint) 22%, var(--ds-surface-2, #0a1322));
+}
+
+/* Preview-strip chips for documents (in the composer, before send) */
+.cm-prev--file {
+    width: auto;
+    min-width: 140px;
+    max-width: 220px;
+    padding: 0.4rem 0.65rem;
+    gap: 0.45rem;
+    display: inline-flex;
+    align-items: center;
+}
+.cm-prev--file .bi { color: var(--cm-file-tint, #6366f1); font-size: 1.2rem; flex-shrink: 0; }
+.cm-prev-name {
+    font-size: 0.78rem;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.cm-prev--pdf   { --cm-file-tint: #ef4444; }
+.cm-prev--word  { --cm-file-tint: #2563eb; }
+.cm-prev--excel { --cm-file-tint: #16a34a; }
+.cm-prev--ppt   { --cm-file-tint: #f97316; }
+.cm-prev--txt   { --cm-file-tint: #64748b; }

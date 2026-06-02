@@ -6994,13 +6994,20 @@
                 opacity: 0;
                 z-index: 0;
                 transform: translate(0, 0) scale(0);
-                transition: transform var(--anim-speed) var(--anim-ease), 
+                /* `scale` is animated as a SEPARATE property so the radial
+                   `transform: rotate translateX rotate scale(1)` stays intact
+                   when an item is hovered/focused — otherwise the hover
+                   transform would snap the item back to the dock-container
+                   origin (the "strange animation"). */
+                scale: 1;
+                transition: transform var(--anim-speed) var(--anim-ease),
+                            scale 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
                             opacity var(--anim-speed) ease,
-                            background var(--anim-speed) ease,
-                            border-color var(--anim-speed) ease,
-                            box-shadow var(--anim-speed) ease;
+                            background 0.2s ease,
+                            border-color 0.2s ease,
+                            box-shadow 0.25s ease;
             }
-            
+
             .dark .quick-access-dock.mobile-minimized .dock-item {
                 /* Match dock container styling - Dark Mode */
                 background: rgba(11, 18, 32, 0.90);
@@ -7008,27 +7015,45 @@
                 color: #ffffff;
                 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             }
-            
-            .quick-access-dock.mobile-minimized .dock-item:hover {
-                background: rgba(248, 250, 252, 0.90);
-                border-color: rgba(226, 232, 240, 0.4);
-                box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
-                transform: scale(1.1) !important;
+
+            /* Smooth grow-in-place on hover/focus. Uses `scale:` (not
+               `transform:`) so the radial positioning transform is preserved. */
+            .quick-access-dock.mobile-minimized .dock-item:hover,
+            .quick-access-dock.mobile-minimized .dock-item:focus-visible {
+                background: rgba(248, 250, 252, 0.98);
+                border-color: rgba(99, 102, 241, 0.55);
+                box-shadow: 0 8px 28px rgba(79, 70, 229, 0.28);
+                scale: 1.18;
+                z-index: 10;
             }
-            
-            .dark .quick-access-dock.mobile-minimized .dock-item:hover {
-                background: rgba(11, 18, 32, 0.90);
-                border-color: rgba(51, 65, 85, 0.4);
-                box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+
+            .quick-access-dock.mobile-minimized .dock-item:active {
+                scale: 1.08;
+                transition: scale 0.08s ease-out, background 0.1s ease;
             }
-            
+
+            .dark .quick-access-dock.mobile-minimized .dock-item:hover,
+            .dark .quick-access-dock.mobile-minimized .dock-item:focus-visible {
+                background: rgba(11, 18, 32, 0.98);
+                border-color: rgba(129, 140, 248, 0.6);
+                box-shadow: 0 8px 28px rgba(79, 70, 229, 0.4);
+            }
+
             .quick-access-dock.mobile-minimized .dock-item i {
                 font-size: 1.1rem; /* Slightly reduced for better fit */
-                transition: transform 0.2s ease;
+                transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                            color 0.2s ease;
             }
-            
-            .quick-access-dock.mobile-minimized .dock-item:hover i {
-                transform: scale(1.15);
+
+            .quick-access-dock.mobile-minimized .dock-item:hover i,
+            .quick-access-dock.mobile-minimized .dock-item:focus-visible i {
+                transform: scale(1.1);
+                color: #4f46e5;
+            }
+
+            .dark .quick-access-dock.mobile-minimized .dock-item:hover i,
+            .dark .quick-access-dock.mobile-minimized .dock-item:focus-visible i {
+                color: #a5b4fc;
             }
             
             /* Hide all items except Quick Actions */
@@ -7039,75 +7064,75 @@
             /* Show Quick Actions items */
             .quick-access-dock.mobile-minimized .dock-item[href="/doctor/calendar"],
             .quick-access-dock.mobile-minimized .dock-item[href="/doctor/patients"],
+            .quick-access-dock.mobile-minimized .dock-item[href="/doctor/board"],
             .quick-access-dock.mobile-minimized .dock-item[href="/doctor/drugs"],
             .quick-access-dock.mobile-minimized .dock-item[href="/doctor/profile"],
-            .quick-access-dock.mobile-minimized .dock-item[href="/doctor/forum"],
             .quick-access-dock.mobile-minimized .dock-item[href="/doctor/notes"] {
                 display: flex;
             }
-            
-            /* C-Shape Animation - Opens from top to left (270deg to 180deg) */
-            /* Calendar: Top (270deg), Patients, Drugs, Profile: Left (180deg) */
+
+            /* C-Shape Animation - Opens from top (270deg) past left to 150deg */
+            /* 5 base items, 120deg arc, 30deg step: Calendar 270, Patients 240, Board 210, Drugs 180, Profile 150 */
             /* Base items (always visible) */
             .quick-access-dock.mobile-minimized.active .dock-item[href="/doctor/calendar"] {
                 --i: 0;
-                --total: 4;
+                --total: 5;
                 opacity: 1;
                 /* Start from top (270deg) */
-                transform: 
-                    rotate(calc(270deg - (90deg / (var(--total) - 1)) * var(--i)))
+                transform:
+                    rotate(calc(270deg - (120deg / (var(--total) - 1)) * var(--i)))
                     translateX(var(--menu-radius))
-                    rotate(calc((270deg - (90deg / (var(--total) - 1)) * var(--i)) * -1))
+                    rotate(calc((270deg - (120deg / (var(--total) - 1)) * var(--i)) * -1))
                     scale(1);
             }
-            
+
             .quick-access-dock.mobile-minimized.active .dock-item[href="/doctor/patients"] {
                 --i: 1;
-                --total: 4;
+                --total: 5;
                 opacity: 1;
-                transform: 
-                    rotate(calc(270deg - (90deg / (var(--total) - 1)) * var(--i)))
+                transform:
+                    rotate(calc(270deg - (120deg / (var(--total) - 1)) * var(--i)))
                     translateX(var(--menu-radius))
-                    rotate(calc((270deg - (90deg / (var(--total) - 1)) * var(--i)) * -1))
+                    rotate(calc((270deg - (120deg / (var(--total) - 1)) * var(--i)) * -1))
                     scale(1);
             }
-            
-            .quick-access-dock.mobile-minimized.active .dock-item[href="/doctor/drugs"] {
+
+            .quick-access-dock.mobile-minimized.active .dock-item[href="/doctor/board"] {
                 --i: 2;
-                --total: 4;
+                --total: 5;
                 opacity: 1;
-                transform: 
-                    rotate(calc(270deg - (90deg / (var(--total) - 1)) * var(--i)))
+                transform:
+                    rotate(calc(270deg - (120deg / (var(--total) - 1)) * var(--i)))
                     translateX(var(--menu-radius))
-                    rotate(calc((270deg - (90deg / (var(--total) - 1)) * var(--i)) * -1))
+                    rotate(calc((270deg - (120deg / (var(--total) - 1)) * var(--i)) * -1))
                     scale(1);
             }
-            
-            .quick-access-dock.mobile-minimized.active .dock-item[href="/doctor/profile"] {
+
+            .quick-access-dock.mobile-minimized.active .dock-item[href="/doctor/drugs"] {
                 --i: 3;
-                --total: 4;
+                --total: 5;
                 opacity: 1;
-                /* End at left (180deg) */
-                transform: 
-                    rotate(calc(270deg - (90deg / (var(--total) - 1)) * var(--i)))
+                transform:
+                    rotate(calc(270deg - (120deg / (var(--total) - 1)) * var(--i)))
                     translateX(var(--menu-radius))
-                    rotate(calc((270deg - (90deg / (var(--total) - 1)) * var(--i)) * -1))
+                    rotate(calc((270deg - (120deg / (var(--total) - 1)) * var(--i)) * -1))
                     scale(1);
             }
-            
-            /* Additional items (Discussions and Notes) - shown when backToTop button is visible */
-            /* Use wider angle spread (120deg instead of 90deg) to add more space between items */
-            .quick-access-dock.mobile-minimized.active.backtotop-visible .dock-item[href="/doctor/forum"] {
+
+            .quick-access-dock.mobile-minimized.active .dock-item[href="/doctor/profile"] {
                 --i: 4;
-                --total: 6;
+                --total: 5;
                 opacity: 1;
-                transform: 
+                /* End at 150deg (one slot past the original 180deg anchor) */
+                transform:
                     rotate(calc(270deg - (120deg / (var(--total) - 1)) * var(--i)))
                     translateX(var(--menu-radius))
                     rotate(calc((270deg - (120deg / (var(--total) - 1)) * var(--i)) * -1))
                     scale(1);
             }
             
+            /* Additional item (Notes) - shown when backToTop button is visible */
+            /* Use wider angle spread (120deg instead of 90deg) to add more space between items */
             .quick-access-dock.mobile-minimized.active.backtotop-visible .dock-item[href="/doctor/notes"] {
                 --i: 5;
                 --total: 6;
@@ -7120,44 +7145,56 @@
             }
             
             /* When additional items are visible, adjust base items to maintain spacing */
+            /* 6-item layout: 120deg arc / 5 gaps = 24deg step. Calendar 270, Patients 246, Board 222, Drugs 198, Profile 174, Notes 150. */
             .quick-access-dock.mobile-minimized.active.backtotop-visible .dock-item[href="/doctor/calendar"] {
                 --i: 0;
-                --total: 6; /* Updated to 6 to maintain spacing */
+                --total: 6;
                 opacity: 1;
-                transform: 
+                transform:
                     rotate(calc(270deg - (120deg / (var(--total) - 1)) * var(--i)))
                     translateX(var(--menu-radius))
                     rotate(calc((270deg - (120deg / (var(--total) - 1)) * var(--i)) * -1))
                     scale(1);
             }
-            
+
             .quick-access-dock.mobile-minimized.active.backtotop-visible .dock-item[href="/doctor/patients"] {
                 --i: 1;
-                --total: 6; /* Updated to 6 to maintain spacing */
+                --total: 6;
                 opacity: 1;
-                transform: 
+                transform:
                     rotate(calc(270deg - (120deg / (var(--total) - 1)) * var(--i)))
                     translateX(var(--menu-radius))
                     rotate(calc((270deg - (120deg / (var(--total) - 1)) * var(--i)) * -1))
                     scale(1);
             }
-            
-            .quick-access-dock.mobile-minimized.active.backtotop-visible .dock-item[href="/doctor/drugs"] {
+
+            .quick-access-dock.mobile-minimized.active.backtotop-visible .dock-item[href="/doctor/board"] {
                 --i: 2;
-                --total: 6; /* Updated to 6 to maintain spacing */
+                --total: 6;
                 opacity: 1;
-                transform: 
+                transform:
                     rotate(calc(270deg - (120deg / (var(--total) - 1)) * var(--i)))
                     translateX(var(--menu-radius))
                     rotate(calc((270deg - (120deg / (var(--total) - 1)) * var(--i)) * -1))
                     scale(1);
             }
-            
-            .quick-access-dock.mobile-minimized.active.backtotop-visible .dock-item[href="/doctor/profile"] {
+
+            .quick-access-dock.mobile-minimized.active.backtotop-visible .dock-item[href="/doctor/drugs"] {
                 --i: 3;
-                --total: 6; /* Updated to 6 to maintain spacing */
+                --total: 6;
                 opacity: 1;
-                transform: 
+                transform:
+                    rotate(calc(270deg - (120deg / (var(--total) - 1)) * var(--i)))
+                    translateX(var(--menu-radius))
+                    rotate(calc((270deg - (120deg / (var(--total) - 1)) * var(--i)) * -1))
+                    scale(1);
+            }
+
+            .quick-access-dock.mobile-minimized.active.backtotop-visible .dock-item[href="/doctor/profile"] {
+                --i: 4;
+                --total: 6;
+                opacity: 1;
+                transform:
                     rotate(calc(270deg - (120deg / (var(--total) - 1)) * var(--i)))
                     translateX(var(--menu-radius))
                     rotate(calc((270deg - (120deg / (var(--total) - 1)) * var(--i)) * -1))
@@ -7165,7 +7202,6 @@
             }
             
             /* Hide additional items when backToTop button is not visible */
-            .quick-access-dock.mobile-minimized.active:not(.backtotop-visible) .dock-item[href="/doctor/forum"],
             .quick-access-dock.mobile-minimized.active:not(.backtotop-visible) .dock-item[href="/doctor/notes"] {
                 opacity: 0;
                 transform: translate(0, 0) scale(0);
@@ -7650,173 +7686,6 @@
             }
         }
         
-        /* Forum Notification Toast Container - Top Right */
-        #forumToastContainer {
-            position: fixed;
-            top: 2rem;
-            right: 2rem;
-            z-index: 10001;
-            max-width: 400px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            pointer-events: none;
-        }
-        
-        #forumToastContainer .toast {
-            pointer-events: auto;
-            min-width: 300px;
-            max-width: 400px;
-            margin: 0;
-        }
-        
-        /* Forum Toast - Liquid Glass Effect */
-        .forum-toast {
-            background: rgba(248, 250, 252, 0.85) !important;
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid rgba(226, 232, 240, 0.5) !important;
-            box-shadow: 
-                0 4px 20px rgba(0, 0, 0, 0.15),
-                0 1px 2px rgba(255, 255, 255, 0.2) inset;
-            color: var(--text) !important;
-            border-radius: 16px;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .forum-toast::before {
-            content: '';
-            position: absolute;
-            top: -1px;
-            left: -1px;
-            right: -1px;
-            bottom: -1px;
-            background: linear-gradient(135deg, 
-                rgba(255, 255, 255, 0.2) 0%,
-                rgba(255, 255, 255, 0.05) 30%,
-                transparent 50%,
-                rgba(255, 255, 255, 0.05) 70%,
-                rgba(255, 255, 255, 0.15) 100%);
-            border-radius: 16px;
-            filter: blur(0.5px);
-            z-index: -1;
-            opacity: 0.9;
-        }
-        
-        .forum-toast::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 50%;
-            background: linear-gradient(180deg, 
-                rgba(255, 255, 255, 0.12) 0%,
-                rgba(255, 255, 255, 0.04) 50%,
-                transparent 100%);
-            border-radius: 16px 16px 18px 18px;
-            pointer-events: none;
-            opacity: 0.9;
-        }
-        
-        .dark .forum-toast {
-            background: rgba(11, 18, 32, 0.98) !important;
-            border: 1px solid rgba(51, 65, 85, 0.5) !important;
-            box-shadow: 
-                0 4px 20px rgba(0, 0, 0, 0.3),
-                0 1px 2px rgba(255, 255, 255, 0.15) inset;
-        }
-        
-        .forum-toast .toast-header {
-            background: transparent !important;
-            border-bottom: 1px solid rgba(226, 232, 240, 0.3) !important;
-            color: var(--text) !important;
-            padding: 0.75rem 1rem !important;
-        }
-        
-        .dark .forum-toast .toast-header {
-            border-bottom-color: rgba(51, 65, 85, 0.3) !important;
-        }
-        
-        .forum-toast .toast-body {
-            color: var(--text) !important;
-            padding: 0.75rem 1rem !important;
-        }
-        
-        .forum-toast .btn-close {
-            filter: none !important;
-            opacity: 0.7;
-            transition: all 0.2s ease;
-        }
-        
-        .forum-toast .btn-close:hover {
-            opacity: 1;
-        }
-        
-        .dark .forum-toast .btn-close {
-            filter: invert(1) brightness(2) !important;
-            opacity: 0.9;
-        }
-        
-        .dark .forum-toast .btn-close:hover {
-            opacity: 1;
-            filter: invert(1) brightness(2.5) !important;
-        }
-        
-        /* Forum Toast Animation - Smooth and Marvelous */
-        @keyframes slideInFromRight {
-            0% {
-                opacity: 0;
-                transform: translateX(120%) scale(0.9);
-                filter: blur(4px);
-            }
-            60% {
-                transform: translateX(-5px) scale(1.02);
-                filter: blur(1px);
-            }
-            100% {
-                opacity: 1;
-                transform: translateX(0) scale(1);
-                filter: blur(0);
-            }
-        }
-        
-        .forum-toast {
-            animation: slideInFromRight 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        }
-        
-        .forum-toast.hiding {
-            animation: slideOutToRight 0.4s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards !important;
-        }
-        
-        @keyframes slideOutToRight {
-            0% {
-                opacity: 1;
-                transform: translateX(0) scale(1);
-                filter: blur(0);
-            }
-            100% {
-                opacity: 0;
-                transform: translateX(120%) scale(0.9);
-                filter: blur(4px);
-            }
-        }
-        
-        /* Mobile responsive for forum toast */
-        @media (max-width: 768px) {
-            #forumToastContainer {
-                top: 1rem;
-                right: 1rem;
-                max-width: calc(100% - 2rem);
-            }
-            
-            #forumToastContainer .toast {
-                min-width: auto;
-                max-width: 100%;
-            }
-        }
         
         /* Alert Toast Container (Bottom) */
         #toastContainer {
@@ -8922,7 +8791,7 @@
         .quick-access-dock.autohide .dock-container {
             overflow: visible;
         }
-/* Dark mode modal background */
+        /* Dark mode modal background */
 .dark .tp-ui-modal {
     background-color: hsl(0deg 2.47% 22.47% / 60%) !important;
 }

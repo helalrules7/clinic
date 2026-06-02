@@ -762,7 +762,6 @@ async function loadSidebarItems() {
         { key: 'calendar', label: 'Calendar', icon: 'bi-calendar3', fixed: true },
         { key: 'patients', label: 'Patients', icon: 'bi-people', fixed: true },
         { key: 'board', label: 'Patients Board', icon: 'bi-kanban', fixed: false },
-        { key: 'forum', label: 'Discussion', icon: 'bi-chat-dots', fixed: false },
         { key: 'drugs', label: 'Drugs Database', icon: 'bi-capsule', fixed: false },
         { key: 'payments', label: 'Financial Management', icon: 'bi-credit-card', fixed: false },
         { key: 'reports', label: 'Reports', icon: 'bi-graph-up', fixed: false },

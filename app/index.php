@@ -186,52 +186,14 @@ try {
     $router->post('/api/notifications/system', 'NotificationController@createSystemNotification');
     
     // Doctor Forum routes
-    $router->get('/doctor/forum', 'ForumController@index');
-    $router->get('/doctor/forum/topic/{id}', 'ForumController@topic');
     
-    // Forum API routes - Topics
-    $router->get('/api/forum/topics', 'ForumController@getTopics');
-    $router->get('/api/forum/topics/{id}', 'ForumController@getTopic');
-    $router->post('/api/forum/topics', 'ForumController@createTopic');
-    $router->put('/api/forum/topics/{id}', 'ForumController@updateTopic');
-    $router->delete('/api/forum/topics/{id}', 'ForumController@deleteTopic');
-    $router->get('/api/forum/topics/patient/{patientId}', 'ForumController@getPatientTopics');
-    $router->get('/api/forum/topics/appointment/{appointmentId}', 'ForumController@getAppointmentTopics');
     
-    // Forum API routes - Posts
-    $router->get('/api/forum/posts/topic/{topicId}', 'ForumController@getTopicPosts');
-    $router->get('/api/forum/posts/{id}', 'ForumController@getPost');
-    $router->post('/api/forum/posts', 'ForumController@createPost');
-    $router->put('/api/forum/posts/{id}', 'ForumController@updatePost');
-    $router->delete('/api/forum/posts/{id}', 'ForumController@deletePost');
     
-    // Forum API routes - Likes (Posts)
-    $router->post('/api/forum/posts/{id}/like', 'ForumController@likePost');
-    $router->post('/api/forum/posts/{id}/dislike', 'ForumController@dislikePost');
-    $router->delete('/api/forum/posts/{id}/like', 'ForumController@removeLike');
     
-    // Forum API routes - Likes (Topics)
-    $router->post('/api/forum/topics/{id}/like', 'ForumController@likeTopic');
-    $router->post('/api/forum/topics/{id}/dislike', 'ForumController@dislikeTopic');
     
-    // Forum API routes - Images
-    $router->post('/api/forum/posts/{id}/images', 'ForumController@uploadImage');
-    $router->delete('/api/forum/images/{id}', 'ForumController@deleteImage');
     
-    // Forum API routes - Attachments
-    $router->post('/api/forum/attachments/upload', 'ForumController@uploadAttachment');
-    $router->get('/api/forum/attachments/view/{id}', 'ForumController@viewAttachment');
-    $router->delete('/api/forum/attachments/{id}', 'ForumController@deleteAttachment');
     
-    // Forum API routes - Tags
-    $router->post('/api/forum/topics/{id}/tags', 'ForumController@addTags');
-    $router->delete('/api/forum/topics/{id}/tags/{tagId}', 'ForumController@removeTag');
     
-    // Forum API routes - Statistics and Actions
-    $router->get('/api/forum/stats/categories', 'ForumController@getCategoryStats');
-    $router->get('/api/forum/stats/top-meta', 'ForumController@getTopMetaTags');
-    $router->post('/api/forum/topics/{id}/toggle-resolved', 'ForumController@toggleResolved');
-    $router->post('/api/forum/topics/{id}/toggle-pin', 'ForumController@togglePin');
     
     // Medical History routes
     $router->get('/api/patients/{id}/medical-history', 'ApiController@getPatientMedicalHistory');

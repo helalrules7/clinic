@@ -1316,6 +1316,26 @@ if ($status === 'completed') {
     .visit-note-meta { font-size: .72rem; color: var(--muted, #64748b); margin-bottom: 3px; }
     .visit-note-author { font-weight: 700; color: var(--text); }
     .visit-note-body { font-size: .85rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word; color: var(--text); }
+    .visit-note { position: relative; }
+    .visit-note-del {
+        flex: 0 0 auto;
+        align-self: flex-start;
+        background: transparent;
+        border: 0;
+        color: var(--muted, #64748b);
+        width: 28px; height: 28px;
+        border-radius: 8px;
+        cursor: pointer;
+        opacity: .7;
+        transition: opacity .15s ease, background .15s ease, color .15s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .9rem;
+    }
+    .visit-note-del:hover { opacity: 1; background: color-mix(in srgb, var(--danger, #ef4444) 12%, transparent); color: var(--danger, #ef4444); }
+    .visit-note-del:focus-visible { opacity: 1; outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger, #ef4444) 40%, transparent); }
+    .visit-note-del:disabled { opacity: .5; cursor: not-allowed; }
 </style>
 <script src="/app/Views/doctor/assets/js/comment-media.js?v=<?= file_exists(__DIR__ . '/assets/js/comment-media.js') ? filemtime(__DIR__ . '/assets/js/comment-media.js') : time() ?>"></script>
 <script>
@@ -1353,11 +1373,46 @@ if ($status === 'completed') {
                     : `<span class="visit-note-av visit-note-av--ini">${esc(CM ? CM.initials(r.author_name) : '?')}</span>`;
                 const body = CM ? CM.renderBody(r.body, r.mentions) : esc(r.body);
                 const atts = CM ? CM.renderAttachments(r.attachments) : '';
-                return `<div class="visit-note">${av}<div class="visit-note-main"><div class="visit-note-meta"><span class="visit-note-author">${esc(r.author_name || 'User')}</span> · ${esc(fmt(r.created_at))}</div><div class="visit-note-body">${body}</div>${atts}</div></div>`;
+                const del  = r.can_edit
+                    ? `<button type="button" class="visit-note-del" data-cid="${r.id}" aria-label="Delete note" title="Delete note"><i class="bi bi-trash"></i></button>`
+                    : '';
+                return `<div class="visit-note">${av}<div class="visit-note-main"><div class="visit-note-meta"><span class="visit-note-author">${esc(r.author_name || 'User')}</span> · ${esc(fmt(r.created_at))}</div><div class="visit-note-body">${body}</div>${atts}</div>${del}</div>`;
             }).join('');
             listEl.scrollTop = listEl.scrollHeight;
         } catch (e) { listEl.innerHTML = '<p class="text-danger small mb-0">Failed to load notes.</p>'; }
     }
+
+    // Delegated delete handler — themed confirmation modal then DELETE.
+    listEl.addEventListener('click', async (ev) => {
+        const btn = ev.target.closest('.visit-note-del');
+        if (!btn) return;
+        const cid = btn.getAttribute('data-cid');
+        if (!cid) return;
+        const ok = typeof window.mkConfirmModal === 'function'
+            ? await window.mkConfirmModal({
+                title: 'Delete note?',
+                message: 'This board note will be removed. This action cannot be undone.',
+                confirmText: 'Delete',
+                confirmClass: 'btn-danger',
+                icon: 'bi-trash',
+            })
+            : window.confirm('Delete this note?');
+        if (!ok) return;
+        btn.disabled = true;
+        try {
+            const r = await fetch('/api/comments/' + cid, {
+                method: 'DELETE', credentials: 'same-origin',
+                headers: { 'X-CSRF-Token': CSRF, 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const j = await r.json().catch(() => ({}));
+            if (!r.ok || !j.ok) throw new Error((j && j.error) || ('HTTP ' + r.status));
+            await load();
+        } catch (e) {
+            btn.disabled = false;
+            errEl.textContent = 'Delete failed: ' + (e.message || 'unknown');
+            errEl.classList.remove('d-none');
+        }
+    });
 
     if (!composer) input.addEventListener('input', () => { sendBtn.disabled = input.value.trim() === ''; });
     sendBtn.addEventListener('click', async () => {
@@ -1457,20 +1512,7 @@ if ($status === 'completed') {
 <?php endif; ?>
 
 <!-- Forum Topics Section -->
-<div class="card mt-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">
-            <i class="bi bi-chat-dots me-2"></i>Forum Topics
-        </h5>
-    </div>
-    <div class="card-body">
-        <div id="appointmentForumTopics">
-            <div class="text-center py-4">
-                <div class="spinner-border spinner-border-sm" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        </div>
+</div>
     </div>
 </div>
 

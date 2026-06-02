@@ -7404,7 +7404,7 @@ class ApiController
 
     /**
      * Comprehensive search across all entities
-     * Searches: appointments, drugs, patients, media, prescriptions, glass prescriptions, medical history, notes, alerts, forum, consultation_notes
+     * Searches: appointments, drugs, patients, media, prescriptions, glass prescriptions, medical history, notes, alerts, consultation_notes
      * Supports refinement using & operator: "query & refinement"
      * - If refinement is numeric: filter by patient_id or appointment_id
      * - If refinement is text: filter by patient name
@@ -7724,35 +7724,6 @@ class ApiController
                         'type' => 'alert',
                         'icon' => 'bi-bell',
                         'url' => '/doctor/alerts?search=' . urlencode($query)
-                    ];
-                }
-            } catch (\Exception $e) {
-                // Continue if error
-            }
-
-            // 9. Search Forum Topics
-            try {
-                $stmt = $this->pdo->prepare("
-                    SELECT t.id, t.title, t.content, t.category, u.name as author_name
-                    FROM doctor_forum_topics t
-                    LEFT JOIN users u ON t.created_by = u.id
-                    WHERE t.title LIKE ? OR t.content LIKE ?
-                    ORDER BY t.created_at DESC
-                    LIMIT ?
-                ");
-                $stmt->execute([$searchTerm, $searchTerm, $limit]);
-                $topics = $stmt->fetchAll();
-                foreach ($topics as $topic) {
-                    $contentPreview = mb_substr(strip_tags($topic['content'] ?? ''), 0, 50);
-                    $results[] = [
-                        'id' => $topic['id'],
-                        'title' => $topic['title'],
-                        'subtitle' => ($topic['category'] ? ucfirst($topic['category']) . ' • ' : '') .
-                            ($contentPreview ? $contentPreview . '...' : '') .
-                            ($topic['author_name'] ? ' • by ' . $topic['author_name'] : ''),
-                        'type' => 'forum',
-                        'icon' => 'bi-chat-dots',
-                        'url' => '/doctor/forum/topic/' . $topic['id']
                     ];
                 }
             } catch (\Exception $e) {
