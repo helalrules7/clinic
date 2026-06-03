@@ -5903,8 +5903,23 @@ class ApiController
                             continue;
                         }
 
-                        // Check for breaking news keywords
+                        // Multi-flag computation — BREAKING stays in lock-step with
+                        // the isBreakingNews() helper (so its keyword list remains
+                        // the single source of truth), then FDA / TRIAL / NEW layer
+                        // on top. BREAKING vs FDA is mutually exclusive: BREAKING wins.
+                        $haystack = mb_strtolower($title . ' ' . $description);
+                        $now = time();
                         $isBreaking = $this->isBreakingNews($title, $description);
+                        $isFda      = (bool) preg_match(
+                            '/\b(fda|510\(k\)|510k|clearance|approved|approval|de novo)\b/u',
+                            $haystack
+                        ) && !$isBreaking;
+                        $isTrial    = (bool) preg_match(
+                            '/\b(clinical trial|randomi[sz]ed|rct|study|cohort|meta-analysis|systematic review)\b/u',
+                            $haystack
+                        );
+                        $pubTs      = $pubDate ? (int) @strtotime($pubDate) : 0;
+                        $isNew      = ($pubTs > 0) && (($now - $pubTs) <= 24 * 3600);
 
                         $articles[] = [
                             'title' => mb_convert_encoding($title, 'UTF-8', 'UTF-8'),
@@ -5912,9 +5927,14 @@ class ApiController
                             'description' => mb_convert_encoding(strip_tags($description), 'UTF-8', 'UTF-8'),
                             'pubDate' => $pubDate,
                             'source' => $feed['source'],
+                            'source_name' => $feed['source'],
                             'source_icon' => $feed['icon'],
                             'category' => $feed['category'],
-                            'is_breaking' => $isBreaking
+                            'is_breaking' => $isBreaking,
+                            'is_fda' => $isFda,
+                            'is_trial' => $isTrial,
+                            'is_new' => $isNew,
+                            'pub_ts' => $pubTs ?: 0,
                         ];
                     }
                 } catch (\Exception $e) {
@@ -5948,29 +5968,17 @@ class ApiController
                 $filteredArticles = $allArticles;
             }
 
-            // Sort by breaking news first, then by date (newest first)
+            // Sort cascade: BREAKING → FDA → NEW → pub_ts desc. The most
+            // urgent / regulatory item always leads the marquee, then the
+            // fresh-in-the-last-24h items, then everything else by recency.
             usort($filteredArticles, function ($a, $b) {
-                if ($a['is_breaking'] && !$b['is_breaking'])
-                    return -1;
-                if (!$a['is_breaking'] && $b['is_breaking'])
-                    return 1;
-
-                $timeA = 0;
-                $timeB = 0;
-
-                if (!empty($a['pubDate'])) {
-                    $timeA = strtotime($a['pubDate']);
-                    if ($timeA === false)
-                        $timeA = 0;
-                }
-
-                if (!empty($b['pubDate'])) {
-                    $timeB = strtotime($b['pubDate']);
-                    if ($timeB === false)
-                        $timeB = 0;
-                }
-
-                return $timeB - $timeA;
+                $cmp = ((int) ($b['is_breaking'] ?? false)) <=> ((int) ($a['is_breaking'] ?? false));
+                if ($cmp !== 0) return $cmp;
+                $cmp = ((int) ($b['is_fda']      ?? false)) <=> ((int) ($a['is_fda']      ?? false));
+                if ($cmp !== 0) return $cmp;
+                $cmp = ((int) ($b['is_new']      ?? false)) <=> ((int) ($a['is_new']      ?? false));
+                if ($cmp !== 0) return $cmp;
+                return ((int) ($b['pub_ts'] ?? 0)) <=> ((int) ($a['pub_ts'] ?? 0));
             });
 
             // Limit to 15 articles

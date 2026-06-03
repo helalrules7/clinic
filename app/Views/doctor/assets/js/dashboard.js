@@ -5307,34 +5307,57 @@ function renderNewsTicker(articles) {
     const ticker = document.getElementById('newsTicker');
     if (!ticker) return;
 
+    // Local escaper — matches the file-level escapeHtml() helper but inlined
+    // so this function stays self-contained if someone moves it.
+    const esc = (s) => {
+        const d = document.createElement('div');
+        d.textContent = s == null ? '' : String(s);
+        return d.innerHTML;
+    };
+
     ticker.innerHTML = '';
-
-    articles.forEach(article => {
+    articles.forEach(a => {
         const span = document.createElement('span');
-        let content = '';
+        const parts = [];
 
-        // Add breaking news badge if applicable
-        if (article.is_breaking) {
-            content += '<span class="breaking-news"><i class="bi bi-exclamation-triangle-fill"></i> BREAKING</span>';
+        // Stacked badges. BREAKING and FDA are mutually exclusive (backend
+        // already enforces this — is_fda is forced false when is_breaking
+        // is true). TRIAL and NEW can stack on top. NEW is suppressed when
+        // BREAKING is already firing — today's urgent news is by definition new.
+        if (a.is_breaking) {
+            parts.push('<span class="news-tag news-breaking"><i class="bi bi-exclamation-triangle-fill"></i> BREAKING</span>');
+        } else if (a.is_fda) {
+            parts.push('<span class="news-tag news-fda"><i class="bi bi-shield-check"></i> FDA</span>');
+        }
+        if (a.is_trial) {
+            parts.push('<span class="news-tag news-trial"><i class="bi bi-clipboard2-pulse"></i> TRIAL</span>');
+        }
+        if (a.is_new && !a.is_breaking) {
+            parts.push('<span class="news-tag news-new"><i class="bi bi-stars"></i> NEW</span>');
         }
 
-        // Add source icon
-        if (article.source_icon) {
-            content += `<span class="source-icon">${article.source_icon}</span>`;
+        // Source pill — icon (server-controlled emoji or <i> from the feed list)
+        // + short source name.
+        const sourceName = a.source_name || a.source;
+        if (sourceName) {
+            const iconHtml = a.source_icon || '<i class="bi bi-rss"></i>';
+            parts.push('<span class="news-source-pill" title="' + esc(sourceName) + '">'
+                       + iconHtml + ' ' + esc(sourceName) + '</span>');
         }
 
-        // Add article link
-        content += `<a href="${article.link}" target="_blank" rel="noopener noreferrer">${article.title}</a>`;
+        const href = (typeof a.link === 'string' && /^https?:\/\//i.test(a.link))
+                   ? a.link : '#';
+        parts.push('<a class="news-title" href="' + esc(href)
+                   + '" target="_blank" rel="noopener noreferrer">'
+                   + esc(a.title) + '</a>');
 
-        span.innerHTML = content;
+        span.innerHTML = parts.join('');
         ticker.appendChild(span);
     });
 
-    // Restart animation
+    // Restart the marquee so length changes don't desync the loop.
     ticker.style.animation = 'none';
-    setTimeout(() => {
-        ticker.style.animation = 'tickerMove 100s linear infinite';
-    }, 10);
+    setTimeout(() => { ticker.style.animation = 'tickerMove 100s linear infinite'; }, 10);
 }
 
 // Initialize news on page load

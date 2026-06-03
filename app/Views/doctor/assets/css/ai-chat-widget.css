@@ -94,7 +94,11 @@
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(226, 232, 240, 0.25);
     box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.15);
-    color: var(--accent);
+    /* Robot glyph color: BLACK in light mode, WHITE in dark mode. The
+       glass background is light/dark theme-aware (rgba 0.65 over the
+       page), so a high-contrast monochrome glyph reads cleanly against
+       either surface without competing with the page's --accent. */
+    color: #000;
     font-size: 1.15rem;
     cursor: pointer;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -107,7 +111,7 @@
 .dark .ai-chat-toggle {
     background: rgba(11, 18, 32, 0.65);
     border: 1px solid rgba(51, 65, 85, 0.25);
-    color: var(--accent);
+    color: #fff;
 }
 
 /* Icon Wrapper - Base Styles */
@@ -151,7 +155,9 @@
 
 .ai-chat-toggle .ai-chat-icon-robot {
     font-size: 1.35em !important;
-    color: var(--accent);
+    /* Inherit from .ai-chat-toggle (black light / white dark). Do NOT
+       hard-code a color here — that would defeat the theme-aware parent. */
+    color: inherit;
     filter: none;
     text-shadow: none;
     line-height: 1;
@@ -165,15 +171,17 @@
 }
 
 .ai-chat-toggle.active {
-    /* Active = chat window is open. Subtle indigo tint without breaking
-       the glass — same surface, just colored. */
+    /* Active = chat window is open. Subtle indigo tint on the surface,
+       but the glyph stays monochrome (black light / white dark) — same
+       contrast story as the base state. */
     background: color-mix(in srgb, var(--accent) 18%, rgba(248, 250, 252, 0.65));
     border-color: color-mix(in srgb, var(--accent) 35%, rgba(226, 232, 240, 0.25));
-    color: var(--accent);
+    color: #000;
 }
 .dark .ai-chat-toggle.active {
     background: color-mix(in srgb, var(--accent) 25%, rgba(11, 18, 32, 0.65));
     border-color: color-mix(in srgb, var(--accent) 35%, rgba(51, 65, 85, 0.25));
+    color: #fff;
 }
 
 /* Chat Window */

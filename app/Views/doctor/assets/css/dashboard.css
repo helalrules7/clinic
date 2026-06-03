@@ -3778,7 +3778,10 @@ canvas {
     font-size: 0.875rem;
 }
 
-.ticker span {
+/* Scoped to DIRECT children — each article is one outer <span>. Descendant
+   spans (badges, source pill) must NOT inherit this 60px gap. The old
+   `.ticker span` selector caught every nested span and broke the chip row. */
+.ticker > span {
     margin-right: 60px;
     display: inline-block;
 }
@@ -3841,7 +3844,7 @@ canvas {
         font-size: 0.8rem;
     }
 
-    .ticker span {
+    .ticker > span {
         margin-right: 40px;
     }
 }
@@ -6179,4 +6182,84 @@ canvas {
 .appt-empty .btn i { font-size: 1rem; opacity: 1; margin: 0; }
 @media (max-width: 575px) {
     .appt-actions .btn-text { display: none; }
+}
+
+/* News ticker badges
+   ===================
+   Stacked pills before each headline. BREAKING and FDA are mutually exclusive
+   (BREAKING wins, enforced server-side); TRIAL + NEW layer on top. Each pill
+   has its own accent color so the strip reads at a glance.
+
+   The `.ticker > span` selector below composes with the earlier `.ticker > span`
+   rule (`margin-right: 60px; display: inline-block;`): browsers merge the two
+   into `inline-flex` (later wins per property) while keeping the 60px article-
+   to-article gap from the first rule. Inside the flex container, `gap: 6px`
+   keeps badges tight against each other. */
+.ticker > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ticker .news-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.4;
+    color: #fff;
+    flex-shrink: 0;
+}
+.ticker .news-tag i { font-size: 0.78rem; }
+
+.ticker .news-breaking {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+}
+.ticker .news-fda {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.35);
+}
+.ticker .news-trial {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35);
+}
+.ticker .news-new {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 2px 6px rgba(5, 150, 105, 0.35);
+}
+
+.ticker .news-source-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: rgba(148, 163, 184, 0.18);
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    color: var(--muted, #64748b);
+    flex-shrink: 0;
+}
+.ticker .news-source-pill i { font-size: 0.85rem; opacity: 0.9; }
+.dark .ticker .news-source-pill {
+    background: rgba(148, 163, 184, 0.12);
+    border-color: rgba(148, 163, 184, 0.2);
+    color: var(--muted, #94a3b8);
+}
+
+.ticker .news-title {
+    color: inherit;
+    text-decoration: none;
+    transition: color .15s ease;
+}
+.ticker .news-title:hover {
+    color: var(--accent, #6366f1);
+    text-decoration: underline;
 }
