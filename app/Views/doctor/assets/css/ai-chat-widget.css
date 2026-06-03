@@ -49,32 +49,65 @@
     filter: invert(1);
 }
 
-/* Chat Widget Container */
+/* Chat Widget Container — anchored to the FAB triplet at bottom-right.
+   Default position matches .scroll-to-top exactly so they overlap when
+   back-to-top is HIDDEN. When back-to-top becomes visible, JS adds
+   `.ai-above-backtotop` and the AI button lifts one slot (vertical on
+   mobile, horizontal on desktop) so the FABs stack: back-to-top → AI → dock. */
 .ai-chat-widget {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 2rem;
+    right: 2rem;
     z-index: 1000004;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    max-width: calc(100vw - 24px);
+    font-family: inherit;
+    /* Animate the lift smoothly when back-to-top toggles. */
+    transition: bottom 0.3s ease, right 0.3s ease;
 }
 
-/* Chat Toggle Button */
+/* Desktop: lift horizontally (slide left) when back-to-top is visible. */
+.ai-chat-widget.ai-above-backtotop {
+    right: calc(2rem + 48px + 12px);
+}
+
+@media (max-width: 768px) {
+    .ai-chat-widget {
+        bottom: 1.5rem;
+        right: 1.5rem;
+    }
+    /* Mobile: lift vertically (slide up) instead, since the FAB column
+       stacks bottom-up on phones. Override the desktop right-shift. */
+    .ai-chat-widget.ai-above-backtotop {
+        right: 1.5rem;
+        bottom: calc(1.5rem + 48px + 12px);
+    }
+}
+
+/* Chat Toggle Button — glass style matching .scroll-to-top + dock-minimize-btn.
+   Same 48px circular glass surface so the three FABs feel like family. */
 .ai-chat-toggle {
-    width: 60px;
-    height: 60px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent) 0%, #0ea5e9 100%);
-    border: none;
-    color: white;
-    font-size: 1.5rem;
+    background: rgba(248, 250, 252, 0.65);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.25);
+    box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.15);
+    color: var(--accent);
+    font-size: 1.15rem;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     z-index: 1000005;
+}
+.dark .ai-chat-toggle {
+    background: rgba(11, 18, 32, 0.65);
+    border: 1px solid rgba(51, 65, 85, 0.25);
+    color: var(--accent);
 }
 
 /* Icon Wrapper - Base Styles */
@@ -108,31 +141,39 @@
     font-size: 1.5rem;
 }
 
+/* On the FAB itself: drop the neon-red heart halo entirely — it leaked
+   ~16px outside the button and clashed with the new glass style. The
+   heart icon still appears in the chat window header / welcome panel /
+   message avatars where there's room. */
 .ai-chat-toggle .ai-chat-icon-medical {
-    top: -8px;
-    left: -8px;
-    font-size: 0.9em !important;
-    color: #ff073a !important;
-    text-shadow: 
-        0 0 8px rgba(255, 7, 58, 0.8),
-        0 0 12px rgba(255, 7, 58, 0.6),
-        0 0 16px rgba(255, 7, 58, 0.4),
-        0 1px 2px rgba(0, 0, 0, 0.3);
-    filter: drop-shadow(0 0 4px rgba(255, 7, 58, 0.9));
+    display: none;
 }
 
 .ai-chat-toggle .ai-chat-icon-robot {
-    font-size: 1.6em !important;
+    font-size: 1.35em !important;
+    color: var(--accent);
+    filter: none;
+    text-shadow: none;
+    line-height: 1;
 }
 
 .ai-chat-toggle:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(14, 165, 233, 0.6);
+    /* Match .scroll-to-top:hover — same lift + box-shadow recipe so the
+       three FABs feel cohesive when hovered. */
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.2);
 }
 
 .ai-chat-toggle.active {
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
+    /* Active = chat window is open. Subtle indigo tint without breaking
+       the glass — same surface, just colored. */
+    background: color-mix(in srgb, var(--accent) 18%, rgba(248, 250, 252, 0.65));
+    border-color: color-mix(in srgb, var(--accent) 35%, rgba(226, 232, 240, 0.25));
+    color: var(--accent);
+}
+.dark .ai-chat-toggle.active {
+    background: color-mix(in srgb, var(--accent) 25%, rgba(11, 18, 32, 0.65));
+    border-color: color-mix(in srgb, var(--accent) 35%, rgba(51, 65, 85, 0.25));
 }
 
 /* Chat Window */
@@ -705,10 +746,9 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .ai-chat-widget {
-        bottom: 10px;
-        right: 10px;
-    }
+    /* NOTE: .ai-chat-widget mobile position is set above (bottom: 1.5rem;
+       right: 1.5rem) to match the FAB triplet. Do not re-set here or it
+       breaks the .ai-above-backtotop lift math. */
 
     .ai-chat-window {
         width: calc(100vw - 20px);
@@ -718,11 +758,10 @@
         border-radius: 12px;
     }
 
-    .ai-chat-toggle {
-        width: 56px;
-        height: 56px;
-        font-size: 1.25rem;
-    }
+    /* NOTE: .ai-chat-toggle mobile size override removed — the FAB triplet
+       (back-to-top + AI + dock) is 48×48 on every viewport for visual parity.
+       Old rule had width:56px height:56px which made the AI 8px taller than
+       the other two FABs and broke the vertical column alignment. */
 
     .ai-chat-action-btn span {
         display: none;

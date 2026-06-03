@@ -20,7 +20,13 @@ let aiChatWidget = {
 function initAIChatWidget(patientId, appointmentId) {
     aiChatWidget.patientId = patientId;
     aiChatWidget.appointmentId = appointmentId;
-    
+
+    // Mark this page as having the AI agent so the mobile dock's CSS can
+    // lift its baseline one slot to stack ABOVE the AI button. Pages WITHOUT
+    // the AI widget (dashboard, calendar, etc.) leave this class absent and
+    // the dock sits at the bottom anchor where back-to-top would appear.
+    document.body.classList.add('has-ai-widget');
+
     createChatWidget();
     loadChatHistory();
 }

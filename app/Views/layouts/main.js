@@ -53,61 +53,28 @@
             window.addEventListener('pageshow', sweep);
         })();
 
-        // Global session check interceptor for fetch requests
+        // Global session check interceptor for fetch requests.
+        //
+        // Previous version fired a PRE-FLIGHT /api/auth/session-time request
+        // BEFORE every /api/* call, doubling network traffic for every API
+        // request on the page. On Cloudflare-fronted prod that caused
+        // intermittent "Fetch API cannot load … due to access control checks"
+        // errors in Safari — the doubled traffic occasionally tripped CF's
+        // edge throttling, and the failed pre-flight bubbled up as a CORS
+        // error. The post-response 401/403 check below catches real session
+        // expiry just as reliably, so the pre-flight has been removed.
         (function() {
             const originalFetch = window.fetch;
-            
+
             window.fetch = async function(...args) {
-                const url = args[0];
-                const options = args[1] || {};
-                
-                // Only intercept API requests (not static assets, images, etc.)
-                if (typeof url === 'string' && (url.startsWith('/api/') || url.includes('/api/'))) {
-                    // Check session before making API request
-                    try {
-                        const sessionResponse = await originalFetch('/api/auth/session-time', {
-                            method: 'GET',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest'
-                            },
-                            credentials: 'same-origin'
-                        });
-                        
-                        if (sessionResponse.ok) {
-                            const sessionData = await sessionResponse.json();
-                            
-                            // If session expired or not authenticated, redirect to login
-                            if (!sessionData.success || sessionData.remaining <= 0) {
-                                // Don't redirect if already on login page
-                                if (!window.location.pathname.includes('/login')) {
-                                    window.location.href = '/login?expired=1';
-                                }
-                                // Return a rejected promise to prevent the original request
-                                return Promise.reject(new Error('Session expired'));
-                            }
-                        } else if (sessionResponse.status === 401 || sessionResponse.status === 403) {
-                            // Unauthorized - redirect to login
-                            if (!window.location.pathname.includes('/login')) {
-                                window.location.href = '/login?expired=1';
-                            }
-                            return Promise.reject(new Error('Unauthorized'));
-                        }
-                    } catch (error) {
-                        // Network error - allow request to proceed (will be handled by server)
-                    }
-                }
-                
-                // Execute original fetch
                 const response = await originalFetch.apply(this, args);
-                
-                // Check response status for unauthorized access
+
+                // Detect session expiry on the actual response.
                 if (response.status === 401 || response.status === 403) {
-                    // Try to parse response to check if it's a session expiry
                     try {
                         const clonedResponse = response.clone();
                         const data = await clonedResponse.json();
-                        
+
                         if (data.message && (data.message.includes('Unauthorized') || data.message.includes('expired') || data.message.includes('session'))) {
                             if (!window.location.pathname.includes('/login')) {
                                 window.location.href = '/login?expired=1';
@@ -115,14 +82,13 @@
                             return Promise.reject(new Error('Session expired'));
                         }
                     } catch (e) {
-                        // If not JSON or parse error, check status code
-                        if (!window.location.pathname.includes('/login')) {
-                            window.location.href = '/login?expired=1';
-                        }
-                        return Promise.reject(new Error('Unauthorized'));
+                        // If not JSON or parse error, fall through and let the caller handle.
+                        // (We deliberately do NOT redirect on bare 401/403 — many endpoints
+                        // legitimately return those for non-session reasons, e.g. a
+                        // permission-gated route or a 403 from CF for a transient block.)
                     }
                 }
-                
+
                 return response;
             };
         })();
@@ -8160,7 +8126,14 @@
         // Scroll to Top Button
         const scrollToTopBtn = document.getElementById('scrollToTop');
         const mobileDock = document.getElementById('quickAccessDock');
-        
+        // FAB triplet: back-to-top → AI → dock. When back-to-top becomes
+        // visible the AI widget lifts one slot (vertical on mobile, horizontal
+        // on desktop) so the three FABs never overlap. The widget is built
+        // LATE by ai-chat-widget.js (called from each page's inline init
+        // script, AFTER main.js's DOMContentLoaded init has already run), so
+        // caching the element here would always return null. Look it up per
+        // scroll-tick instead — cheap inside the existing rAF.
+
         function updateMobileDockPosition() {
             if (!mobileDock || window.innerWidth > 768) return;
 
@@ -8203,11 +8176,17 @@
                 const max = (el.scrollHeight - el.clientHeight) || 1;
                 const ringP = Math.min(1, Math.max(0, y / max));
                 const wantShow = y > 300;
-                const isMobile = window.innerWidth <= 768;
-                const dockVisible = !!mobileDock && isMobile;
                 // ---- WRITES ----
                 if (scrollToTopBtn) scrollToTopBtn.classList.toggle('show', wantShow);
-                if (dockVisible) mobileDock.classList.toggle('dock-above-button', wantShow);
+                // `.dock-above-button` drives both the mobile vertical-column
+                // shift (style.css:6892, inside @media max-width:768px) AND
+                // the desktop horizontal-row shift (style.css:8597, on the
+                // .quick-access-dock.minimized rule). Both are media-queried so
+                // they can't leak across viewports — no need to gate the toggle.
+                if (mobileDock) mobileDock.classList.toggle('dock-above-button', wantShow);
+                // Per-tick lookup — see note above; widget DOM is built late.
+                const aiFab = document.getElementById('aiChatWidget');
+                if (aiFab) aiFab.classList.toggle('ai-above-backtotop', wantShow);
                 if (sttRingBar) sttRingBar.style.strokeDashoffset = (STT_RING_C * (1 - ringP)).toFixed(2);
             });
         }

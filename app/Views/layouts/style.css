@@ -6784,8 +6784,10 @@
             position: fixed;
             bottom: 2rem;
             right: 2rem;
-            width: 50px;
-            height: 50px;
+            /* FAB triplet — same size on every viewport for visual parity
+               with .ai-chat-toggle + .dock-minimize-btn. */
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
             display: none;
             align-items: center;
@@ -6855,8 +6857,8 @@
             .scroll-to-top {
                 bottom: 1.5rem;
                 right: 1.5rem;
-                width: 45px;
-                height: 45px;
+                width: 48px;
+                height: 48px;
             }
             
             /* Mobile Dock C-Shape Radial Menu */
@@ -6873,29 +6875,49 @@
             }
             
             /* When back to top button is hidden, use its exact position */
-            /* Aligned with the back-to-top button (same right edge). When back-to-top is
-               hidden it sits at the bottom; when shown it lifts above it. */
+            /* FAB stack (bottom-up): back-to-top → AI → dock. All three are 48px,
+               with a 12px gap between adjacent buttons. Anchored at right: 1.5rem.
+               Default baseline assumes NO AI widget on the page (dashboard, etc.):
+               dock sits at the bottom anchor, lifts one slot when back-to-top
+               appears. Pages with AI widget add `body.has-ai-widget` (see
+               ai-chat-widget.js) which lifts the dock one extra slot to stack
+               above the AI button. */
             .quick-access-dock.mobile-minimized {
                 bottom: 1.5rem;
                 right: 1.5rem;
                 left: auto;
                 top: auto;
+                /* Kill the desktop rule's `transform: translateX(-50%)` (used to
+                   center the dock at left: 50%) — it leaks 50%-of-width left on
+                   mobile and breaks vertical alignment with the other FABs. */
+                transform: none !important;
             }
 
-            /* When back to top button is visible, position dock above it (45px btn + gap) */
+            /* Back-to-top visible, no AI widget: dock lifts one slot. */
             .quick-access-dock.mobile-minimized.dock-above-button {
-                bottom: calc(1.5rem + 45px + 12px);
+                bottom: calc(1.5rem + 48px + 12px);
                 right: 1.5rem;
                 left: auto;
                 top: auto;
             }
+
+            /* Pages WITH AI widget (patient, appointment): dock sits one slot
+               above the AI button by default, two slots above when back-to-top
+               appears. The CSS tokens compose: base + 60px adds one slot. */
+            body.has-ai-widget .quick-access-dock.mobile-minimized {
+                bottom: calc(1.5rem + 48px + 12px);
+            }
+            body.has-ai-widget .quick-access-dock.mobile-minimized.dock-above-button {
+                bottom: calc(1.5rem + 2 * (48px + 12px));   /* = 1.5rem + 120px */
+            }
             
-            /* Ensure dock container aligns perfectly with scroll-to-top button */
+            /* Ensure dock container aligns perfectly with scroll-to-top button.
+               48px to match the FAB triplet (back-to-top + AI agent + dock). */
             .quick-access-dock.mobile-minimized .dock-container {
                 box-sizing: border-box;
                 margin: 0;
-                width: 40px;
-                height: 40px;
+                width: 48px;
+                height: 48px;
                 padding: 0;
                 border-radius: 12px;
                 display: flex;
@@ -8556,21 +8578,51 @@
             will-change: color, transform;
         }
         
-        /* Dock Minimized State */
+        /* Dock Minimized State — desktop FAB triplet (back-to-top → AI → dock,
+           right-to-left). All three are 48×48 with 12 px gaps. The row COMPACTS
+           when buttons are hidden: dock collapses into the BTT corner-slot when
+           BTT is hidden, then shifts left one slot when BTT appears (via the
+           `.dock-above-button` class toggled by main.js scroll handler).
+           Same shift for AI via `.ai-above-backtotop`.
+
+           Slot map (right offset, all 48×48 with 12 px gap):
+             slot 1: right: 2rem                            (corner — BTT slot)
+             slot 2: right: 2rem + 60px                      (one slot left)
+             slot 3: right: 2rem + 120px                     (two slots left)
+
+           Pages WITHOUT AI:
+             BTT hidden → dock at slot 1 (corner, alone)
+             BTT shown  → BTT slot 1, dock slot 2
+           Pages WITH AI:
+             BTT hidden → AI at slot 1, dock at slot 2 (adjacent — no gap)
+             BTT shown  → BTT slot 1, AI slot 2, dock slot 3 */
         .quick-access-dock.minimized {
             left: auto;
-            right: calc(2rem + 64px + 1rem); /* Position to the left of scroll to top button */
-            transform: none;
-            bottom: 2rem; /* Same level as scroll to top button */
+            right: 2rem;                            /* slot 1 — at the corner */
+            transform: none !important;
+            bottom: 2rem;
+            transition: right .3s ease, bottom .3s ease;
         }
-        
+        /* BTT visible (no AI page): dock shifts one slot left. */
+        .quick-access-dock.minimized.dock-above-button {
+            right: calc(2rem + 48px + 12px);        /* slot 2 */
+        }
+        /* AI present, BTT hidden: AI sits at slot 1, dock at slot 2 (adjacent). */
+        body.has-ai-widget .quick-access-dock.minimized {
+            right: calc(2rem + 48px + 12px);        /* slot 2 */
+        }
+        /* AI present, BTT visible: dock shifts to slot 3 (AI to slot 2). */
+        body.has-ai-widget .quick-access-dock.minimized.dock-above-button {
+            right: calc(2rem + 2 * (48px + 12px));  /* slot 3 */
+        }
+
         .quick-access-dock.minimized .dock-container {
-            padding: 0.75rem;
-            width: 64px;
-            height: 64px;
+            padding: 0;
+            width: 48px;
+            height: 48px;
             justify-content: center;
             align-items: center;
-            border-radius: 16px;
+            border-radius: 12px;
         }
         
         .quick-access-dock.minimized .dock-item,

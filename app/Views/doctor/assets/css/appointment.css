@@ -405,6 +405,36 @@
 .note-badge {
     font-size: 0.75rem;
     padding: 0.25rem 0.5rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Keep the date on one line — without nowrap the small "Jun 2, 2026 at
+   6:46 PM" string broke one token per line on narrow viewports because
+   the right-hand action-button cluster ate all the horizontal space. */
+.consultation-note-header .text-muted {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+@media (max-width: 767.98px) {
+    /* Stack the header on mobile: meta cluster on top, action buttons
+       on the bottom-right. The date keeps `nowrap` from above. */
+    .consultation-note-header > .d-flex {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 6px;
+    }
+    .consultation-note-header > .d-flex > .d-flex {
+        flex-wrap: wrap;
+        row-gap: 4px;
+        column-gap: 8px;
+        min-width: 0;
+    }
+    .consultation-note-header > .d-flex > .d-flex:last-child {
+        align-self: flex-end;
+        margin-inline-start: 0;
+    }
 }
 
 .consultation-section.border-top {
