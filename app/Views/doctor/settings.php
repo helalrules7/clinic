@@ -463,8 +463,8 @@
                                                    value="<?= htmlspecialchars($settings['clinic_logo']) ?>" placeholder="مسار الشعار الحالي" readonly>
                                         </div>
                                         <div class="mt-2" id="clinic_logo_preview">
-                                            <?php if ($settings['clinic_logo'] && file_exists('/var/www/html/clinic/public' . $settings['clinic_logo'])): ?>
-                                                <img src="<?= htmlspecialchars($settings['clinic_logo']) ?>" alt="Current Logo" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
+                                            <?php if (!empty($settings['clinic_logo'])): ?>
+                                                <img src="<?= htmlspecialchars($settings['clinic_logo']) ?>" alt="Current Logo" class="img-thumbnail" style="max-width: 150px; max-height: 150px;" onerror="this.style.display='none'">
                                             <?php endif; ?>
                                         </div>
                                     </div>
@@ -480,8 +480,8 @@
                                                    value="<?= htmlspecialchars($settings['clinic_logo_print']) ?>" placeholder="أو أدخل مسار الشعار">
                                         </div>
                                         <div class="mt-2" id="clinic_logo_print_preview">
-                                            <?php if ($settings['clinic_logo_print'] && file_exists('/var/www/html/clinic/public' . $settings['clinic_logo_print'])): ?>
-                                                <img src="<?= htmlspecialchars($settings['clinic_logo_print']) ?>" alt="Current Print Logo" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
+                                            <?php if (!empty($settings['clinic_logo_print'])): ?>
+                                                <img src="<?= htmlspecialchars($settings['clinic_logo_print']) ?>" alt="Current Print Logo" class="img-thumbnail" style="max-width: 150px; max-height: 150px;" onerror="this.style.display='none'">
                                             <?php endif; ?>
                                         </div>
                                     </div>
@@ -497,8 +497,8 @@
                                                    value="<?= htmlspecialchars($settings['clinic_logo_watermark']) ?>" placeholder="أو أدخل مسار الشعار">
                                         </div>
                                         <div class="mt-2" id="clinic_logo_watermark_preview">
-                                            <?php if ($settings['clinic_logo_watermark'] && file_exists('/var/www/html/clinic/public' . $settings['clinic_logo_watermark'])): ?>
-                                                <img src="<?= htmlspecialchars($settings['clinic_logo_watermark']) ?>" alt="Current Watermark Logo" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
+                                            <?php if (!empty($settings['clinic_logo_watermark'])): ?>
+                                                <img src="<?= htmlspecialchars($settings['clinic_logo_watermark']) ?>" alt="Current Watermark Logo" class="img-thumbnail" style="max-width: 150px; max-height: 150px;" onerror="this.style.display='none'">
                                             <?php endif; ?>
                                         </div>
                                     </div>

@@ -7,16 +7,17 @@
     rel="stylesheet">
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/doctor/dashboard">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="/doctor/patients">Patients</a></li>
-            <li class="breadcrumb-item"><a href="/doctor/patients/<?= $appointment['patient_id'] ?? '' ?>"><?= htmlspecialchars($appointment['patient_name'] ?? '') ?></a></li>
-            <li class="breadcrumb-item"><a href="/doctor/appointments/<?= $appointment['id'] ?? '' ?>">Appointment</a></li>
-            <li class="breadcrumb-item active">Edit Consultation</li>
-        </ol>
+    <nav class="app-breadcrumb" aria-label="Breadcrumb">
+        <a href="/doctor/appointments/<?= (int)($appointment['id'] ?? 0) ?>" class="app-crumb-back" aria-label="Back to appointment">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <a href="/doctor/patients/<?= (int)($appointment['patient_id'] ?? 0) ?>" class="app-crumb-link"><?= htmlspecialchars($appointment['patient_name'] ?? '') ?></a>
+        <i class="bi bi-chevron-right app-crumb-sep" aria-hidden="true"></i>
+        <a href="/doctor/appointments/<?= (int)($appointment['id'] ?? 0) ?>" class="app-crumb-link">Appointment #<?= (int)($appointment['id'] ?? 0) ?></a>
+        <i class="bi bi-chevron-right app-crumb-sep" aria-hidden="true"></i>
+        <span class="app-crumb-current">Edit Consultation</span>
     </nav>
-    <a href="/doctor/appointments/<?= $appointment['id'] ?? '' ?>" class="btn btn-secondary">
+    <a href="/doctor/appointments/<?= (int)($appointment['id'] ?? 0) ?>" class="btn btn-secondary">
         <i class="bi bi-arrow-left"></i> Back to Appointment
     </a>
 </div>

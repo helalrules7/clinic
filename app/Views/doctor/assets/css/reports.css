@@ -1053,6 +1053,13 @@
 .mini-stats-grid .mini-stat-card {
     position: relative;
     overflow: hidden;
+    /* Same four-clip combo as dashboard.css .mini-stat-card —
+       backdrop-filter + blurred ::before blob escapes the rounded
+       corners without these. */
+    isolation: isolate;
+    contain: paint;
+    will-change: transform;
+    clip-path: inset(0 round var(--r-xl));
     min-height: 132px;
     padding: 18px 20px;
     border-radius: var(--r-xl);
@@ -1197,4 +1204,15 @@
 .reports-page .card-header { background: transparent; color: var(--text); border: none; padding: 1.25rem 1.5rem; }
 .reports-page .card-header h5 { color: var(--text); font-weight: 700; margin: 0; display: flex; align-items: center; }
 .reports-page .card-body { padding: 1.5rem; background: transparent; }
+
+/* Detailed Report Data table bleed —
+   `.reports-page .card { overflow: visible !important }` above is REQUIRED
+   for the per-page-size filter dropdown to escape the card. The card itself
+   therefore can't clip its own corners. Round-clip the inner
+   `.table-responsive` wrapper instead so the solid `<thead>` / row backgrounds
+   stay inside the rounded card visual. */
+.reports-page .card-body .table-responsive {
+    border-radius: var(--r-xl);
+    overflow: hidden;
+}
 .reports-page .table td { background-color: var(--card); border-color: var(--glass-border); color: var(--text); vertical-align: middle; }

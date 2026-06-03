@@ -43,14 +43,14 @@
         <!-- Detail header -->
         <div class="board-head-row" id="boardDetailHead" hidden>
             <div class="board-head-titles">
-                <nav class="board-breadcrumb" aria-label="Breadcrumb">
-                    <button type="button" class="board-crumb-back" id="boardBackBtn"
+                <nav class="app-breadcrumb board-breadcrumb" aria-label="Breadcrumb">
+                    <button type="button" class="app-crumb-back board-crumb-back" id="boardBackBtn"
                             aria-label="Back to all boards">
                         <i class="bi bi-arrow-left"></i>
                     </button>
-                    <button type="button" class="board-crumb-link" id="boardCrumbRoot">Boards</button>
-                    <i class="bi bi-chevron-right board-crumb-sep"></i>
-                    <span class="board-crumb-current" id="boardCrumbName">—</span>
+                    <button type="button" class="app-crumb-link board-crumb-link" id="boardCrumbRoot">Boards</button>
+                    <i class="bi bi-chevron-right app-crumb-sep board-crumb-sep" aria-hidden="true"></i>
+                    <span class="app-crumb-current board-crumb-current" id="boardCrumbName">—</span>
                 </nav>
                 <h1 class="board-head-title">
                     <span class="board-detail-swatch" id="boardDetailSwatch"></span>

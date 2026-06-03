@@ -1112,6 +1112,16 @@ kbd {
     border-radius: var(--r-xl) !important;
 }
 
+/* Daily Balance + Transactions tables bleed past the card's rounded
+   corners because `.card-body.p-0` removes padding and the `<table>`
+   paints a solid square-cornered surface. Clip the `.table-responsive`
+   wrapper to the same border-radius as its parent card. */
+.container-fluid > .card .table-responsive,
+.card.mb-4 .table-responsive {
+    border-radius: var(--r-xl);
+    overflow: hidden;
+}
+
 .card > .card-header {
     background: transparent !important;
     border-bottom: 1px solid var(--glass-border) !important;

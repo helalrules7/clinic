@@ -783,9 +783,34 @@ document.addEventListener('DOMContentLoaded', function() {
     // Missed Appointments Pagination
     let missedCurrentPage = 1;
     let missedPerPage = 5;
-    
-    // Load missed appointments on page load
-    loadMissedAppointments(missedCurrentPage, missedPerPage);
+    let missedLoaded = false;
+
+    // LAZY-LOAD: this card is the LAST row on the dashboard and is almost
+    // always below the fold on first paint. Defer the fetch until its
+    // container scrolls within ~400 px of the viewport so it doesn't
+    // compete with the 6 above-the-fold cards for connection/DB time on
+    // initial dashboard load. Fall back to immediate load if the
+    // IntersectionObserver API is unavailable (very old browsers).
+    (function lazyMissedAppointments() {
+        const card = document.querySelector('[data-card-id="missed-appointments"]')
+                  || document.querySelector('#missedAppointmentsList')
+                  || document.querySelector('#missedAppointmentsCard');
+        const triggerLoad = () => {
+            if (missedLoaded) return;
+            missedLoaded = true;
+            loadMissedAppointments(missedCurrentPage, missedPerPage);
+        };
+        if (!card || typeof IntersectionObserver === 'undefined') {
+            triggerLoad();
+            return;
+        }
+        const io = new IntersectionObserver((entries) => {
+            for (const e of entries) {
+                if (e.isIntersecting) { triggerLoad(); io.disconnect(); break; }
+            }
+        }, { rootMargin: '400px 0px' });
+        io.observe(card);
+    })();
     
     // Handle per page change for missed appointments
     document.getElementById('missedPerPageSelect').addEventListener('change', function() {
@@ -5269,37 +5294,84 @@ function updateAppointmentProgressBar(container) {
         progressText.textContent = timeText;
     }
 
-// Load Ophthalmology News
+// Load Ophthalmology News (stale-while-revalidate).
+//
+// Server cache TTL is 12h; client mirrors the last-rendered payload in
+// localStorage so the ticker renders INSTANTLY on every page load — no
+// "Loading…" flash. The network fetch fires in the background and only
+// re-renders when the server returns a different `cache_key` (= cache
+// file timestamp), so the marquee animation doesn't restart unnecessarily.
+//
+// LocalStorage keys (`.v1` is a schema-version namespace — bump to .v2
+// if the article shape ever changes so stale payloads are ignored
+// rather than handed to a renderer that doesn't know how to draw them):
+//   roaya.ophthNews.v1.articles  — JSON array of the last rendered payload
+//   roaya.ophthNews.v1.cacheKey  — server cache_key that payload came from
+const OPHTH_NEWS_LS_ARTICLES  = 'roaya.ophthNews.v1.articles';
+const OPHTH_NEWS_LS_CACHE_KEY = 'roaya.ophthNews.v1.cacheKey';
+
 function loadOphthalmologyNews() {
     const ticker = document.getElementById('newsTicker');
     if (!ticker) return;
-    
-    ticker.innerHTML = '<span>Loading ophthalmology news...</span>';
-    
+
+    // 1) Render from localStorage INSTANTLY if we have a cached payload.
+    //    The "Loading…" placeholder only appears on a genuine first-ever
+    //    load, not on every refresh.
+    let cachedArticles = null;
+    let cachedKey = null;
+    try {
+        const raw = localStorage.getItem(OPHTH_NEWS_LS_ARTICLES);
+        if (raw) cachedArticles = JSON.parse(raw);
+        cachedKey = localStorage.getItem(OPHTH_NEWS_LS_CACHE_KEY);
+    } catch (_) { /* Safari private mode / quota — silent */ }
+
+    if (cachedArticles && Array.isArray(cachedArticles) && cachedArticles.length > 0) {
+        renderNewsTicker(cachedArticles);
+    } else {
+        ticker.innerHTML = '<span>Loading ophthalmology news...</span>';
+    }
+
+    // 2) Background fetch. Swap in the fresh payload ONLY if the server's
+    //    cache_key differs from what we already rendered (avoids
+    //    re-running the marquee restart for no visual change).
     fetch('/api/ophthalmology-news')
         .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.text();
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            return response.json();
         })
-        .then(text => {
-            try {
-                const data = JSON.parse(text);
-                if (data.success && data.articles && data.articles.length > 0) {
-                    renderNewsTicker(data.articles);
-                } else {
+        .then(data => {
+            if (!data || !data.success || !Array.isArray(data.articles) || data.articles.length === 0) {
+                // Server said no articles available. Only show the empty
+                // state when we don't already have something cached.
+                if (!cachedArticles || cachedArticles.length === 0) {
                     ticker.innerHTML = '<span>No ophthalmology news available</span>';
                 }
-            } catch (parseError) {
-                console.error('JSON parse error:', parseError);
-                console.error('Response text:', text);
-                ticker.innerHTML = '<span>Unable to load news</span>';
+                return;
             }
+
+            const freshKey = data.cache_key || '';
+            if (freshKey && cachedKey && freshKey === cachedKey) {
+                // Same payload we already rendered from localStorage —
+                // skip the re-render and the marquee restart.
+                return;
+            }
+
+            renderNewsTicker(data.articles);
+
+            // Persist for next visit.
+            try {
+                localStorage.setItem(OPHTH_NEWS_LS_ARTICLES, JSON.stringify(data.articles));
+                if (freshKey) localStorage.setItem(OPHTH_NEWS_LS_CACHE_KEY, freshKey);
+            } catch (_) { /* quota / private mode — silent */ }
         })
         .catch(error => {
             console.error('Error loading news:', error);
-            ticker.innerHTML = '<span>Unable to load news</span>';
+            // Only show "Unable to load" if we don't have a cached payload
+            // on screen — otherwise the user keeps seeing the last-known
+            // good ticker (better than a hard error in the strip).
+            if (!cachedArticles || cachedArticles.length === 0) {
+                ticker.innerHTML = '<span>Unable to load news</span>';
+            }
         });
 }
 

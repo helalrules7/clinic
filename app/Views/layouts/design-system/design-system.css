@@ -678,6 +678,15 @@ html { background: var(--bg); }
 
 .fin-stat {
     position: relative; overflow: hidden;
+    /* Four-clip combo — same fix as .mini-stat-card / .clinical-indicator-card
+       in dashboard.css. backdrop-filter promotes this element to its own
+       compositor layer; the ::before blurred radial-gradient blob's halo
+       escapes overflow:hidden alone, so we add explicit isolation +
+       contain:paint + clip-path:inset(round var(--r-xl)). */
+    isolation: isolate;
+    contain: paint;
+    will-change: transform;
+    clip-path: inset(0 round var(--r-xl));
     display: flex; flex-direction: column; gap: 4px;
     min-height: 132px; padding: 18px 20px;
     background:
@@ -914,4 +923,98 @@ html { background: var(--bg); }
     background: linear-gradient(135deg, var(--ds-primary), var(--ds-accent-2)); color: #fff;
     font-size: .8rem; font-weight: 700; box-shadow: 0 4px 12px var(--ds-primary-soft);
     -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+
+/* =====================================================================
+   APP BREADCRUMB — unified glass breadcrumb across the whole project.
+   Replaces both the hand-rolled .board-breadcrumb pattern (board.css) and
+   the bare Bootstrap <ol class="breadcrumb"> markup on patient /
+   appointment / edit_consultation. Use this everywhere a page needs a
+   "Parent > Child" path with a back-arrow.
+
+   Markup (LTR):
+     <nav class="app-breadcrumb" aria-label="Breadcrumb">
+       <a href="…" class="app-crumb-back" aria-label="Back"><i class="bi bi-arrow-left"></i></a>
+       <a href="…" class="app-crumb-link">Parent</a>
+       <i class="bi bi-chevron-right app-crumb-sep" aria-hidden="true"></i>
+       <span class="app-crumb-current">Current page</span>
+     </nav>
+
+   <button> elements work too — board.php uses them because navigation is
+   JS-driven. The component styles target the class, not the tag. */
+.app-breadcrumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px 6px 6px;
+    margin-bottom: 1rem;
+    border-radius: var(--r-pill);
+    background: var(--glass-bg-strong);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    font-size: 0.875rem;
+    color: var(--text);
+}
+.app-crumb-back {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    color: var(--accent);
+    cursor: pointer;
+    transition: background .15s ease, transform .15s ease;
+    text-decoration: none;
+}
+.app-crumb-back:hover {
+    background: color-mix(in srgb, var(--accent) 28%, transparent);
+    transform: translateX(-2px);
+    color: var(--accent);
+}
+.app-crumb-back:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+[dir="rtl"] .app-crumb-back:hover { transform: translateX(2px); }
+[dir="rtl"] .app-crumb-back i.bi-arrow-left::before {
+    /* Bootstrap Icons "arrow-right" codepoint — flip the glyph for RTL so
+       the back arrow always points "away from the current page". */
+    content: "\f135";
+}
+
+.app-crumb-link {
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 2px 4px;
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: color .15s ease;
+}
+.app-crumb-link:hover {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.app-crumb-sep {
+    color: var(--muted);
+    font-size: 0.7rem;
+    opacity: 0.7;
+}
+[dir="rtl"] .app-crumb-sep.bi-chevron-right::before {
+    /* RTL: flip chevron */
+    content: "\f284"; /* bi-chevron-left codepoint */
+}
+
+.app-crumb-current {
+    color: var(--text);
+    font-weight: 700;
 }

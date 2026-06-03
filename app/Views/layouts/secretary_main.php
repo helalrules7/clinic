@@ -6,12 +6,12 @@
     <title><?= $title ?? 'HClinic / عيادة رؤية - السكرتارية' ?></title>
     
     <!-- Favicons -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="icon" type="image/x-icon" href="/public/assets/fav/faicon.ico">
-    <link rel="apple-touch-icon" sizes="180x180" href="/public/assets/fav/faicon-180x180.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/public/assets/fav/faicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/public/assets/fav/faicon-192x192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/public/assets/fav/faicon-512x512.png">
+    <!-- Favicons — theme-matched (Light/Dark). Swapped by the pre-paint script below. -->
+    <link id="faviconIco"   rel="icon"            type="image/x-icon" href="/assets/fav/Light.ico">
+    <link id="faviconApple" rel="apple-touch-icon" sizes="180x180"     href="/assets/fav/Light-180x180.png">
+    <link id="favicon32"    rel="icon"            type="image/png" sizes="32x32"  href="/assets/fav/Light-32x32.png">
+    <link id="favicon192"   rel="icon"            type="image/png" sizes="192x192" href="/assets/fav/Light-192x192.png">
+    <link id="favicon512"   rel="icon"            type="image/png" sizes="512x512" href="/assets/fav/Light-512x512.png">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -33,15 +33,32 @@
     <!-- Shared modal kit (center + animate + drag affordance) — after design-system so it wins -->
     <link href="/app/Views/layouts/modal-kit.css?v=<?= file_exists(__DIR__ . '/modal-kit.css') ? filemtime(__DIR__ . '/modal-kit.css') : time() ?>" rel="stylesheet">
 
-    <!-- Prevent flash of wrong theme -->
+    <!-- Theme + logo + favicon pre-paint. Runs synchronously in <head> so
+         #clinicLogo and the favicon <link>s are rendered with the right
+         theme variant on first paint — no Light→Dark flicker on refresh. -->
     <script>
         (function() {
-            const theme = localStorage.getItem('appTheme') || localStorage.getItem('theme') ||
-                (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-            }
+            var saved = localStorage.getItem('appTheme') || localStorage.getItem('theme');
+            var theme = (saved === 'light' || saved === 'dark') ? saved
+                      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+            document.documentElement.classList.toggle('dark', theme === 'dark');
             document.documentElement.classList.add('theme-loaded');
+
+            window.__INITIAL_LOGO_SRC__ = theme === 'dark'
+                ? '/assets/images/Dark.png'
+                : '/assets/images/Light.png';
+
+            var icon = theme === 'dark' ? 'Dark' : 'Light';
+            var setHref = function(id, href) {
+                var el = document.getElementById(id);
+                if (el) el.href = href;
+            };
+            setHref('faviconIco',   '/assets/fav/' + icon + '.ico');
+            setHref('faviconApple', '/assets/fav/' + icon + '-180x180.png');
+            setHref('favicon32',    '/assets/fav/' + icon + '-32x32.png');
+            setHref('favicon192',   '/assets/fav/' + icon + '-192x192.png');
+            setHref('favicon512',   '/assets/fav/' + icon + '-512x512.png');
         })();
     </script>
 
@@ -159,7 +176,13 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="clinic-logo">
-                <img id="clinicLogo" src="/assets/images/Light.png" alt="HClinic / عيادة رؤية" style="width: 32px; height: 32px; margin-left: 0.75rem;">
+                <img id="clinicLogo" src="/assets/images/Light.png" data-light-src="/assets/images/Light.png" data-dark-src="/assets/images/Dark.png" alt="HClinic / عيادة رؤية" style="width: 32px; height: 32px; margin-left: 0.75rem;">
+                <script>
+                    (function() {
+                        var img = document.getElementById('clinicLogo');
+                        if (img && window.__INITIAL_LOGO_SRC__) img.src = window.__INITIAL_LOGO_SRC__;
+                    })();
+                </script>
                 <div class="clinic-name">HClinic / عيادة رؤية</div>
             </div>
         </div>
@@ -231,7 +254,9 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="text-muted">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v10.1.0
+                        HClinic / Roaya Clinic v10.2.0
+                        <span aria-hidden="true">·</span>
+                        <a href="https://hclinic.clinic/docs/opth/" target="_blank" rel="noopener" style="color: var(--accent);"><i class="bi bi-book me-1"></i>Docs</a>
                     </div>
                     <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none" style="color: var(--accent);">Ahmed Helal</a></div>
                 </small>

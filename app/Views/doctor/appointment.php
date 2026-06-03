@@ -2,13 +2,15 @@
 
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/doctor/dashboard">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="/doctor/patients">Patients</a></li>
-            <li class="breadcrumb-item"><a href="/doctor/patients/<?= $appointment['patient_id'] ?? '' ?>"><?= htmlspecialchars($appointment['patient_name'] ?? '') ?></a></li>
-            <li class="breadcrumb-item active">Appointment #<?= $appointment['id'] ?></li>
-        </ol>
+    <nav class="app-breadcrumb" aria-label="Breadcrumb">
+        <a href="/doctor/patients/<?= (int)($appointment['patient_id'] ?? 0) ?>" class="app-crumb-back" aria-label="Back to patient">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <a href="/doctor/patients" class="app-crumb-link">Patients</a>
+        <i class="bi bi-chevron-right app-crumb-sep" aria-hidden="true"></i>
+        <a href="/doctor/patients/<?= (int)($appointment['patient_id'] ?? 0) ?>" class="app-crumb-link"><?= htmlspecialchars($appointment['patient_name'] ?? '') ?></a>
+        <i class="bi bi-chevron-right app-crumb-sep" aria-hidden="true"></i>
+        <span class="app-crumb-current">Appointment #<?= (int)$appointment['id'] ?></span>
     </nav>
     <div class="d-flex gap-2">
         <a href="/doctor/patients/<?= $appointment['patient_id'] ?? '' ?>" class="btn btn-outline-secondary hide-pa-on-mobile">

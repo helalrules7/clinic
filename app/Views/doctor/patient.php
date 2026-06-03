@@ -1,15 +1,14 @@
 <link href="/app/Views/doctor/assets/css/patient.css?v=<?= file_exists(__DIR__ . '/assets/css/patient.css') ? filemtime(__DIR__ . '/assets/css/patient.css') : time() ?>" rel="stylesheet">
 
-<!-- Breadcrumb -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/doctor/dashboard">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="/doctor/patients">Patients</a></li>
-            <li class="breadcrumb-item active"><?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></li>
-        </ol>
-    </nav>
-</div>
+<!-- Breadcrumb (unified .app-breadcrumb component, see design-system.css) -->
+<nav class="app-breadcrumb" aria-label="Breadcrumb">
+    <a href="/doctor/patients" class="app-crumb-back" aria-label="Back to patients">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <a href="/doctor/patients" class="app-crumb-link">Patients</a>
+    <i class="bi bi-chevron-right app-crumb-sep" aria-hidden="true"></i>
+    <span class="app-crumb-current"><?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></span>
+</nav>
 
 <!-- Patient Profile Header -->
 <div class="patient-profile-header-wrapper mb-4" id="patientProfileHeader" data-patient-id="<?= $patient['id'] ?>">

@@ -6,6 +6,16 @@ $pageSubtitle = 'Review and close daily operations for ' . date('F j, Y', strtot
 
 <link href="/app/Views/doctor/assets/css/daily_closure.css?v=<?= file_exists(__DIR__ . '/assets/css/daily_closure.css') ? filemtime(__DIR__ . '/assets/css/daily_closure.css') : time() ?>" rel="stylesheet">
 <div class="container-fluid">
+    <!-- Breadcrumb: Daily Closure is a sub-page of Payments -->
+    <nav class="app-breadcrumb" aria-label="Breadcrumb">
+        <a href="/doctor/payments" class="app-crumb-back" aria-label="Back to Payments">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <a href="/doctor/payments" class="app-crumb-link">Payments</a>
+        <i class="bi bi-chevron-right app-crumb-sep" aria-hidden="true"></i>
+        <span class="app-crumb-current">Daily Closure</span>
+    </nav>
+
     <!-- Page Header / Toolbar -->
     <div class="dc-toolbar mb-4">
         <div class="dc-toolbar-text">

@@ -28,13 +28,16 @@
     <meta name="twitter:description" content="HClinic / Roaya Clinic - Advanced Eye Care Management System">
     <meta name="twitter:image" content="<?= isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http' ?>://<?= $_SERVER['HTTP_HOST'] ?>/assets/images/Light.png">
     
-    <!-- Favicons -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="icon" type="image/x-icon" href="/public/assets/fav/faicon.ico">
-    <link rel="apple-touch-icon" sizes="180x180" href="/public/assets/fav/faicon-180x180.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/public/assets/fav/faicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/public/assets/fav/faicon-192x192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/public/assets/fav/faicon-512x512.png">
+    <!-- Favicons (web root is site/public, so /assets/fav/* is the correct URL).
+         Theme-matched (Light/Dark) variants — actual <link> hrefs are swapped
+         to the right theme by the inline pre-paint script below before first
+         paint. These defaults render in the light variant in the rare case
+         that the script doesn't run (JS off). -->
+    <link id="faviconIco"   rel="icon"            type="image/x-icon" href="/assets/fav/Light.ico">
+    <link id="faviconApple" rel="apple-touch-icon" sizes="180x180"     href="/assets/fav/Light-180x180.png">
+    <link id="favicon32"    rel="icon"            type="image/png" sizes="32x32"  href="/assets/fav/Light-32x32.png">
+    <link id="favicon192"   rel="icon"            type="image/png" sizes="192x192" href="/assets/fav/Light-192x192.png">
+    <link id="favicon512"   rel="icon"            type="image/png" sizes="512x512" href="/assets/fav/Light-512x512.png">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -60,21 +63,44 @@
     <!-- Timepicker UI CSS (Local) -->
     <link href="/app/Views/layouts/timepicker-ui-main/css/main.css?v=<?= file_exists(__DIR__ . '/timepicker-ui-main/css/main.css') ? filemtime(__DIR__ . '/timepicker-ui-main/css/main.css') : time() ?>" rel="stylesheet">
     
-    <!-- Theme initialization script - Must run before CSS to prevent flash -->
+    <!-- Theme + logo + favicon pre-paint. Runs synchronously in <head> BEFORE
+         any <body> content is parsed, so by the time #clinicLogo and the
+         favicon <link> tags are interpreted, they already point at the
+         theme-matched asset — no flash from Light → Dark on dark-mode refreshes. -->
     <script>
         (function() {
-            // Read theme from localStorage immediately (before page renders)
-            const savedTheme = localStorage.getItem('appTheme');
+            var savedTheme = localStorage.getItem('appTheme');
+            var theme = (savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : 'dark';
 
-            if (savedTheme === 'light' || savedTheme === 'dark') {
-                // Apply theme immediately
-                document.documentElement.classList.toggle('dark', savedTheme === 'dark');
-                document.documentElement.classList.add('theme-loaded');
-            } else {
-                // Default to dark if no saved theme
-                document.documentElement.classList.add('dark');
-                document.documentElement.classList.add('theme-loaded');
-            }
+            // 1) Apply dark class before first paint.
+            document.documentElement.classList.toggle('dark', theme === 'dark');
+            document.documentElement.classList.add('theme-loaded');
+
+            // 2) Pre-resolve the sidebar logo + favicon URLs so the markup
+            //    below can render with them on first paint.
+            window.__INITIAL_LOGO_SRC__ = theme === 'dark'
+                ? '/assets/images/Dark.png'
+                : '/assets/images/Light.png';
+            window.__INITIAL_FAVICONS__ = {
+                ico:   theme === 'dark' ? '/assets/fav/Dark.ico'         : '/assets/fav/Light.ico',
+                p32:   theme === 'dark' ? '/assets/fav/Dark-32x32.png'   : '/assets/fav/Light-32x32.png',
+                p192:  theme === 'dark' ? '/assets/fav/Dark-192x192.png' : '/assets/fav/Light-192x192.png',
+                p512:  theme === 'dark' ? '/assets/fav/Dark-512x512.png' : '/assets/fav/Light-512x512.png',
+                apple: theme === 'dark' ? '/assets/fav/Dark-180x180.png' : '/assets/fav/Light-180x180.png',
+            };
+
+            // 3) Rewrite favicon <link> hrefs NOW (still in <head>, before body
+            //    parses) so the tab icon never starts as Light on a dark theme.
+            //    The <link> tags themselves are above; we can grab them by id.
+            var setHref = function(id, href) {
+                var el = document.getElementById(id);
+                if (el) el.href = href;
+            };
+            setHref('faviconIco',   window.__INITIAL_FAVICONS__.ico);
+            setHref('faviconApple', window.__INITIAL_FAVICONS__.apple);
+            setHref('favicon32',    window.__INITIAL_FAVICONS__.p32);
+            setHref('favicon192',   window.__INITIAL_FAVICONS__.p192);
+            setHref('favicon512',   window.__INITIAL_FAVICONS__.p512);
         })();
     </script>
 
@@ -118,7 +144,17 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="clinic-logo">
-                <img id="clinicLogo" src="/assets/images/Light.png" alt="HClinic / Roaya Clinic" style="width: 32px; height: 32px; margin-right: 0.75rem;">
+                <img id="clinicLogo" src="/assets/images/Light.png" data-light-src="/assets/images/Light.png" data-dark-src="/assets/images/Dark.png" alt="HClinic / Roaya Clinic" style="width: 32px; height: 32px; margin-right: 0.75rem;">
+                <script>
+                    // Runs immediately after #clinicLogo enters the DOM and BEFORE
+                    // it commits the initial Light.png src to the network. Rewrites
+                    // src to the theme-correct asset that was resolved in <head>,
+                    // so the user never sees the Light→Dark swap on dark-mode refresh.
+                    (function() {
+                        var img = document.getElementById('clinicLogo');
+                        if (img && window.__INITIAL_LOGO_SRC__) img.src = window.__INITIAL_LOGO_SRC__;
+                    })();
+                </script>
                 <div class="clinic-name">HClinic / Roaya</div>
             </div>
         </div>
@@ -333,9 +369,11 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="sidebar-footer-text">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v10.1.0
+                        HClinic / Roaya Clinic v10.2.0
+                        <span aria-hidden="true">·</span>
+                        <a href="https://hclinic.clinic/docs/opth/" target="_blank" rel="noopener" class="sidebar-footer-link"><i class="bi bi-book me-1"></i>Docs</a>
                     </div>
-                    <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none sidebar-footer-link">Ahmed Helal</a></div>
+                    <div>© 2026 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none sidebar-footer-link">Ahmed Helal</a></div>
                 </small>
             </div>
         </nav>

@@ -5667,7 +5667,7 @@ class ApiController
             }
 
             $cacheFile = __DIR__ . '/../../storage/ophthalmology_news_cache.json';
-            $cacheDuration = 20 * 60; // 20 minutes cache
+            $cacheDuration = 12 * 60 * 60; // 12 hours cache
 
             // Check cache
             if (file_exists($cacheFile)) {
@@ -5679,7 +5679,8 @@ class ApiController
                     return $this->jsonResponse([
                         'success' => true,
                         'articles' => $cacheData['articles'],
-                        'cached' => true
+                        'cached' => true,
+                        'cache_key' => (string) $cacheData['timestamp'],
                     ]);
                 }
             }
@@ -6013,7 +6014,8 @@ class ApiController
                 'success' => true,
                 'articles' => $articles,
                 'cached' => false,
-                'count' => count($articles)
+                'count' => count($articles),
+                'cache_key' => (string) $cacheData['timestamp'],
             ]);
 
         } catch (\Exception $e) {
@@ -9744,32 +9746,43 @@ class ApiController
             $perPage = isset($_GET['per_page']) ? max(1, min(100, intval($_GET['per_page']))) : 10;
             $offset = ($page - 1) * $perPage;
 
-            $today = date('Y-m-d');
+            $today       = date('Y-m-d');
+            // Bound the window to the last 90 days. The old unbounded query
+            // scanned every historical appointment row for the whole clinic
+            // (because doctor_id filter was missing too — see below), which
+            // grew O(years) and dominated dashboard latency. A 90-day catch-
+            // up window still covers any reasonable doctor-was-away gap.
+            $missedFloor = date('Y-m-d', strtotime('-90 days'));
 
-            // Get total count - appointments from previous days that are not Completed
+            // Scope to THIS doctor's appointments. The original query read
+            // every doctor's data — a privacy bug AND the dominant perf cost
+            // on a multi-doctor install. Now (doctor_id, date) hits the new
+            // composite index (see 029_missed_appointments_index.sql).
             $countStmt = $this->pdo->prepare("
                 SELECT COUNT(*) as total
                 FROM appointments a
-                JOIN patients p ON a.patient_id = p.id
-                WHERE a.date < ?
-                AND a.status != 'Completed'
-                AND a.status != 'Cancelled'
+                WHERE a.doctor_id = ?
+                  AND a.date >= ? AND a.date < ?
+                  AND a.status NOT IN ('Completed','Cancelled')
             ");
-            $countStmt->execute([$today]);
+            $countStmt->execute([$doctorId, $missedFloor, $today]);
             $total = $countStmt->fetchColumn();
 
-            // Get paginated appointments
+            // SELECT only the columns the UI actually reads (`a.*` was
+            // pulling every row column — pointless bandwidth).
             $stmt = $this->pdo->prepare("
-                SELECT a.*, p.first_name, p.last_name, p.phone
+                SELECT a.id, a.patient_id, a.doctor_id, a.date, a.start_time, a.end_time,
+                       a.visit_type, a.status, a.notes,
+                       p.first_name, p.last_name, p.phone
                 FROM appointments a
                 JOIN patients p ON a.patient_id = p.id
-                WHERE a.date < ?
-                AND a.status != 'Completed'
-                AND a.status != 'Cancelled'
+                WHERE a.doctor_id = ?
+                  AND a.date >= ? AND a.date < ?
+                  AND a.status NOT IN ('Completed','Cancelled')
                 ORDER BY a.date DESC, a.start_time DESC
                 LIMIT ? OFFSET ?
             ");
-            $stmt->execute([$today, $perPage, $offset]);
+            $stmt->execute([$doctorId, $missedFloor, $today, $perPage, $offset]);
             $appointments = $stmt->fetchAll();
 
             $totalPages = ceil($total / $perPage);
