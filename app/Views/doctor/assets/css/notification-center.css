@@ -219,8 +219,12 @@
     --row-tint: var(--accent);
     position: relative;
     display: grid;
-    grid-template-columns: 40px 1fr auto;
-    grid-template-areas: "icon content actions";
+    /* No `actions` track — actions are absolutely-positioned on top of
+       the content at hover (see .notif-row__actions). This lets the
+       title + body use the FULL row width at rest, rather than always
+       reserving the action-button gutter (≈ 120 px). */
+    grid-template-columns: 40px 1fr;
+    grid-template-areas: "icon content";
     align-items: flex-start;
     gap: 12px;
     padding: 10px 12px;
@@ -292,10 +296,13 @@
     font-size: 0.86rem;
     font-weight: 600;
     color: var(--text);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     line-height: 1.3;
+    /* DEFAULT: show the full title, wrapping freely. The hover rule below
+       collapses it to a single ellipsised line so the action buttons get
+       breathing room without overlapping text. */
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    transition: white-space .15s ease;
 }
 .notif-row.is-read .notif-row__title { font-weight: 500; color: var(--muted); }
 .notif-row__time {
@@ -309,27 +316,68 @@
     font-size: 0.78rem;
     color: var(--muted);
     line-height: 1.4;
+    /* DEFAULT: full body text, wraps to as many lines as it needs. */
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+/* HOVER: compact the text — title to one ellipsised line, body to two —
+   so the floating action buttons (snooze · pin · read · delete) can sit
+   on the right without overlapping content. */
+.notif-row:hover .notif-row__title,
+.notif-row:focus-within .notif-row__title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.notif-row:hover .notif-row__body,
+.notif-row:focus-within .notif-row__body {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
-/* Row actions */
+/* Row actions — overlay on the right side of the row, hidden at rest so
+   the content gets the full width. Background gradient masks the title
+   ellipsis underneath while preserving visual continuity. */
 .notif-row__actions {
-    grid-area: actions;
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translate(8px, -50%);
     display: flex;
     align-items: center;
     gap: 2px;
     opacity: 0;
-    transform: translateX(4px);
-    transition: opacity 180ms ease, transform 180ms ease;
     pointer-events: none;
+    padding: 4px 6px 4px 18px;
+    border-radius: var(--r-pill, 999px);
+    /* Soft accent-tinted backdrop so action buttons read against any text
+       that may sit beneath. The left edge fades to transparent. */
+    background: linear-gradient(
+        to right,
+        rgba(var(--accent-rgb, 99, 102, 241), 0) 0%,
+        color-mix(in srgb, var(--accent) 12%, var(--card, #fff)) 18%,
+        color-mix(in srgb, var(--accent) 12%, var(--card, #fff)) 100%);
+    -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
+    transition: opacity 180ms ease, transform 180ms ease;
+    z-index: 2;
+}
+.dark .notif-row__actions {
+    background: linear-gradient(
+        to right,
+        rgba(15, 21, 38, 0) 0%,
+        rgba(30, 41, 59, 0.92) 18%,
+        rgba(30, 41, 59, 0.92) 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.30);
 }
 .notif-row:hover .notif-row__actions,
 .notif-row:focus-within .notif-row__actions {
     opacity: 1;
-    transform: translateX(0);
+    transform: translate(0, -50%);
     pointer-events: auto;
 }
 .notif-act {
@@ -508,42 +556,151 @@
         transparent,
         rgba(var(--accent-rgb, 99, 102, 241), 0.04));
 }
+/* -------- 3D Glassmorphism dock buttons --------------------------------
+   Reference: https://css-tricks.com/circular-3d-buttons/
+
+   Recipe:
+     • Linear-gradient background simulates light hitting a curved surface
+       from the top-left (highlight) and shadow at the bottom-right.
+     • Two inset box-shadows stack a top "wet-glass" highlight + a bottom
+       inner shadow that suggests material thickness.
+     • One outer drop shadow gives elevation off the dock surface.
+     • backdrop-filter blur+saturate adds the glassmorphism wash.
+     • On :hover the highlight brightens + the shadow softens; on :active
+       the button presses in (inverted inner shadow + tiny scale).
+   -------------------------------------------------------------------- */
 .qa-btn {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     appearance: none;
-    background: var(--glass-bg-strong, rgba(255, 255, 255, 0.7));
-    border: 1px solid var(--glass-border, rgba(0, 0, 0, 0.06));
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    /* light gradient — top-left bright, bottom-right dim */
+    background:
+        radial-gradient(circle at 30% 28%,
+            rgba(255, 255, 255, 0.55) 0%,
+            rgba(255, 255, 255, 0.10) 35%,
+            rgba(255, 255, 255, 0.00) 60%),
+        linear-gradient(155deg,
+            rgba(255, 255, 255, 0.18) 0%,
+            rgba(255, 255, 255, 0.04) 50%,
+            rgba(0, 0, 0, 0.06) 100%);
+    -webkit-backdrop-filter: blur(14px) saturate(180%);
+            backdrop-filter: blur(14px) saturate(180%);
     color: var(--text);
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     font-size: 1.05rem;
+    position: relative;
+    isolation: isolate;
+    box-shadow:
+        /* outer elevation */
+        0  8px 18px -6px rgba(15, 23, 42, 0.30),
+        0  2px  4px      rgba(15, 23, 42, 0.10),
+        /* inner top highlight (wet-glass rim) */
+        inset 0  1px 0   rgba(255, 255, 255, 0.55),
+        /* inner bottom soft shadow (material thickness) */
+        inset 0 -2px 3px rgba(0, 0, 0, 0.18),
+        /* tiny inner ring (glass edge) */
+        inset 0  0   0 1px rgba(255, 255, 255, 0.08);
     transition:
-        transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
-        box-shadow 200ms ease,
-        background 200ms ease,
-        color 200ms ease;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+        transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 220ms ease,
+        background 220ms ease,
+        color 220ms ease;
 }
+/* Subtle specular highlight (small glossy disc on top half) */
+.qa-btn::before {
+    content: '';
+    position: absolute;
+    inset: 2px 2px auto 2px;
+    height: 45%;
+    border-radius: 50% 50% 50% 50% / 100% 100% 0 0;
+    background: linear-gradient(to bottom,
+        rgba(255, 255, 255, 0.35),
+        rgba(255, 255, 255, 0) 80%);
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.85;
+}
+.qa-btn > i {
+    position: relative;
+    z-index: 2;
+    /* tiny inner glow on the icon to lift it off the glass */
+    filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.20));
+}
+
+/* Dark mode — flip the highlights for a "polished obsidian" look */
 .dark .qa-btn {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.10);
+    background:
+        radial-gradient(circle at 30% 28%,
+            rgba(255, 255, 255, 0.18) 0%,
+            rgba(255, 255, 255, 0.04) 38%,
+            rgba(0, 0, 0, 0.00) 62%),
+        linear-gradient(155deg,
+            rgba(255, 255, 255, 0.06) 0%,
+            rgba(255, 255, 255, 0.02) 50%,
+            rgba(0, 0, 0, 0.25) 100%);
+    box-shadow:
+        0  8px 22px -6px rgba(0, 0, 0, 0.55),
+        0  2px  4px      rgba(0, 0, 0, 0.40),
+        inset 0  1px 0   rgba(255, 255, 255, 0.22),
+        inset 0 -2px 3px rgba(0, 0, 0, 0.45),
+        inset 0  0   0 1px rgba(255, 255, 255, 0.04);
 }
+.dark .qa-btn::before {
+    background: linear-gradient(to bottom,
+        rgba(255, 255, 255, 0.14),
+        rgba(255, 255, 255, 0) 85%);
+    opacity: 0.7;
+}
+
+/* Hover — button lifts, accent-tinted ring brightens */
 .qa-btn:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
     color: var(--accent);
     box-shadow:
-        0 10px 22px -10px rgba(var(--accent-rgb, 99, 102, 241), 0.5),
-        0 0 0 1px rgba(var(--accent-rgb, 99, 102, 241), 0.3) inset;
+        0 14px 26px -8px color-mix(in srgb, var(--accent) 45%, rgba(15, 23, 42, 0.30)),
+        0  4px  8px      rgba(15, 23, 42, 0.12),
+        inset 0  1px 0   rgba(255, 255, 255, 0.70),
+        inset 0 -2px 3px rgba(0, 0, 0, 0.20),
+        inset 0  0   0 1px color-mix(in srgb, var(--accent) 30%, rgba(255, 255, 255, 0.08));
 }
-.qa-btn:active { transform: translateY(0); }
-.qa-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dark .qa-btn:hover {
+    box-shadow:
+        0 14px 28px -8px color-mix(in srgb, var(--accent) 60%, rgba(0, 0, 0, 0.55)),
+        0  4px  8px      rgba(0, 0, 0, 0.45),
+        inset 0  1px 0   rgba(255, 255, 255, 0.30),
+        inset 0 -2px 3px rgba(0, 0, 0, 0.50),
+        inset 0  0   0 1px color-mix(in srgb, var(--accent) 32%, rgba(255, 255, 255, 0.06));
+}
+.qa-btn:hover::before { opacity: 1; }
+
+/* Active — press in: scale down, invert the shadow direction */
+.qa-btn:active {
+    transform: translateY(0) scale(0.94);
+    box-shadow:
+        0  2px  6px      rgba(15, 23, 42, 0.18),
+        inset 0  3px 6px rgba(0, 0, 0, 0.20),
+        inset 0 -1px 0   rgba(255, 255, 255, 0.20),
+        inset 0  0   0 1px rgba(255, 255, 255, 0.04);
+}
+.dark .qa-btn:active {
+    box-shadow:
+        0  2px  6px      rgba(0, 0, 0, 0.45),
+        inset 0  3px 6px rgba(0, 0, 0, 0.55),
+        inset 0 -1px 0   rgba(255, 255, 255, 0.10),
+        inset 0  0   0 1px rgba(255, 255, 255, 0.04);
+}
+.qa-btn:active::before { opacity: 0.5; }
+
+.qa-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
 
 /* -------- Snooze popover ----------------------------------- */
 .notif-snooze {

@@ -48,8 +48,8 @@
             <button type="button" class="qa-btn" data-action="new-note" aria-label="New quick note" title="New quick note">
                 <i class="bi bi-pencil-square" aria-hidden="true"></i>
             </button>
-            <button type="button" class="qa-btn" data-action="new-alert" aria-label="New alert" title="New alert">
-                <i class="bi bi-bell-fill" aria-hidden="true"></i>
+            <button type="button" class="qa-btn" data-action="notes-drawer" aria-label="Open notes" title="Open notes">
+                <i class="bi bi-journal-text" aria-hidden="true"></i>
             </button>
             <button type="button" class="qa-btn" data-action="calendar" aria-label="Open calendar" title="Open calendar">
                 <i class="bi bi-calendar3" aria-hidden="true"></i>

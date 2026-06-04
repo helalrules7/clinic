@@ -856,10 +856,10 @@
                 else if (window.quickNotes && typeof window.quickNotes.openCreate === 'function') window.quickNotes.openCreate();
                 else window.location.href = '/doctor/notes';
                 break;
-            case 'new-alert':
-                if (typeof window.openAlertModal === 'function') window.openAlertModal();
-                else if (window.alertModal && typeof window.alertModal.open === 'function') window.alertModal.open();
-                else window.location.href = '/doctor/alerts?new=1';
+            case 'notes-drawer':
+                if (typeof window.openNotesDrawer === 'function') window.openNotesDrawer();
+                else if (window.notesDrawer && typeof window.notesDrawer.open === 'function') window.notesDrawer.open();
+                else window.location.href = '/doctor/notes';
                 break;
             case 'calendar':
                 window.location.href = '/doctor/calendar';
