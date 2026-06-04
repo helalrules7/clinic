@@ -21,6 +21,9 @@ if (file_exists($vendorAutoload)) {
     require_once $vendorAutoload;
 }
 
+// v11.0.0 — Global procedural helpers (base_url, asset_url) used by view partials.
+require_once __DIR__ . '/app/Lib/global_helpers.php';
+
 // Load Controllers
 require_once __DIR__ . '/app/Controllers/SecretaryController.php';
 require_once __DIR__ . '/app/Controllers/AlertController.php';
@@ -184,6 +187,68 @@ try {
     $router->delete('/api/notifications/clear-all', 'NotificationController@clearAll');
     $router->delete('/api/notifications/{id}', 'NotificationController@delete');
     $router->post('/api/notifications/system', 'NotificationController@createSystemNotification');
+
+    // v11.0.0 — Notification center extensions (grouped feed + snooze + pin)
+    $router->get('/api/notifications/grouped',           'NotificationControllerV11@grouped');
+    $router->post('/api/notifications/{id}/snooze',      'NotificationControllerV11@snooze');
+    $router->post('/api/notifications/{id}/unsnooze',    'NotificationControllerV11@unsnooze');
+    $router->post('/api/notifications/{id}/pin',         'NotificationControllerV11@pin');
+    $router->post('/api/notifications/{id}/unpin',       'NotificationControllerV11@unpin');
+
+    // v11.0.0 — To-Do (multi-list) routes
+    $router->get('/doctor/todos',           'TodoController@page');
+    $router->get('/api/todos',              'TodoController@index');
+    $router->get('/api/todos/counts',       'TodoController@counts');
+    $router->post('/api/todos/reorder',     'TodoController@reorder');
+    $router->get('/api/todos/{id}',         'TodoController@show');
+    $router->post('/api/todos',             'TodoController@create');
+    $router->patch('/api/todos/{id}',       'TodoController@update');
+    $router->delete('/api/todos/{id}',      'TodoController@delete');
+    $router->post('/api/todos/{id}/done',   'TodoController@markDone');
+    $router->post('/api/todos/{id}/reopen', 'TodoController@reopen');
+
+    // v11.0.0 — To-Do lists
+    $router->get('/api/todo-lists',                  'TodoListController@index');
+    $router->post('/api/todo-lists/reorder',         'TodoListController@reorder');
+    $router->get('/api/todo-lists/{id}',             'TodoListController@show');
+    $router->post('/api/todo-lists',                 'TodoListController@create');
+    $router->patch('/api/todo-lists/{id}',           'TodoListController@update');
+    $router->post('/api/todo-lists/{id}/archive',    'TodoListController@archive');
+    $router->post('/api/todo-lists/{id}/restore',    'TodoListController@restore');
+    $router->delete('/api/todo-lists/{id}',          'TodoListController@delete');
+
+    // v11.0.0 — Quick notes (scratchpad)
+    $router->get('/api/quick-notes',              'QuickNoteController@index');
+    $router->post('/api/quick-notes',             'QuickNoteController@create');
+    $router->get('/api/quick-notes/{id}',         'QuickNoteController@show');
+    $router->patch('/api/quick-notes/{id}',       'QuickNoteController@update');
+    $router->delete('/api/quick-notes/{id}',      'QuickNoteController@delete');
+    $router->post('/api/quick-notes/{id}/pin',    'QuickNoteController@pin');
+    $router->post('/api/quick-notes/{id}/unpin',  'QuickNoteController@unpin');
+
+    // v11.0.0 — Note templates (phrase library)
+    $router->get('/api/note-templates',                    'NoteTemplateController@index');
+    $router->post('/api/note-templates',                   'NoteTemplateController@create');
+    $router->post('/api/note-templates/reorder',           'NoteTemplateController@reorder');
+    $router->post('/api/note-templates/seed-defaults',     'NoteTemplateController@seedDefaults');
+    $router->get('/api/note-templates/{id}',               'NoteTemplateController@show');
+    $router->patch('/api/note-templates/{id}',             'NoteTemplateController@update');
+    $router->delete('/api/note-templates/{id}',            'NoteTemplateController@delete');
+    $router->post('/api/note-templates/{id}/used',         'NoteTemplateController@markUsed');
+
+    // v11.0.0 — Activity feed
+    $router->get('/api/activity', 'ActivityController@feed');
+
+    // v11.0.0 — Cmd+K command palette search
+    $router->get('/api/search/palette', 'SearchController@palette');
+
+    // v11.0.0 — Patient summary (hover-card)
+    $router->get('/api/patients/{id}/summary', 'PatientSummaryController@summary');
+
+    // v11.0.0 — Settings: theme palette + auto-schedule + appearance read
+    $router->get('/api/settings/appearance',            'SettingsControllerV11@getAppearance');
+    $router->post('/api/settings/theme-palette',        'SettingsControllerV11@setThemePalette');
+    $router->post('/api/settings/theme-auto-schedule',  'SettingsControllerV11@setThemeAutoSchedule');
     
     // Doctor Forum routes
     

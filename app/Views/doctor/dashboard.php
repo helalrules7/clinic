@@ -1,57 +1,70 @@
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 
-<!-- v10.2.0 update notice bar — sits ABOVE the welcome hero. Dismissable
-     and self-hides after one day from launch. The launch timestamp is
-     stamped via PHP so all clients see the same TTL, and the dismiss is
-     remembered per browser via localStorage. Clicking the link opens the
-     existing What's-New wizard (auto-show is disabled, this is the manual
-     trigger). -->
+<!-- v11.0.0 celebration notice bar — major-release fanfare. Three layered
+     animations: one-shot confetti burst (sessionStorage flag), continuous
+     CSS sparkle drift, and an animated indigo→violet→pink gradient sweep
+     on the bar surface. Dismissable; persists per browser. 3-day TTL from
+     the launch timestamp. Wizard auto-show stays disabled — this bar is
+     the only entry point. Respects prefers-reduced-motion. -->
 <?php
     // Launch epoch — bump this when you launch a NEW release to extend the
     // visibility window. Pinning a constant (not time()) means the bar
-    // disappears exactly 24h after THIS release, not 24h from each user's
-    // first visit.
-    $whatsNewLaunchTs   = strtotime('2026-06-03 12:00:00');
-    $whatsNewLaunchDays = 1;
+    // disappears exactly N days after THIS release, not N days from each
+    // user's first visit.
+    $whatsNewLaunchTs   = strtotime('2026-06-04 12:00:00');
+    $whatsNewLaunchDays = 3;
     $whatsNewVisibleUntil = $whatsNewLaunchTs + ($whatsNewLaunchDays * 24 * 3600);
-    $whatsNewVersion = 'v10_2_0';
+    $whatsNewVersion = 'v11_0_0';
 ?>
 <?php if (time() < $whatsNewVisibleUntil): ?>
-<div class="whatsnew-notice mb-4" id="whatsNewNotice"
+<div class="whatsnew-notice whatsnew-celebrate mb-4" id="whatsNewNotice"
      data-version="<?= htmlspecialchars($whatsNewVersion) ?>"
      data-visible-until="<?= (int)$whatsNewVisibleUntil ?>">
     <span class="whatsnew-notice-glow" aria-hidden="true"></span>
-    <span class="whatsnew-notice-pill"><i class="bi bi-stars"></i> v10.2.0</span>
+    <span class="whatsnew-sparkles" aria-hidden="true"></span>
+    <span class="whatsnew-confetti" id="whatsNewConfetti" aria-hidden="true"></span>
+    <span class="whatsnew-notice-pill"><i class="bi bi-stars"></i> v11.0.0</span>
     <span class="whatsnew-notice-text">
-        <strong>What's new:</strong>
-        Cleaner sidebar logo (no more flicker), 12-hour news cache, snappier
-        Missed Appointments, unified glass breadcrumbs, payments &amp; reports
-        bleed fix, settings warnings cleared, and more.
+        <strong>The biggest release yet.</strong>
+        A re-designed iOS-style notification center, the new To-Do, theme
+        palettes with auto dark/light schedule, a Cmd+K command palette,
+        patient hover-cards, @mentions, focus mode, note templates &mdash;
+        and more.
     </span>
     <button type="button" class="whatsnew-notice-cta"
             data-bs-toggle="modal" data-bs-target="#whatsNewV9Modal">
-        See what's new <i class="bi bi-arrow-right"></i>
+        Tour what's new <i class="bi bi-arrow-right"></i>
     </button>
     <button type="button" class="whatsnew-notice-close" id="whatsNewNoticeClose"
             aria-label="Dismiss update notice">
         <i class="bi bi-x-lg"></i>
     </button>
 </div>
+<script src="/app/Views/doctor/assets/js/celebration.js?v=<?= file_exists(__DIR__ . '/assets/js/celebration.js') ? filemtime(__DIR__ . '/assets/js/celebration.js') : time() ?>"></script>
 <script>
     (function () {
         var el  = document.getElementById('whatsNewNotice');
         if (!el) return;
         var ver = el.getAttribute('data-version');
-        var key = 'whatsNew_' + ver + '_noticeDismissed';
+        var dismissKey  = 'whatsNew_' + ver + '_noticeDismissed';
+        var confettiKey = 'whatsNew_' + ver + '_confettiShown';
         try {
-            if (localStorage.getItem(key) === '1') { el.style.display = 'none'; return; }
+            if (localStorage.getItem(dismissKey) === '1') { el.style.display = 'none'; return; }
         } catch (_) {}
         var btn = document.getElementById('whatsNewNoticeClose');
         if (btn) btn.addEventListener('click', function () {
             el.style.opacity = '0';
             setTimeout(function () { el.style.display = 'none'; }, 250);
-            try { localStorage.setItem(key, '1'); } catch (_) {}
+            try { localStorage.setItem(dismissKey, '1'); } catch (_) {}
         });
+        // Confetti burst: once per browser session, only the first dashboard load.
+        try {
+            var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (!reduced && sessionStorage.getItem(confettiKey) !== '1' && window.fireCelebrationConfetti) {
+                window.fireCelebrationConfetti(document.getElementById('whatsNewConfetti'));
+                sessionStorage.setItem(confettiKey, '1');
+            }
+        } catch (_) {}
     })();
 </script>
 <?php endif; ?>

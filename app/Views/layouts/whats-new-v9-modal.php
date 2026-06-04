@@ -1,57 +1,36 @@
 <?php
-// "What's New" v10.2.0 — step-by-step wizard. Same display policy as before
-// (per-login session, 2-day window from first sight, opt-out persistent),
-// but bumping VERSION below to v10_2_0 deliberately RESETS the timer +
-// opt-out for every browser, so the new wizard surfaces fresh on the
-// next login. Included from layouts/main.php (doctor/admin) and
-// secretary_main.php. Bump VERSION again in a future release to
-// resurface the next wizard.
+// "What's New" v11.0.0 — step-by-step wizard for the biggest release in
+// the app's history. Auto-show stays DISABLED (return false in shouldShow);
+// the wizard surfaces only via the dashboard celebration notice bar's
+// data-bs-toggle trigger. Bumping VERSION below to v11_0_0 deliberately
+// RESETS the timer / opt-out / session-shown for every browser so the
+// new wizard surfaces fresh after the v11 deploy.
+//
+// Slide track: 13 slides covering every v11 feature with pure-CSS animated
+// mockups. ALL v10 slides removed in this release.
 ?>
 <style>
     /* ---- shell ----------------------------------------------------------- */
     #whatsNewV9Modal .modal-dialog { max-width: 640px; }
-    #whatsNewV9Modal .modal-content {
-        border: none;
-        border-radius: 18px;
-        overflow: hidden;
-        background: var(--card);
-    }
-    .dark #whatsNewV9Modal .modal-content {
-        background: var(--card);
-        color: #e2e8f0;
-    }
+    #whatsNewV9Modal .modal-content { border: none; border-radius: 18px; overflow: hidden; background: var(--card); }
+    .dark #whatsNewV9Modal .modal-content { background: var(--card); color: #e2e8f0; }
     #whatsNewV9Modal .modal-header {
         background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #4F46E5 100%);
-        color: #fff;
-        border-bottom: none;
-        padding: 1rem 1.4rem;
+        color: #fff; border-bottom: none; padding: 1rem 1.4rem;
     }
     #whatsNewV9Modal .modal-title { font-weight: 700; letter-spacing: .3px; }
     #whatsNewV9Modal .version-pill {
-        background: rgba(255,255,255,.18);
-        padding: 3px 10px; border-radius: 999px;
+        background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 999px;
         font-size: .72rem; font-weight: 600; margin-left: 8px;
     }
     #whatsNewV9Modal .modal-body { padding: 0; }
 
-    /* ---- wizard track ---------------------------------------------------- */
     .wn-viewport { position: relative; overflow: hidden; }
     .wn-track { display: flex; transition: transform .4s cubic-bezier(.4,0,.2,1); }
-    .wn-slide {
-        min-width: 100%;
-        padding: 1.6rem 1.8rem 1.2rem;
-        box-sizing: border-box;
-        text-align: center;
-    }
-    .wn-slide h3 {
-        font-size: 1.25rem; font-weight: 800; margin: .9rem 0 .35rem;
-        color: #4338ca;
-    }
+    .wn-slide { min-width: 100%; padding: 1.6rem 1.8rem 1.2rem; box-sizing: border-box; text-align: center; }
+    .wn-slide h3 { font-size: 1.25rem; font-weight: 800; margin: .9rem 0 .35rem; color: #4338ca; }
     .dark .wn-slide h3 { color: #a5b4fc; }
-    .wn-slide p {
-        font-size: .92rem; color: #475569; margin: 0 auto; max-width: 460px;
-        line-height: 1.55;
-    }
+    .wn-slide p { font-size: .92rem; color: #475569; margin: 0 auto; max-width: 460px; line-height: 1.55; }
     .dark .wn-slide p { color: #94a3b8; }
     .wn-kicker {
         display:inline-block; font-size:.7rem; font-weight:700;
@@ -59,378 +38,40 @@
         color:#8b5cf6; background:rgba(139,92,246,.12);
         padding:3px 10px; border-radius:999px;
     }
-
-    /* ---- mockup stage ---------------------------------------------------- */
     .wn-stage {
         height: 210px; margin: 1rem auto 0; max-width: 480px;
         border-radius: 14px; position: relative; overflow: hidden;
-        background: #0f172a;
-        border: 1px solid rgba(148,163,184,.25);
+        background: #0f172a; border: 1px solid rgba(148,163,184,.25);
         box-shadow: inset 0 0 40px rgba(0,0,0,.35);
     }
 
-    /* ---- Slide 1 — animated version label -------------------------------- */
-    .wn-ver {
-        position:absolute; inset:0;
-        display:flex; flex-direction:column;
-        align-items:center; justify-content:center; gap:6px;
-        background:
-          radial-gradient(circle at 50% 45%, rgba(99,102,241,.30), transparent 60%);
+    /* ---- change-list slide (static, no animation) ---- */
+    /* Tight grid sized to fit 12 items (6 rows × 2 cols) inside the 182px
+       inner space (210px stage − 28px inset). Each row ~24px tall;
+       6 × 24 + 16px padding = 160px — comfortable headroom. */
+    .wn-cl-list {
+        position: absolute; inset: 14px; background: #1e293b;
+        border-radius: 10px; border: 1px solid rgba(148,163,184,.18);
+        padding: 8px 12px; text-align: left; font-size: .78rem; color: #e2e8f0;
+        list-style: none; margin: 0;
+        display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px;
+        align-content: center;
+        overflow: hidden;
     }
-    .wn-ver-label {
-        font-size:.8rem; font-weight:700; letter-spacing:.5em;
-        text-transform:uppercase; color:#94a3b8;
-        opacity:0; transform:translateY(8px);
-        animation: wnVerLabel .8s ease-out .2s forwards;
+    .wn-cl-list li {
+        display: flex; align-items: center; gap: 7px;
+        padding: 2px 0; line-height: 1.25;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        min-width: 0;
     }
-    .wn-ver-num {
-        font-size:3.4rem; font-weight:900; line-height:1;
-        background:linear-gradient(135deg,#818cf8 0%,#a78bfa 45%,#6366F1 100%);
-        -webkit-background-clip:text; background-clip:text;
-        -webkit-text-fill-color:transparent; color:transparent;
-        filter:drop-shadow(0 4px 18px rgba(99,102,241,.45));
-        transform:scale(.6); opacity:0;
-        animation: wnVerNum .7s cubic-bezier(.34,1.56,.64,1) .35s forwards,
-                   wnVerGlow 2.8s ease-in-out 1.1s infinite;
-    }
-    @keyframes wnVerLabel { to { opacity:1; transform:translateY(0); } }
-    @keyframes wnVerNum   { to { opacity:1; transform:scale(1); } }
-    @keyframes wnVerGlow {
-        0%,100% { filter:drop-shadow(0 4px 14px rgba(99,102,241,.35)); }
-        50%     { filter:drop-shadow(0 6px 26px rgba(56,189,248,.65)); }
+    .wn-cl-list li i { color: #a5b4fc; font-size: .92rem; flex-shrink: 0; }
+    .wn-cl-list li span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    @media (max-width: 575.98px) {
+        .wn-cl-list { grid-template-columns: 1fr 1fr; gap: 0 8px; font-size: .68rem; padding: 6px 8px; inset: 10px; }
+        .wn-cl-list li { gap: 5px; padding: 1px 0; }
+        .wn-cl-list li i { font-size: .8rem; }
     }
 
-    /* ---- Slide 2 — AI Assistant card mockup ------------------------------ */
-    .wn-ai {
-        position:absolute; inset:18px;
-        background:#1e293b; border-radius:10px;
-        border:1px solid rgba(148,163,184,.18);
-        padding:14px 16px; text-align:left;
-        display:flex; flex-direction:column; gap:12px;
-    }
-    .wn-ai-head {
-        display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-    }
-    .wn-ai-icon {
-        width:30px; height:30px; border-radius:8px;
-        display:inline-flex; align-items:center; justify-content:center;
-        background:rgba(245,158,11,.18); color:#fbbf24; font-size:1rem;
-        animation: wnAiIcon 2.2s ease-in-out infinite;
-    }
-    @keyframes wnAiIcon {
-        0%,100% { box-shadow:0 0 0 0 rgba(251,191,36,0); transform:scale(1); }
-        50%     { box-shadow:0 0 0 8px rgba(251,191,36,.18); transform:scale(1.06); }
-    }
-    .wn-ai-title { font-weight:700; color:#f1f5f9; font-size:.95rem; }
-    .wn-ai-badge {
-        font-size:.66rem; font-weight:700;
-        color:#fde68a; background:rgba(251,191,36,.14);
-        border:1px solid rgba(251,191,36,.4);
-        padding:3px 8px; border-radius:999px;
-        margin-left:auto; white-space:nowrap;
-    }
-    .wn-ai-chips { display:flex; flex-wrap:wrap; gap:8px; }
-    .wn-ai-chip {
-        display:inline-flex; align-items:center; gap:6px;
-        font-size:.74rem; padding:6px 11px; border-radius:999px;
-        background:#0f172a; color:#e2e8f0;
-        border:1px solid rgba(148,163,184,.25);
-        opacity:0; transform:translateY(6px);
-        animation: wnChipIn .6s ease-out forwards;
-    }
-    .wn-ai-chip i { color:#6366F1; }
-    .wn-ai-chip:nth-child(1) { animation-delay:.5s; }
-    .wn-ai-chip:nth-child(2) { animation-delay:.85s; }
-    @keyframes wnChipIn { to { opacity:1; transform:translateY(0); } }
-
-    /* ---- Slide 3 — Prior-visit summary bullets --------------------------- */
-    .wn-sum {
-        position:absolute; inset:18px;
-        background:#1e293b; border-radius:10px;
-        border:1px solid rgba(148,163,184,.18);
-        padding:12px 14px; text-align:left;
-        display:flex; flex-direction:column; gap:8px;
-    }
-    .wn-sum-btn {
-        align-self:flex-start;
-        display:inline-flex; align-items:center; gap:6px;
-        font-size:.74rem; padding:5px 11px; border-radius:6px;
-        color:#bfdbfe; background:rgba(59,130,246,.16);
-        border:1px solid rgba(59,130,246,.45);
-        animation: wnSumBtn 4.5s ease-in-out infinite;
-    }
-    @keyframes wnSumBtn {
-        0%,100% { box-shadow:0 0 0 0 rgba(59,130,246,0); }
-        12%     { box-shadow:0 0 0 4px rgba(59,130,246,.4); }
-        25%     { box-shadow:0 0 0 0 rgba(59,130,246,0); }
-    }
-    .wn-sum-list {
-        margin:0; padding:0; list-style:none;
-        font-size:.78rem; color:#cbd5e1; line-height:1.55;
-    }
-    .wn-sum-list li {
-        opacity:0; transform:translateY(4px);
-        animation: wnBullet 4.5s ease-out infinite;
-    }
-    .wn-sum-list li em { color:#fbbf24; font-style:normal; font-weight:700; }
-    .wn-sum-list li:nth-child(1) { animation-delay:.6s; }
-    .wn-sum-list li:nth-child(2) { animation-delay:1.0s; }
-    .wn-sum-list li:nth-child(3) { animation-delay:1.4s; }
-    .wn-sum-list li:nth-child(4) { animation-delay:1.8s; }
-    @keyframes wnBullet {
-        0%   { opacity:0; transform:translateY(4px); }
-        15%  { opacity:1; transform:translateY(0); }
-        85%  { opacity:1; transform:translateY(0); }
-        100% { opacity:0; transform:translateY(0); }
-    }
-
-    /* ---- Slide 4 — ICD-10 popover ---------------------------------------- */
-    .wn-icd {
-        position:absolute; inset:18px;
-        background:#1e293b; border-radius:10px;
-        border:1px solid rgba(148,163,184,.18);
-        padding:12px 14px; text-align:left;
-        display:flex; flex-direction:column; gap:8px;
-    }
-    .wn-icd-row1 {
-        display:flex; align-items:center; gap:10px;
-    }
-    .wn-icd-input {
-        flex:1; font-size:.76rem; color:#e2e8f0;
-        background:#0f172a; border:1px solid rgba(148,163,184,.25);
-        border-radius:6px; padding:5px 9px;
-    }
-    .wn-icd-btn {
-        display:inline-flex; align-items:center; gap:6px;
-        font-size:.72rem; padding:5px 10px; border-radius:6px;
-        color:#bfdbfe; background:rgba(59,130,246,.16);
-        border:1px solid rgba(59,130,246,.45); white-space:nowrap;
-        animation: wnSumBtn 3.6s ease-in-out infinite;
-    }
-    .wn-icd-pop {
-        background:#0f172a; border:1px solid rgba(148,163,184,.25);
-        border-radius:8px; overflow:hidden;
-        opacity:0; transform:translateY(-6px);
-        animation: wnIcdPop 3.6s ease-out infinite;
-    }
-    @keyframes wnIcdPop {
-        0%, 22% { opacity:0; transform:translateY(-6px); }
-        32%     { opacity:1; transform:translateY(0); }
-        90%     { opacity:1; transform:translateY(0); }
-        100%    { opacity:0; transform:translateY(-6px); }
-    }
-    .wn-icd-pop-label {
-        font-size:.62rem; font-weight:700; text-transform:uppercase;
-        letter-spacing:.04em; color:#94a3b8; padding:6px 10px 2px;
-    }
-    .wn-icd-r {
-        display:flex; align-items:center; gap:10px;
-        padding:6px 10px; border-top:1px solid rgba(148,163,184,.12);
-        font-size:.76rem;
-    }
-    .wn-icd-r b {
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        color:#6366F1; font-weight:700;
-    }
-    .wn-icd-r span { flex:1; color:#cbd5e1; }
-    .wn-icd-r i {
-        font-size:.62rem; padding:2px 7px; border-radius:999px;
-        background:rgba(251,191,36,.14); color:#fde68a; font-style:normal;
-    }
-
-    /* ---- Slide 5 — Drawing: animated eye SVG (ophthalmology) ------------- */
-    .wn-eye-wrap {
-        position:absolute; inset:0;
-        display:flex; align-items:center; justify-content:center;
-        background: radial-gradient(circle at 50% 50%, rgba(56,189,248,.18), transparent 70%);
-    }
-    .wn-eye {
-        width: 88%; height: 88%;
-    }
-    .wn-eye-outline {
-        fill:none; stroke:#60a5fa; stroke-width:2.5;
-        stroke-linecap:round; stroke-linejoin:round;
-        stroke-dasharray:760; stroke-dashoffset:760;
-        animation: wnEyeOutline 6s ease-in-out infinite;
-    }
-    .wn-eye-iris {
-        fill:rgba(14,165,233,.14); stroke:#4F46E5; stroke-width:2.5;
-        stroke-dasharray:270; stroke-dashoffset:270; opacity:0;
-        animation: wnEyeIris 6s ease-in-out infinite;
-    }
-    .wn-eye-rays {
-        opacity:0; stroke:#4F46E5; stroke-width:1;
-        animation: wnEyeRays 6s ease-in-out infinite;
-    }
-    .wn-eye-pupil { fill:#0f172a; opacity:0; animation: wnEyePupil 6s ease-in-out infinite; }
-    .wn-eye-glint { fill:#fff; opacity:0; animation: wnEyeGlint 6s ease-in-out infinite; }
-    .wn-eye-label {
-        opacity:0; animation: wnEyeLabel 6s ease-in-out infinite;
-    }
-    .wn-eye-label line { stroke:#fbbf24; stroke-width:2; stroke-linecap:round; }
-    .wn-eye-label text { fill:#fbbf24; font-weight:700; font-size:13px;
-                         font-family: ui-monospace, monospace; }
-    @keyframes wnEyeOutline {
-        0%   { stroke-dashoffset:760; opacity:1; }
-        18%  { stroke-dashoffset:0;   opacity:1; }
-        88%  { stroke-dashoffset:0;   opacity:1; }
-        100% { stroke-dashoffset:0;   opacity:0; }
-    }
-    @keyframes wnEyeIris {
-        0%,18% { stroke-dashoffset:270; opacity:1; }
-        30%    { stroke-dashoffset:0;   opacity:1; }
-        88%    { stroke-dashoffset:0;   opacity:1; }
-        100%   { stroke-dashoffset:0;   opacity:0; }
-    }
-    @keyframes wnEyeRays {
-        0%,32% { opacity:0; }
-        42%    { opacity:.6; }
-        88%    { opacity:.6; }
-        100%   { opacity:0; }
-    }
-    @keyframes wnEyePupil {
-        0%,38% { opacity:0; }
-        48%    { opacity:1; }
-        88%    { opacity:1; }
-        100%   { opacity:0; }
-    }
-    @keyframes wnEyeGlint {
-        0%,50% { opacity:0; }
-        60%    { opacity:1; }
-        88%    { opacity:1; }
-        100%   { opacity:0; }
-    }
-    @keyframes wnEyeLabel {
-        0%,62% { opacity:0; }
-        72%    { opacity:1; }
-        88%    { opacity:1; }
-        100%   { opacity:0; }
-    }
-
-    /* ---- Slide 6 — Bug Fixes -------------------------------------------- */
-    .wn-bugs {
-        position:absolute; inset:18px;
-        background:#1e293b; border-radius:10px;
-        border:1px solid rgba(148,163,184,.18);
-        padding:14px 16px; text-align:left;
-        list-style:none; margin:0;
-        display:flex; flex-direction:column; justify-content:center;
-        gap:0;
-    }
-    .wn-bugs li {
-        display:flex; align-items:center; gap:12px;
-        padding:8px 0; color:#e2e8f0; font-size:.82rem;
-    }
-    .wn-bugs li + li { border-top:1px solid rgba(148,163,184,.14); }
-    .wn-bug-icon {
-        width:28px; height:28px;
-        display:inline-flex; align-items:center; justify-content:center;
-        flex-shrink:0; position:relative;
-    }
-    .wn-bug-icon i {
-        position:absolute; line-height:1;
-    }
-    .wn-bug-icon .bi-bug-fill {
-        color:#ef4444; font-size:1.05rem;
-        animation: wnBugOut 3.6s ease-in-out infinite;
-    }
-    .wn-bug-icon .bi-check-circle-fill {
-        color:#10b981; font-size:1.15rem; opacity:0; transform:scale(.4);
-        animation: wnBugIn 3.6s ease-in-out infinite;
-    }
-    @keyframes wnBugOut {
-        0%,40% { opacity:1; transform:scale(1) rotate(0); }
-        55%    { opacity:0; transform:scale(0) rotate(180deg); }
-        100%   { opacity:0; transform:scale(0) rotate(180deg); }
-    }
-    @keyframes wnBugIn {
-        0%,50% { opacity:0; transform:scale(.4); }
-        65%    { opacity:1; transform:scale(1.15); }
-        80%    { opacity:1; transform:scale(1); }
-        100%   { opacity:1; transform:scale(1); }
-    }
-    .wn-bug-label { position:relative; flex:1; }
-    .wn-bug-label::after {
-        content:""; position:absolute; left:0; right:0; top:50%; height:1px;
-        background:#94a3b8; transform-origin:left; transform:scaleX(0);
-        animation: wnStrike 3.6s ease-in-out infinite;
-    }
-    @keyframes wnStrike {
-        0%,30% { transform:scaleX(0); opacity:.65; }
-        50%    { transform:scaleX(1); opacity:.65; }
-        62%    { transform:scaleX(1); opacity:0; }
-        100%   { transform:scaleX(1); opacity:0; }
-    }
-    .wn-bugs li:nth-child(2) .wn-bug-icon .bi-bug-fill,
-    .wn-bugs li:nth-child(2) .wn-bug-icon .bi-check-circle-fill,
-    .wn-bugs li:nth-child(2) .wn-bug-label::after { animation-delay:.45s; }
-    .wn-bugs li:nth-child(3) .wn-bug-icon .bi-bug-fill,
-    .wn-bugs li:nth-child(3) .wn-bug-icon .bi-check-circle-fill,
-    .wn-bugs li:nth-child(3) .wn-bug-label::after { animation-delay:.9s; }
-
-    /* ---- v10: new-look (light/dark glass) mockup ------------------------- */
-    .wn-theme { position:absolute; inset:16px; display:flex; gap:12px; }
-    .wn-theme-half {
-        flex:1; border-radius:12px; padding:14px; position:relative; overflow:hidden;
-        border:1px solid rgba(148,163,184,.25);
-        display:flex; flex-direction:column; gap:9px;
-    }
-    .wn-theme-light { background:linear-gradient(160deg,#eef2ff 0%,#f8fafc 70%); }
-    .wn-theme-dark  { background:linear-gradient(160deg,#1e293b 0%,#0b1220 70%); }
-    .wn-theme-dot { width:26px; height:26px; border-radius:8px;
-        background:linear-gradient(135deg,#6366f1,#8b5cf6); box-shadow:0 6px 14px rgba(99,102,241,.45); }
-    .wn-theme-bar { height:8px; border-radius:99px; background:rgba(99,102,241,.55); width:80%;
-        animation:wnThemeBar 2.6s ease-in-out infinite; }
-    .wn-theme-bar.short { width:55%; opacity:.6; animation-delay:.3s; }
-    .wn-theme-light .wn-theme-bar { background:rgba(99,102,241,.35); }
-    .wn-theme-tag { position:absolute; bottom:10px; right:12px; font-size:.66rem; font-weight:700;
-        letter-spacing:.04em; text-transform:uppercase; }
-    .wn-theme-light .wn-theme-tag { color:#6366f1; }
-    .wn-theme-dark  .wn-theme-tag { color:#a5b4fc; }
-    @keyframes wnThemeBar { 0%,100% { transform:scaleX(.85); transform-origin:left; } 50% { transform:scaleX(1); } }
-
-    /* ---- v10: Patients Board mockup -------------------------------------- */
-    .wn-board { position:absolute; inset:16px; display:flex; gap:10px; }
-    .wn-board-col {
-        flex:1; background:rgba(148,163,184,.10); border:1px solid rgba(148,163,184,.20);
-        border-radius:10px; padding:8px; display:flex; flex-direction:column; gap:7px;
-    }
-    .wn-board-col-head {
-        font-size:.66rem; font-weight:700; color:#fff; text-align:center;
-        background:var(--c,#6366f1); border-radius:6px; padding:3px 0; letter-spacing:.03em;
-    }
-    .wn-board-card { height:24px; border-radius:6px; background:#fff; border:1px solid rgba(148,163,184,.3);
-        box-shadow:0 1px 3px rgba(15,23,42,.12); }
-    .dark .wn-board-card { background:#0f172a; border-color:rgba(148,163,184,.22); }
-    .wn-board-card--drag {
-        border:1px solid #6366f1; box-shadow:0 8px 18px rgba(99,102,241,.4);
-        animation:wnBoardDrag 3.2s ease-in-out infinite;
-    }
-    @keyframes wnBoardDrag {
-        0%,12%   { transform:translate(0,0) rotate(0); opacity:1; }
-        45%,55%  { transform:translate(0,-34px) rotate(-3deg); opacity:.92; }
-        88%,100% { transform:translate(0,0) rotate(0); opacity:1; }
-    }
-
-    /* ---- v10: Auto Complete settings mockup ------------------------------ */
-    .wn-acset { position:absolute; inset:20px; display:flex; flex-direction:column; gap:10px;
-        justify-content:center; }
-    .wn-acset-row {
-        display:flex; align-items:center; justify-content:space-between; gap:12px;
-        background:rgba(148,163,184,.10); border:1px solid rgba(148,163,184,.2);
-        border-radius:10px; padding:10px 14px; font-size:.8rem; color:#e2e8f0;
-    }
-    .wn-acset-row span:first-child { color:#cbd5e1; }
-    .wn-acset-sw { width:38px; height:21px; border-radius:99px; background:#475569; position:relative;
-        flex-shrink:0; transition:background .3s; }
-    .wn-acset-sw::after { content:''; position:absolute; top:2px; left:2px; width:17px; height:17px;
-        border-radius:50%; background:#fff; transition:left .3s; }
-    .wn-acset-sw.on { background:linear-gradient(135deg,#6366f1,#818cf8); }
-    .wn-acset-sw.on::after { left:19px; }
-    .wn-acset-sw.on { animation:wnSwPulse 2.8s ease-in-out infinite; }
-    @keyframes wnSwPulse { 0%,100% { box-shadow:0 0 0 0 rgba(99,102,241,0); } 50% { box-shadow:0 0 0 5px rgba(99,102,241,.18); } }
-
-    /* ---- dots + footer --------------------------------------------------- */
     .wn-dots { display:flex; justify-content:center; gap:7px; padding:.4rem 0 0; }
     .wn-dots button {
         width:8px; height:8px; border-radius:50%; border:0; padding:0;
@@ -449,896 +90,1821 @@
     @media (max-width: 575.98px) {
         #whatsNewV9Modal .wn-slide { padding: 1.2rem 1.1rem 1rem; }
         #whatsNewV9Modal .wn-stage { height: 178px; }
-        .wn-ai-badge { display:none; }
-        .wn-sum-list { font-size:.72rem; }
     }
 
     /* ====================================================================== */
-    /* v10.2.0 — animated change-slides (polish / perf / crumb / forum / bv2)  */
+    /* v11.0.0 — animated change-slides                                        */
     /* ====================================================================== */
 
-    /* ===== Polish slide ===== */
-    .wn-polish {
-        position: absolute; inset: 14px;
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 10px;
-    }
-    .wn-polish-card {
-        background: #1e293b;
-        border: 1px solid rgba(148,163,184,.18);
-        border-radius: 10px;
-        padding: 10px 10px 12px;
-        display: flex; flex-direction: column; gap: 8px;
-        position: relative; overflow: hidden;
-        min-width: 0;
-    }
-    .wn-polish-label {
-        font-size: .62rem;
-        font-weight: 600;
-        letter-spacing: .04em;
-        text-transform: uppercase;
-        color: #94a3b8;
-        display: inline-flex; align-items: center; gap: 6px;
-        white-space: nowrap;
-    }
-    .wn-polish-label i { color: #a5b4fc; font-size: .78rem; }
-    .wn-polish-sidebar {
-        flex: 1;
-        background: rgba(99,102,241,.08);
-        border: 1px solid rgba(148,163,184,.12);
-        border-radius: 8px;
-        padding: 8px 7px;
-        display: flex; flex-direction: column; gap: 6px;
-        position: relative;
-    }
-    .wn-polish-logo {
-        width: 26px; height: 26px; border-radius: 6px;
-        background: linear-gradient(135deg, #4F46E5, #8b5cf6);
-        display: inline-flex; align-items: center; justify-content: center;
-        color: #fde68a; font-size: .8rem;
-        position: relative; overflow: hidden;
-        box-shadow: 0 2px 6px rgba(79,70,229,.35);
-    }
-    .wn-polish-logo-flash {
-        position: absolute; inset: 0;
-        background: #f8fafc;
-        animation: wnPolishFlicker 4.4s ease-in-out infinite;
-    }
-    @keyframes wnPolishFlicker {
-        0%      { opacity: .85; }
-        6%      { opacity: 0; }
-        10%     { opacity: .6; }
-        14%     { opacity: 0; }
-        18%,100%{ opacity: 0; }
-    }
-    .wn-polish-row {
-        height: 6px; border-radius: 3px;
-        background: rgba(148,163,184,.22);
-        width: 80%;
-    }
-    .wn-polish-row-b { width: 62%; background: rgba(148,163,184,.16); }
-    .wn-polish-row-c { width: 70%; background: rgba(148,163,184,.16); }
-    .wn-polish-appt {
-        flex: 1;
-        position: relative;
-        background: #0f172a;
-        border: 1px solid rgba(148,163,184,.18);
-        border-radius: 12px 6px 6px 12px;
-        overflow: hidden;
-        display: flex;
-        animation: wnPolishCorner 4.4s ease-in-out infinite;
-    }
-    @keyframes wnPolishCorner {
-        0%, 30%   { border-radius: 12px 14px 14px 12px; }
-        55%, 90%  { border-radius: 12px 4px 4px 12px; }
-        100%      { border-radius: 12px 14px 14px 12px; }
-    }
-    .wn-polish-strip {
-        width: 5px;
-        background: linear-gradient(180deg, #6366f1, #8b5cf6);
-        flex-shrink: 0;
-    }
-    .wn-polish-appt-body {
-        flex: 1;
-        padding: 8px 9px;
-        display: flex; flex-direction: column; gap: 6px; justify-content: center;
-    }
-    .wn-polish-appt-name {
-        height: 7px; border-radius: 3px;
-        background: rgba(226,232,240,.55);
-        width: 78%;
-    }
-    .wn-polish-appt-time {
-        height: 6px; border-radius: 3px;
-        background: rgba(56,189,248,.55);
-        width: 50%;
-    }
-    .wn-polish-field {
-        flex: 1;
-        display: flex; flex-direction: column; gap: 5px;
-        position: relative;
-    }
-    .wn-polish-input {
-        height: 22px;
-        border-radius: 6px;
-        border: 1px dashed rgba(148,163,184,.4);
-        background: rgba(15,23,42,.6);
-        color: #cbd5e1; font-size: .68rem;
-        display: inline-flex; align-items: center; gap: 5px;
-        padding: 0 7px;
-    }
-    .wn-polish-input i { color: #a5b4fc; font-size: .78rem; }
-    .wn-polish-input span {
-        height: 5px; border-radius: 3px;
-        background: rgba(148,163,184,.3);
-        flex: 1;
-    }
-    .wn-polish-warn {
-        display: inline-flex; align-items: center; gap: 5px;
-        font-size: .58rem; color: #fca5a5;
-        background: rgba(239,68,68,.12);
-        border-left: 2px solid #ef4444;
-        padding: 3px 6px; border-radius: 0 4px 4px 0;
-        animation: wnPolishWarn 4.4s ease-in-out infinite;
-        transform-origin: left center;
-    }
-    .wn-polish-warn i { font-size: .68rem; color: #ef4444; }
-    .wn-polish-warn-text {
-        height: 4px; border-radius: 2px;
-        background: rgba(252,165,165,.55);
-        width: 70px;
-    }
-    @keyframes wnPolishWarn {
-        0%, 30%   { opacity: 1; transform: translateX(0) scaleY(1); }
-        45%, 90%  { opacity: 0; transform: translateX(-6px) scaleY(.4); }
-        100%      { opacity: 1; transform: translateX(0) scaleY(1); }
-    }
-    .wn-polish-ok {
-        position: absolute;
-        left: 0; right: 0;
-        top: 27px;
-        display: inline-flex; align-items: center; gap: 5px;
-        font-size: .62rem; font-weight: 600; color: #6ee7b7;
-        background: rgba(16,185,129,.12);
-        border-left: 2px solid #10b981;
-        padding: 3px 6px; border-radius: 0 4px 4px 0;
-        animation: wnPolishOk 4.4s ease-in-out infinite;
-        transform-origin: left center;
-    }
-    .wn-polish-ok i { font-size: .72rem; color: #10b981; }
-    @keyframes wnPolishOk {
-        0%, 35%   { opacity: 0; transform: translateX(-6px) scale(.85); }
-        55%, 90%  { opacity: 1; transform: translateX(0) scale(1); }
-        100%      { opacity: 0; transform: translateX(-6px) scale(.85); }
-    }
-    .wn-polish-c1 { animation: wnPolishLift 4.4s ease-in-out infinite; }
-    .wn-polish-c2 { animation: wnPolishLift 4.4s ease-in-out .15s infinite; }
-    .wn-polish-c3 { animation: wnPolishLift 4.4s ease-in-out .3s infinite; }
-    @keyframes wnPolishLift {
-        0%, 30%   { box-shadow: 0 0 0 0 rgba(99,102,241,0); border-color: rgba(148,163,184,.18); }
-        55%, 85%  { box-shadow: 0 4px 14px rgba(99,102,241,.18); border-color: rgba(165,180,252,.4); }
-        100%      { box-shadow: 0 0 0 0 rgba(99,102,241,0); border-color: rgba(148,163,184,.18); }
-    }
-
-    /* ===== Performance slide ===== */
-    .wn-perf {
-        position: absolute; inset: 14px;
-        background: #1e293b; border-radius: 10px;
-        border: 1px solid rgba(148,163,184,.18);
-        padding: 12px 14px;
-        display: flex; flex-direction: column; gap: 10px;
-        text-align: left; overflow: hidden;
-    }
-    .wn-perf-head {
-        display: flex; align-items: center; gap: 10px;
-    }
-    .wn-perf-icon {
-        width: 28px; height: 28px; border-radius: 8px;
-        display: inline-flex; align-items: center; justify-content: center;
-        background: rgba(245,158,11,.18); color: #fbbf24; font-size: .95rem;
-        animation: wnPerfBoltPulse 1.6s ease-in-out infinite;
-    }
-    @keyframes wnPerfBoltPulse {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0); transform: scale(1); }
-        50%      { box-shadow: 0 0 0 7px rgba(251,191,36,.18); transform: scale(1.08); }
-    }
-    .wn-perf-title {
-        color: #e2e8f0; font-size: .85rem; font-weight: 600; flex: 1;
-    }
-    .wn-perf-delta {
-        color: #6ee7b7; font-size: .72rem; font-weight: 700;
-        background: rgba(16,185,129,.14);
-        border: 1px solid rgba(16,185,129,.35);
-        padding: 2px 8px; border-radius: 999px; letter-spacing: .3px;
-    }
-    .wn-perf-races {
-        display: flex; flex-direction: column; gap: 6px;
-    }
-    .wn-perf-race {
-        display: grid; grid-template-columns: 52px 1fr 38px;
-        align-items: center; gap: 8px;
-    }
-    .wn-perf-label {
-        color: #94a3b8; font-size: .68rem; text-transform: uppercase;
-        letter-spacing: .5px; font-weight: 600;
-    }
-    .wn-perf-track {
-        position: relative; height: 8px; border-radius: 999px;
-        background: rgba(148,163,184,.12);
-        border: 1px solid rgba(148,163,184,.18);
-        overflow: hidden;
-    }
-    .wn-perf-fill {
-        position: absolute; inset: 0 auto 0 0; height: 100%;
-        border-radius: 999px; width: 0;
-    }
-    .wn-perf-fill-slow {
-        background: linear-gradient(90deg, #f59e0b, #ef4444);
-        animation: wnPerfSlowFill 3.2s ease-in-out infinite;
-    }
-    .wn-perf-fill-fast {
-        background: linear-gradient(90deg, #818cf8, #10b981);
-        box-shadow: 0 0 12px rgba(16,185,129,.45);
-        animation: wnPerfFastFill 3.2s ease-out infinite;
-    }
-    @keyframes wnPerfSlowFill {
-        0%       { width: 0; }
-        78%      { width: 100%; }
-        85%, 100%{ width: 100%; }
-    }
-    @keyframes wnPerfFastFill {
-        0%, 8%   { width: 0; }
-        18%      { width: 100%; }
-        85%, 100%{ width: 100%; }
-    }
-    .wn-perf-bolt {
-        position: absolute; top: 50%; left: 0;
-        transform: translate(-50%, -50%);
-        color: #fde68a; font-size: .7rem;
-        text-shadow: 0 0 8px rgba(251,191,36,.7);
-        animation: wnPerfBoltSlide 3.2s ease-out infinite;
-    }
-    @keyframes wnPerfBoltSlide {
-        0%, 8%   { left: 0;    opacity: 0; }
-        14%      { opacity: 1; }
-        18%      { left: 100%; opacity: 1; }
-        24%      { opacity: 0; }
-        85%, 100%{ left: 100%; opacity: 0; }
-    }
-    .wn-perf-time {
-        font-size: .72rem; font-weight: 700;
-        font-variant-numeric: tabular-nums; text-align: right;
-    }
-    .wn-perf-time-slow { color: #fca5a5; }
-    .wn-perf-time-fast {
-        color: #6ee7b7;
-        animation: wnPerfTimePop 3.2s ease-out infinite;
-    }
-    @keyframes wnPerfTimePop {
-        0%, 15%  { transform: scale(.85); opacity: .4; }
-        22%      { transform: scale(1.15); opacity: 1; }
-        30%, 100%{ transform: scale(1); opacity: 1; }
-    }
-    .wn-perf-chips {
-        display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto;
-    }
-    .wn-perf-chip {
-        display: inline-flex; align-items: center; gap: 5px;
-        font-size: .68rem; font-weight: 600; color: #cbd5e1;
-        background: rgba(99,102,241,.12);
-        border: 1px solid rgba(129,140,248,.35);
-        padding: 3px 8px; border-radius: 999px;
-        opacity: 0; transform: translateY(4px);
-    }
-    .wn-perf-chip i { color: #a5b4fc; font-size: .78rem; }
-    .wn-perf-chip-1 { animation: wnPerfChipIn .5s ease-out .35s forwards; }
-    .wn-perf-chip-2 { animation: wnPerfChipIn .5s ease-out .65s forwards; }
-    .wn-perf-chip-3 { animation: wnPerfChipIn .5s ease-out .95s forwards; }
-    @keyframes wnPerfChipIn {
-        0%   { opacity: 0; transform: translateY(4px); }
-        100% { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ===== Unified breadcrumb slide ===== */
-    .wn-crumb-scene {
-        position: absolute; inset: 0;
-        display: flex; flex-direction: column;
-        align-items: center; justify-content: center;
-        gap: 14px; padding: 16px;
-    }
-    .wn-crumb-pill {
-        display: inline-flex; align-items: center;
-        gap: 8px;
-        background: rgba(30, 41, 59, .85);
-        border: 1px solid rgba(148, 163, 184, .22);
-        border-radius: 999px;
-        padding: 6px 14px 6px 6px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, .35),
-                    inset 0 1px 0 rgba(255, 255, 255, .04);
-        -webkit-backdrop-filter: blur(6px);
-        backdrop-filter: blur(6px);
-        max-width: 92%;
-        overflow: hidden;
-        position: relative;
-    }
-    .wn-crumb-pill::before {
-        content: "";
-        position: absolute; inset: 0;
-        border-radius: 999px;
-        background: linear-gradient(120deg,
-            rgba(99, 102, 241, .12) 0%,
-            rgba(139, 92, 246, .08) 50%,
-            rgba(56, 189, 248, .10) 100%);
-        pointer-events: none;
-    }
-    .wn-crumb-back {
-        width: 30px; height: 30px;
-        border-radius: 50%;
-        flex: 0 0 30px;
-        display: inline-flex; align-items: center; justify-content: center;
-        background: linear-gradient(135deg, #6366f1, #4F46E5);
-        color: #fff;
-        font-size: .95rem;
-        box-shadow: 0 2px 8px rgba(79, 70, 229, .45);
-        position: relative; z-index: 1;
-        animation: wnCrumbBack 2.6s ease-in-out infinite;
-    }
-    .wn-crumb-back::after {
-        content: "";
-        position: absolute; inset: -3px;
-        border-radius: 50%;
-        border: 1.5px solid rgba(129, 140, 248, .55);
-        animation: wnCrumbRing 2.6s ease-out infinite;
-    }
-    .wn-crumb-back i { animation: wnCrumbArrow 2.6s ease-in-out infinite; }
-    .wn-crumb-track {
-        position: relative;
-        height: 22px;
-        min-width: 200px;
-        max-width: 320px;
-        flex: 1 1 auto;
-        overflow: hidden;
-    }
-    .wn-crumb-route {
-        position: absolute; inset: 0;
-        display: inline-flex; align-items: center;
-        gap: 6px;
-        font-size: .78rem;
-        color: #cbd5e1;
-        white-space: nowrap;
-        opacity: 0;
-        transform: translateY(8px);
-        animation: wnCrumbSwap 6s ease-in-out infinite;
-    }
-    .wn-crumb-route:nth-child(1) { animation-delay: 0s; }
-    .wn-crumb-route:nth-child(2) { animation-delay: 2s; }
-    .wn-crumb-route:nth-child(3) { animation-delay: 4s; }
-    .wn-crumb-route > i:first-child {
-        color: #a5b4fc;
-        font-size: .85rem;
-    }
-    .wn-crumb-root { color: #94a3b8; }
-    .wn-crumb-mid  { color: #cbd5e1; }
-    .wn-crumb-leaf {
-        color: #fde68a;
-        font-weight: 600;
-        text-shadow: 0 0 8px rgba(251, 191, 36, .25);
-    }
-    .wn-crumb-sep {
-        color: #64748b;
-        font-size: .65rem;
-        opacity: .8;
-    }
-    .wn-crumb-dots {
-        display: inline-flex; gap: 5px;
-    }
-    .wn-crumb-dot {
-        width: 5px; height: 5px; border-radius: 50%;
-        background: rgba(148, 163, 184, .35);
-        animation: wnCrumbDot 6s ease-in-out infinite;
-    }
-    .wn-crumb-dot:nth-child(1) { animation-delay: 0s; }
-    .wn-crumb-dot:nth-child(2) { animation-delay: 2s; }
-    .wn-crumb-dot:nth-child(3) { animation-delay: 4s; }
-    .wn-crumb-pages {
-        display: flex; flex-wrap: wrap;
-        justify-content: center; gap: 5px 6px;
-        max-width: 100%;
-    }
-    .wn-crumb-tag {
-        display: inline-flex; align-items: center; gap: 4px;
-        padding: 3px 8px;
-        font-size: .65rem;
-        color: #cbd5e1;
-        background: rgba(99, 102, 241, .12);
-        border: 1px solid rgba(129, 140, 248, .25);
-        border-radius: 999px;
-        animation: wnCrumbTag 6s ease-in-out infinite;
-    }
-    .wn-crumb-tag i { font-size: .7rem; color: #a5b4fc; }
-    .wn-crumb-tag:nth-child(1) { animation-delay: 0s; }
-    .wn-crumb-tag:nth-child(2) { animation-delay: .4s; }
-    .wn-crumb-tag:nth-child(3) { animation-delay: .8s; }
-    .wn-crumb-tag:nth-child(4) { animation-delay: 1.2s; }
-    .wn-crumb-tag:nth-child(5) { animation-delay: 1.6s; }
-    @keyframes wnCrumbSwap {
-        0%    { opacity: 0; transform: translateY(8px); }
-        5%    { opacity: 1; transform: translateY(0); }
-        30%   { opacity: 1; transform: translateY(0); }
-        35%   { opacity: 0; transform: translateY(-8px); }
-        100%  { opacity: 0; transform: translateY(8px); }
-    }
-    @keyframes wnCrumbBack {
-        0%, 100% { transform: scale(1); box-shadow: 0 2px 8px rgba(79, 70, 229, .45); }
-        50%      { transform: scale(1.08); box-shadow: 0 2px 14px rgba(99, 102, 241, .7); }
-    }
-    @keyframes wnCrumbArrow {
-        0%, 70%, 100% { transform: translateX(0); }
-        35%           { transform: translateX(-3px); }
-    }
-    @keyframes wnCrumbRing {
-        0%   { opacity: .7; transform: scale(1); }
-        70%  { opacity: 0;  transform: scale(1.45); }
-        100% { opacity: 0;  transform: scale(1.45); }
-    }
-    @keyframes wnCrumbDot {
-        0%, 5%   { background: #818cf8; transform: scale(1.25); }
-        33%, 100%{ background: rgba(148, 163, 184, .35); transform: scale(1); }
-    }
-    @keyframes wnCrumbTag {
-        0%, 100% { background: rgba(99, 102, 241, .12); border-color: rgba(129, 140, 248, .25); color: #cbd5e1; }
-        8%, 20%  { background: rgba(245, 158, 11, .18); border-color: rgba(251, 191, 36, .55); color: #fde68a; }
-    }
-
-    /* ===== Forum removed slide ===== */
-    .wn-forum {
-        position: absolute; inset: 14px;
-        display: flex; flex-direction: column; gap: 12px;
-        text-align: left;
-    }
-    .wn-forum-dock {
-        background: #1e293b;
-        border: 1px solid rgba(148,163,184,.18);
-        border-radius: 12px;
-        padding: 10px;
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
-        flex: 1;
-        min-height: 0;
-    }
-    .wn-forum-dock-item {
-        display: flex; flex-direction: column;
-        align-items: center; justify-content: center;
-        gap: 4px;
-        border-radius: 9px;
-        padding: 8px 4px;
-        background: rgba(148,163,184,.06);
-        border: 1px solid rgba(148,163,184,.12);
-        color: #94a3b8;
-        font-size: .62rem;
-        font-weight: 600;
-        letter-spacing: .02em;
-        min-width: 0;
-    }
-    .wn-forum-dock-item > i {
-        font-size: 1.05rem;
-        line-height: 1;
-    }
-    .wn-forum-dock-item > span {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100%;
-    }
-    .wn-forum-dock-slot {
-        position: relative;
-        overflow: hidden;
-        background: rgba(99,102,241,.10);
-        border-color: rgba(129,140,248,.35);
-        padding: 0;
-    }
-    .wn-forum-tile {
-        position: absolute; inset: 0;
-        display: flex; flex-direction: column;
-        align-items: center; justify-content: center;
-        gap: 4px;
-        border-radius: 8px;
-        font-size: .62rem;
-        font-weight: 700;
-        letter-spacing: .02em;
-        padding: 6px 4px;
-    }
-    .wn-forum-tile > i { font-size: 1.05rem; line-height: 1; }
-    .wn-forum-tile > span {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100%;
-    }
-    .wn-forum-tile-old {
-        color: #cbd5e1;
-        background: rgba(148,163,184,.10);
-        animation: wnForumOld 5s ease-in-out infinite;
-    }
-    .wn-forum-tile-new {
-        color: #a5b4fc;
-        background: linear-gradient(160deg, rgba(99,102,241,.28), rgba(139,92,246,.22));
-        box-shadow: inset 0 0 0 1px rgba(129,140,248,.55), 0 6px 18px -8px rgba(99,102,241,.6);
-        transform: translateY(110%);
-        opacity: 0;
-        animation: wnForumNew 5s ease-in-out infinite;
-    }
-    .wn-forum-strike {
-        position: absolute;
-        left: 10%; right: 10%;
-        top: 50%;
-        height: 2px;
-        background: #ef4444;
-        border-radius: 2px;
-        transform: scaleX(0);
-        transform-origin: left center;
-        animation: wnForumStrike 5s ease-in-out infinite;
-    }
-    .wn-forum-spark {
-        position: absolute;
-        inset: -2px;
-        border-radius: 9px;
-        background: radial-gradient(circle at 50% 50%, rgba(165,180,252,.55), transparent 60%);
-        opacity: 0;
-        animation: wnForumSpark 5s ease-in-out infinite;
-        pointer-events: none;
-    }
-    .wn-forum-status {
-        display: flex; align-items: center; justify-content: center;
-        gap: 10px;
-        font-size: .68rem;
-        font-weight: 600;
-    }
-    .wn-forum-tag {
-        display: inline-flex; align-items: center;
-        gap: 5px;
-        padding: 4px 9px;
-        border-radius: 999px;
-        border: 1px solid transparent;
-        line-height: 1;
-    }
-    .wn-forum-tag > i { font-size: .8rem; }
-    .wn-forum-tag-removed {
-        color: #fca5a5;
-        background: rgba(239,68,68,.12);
-        border-color: rgba(239,68,68,.35);
-        animation: wnForumTagOld 5s ease-in-out infinite;
-    }
-    .wn-forum-tag-added {
-        color: #a5b4fc;
-        background: rgba(99,102,241,.15);
-        border-color: rgba(129,140,248,.45);
-        animation: wnForumTagNew 5s ease-in-out infinite;
-    }
-    .wn-forum-arrow {
-        color: #64748b;
-        font-size: .85rem;
-        line-height: 1;
-        display: inline-flex;
-        animation: wnForumArrow 5s ease-in-out infinite;
-    }
-    @keyframes wnForumOld {
-        0%, 18%   { transform: translateY(0); opacity: 1; filter: none; }
-        32%       { transform: translateY(0); opacity: .85; filter: grayscale(.6); }
-        46%, 86%  { transform: translateY(-115%); opacity: 0; filter: grayscale(1); }
-        100%      { transform: translateY(0); opacity: 1; filter: none; }
-    }
-    @keyframes wnForumNew {
-        0%, 38%   { transform: translateY(110%); opacity: 0; }
-        52%       { transform: translateY(0); opacity: 1; }
-        80%       { transform: translateY(0); opacity: 1; }
-        92%, 100% { transform: translateY(110%); opacity: 0; }
-    }
-    @keyframes wnForumStrike {
-        0%, 18%   { transform: scaleX(0); opacity: 0; }
-        30%       { transform: scaleX(1); opacity: 1; }
-        42%       { transform: scaleX(1); opacity: 1; }
-        50%, 100% { transform: scaleX(0); opacity: 0; }
-    }
-    @keyframes wnForumSpark {
-        0%, 48%   { opacity: 0; transform: scale(.6); }
-        58%       { opacity: 1; transform: scale(1.05); }
-        72%       { opacity: .4; transform: scale(1); }
-        82%, 100% { opacity: 0; transform: scale(.6); }
-    }
-    @keyframes wnForumTagOld {
-        0%, 20%   { opacity: 1; transform: translateY(0); }
-        40%, 80%  { opacity: .35; transform: translateY(0); }
-        100%      { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes wnForumTagNew {
-        0%, 38%   { opacity: .35; transform: translateY(0) scale(.96); }
-        55%, 80%  { opacity: 1;   transform: translateY(0) scale(1); }
-        100%      { opacity: .35; transform: translateY(0) scale(.96); }
-    }
-    @keyframes wnForumArrow {
-        0%, 30%   { transform: translateX(-2px); opacity: .5; }
-        50%, 80%  { transform: translateX(2px);  opacity: 1; }
-        100%      { transform: translateX(-2px); opacity: .5; }
-    }
-
-    /* ===== Smarter Patients Board slide ===== */
-    .wn-bv2 {
-        position: absolute; inset: 0;
-        overflow: hidden;
-        font-family: inherit;
-    }
-    .wn-bv2-bg {
-        position: absolute; inset: 0;
-        background:
-            radial-gradient(circle at 18% 12%, rgba(99,102,241,.32), transparent 55%),
-            radial-gradient(circle at 88% 92%, rgba(139,92,246,.28), transparent 60%),
-            linear-gradient(135deg, rgba(56,189,248,.10), rgba(236,72,153,.10));
-        animation: wnBv2Bg 7.2s ease-in-out infinite;
-    }
-    @keyframes wnBv2Bg {
-        0%,100% { filter: hue-rotate(0deg) brightness(1); }
-        50%     { filter: hue-rotate(18deg) brightness(1.08); }
-    }
-    .wn-bv2-head {
-        position: absolute; top: 12px; left: 14px; right: 14px;
-        display: flex; align-items: center; gap: 8px;
-        font-size: .72rem; color: #e2e8f0;
-    }
-    .wn-bv2-logo {
-        width: 22px; height: 22px; border-radius: 6px;
-        display: inline-flex; align-items: center; justify-content: center;
-        background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        color: #fff; font-size: .78rem;
-        box-shadow: 0 4px 10px rgba(99,102,241,.45);
-    }
-    .wn-bv2-title { font-weight: 600; letter-spacing: .2px; }
-    .wn-bv2-auto {
-        margin-left: auto;
-        display: inline-flex; align-items: center; gap: 5px;
-        padding: 4px 9px; border-radius: 999px;
-        background: rgba(245,158,11,.18);
-        color: #fde68a;
-        border: 1px solid rgba(245,158,11,.45);
-        font-size: .65rem; font-weight: 600;
-        animation: wnBv2Auto 6.8s ease-in-out infinite;
-    }
-    .wn-bv2-auto i { font-size: .72rem; color: #fbbf24; }
-    @keyframes wnBv2Auto {
-        0%, 12%   { box-shadow: 0 0 0 0 rgba(251,191,36,0); transform: scale(1); }
-        16%       { box-shadow: 0 0 0 6px rgba(251,191,36,.25); transform: scale(1.07); }
-        22%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0); transform: scale(1); }
-    }
-    .wn-bv2-cols {
-        position: absolute; left: 14px; right: 14px; bottom: 14px;
-        height: 92px;
-        display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
-    }
-    .wn-bv2-col {
-        position: relative;
-        border-radius: 9px;
-        background: rgba(30,41,59,.72);
-        border: 1px solid rgba(148,163,184,.18);
-        padding: 8px 6px 6px;
-        -webkit-backdrop-filter: blur(2px);
-        backdrop-filter: blur(2px);
-    }
-    .wn-bv2-coltag {
-        display: block;
-        height: 6px; width: 60%;
-        border-radius: 999px;
-        margin-bottom: 6px;
-    }
-    .wn-bv2-tag-a { background: #38bdf8; }
-    .wn-bv2-tag-b { background: #f59e0b; }
-    .wn-bv2-tag-c { background: #10b981; }
-    .wn-bv2-col-b {
-        border-color: rgba(245,158,11,.45);
-        animation: wnBv2ColPulse 6.8s ease-in-out infinite;
-    }
-    @keyframes wnBv2ColPulse {
-        0%, 30%   { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
-        38%, 52%  { box-shadow: 0 0 0 3px rgba(245,158,11,.35); border-color: rgba(245,158,11,.8); }
-        60%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
-    }
-    .wn-bv2-slot {
-        display: block; height: 28px;
-        border-radius: 6px;
-        border: 1.5px dashed rgba(245,158,11,.55);
-        background: rgba(245,158,11,.08);
-        opacity: 0;
-        animation: wnBv2Slot 6.8s ease-in-out infinite;
-    }
-    @keyframes wnBv2Slot {
-        0%, 18%   { opacity: 0; }
-        24%, 50%  { opacity: 1; }
-        56%, 100% { opacity: 0; }
-    }
-    .wn-bv2-card {
-        position: absolute;
-        top: 42px; left: 28px;
-        width: 90px; height: 34px;
-        border-radius: 8px;
-        background: linear-gradient(135deg, rgba(99,102,241,.95), rgba(139,92,246,.95));
-        border: 1px solid rgba(165,180,252,.55);
-        box-shadow: 0 8px 18px rgba(15,23,42,.55), 0 0 0 1px rgba(255,255,255,.04) inset;
-        display: flex; flex-direction: column; gap: 4px;
-        padding: 7px 9px;
-        animation: wnBv2Card 6.8s cubic-bezier(.55,.05,.3,1) infinite;
-        z-index: 3;
-    }
-    .wn-bv2-dot {
-        width: 7px; height: 7px; border-radius: 50%;
-        background: #fde68a;
-        box-shadow: 0 0 6px rgba(251,191,36,.7);
-    }
-    .wn-bv2-bar {
-        height: 4px; border-radius: 999px;
-        background: rgba(255,255,255,.6);
-    }
-    .wn-bv2-bar-1 { width: 70%; }
-    .wn-bv2-bar-2 { width: 45%; background: rgba(255,255,255,.4); }
-    @keyframes wnBv2Card {
-        0%, 14%   { top: 42px; left: 28px; transform: scale(1) rotate(0deg); opacity: 1; }
-        22%       { top: 42px; left: 28px; transform: scale(1.05) rotate(-2deg); }
-        34%       { top: 70px; left: 50%; transform: translateX(-50%) scale(.9) rotate(2deg); opacity: .95; }
-        44%, 78%  { top: 118px; left: 50%; transform: translateX(-50%) scale(.78) rotate(0deg); opacity: 1; }
-        88%, 100% { top: 42px; left: 28px; transform: scale(1) rotate(0deg); opacity: 1; }
-    }
-    .wn-bv2-trail {
-        position: absolute;
-        top: 58px; left: 78px;
-        width: 100px; height: 2px;
-        border-radius: 999px;
-        background: linear-gradient(90deg, rgba(251,191,36,0), rgba(251,191,36,.9), rgba(251,191,36,0));
-        transform: rotate(28deg); transform-origin: left center;
-        opacity: 0;
-        animation: wnBv2Trail 6.8s ease-in-out infinite;
-        z-index: 2;
-    }
-    @keyframes wnBv2Trail {
-        0%, 22%   { opacity: 0; transform: rotate(28deg) scaleX(.2); }
-        30%       { opacity: 1; transform: rotate(28deg) scaleX(1); }
-        42%, 100% { opacity: 0; transform: rotate(28deg) scaleX(1); }
-    }
-    .wn-bv2-note {
-        position: absolute;
-        top: 40px; right: 14px;
-        width: 138px;
-        background: #1e293b;
-        border: 1px solid rgba(148,163,184,.22);
-        border-radius: 10px;
-        padding: 7px 8px;
-        display: flex; flex-direction: column; gap: 5px;
-        box-shadow: 0 10px 22px rgba(0,0,0,.4);
-        opacity: 0; transform: translateY(6px) scale(.96);
-        animation: wnBv2Note 6.8s ease-in-out infinite;
-        z-index: 4;
-    }
-    @keyframes wnBv2Note {
-        0%, 46%   { opacity: 0; transform: translateY(6px) scale(.96); }
-        54%, 86%  { opacity: 1; transform: translateY(0) scale(1); }
-        94%, 100% { opacity: 0; transform: translateY(6px) scale(.96); }
-    }
-    .wn-bv2-note-head {
-        display: flex; align-items: center; gap: 5px;
-        font-size: .62rem; color: #cbd5e1; font-weight: 600;
-    }
-    .wn-bv2-note-head i { color: #fbbf24; font-size: .72rem; }
-    .wn-bv2-chips {
-        display: flex; gap: 4px; flex-wrap: nowrap;
-    }
-    .wn-bv2-chip {
-        display: inline-flex; align-items: center; gap: 3px;
-        font-size: .55rem; font-weight: 600;
-        padding: 2px 5px; border-radius: 5px;
-        color: #e2e8f0;
-        background: rgba(148,163,184,.15);
-        border: 1px solid rgba(148,163,184,.25);
-        opacity: 0; transform: translateY(4px);
-    }
-    .wn-bv2-chip i { font-size: .65rem; }
-    .wn-bv2-chip-pdf i { color: #ef4444; }
-    .wn-bv2-chip-xls i { color: #10b981; }
-    .wn-bv2-chip-doc i { color: #60a5fa; }
-    .wn-bv2-chip-pdf { animation: wnBv2Chip 6.8s ease-in-out infinite; animation-delay: 0s; }
-    .wn-bv2-chip-xls { animation: wnBv2Chip 6.8s ease-in-out infinite; animation-delay: .15s; }
-    .wn-bv2-chip-doc { animation: wnBv2Chip 6.8s ease-in-out infinite; animation-delay: .3s; }
-    @keyframes wnBv2Chip {
-        0%, 54%   { opacity: 0; transform: translateY(4px) scale(.85); }
-        62%, 86%  { opacity: 1; transform: translateY(0) scale(1); }
-        94%, 100% { opacity: 0; transform: translateY(4px) scale(.85); }
-    }
-    .wn-bv2-acts {
-        display: flex; gap: 5px; margin-top: 1px;
-    }
-    .wn-bv2-btn {
-        flex: 1;
-        display: inline-flex; align-items: center; justify-content: center; gap: 3px;
-        font-size: .58rem; font-weight: 600;
-        padding: 3px 4px; border-radius: 5px;
-        border: 1px solid transparent;
-    }
-    .wn-bv2-btn i { font-size: .65rem; }
-    .wn-bv2-btn-add {
-        color: #a5b4fc;
-        background: rgba(99,102,241,.18);
-        border-color: rgba(99,102,241,.45);
-        animation: wnBv2Add 6.8s ease-in-out infinite;
-    }
-    .wn-bv2-btn-del {
-        color: #fca5a5;
-        background: rgba(239,68,68,.15);
-        border-color: rgba(239,68,68,.4);
-        animation: wnBv2Del 6.8s ease-in-out infinite;
-    }
-    @keyframes wnBv2Add {
-        0%, 70%   { box-shadow: 0 0 0 0 rgba(99,102,241,0); transform: scale(1); }
-        75%       { box-shadow: 0 0 0 4px rgba(99,102,241,.32); transform: scale(1.06); }
-        82%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); transform: scale(1); }
-    }
-    @keyframes wnBv2Del {
-        0%, 80%   { box-shadow: 0 0 0 0 rgba(239,68,68,0); transform: scale(1); }
-        85%       { box-shadow: 0 0 0 4px rgba(239,68,68,.32); transform: scale(1.06); }
-        92%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); transform: scale(1); }
-    }
-
-    /* ===== v10.2.0 slides — mobile (stage 178px) ===== */
+    /* ===== wn-v11 — Welcome to v11.0.0 ===== */
+    .wn-v11-stage {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(99,102,241,.22), transparent 60%),
+        #0f172a;
+    }
+    
+    /* Rotating radial starburst behind the number */
+    .wn-v11-burst {
+      position: absolute;
+      inset: 50% auto auto 50%;
+      width: 360px;
+      height: 360px;
+      transform: translate(-50%, -50%);
+      background:
+        conic-gradient(from 0deg,
+          rgba(129,140,248,0) 0deg,
+          rgba(129,140,248,.35) 18deg,
+          rgba(129,140,248,0) 36deg,
+          rgba(139,92,246,.30) 54deg,
+          rgba(139,92,246,0) 72deg,
+          rgba(99,102,241,.32) 90deg,
+          rgba(99,102,241,0) 108deg,
+          rgba(165,180,252,.28) 126deg,
+          rgba(165,180,252,0) 144deg,
+          rgba(129,140,248,.30) 162deg,
+          rgba(129,140,248,0) 180deg,
+          rgba(139,92,246,.32) 198deg,
+          rgba(139,92,246,0) 216deg,
+          rgba(99,102,241,.28) 234deg,
+          rgba(99,102,241,0) 252deg,
+          rgba(165,180,252,.32) 270deg,
+          rgba(165,180,252,0) 288deg,
+          rgba(129,140,248,.30) 306deg,
+          rgba(129,140,248,0) 324deg,
+          rgba(139,92,246,.32) 342deg,
+          rgba(139,92,246,0) 360deg);
+      filter: blur(8px);
+      -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 35%, transparent 70%);
+              mask-image: radial-gradient(circle at 50% 50%, #000 35%, transparent 70%);
+      animation: wn-v11-spin 18s linear infinite;
+      opacity: .9;
+    }
+    
+    /* Concentric pulsing rings */
+    .wn-v11-rings {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .wn-v11-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(165,180,252,.28);
+      box-shadow: 0 0 24px rgba(99,102,241,.18) inset;
+      animation: wn-v11-pulse 4.4s ease-in-out infinite;
+    }
+    .wn-v11-ring-a { width: 150px; height: 150px; animation-delay: 0s; }
+    .wn-v11-ring-b { width: 210px; height: 210px; animation-delay: .8s; border-color: rgba(139,92,246,.22); }
+    .wn-v11-ring-c { width: 280px; height: 280px; animation-delay: 1.6s; border-color: rgba(99,102,241,.18); }
+    
+    /* Floating sparkles */
+    .wn-v11-sparkles { position: absolute; inset: 0; pointer-events: none; }
+    .wn-v11-spark {
+      position: absolute;
+      font-size: 12px;
+      color: #fde68a;
+      text-shadow: 0 0 10px rgba(251,191,36,.7);
+      animation: wn-v11-twinkle 3.2s ease-in-out infinite;
+    }
+    .wn-v11-spark-1 { top: 14%; left: 12%; color: #a5b4fc; animation-delay: 0s; }
+    .wn-v11-spark-2 { top: 22%; right: 14%; color: #fbbf24; animation-delay: .5s; }
+    .wn-v11-spark-3 { bottom: 18%; left: 18%; color: #818cf8; animation-delay: 1s; }
+    .wn-v11-spark-4 { bottom: 22%; right: 12%; color: #fde68a; animation-delay: 1.5s; }
+    .wn-v11-spark-5 { top: 50%; left: 6%; color: #c4b5fd; animation-delay: 2s; font-size: 10px; }
+    .wn-v11-spark-6 { top: 48%; right: 6%; color: #a5b4fc; animation-delay: 2.5s; font-size: 10px; }
+    
+    /* Eyebrow label */
+    .wn-v11-label {
+      position: absolute;
+      top: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .22em;
+      color: #c7d2fe;
+      background: rgba(99,102,241,.14);
+      border: 1px solid rgba(165,180,252,.30);
+      border-radius: 999px;
+      text-transform: uppercase;
+      animation: wn-v11-labelin 5s ease-in-out infinite;
+    }
+    .wn-v11-label i { color: #fbbf24; font-size: 11px; }
+    
+    /* Big gradient number */
+    .wn-v11-number {
+      position: relative;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 2px;
+      font-weight: 900;
+      font-size: 64px;
+      line-height: 1;
+      letter-spacing: -.02em;
+      filter: drop-shadow(0 0 18px rgba(129,140,248,.45));
+      animation: wn-v11-glow 3.6s ease-in-out infinite;
+    }
+    /* The gradient must be applied to each DIGIT span, not the parent — the
+       parent wraps inline-block spans, so its background-clip:text has no
+       text of its own to clip against and renders invisibly. */
+    .wn-v11-digit {
+      display: inline-block;
+      animation: wn-v11-rise 5s ease-in-out infinite;
+      background: linear-gradient(135deg, #a5b4fc 0%, #818cf8 25%, #6366f1 50%, #8b5cf6 75%, #ec4899 100%);
+      -webkit-background-clip: text;
+              background-clip: text;
+      -webkit-text-fill-color: transparent;
+              color: transparent;
+    }
+    .wn-v11-number .wn-v11-digit:nth-child(1) { animation-delay: 0s; }
+    .wn-v11-number .wn-v11-digit:nth-child(3) { animation-delay: .25s; }
+    .wn-v11-number .wn-v11-digit:nth-child(5) { animation-delay: .5s; }
+    .wn-v11-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #fbbf24;
+      border-radius: 50%;
+      margin: 0 2px 6px;
+      align-self: flex-end;
+      color: transparent;
+      box-shadow: 0 0 12px rgba(251,191,36,.7);
+      animation: wn-v11-dotpulse 2.2s ease-in-out infinite;
+    }
+    .wn-v11-number .wn-v11-dot:nth-of-type(2) { animation-delay: .4s; }
+    
+    /* Bottom tag */
+    .wn-v11-tag {
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #cbd5e1;
+      background: #1e293b;
+      border: 1px solid rgba(148,163,184,.18);
+      border-radius: 999px;
+      animation: wn-v11-labelin 5s ease-in-out infinite .4s;
+    }
+    .wn-v11-pip {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: wn-v11-pip 1.8s ease-in-out infinite;
+    }
+    
+    @keyframes wn-v11-spin {
+      0%   { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    @keyframes wn-v11-pulse {
+      0%, 90%, 100% { transform: scale(1); opacity: .55; }
+      45%           { transform: scale(1.08); opacity: .95; }
+    }
+    @keyframes wn-v11-twinkle {
+      0%, 85%, 100% { transform: scale(1) rotate(0deg); opacity: .35; }
+      40%           { transform: scale(1.4) rotate(18deg); opacity: 1; }
+    }
+    @keyframes wn-v11-glow {
+      0%, 85%, 100% { filter: drop-shadow(0 0 18px rgba(129,140,248,.45)); }
+      45%           { filter: drop-shadow(0 0 28px rgba(165,180,252,.85)) drop-shadow(0 0 40px rgba(139,92,246,.35)); }
+    }
+    @keyframes wn-v11-rise {
+      0%, 80%, 100% { transform: translateY(0); }
+      40%           { transform: translateY(-4px); }
+    }
+    @keyframes wn-v11-dotpulse {
+      0%, 85%, 100% { transform: scale(1); box-shadow: 0 0 12px rgba(251,191,36,.7); }
+      45%           { transform: scale(1.25); box-shadow: 0 0 18px rgba(251,191,36,1); }
+    }
+    @keyframes wn-v11-labelin {
+      0%, 90%, 100% { opacity: .9; transform: translateX(-50%) translateY(0); }
+      45%           { opacity: 1;  transform: translateX(-50%) translateY(-1px); }
+    }
+    @keyframes wn-v11-pip {
+      0%, 85%, 100% { opacity: 1; transform: scale(1); }
+      45%           { opacity: .55; transform: scale(.85); }
+    }
+    
     @media (max-width: 575.98px) {
-        .wn-polish { inset: 10px; gap: 7px; }
-        .wn-polish-card { padding: 7px 7px 8px; gap: 6px; border-radius: 8px; }
-        .wn-polish-label { font-size: .54rem; gap: 4px; }
-        .wn-polish-label i { font-size: .66rem; }
-        .wn-polish-logo { width: 22px; height: 22px; font-size: .7rem; }
-        .wn-polish-row { height: 4px; }
-        .wn-polish-strip { width: 4px; }
-        .wn-polish-appt-name { height: 5px; }
-        .wn-polish-appt-time { height: 4px; }
-        .wn-polish-input { height: 18px; font-size: .58rem; }
-        .wn-polish-input i { font-size: .66rem; }
-        .wn-polish-warn { font-size: .5rem; padding: 2px 5px; }
-        .wn-polish-warn i { font-size: .58rem; }
-        .wn-polish-warn-text { width: 44px; height: 3px; }
-        .wn-polish-ok { font-size: .54rem; padding: 2px 5px; top: 22px; }
-        .wn-polish-ok i { font-size: .62rem; }
+      .wn-v11-burst { width: 280px; height: 280px; }
+      .wn-v11-ring-a { width: 120px; height: 120px; }
+      .wn-v11-ring-b { width: 170px; height: 170px; }
+      .wn-v11-ring-c { width: 220px; height: 220px; }
+      .wn-v11-number { font-size: 52px; }
+      .wn-v11-label { top: 14px; font-size: 9px; padding: 3px 8px; }
+      .wn-v11-tag   { bottom: 12px; font-size: 9px; padding: 3px 8px; }
+      .wn-v11-dot   { width: 6px; height: 6px; margin: 0 1px 4px; }
+    }
 
-        .wn-perf { inset: 10px; padding: 10px 12px; gap: 7px; }
-        .wn-perf-title { font-size: .78rem; }
-        .wn-perf-delta { font-size: .65rem; padding: 1px 6px; }
-        .wn-perf-race { grid-template-columns: 44px 1fr 32px; gap: 6px; }
-        .wn-perf-label { font-size: .6rem; }
-        .wn-perf-time { font-size: .65rem; }
-        .wn-perf-chip { font-size: .6rem; padding: 2px 6px; }
-        .wn-perf-chip i { font-size: .68rem; }
+    /* ===== wn-notif — A redesigned notification center ===== */
+    .wn-notif-bg{position:absolute;inset:0;background:radial-gradient(120% 80% at 80% 0%,rgba(99,102,241,.22),transparent 60%),radial-gradient(80% 60% at 10% 100%,rgba(139,92,246,.16),transparent 60%);}
+    .wn-notif-orb{position:absolute;border-radius:50%;filter:blur(18px);opacity:.55;}
+    .wn-notif-orb-1{width:90px;height:90px;top:-20px;left:-20px;background:#6366f1;}
+    .wn-notif-orb-2{width:70px;height:70px;bottom:-20px;right:30%;background:#8b5cf6;}
+    .wn-notif-bell{position:absolute;top:10px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(30,41,59,.85);border:1px solid rgba(148,163,184,.25);display:flex;align-items:center;justify-content:center;color:#a5b4fc;font-size:13px;z-index:1;animation:wn-notif-ring 6s ease-in-out infinite;}
+    .wn-notif-badge{position:absolute;top:-4px;right:-4px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;background:#ef4444;color:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1.5px solid #0f172a;}
+    .wn-notif-panel{position:absolute;top:8px;right:8px;width:300px;border-radius:12px;background:linear-gradient(160deg,rgba(30,41,59,.92),rgba(15,23,42,.88));border:1px solid rgba(148,163,184,.22);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.05);padding:8px;transform-origin:top right;animation:wn-notif-pop 6s ease-in-out infinite;z-index:2;}
+    .wn-notif-head{display:flex;justify-content:space-between;align-items:center;padding:2px 4px 6px;border-bottom:1px solid rgba(148,163,184,.14);margin-bottom:6px;}
+    .wn-notif-title{color:#e2e8f0;font-size:10px;font-weight:600;display:flex;align-items:center;gap:5px;}
+    .wn-notif-title i{color:#a5b4fc;font-size:10px;}
+    .wn-notif-count{color:#a5b4fc;font-size:8px;font-weight:600;padding:2px 6px;border-radius:8px;background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.3);}
+    .wn-notif-bucket{color:#94a3b8;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:3px 4px 2px;}
+    .wn-notif-row{position:relative;display:flex;align-items:center;gap:7px;padding:5px 6px;border-radius:8px;background:rgba(15,23,42,.5);border:1px solid rgba(148,163,184,.08);margin-bottom:3px;overflow:hidden;}
+    .wn-notif-row-hover{animation:wn-notif-rowhi 6s ease-in-out infinite;}
+    .wn-notif-dot{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;flex-shrink:0;}
+    .wn-notif-dot-indigo{background:linear-gradient(135deg,#6366f1,#4F46E5);}
+    .wn-notif-dot-amber{background:linear-gradient(135deg,#f59e0b,#fbbf24);}
+    .wn-notif-dot-green{background:linear-gradient(135deg,#10b981,#6ee7b7);}
+    .wn-notif-body{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0;}
+    .wn-notif-line{height:4px;border-radius:2px;background:linear-gradient(90deg,rgba(226,232,240,.55),rgba(226,232,240,.15));}
+    .wn-notif-line-1{width:70%;}
+    .wn-notif-line-2{width:90%;background:linear-gradient(90deg,rgba(148,163,184,.4),rgba(148,163,184,.1));}
+    .wn-notif-line-short{width:55%;}
+    .wn-notif-time{color:#94a3b8;font-size:7.5px;font-weight:600;flex-shrink:0;}
+    .wn-notif-actions{position:absolute;right:4px;top:50%;transform:translateY(-50%) translateX(6px);display:flex;gap:3px;opacity:0;animation:wn-notif-act 6s ease-in-out infinite;}
+    .wn-notif-chip{width:18px;height:18px;border-radius:6px;background:rgba(30,41,59,.95);border:1px solid rgba(148,163,184,.25);color:#a5b4fc;display:flex;align-items:center;justify-content:center;font-size:9px;box-shadow:0 2px 6px rgba(0,0,0,.4);}
+    .wn-notif-chip-red{color:#fca5a5;border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.12);}
+    .wn-notif-dock{display:flex;justify-content:space-between;align-items:center;gap:4px;margin-top:6px;padding:5px 6px;border-radius:8px;background:linear-gradient(180deg,rgba(15,23,42,.7),rgba(15,23,42,.4));border:1px solid rgba(148,163,184,.12);}
+    .wn-notif-dbtn{width:22px;height:22px;border-radius:50%;background:rgba(99,102,241,.15);border:1px solid rgba(165,180,252,.25);color:#a5b4fc;display:flex;align-items:center;justify-content:center;font-size:10px;animation:wn-notif-dbtn 6s ease-in-out infinite;}
+    .wn-notif-dbtn:nth-child(1){animation-delay:0s;}
+    .wn-notif-dbtn:nth-child(2){animation-delay:.15s;}
+    .wn-notif-dbtn:nth-child(3){animation-delay:.3s;}
+    .wn-notif-dbtn:nth-child(4){animation-delay:.45s;}
+    .wn-notif-dbtn:nth-child(5){animation-delay:.6s;}
+    .wn-notif-dbtn:nth-child(6){animation-delay:.75s;}
+    @keyframes wn-notif-pop{0%{opacity:0;transform:translate(20px,-12px) scale(.9);}10%,90%{opacity:1;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(20px,-12px) scale(.9);}}
+    @keyframes wn-notif-ring{0%,12%,100%{transform:rotate(0);}15%{transform:rotate(-14deg);}18%{transform:rotate(12deg);}21%{transform:rotate(-8deg);}24%{transform:rotate(0);}}
+    @keyframes wn-notif-rowhi{0%,30%{background:rgba(15,23,42,.5);border-color:rgba(148,163,184,.08);}45%,75%{background:rgba(99,102,241,.14);border-color:rgba(99,102,241,.3);}90%,100%{background:rgba(15,23,42,.5);border-color:rgba(148,163,184,.08);}}
+    @keyframes wn-notif-act{0%,30%{opacity:0;transform:translateY(-50%) translateX(6px);}45%,75%{opacity:1;transform:translateY(-50%) translateX(0);}90%,100%{opacity:0;transform:translateY(-50%) translateX(6px);}}
+    @keyframes wn-notif-dbtn{0%,80%,100%{transform:translateY(0);background:rgba(99,102,241,.15);color:#a5b4fc;}40%{transform:translateY(-2px);background:rgba(99,102,241,.3);color:#e2e8f0;box-shadow:0 4px 10px rgba(99,102,241,.3);}}
+    @media (max-width:575.98px){.wn-notif-panel{width:84%;right:6px;top:6px;padding:6px;}.wn-notif-bell{top:8px;right:8px;width:24px;height:24px;font-size:11px;}.wn-notif-dot{width:16px;height:16px;font-size:8px;}.wn-notif-chip{width:16px;height:16px;font-size:8px;}.wn-notif-dbtn{width:20px;height:20px;font-size:9px;}.wn-notif-title{font-size:9px;}.wn-notif-count{font-size:7px;}.wn-notif-bucket{font-size:7px;}.wn-notif-time{font-size:7px;}}
 
-        .wn-crumb-scene { gap: 10px; padding: 12px; }
-        .wn-crumb-track { min-width: 160px; max-width: 240px; height: 20px; }
-        .wn-crumb-route { font-size: .72rem; gap: 5px; }
-        .wn-crumb-back { width: 26px; height: 26px; flex-basis: 26px; font-size: .82rem; }
-        .wn-crumb-pill { padding: 5px 12px 5px 5px; }
-        .wn-crumb-tag { font-size: .6rem; padding: 2px 6px; }
+    /* ===== wn-todo — Smart, multi-list to-dos ===== */
+    .wn-todo-scene{position:absolute;inset:0;padding:12px 14px;display:flex;flex-direction:column;gap:8px;font-family:inherit}
+    
+    /* ---- list rail ---- */
+    .wn-todo-rail{display:flex;gap:6px;overflow:hidden;flex-wrap:nowrap}
+    .wn-todo-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:999px;font-size:10.5px;font-weight:600;letter-spacing:.1px;color:#cbd5e1;background:rgba(30,41,59,.85);border:1px solid rgba(148,163,184,.2);white-space:nowrap}
+    .wn-todo-chip i{font-size:10px;opacity:.85}
+    .wn-todo-chip-indigo{color:#a5b4fc;border-color:rgba(129,140,248,.35)}
+    .wn-todo-chip-amber{color:#fbbf24;border-color:rgba(245,158,11,.3)}
+    .wn-todo-chip-cyan{color:#38bdf8;border-color:rgba(56,189,248,.3)}
+    .wn-todo-chip-active{color:#fff;background:linear-gradient(135deg,#ec4899,#f43f5e);border-color:rgba(236,72,153,.55);box-shadow:0 4px 14px -4px rgba(236,72,153,.55);animation:wn-todo-chip-pulse 4s ease-in-out infinite}
+    @keyframes wn-todo-chip-pulse{0%,80%,100%{box-shadow:0 4px 14px -4px rgba(236,72,153,.55)}40%{box-shadow:0 4px 18px -2px rgba(236,72,153,.85)}}
+    
+    /* ---- progress card ---- */
+    .wn-todo-card{background:linear-gradient(135deg,rgba(236,72,153,.18),rgba(244,63,94,.08));border:1px solid rgba(236,72,153,.28);border-radius:11px;padding:8px 10px 9px;backdrop-filter:blur(8px)}
+    .wn-todo-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+    .wn-todo-card-title{display:inline-flex;align-items:center;gap:5px;color:#fde68a;font-size:11px;font-weight:700;letter-spacing:.15px}
+    .wn-todo-card-title i{color:#fbbf24;font-size:12px;animation:wn-todo-sparkle 3.6s ease-in-out infinite}
+    @keyframes wn-todo-sparkle{0%,80%,100%{transform:rotate(0) scale(1);opacity:1}40%{transform:rotate(15deg) scale(1.18);opacity:.9}}
+    .wn-todo-badge{font-size:9.5px;font-weight:700;color:#fda4af;background:rgba(15,23,42,.55);border:1px solid rgba(236,72,153,.35);padding:2px 7px;border-radius:999px;letter-spacing:.3px}
+    .wn-todo-badge-num{color:#fff}
+    .wn-todo-bar{height:6px;background:rgba(15,23,42,.6);border-radius:999px;overflow:hidden;position:relative}
+    .wn-todo-bar-fill{position:absolute;inset:0 auto 0 0;width:75%;background:linear-gradient(90deg,#f43f5e,#ec4899,#fbbf24);border-radius:999px;animation:wn-todo-fill 4s ease-in-out infinite;box-shadow:0 0 10px rgba(236,72,153,.55)}
+    @keyframes wn-todo-fill{0%,40%{width:75%}55%,80%{width:100%}90%{width:100%}100%{width:75%}}
+    
+    /* ---- task rows ---- */
+    .wn-todo-tasks{display:flex;flex-direction:column;gap:5px;margin-top:1px}
+    .wn-todo-row{display:flex;align-items:center;gap:8px;padding:5px 9px;background:rgba(30,41,59,.7);border:1px solid rgba(148,163,184,.14);border-radius:9px;font-size:11px;color:#e2e8f0;min-height:24px}
+    .wn-todo-check{width:15px;height:15px;border-radius:50%;border:1.5px solid rgba(148,163,184,.55);flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;color:transparent;font-size:10px;transition:none}
+    .wn-todo-check-static{background:linear-gradient(135deg,#10b981,#6ee7b7);border-color:#10b981;color:#0f172a}
+    .wn-todo-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;position:relative}
+    .wn-todo-title-struck{color:#94a3b8}
+    .wn-todo-title-struck::after{content:"";position:absolute;left:0;right:0;top:50%;height:1.5px;background:#94a3b8;border-radius:1px}
+    
+    /* checking-off row */
+    .wn-todo-row-anim{position:relative;overflow:hidden}
+    .wn-todo-row-anim::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(236,72,153,.18),transparent 60%);opacity:0;animation:wn-todo-glow 4s ease-in-out infinite;pointer-events:none}
+    @keyframes wn-todo-glow{0%,40%{opacity:0}55%,75%{opacity:1}90%,100%{opacity:0}}
+    .wn-todo-check-anim{animation:wn-todo-check 4s ease-in-out infinite}
+    @keyframes wn-todo-check{0%,40%{background:transparent;border-color:rgba(148,163,184,.55);color:transparent;transform:scale(1)}50%{transform:scale(1.25)}55%,80%{background:linear-gradient(135deg,#10b981,#6ee7b7);border-color:#10b981;color:#0f172a;transform:scale(1)}92%{background:transparent;border-color:rgba(148,163,184,.55);color:transparent;transform:scale(1)}100%{background:transparent;border-color:rgba(148,163,184,.55);color:transparent}}
+    .wn-todo-title-anim{position:relative}
+    .wn-todo-title-anim::after{content:"";position:absolute;left:0;top:50%;height:1.5px;background:#94a3b8;border-radius:1px;width:0;animation:wn-todo-strike 4s ease-in-out infinite}
+    @keyframes wn-todo-strike{0%,50%{width:0;opacity:1}55%{width:0;opacity:1}75%,85%{width:100%;opacity:1}92%{width:100%;opacity:0}100%{width:0;opacity:1}}
+    .wn-todo-row-anim .wn-todo-title-anim{animation:wn-todo-fade 4s ease-in-out infinite}
+    @keyframes wn-todo-fade{0%,50%{color:#e2e8f0}75%,88%{color:#94a3b8}100%{color:#e2e8f0}}
+    
+    /* ---- mobile ---- */
+    @media (max-width:575.98px){
+      .wn-todo-scene{padding:9px 10px;gap:6px}
+      .wn-todo-chip{font-size:9.5px;padding:3px 7px;gap:3px}
+      .wn-todo-chip i{font-size:9px}
+      .wn-todo-card{padding:6px 9px 7px;border-radius:10px}
+      .wn-todo-card-title{font-size:10px}
+      .wn-todo-badge{font-size:9px;padding:1px 6px}
+      .wn-todo-bar{height:5px}
+      .wn-todo-row{padding:4px 8px;font-size:10px;min-height:22px;border-radius:8px}
+      .wn-todo-check{width:13px;height:13px;font-size:9px}
+      .wn-todo-tasks{gap:4px}
+    }
 
-        .wn-forum { inset: 10px; gap: 8px; }
-        .wn-forum-dock { padding: 8px; gap: 6px; }
-        .wn-forum-dock-item { font-size: .56rem; padding: 6px 2px; }
-        .wn-forum-dock-item > i { font-size: .95rem; }
-        .wn-forum-tile { font-size: .56rem; }
-        .wn-forum-tile > i { font-size: .95rem; }
-        .wn-forum-status { font-size: .6rem; gap: 6px; }
-        .wn-forum-tag { padding: 3px 7px; }
+    /* ===== wn-pal — A palette for every mood ===== */
+    .wn-pal-scene{
+        position:absolute; inset:0; padding:14px;
+        display:grid; grid-template-columns: 1fr 128px; gap:12px;
+        align-items:center;
+    }
+    .wn-pal-grid{
+        display:grid; grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap:8px; height:100%;
+    }
+    .wn-pal-sw{
+        position:relative; border-radius:10px;
+        background:#1e293b; border:1px solid rgba(148,163,184,.18);
+        display:flex; align-items:center; gap:6px;
+        padding:6px 8px; overflow:hidden;
+        box-shadow: 0 1px 0 rgba(255,255,255,.03) inset;
+    }
+    .wn-pal-sw::after{
+        content:""; position:absolute; inset:-1px; border-radius:11px;
+        border:1.5px solid transparent; pointer-events:none;
+        transition:none;
+    }
+    .wn-pal-dot{
+        width:14px; height:14px; border-radius:50%;
+        flex:0 0 auto;
+        box-shadow: 0 0 0 2px rgba(15,23,42,.6), 0 0 8px rgba(0,0,0,.35);
+    }
+    .wn-pal-lbl{
+        font-size:10px; font-weight:600; letter-spacing:.02em;
+        color:#cbd5e1; white-space:nowrap;
+    }
+    .wn-pal-sw-1 .wn-pal-dot{ background:linear-gradient(135deg,#6366f1,#a5b4fc); }
+    .wn-pal-sw-2 .wn-pal-dot{ background:linear-gradient(135deg,#10b981,#6ee7b7); }
+    .wn-pal-sw-3 .wn-pal-dot{ background:linear-gradient(135deg,#ec4899,#fca5a5); }
+    .wn-pal-sw-4 .wn-pal-dot{ background:linear-gradient(135deg,#64748b,#cbd5e1); }
+    .wn-pal-sw-5 .wn-pal-dot{ background:linear-gradient(135deg,#f59e0b,#fde68a); }
+    .wn-pal-sw-6 .wn-pal-dot{ background:linear-gradient(135deg,#38bdf8,#bfdbfe); }
+    
+    /* highlight ring per swatch — staggered keyframes */
+    .wn-pal-sw-1::after{ animation: wn-pal-ring1 7.2s infinite; }
+    .wn-pal-sw-2::after{ animation: wn-pal-ring2 7.2s infinite; }
+    .wn-pal-sw-3::after{ animation: wn-pal-ring3 7.2s infinite; }
+    .wn-pal-sw-4::after{ animation: wn-pal-ring4 7.2s infinite; }
+    .wn-pal-sw-5::after{ animation: wn-pal-ring5 7.2s infinite; }
+    .wn-pal-sw-6::after{ animation: wn-pal-ring6 7.2s infinite; }
+    
+    @keyframes wn-pal-ring1{ 0%,12%{ border-color:#818cf8; box-shadow:0 0 14px rgba(99,102,241,.55);} 18%,100%{ border-color:transparent; box-shadow:none;} }
+    @keyframes wn-pal-ring2{ 0%,16.66%{ border-color:transparent; box-shadow:none;} 16.67%,28.66%{ border-color:#6ee7b7; box-shadow:0 0 14px rgba(16,185,129,.55);} 34.66%,100%{ border-color:transparent; box-shadow:none;} }
+    @keyframes wn-pal-ring3{ 0%,33.33%{ border-color:transparent; box-shadow:none;} 33.34%,45.33%{ border-color:#fca5a5; box-shadow:0 0 14px rgba(236,72,153,.55);} 51.33%,100%{ border-color:transparent; box-shadow:none;} }
+    @keyframes wn-pal-ring4{ 0%,50%{ border-color:transparent; box-shadow:none;} 50.01%,62%{ border-color:#cbd5e1; box-shadow:0 0 14px rgba(148,163,184,.55);} 68%,100%{ border-color:transparent; box-shadow:none;} }
+    @keyframes wn-pal-ring5{ 0%,66.66%{ border-color:transparent; box-shadow:none;} 66.67%,78.66%{ border-color:#fde68a; box-shadow:0 0 14px rgba(245,158,11,.55);} 84.66%,100%{ border-color:transparent; box-shadow:none;} }
+    @keyframes wn-pal-ring6{ 0%,83.33%{ border-color:transparent; box-shadow:none;} 83.34%,95.33%{ border-color:#bfdbfe; box-shadow:0 0 14px rgba(56,189,248,.55);} 99%,100%{ border-color:transparent; box-shadow:none;} }
+    
+    /* preview card */
+    .wn-pal-preview{
+        background:#1e293b; border:1px solid rgba(148,163,184,.22);
+        border-radius:12px; padding:10px;
+        display:flex; flex-direction:column; gap:8px;
+        height:100%; box-sizing:border-box;
+        box-shadow: 0 6px 18px rgba(0,0,0,.35);
+    }
+    .wn-pal-prev-head{ display:flex; align-items:center; gap:8px; }
+    .wn-pal-prev-avatar{
+        width:22px; height:22px; border-radius:50%;
+        display:flex; align-items:center; justify-content:center;
+        color:#0f172a; font-size:13px;
+        background:#818cf8;
+        animation: wn-pal-accent-bg 7.2s infinite;
+    }
+    .wn-pal-prev-lines{ display:flex; flex-direction:column; gap:3px; flex:1; }
+    .wn-pal-prev-l1{ height:6px; width:70%; border-radius:3px; background:#334155; }
+    .wn-pal-prev-l2{ height:5px; width:45%; border-radius:3px; background:#273449; }
+    .wn-pal-prev-bar{
+        height:6px; border-radius:3px; background:#273449; overflow:hidden;
+    }
+    .wn-pal-prev-bar-fill{
+        display:block; height:100%; width:62%; border-radius:3px;
+        background:linear-gradient(90deg,#6366f1,#818cf8);
+        animation: wn-pal-accent-bar 7.2s infinite;
+    }
+    .wn-pal-prev-row{ display:flex; align-items:center; justify-content:space-between; gap:6px; }
+    .wn-pal-prev-chip{
+        font-size:9px; font-weight:600; padding:3px 6px;
+        border-radius:999px;
+        background:rgba(99,102,241,.18); color:#a5b4fc;
+        border:1px solid rgba(99,102,241,.45);
+        display:inline-flex; align-items:center; gap:3px;
+        animation: wn-pal-accent-chip 7.2s infinite;
+    }
+    .wn-pal-prev-btn{
+        font-size:10px; font-weight:700; padding:4px 9px;
+        border-radius:6px; color:#fff;
+        background:#6366f1;
+        box-shadow: 0 4px 10px rgba(99,102,241,.45);
+        animation: wn-pal-accent-btn 7.2s infinite;
+    }
+    
+    /* accent cycling — avatar + bar + chip + button share the schedule */
+    @keyframes wn-pal-accent-bg{
+        0%,12%   { background:#818cf8; }
+        16.67%,28.66% { background:#6ee7b7; }
+        33.34%,45.33% { background:#fca5a5; }
+        50.01%,62%    { background:#cbd5e1; }
+        66.67%,78.66% { background:#fde68a; }
+        83.34%,95.33% { background:#bfdbfe; }
+        100% { background:#818cf8; }
+    }
+    @keyframes wn-pal-accent-bar{
+        0%,12%   { background:linear-gradient(90deg,#6366f1,#818cf8); }
+        16.67%,28.66% { background:linear-gradient(90deg,#10b981,#6ee7b7); }
+        33.34%,45.33% { background:linear-gradient(90deg,#ec4899,#fca5a5); }
+        50.01%,62%    { background:linear-gradient(90deg,#64748b,#cbd5e1); }
+        66.67%,78.66% { background:linear-gradient(90deg,#f59e0b,#fde68a); }
+        83.34%,95.33% { background:linear-gradient(90deg,#38bdf8,#bfdbfe); }
+        100% { background:linear-gradient(90deg,#6366f1,#818cf8); }
+    }
+    @keyframes wn-pal-accent-chip{
+        0%,12%   { background:rgba(99,102,241,.18); color:#a5b4fc; border-color:rgba(99,102,241,.45); }
+        16.67%,28.66% { background:rgba(16,185,129,.18); color:#6ee7b7; border-color:rgba(16,185,129,.45); }
+        33.34%,45.33% { background:rgba(236,72,153,.18); color:#fca5a5; border-color:rgba(236,72,153,.45); }
+        50.01%,62%    { background:rgba(148,163,184,.18); color:#cbd5e1; border-color:rgba(148,163,184,.45); }
+        66.67%,78.66% { background:rgba(245,158,11,.18); color:#fde68a; border-color:rgba(245,158,11,.45); }
+        83.34%,95.33% { background:rgba(56,189,248,.18); color:#bfdbfe; border-color:rgba(56,189,248,.45); }
+        100% { background:rgba(99,102,241,.18); color:#a5b4fc; border-color:rgba(99,102,241,.45); }
+    }
+    @keyframes wn-pal-accent-btn{
+        0%,12%   { background:#6366f1; box-shadow:0 4px 10px rgba(99,102,241,.45); }
+        16.67%,28.66% { background:#10b981; box-shadow:0 4px 10px rgba(16,185,129,.45); }
+        33.34%,45.33% { background:#ec4899; box-shadow:0 4px 10px rgba(236,72,153,.45); }
+        50.01%,62%    { background:#64748b; box-shadow:0 4px 10px rgba(100,116,139,.45); color:#0f172a;}
+        66.67%,78.66% { background:#f59e0b; box-shadow:0 4px 10px rgba(245,158,11,.45); color:#0f172a;}
+        83.34%,95.33% { background:#38bdf8; box-shadow:0 4px 10px rgba(56,189,248,.45); color:#0f172a;}
+        100% { background:#6366f1; box-shadow:0 4px 10px rgba(99,102,241,.45); color:#fff; }
+    }
+    
+    @media (max-width: 575.98px){
+        .wn-pal-scene{ padding:10px; gap:8px; grid-template-columns: 1fr 108px; }
+        .wn-pal-lbl{ font-size:9px; }
+        .wn-pal-dot{ width:12px; height:12px; }
+        .wn-pal-sw{ padding:5px 6px; gap:5px; }
+        .wn-pal-prev-btn{ font-size:9px; padding:3px 7px; }
+        .wn-pal-prev-chip{ font-size:8px; }
+    }
 
-        .wn-bv2-head { top: 9px; font-size: .65rem; }
-        .wn-bv2-logo { width: 19px; height: 19px; font-size: .65rem; }
-        .wn-bv2-auto { padding: 3px 7px; font-size: .58rem; }
-        .wn-bv2-cols { bottom: 10px; height: 72px; gap: 6px; }
-        .wn-bv2-card { top: 36px; left: 22px; width: 76px; height: 28px; padding: 5px 7px; }
-        .wn-bv2-note { width: 122px; top: 34px; right: 10px; padding: 6px 7px; }
-        .wn-bv2-chip { font-size: .5rem; padding: 1px 4px; }
-        .wn-bv2-btn { font-size: .52rem; padding: 2px 3px; }
+    /* ===== wn-sched — Dark by night, light by day ===== */
+    .wn-sched-stage { isolation: isolate; }
+    
+    /* ---- Sky half (left) ---- */
+    .wn-sched-sky {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, #0b1228 0%, #0f172a 55%, #111a32 100%);
+      animation: wn-sched-sky 12s ease-in-out infinite;
+    }
+    .wn-sched-sky::after {
+      content: ""; position: absolute; inset: 0;
+      background:
+        radial-gradient(120% 60% at 20% 110%, rgba(99,102,241,.25), transparent 60%),
+        radial-gradient(80% 50% at 80% -10%, rgba(139,92,246,.18), transparent 70%);
+      pointer-events: none;
+    }
+    .wn-sched-horizon {
+      position: absolute; left: 0; right: 0; bottom: 0; height: 38%;
+      background: linear-gradient(180deg, rgba(15,23,42,0) 0%, rgba(15,23,42,.55) 70%, rgba(2,6,23,.85) 100%);
+    }
+    .wn-sched-stars {
+      position: absolute; inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 12% 22%, #e2e8f0 99%, transparent),
+        radial-gradient(1px 1px at 28% 14%, #cbd5e1 99%, transparent),
+        radial-gradient(1px 1px at 44% 30%, #e2e8f0 99%, transparent),
+        radial-gradient(1px 1px at 18% 48%, #a5b4fc 99%, transparent),
+        radial-gradient(1px 1px at 36% 56%, #cbd5e1 99%, transparent),
+        radial-gradient(1px 1px at 6% 36%, #fde68a 99%, transparent);
+      opacity: 0;
+      animation: wn-sched-stars 12s ease-in-out infinite;
+    }
+    .wn-sched-sun, .wn-sched-moon {
+      position: absolute; left: 22%; width: 34px; height: 34px;
+      border-radius: 50%; transform: translate(-50%, -50%);
+      will-change: top, opacity, box-shadow;
+    }
+    .wn-sched-sun {
+      background: radial-gradient(circle at 35% 35%, #fde68a, #fbbf24 55%, #f59e0b 100%);
+      box-shadow: 0 0 24px rgba(251,191,36,.55), 0 0 48px rgba(245,158,11,.35);
+      animation: wn-sched-sun 12s ease-in-out infinite;
+    }
+    .wn-sched-moon {
+      background: radial-gradient(circle at 35% 35%, #f1f5f9, #cbd5e1 60%, #94a3b8 100%);
+      box-shadow: 0 0 18px rgba(165,180,252,.45), inset -6px -2px 0 rgba(15,23,42,.55);
+      animation: wn-sched-moon 12s ease-in-out infinite;
+    }
+    
+    /* ---- Clock (right) ---- */
+    .wn-sched-clock {
+      position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+      width: 104px; height: 104px;
+      background: radial-gradient(circle at 50% 45%, #1e293b 0%, #0f172a 80%);
+      border: 1px solid rgba(148,163,184,.28);
+      border-radius: 50%;
+      box-shadow: 0 10px 24px rgba(0,0,0,.45), inset 0 0 22px rgba(99,102,241,.18);
+    }
+    .wn-sched-dial { position: absolute; inset: 0; }
+    .wn-sched-tick {
+      position: absolute; left: 50%; top: 50%;
+      width: 2px; height: 7px; margin-left: -1px;
+      background: rgba(203,213,225,.7); border-radius: 1px;
+    }
+    .wn-sched-t12 { transform: translate(0, -46px); }
+    .wn-sched-t3  { transform: translate(0, -46px) rotate(90deg); transform-origin: 50% 46px; }
+    .wn-sched-t6  { transform: translate(0, -46px) rotate(180deg); transform-origin: 50% 46px; }
+    .wn-sched-t9  { transform: translate(0, -46px) rotate(270deg); transform-origin: 50% 46px; }
+    .wn-sched-hand {
+      position: absolute; left: 50%; top: 50%;
+      width: 3px; height: 36px; margin-left: -1.5px;
+      background: linear-gradient(180deg, #a5b4fc, #6366f1);
+      border-radius: 2px;
+      transform-origin: 50% 100%;
+      transform: translateY(-100%) rotate(0deg);
+      box-shadow: 0 0 8px rgba(99,102,241,.55);
+      animation: wn-sched-hand 12s linear infinite;
+    }
+    .wn-sched-pivot {
+      position: absolute; left: 50%; top: 50%;
+      width: 8px; height: 8px; margin: -4px 0 0 -4px;
+      border-radius: 50%;
+      background: #fbbf24;
+      box-shadow: 0 0 0 2px #0f172a, 0 0 10px rgba(251,191,36,.7);
+    }
+    
+    /* ---- Time chips ---- */
+    .wn-sched-chip {
+      position: absolute; left: 12px;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 8px; border-radius: 999px;
+      font-size: 10px; font-weight: 600; letter-spacing: .02em;
+      background: rgba(30,41,59,.85);
+      border: 1px solid rgba(148,163,184,.22);
+      backdrop-filter: blur(4px);
+      color: #e2e8f0;
+    }
+    .wn-sched-chip i { font-size: 11px; line-height: 1; }
+    .wn-sched-chip-day { top: 14px; color: #fde68a; border-color: rgba(251,191,36,.35); }
+    .wn-sched-chip-day i { color: #fbbf24; }
+    .wn-sched-chip-night { bottom: 14px; color: #bfdbfe; border-color: rgba(99,102,241,.4); }
+    .wn-sched-chip-night i { color: #a5b4fc; }
+    
+    /* ---- Auto toggle ---- */
+    .wn-sched-toggle {
+      position: absolute; right: 12px; top: 10px;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 8px 3px 8px; border-radius: 999px;
+      background: rgba(15,23,42,.75);
+      border: 1px solid rgba(99,102,241,.45);
+      font-size: 9.5px; font-weight: 700; letter-spacing: .04em;
+      color: #c7d2fe; text-transform: uppercase;
+      box-shadow: 0 0 0 1px rgba(99,102,241,.15), 0 6px 14px rgba(0,0,0,.35);
+    }
+    .wn-sched-toggle-track {
+      position: relative; width: 22px; height: 12px; border-radius: 999px;
+      background: linear-gradient(90deg, #6366f1, #818cf8);
+      box-shadow: inset 0 0 4px rgba(15,23,42,.4);
+    }
+    .wn-sched-toggle-knob {
+      position: absolute; top: 1.5px; left: 11px;
+      width: 9px; height: 9px; border-radius: 50%;
+      background: #f8fafc;
+      box-shadow: 0 1px 2px rgba(0,0,0,.4);
+      animation: wn-sched-knob 12s ease-in-out infinite;
+    }
+    .wn-sched-toggle-state { color: #6ee7b7; }
+    
+    /* ---- Keyframes ---- */
+    @keyframes wn-sched-sky {
+      0%, 100% { background: linear-gradient(180deg, #0b1228 0%, #0f172a 55%, #111a32 100%); }
+      20%      { background: linear-gradient(180deg, #2a1f4a 0%, #6b3a6e 55%, #f59e0b 100%); }
+      40%      { background: linear-gradient(180deg, #1e3a8a 0%, #3b82f6 55%, #bfdbfe 100%); }
+      60%      { background: linear-gradient(180deg, #60a5fa 0%, #38bdf8 55%, #fde68a 100%); }
+      80%      { background: linear-gradient(180deg, #4c1d6b 0%, #8b5cf6 50%, #ef4444 100%); }
+    }
+    @keyframes wn-sched-stars {
+      0%, 100% { opacity: .85; }
+      20%      { opacity: .35; }
+      40%, 60% { opacity: 0; }
+      80%      { opacity: .4; }
+    }
+    @keyframes wn-sched-sun {
+      0%, 100% { top: 115%; opacity: 0; }
+      20%      { top: 70%;  opacity: .9; }
+      40%, 60% { top: 32%;  opacity: 1; }
+      80%      { top: 70%;  opacity: .85; }
+    }
+    @keyframes wn-sched-moon {
+      0%, 100% { top: 30%; opacity: 1; }
+      20%      { top: 70%; opacity: .4; }
+      40%, 60% { top: 115%; opacity: 0; }
+      80%      { top: 70%; opacity: .45; }
+    }
+    @keyframes wn-sched-hand {
+      0%   { transform: translateY(-100%) rotate(0deg); }
+      100% { transform: translateY(-100%) rotate(360deg); }
+    }
+    @keyframes wn-sched-knob {
+      0%, 100% { left: 11px; background: #f8fafc; }
+      50%      { left: 11px; background: #f0fdf4; }
+    }
+    
+    /* ---- Mobile safety ---- */
+    @media (max-width: 575.98px) {
+      .wn-sched-clock { width: 86px; height: 86px; right: 12px; }
+      .wn-sched-hand { height: 30px; }
+      .wn-sched-t12, .wn-sched-t3, .wn-sched-t6, .wn-sched-t9 { transform: translate(0, -38px); }
+      .wn-sched-t3 { transform: translate(0, -38px) rotate(90deg); transform-origin: 50% 38px; }
+      .wn-sched-t6 { transform: translate(0, -38px) rotate(180deg); transform-origin: 50% 38px; }
+      .wn-sched-t9 { transform: translate(0, -38px) rotate(270deg); transform-origin: 50% 38px; }
+      .wn-sched-chip { font-size: 9px; padding: 3px 6px; }
+      .wn-sched-toggle { font-size: 9px; padding: 2px 6px; }
+      .wn-sched-sun, .wn-sched-moon { width: 28px; height: 28px; left: 20%; }
+    }
+
+    /* ===== wn-cmdk — Cmd+K, anywhere ===== */
+    .wn-cmdk-scene {
+      position: absolute;
+      inset: 0;
+      padding: 12px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow: hidden;
+    }
+    
+    /* ⌘ K chip at the top */
+    .wn-cmdk-kbd {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #1e293b, #0f172a);
+      border: 1px solid rgba(165,180,252,.35);
+      box-shadow: 0 4px 14px rgba(99,102,241,.35), inset 0 1px 0 rgba(255,255,255,.06);
+      color: #e2e8f0;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .3px;
+      animation: wn-cmdk-pulse 4.5s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    .wn-cmdk-key {
+      display: inline-block;
+      min-width: 16px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: rgba(99,102,241,.18);
+      border: 1px solid rgba(165,180,252,.4);
+      color: #c7d2fe;
+      font-size: 11px;
+      line-height: 1.1;
+      text-align: center;
+    }
+    .wn-cmdk-plus {
+      color: #94a3b8;
+      font-size: 10px;
+    }
+    
+    /* Modal */
+    .wn-cmdk-modal {
+      width: 86%;
+      max-width: 340px;
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(30,41,59,.95), rgba(15,23,42,.95));
+      border: 1px solid rgba(129,140,248,.45);
+      box-shadow: 0 12px 30px rgba(0,0,0,.45), 0 0 0 1px rgba(99,102,241,.15), inset 0 1px 0 rgba(255,255,255,.04);
+      overflow: hidden;
+      transform-origin: top center;
+      animation: wn-cmdk-modal 4.5s ease-in-out infinite;
+      min-width: 0;
+    }
+    
+    /* Input row */
+    .wn-cmdk-input {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-bottom: 1px solid rgba(148,163,184,.18);
+      background: rgba(15,23,42,.5);
+      position: relative;
+      font-size: 11px;
+      color: #e2e8f0;
+    }
+    .wn-cmdk-search {
+      color: #818cf8;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    .wn-cmdk-typed {
+      position: relative;
+      font-weight: 600;
+      letter-spacing: .3px;
+      color: #e2e8f0;
+      white-space: pre;
+      display: inline-block;
+      min-width: 28px;
+    }
+    .wn-cmdk-typed::before {
+      content: "";
+      animation: wn-cmdk-type 4.5s steps(1, end) infinite;
+    }
+    .wn-cmdk-caret {
+      display: inline-block;
+      width: 1.5px;
+      height: 11px;
+      background: #a5b4fc;
+      margin-left: -2px;
+      animation: wn-cmdk-caret 0.9s steps(1, end) infinite;
+      flex-shrink: 0;
+    }
+    .wn-cmdk-enter {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: rgba(99,102,241,.18);
+      border: 1px solid rgba(165,180,252,.45);
+      color: #c7d2fe;
+      font-size: 10px;
+      font-weight: 600;
+      opacity: 0;
+      animation: wn-cmdk-enter 4.5s ease-in-out infinite;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .wn-cmdk-enter .bi { font-size: 10px; }
+    
+    /* Result list */
+    .wn-cmdk-list {
+      list-style: none;
+      margin: 0;
+      padding: 5px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .wn-cmdk-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      color: #cbd5e1;
+      background: transparent;
+      border: 1px solid transparent;
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    .wn-cmdk-rico {
+      font-size: 13px;
+      color: #94a3b8;
+      flex-shrink: 0;
+    }
+    .wn-cmdk-rtxt {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .wn-cmdk-rtxt b {
+      color: #fde68a;
+      font-weight: 700;
+      background: rgba(245,158,11,.12);
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+    .wn-cmdk-rtag {
+      font-size: 9px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 999px;
+      letter-spacing: .3px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .wn-cmdk-tag-pt { background: rgba(99,102,241,.18); color: #a5b4fc; border: 1px solid rgba(165,180,252,.3); }
+    .wn-cmdk-tag-ac { background: rgba(16,185,129,.15); color: #6ee7b7; border: 1px solid rgba(110,231,183,.3); }
+    .wn-cmdk-tag-pg { background: rgba(56,189,248,.15); color: #60a5fa; border: 1px solid rgba(96,165,250,.3); }
+    
+    .wn-cmdk-r1 { animation: wn-cmdk-row1 4.5s ease-in-out infinite; }
+    .wn-cmdk-r2 { animation: wn-cmdk-row2 4.5s ease-in-out infinite; }
+    .wn-cmdk-r3 { animation: wn-cmdk-row3 4.5s ease-in-out infinite; }
+    
+    /* Keyframes */
+    @keyframes wn-cmdk-pulse {
+      0%, 8%   { transform: scale(1);    box-shadow: 0 4px 14px rgba(99,102,241,.35), inset 0 1px 0 rgba(255,255,255,.06); }
+      14%      { transform: scale(1.12); box-shadow: 0 6px 22px rgba(129,140,248,.7), inset 0 1px 0 rgba(255,255,255,.1); }
+      22%, 90% { transform: scale(1);    box-shadow: 0 4px 14px rgba(99,102,241,.35), inset 0 1px 0 rgba(255,255,255,.06); }
+      100%     { transform: scale(1);    box-shadow: 0 4px 14px rgba(99,102,241,.35), inset 0 1px 0 rgba(255,255,255,.06); }
+    }
+    
+    @keyframes wn-cmdk-modal {
+      0%       { opacity: 0; transform: translateY(-6px) scale(.94); }
+      10%      { opacity: 0; transform: translateY(-6px) scale(.94); }
+      18%      { opacity: 1; transform: translateY(0) scale(1); }
+      85%      { opacity: 1; transform: translateY(0) scale(1); }
+      95%, 100%{ opacity: 0; transform: translateY(-6px) scale(.94); }
+    }
+    
+    @keyframes wn-cmdk-type {
+      0%, 20%   { content: ""; }
+      28%       { content: "a"; }
+      34%       { content: "ah"; }
+      40%, 90%  { content: "ahm"; }
+      95%, 100% { content: ""; }
+    }
+    
+    @keyframes wn-cmdk-caret {
+      0%, 49%   { opacity: 1; }
+      50%, 99%  { opacity: 0; }
+      100%      { opacity: 1; }
+    }
+    
+    @keyframes wn-cmdk-row1 {
+      0%, 40%   { opacity: 0; transform: translateY(4px); background: transparent; border-color: transparent; }
+      48%       { opacity: 1; transform: translateY(0);   background: transparent; border-color: transparent; }
+      62%       { opacity: 1; transform: translateY(0);   background: rgba(99,102,241,.22); border-color: rgba(165,180,252,.55); box-shadow: 0 0 0 2px rgba(99,102,241,.18); }
+      78%       { opacity: 1; transform: translateY(0);   background: rgba(99,102,241,.35); border-color: rgba(165,180,252,.75); box-shadow: 0 0 0 3px rgba(99,102,241,.28); }
+      86%       { opacity: 1; transform: translateY(0) scale(.98); background: rgba(129,140,248,.45); border-color: rgba(165,180,252,.9); }
+      92%, 100% { opacity: 0; transform: translateY(4px); background: transparent; border-color: transparent; box-shadow: none; }
+    }
+    
+    @keyframes wn-cmdk-row2 {
+      0%, 50%   { opacity: 0; transform: translateY(4px); }
+      58%, 90%  { opacity: 1; transform: translateY(0); }
+      95%, 100% { opacity: 0; transform: translateY(4px); }
+    }
+    
+    @keyframes wn-cmdk-row3 {
+      0%, 58%   { opacity: 0; transform: translateY(4px); }
+      66%, 90%  { opacity: 1; transform: translateY(0); }
+      95%, 100% { opacity: 0; transform: translateY(4px); }
+    }
+    
+    @keyframes wn-cmdk-enter {
+      0%, 60%   { opacity: 0; transform: scale(.9); }
+      68%       { opacity: 1; transform: scale(1); }
+      78%       { opacity: 1; transform: scale(1.12); }
+      86%, 90%  { opacity: 1; transform: scale(1); }
+      95%, 100% { opacity: 0; transform: scale(.9); }
+    }
+    
+    @media (max-width: 575.98px) {
+      .wn-cmdk-scene { padding: 8px 10px 10px; gap: 7px; }
+      .wn-cmdk-modal { width: 94%; }
+      .wn-cmdk-row { padding: 5px 7px; font-size: 10px; }
+      .wn-cmdk-rtag { font-size: 8px; padding: 1px 5px; }
+      .wn-cmdk-input { padding: 6px 8px; font-size: 10px; gap: 4px; }
+      .wn-cmdk-kbd { font-size: 10px; padding: 3px 8px; }
+      .wn-cmdk-typed { min-width: 22px; }
+      .wn-cmdk-enter { padding: 2px 5px; font-size: 9px; }
+    }
+
+    /* ===== wn-kbd — Every shortcut at your fingertips ===== */
+    .wn-kbd-scene {
+      position: absolute; inset: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .wn-kbd-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(99,102,241,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,102,241,.08) 1px, transparent 1px);
+      background-size: 22px 22px;
+      mask-image: radial-gradient(ellipse at 30% 50%, #000 30%, transparent 75%);
+    }
+    .wn-kbd-press {
+      position: absolute;
+      top: 50%; left: 16%;
+      transform: translate(-50%, -50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      animation: wn-kbd-press-fade 6s ease-in-out infinite;
+    }
+    .wn-kbd-presslabel {
+      font-size: 10px; letter-spacing: 2px; color: #94a3b8;
+      text-transform: uppercase; font-weight: 600;
+    }
+    .wn-kbd-chip {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 22px; height: 22px; padding: 0 6px;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 11px; font-weight: 600;
+      color: #e2e8f0;
+      background: linear-gradient(180deg, #1e293b, #0f172a);
+      border: 1px solid rgba(148,163,184,.28);
+      border-radius: 6px;
+      box-shadow: 0 2px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    .wn-kbd-chip-lg {
+      min-width: 44px; height: 44px; font-size: 22px; border-radius: 10px;
+      color: #a5b4fc;
+      background: linear-gradient(180deg, #312e81, #1e1b4b);
+      border-color: rgba(165,180,252,.4);
+      box-shadow: 0 4px 0 #0b0a24, 0 6px 18px rgba(99,102,241,.35),
+        inset 0 1px 0 rgba(255,255,255,.1);
+      animation: wn-kbd-keypress 6s ease-in-out infinite;
+    }
+    .wn-kbd-ripple {
+      position: absolute; bottom: -6px; left: 50%;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 2px solid #818cf8;
+      transform: translate(-50%, 0) scale(.4);
+      opacity: 0;
+      animation: wn-kbd-ripple-anim 6s ease-out infinite;
+    }
+    .wn-kbd-modal {
+      position: absolute;
+      top: 50%; right: 14px;
+      transform: translateY(-50%) translateX(40px);
+      width: 248px;
+      background: linear-gradient(180deg, #1e293b, #172033);
+      border: 1px solid rgba(148,163,184,.22);
+      border-radius: 12px;
+      box-shadow: 0 18px 40px rgba(0,0,0,.55), 0 0 0 1px rgba(99,102,241,.08);
+      opacity: 0;
+      animation: wn-kbd-modal-in 6s cubic-bezier(.22,.61,.36,1) infinite;
+      overflow: hidden;
+    }
+    .wn-kbd-modalhead {
+      display: flex; align-items: center; gap: 5px;
+      padding: 7px 10px;
+      border-bottom: 1px solid rgba(148,163,184,.15);
+      background: rgba(15,23,42,.5);
+    }
+    .wn-kbd-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: rgba(148,163,184,.3);
+    }
+    .wn-kbd-dot:nth-child(1) { background: #ef4444; }
+    .wn-kbd-dot:nth-child(2) { background: #f59e0b; }
+    .wn-kbd-dot:nth-child(3) { background: #10b981; }
+    .wn-kbd-title {
+      margin-left: 6px;
+      font-size: 10.5px; font-weight: 600; color: #cbd5e1;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .wn-kbd-title .bi { color: #818cf8; font-size: 11px; }
+    .wn-kbd-list {
+      list-style: none; margin: 0;
+      padding: 6px 10px 8px;
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .wn-kbd-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 4px 6px;
+      border-radius: 6px;
+      opacity: 0;
+      animation: wn-kbd-row-in 6s ease-out infinite;
+      animation-delay: calc(1.1s + var(--wn-kbd-i) * 0.12s);
+    }
+    .wn-kbd-row:nth-child(2) { background: rgba(99,102,241,.1); }
+    .wn-kbd-keys {
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .wn-kbd-plus {
+      font-size: 9px; color: #64748b; font-style: italic;
+      padding: 0 1px;
+    }
+    .wn-kbd-label {
+      font-size: 11px; color: #cbd5e1; font-weight: 500;
+    }
+    
+    @keyframes wn-kbd-keypress {
+      0%, 6% { transform: translateY(0); box-shadow: 0 4px 0 #0b0a24, 0 6px 18px rgba(99,102,241,.35), inset 0 1px 0 rgba(255,255,255,.1); }
+      10%, 18% { transform: translateY(4px); box-shadow: 0 0 0 #0b0a24, 0 2px 12px rgba(99,102,241,.55), inset 0 1px 0 rgba(255,255,255,.1); }
+      24%, 100% { transform: translateY(0); box-shadow: 0 4px 0 #0b0a24, 0 6px 18px rgba(99,102,241,.35), inset 0 1px 0 rgba(255,255,255,.1); }
+    }
+    @keyframes wn-kbd-ripple-anim {
+      0%, 8% { opacity: 0; transform: translate(-50%, 0) scale(.4); }
+      14% { opacity: .8; transform: translate(-50%, 0) scale(.9); }
+      26% { opacity: 0; transform: translate(-50%, 0) scale(1.8); }
+      100% { opacity: 0; transform: translate(-50%, 0) scale(.4); }
+    }
+    @keyframes wn-kbd-press-fade {
+      0%, 18% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      30%, 82% { opacity: .35; transform: translate(-50%, -50%) scale(.92); }
+      94%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+    @keyframes wn-kbd-modal-in {
+      0%, 18% { opacity: 0; transform: translateY(-50%) translateX(40px) scale(.96); }
+      28%, 82% { opacity: 1; transform: translateY(-50%) translateX(0) scale(1); }
+      94%, 100% { opacity: 0; transform: translateY(-50%) translateX(40px) scale(.96); }
+    }
+    @keyframes wn-kbd-row-in {
+      0%, 14% { opacity: 0; transform: translateX(10px); }
+      30%, 80% { opacity: 1; transform: translateX(0); }
+      92%, 100% { opacity: 0; transform: translateX(10px); }
+    }
+    
+    @media (max-width: 575.98px) {
+      .wn-kbd-press { left: 14%; gap: 6px; }
+      .wn-kbd-chip-lg { min-width: 32px; height: 32px; font-size: 15px; border-radius: 8px; }
+      .wn-kbd-ripple { width: 32px; height: 32px; }
+      .wn-kbd-presslabel { font-size: 8px; letter-spacing: 1.2px; }
+      .wn-kbd-modal { width: 122px; right: 6px; border-radius: 10px; }
+      .wn-kbd-modalhead { padding: 5px 7px; gap: 4px; }
+      .wn-kbd-dot { width: 5px; height: 5px; }
+      .wn-kbd-title { font-size: 8px; margin-left: 3px; gap: 3px; }
+      .wn-kbd-title .bi { font-size: 9px; }
+      .wn-kbd-list { padding: 4px 6px 5px; gap: 2px; }
+      .wn-kbd-row { padding: 2px 3px; }
+      .wn-kbd-keys { gap: 3px; }
+      .wn-kbd-label { font-size: 8.5px; }
+      .wn-kbd-chip { min-width: 14px; height: 14px; font-size: 8px; padding: 0 3px; border-radius: 4px; }
+      .wn-kbd-plus { font-size: 7px; padding: 0; }
+    }
+
+    /* ===== wn-pc — A patient summary, just by hovering ===== */
+    .wn-pc-scene {
+      position: absolute; inset: 0;
+      padding: 14px 18px;
+      font-family: inherit;
+    }
+    
+    .wn-pc-row {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: #94a3b8;
+      position: relative;
+      z-index: 2;
+    }
+    .wn-pc-label { letter-spacing: .02em; }
+    .wn-pc-link {
+      color: #a5b4fc;
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(165,180,252,.45);
+      padding-bottom: 1px;
+      font-weight: 600;
+      position: relative;
+      transition: color .25s ease;
+      animation: wn-pc-link-hl 4.6s ease-in-out infinite;
+    }
+    @keyframes wn-pc-link-hl {
+      0%, 14%   { color: #a5b4fc; background: transparent; }
+      20%, 78%  { color: #c7d2fe; background: rgba(99,102,241,.18); box-shadow: 0 0 0 4px rgba(99,102,241,.10); border-radius: 4px; }
+      86%, 100% { color: #a5b4fc; background: transparent; }
+    }
+    
+    .wn-pc-cursor {
+      color: #e2e8f0;
+      font-size: 13px;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
+      position: absolute;
+      left: 110px;
+      top: 14px;
+      transform: rotate(-12deg);
+      animation: wn-pc-cursor-move 4.6s ease-in-out infinite;
+    }
+    @keyframes wn-pc-cursor-move {
+      0%      { left: 175px; top: 26px; opacity: 0; }
+      8%      { left: 175px; top: 26px; opacity: 1; }
+      18%     { left: 112px; top: 14px; opacity: 1; }
+      78%     { left: 112px; top: 14px; opacity: 1; }
+      92%     { left: 175px; top: 26px; opacity: .6; }
+      100%    { left: 175px; top: 26px; opacity: 0; }
+    }
+    
+    .wn-pc-card {
+      position: absolute;
+      left: 18px;
+      top: 44px;
+      right: 18px;
+      background: linear-gradient(180deg, rgba(30,41,59,.96), rgba(15,23,42,.96));
+      border: 1px solid rgba(148,163,184,.22);
+      border-radius: 12px;
+      padding: 10px 12px 11px;
+      box-shadow: 0 14px 30px rgba(0,0,0,.45), 0 0 0 1px rgba(99,102,241,.08);
+      backdrop-filter: blur(6px);
+      transform-origin: 18% top;
+      opacity: 0;
+      transform: translateY(-6px) scale(.94);
+      animation: wn-pc-card-in 4.6s ease-in-out infinite;
+      z-index: 3;
+    }
+    .wn-pc-card::before {
+      content: "";
+      position: absolute;
+      top: -5px; left: 28px;
+      width: 10px; height: 10px;
+      background: #1e293b;
+      border-left: 1px solid rgba(148,163,184,.22);
+      border-top: 1px solid rgba(148,163,184,.22);
+      transform: rotate(45deg);
+    }
+    @keyframes wn-pc-card-in {
+      0%, 16%   { opacity: 0; transform: translateY(-6px) scale(.94); }
+      24%, 78%  { opacity: 1; transform: translateY(0) scale(1); }
+      90%, 100% { opacity: 0; transform: translateY(-6px) scale(.94); }
+    }
+    
+    .wn-pc-card-head {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 9px;
+    }
+    .wn-pc-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 11px; font-weight: 700; color: #fff;
+      letter-spacing: .02em;
+      /* HSL-seeded teal-violet for "AM" */
+      background: linear-gradient(135deg, hsl(258 70% 58%), hsl(196 80% 52%));
+      box-shadow: 0 0 0 2px rgba(99,102,241,.22), inset 0 -4px 8px rgba(0,0,0,.18);
+      flex: 0 0 auto;
+    }
+    .wn-pc-id { flex: 1; min-width: 0; }
+    .wn-pc-name {
+      font-size: 13px; font-weight: 600; color: #e2e8f0;
+      line-height: 1.1;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .wn-pc-meta { font-size: 10.5px; color: #94a3b8; margin-top: 2px; }
+    
+    .wn-pc-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(245,158,11,.16);
+      color: #fbbf24;
+      border: 1px solid rgba(245,158,11,.35);
+      font-size: 10px; font-weight: 600;
+      padding: 3px 7px;
+      border-radius: 999px;
+      white-space: nowrap;
+      animation: wn-pc-chip-pulse 1.6s ease-in-out infinite;
+    }
+    .wn-pc-chip i { font-size: 10px; }
+    @keyframes wn-pc-chip-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,.45); transform: scale(1); }
+      50%      { box-shadow: 0 0 0 6px rgba(245,158,11,0);   transform: scale(1.04); }
+    }
+    
+    .wn-pc-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .wn-pc-stat {
+      background: rgba(99,102,241,.10);
+      border: 1px solid rgba(99,102,241,.20);
+      border-radius: 8px;
+      padding: 6px 7px;
+      display: flex; flex-direction: column; gap: 2px;
+      min-width: 0;
+      opacity: 0;
+      transform: translateY(4px);
+      animation: wn-pc-stat-in 4.6s ease-out infinite;
+    }
+    .wn-pc-stat:nth-child(1) { animation-delay: .05s; }
+    .wn-pc-stat:nth-child(2) { animation-delay: .15s; }
+    .wn-pc-stat:nth-child(3) { animation-delay: .25s; }
+    .wn-pc-stat i {
+      color: #818cf8;
+      font-size: 12px;
+    }
+    .wn-pc-stat-k {
+      font-size: 9.5px; color: #94a3b8; text-transform: uppercase; letter-spacing: .04em;
+    }
+    .wn-pc-stat-v {
+      font-size: 11.5px; color: #e2e8f0; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    @keyframes wn-pc-stat-in {
+      0%, 22%   { opacity: 0; transform: translateY(4px); }
+      32%, 78%  { opacity: 1; transform: translateY(0); }
+      90%, 100% { opacity: 0; transform: translateY(4px); }
+    }
+    
+    .wn-pc-glow {
+      position: absolute;
+      left: -30px; top: -40px;
+      width: 220px; height: 220px;
+      background: radial-gradient(circle, rgba(99,102,241,.22), transparent 60%);
+      pointer-events: none;
+      z-index: 1;
+      animation: wn-pc-glow-pan 6s ease-in-out infinite;
+    }
+    @keyframes wn-pc-glow-pan {
+      0%, 100% { transform: translate(0, 0); opacity: .8; }
+      50%      { transform: translate(40px, 20px); opacity: 1; }
+    }
+    
+    @media (max-width: 575.98px) {
+      .wn-pc-scene { padding: 11px 12px; }
+      .wn-pc-card { left: 12px; right: 12px; top: 38px; padding: 8px 10px 9px; }
+      .wn-pc-avatar { width: 28px; height: 28px; font-size: 10px; }
+      .wn-pc-name { font-size: 12px; }
+      .wn-pc-meta { font-size: 10px; }
+      .wn-pc-chip { font-size: 9.5px; padding: 2px 6px; }
+      .wn-pc-stat { padding: 5px 6px; }
+      .wn-pc-stat-k { font-size: 9px; }
+      .wn-pc-stat-v { font-size: 10.5px; }
+      @keyframes wn-pc-cursor-move {
+        0%      { left: 140px; top: 24px; opacity: 0; }
+        8%      { left: 140px; top: 24px; opacity: 1; }
+        18%     { left: 92px;  top: 12px; opacity: 1; }
+        78%     { left: 92px;  top: 12px; opacity: 1; }
+        92%     { left: 140px; top: 24px; opacity: .6; }
+        100%    { left: 140px; top: 24px; opacity: 0; }
+      }
+    }
+
+    /* ===== wn-snz — Snooze, pin, get back to it ===== */
+    .wn-snz-scene{position:absolute;inset:0;padding:14px 16px;display:flex;align-items:flex-start;justify-content:center;}
+    .wn-snz-list{position:relative;width:100%;max-width:300px;height:100%;}
+    .wn-snz-row{position:absolute;left:0;right:0;display:flex;align-items:center;gap:10px;padding:10px 12px;background:linear-gradient(180deg,#1e293b 0%,#172033 100%);border:1px solid rgba(148,163,184,.18);border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.35);}
+    .wn-snz-row-a{top:0;z-index:3;animation:wn-snz-rowa 9s ease-in-out infinite;}
+    .wn-snz-row-b{top:64px;z-index:2;animation:wn-snz-rowb 9s ease-in-out infinite;}
+    .wn-snz-icon{flex:0 0 30px;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;}
+    .wn-snz-icon-blue{background:linear-gradient(135deg,#3b82f6,#6366f1);box-shadow:0 4px 10px rgba(59,130,246,.35);}
+    .wn-snz-icon-pink{background:linear-gradient(135deg,#ec4899,#8b5cf6);box-shadow:0 4px 10px rgba(236,72,153,.3);}
+    .wn-snz-body{flex:1 1 auto;min-width:0;}
+    .wn-snz-title{color:#e2e8f0;font-size:12px;font-weight:600;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .wn-snz-meta{color:#94a3b8;font-size:10px;line-height:1.3;margin-top:2px;}
+    .wn-snz-btn{flex:0 0 26px;width:26px;height:26px;border-radius:8px;border:1px solid rgba(148,163,184,.22);background:rgba(99,102,241,.14);color:#a5b4fc;font-size:12px;display:flex;align-items:center;justify-content:center;padding:0;animation:wn-snz-btn 9s ease-in-out infinite;}
+    .wn-snz-menu{position:absolute;top:42px;right:6px;width:152px;background:#0b1224;border:1px solid rgba(148,163,184,.22);border-radius:10px;padding:6px;box-shadow:0 14px 28px rgba(0,0,0,.5);transform-origin:top right;transform:scale(.85) translateY(-6px);opacity:0;pointer-events:none;animation:wn-snz-menu 9s ease-in-out infinite;}
+    .wn-snz-mhead{color:#94a3b8;font-size:9px;text-transform:uppercase;letter-spacing:.08em;padding:4px 8px 6px;}
+    .wn-snz-mitem{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;color:#cbd5e1;font-size:10.5px;font-weight:500;opacity:0;transform:translateX(-6px);animation:wn-snz-mitem 9s ease-in-out infinite;}
+    .wn-snz-mitem i{color:#818cf8;font-size:11px;width:12px;text-align:center;}
+    .wn-snz-mitem:nth-child(2){animation-delay:.05s;}
+    .wn-snz-mitem:nth-child(3){animation-delay:.12s;}
+    .wn-snz-mitem:nth-child(4){animation-delay:.19s;}
+    .wn-snz-mitem:nth-child(5){animation-delay:.26s;}
+    .wn-snz-mitem:nth-child(6){animation-delay:.33s;}
+    .wn-snz-mitem:nth-child(4){background:rgba(99,102,241,.16);color:#e0e7ff;}
+    .wn-snz-pin{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;font-size:11px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(245,158,11,.55);opacity:0;transform:scale(.4) rotate(-25deg);animation:wn-snz-pin 9s ease-in-out infinite;}
+    .wn-snz-pin::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid #fbbf24;opacity:0;animation:wn-snz-pulse 9s ease-in-out infinite;}
+    @keyframes wn-snz-rowa{0%,8%{top:0;}18%{top:0;}55%{top:0;}62%{top:64px;transform:scale(.98);}80%{top:64px;}100%{top:0;transform:scale(1);}}
+    @keyframes wn-snz-rowb{0%,55%{top:64px;}62%{top:0;transform:scale(1.02);}70%{top:0;transform:scale(1);}80%{top:0;}100%{top:64px;}}
+    @keyframes wn-snz-btn{0%,8%{background:rgba(99,102,241,.14);color:#a5b4fc;transform:scale(1);}12%{background:#6366f1;color:#fff;transform:scale(.9);}18%{background:#6366f1;color:#fff;transform:scale(1);}45%{background:#6366f1;color:#fff;}52%{background:rgba(99,102,241,.14);color:#a5b4fc;}100%{background:rgba(99,102,241,.14);color:#a5b4fc;}}
+    @keyframes wn-snz-menu{0%,10%{opacity:0;transform:scale(.85) translateY(-6px);}16%{opacity:1;transform:scale(1) translateY(0);}45%{opacity:1;transform:scale(1) translateY(0);}50%{opacity:0;transform:scale(.9) translateY(-4px);}100%{opacity:0;transform:scale(.85) translateY(-6px);}}
+    @keyframes wn-snz-mitem{0%,12%{opacity:0;transform:translateX(-6px);}22%{opacity:1;transform:translateX(0);}45%{opacity:1;transform:translateX(0);}50%{opacity:0;transform:translateX(-4px);}100%{opacity:0;transform:translateX(-6px);}}
+    @keyframes wn-snz-pin{0%,52%{opacity:0;transform:scale(.4) rotate(-25deg);}58%{opacity:1;transform:scale(1.25) rotate(8deg);}64%{opacity:1;transform:scale(1) rotate(0);}82%{opacity:1;transform:scale(1) rotate(0);}92%{opacity:0;transform:scale(.6) rotate(-10deg);}100%{opacity:0;transform:scale(.4) rotate(-25deg);}}
+    @keyframes wn-snz-pulse{0%,56%{opacity:0;transform:scale(.8);}60%{opacity:.8;transform:scale(1);}72%{opacity:0;transform:scale(1.7);}82%{opacity:0;transform:scale(1);}100%{opacity:0;transform:scale(.8);}}
+    @media (max-width:575.98px){.wn-snz-scene{padding:10px 12px;}.wn-snz-list{max-width:260px;}.wn-snz-row-b{top:58px;}.wn-snz-title{font-size:11px;}.wn-snz-meta{font-size:9px;}.wn-snz-menu{width:138px;top:38px;}.wn-snz-mitem{font-size:10px;padding:4px 7px;}@keyframes wn-snz-rowa{0%,8%{top:0;}18%{top:0;}55%{top:0;}62%{top:58px;transform:scale(.98);}80%{top:58px;}100%{top:0;transform:scale(1);}}@keyframes wn-snz-rowb{0%,55%{top:58px;}62%{top:0;transform:scale(1.02);}70%{top:0;transform:scale(1);}80%{top:0;}100%{top:58px;}}}
+
+    /* ===== wn-mention — @mention, and stay in the loop ===== */
+    .wn-mention-grid{
+      position:absolute; inset:0; padding:12px 14px;
+      display:grid; grid-template-rows: 1fr auto; gap:10px;
+    }
+    .wn-mention-note{
+      background:linear-gradient(180deg,#1e293b,#172033);
+      border:1px solid rgba(148,163,184,.18);
+      border-radius:10px; overflow:hidden;
+      box-shadow:0 4px 14px rgba(0,0,0,.25);
+    }
+    .wn-mention-note-head{
+      display:flex; align-items:center; gap:6px;
+      padding:6px 10px;
+      background:rgba(15,23,42,.6);
+      border-bottom:1px solid rgba(148,163,184,.12);
+    }
+    .wn-mention-dot{ width:8px; height:8px; border-radius:50%; display:inline-block; }
+    .wn-mention-dot-r{ background:#ef4444; }
+    .wn-mention-dot-y{ background:#f59e0b; }
+    .wn-mention-dot-g{ background:#10b981; }
+    .wn-mention-note-label{
+      margin-left:6px; font-size:10px; letter-spacing:.08em;
+      text-transform:uppercase; color:#94a3b8;
+    }
+    .wn-mention-note-body{
+      padding:10px 12px; min-height:62px;
+      font-size:12.5px; color:#cbd5e1; line-height:1.5;
+      display:flex; flex-wrap:wrap; align-items:center; gap:2px;
+    }
+    .wn-mention-text{ white-space:pre; }
+    .wn-mention-typed{ position:relative; display:inline-block; min-height:18px; }
+    .wn-mention-raw{
+      color:#a5b4fc; font-weight:600;
+      display:inline-block;
+      max-width:0; overflow:hidden; white-space:nowrap;
+      vertical-align:bottom;
+      animation: wn-mention-type 6s ease-in-out infinite;
+    }
+    .wn-mention-chip{
+      position:absolute; left:0; top:50%;
+      transform:translateY(-50%) scale(.8);
+      display:inline-flex; align-items:center; gap:3px;
+      padding:2px 8px 2px 6px; border-radius:999px;
+      background:linear-gradient(135deg, rgba(99,102,241,.28), rgba(139,92,246,.25));
+      border:1px solid rgba(129,140,248,.55);
+      color:#e0e7ff; font-weight:600; font-size:11.5px;
+      white-space:nowrap; opacity:0;
+      box-shadow:0 0 0 0 rgba(129,140,248,.4);
+      animation: wn-mention-chip 6s ease-in-out infinite;
+    }
+    .wn-mention-chip i{ font-size:12px; color:#a5b4fc; }
+    .wn-mention-caret{
+      display:inline-block; width:1.5px; height:14px;
+      background:#a5b4fc; vertical-align:middle; margin-left:1px;
+      animation: wn-mention-blink 1s steps(2) infinite;
+    }
+    .wn-mention-bottom{
+      display:grid; grid-template-columns: auto 1fr; gap:10px; align-items:center;
+    }
+    .wn-mention-bell{
+      position:relative; width:42px; height:42px; border-radius:10px;
+      background:linear-gradient(160deg,#1e293b,#0f172a);
+      border:1px solid rgba(148,163,184,.18);
+      display:flex; align-items:center; justify-content:center;
+      color:#fbbf24; font-size:18px;
+      animation: wn-mention-shake 6s ease-in-out infinite;
+    }
+    .wn-mention-badge{
+      position:absolute; top:-5px; right:-5px;
+      min-width:16px; height:16px; padding:0 4px;
+      border-radius:999px; background:#ef4444; color:#fff;
+      font-size:10px; font-weight:700; line-height:16px; text-align:center;
+      border:2px solid #0f172a;
+      transform:scale(0);
+      animation: wn-mention-pop 6s ease-in-out infinite;
+    }
+    .wn-mention-ring{
+      position:absolute; inset:-2px; border-radius:12px;
+      border:2px solid rgba(245,158,11,.6);
+      opacity:0;
+      animation: wn-mention-ring 6s ease-out infinite;
+    }
+    .wn-mention-activity{
+      background:#1e293b;
+      border:1px solid rgba(148,163,184,.18);
+      border-radius:10px; overflow:hidden;
+      transform:translateX(120%); opacity:0;
+      animation: wn-mention-slide 6s ease-in-out infinite;
+    }
+    .wn-mention-tab{
+      display:flex; align-items:center; gap:5px;
+      padding:4px 10px;
+      background:linear-gradient(90deg, rgba(99,102,241,.22), rgba(99,102,241,0));
+      border-bottom:1px solid rgba(148,163,184,.12);
+      font-size:10px; letter-spacing:.06em; text-transform:uppercase;
+      color:#a5b4fc; font-weight:700;
+    }
+    .wn-mention-tab i{ font-size:11px; }
+    .wn-mention-row{
+      display:flex; align-items:center; gap:8px;
+      padding:7px 10px;
+    }
+    .wn-mention-avatar{
+      width:24px; height:24px; border-radius:50%;
+      background:linear-gradient(135deg,#6366f1,#8b5cf6);
+      color:#fff; font-size:9.5px; font-weight:700;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; letter-spacing:.02em;
+    }
+    .wn-mention-row-text{
+      font-size:11px; color:#cbd5e1; line-height:1.35;
+      display:flex; flex-direction:column; min-width:0;
+    }
+    .wn-mention-row-text strong{ color:#a5b4fc; font-weight:600; }
+    .wn-mention-time{ color:#64748b; font-size:10px; margin-top:1px; }
+    
+    @keyframes wn-mention-type{
+      0%, 8%   { max-width:0; }
+      28%, 55% { max-width:78px; }
+      60%      { max-width:78px; opacity:0; }
+      61%, 95% { max-width:0; opacity:0; }
+      100%     { max-width:0; opacity:1; }
+    }
+    @keyframes wn-mention-chip{
+      0%, 55%       { opacity:0; transform:translateY(-50%) scale(.7); box-shadow:0 0 0 0 rgba(129,140,248,.45); }
+      60%           { opacity:1; transform:translateY(-50%) scale(1.06); box-shadow:0 0 0 6px rgba(129,140,248,0); }
+      66%, 92%      { opacity:1; transform:translateY(-50%) scale(1);    box-shadow:0 0 0 0 rgba(129,140,248,0); }
+      97%, 100%     { opacity:0; transform:translateY(-50%) scale(.7); }
+    }
+    @keyframes wn-mention-blink{
+      0%, 100% { opacity:1; }
+      50%      { opacity:0; }
+    }
+    @keyframes wn-mention-pop{
+      0%, 58%   { transform:scale(0); }
+      64%       { transform:scale(1.35); }
+      70%, 90%  { transform:scale(1); }
+      96%, 100% { transform:scale(0); }
+    }
+    @keyframes wn-mention-ring{
+      0%, 58%   { opacity:0; transform:scale(.9); }
+      62%       { opacity:.9; transform:scale(1); }
+      78%       { opacity:0; transform:scale(1.5); }
+      100%      { opacity:0; transform:scale(.9); }
+    }
+    @keyframes wn-mention-shake{
+      0%, 58%, 90%, 100% { transform:rotate(0); }
+      63% { transform:rotate(-14deg); }
+      67% { transform:rotate(12deg); }
+      71% { transform:rotate(-8deg); }
+      75% { transform:rotate(6deg); }
+      79% { transform:rotate(0); }
+    }
+    @keyframes wn-mention-slide{
+      0%, 64%   { transform:translateX(120%); opacity:0; }
+      72%, 92%  { transform:translateX(0);    opacity:1; }
+      98%, 100% { transform:translateX(120%); opacity:0; }
+    }
+    
+    @media (max-width: 575.98px){
+      .wn-mention-grid{ padding:10px 12px; gap:8px; }
+      .wn-mention-note-body{ min-height:54px; font-size:12px; padding:8px 10px; }
+      .wn-mention-bell{ width:38px; height:38px; font-size:16px; }
+      .wn-mention-row-text{ font-size:10.5px; }
+      .wn-mention-tab{ font-size:9.5px; padding:3px 8px; }
+    }
+
+    /* ===== wn-focus — Distraction-free consultations ===== */
+    .wn-focus-stage {
+      background:
+        radial-gradient(120% 80% at 80% 10%, rgba(99,102,241,.18), transparent 60%),
+        radial-gradient(120% 80% at 10% 100%, rgba(139,92,246,.14), transparent 55%),
+        #0f172a;
+    }
+    .wn-focus-app {
+      position: absolute; inset: 14px;
+      border-radius: 10px;
+      background: #0b1224;
+      border: 1px solid rgba(148,163,184,.14);
+      overflow: hidden;
+    }
+    /* Sidebar */
+    .wn-focus-sidebar {
+      position: absolute; top: 0; left: 0; bottom: 0;
+      width: 64px;
+      background: #1e293b;
+      border-right: 1px solid rgba(148,163,184,.18);
+      padding: 10px 10px;
+      display: flex; flex-direction: column; gap: 8px;
+      animation: wn-focus-sidebar 6s ease-in-out infinite;
+    }
+    .wn-focus-logo {
+      width: 22px; height: 22px; border-radius: 6px;
+      background: linear-gradient(135deg,#6366f1,#8b5cf6);
+      margin-bottom: 6px;
+      box-shadow: 0 0 10px rgba(129,140,248,.5);
+    }
+    .wn-focus-navitem {
+      height: 10px; border-radius: 4px;
+      background: rgba(148,163,184,.22);
+    }
+    .wn-focus-navitem-active {
+      background: linear-gradient(90deg,#6366f1,#818cf8);
+      box-shadow: 0 0 8px rgba(99,102,241,.55);
+    }
+    /* Header */
+    .wn-focus-header {
+      position: absolute; top: 0; left: 64px; right: 0;
+      height: 28px;
+      background: #1e293b;
+      border-bottom: 1px solid rgba(148,163,184,.18);
+      display: flex; align-items: center; gap: 6px;
+      padding: 0 10px;
+      animation: wn-focus-header 6s ease-in-out infinite;
+    }
+    .wn-focus-crumb {
+      width: 38px; height: 8px; border-radius: 3px;
+      background: rgba(165,180,252,.35);
+    }
+    .wn-focus-crumb-short { width: 22px; background: rgba(148,163,184,.25); }
+    .wn-focus-spacer { flex: 1; }
+    .wn-focus-avatar {
+      width: 16px; height: 16px; border-radius: 50%;
+      background: linear-gradient(135deg,#38bdf8,#6366f1);
+    }
+    /* Main + textarea */
+    .wn-focus-main {
+      position: absolute; top: 28px; left: 64px; right: 0; bottom: 0;
+      padding: 10px;
+      animation: wn-focus-main 6s ease-in-out infinite;
+    }
+    .wn-focus-textarea {
+      position: absolute; inset: 10px;
+      background: linear-gradient(180deg, rgba(30,41,59,.95), rgba(15,23,42,.95));
+      border: 1px solid rgba(129,140,248,.35);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 8px;
+      box-shadow: 0 0 0 0 rgba(99,102,241,0), inset 0 0 20px rgba(99,102,241,.06);
+      animation: wn-focus-textglow 6s ease-in-out infinite;
+    }
+    .wn-focus-line {
+      height: 6px; border-radius: 3px;
+      background: rgba(203,213,225,.35);
+      width: 92%;
+    }
+    .wn-focus-line-short { width: 55%; }
+    .wn-focus-line-med { width: 75%; }
+    .wn-focus-caret {
+      position: absolute; left: 14px; bottom: 14px;
+      width: 2px; height: 12px;
+      background: #a5b4fc;
+      animation: wn-focus-caret 1s steps(2,end) infinite;
+    }
+    /* Focus pill */
+    .wn-focus-pill {
+      position: absolute; top: 8px; right: 8px;
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font: 600 9px/1 ui-sans-serif, system-ui, sans-serif;
+      letter-spacing: .04em;
+      color: #fde68a;
+      background: linear-gradient(135deg, rgba(245,158,11,.22), rgba(139,92,246,.22));
+      border: 1px solid rgba(251,191,36,.55);
+      box-shadow: 0 4px 14px rgba(245,158,11,.25);
+      opacity: 0; transform: translateY(-4px) scale(.9);
+      animation: wn-focus-pill 6s ease-in-out infinite;
+    }
+    .wn-focus-pill i { font-size: 10px; color: #fbbf24; }
+    /* Tap indicator */
+    .wn-focus-tap {
+      position: absolute;
+      top: 6px; left: 70px;
+      width: 22px; height: 22px;
+      display: grid; place-items: center;
+      color: #a5b4fc;
+      font-size: 11px;
+      opacity: 0;
+      animation: wn-focus-tap 6s ease-in-out infinite;
+    }
+    .wn-focus-ring {
+      position: absolute; inset: 0;
+      border-radius: 50%;
+      border: 2px solid rgba(165,180,252,.85);
+      animation: wn-focus-ring 6s ease-in-out infinite;
+    }
+    /* Keyframes — every one returns to its 0% state */
+    @keyframes wn-focus-sidebar {
+      0%, 18%   { transform: translateX(0); opacity: 1; }
+      28%, 70%  { transform: translateX(-72px); opacity: 0; }
+      82%, 100% { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes wn-focus-header {
+      0%, 18%   { transform: translateY(0); opacity: 1; }
+      28%, 70%  { transform: translateY(-30px); opacity: 0; }
+      82%, 100% { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes wn-focus-main {
+      0%, 18%   { top: 28px; left: 64px; }
+      28%, 70%  { top: 0;    left: 0; }
+      82%, 100% { top: 28px; left: 64px; }
+    }
+    @keyframes wn-focus-textglow {
+      0%, 18%   { box-shadow: inset 0 0 20px rgba(99,102,241,.06); border-color: rgba(129,140,248,.35); }
+      28%, 70%  { box-shadow: 0 0 0 1px rgba(99,102,241,.45), inset 0 0 36px rgba(99,102,241,.18); border-color: rgba(165,180,252,.7); }
+      82%, 100% { box-shadow: inset 0 0 20px rgba(99,102,241,.06); border-color: rgba(129,140,248,.35); }
+    }
+    @keyframes wn-focus-pill {
+      0%, 20%   { opacity: 0; transform: translateY(-4px) scale(.9); }
+      30%, 70%  { opacity: 1; transform: translateY(0) scale(1); }
+      80%, 100% { opacity: 0; transform: translateY(-4px) scale(.9); }
+    }
+    @keyframes wn-focus-tap {
+      0%, 6%    { opacity: 0; transform: scale(.6); }
+      10%, 16%  { opacity: 1; transform: scale(1); }
+      22%, 95%  { opacity: 0; transform: scale(1.2); }
+      100%      { opacity: 0; transform: scale(.6); }
+    }
+    @keyframes wn-focus-ring {
+      0%, 6%    { transform: scale(.4); opacity: 0; }
+      12%       { transform: scale(1);  opacity: 1; }
+      22%       { transform: scale(1.8);opacity: 0; }
+      100%      { transform: scale(.4); opacity: 0; }
+    }
+    @keyframes wn-focus-caret {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0; }
+    }
+    /* Mobile */
+    @media (max-width: 575.98px) {
+      .wn-focus-app { inset: 10px; }
+      .wn-focus-sidebar { width: 54px; padding: 8px; }
+      .wn-focus-header { left: 54px; height: 24px; padding: 0 8px; }
+      .wn-focus-main { left: 54px; top: 24px; padding: 8px; }
+      .wn-focus-tap { left: 60px; }
+      @keyframes wn-focus-sidebar {
+        0%, 18%   { transform: translateX(0); opacity: 1; }
+        28%, 70%  { transform: translateX(-60px); opacity: 0; }
+        82%, 100% { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes wn-focus-main {
+        0%, 18%   { top: 24px; left: 54px; }
+        28%, 70%  { top: 0;    left: 0; }
+        82%, 100% { top: 24px; left: 54px; }
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .wn-focus-sidebar, .wn-focus-header, .wn-focus-main,
+      .wn-focus-textarea, .wn-focus-pill, .wn-focus-tap,
+      .wn-focus-ring, .wn-focus-caret { animation: none; }
+      .wn-focus-pill { opacity: 1; transform: none; }
+    }
+
+    /* ===== wn-tpl — Your phrase library, one click away ===== */
+    /* ============ wn-tpl: Templates dropdown + typewriter ============ */
+    .wn-tpl-scene {
+      position: absolute; inset: 14px;
+      display: flex; flex-direction: column; gap: 8px;
+      font-family: inherit;
+    }
+    
+    /* --- Toolbar row above textarea --- */
+    .wn-tpl-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px;
+    }
+    .wn-tpl-label {
+      font-size: 10px; color: #94a3b8; letter-spacing: .04em;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .wn-tpl-label i { color: #a5b4fc; font-size: 12px; }
+    
+    .wn-tpl-btn {
+      position: relative;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 9px;
+      font-size: 10.5px; font-weight: 600;
+      color: #e2e8f0;
+      background: linear-gradient(180deg, #4F46E5 0%, #4338ca 100%);
+      border: 1px solid rgba(165,180,252,.5);
+      border-radius: 7px;
+      box-shadow: 0 4px 12px -4px rgba(79,70,229,.55), inset 0 1px 0 rgba(255,255,255,.15);
+      animation: wn-tpl-btnPulse 7s ease-in-out infinite;
+    }
+    .wn-tpl-btn i { font-size: 11px; }
+    .wn-tpl-caret {
+      display: inline-block;
+      transform-origin: center;
+      animation: wn-tpl-caretFlip 7s ease-in-out infinite;
+    }
+    
+    /* --- Textarea --- */
+    .wn-tpl-textarea {
+      position: relative;
+      flex: 1;
+      background: #1e293b;
+      border: 1px solid rgba(148,163,184,.22);
+      border-radius: 9px;
+      padding: 10px 12px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+    }
+    .wn-tpl-caret-blink {
+      position: absolute;
+      top: 11px; left: 12px;
+      width: 1.5px; height: 11px;
+      background: #a5b4fc;
+      animation: wn-tpl-blink 1s steps(2) infinite, wn-tpl-caretMove 7s ease-in-out infinite;
+    }
+    .wn-tpl-typed {
+      display: flex; flex-direction: column; gap: 4px;
+      font-size: 10.5px; line-height: 1.35;
+      color: #cbd5e1;
+    }
+    .wn-tpl-line {
+      display: block;
+      opacity: 0;
+      transform: translateX(-8px);
+      white-space: nowrap; overflow: hidden;
+      max-width: 100%; text-overflow: clip;
+    }
+    .wn-tpl-l1 { animation: wn-tpl-typeLine 7s ease-in-out infinite; animation-delay: 0s; }
+    .wn-tpl-l2 { animation: wn-tpl-typeLine 7s ease-in-out infinite; animation-delay: .18s; }
+    .wn-tpl-l3 { animation: wn-tpl-typeLine 7s ease-in-out infinite; animation-delay: .36s; }
+    
+    /* --- Dropdown menu --- */
+    .wn-tpl-menu {
+      position: absolute;
+      top: 32px; right: 14px;
+      width: 188px;
+      background: linear-gradient(180deg, #1e293b 0%, #172033 100%);
+      border: 1px solid rgba(148,163,184,.28);
+      border-radius: 10px;
+      padding: 6px 4px;
+      box-shadow: 0 18px 36px -10px rgba(0,0,0,.6), 0 0 0 1px rgba(99,102,241,.18);
+      transform-origin: top right;
+      opacity: 0;
+      transform: translateY(-6px) scale(.94);
+      pointer-events: none;
+      z-index: 3;
+      animation: wn-tpl-menuOpen 7s ease-in-out infinite;
+    }
+    .wn-tpl-group {
+      font-size: 8.5px; letter-spacing: .12em; text-transform: uppercase;
+      color: #64748b; padding: 4px 8px 2px;
+    }
+    .wn-tpl-row {
+      position: relative;
+      display: flex; align-items: center; gap: 7px;
+      padding: 4px 8px;
+      font-size: 10px; color: #cbd5e1;
+      border-radius: 6px;
+      z-index: 1;
+    }
+    .wn-tpl-row i { color: #818cf8; font-size: 11px; width: 12px; }
+    .wn-tpl-row span { flex: 1; }
+    .wn-tpl-row kbd {
+      font-size: 8px; padding: 1px 4px;
+      background: rgba(99,102,241,.18);
+      color: #a5b4fc;
+      border: 1px solid rgba(165,180,252,.25);
+      border-radius: 3px;
+    }
+    .wn-tpl-highlight {
+      position: absolute;
+      left: 4px; right: 4px;
+      top: 22px; height: 19px;
+      background: linear-gradient(90deg, rgba(99,102,241,.35), rgba(139,92,246,.25));
+      border: 1px solid rgba(165,180,252,.55);
+      border-radius: 6px;
+      box-shadow: 0 0 0 2px rgba(99,102,241,.12);
+      z-index: 0;
+      opacity: 0;
+      animation: wn-tpl-highlight 7s ease-in-out infinite;
+    }
+    
+    /* ============ Keyframes ============ */
+    @keyframes wn-tpl-blink {
+      0%,49% { opacity: 1; }
+      50%,100% { opacity: 0; }
+    }
+    @keyframes wn-tpl-caretMove {
+      /* caret hides while text is typing, returns when textarea empties */
+      0%, 8%   { opacity: 1; }
+      9%, 78%  { opacity: 0; }
+      85%,100% { opacity: 1; }
+    }
+    @keyframes wn-tpl-btnPulse {
+      0%, 8%   { box-shadow: 0 4px 12px -4px rgba(79,70,229,.55), inset 0 1px 0 rgba(255,255,255,.15); }
+      10%, 18% { box-shadow: 0 6px 18px -2px rgba(99,102,241,.85), inset 0 1px 0 rgba(255,255,255,.25); }
+      30%,100% { box-shadow: 0 4px 12px -4px rgba(79,70,229,.55), inset 0 1px 0 rgba(255,255,255,.15); }
+    }
+    @keyframes wn-tpl-caretFlip {
+      0%, 10%  { transform: rotate(0deg); }
+      14%, 38% { transform: rotate(-180deg); }
+      42%,100% { transform: rotate(0deg); }
+    }
+    @keyframes wn-tpl-menuOpen {
+      0%, 10%  { opacity: 0; transform: translateY(-6px) scale(.94); }
+      14%, 38% { opacity: 1; transform: translateY(0) scale(1); }
+      42%,100% { opacity: 0; transform: translateY(-6px) scale(.94); }
+    }
+    @keyframes wn-tpl-highlight {
+      /* slide highlight from row1 -> row2 -> row3 -> snap to row1 (Normal exam) */
+      0%, 14%  { opacity: 0; top: 22px; }
+      16%, 19% { opacity: 1; top: 22px; }
+      22%, 25% { opacity: 1; top: 41px; }
+      28%, 31% { opacity: 1; top: 79px; }
+      33%, 36% { opacity: 1; top: 22px; transform: scale(1.04); }
+      38%, 100%{ opacity: 0; top: 22px; transform: scale(1); }
+    }
+    @keyframes wn-tpl-typeLine {
+      /* lines stay empty during dropdown phase, then slide-in, hold, then clear */
+      0%, 42%  { opacity: 0; transform: translateX(-8px); max-width: 0; }
+      46%, 50% { opacity: 1; transform: translateX(0);    max-width: 100%; }
+      78%      { opacity: 1; transform: translateX(0);    max-width: 100%; }
+      86%      { opacity: 0; transform: translateX(-8px); max-width: 0; }
+      100%     { opacity: 0; transform: translateX(-8px); max-width: 0; }
+    }
+    
+    /* ============ Mobile (≤ 575.98px) ============ */
+    @media (max-width: 575.98px) {
+      .wn-tpl-scene { inset: 11px; gap: 6px; }
+      .wn-tpl-btn { font-size: 9.5px; padding: 4px 7px; }
+      .wn-tpl-label { font-size: 9px; }
+      .wn-tpl-menu { width: 156px; top: 28px; right: 11px; }
+      .wn-tpl-row { font-size: 9.5px; padding: 3px 7px; }
+      .wn-tpl-highlight { height: 17px; top: 21px; }
+      .wn-tpl-typed { font-size: 9.5px; }
+      @keyframes wn-tpl-highlight {
+        0%, 14%  { opacity: 0; top: 21px; }
+        16%, 19% { opacity: 1; top: 21px; }
+        22%, 25% { opacity: 1; top: 38px; }
+        28%, 31% { opacity: 1; top: 73px; }
+        33%, 36% { opacity: 1; top: 21px; transform: scale(1.04); }
+        38%, 100%{ opacity: 0; top: 21px; transform: scale(1); }
+      }
     }
 </style>
+
 
 <div class="modal fade" id="whatsNewV9Modal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -1346,7 +1912,7 @@
       <div class="modal-header">
         <h5 class="modal-title">
           <i class="bi bi-stars me-2"></i>What's New
-          <span class="version-pill">v10.2.0</span>
+          <span class="version-pill">v11.0.0</span>
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -1355,360 +1921,575 @@
         <div class="wn-viewport">
           <div class="wn-track" id="wnTrack">
 
-            <!-- 1 — Welcome v10.2.0 -->
+            <!-- v11.0.0 — wn-v11 (Welcome to v11.0.0) -->
             <div class="wn-slide">
-              <span class="wn-kicker">Polish &amp; Performance</span>
-              <div class="wn-stage">
-                <div class="wn-ver">
-                  <span class="wn-ver-label">version</span>
-                  <span class="wn-ver-num">10.2.0</span>
+              <span class="wn-kicker">A major release</span>
+              <div class="wn-stage wn-v11-stage">
+                <div class="wn-v11-burst" aria-hidden="true"></div>
+                <div class="wn-v11-rings" aria-hidden="true">
+                  <span class="wn-v11-ring wn-v11-ring-a"></span>
+                  <span class="wn-v11-ring wn-v11-ring-b"></span>
+                  <span class="wn-v11-ring wn-v11-ring-c"></span>
+                </div>
+                <div class="wn-v11-sparkles" aria-hidden="true">
+                  <i class="bi bi-stars wn-v11-spark wn-v11-spark-1" aria-hidden="true"></i>
+                  <i class="bi bi-star-fill wn-v11-spark wn-v11-spark-2" aria-hidden="true"></i>
+                  <i class="bi bi-stars wn-v11-spark wn-v11-spark-3" aria-hidden="true"></i>
+                  <i class="bi bi-star-fill wn-v11-spark wn-v11-spark-4" aria-hidden="true"></i>
+                  <i class="bi bi-asterisk wn-v11-spark wn-v11-spark-5" aria-hidden="true"></i>
+                  <i class="bi bi-stars wn-v11-spark wn-v11-spark-6" aria-hidden="true"></i>
+                </div>
+                <div class="wn-v11-label">
+                  <i class="bi bi-rocket-takeoff-fill" aria-hidden="true"></i>
+                  <span>VERSION</span>
+                </div>
+                <div class="wn-v11-number" aria-hidden="true">
+                  <span class="wn-v11-digit">11</span>
+                  <span class="wn-v11-dot">.</span>
+                  <span class="wn-v11-digit">0</span>
+                  <span class="wn-v11-dot">.</span>
+                  <span class="wn-v11-digit">0</span>
+                </div>
+                <div class="wn-v11-tag">
+                  <span class="wn-v11-pip"></span>
+                  <span>Major release</span>
                 </div>
               </div>
-              <h3>Sharper, faster, more polished</h3>
-              <p>v10.2.0 builds on the V10 redesign with a focused round of
-                 polish + performance. Cleaner sidebar logo, 12-hour news
-                 cache, faster Missed Appointments, a unified glass
-                 breadcrumb, and bleed fixes across Payments &amp; Reports.</p>
+              <h3>Welcome to v11.0.0</h3>
+              <p>Our biggest release yet brings a <strong>redesigned notification center</strong>, multi-list to-do, theme palettes, Cmd+K, and more.</p>
             </div>
 
-            <!-- 1b — v10.2.0 highlights -->
+            <!-- v11.0.0 #2 — change-list overview (static) -->
             <div class="wn-slide">
-              <span class="wn-kicker">What's New in 10.2</span>
+              <span class="wn-kicker">What's New</span>
               <div class="wn-stage">
-                <ul style="text-align:start;line-height:1.7;list-style:none;padding:0;margin:0;font-size:.95rem;">
-                  <li style="margin-bottom:8px;"><i class="bi bi-lightning-charge-fill" style="color:#10b981;margin-right:8px;"></i><strong>No more logo flicker</strong> — theme + logo + favicon now resolve before first paint</li>
-                  <li style="margin-bottom:8px;"><i class="bi bi-broadcast" style="color:#6366f1;margin-right:8px;"></i><strong>Ophthalmology news cached 12h</strong> + instant render from localStorage (no "Loading…" flash on refresh)</li>
-                  <li style="margin-bottom:8px;"><i class="bi bi-speedometer2" style="color:#f59e0b;margin-right:8px;"></i><strong>Faster Missed Appointments</strong> — scoped to your doctor, 90-day window, indexed, and lazy-loaded</li>
-                  <li style="margin-bottom:8px;"><i class="bi bi-bounding-box-circles" style="color:#0ea5e9;margin-right:8px;"></i><strong>Payments &amp; Reports bleed fixed</strong> — stats cards and tables now stay inside their rounded corners</li>
-                  <li style="margin-bottom:8px;"><i class="bi bi-signpost-2-fill" style="color:#a855f7;margin-right:8px;"></i><strong>Unified glass breadcrumb</strong> across Boards, Patient, Appointment, Day Close + others</li>
-                  <li style="margin-bottom:8px;"><i class="bi bi-newspaper" style="color:#ec4899;margin-right:8px;"></i><strong>News ticker badges</strong> — BREAKING / FDA / TRIAL / NEW chips with source pills</li>
-                  <li style="margin-bottom:8px;"><i class="bi bi-circle-half" style="color:#14b8a6;margin-right:8px;"></i><strong>FAB triplet alignment</strong> — back-to-top, AI agent and dock launcher now share size + slot system</li>
+                <ul class="wn-cl-list">
+                  <li><i class="bi bi-bell-fill"></i><span>iOS notification center</span></li>
+                  <li><i class="bi bi-check2-square"></i><span>Multi-list To-Do</span></li>
+                  <li><i class="bi bi-palette-fill"></i><span>Theme palettes (6)</span></li>
+                  <li><i class="bi bi-sun-fill"></i><span>Auto dark/light schedule</span></li>
+                  <li><i class="bi bi-command"></i><span>Cmd+K command palette</span></li>
+                  <li><i class="bi bi-keyboard-fill"></i><span>Keyboard shortcuts (?)</span></li>
+                  <li><i class="bi bi-person-vcard"></i><span>Patient hover-cards</span></li>
+                  <li><i class="bi bi-pin-angle-fill"></i><span>Snooze &amp; Pin</span></li>
+                  <li><i class="bi bi-at"></i><span>@mentions + Activity</span></li>
+                  <li><i class="bi bi-eye-fill"></i><span>Focus mode</span></li>
+                  <li><i class="bi bi-stickies-fill"></i><span>Note templates</span></li>
+                  <li><i class="bi bi-sparkles"></i><span>… and more</span></li>
                 </ul>
               </div>
-              <h3>v10.2.0 — change-list</h3>
-              <p>Every fix above is also documented for the ortho fork so it
-                 ships with the same polish.</p>
+              <h3>v11.0.0 — change-list</h3>
+              <p>The biggest update yet. Every fix and feature is documented for the ortho fork so it ships with the same polish.</p>
             </div>
 
-            <!-- v10.2.0 #1 — UI/UX Polish -->
+
+            <!-- v11.0.0 — wn-notif (A redesigned notification center) -->
             <div class="wn-slide">
-              <span class="wn-kicker">Polish</span>
+              <span class="wn-kicker">Notifications</span>
               <div class="wn-stage">
-                <div class="wn-polish">
-                  <div class="wn-polish-card wn-polish-c1">
-                    <div class="wn-polish-label"><i class="bi bi-stars" aria-hidden="true"></i>Logo</div>
-                    <div class="wn-polish-sidebar">
-                      <div class="wn-polish-logo">
-                        <span class="wn-polish-logo-flash" aria-hidden="true"></span>
-                        <i class="bi bi-heart-pulse-fill" aria-hidden="true"></i>
-                      </div>
-                      <span class="wn-polish-row"></span>
-                      <span class="wn-polish-row wn-polish-row-b"></span>
-                      <span class="wn-polish-row wn-polish-row-c"></span>
+                <div class="wn-notif-bg" aria-hidden="true">
+                  <span class="wn-notif-orb wn-notif-orb-1"></span>
+                  <span class="wn-notif-orb wn-notif-orb-2"></span>
+                </div>
+                <div class="wn-notif-bell" aria-hidden="true">
+                  <i class="bi bi-bell-fill"></i>
+                  <span class="wn-notif-badge">3</span>
+                </div>
+                <div class="wn-notif-panel" aria-hidden="true">
+                  <div class="wn-notif-head">
+                    <span class="wn-notif-title"><i class="bi bi-bell-fill"></i> Notifications</span>
+                    <span class="wn-notif-count">3 new</span>
+                  </div>
+                  <div class="wn-notif-bucket">Today</div>
+                  <div class="wn-notif-row wn-notif-row-hover">
+                    <span class="wn-notif-dot wn-notif-dot-indigo"><i class="bi bi-calendar-check"></i></span>
+                    <div class="wn-notif-body">
+                      <span class="wn-notif-line wn-notif-line-1"></span>
+                      <span class="wn-notif-line wn-notif-line-2"></span>
+                    </div>
+                    <span class="wn-notif-time">2m</span>
+                    <div class="wn-notif-actions">
+                      <span class="wn-notif-chip"><i class="bi bi-clock"></i></span>
+                      <span class="wn-notif-chip"><i class="bi bi-pin-angle-fill"></i></span>
+                      <span class="wn-notif-chip"><i class="bi bi-check2"></i></span>
+                      <span class="wn-notif-chip wn-notif-chip-red"><i class="bi bi-trash"></i></span>
                     </div>
                   </div>
-                  <div class="wn-polish-card wn-polish-c2">
-                    <div class="wn-polish-label"><i class="bi bi-calendar2-event" aria-hidden="true"></i>Corner</div>
-                    <div class="wn-polish-appt">
-                      <span class="wn-polish-strip" aria-hidden="true"></span>
-                      <div class="wn-polish-appt-body">
-                        <span class="wn-polish-appt-name"></span>
-                        <span class="wn-polish-appt-time"></span>
+                  <div class="wn-notif-row">
+                    <span class="wn-notif-dot wn-notif-dot-amber"><i class="bi bi-exclamation"></i></span>
+                    <div class="wn-notif-body">
+                      <span class="wn-notif-line wn-notif-line-1"></span>
+                      <span class="wn-notif-line wn-notif-line-2 wn-notif-line-short"></span>
+                    </div>
+                    <span class="wn-notif-time">11m</span>
+                  </div>
+                  <div class="wn-notif-bucket">Yesterday</div>
+                  <div class="wn-notif-row">
+                    <span class="wn-notif-dot wn-notif-dot-green"><i class="bi bi-chat-dots-fill"></i></span>
+                    <div class="wn-notif-body">
+                      <span class="wn-notif-line wn-notif-line-1"></span>
+                      <span class="wn-notif-line wn-notif-line-2"></span>
+                    </div>
+                    <span class="wn-notif-time">1d</span>
+                  </div>
+                  <div class="wn-notif-dock">
+                    <span class="wn-notif-dbtn"><i class="bi bi-check2-all"></i></span>
+                    <span class="wn-notif-dbtn"><i class="bi bi-funnel"></i></span>
+                    <span class="wn-notif-dbtn"><i class="bi bi-bookmark"></i></span>
+                    <span class="wn-notif-dbtn"><i class="bi bi-bell-slash"></i></span>
+                    <span class="wn-notif-dbtn"><i class="bi bi-gear"></i></span>
+                    <span class="wn-notif-dbtn"><i class="bi bi-archive"></i></span>
+                  </div>
+                </div>
+              </div>
+              <h3>A redesigned notification center</h3>
+              <p>A <strong>glass notification panel</strong> slides in with smart Today/Yesterday grouping, hover-reveal snooze and pin actions, and a footer dock for quick triage.</p>
+            </div>
+
+            <!-- v11.0.0 — wn-todo (Smart, multi-list to-dos) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">To-Do</span>
+              <div class="wn-stage">
+                <div class="wn-todo-scene">
+                  <div class="wn-todo-rail" aria-hidden="true">
+                    <span class="wn-todo-chip wn-todo-chip-indigo"><i class="bi bi-person-fill"></i>Personal</span>
+                    <span class="wn-todo-chip wn-todo-chip-active"><i class="bi bi-heart-pulse-fill"></i>Follow-ups</span>
+                    <span class="wn-todo-chip wn-todo-chip-amber"><i class="bi bi-box-seam-fill"></i>Inventory</span>
+                    <span class="wn-todo-chip wn-todo-chip-cyan"><i class="bi bi-mortarboard-fill"></i>Study</span>
+                  </div>
+
+                  <div class="wn-todo-card">
+                    <div class="wn-todo-card-head">
+                      <div class="wn-todo-card-title">
+                        <i class="bi bi-stars" aria-hidden="true"></i>
+                        <span>Keep it up!</span>
                       </div>
+                      <div class="wn-todo-badge"><span class="wn-todo-badge-num">3</span>/4</div>
+                    </div>
+                    <div class="wn-todo-bar"><div class="wn-todo-bar-fill"></div></div>
+                  </div>
+
+                  <div class="wn-todo-tasks">
+                    <div class="wn-todo-row wn-todo-row-done">
+                      <span class="wn-todo-check wn-todo-check-static" aria-hidden="true"><i class="bi bi-check2"></i></span>
+                      <span class="wn-todo-title wn-todo-title-struck">Call Mrs. Hassan re: lab results</span>
+                    </div>
+                    <div class="wn-todo-row wn-todo-row-anim">
+                      <span class="wn-todo-check wn-todo-check-anim" aria-hidden="true"><i class="bi bi-check2"></i></span>
+                      <span class="wn-todo-title wn-todo-title-anim">Schedule Ahmed's follow-up visit</span>
+                    </div>
+                    <div class="wn-todo-row">
+                      <span class="wn-todo-check" aria-hidden="true"></span>
+                      <span class="wn-todo-title">Send post-op care PDF to Lina</span>
                     </div>
                   </div>
-                  <div class="wn-polish-card wn-polish-c3">
-                    <div class="wn-polish-label"><i class="bi bi-image" aria-hidden="true"></i>Upload</div>
-                    <div class="wn-polish-field">
-                      <div class="wn-polish-input"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i><span></span></div>
-                      <div class="wn-polish-warn">
+                </div>
+              </div>
+              <h3>Smart, multi-list to-dos</h3>
+              <p>Organize your day with <strong>multiple named lists</strong> — Personal, Patient follow-ups, Inventory and more. Each list tracks its own gamified progress, so finishing tasks actually feels rewarding.</p>
+            </div>
+
+            <!-- v11.0.0 — wn-pal (A palette for every mood) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Themes</span>
+              <div class="wn-stage">
+                <div class="wn-pal-scene">
+                  <div class="wn-pal-grid" aria-hidden="true">
+                    <div class="wn-pal-sw wn-pal-sw-1"><span class="wn-pal-dot"></span><span class="wn-pal-lbl">Indigo</span></div>
+                    <div class="wn-pal-sw wn-pal-sw-2"><span class="wn-pal-dot"></span><span class="wn-pal-lbl">Emerald</span></div>
+                    <div class="wn-pal-sw wn-pal-sw-3"><span class="wn-pal-dot"></span><span class="wn-pal-lbl">Rose</span></div>
+                    <div class="wn-pal-sw wn-pal-sw-4"><span class="wn-pal-dot"></span><span class="wn-pal-lbl">Slate</span></div>
+                    <div class="wn-pal-sw wn-pal-sw-5"><span class="wn-pal-dot"></span><span class="wn-pal-lbl">Amber</span></div>
+                    <div class="wn-pal-sw wn-pal-sw-6"><span class="wn-pal-dot"></span><span class="wn-pal-lbl">Ocean</span></div>
+                  </div>
+                  <div class="wn-pal-preview" aria-hidden="true">
+                    <div class="wn-pal-prev-head">
+                      <span class="wn-pal-prev-avatar"><i class="bi bi-person-fill" aria-hidden="true"></i></span>
+                      <span class="wn-pal-prev-lines">
+                        <span class="wn-pal-prev-l1"></span>
+                        <span class="wn-pal-prev-l2"></span>
+                      </span>
+                    </div>
+                    <div class="wn-pal-prev-bar"><span class="wn-pal-prev-bar-fill"></span></div>
+                    <div class="wn-pal-prev-row">
+                      <span class="wn-pal-prev-chip"><i class="bi bi-check2" aria-hidden="true"></i> Saved</span>
+                      <span class="wn-pal-prev-btn">Apply</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h3>A palette for every mood</h3>
+              <p>Pick from six accent <strong>palettes</strong> in dark or light mode. Your choice is saved to your profile and follows you everywhere.</p>
+            </div>
+
+            <!-- v11.0.0 — wn-sched (Dark by night, light by day) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Auto theme</span>
+              <div class="wn-stage wn-sched-stage">
+                <div class="wn-sched-sky" aria-hidden="true">
+                  <div class="wn-sched-stars"></div>
+                  <div class="wn-sched-sun"></div>
+                  <div class="wn-sched-moon"></div>
+                  <div class="wn-sched-horizon"></div>
+                </div>
+
+                <div class="wn-sched-clock" aria-hidden="true">
+                  <div class="wn-sched-dial">
+                    <span class="wn-sched-tick wn-sched-t12"></span>
+                    <span class="wn-sched-tick wn-sched-t3"></span>
+                    <span class="wn-sched-tick wn-sched-t6"></span>
+                    <span class="wn-sched-tick wn-sched-t9"></span>
+                    <span class="wn-sched-hand"></span>
+                    <span class="wn-sched-pivot"></span>
+                  </div>
+                </div>
+
+                <div class="wn-sched-chip wn-sched-chip-day" aria-hidden="true">
+                  <i class="bi bi-sun-fill" aria-hidden="true"></i>
+                  <span>Light from 07:00</span>
+                </div>
+                <div class="wn-sched-chip wn-sched-chip-night" aria-hidden="true">
+                  <i class="bi bi-moon-stars-fill" aria-hidden="true"></i>
+                  <span>Dark from 19:00</span>
+                </div>
+
+                <div class="wn-sched-toggle" aria-hidden="true">
+                  <span class="wn-sched-toggle-label">Auto</span>
+                  <span class="wn-sched-toggle-track"><span class="wn-sched-toggle-knob"></span></span>
+                  <span class="wn-sched-toggle-state">ON</span>
+                </div>
+              </div>
+              <h3>Dark by night, light by day</h3>
+              <p>Pick a sunrise and sunset, and the app follows the sky. Turn on <strong>Auto theme</strong> to glide from light to dark without lifting a finger.</p>
+            </div>
+
+            <!-- v11.0.0 — wn-cmdk (Cmd+K, anywhere) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Command palette</span>
+              <div class="wn-stage">
+                <div class="wn-cmdk-scene">
+                  <div class="wn-cmdk-kbd" aria-hidden="true">
+                    <span class="wn-cmdk-key">⌘</span>
+                    <span class="wn-cmdk-plus">+</span>
+                    <span class="wn-cmdk-key">K</span>
+                  </div>
+                  <div class="wn-cmdk-modal" aria-hidden="true">
+                    <div class="wn-cmdk-input">
+                      <i class="bi bi-search wn-cmdk-search" aria-hidden="true"></i>
+                      <span class="wn-cmdk-typed"></span>
+                      <span class="wn-cmdk-caret"></span>
+                      <span class="wn-cmdk-enter">
+                        <i class="bi bi-arrow-return-left" aria-hidden="true"></i>
+                        Enter
+                      </span>
+                    </div>
+                    <ul class="wn-cmdk-list">
+                      <li class="wn-cmdk-row wn-cmdk-r1">
+                        <i class="bi bi-person-circle wn-cmdk-rico" aria-hidden="true"></i>
+                        <span class="wn-cmdk-rtxt"><b>Ahm</b>ed Maher</span>
+                        <span class="wn-cmdk-rtag wn-cmdk-tag-pt">Patient</span>
+                      </li>
+                      <li class="wn-cmdk-row wn-cmdk-r2">
+                        <i class="bi bi-check2-square wn-cmdk-rico" aria-hidden="true"></i>
+                        <span class="wn-cmdk-rtxt">Add to-do</span>
+                        <span class="wn-cmdk-rtag wn-cmdk-tag-ac">Action</span>
+                      </li>
+                      <li class="wn-cmdk-row wn-cmdk-r3">
+                        <i class="bi bi-calendar2-week wn-cmdk-rico" aria-hidden="true"></i>
+                        <span class="wn-cmdk-rtxt">Appointments</span>
+                        <span class="wn-cmdk-rtag wn-cmdk-tag-pg">Page</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <h3>Cmd+K, anywhere</h3>
+              <p>Hit <strong>Cmd+K</strong> from any screen to fuzzy-search patients, pages, actions and to-dos. Type a few letters, then Enter — you're there.</p>
+            </div>
+
+            <!-- v11.0.0 — wn-kbd (Every shortcut at your fingertips) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Shortcuts</span>
+              <div class="wn-stage">
+                <div class="wn-kbd-scene">
+                  <div class="wn-kbd-grid" aria-hidden="true"></div>
+
+                  <div class="wn-kbd-press">
+                    <span class="wn-kbd-presslabel">Press</span>
+                    <span class="wn-kbd-chip wn-kbd-chip-lg">?</span>
+                    <span class="wn-kbd-ripple"></span>
+                  </div>
+
+                  <div class="wn-kbd-modal" aria-hidden="true">
+                    <div class="wn-kbd-modalhead">
+                      <span class="wn-kbd-dot"></span>
+                      <span class="wn-kbd-dot"></span>
+                      <span class="wn-kbd-dot"></span>
+                      <span class="wn-kbd-title"><i class="bi bi-keyboard" aria-hidden="true"></i> Keyboard shortcuts</span>
+                    </div>
+                    <ul class="wn-kbd-list">
+                      <li class="wn-kbd-row" style="--wn-kbd-i:0">
+                        <span class="wn-kbd-keys"><span class="wn-kbd-chip">&#8984;</span><span class="wn-kbd-chip">K</span></span>
+                        <span class="wn-kbd-label">Quick search</span>
+                      </li>
+                      <li class="wn-kbd-row" style="--wn-kbd-i:1">
+                        <span class="wn-kbd-keys"><span class="wn-kbd-chip">?</span></span>
+                        <span class="wn-kbd-label">Show shortcuts</span>
+                      </li>
+                      <li class="wn-kbd-row" style="--wn-kbd-i:2">
+                        <span class="wn-kbd-keys"><span class="wn-kbd-chip">T</span></span>
+                        <span class="wn-kbd-label">Today's bookings</span>
+                      </li>
+                      <li class="wn-kbd-row" style="--wn-kbd-i:3">
+                        <span class="wn-kbd-keys"><span class="wn-kbd-chip">N</span></span>
+                        <span class="wn-kbd-label">New patient</span>
+                      </li>
+                      <li class="wn-kbd-row" style="--wn-kbd-i:4">
+                        <span class="wn-kbd-keys"><span class="wn-kbd-chip">G</span><span class="wn-kbd-plus">then</span><span class="wn-kbd-chip">D</span></span>
+                        <span class="wn-kbd-label">Go to Dashboard</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <h3>Every shortcut at your fingertips</h3>
+              <p>Press <strong>?</strong> anywhere in the app to open the full keyboard shortcut sheet. Jump between bookings, patients and the dashboard without lifting your hands.</p>
+            </div>
+
+            <!-- v11.0.0 — wn-pc (A patient summary, just by hovering) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Patient cards</span>
+              <div class="wn-stage">
+                <div class="wn-pc-scene">
+                  <div class="wn-pc-row">
+                    <span class="wn-pc-label">Patient:</span>
+                    <a class="wn-pc-link" href="#">Ahmed Maher</a>
+                    <i class="bi bi-cursor-fill wn-pc-cursor" aria-hidden="true"></i>
+                  </div>
+
+                  <div class="wn-pc-card" role="presentation">
+                    <div class="wn-pc-card-head">
+                      <div class="wn-pc-avatar" aria-hidden="true">AM</div>
+                      <div class="wn-pc-id">
+                        <div class="wn-pc-name">Ahmed Maher</div>
+                        <div class="wn-pc-meta">Male &middot; 34 y</div>
+                      </div>
+                      <span class="wn-pc-chip">
                         <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
-                        <span class="wn-polish-warn-text"></span>
+                        2 alerts
+                      </span>
+                    </div>
+
+                    <div class="wn-pc-stats">
+                      <div class="wn-pc-stat">
+                        <i class="bi bi-clock-history" aria-hidden="true"></i>
+                        <span class="wn-pc-stat-k">Last visit</span>
+                        <span class="wn-pc-stat-v">12 May</span>
                       </div>
-                      <div class="wn-polish-ok">
-                        <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-                        <span>Clean</span>
+                      <div class="wn-pc-stat">
+                        <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                        <span class="wn-pc-stat-k">Next appt</span>
+                        <span class="wn-pc-stat-v">Tue 09:30</span>
+                      </div>
+                      <div class="wn-pc-stat">
+                        <i class="bi bi-capsule" aria-hidden="true"></i>
+                        <span class="wn-pc-stat-k">Active Rx</span>
+                        <span class="wn-pc-stat-v">3 meds</span>
                       </div>
                     </div>
                   </div>
+
+                  <div class="wn-pc-glow" aria-hidden="true"></div>
                 </div>
               </div>
-              <h3>Polish, end-to-end</h3>
-              <p>A focused round of <strong>UI fixes</strong>: the sidebar logo
-                 and favicon no longer flicker on refresh, Upcoming Appointments
-                 cards now sit flush against the accent strip, and the noisy
-                 <code>open_basedir</code> warnings under the Settings logo
-                 uploads are gone.</p>
+              <h3>A patient summary, just by hovering</h3>
+              <p>Hover any patient name to peek at a <strong>mini profile card</strong> — avatar, age, last visit, next appointment, and active alerts — without leaving the page.</p>
             </div>
 
-            <!-- v10.2.0 #2 — Performance -->
+            <!-- v11.0.0 — wn-snz (Snooze, pin, get back to it) -->
             <div class="wn-slide">
-              <span class="wn-kicker">Performance</span>
+              <span class="wn-kicker">Snooze &amp; Pin</span>
               <div class="wn-stage">
-                <div class="wn-perf">
-                  <div class="wn-perf-head">
-                    <span class="wn-perf-icon" aria-hidden="true"><i class="bi bi-lightning-charge-fill"></i></span>
-                    <span class="wn-perf-title">Page load</span>
-                    <span class="wn-perf-delta">2.4s &rarr; 0.3s</span>
-                  </div>
-                  <div class="wn-perf-races">
-                    <div class="wn-perf-race wn-perf-race-before">
-                      <span class="wn-perf-label">Before</span>
-                      <div class="wn-perf-track">
-                        <div class="wn-perf-fill wn-perf-fill-slow"></div>
+                <div class="wn-snz-scene">
+                  <div class="wn-snz-list">
+                    <div class="wn-snz-row wn-snz-row-a">
+                      <div class="wn-snz-icon wn-snz-icon-blue" aria-hidden="true"><i class="bi bi-bell-fill"></i></div>
+                      <div class="wn-snz-body">
+                        <div class="wn-snz-title">Lab results ready</div>
+                        <div class="wn-snz-meta">Ms. Karim &middot; 2m</div>
                       </div>
-                      <span class="wn-perf-time wn-perf-time-slow">2.4s</span>
-                    </div>
-                    <div class="wn-perf-race wn-perf-race-after">
-                      <span class="wn-perf-label">After</span>
-                      <div class="wn-perf-track">
-                        <div class="wn-perf-fill wn-perf-fill-fast"></div>
-                        <div class="wn-perf-bolt" aria-hidden="true"><i class="bi bi-lightning-charge-fill"></i></div>
+                      <button class="wn-snz-btn" type="button" aria-hidden="true">
+                        <i class="bi bi-moon-stars-fill"></i>
+                      </button>
+                      <div class="wn-snz-menu" aria-hidden="true">
+                        <div class="wn-snz-mhead">Snooze until</div>
+                        <div class="wn-snz-mitem"><i class="bi bi-clock"></i><span>1 hour</span></div>
+                        <div class="wn-snz-mitem"><i class="bi bi-hourglass-split"></i><span>4 hours</span></div>
+                        <div class="wn-snz-mitem"><i class="bi bi-sunrise"></i><span>Tomorrow 9am</span></div>
+                        <div class="wn-snz-mitem"><i class="bi bi-calendar-week"></i><span>Next week</span></div>
+                        <div class="wn-snz-mitem"><i class="bi bi-sliders"></i><span>Custom&hellip;</span></div>
                       </div>
-                      <span class="wn-perf-time wn-perf-time-fast">0.3s</span>
                     </div>
-                  </div>
-                  <div class="wn-perf-chips">
-                    <span class="wn-perf-chip wn-perf-chip-1"><i class="bi bi-newspaper" aria-hidden="true"></i>12h news cache</span>
-                    <span class="wn-perf-chip wn-perf-chip-2"><i class="bi bi-database-check" aria-hidden="true"></i>DB index</span>
-                    <span class="wn-perf-chip wn-perf-chip-3"><i class="bi bi-arrow-down-circle" aria-hidden="true"></i>Lazy-load</span>
+                    <div class="wn-snz-row wn-snz-row-b">
+                      <div class="wn-snz-icon wn-snz-icon-pink" aria-hidden="true"><i class="bi bi-chat-heart-fill"></i></div>
+                      <div class="wn-snz-body">
+                        <div class="wn-snz-title">New message from Dr. Salem</div>
+                        <div class="wn-snz-meta">Inbox &middot; 6m</div>
+                      </div>
+                      <div class="wn-snz-pin" aria-hidden="true"><i class="bi bi-pin-angle-fill"></i></div>
+                    </div>
                   </div>
                 </div>
               </div>
-              <h3>Faster than ever</h3>
-              <p>We trimmed seconds off your day. <strong>Ophthalmology news</strong>
-                 renders instantly from cache, the <strong>missed-appointments</strong>
-                 query uses a new doctor+date index, and below-the-fold cards
-                 lazy-load as you scroll.</p>
+              <h3>Snooze, pin, get back to it</h3>
+              <p>Tap the moon to <strong>snooze</strong> a notification for an hour, until tomorrow, or a custom time. Pin the ones you can&rsquo;t forget &mdash; they float to the top and stay put.</p>
             </div>
 
-            <!-- v10.2.0 #3 — Unified Glass Breadcrumb -->
+            <!-- v11.0.0 — wn-mention (@mention, and stay in the loop) -->
             <div class="wn-slide">
-              <span class="wn-kicker">Navigation</span>
+              <span class="wn-kicker">Mentions &amp; Activity</span>
               <div class="wn-stage">
-                <div class="wn-crumb-scene">
-                  <div class="wn-crumb-pill">
-                    <span class="wn-crumb-back" aria-hidden="true">
-                      <i class="bi bi-arrow-left"></i>
-                    </span>
-                    <div class="wn-crumb-track">
-                      <div class="wn-crumb-route">
-                        <i class="bi bi-people-fill" aria-hidden="true"></i>
-                        <span class="wn-crumb-root">Patients</span>
-                        <i class="bi bi-chevron-right wn-crumb-sep" aria-hidden="true"></i>
-                        <span class="wn-crumb-leaf">Ahmed Maher</span>
-                      </div>
-                      <div class="wn-crumb-route">
-                        <i class="bi bi-people-fill" aria-hidden="true"></i>
-                        <span class="wn-crumb-root">Patients</span>
-                        <i class="bi bi-chevron-right wn-crumb-sep" aria-hidden="true"></i>
-                        <span class="wn-crumb-mid">Mariam Hassan</span>
-                        <i class="bi bi-chevron-right wn-crumb-sep" aria-hidden="true"></i>
-                        <span class="wn-crumb-leaf">Appointment #312</span>
-                      </div>
-                      <div class="wn-crumb-route">
-                        <i class="bi bi-cash-coin" aria-hidden="true"></i>
-                        <span class="wn-crumb-root">Payments</span>
-                        <i class="bi bi-chevron-right wn-crumb-sep" aria-hidden="true"></i>
-                        <span class="wn-crumb-leaf">Daily Closure</span>
-                      </div>
+                <div class="wn-mention-grid">
+                  <div class="wn-mention-note">
+                    <div class="wn-mention-note-head">
+                      <span class="wn-mention-dot wn-mention-dot-r" aria-hidden="true"></span>
+                      <span class="wn-mention-dot wn-mention-dot-y" aria-hidden="true"></span>
+                      <span class="wn-mention-dot wn-mention-dot-g" aria-hidden="true"></span>
+                      <span class="wn-mention-note-label">Consultation note</span>
+                    </div>
+                    <div class="wn-mention-note-body">
+                      <span class="wn-mention-text">Discussed plan with </span>
+                      <span class="wn-mention-typed" aria-hidden="true">
+                        <span class="wn-mention-raw">@dr_osama</span>
+                        <span class="wn-mention-chip">
+                          <i class="bi bi-at" aria-hidden="true"></i>dr_osama
+                        </span>
+                      </span>
+                      <span class="wn-mention-caret" aria-hidden="true"></span>
                     </div>
                   </div>
-                  <div class="wn-crumb-dots" aria-hidden="true">
-                    <span class="wn-crumb-dot"></span>
-                    <span class="wn-crumb-dot"></span>
-                    <span class="wn-crumb-dot"></span>
-                  </div>
-                  <div class="wn-crumb-pages" aria-hidden="true">
-                    <span class="wn-crumb-tag"><i class="bi bi-grid-3x3-gap-fill"></i>Board</span>
-                    <span class="wn-crumb-tag"><i class="bi bi-person-vcard"></i>Profile</span>
-                    <span class="wn-crumb-tag"><i class="bi bi-calendar2-event"></i>Appointment</span>
-                    <span class="wn-crumb-tag"><i class="bi bi-clipboard2-pulse"></i>Consult</span>
-                    <span class="wn-crumb-tag"><i class="bi bi-cash-stack"></i>Day Close</span>
-                  </div>
-                </div>
-              </div>
-              <h3>A unified glass breadcrumb</h3>
-              <p>One <strong>.app-breadcrumb</strong> component now powers
-                 navigation across the Patients Board, Patient profile,
-                 Appointment, Edit Consultation and the new Day Close page —
-                 with a glass pill surface and a circular back arrow that
-                 slides on hover.</p>
-            </div>
-
-            <!-- v10.2.0 #4 — Forum Removed -->
-            <div class="wn-slide">
-              <span class="wn-kicker">Cleanup</span>
-              <div class="wn-stage">
-                <div class="wn-forum">
-                  <div class="wn-forum-dock" aria-hidden="true">
-                    <div class="wn-forum-dock-item"><i class="bi bi-house-door-fill"></i><span>Home</span></div>
-                    <div class="wn-forum-dock-item wn-forum-dock-slot">
-                      <div class="wn-forum-tile wn-forum-tile-old">
-                        <i class="bi bi-chat-square-dots"></i>
-                        <span>Forum</span>
-                        <span class="wn-forum-strike"></span>
+                  <div class="wn-mention-bottom">
+                    <div class="wn-mention-bell" aria-hidden="true">
+                      <i class="bi bi-bell-fill"></i>
+                      <span class="wn-mention-badge">1</span>
+                      <span class="wn-mention-ring"></span>
+                    </div>
+                    <div class="wn-mention-activity">
+                      <div class="wn-mention-tab">
+                        <i class="bi bi-activity" aria-hidden="true"></i>
+                        <span>Activity</span>
                       </div>
-                      <div class="wn-forum-tile wn-forum-tile-new">
-                        <i class="bi bi-grid-3x3-gap-fill"></i>
-                        <span>Patients Board</span>
-                        <span class="wn-forum-spark"></span>
+                      <div class="wn-mention-row">
+                        <span class="wn-mention-avatar" aria-hidden="true">DO</span>
+                        <div class="wn-mention-row-text">
+                          <strong>dr_osama</strong> was mentioned in a note
+                          <span class="wn-mention-time">2 min ago</span>
+                        </div>
                       </div>
                     </div>
-                    <div class="wn-forum-dock-item"><i class="bi bi-calendar-week-fill"></i><span>Calendar</span></div>
-                    <div class="wn-forum-dock-item"><i class="bi bi-people-fill"></i><span>Patients</span></div>
-                  </div>
-                  <div class="wn-forum-status" aria-hidden="true">
-                    <span class="wn-forum-tag wn-forum-tag-removed"><i class="bi bi-trash"></i>Removed</span>
-                    <span class="wn-forum-arrow"><i class="bi bi-arrow-right"></i></span>
-                    <span class="wn-forum-tag wn-forum-tag-added"><i class="bi bi-stars"></i>Promoted</span>
                   </div>
                 </div>
               </div>
-              <h3>Out with the old Forum</h3>
-              <p>The legacy Discussion module is gone. The <strong>Patients
-                 Board</strong> now takes its slot in the navigation dock —
-                 less clutter, more clinical signal where you actually need it.</p>
+              <h3>@mention, and stay in the loop</h3>
+              <p>Type <strong>@username</strong> in any note and that teammate gets a ping. Every mention also lands in the new Activity tab so nothing slips by.</p>
             </div>
 
-            <!-- v10.2.0 #5 — Smarter Patients Board -->
+            <!-- v11.0.0 — wn-focus (Distraction-free consultations) -->
             <div class="wn-slide">
-              <span class="wn-kicker">Board Updates</span>
-              <div class="wn-stage">
-                <div class="wn-bv2">
-                  <div class="wn-bv2-bg" aria-hidden="true"></div>
-                  <div class="wn-bv2-head">
-                    <span class="wn-bv2-logo" aria-hidden="true"><i class="bi bi-columns-gap"></i></span>
-                    <span class="wn-bv2-title">Patients Board</span>
-                    <span class="wn-bv2-auto">
-                      <i class="bi bi-magic" aria-hidden="true"></i>
-                      <span>Auto place</span>
-                    </span>
+              <span class="wn-kicker">Focus mode</span>
+              <div class="wn-stage wn-focus-stage">
+                <div class="wn-focus-app">
+                  <aside class="wn-focus-sidebar" aria-hidden="true">
+                    <div class="wn-focus-logo"></div>
+                    <div class="wn-focus-navitem"></div>
+                    <div class="wn-focus-navitem"></div>
+                    <div class="wn-focus-navitem wn-focus-navitem-active"></div>
+                    <div class="wn-focus-navitem"></div>
+                    <div class="wn-focus-navitem"></div>
+                  </aside>
+                  <header class="wn-focus-header" aria-hidden="true">
+                    <div class="wn-focus-crumb"></div>
+                    <div class="wn-focus-crumb wn-focus-crumb-short"></div>
+                    <div class="wn-focus-spacer"></div>
+                    <div class="wn-focus-avatar"></div>
+                  </header>
+                  <section class="wn-focus-main">
+                    <div class="wn-focus-textarea">
+                      <span class="wn-focus-line"></span>
+                      <span class="wn-focus-line"></span>
+                      <span class="wn-focus-line wn-focus-line-short"></span>
+                      <span class="wn-focus-line"></span>
+                      <span class="wn-focus-line wn-focus-line-med"></span>
+                      <span class="wn-focus-caret"></span>
+                    </div>
+                  </section>
+                  <div class="wn-focus-pill" aria-hidden="true">
+                    <i class="bi bi-eye" aria-hidden="true"></i>
+                    <span>Focus ON</span>
                   </div>
-                  <div class="wn-bv2-cols" aria-hidden="true">
-                    <div class="wn-bv2-col wn-bv2-col-a">
-                      <span class="wn-bv2-coltag wn-bv2-tag-a"></span>
-                    </div>
-                    <div class="wn-bv2-col wn-bv2-col-b">
-                      <span class="wn-bv2-coltag wn-bv2-tag-b"></span>
-                      <span class="wn-bv2-slot"></span>
-                    </div>
-                    <div class="wn-bv2-col wn-bv2-col-c">
-                      <span class="wn-bv2-coltag wn-bv2-tag-c"></span>
-                    </div>
-                  </div>
-                  <div class="wn-bv2-card" aria-hidden="true">
-                    <span class="wn-bv2-dot"></span>
-                    <span class="wn-bv2-bar wn-bv2-bar-1"></span>
-                    <span class="wn-bv2-bar wn-bv2-bar-2"></span>
-                  </div>
-                  <div class="wn-bv2-trail" aria-hidden="true"></div>
-                  <div class="wn-bv2-note" aria-hidden="true">
-                    <div class="wn-bv2-note-head">
-                      <i class="bi bi-sticky-fill" aria-hidden="true"></i>
-                      <span>Note</span>
-                    </div>
-                    <div class="wn-bv2-chips">
-                      <span class="wn-bv2-chip wn-bv2-chip-pdf"><i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>PDF</span>
-                      <span class="wn-bv2-chip wn-bv2-chip-xls"><i class="bi bi-file-earmark-excel" aria-hidden="true"></i>XLS</span>
-                      <span class="wn-bv2-chip wn-bv2-chip-doc"><i class="bi bi-file-earmark-word" aria-hidden="true"></i>DOC</span>
-                    </div>
-                    <div class="wn-bv2-acts">
-                      <span class="wn-bv2-btn wn-bv2-btn-add"><i class="bi bi-plus-lg" aria-hidden="true"></i>Add</span>
-                      <span class="wn-bv2-btn wn-bv2-btn-del"><i class="bi bi-trash" aria-hidden="true"></i>Delete</span>
-                    </div>
+                  <div class="wn-focus-tap" aria-hidden="true">
+                    <span class="wn-focus-ring"></span>
+                    <i class="bi bi-fullscreen" aria-hidden="true"></i>
                   </div>
                 </div>
               </div>
-              <h3>Smarter Patients Board</h3>
-              <p>The <strong>Patients Board</strong> gets a one-click Auto-place
-                 that drops every card in the right column, plus a refreshed
-                 gradient look, notes with PDF, Word, Excel, PowerPoint and TXT
-                 attachments, and a unified Add/Delete flow with a confirm modal.</p>
+              <h3>Distraction-free consultations</h3>
+              <p>One tap collapses the sidebar, header, and dock so only your <strong>consultation textarea</strong> remains. Perfect for long notes when the patient is sitting across from you.</p>
             </div>
 
-            <!-- 2 — New look: Glass / Indigo, Dark + Light -->
+            <!-- v11.0.0 — wn-tpl (Your phrase library, one click away) -->
             <div class="wn-slide">
-              <span class="wn-kicker">New Design</span>
+              <span class="wn-kicker">Templates</span>
               <div class="wn-stage">
-                <div class="wn-theme">
-                  <div class="wn-theme-half wn-theme-light">
-                    <span class="wn-theme-dot"></span>
-                    <div class="wn-theme-bar"></div>
-                    <div class="wn-theme-bar short"></div>
-                    <span class="wn-theme-tag">Light</span>
+                <div class="wn-tpl-scene">
+                  <div class="wn-tpl-toolbar">
+                    <span class="wn-tpl-label"><i class="bi bi-file-earmark-text" aria-hidden="true"></i> Consultation note</span>
+                    <button class="wn-tpl-btn" aria-hidden="true">
+                      <i class="bi bi-bookmark-plus"></i>
+                      <span>Insert template</span>
+                      <i class="bi bi-caret-down-fill wn-tpl-caret"></i>
+                    </button>
                   </div>
-                  <div class="wn-theme-half wn-theme-dark">
-                    <span class="wn-theme-dot"></span>
-                    <div class="wn-theme-bar"></div>
-                    <div class="wn-theme-bar short"></div>
-                    <span class="wn-theme-tag">Dark</span>
+
+                  <div class="wn-tpl-textarea">
+                    <span class="wn-tpl-caret-blink" aria-hidden="true"></span>
+                    <div class="wn-tpl-typed">
+                      <span class="wn-tpl-line wn-tpl-l1">Patient appears well, alert and oriented.</span>
+                      <span class="wn-tpl-line wn-tpl-l2">HEENT: unremarkable. Pupils equal, reactive.</span>
+                      <span class="wn-tpl-line wn-tpl-l3">Heart: regular rate, no murmurs detected.</span>
+                    </div>
+                  </div>
+
+                  <div class="wn-tpl-menu" aria-hidden="true">
+                    <div class="wn-tpl-group">General</div>
+                    <div class="wn-tpl-row wn-tpl-r1">
+                      <i class="bi bi-clipboard2-pulse"></i>
+                      <span>Normal exam</span>
+                      <kbd>1</kbd>
+                    </div>
+                    <div class="wn-tpl-row wn-tpl-r2">
+                      <i class="bi bi-heart-pulse"></i>
+                      <span>Follow-up visit</span>
+                      <kbd>2</kbd>
+                    </div>
+                    <div class="wn-tpl-group">Cardiology</div>
+                    <div class="wn-tpl-row wn-tpl-r3">
+                      <i class="bi bi-activity"></i>
+                      <span>Chest pain workup</span>
+                      <kbd>3</kbd>
+                    </div>
+                    <div class="wn-tpl-row wn-tpl-r4">
+                      <i class="bi bi-droplet-half"></i>
+                      <span>BP management</span>
+                      <kbd>4</kbd>
+                    </div>
+                    <div class="wn-tpl-highlight" aria-hidden="true"></div>
                   </div>
                 </div>
               </div>
-              <h3>A premium new look</h3>
-              <p>The whole app moves to a unified glassmorphism design system
-                 in a refined <strong>Indigo</strong> palette — frosted cards,
-                 cleaner depth and spacing, and a gorgeous <strong>Dark
-                 mode</strong> that's easy on the eyes during long clinics.
-                 Everything feels calmer and more consistent, page to page.</p>
+              <h3>Your phrase library, one click away</h3>
+              <p>Save common notes as <strong>templates</strong> and drop a full block into Edit Consultation with a single click — grouped by category and keyboard-friendly.</p>
             </div>
-
-            <!-- 3 — Patients Board -->
-            <div class="wn-slide">
-              <span class="wn-kicker">New Feature</span>
-              <div class="wn-stage">
-                <div class="wn-board">
-                  <div class="wn-board-col">
-                    <div class="wn-board-col-head" style="--c:#6366f1">New</div>
-                    <div class="wn-board-card"></div>
-                    <div class="wn-board-card"></div>
-                  </div>
-                  <div class="wn-board-col">
-                    <div class="wn-board-col-head" style="--c:#f59e0b">Awaiting</div>
-                    <div class="wn-board-card wn-board-card--drag"></div>
-                  </div>
-                  <div class="wn-board-col">
-                    <div class="wn-board-col-head" style="--c:#10b981">Done</div>
-                    <div class="wn-board-card"></div>
-                  </div>
-                </div>
-              </div>
-              <h3>Meet the Patients Board</h3>
-              <p>Organize your patients on a beautiful <strong>Trello-style
-                 board</strong>. Drag cards between your own workflow columns,
-                 group patients by stage, search and filter instantly, and
-                 open a full profile in one click. Your whole clinic, at a
-                 glance — with a quick overview that drills into detail.</p>
-            </div>
-
-            <!-- 4 — Auto Complete settings -->
-            <div class="wn-slide">
-              <span class="wn-kicker">Settings</span>
-              <div class="wn-stage">
-                <div class="wn-acset">
-                  <div class="wn-acset-row">
-                    <span>Consultation suggestions</span>
-                    <span class="wn-acset-sw on"></span>
-                  </div>
-                  <div class="wn-acset-row">
-                    <span>ICD-10 code suggestions</span>
-                    <span class="wn-acset-sw on"></span>
-                  </div>
-                  <div class="wn-acset-row">
-                    <span>Medication auto complete</span>
-                    <span class="wn-acset-sw"></span>
-                  </div>
-                </div>
-              </div>
-              <h3>You're in control of Auto Complete</h3>
-              <p>A new <strong>Auto Complete</strong> section in Settings lets
-                 you turn the smart suggestions on or off — consultation
-                 assists, ICD-10 codes, and medication name lookup — each with
-                 a live animated preview. Set it once; it follows you across
-                 the Edit Consultation page and prescribing.</p>
-            </div>
-
           </div>
         </div>
         <div class="wn-dots" id="wnDots"></div>
@@ -1742,7 +2523,7 @@
     //   • "Don't show again" opts out permanently.
     // Bumping VERSION (e.g. v9_0_0 → v9_1_0) RESETS first-seen / opt-out /
     // session-shown for every browser, so the wizard resurfaces fresh.
-    const VERSION       = 'v10_2_0';
+    const VERSION       = 'v11_0_0';
     const OPT_OUT_KEY   = 'whatsNew_' + VERSION + '_optOut';     // permanent
     const FIRST_SEEN_KEY= 'whatsNew_' + VERSION + '_firstSeen';  // ms epoch
     const SESSION_KEY   = 'whatsNew_' + VERSION + '_shownSession';

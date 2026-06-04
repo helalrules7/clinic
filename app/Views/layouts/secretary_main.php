@@ -33,18 +33,58 @@
     <!-- Shared modal kit (center + animate + drag affordance) — after design-system so it wins -->
     <link href="/app/Views/layouts/modal-kit.css?v=<?= file_exists(__DIR__ . '/modal-kit.css') ? filemtime(__DIR__ . '/modal-kit.css') : time() ?>" rel="stylesheet">
 
+    <!-- v11.0.0 feature CSS bundle -->
+    <link href="/app/Views/doctor/assets/css/notification-center.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/notification-center.css') ? filemtime(__DIR__ . '/../doctor/assets/css/notification-center.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/todo-drawer.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/todo-drawer.css') ? filemtime(__DIR__ . '/../doctor/assets/css/todo-drawer.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/cmdk.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/cmdk.css') ? filemtime(__DIR__ . '/../doctor/assets/css/cmdk.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/patient-hover.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/patient-hover.css') ? filemtime(__DIR__ . '/../doctor/assets/css/patient-hover.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/keyboard-help.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/keyboard-help.css') ? filemtime(__DIR__ . '/../doctor/assets/css/keyboard-help.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/quick-note.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/quick-note.css') ? filemtime(__DIR__ . '/../doctor/assets/css/quick-note.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/note-templates.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/note-templates.css') ? filemtime(__DIR__ . '/../doctor/assets/css/note-templates.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/theme-palette.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/theme-palette.css') ? filemtime(__DIR__ . '/../doctor/assets/css/theme-palette.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/celebration.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/celebration.css') ? filemtime(__DIR__ . '/../doctor/assets/css/celebration.css') : time() ?>" rel="stylesheet">
+
     <!-- Theme + logo + favicon pre-paint. Runs synchronously in <head> so
          #clinicLogo and the favicon <link>s are rendered with the right
          theme variant on first paint — no Light→Dark flicker on refresh. -->
     <script>
         (function() {
-            var saved = localStorage.getItem('appTheme') || localStorage.getItem('theme');
-            var theme = (saved === 'light' || saved === 'dark') ? saved
+            // v11.0.0 — Theme + Palette + Auto-schedule pre-paint (secretary layout).
+
+            var html = document.documentElement;
+            var ALLOWED_PALETTES = ['indigo','emerald','rose','slate','amber','ocean'];
+
+            // 1) Palette
+            var savedPalette = null;
+            try { savedPalette = localStorage.getItem('appPalette'); } catch (e) {}
+            var palette = (ALLOWED_PALETTES.indexOf(savedPalette) >= 0) ? savedPalette : 'indigo';
+            html.setAttribute('data-palette', palette);
+
+            // 2) Theme — manual OR auto-schedule, with fallback to system pref.
+            var saved, autoSched = false, darkFrom = '19:00', lightFrom = '07:00';
+            try {
+                saved      = localStorage.getItem('appTheme') || localStorage.getItem('theme');
+                autoSched  = localStorage.getItem('appThemeAutoSchedule') === '1';
+                darkFrom   = localStorage.getItem('appThemeDarkFrom')  || '19:00';
+                lightFrom  = localStorage.getItem('appThemeLightFrom') || '07:00';
+            } catch (e) {}
+
+            var theme;
+            if (autoSched) {
+                var now = new Date();
+                var mins = now.getHours() * 60 + now.getMinutes();
+                var parse = function (s) { var p = String(s).split(':'); return (+p[0]) * 60 + (+(p[1] || 0)); };
+                var darkStart  = parse(darkFrom);
+                var lightStart = parse(lightFrom);
+                theme = ((mins >= darkStart) || (mins < lightStart)) ? 'dark' : 'light';
+            } else {
+                theme = (saved === 'light' || saved === 'dark') ? saved
                       : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            }
+            html.classList.toggle('dark', theme === 'dark');
+            html.classList.add('theme-loaded');
 
-            document.documentElement.classList.toggle('dark', theme === 'dark');
-            document.documentElement.classList.add('theme-loaded');
-
+            // 3) Logo + favicons.
             window.__INITIAL_LOGO_SRC__ = theme === 'dark'
                 ? '/assets/images/Dark.png'
                 : '/assets/images/Light.png';
@@ -254,7 +294,7 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="text-muted">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v10.2.0
+                        HClinic / Roaya Clinic v11.0.0
                         <span aria-hidden="true">·</span>
                         <a href="https://hclinic.clinic/docs/opth/" target="_blank" rel="noopener" style="color: var(--accent);"><i class="bi bi-book me-1"></i>Docs</a>
                     </div>
@@ -998,5 +1038,25 @@
     </script>
 
     <?php include __DIR__ . '/whats-new-v9-modal.php'; ?>
+
+    <!-- v11.0.0 feature surfaces -->
+    <?php include __DIR__ . '/notification-center.php'; ?>
+    <?php include __DIR__ . '/todo-drawer.php'; ?>
+    <?php include __DIR__ . '/cmdk-palette.php'; ?>
+    <?php include __DIR__ . '/patient-hover-card.php'; ?>
+    <?php include __DIR__ . '/keyboard-help.php'; ?>
+    <?php include __DIR__ . '/quick-note-modal.php'; ?>
+
+    <!-- v11.0.0 feature JS bundle -->
+    <script defer src="/app/Views/doctor/assets/js/patient-color.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/patient-color.js') ? filemtime(__DIR__ . '/../doctor/assets/js/patient-color.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/theme-palette.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/theme-palette.js') ? filemtime(__DIR__ . '/../doctor/assets/js/theme-palette.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/notification-center.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notification-center.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notification-center.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/todo-drawer.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/todo-drawer.js') ? filemtime(__DIR__ . '/../doctor/assets/js/todo-drawer.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/cmdk.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/cmdk.js') ? filemtime(__DIR__ . '/../doctor/assets/js/cmdk.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/patient-hover.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/patient-hover.js') ? filemtime(__DIR__ . '/../doctor/assets/js/patient-hover.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/keyboard-help.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/keyboard-help.js') ? filemtime(__DIR__ . '/../doctor/assets/js/keyboard-help.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/quick-note.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/quick-note.js') ? filemtime(__DIR__ . '/../doctor/assets/js/quick-note.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/note-templates.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/note-templates.js') ? filemtime(__DIR__ . '/../doctor/assets/js/note-templates.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/focus-mode.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/focus-mode.js') ? filemtime(__DIR__ . '/../doctor/assets/js/focus-mode.js') : time() ?>"></script>
 </body>
 </html>

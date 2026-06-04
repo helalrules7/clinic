@@ -1,0 +1,384 @@
+/* =====================================================================
+   patient-hover.css — v11.0.0
+
+   Styles for the single recycled #patientCard element. Scoped under
+   .patient-card on the outermost <aside>. Uses design-system tokens
+   (--glass-*, --r-*, --text, --muted, --accent, --card, --bg) so it
+   adapts to palette switches and dark/light theme automatically.
+   ===================================================================== */
+
+.patient-card {
+    /* Local tokens. The avatar custom props (--pt-bg, --pt-fg, --pt-color)
+       are injected by patient-hover.js. */
+    --pc-pad:        14px;
+    --pc-gap:        10px;
+    --pc-radius:     var(--r-lg, 16px);
+    --pc-radius-sm:  var(--r-sm, 8px);
+    --pc-shadow:     var(--glass-shadow-lg, 0 16px 48px rgba(15, 23, 42, 0.14));
+    --pc-border:     var(--glass-border, rgba(226, 232, 240, 0.7));
+    --pc-bg:         var(--glass-bg-strong, rgba(255, 255, 255, 0.85));
+    --pc-text:       var(--text, #0F172A);
+    --pc-muted:      var(--muted, #64748B);
+    --pc-accent:     var(--accent, #4F46E5);
+    --pc-alert:      var(--warning, #F59E0B);
+
+    position: fixed;
+    z-index: 9000;
+    top: -9999px;
+    left: -9999px;
+    width: max-content;
+    max-width: 280px;
+    min-width: 240px;
+    padding: var(--pc-pad);
+    color: var(--pc-text);
+    background: var(--pc-bg);
+    border: 1px solid var(--pc-border);
+    border-radius: var(--pc-radius);
+    box-shadow: var(--pc-shadow);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
+    font-size: 0.875rem;
+    line-height: 1.4;
+    pointer-events: auto;
+
+    /* Hidden state — show class triggers the transition. */
+    opacity: 0;
+    transform: scale(0.96) translateY(2px);
+    transform-origin: top left;
+    transition: opacity 120ms ease, transform 120ms ease;
+    will-change: opacity, transform;
+}
+.patient-card[hidden] { display: none !important; }
+.patient-card[data-placement="left"]  { transform-origin: top right; }
+
+.patient-card.patient-card--show {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    transition: opacity 180ms ease, transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Dark theme — token-driven, but bump the shadow a notch for contrast. */
+.dark .patient-card {
+    --pc-bg:     var(--glass-bg-strong, rgba(12, 17, 31, 0.88));
+    --pc-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+}
+
+/* Mobile centered dialog mode (long-press). */
+.patient-card.patient-card--centered {
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) scale(0.96);
+    transform-origin: center;
+    max-width: calc(100vw - 32px);
+    width: min(340px, calc(100vw - 32px));
+}
+.patient-card.patient-card--centered.patient-card--show {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* ---------- Header ---------- */
+.patient-card .pc-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: var(--pc-gap);
+}
+.patient-card .pc-avatar {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--pt-bg, color-mix(in srgb, var(--pc-accent) 14%, transparent));
+    color: var(--pt-fg, var(--pc-text));
+    border: 1px solid color-mix(in srgb, var(--pt-color, var(--pc-accent)) 30%, transparent);
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+    user-select: none;
+}
+.patient-card .pc-avatar-initials { line-height: 1; }
+.patient-card .pc-ident { min-width: 0; flex: 1 1 auto; }
+.patient-card .pc-name {
+    margin: 0;
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--pc-text);
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.patient-card .pc-meta {
+    margin: 2px 0 0;
+    color: var(--pc-muted);
+    font-size: 0.78rem;
+    line-height: 1.3;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    align-items: center;
+}
+.patient-card .pc-meta-sep { opacity: 0.6; }
+.patient-card .pc-meta-phone {
+    font-variant-numeric: tabular-nums;
+    direction: ltr;
+    unicode-bidi: isolate;
+}
+
+/* ---------- Stats rows ---------- */
+.patient-card .pc-stats {
+    margin: 0;
+    padding: var(--pc-gap) 0;
+    border-top: 1px solid color-mix(in srgb, var(--pc-border) 60%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--pc-border) 60%, transparent);
+    display: grid;
+    gap: 8px;
+}
+.patient-card .pc-stat {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+.patient-card .pc-stat-label {
+    margin: 0;
+    color: var(--pc-muted);
+    font-size: 0.78rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+.patient-card .pc-stat-label i {
+    font-size: 0.95rem;
+    color: var(--pc-accent);
+    flex: 0 0 auto;
+}
+.patient-card .pc-stat-value {
+    margin: 0;
+    color: var(--pc-text);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+/* Alerts chip — amber, pulses to draw attention. */
+.patient-card .pc-stat-alerts .pc-stat-label i { color: var(--pc-alert); }
+.patient-card .pc-alerts-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    border-radius: var(--r-pill, 999px);
+    background: color-mix(in srgb, var(--pc-alert) 18%, transparent);
+    color: var(--pc-alert);
+    font-size: 0.74rem;
+    font-weight: 700;
+    line-height: 1.4;
+    border: 1px solid color-mix(in srgb, var(--pc-alert) 35%, transparent);
+}
+.patient-card .pc-alerts-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: var(--r-pill, 999px);
+    background: var(--pc-alert);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+}
+.dark .patient-card .pc-alerts-chip {
+    background: color-mix(in srgb, var(--pc-alert) 22%, transparent);
+    border-color: color-mix(in srgb, var(--pc-alert) 45%, transparent);
+}
+
+.patient-card .pc-alerts-chip--pulse {
+    animation: pcAlertPulse 1.8s ease-in-out infinite;
+}
+@keyframes pcAlertPulse {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--pc-alert) 45%, transparent); }
+    50%      { box-shadow: 0 0 0 5px color-mix(in srgb, var(--pc-alert) 0%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .patient-card .pc-alerts-chip--pulse { animation: none; }
+}
+
+/* ---------- CTA ---------- */
+.patient-card .pc-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    margin-top: var(--pc-gap);
+    padding: 8px 10px;
+    color: var(--pc-accent);
+    background: color-mix(in srgb, var(--pc-accent) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--pc-accent) 22%, transparent);
+    border-radius: var(--pc-radius-sm);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+.patient-card .pc-cta:hover,
+.patient-card .pc-cta:focus-visible {
+    background: color-mix(in srgb, var(--pc-accent) 14%, transparent);
+    border-color: color-mix(in srgb, var(--pc-accent) 35%, transparent);
+    text-decoration: none;
+    color: var(--pc-accent);
+}
+.patient-card .pc-cta:active { transform: translateY(1px); }
+.patient-card .pc-cta i { font-size: 1.05rem; line-height: 1; }
+.patient-card .pc-cta:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--pc-accent) 60%, transparent);
+    outline-offset: 2px;
+}
+
+/* ---------- Error state ---------- */
+.patient-card .pc-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 4px 2px;
+    color: var(--pc-muted);
+    font-size: 0.82rem;
+}
+.patient-card .pc-error i {
+    font-size: 1.1rem;
+    color: var(--danger, #EF4444);
+}
+
+/* =====================================================================
+   Skeleton — shimmer placeholders while the summary loads.
+   ===================================================================== */
+.patient-card .pc-skeleton { display: block; }
+.patient-card .pc-skel-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: var(--pc-gap);
+}
+.patient-card .pc-skel-lines {
+    flex: 1 1 auto;
+    display: grid;
+    gap: 6px;
+}
+.patient-card .pc-skel-rows {
+    display: grid;
+    gap: 8px;
+    padding: var(--pc-gap) 0;
+    border-top: 1px solid color-mix(in srgb, var(--pc-border) 60%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--pc-border) 60%, transparent);
+}
+.patient-card .pc-skel {
+    display: block;
+    border-radius: var(--pc-radius-sm);
+    background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--pc-muted) 14%, transparent) 0%,
+        color-mix(in srgb, var(--pc-muted) 24%, transparent) 50%,
+        color-mix(in srgb, var(--pc-muted) 14%, transparent) 100%
+    );
+    background-size: 200% 100%;
+    animation: pcShimmer 1.4s linear infinite;
+}
+.patient-card .pc-skel-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+}
+.patient-card .pc-skel-line {
+    height: 10px;
+    border-radius: 999px;
+}
+.patient-card .pc-skel-line-lg { width: 70%; }
+.patient-card .pc-skel-line-sm { width: 45%; }
+.patient-card .pc-skel-row     { height: 14px; width: 100%; border-radius: 999px; }
+.patient-card .pc-skel-cta {
+    display: block;
+    height: 32px;
+    width: 100%;
+    margin-top: var(--pc-gap);
+    border-radius: var(--pc-radius-sm);
+}
+@keyframes pcShimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .patient-card .pc-skel { animation: none; }
+}
+
+.dark .patient-card .pc-skel {
+    background: linear-gradient(
+        90deg,
+        rgba(148, 163, 184, 0.10) 0%,
+        rgba(148, 163, 184, 0.22) 50%,
+        rgba(148, 163, 184, 0.10) 100%
+    );
+    background-size: 200% 100%;
+}
+
+/* =====================================================================
+   Accessibility helpers.
+   ===================================================================== */
+.patient-card .visually-hidden {
+    position: absolute !important;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* =====================================================================
+   Mobile (≤ 575.98 px): card behaves as a small centred dialog when
+   triggered by long-press. Hover doesn't fire on touch, so the regular
+   anchored mode is effectively desktop-only.
+   ===================================================================== */
+@media (max-width: 575.98px) {
+    .patient-card:not(.patient-card--centered) {
+        /* Force the centred dialog layout even if JS forgot the modifier.
+           This keeps the card readable on small viewports. */
+        position: fixed;
+        top: 50% !important;
+        left: 50% !important;
+        right: auto;
+        transform: translate(-50%, -50%) scale(0.96);
+        transform-origin: center;
+        max-width: calc(100vw - 32px);
+        width: min(340px, calc(100vw - 32px));
+    }
+    .patient-card:not(.patient-card--centered).patient-card--show {
+        transform: translate(-50%, -50%) scale(1);
+    }
+    .patient-card { font-size: 0.92rem; }
+    .patient-card .pc-cta {
+        /* Larger tap target on mobile, always visible (no hover). */
+        padding: 10px 12px;
+        font-size: 0.88rem;
+    }
+}
+
+/* =====================================================================
+   Print: hide entirely.
+   ===================================================================== */
+@media print {
+    .patient-card { display: none !important; }
+}

@@ -60,6 +60,18 @@
     <link href="/app/Views/layouts/modal-kit.css?v=<?= file_exists(__DIR__ . '/modal-kit.css') ? filemtime(__DIR__ . '/modal-kit.css') : time() ?>" rel="stylesheet">
     <!-- Shared weather visuals (animated scene/icons + eye-care advisory + UV) -->
     <link href="/app/Views/layouts/weather-fx.css?v=<?= file_exists(__DIR__ . '/weather-fx.css') ? filemtime(__DIR__ . '/weather-fx.css') : time() ?>" rel="stylesheet">
+
+    <!-- v11.0.0 feature CSS bundle -->
+    <link href="/app/Views/doctor/assets/css/notification-center.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/notification-center.css') ? filemtime(__DIR__ . '/../doctor/assets/css/notification-center.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/todo-drawer.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/todo-drawer.css') ? filemtime(__DIR__ . '/../doctor/assets/css/todo-drawer.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/cmdk.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/cmdk.css') ? filemtime(__DIR__ . '/../doctor/assets/css/cmdk.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/patient-hover.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/patient-hover.css') ? filemtime(__DIR__ . '/../doctor/assets/css/patient-hover.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/keyboard-help.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/keyboard-help.css') ? filemtime(__DIR__ . '/../doctor/assets/css/keyboard-help.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/quick-note.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/quick-note.css') ? filemtime(__DIR__ . '/../doctor/assets/css/quick-note.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/note-templates.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/note-templates.css') ? filemtime(__DIR__ . '/../doctor/assets/css/note-templates.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/focus-mode.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/focus-mode.css') ? filemtime(__DIR__ . '/../doctor/assets/css/focus-mode.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/theme-palette.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/theme-palette.css') ? filemtime(__DIR__ . '/../doctor/assets/css/theme-palette.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/celebration.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/celebration.css') ? filemtime(__DIR__ . '/../doctor/assets/css/celebration.css') : time() ?>" rel="stylesheet">
     <!-- Timepicker UI CSS (Local) -->
     <link href="/app/Views/layouts/timepicker-ui-main/css/main.css?v=<?= file_exists(__DIR__ . '/timepicker-ui-main/css/main.css') ? filemtime(__DIR__ . '/timepicker-ui-main/css/main.css') : time() ?>" rel="stylesheet">
     
@@ -69,15 +81,45 @@
          theme-matched asset — no flash from Light → Dark on dark-mode refreshes. -->
     <script>
         (function() {
-            var savedTheme = localStorage.getItem('appTheme');
-            var theme = (savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : 'dark';
+            // v11.0.0 — Theme + Palette + Auto-schedule pre-paint. Runs in <head>
+            // BEFORE any <body> content parses, so logo, favicon AND data-palette
+            // are all resolved on first paint — no flashes.
 
-            // 1) Apply dark class before first paint.
-            document.documentElement.classList.toggle('dark', theme === 'dark');
-            document.documentElement.classList.add('theme-loaded');
+            var html = document.documentElement;
+            var ALLOWED_PALETTES = ['indigo','emerald','rose','slate','amber','ocean'];
 
-            // 2) Pre-resolve the sidebar logo + favicon URLs so the markup
-            //    below can render with them on first paint.
+            // 1) Palette (data-palette attr). Falls back to indigo.
+            var savedPalette = null;
+            try { savedPalette = localStorage.getItem('appPalette'); } catch (e) {}
+            var palette = (ALLOWED_PALETTES.indexOf(savedPalette) >= 0) ? savedPalette : 'indigo';
+            html.setAttribute('data-palette', palette);
+
+            // 2) Theme — manual saved theme OR auto-schedule (v11 new).
+            var savedTheme = null, autoSched = false, darkFrom = '19:00', lightFrom = '07:00';
+            try {
+                savedTheme = localStorage.getItem('appTheme');
+                autoSched  = localStorage.getItem('appThemeAutoSchedule') === '1';
+                darkFrom   = localStorage.getItem('appThemeDarkFrom')  || '19:00';
+                lightFrom  = localStorage.getItem('appThemeLightFrom') || '07:00';
+            } catch (e) {}
+
+            var theme;
+            if (autoSched) {
+                // Auto-schedule mode: pick by current local time, wrap-around range.
+                var now = new Date();
+                var mins = now.getHours() * 60 + now.getMinutes();
+                var parse = function (s) { var p = String(s).split(':'); return (+p[0]) * 60 + (+(p[1] || 0)); };
+                var darkStart  = parse(darkFrom);
+                var lightStart = parse(lightFrom);
+                var isDark = (mins >= darkStart) || (mins < lightStart);
+                theme = isDark ? 'dark' : 'light';
+            } else {
+                theme = (savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : 'dark';
+            }
+            html.classList.toggle('dark', theme === 'dark');
+            html.classList.add('theme-loaded');
+
+            // 3) Pre-resolve the sidebar logo + favicon URLs.
             window.__INITIAL_LOGO_SRC__ = theme === 'dark'
                 ? '/assets/images/Dark.png'
                 : '/assets/images/Light.png';
@@ -89,9 +131,7 @@
                 apple: theme === 'dark' ? '/assets/fav/Dark-180x180.png' : '/assets/fav/Light-180x180.png',
             };
 
-            // 3) Rewrite favicon <link> hrefs NOW (still in <head>, before body
-            //    parses) so the tab icon never starts as Light on a dark theme.
-            //    The <link> tags themselves are above; we can grab them by id.
+            // 4) Rewrite favicon <link> hrefs NOW so the tab icon never starts wrong.
             var setHref = function(id, href) {
                 var el = document.getElementById(id);
                 if (el) el.href = href;
@@ -369,7 +409,7 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="sidebar-footer-text">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v10.2.0
+                        HClinic / Roaya Clinic v11.0.0
                         <span aria-hidden="true">·</span>
                         <a href="https://hclinic.clinic/docs/opth/" target="_blank" rel="noopener" class="sidebar-footer-link"><i class="bi bi-book me-1"></i>Docs</a>
                     </div>
@@ -1259,5 +1299,25 @@
     </script>
 
     <?php include __DIR__ . '/whats-new-v9-modal.php'; ?>
+
+    <!-- v11.0.0 feature surfaces -->
+    <?php include __DIR__ . '/notification-center.php'; ?>
+    <?php include __DIR__ . '/todo-drawer.php'; ?>
+    <?php include __DIR__ . '/cmdk-palette.php'; ?>
+    <?php include __DIR__ . '/patient-hover-card.php'; ?>
+    <?php include __DIR__ . '/keyboard-help.php'; ?>
+    <?php include __DIR__ . '/quick-note-modal.php'; ?>
+
+    <!-- v11.0.0 feature JS bundle (deferred so it doesn't block paint) -->
+    <script defer src="/app/Views/doctor/assets/js/patient-color.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/patient-color.js') ? filemtime(__DIR__ . '/../doctor/assets/js/patient-color.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/theme-palette.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/theme-palette.js') ? filemtime(__DIR__ . '/../doctor/assets/js/theme-palette.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/notification-center.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notification-center.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notification-center.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/todo-drawer.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/todo-drawer.js') ? filemtime(__DIR__ . '/../doctor/assets/js/todo-drawer.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/cmdk.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/cmdk.js') ? filemtime(__DIR__ . '/../doctor/assets/js/cmdk.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/patient-hover.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/patient-hover.js') ? filemtime(__DIR__ . '/../doctor/assets/js/patient-hover.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/keyboard-help.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/keyboard-help.js') ? filemtime(__DIR__ . '/../doctor/assets/js/keyboard-help.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/quick-note.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/quick-note.js') ? filemtime(__DIR__ . '/../doctor/assets/js/quick-note.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/note-templates.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/note-templates.js') ? filemtime(__DIR__ . '/../doctor/assets/js/note-templates.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/focus-mode.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/focus-mode.js') ? filemtime(__DIR__ . '/../doctor/assets/js/focus-mode.js') : time() ?>"></script>
 </body>
 </html>

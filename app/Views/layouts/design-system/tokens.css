@@ -134,3 +134,212 @@
 /* Direction-aware UI font: secretary layout is <html dir="rtl"> → Cairo. */
 [dir="rtl"] { --font-ui: var(--font-ar); }
 [dir="ltr"] { --font-ui: var(--font-en); }
+
+/* =====================================================================
+   v11.0.0 — Theme palettes (6 named accent palettes × dark/light)
+
+   How it works
+   ------------
+   The base :root + .dark blocks above carry the default Indigo palette
+   (which doubles as the `indigo` palette). For the OTHER 5 palettes we
+   override only the tokens that carry hue: --accent, --accent-rgb,
+   --ds-primary, --ds-primary-hover, --ds-primary-soft, --ds-accent-2,
+   --ds-chip-info-bg, --bs-primary (and friends).
+
+   Selection
+   ---------
+   The pre-paint script in main.php / secretary_main.php reads the user's
+   chosen palette from localStorage ("appPalette") BEFORE first paint and
+   sets `data-palette="X"` on the <html> element. The CSS below then
+   cascades the right hues over the legacy / design-system / Bootstrap
+   bridge tokens — every component picks up the new accent automatically
+   because they all consume `var(--accent)` and friends.
+
+   ===================================================================== */
+
+/* ---- INDIGO (default — explicit data attribute, same as base) ---- */
+:root[data-palette="indigo"] {
+    --accent: #4F46E5; --accent-rgb: 79, 70, 229;
+    --ds-primary: #4F46E5; --ds-primary-hover: #4338CA;
+    --ds-primary-soft: rgba(79, 70, 229, 0.10);
+    --ds-accent-2: #6366F1;
+    --ds-chip-info-bg: rgba(79, 70, 229, 0.12);
+    --bs-primary: #4F46E5; --bs-primary-rgb: 79, 70, 229;
+    --bs-primary-text-emphasis: #3730A3;
+    --bs-primary-bg-subtle: #E0E7FF;
+    --bs-primary-border-subtle: #C7D2FE;
+    --bs-link-color: #4F46E5; --bs-link-color-rgb: 79, 70, 229;
+    --bs-link-hover-color: #4338CA;
+}
+.dark[data-palette="indigo"] {
+    --accent: #6366F1; --accent-rgb: 99, 102, 241;
+    --ds-primary: #6366F1; --ds-primary-hover: #818CF8;
+    --ds-primary-soft: rgba(99, 102, 241, 0.16);
+    --ds-accent-2: #818CF8;
+    --ds-chip-info-bg: rgba(99, 102, 241, 0.18);
+    --bs-primary: #6366F1; --bs-primary-rgb: 99, 102, 241;
+    --bs-primary-text-emphasis: #A5B4FC;
+    --bs-primary-bg-subtle: #1E1B4B;
+    --bs-primary-border-subtle: #312E81;
+    --bs-link-color: #818CF8; --bs-link-color-rgb: 129, 140, 248;
+    --bs-link-hover-color: #A5B4FC;
+}
+
+/* ---- EMERALD (clinical green) ---- */
+:root[data-palette="emerald"] {
+    --accent: #059669; --accent-rgb: 5, 150, 105;
+    --ds-primary: #059669; --ds-primary-hover: #047857;
+    --ds-primary-soft: rgba(5, 150, 105, 0.10);
+    --ds-accent-2: #10B981;
+    --ds-chip-info-bg: rgba(5, 150, 105, 0.12);
+    --bs-primary: #059669; --bs-primary-rgb: 5, 150, 105;
+    --bs-primary-text-emphasis: #065F46;
+    --bs-primary-bg-subtle: #D1FAE5;
+    --bs-primary-border-subtle: #6EE7B7;
+    --bs-link-color: #059669; --bs-link-color-rgb: 5, 150, 105;
+    --bs-link-hover-color: #047857;
+}
+.dark[data-palette="emerald"] {
+    --accent: #34D399; --accent-rgb: 52, 211, 153;
+    --ds-primary: #34D399; --ds-primary-hover: #6EE7B7;
+    --ds-primary-soft: rgba(52, 211, 153, 0.16);
+    --ds-accent-2: #6EE7B7;
+    --ds-chip-info-bg: rgba(52, 211, 153, 0.18);
+    --bs-primary: #34D399; --bs-primary-rgb: 52, 211, 153;
+    --bs-primary-text-emphasis: #6EE7B7;
+    --bs-primary-bg-subtle: #064E3B;
+    --bs-primary-border-subtle: #065F46;
+    --bs-link-color: #6EE7B7; --bs-link-color-rgb: 110, 231, 183;
+    --bs-link-hover-color: #A7F3D0;
+}
+
+/* ---- ROSE (warm pink-red) ---- */
+:root[data-palette="rose"] {
+    --accent: #E11D48; --accent-rgb: 225, 29, 72;
+    --ds-primary: #E11D48; --ds-primary-hover: #BE123C;
+    --ds-primary-soft: rgba(225, 29, 72, 0.10);
+    --ds-accent-2: #F43F5E;
+    --ds-chip-info-bg: rgba(225, 29, 72, 0.12);
+    --bs-primary: #E11D48; --bs-primary-rgb: 225, 29, 72;
+    --bs-primary-text-emphasis: #9F1239;
+    --bs-primary-bg-subtle: #FFE4E6;
+    --bs-primary-border-subtle: #FDA4AF;
+    --bs-link-color: #E11D48; --bs-link-color-rgb: 225, 29, 72;
+    --bs-link-hover-color: #BE123C;
+}
+.dark[data-palette="rose"] {
+    --accent: #FB7185; --accent-rgb: 251, 113, 133;
+    --ds-primary: #FB7185; --ds-primary-hover: #FDA4AF;
+    --ds-primary-soft: rgba(251, 113, 133, 0.16);
+    --ds-accent-2: #FDA4AF;
+    --ds-chip-info-bg: rgba(251, 113, 133, 0.18);
+    --bs-primary: #FB7185; --bs-primary-rgb: 251, 113, 133;
+    --bs-primary-text-emphasis: #FDA4AF;
+    --bs-primary-bg-subtle: #4C0519;
+    --bs-primary-border-subtle: #881337;
+    --bs-link-color: #FDA4AF; --bs-link-color-rgb: 253, 164, 175;
+    --bs-link-hover-color: #FECDD3;
+}
+
+/* ---- SLATE (monochrome) ---- */
+:root[data-palette="slate"] {
+    --accent: #475569; --accent-rgb: 71, 85, 105;
+    --ds-primary: #475569; --ds-primary-hover: #334155;
+    --ds-primary-soft: rgba(71, 85, 105, 0.10);
+    --ds-accent-2: #64748B;
+    --ds-chip-info-bg: rgba(71, 85, 105, 0.12);
+    --bs-primary: #475569; --bs-primary-rgb: 71, 85, 105;
+    --bs-primary-text-emphasis: #1E293B;
+    --bs-primary-bg-subtle: #E2E8F0;
+    --bs-primary-border-subtle: #CBD5E1;
+    --bs-link-color: #475569; --bs-link-color-rgb: 71, 85, 105;
+    --bs-link-hover-color: #334155;
+}
+.dark[data-palette="slate"] {
+    --accent: #94A3B8; --accent-rgb: 148, 163, 184;
+    --ds-primary: #94A3B8; --ds-primary-hover: #CBD5E1;
+    --ds-primary-soft: rgba(148, 163, 184, 0.16);
+    --ds-accent-2: #CBD5E1;
+    --ds-chip-info-bg: rgba(148, 163, 184, 0.18);
+    --bs-primary: #94A3B8; --bs-primary-rgb: 148, 163, 184;
+    --bs-primary-text-emphasis: #CBD5E1;
+    --bs-primary-bg-subtle: #1E293B;
+    --bs-primary-border-subtle: #334155;
+    --bs-link-color: #CBD5E1; --bs-link-color-rgb: 203, 213, 225;
+    --bs-link-hover-color: #E2E8F0;
+}
+
+/* ---- AMBER (sunny warm) ---- */
+:root[data-palette="amber"] {
+    --accent: #D97706; --accent-rgb: 217, 119, 6;
+    --ds-primary: #D97706; --ds-primary-hover: #B45309;
+    --ds-primary-soft: rgba(217, 119, 6, 0.10);
+    --ds-accent-2: #F59E0B;
+    --ds-chip-info-bg: rgba(217, 119, 6, 0.12);
+    --bs-primary: #D97706; --bs-primary-rgb: 217, 119, 6;
+    --bs-primary-text-emphasis: #92400E;
+    --bs-primary-bg-subtle: #FEF3C7;
+    --bs-primary-border-subtle: #FCD34D;
+    --bs-link-color: #D97706; --bs-link-color-rgb: 217, 119, 6;
+    --bs-link-hover-color: #B45309;
+}
+.dark[data-palette="amber"] {
+    --accent: #FBBF24; --accent-rgb: 251, 191, 36;
+    --ds-primary: #FBBF24; --ds-primary-hover: #FCD34D;
+    --ds-primary-soft: rgba(251, 191, 36, 0.16);
+    --ds-accent-2: #FCD34D;
+    --ds-chip-info-bg: rgba(251, 191, 36, 0.18);
+    --bs-primary: #FBBF24; --bs-primary-rgb: 251, 191, 36;
+    --bs-primary-text-emphasis: #FCD34D;
+    --bs-primary-bg-subtle: #451A03;
+    --bs-primary-border-subtle: #78350F;
+    --bs-link-color: #FCD34D; --bs-link-color-rgb: 252, 211, 77;
+    --bs-link-hover-color: #FDE68A;
+}
+
+/* ---- OCEAN (cyan / sky blue) ---- */
+:root[data-palette="ocean"] {
+    --accent: #0891B2; --accent-rgb: 8, 145, 178;
+    --ds-primary: #0891B2; --ds-primary-hover: #0E7490;
+    --ds-primary-soft: rgba(8, 145, 178, 0.10);
+    --ds-accent-2: #06B6D4;
+    --ds-chip-info-bg: rgba(8, 145, 178, 0.12);
+    --bs-primary: #0891B2; --bs-primary-rgb: 8, 145, 178;
+    --bs-primary-text-emphasis: #155E75;
+    --bs-primary-bg-subtle: #CFFAFE;
+    --bs-primary-border-subtle: #67E8F9;
+    --bs-link-color: #0891B2; --bs-link-color-rgb: 8, 145, 178;
+    --bs-link-hover-color: #0E7490;
+}
+.dark[data-palette="ocean"] {
+    --accent: #22D3EE; --accent-rgb: 34, 211, 238;
+    --ds-primary: #22D3EE; --ds-primary-hover: #67E8F9;
+    --ds-primary-soft: rgba(34, 211, 238, 0.16);
+    --ds-accent-2: #67E8F9;
+    --ds-chip-info-bg: rgba(34, 211, 238, 0.18);
+    --bs-primary: #22D3EE; --bs-primary-rgb: 34, 211, 238;
+    --bs-primary-text-emphasis: #67E8F9;
+    --bs-primary-bg-subtle: #083344;
+    --bs-primary-border-subtle: #155E75;
+    --bs-link-color: #67E8F9; --bs-link-color-rgb: 103, 232, 249;
+    --bs-link-hover-color: #A5F3FC;
+}
+
+/* ---- Palette named-color helpers used by JS (todo lists, badges, etc.) ----
+   These are global static colors so any component can do
+   `style="--list-c: var(--palette-emerald);"` etc. without recomputing. */
+:root {
+    --palette-indigo:  #6366F1;
+    --palette-emerald: #10B981;
+    --palette-rose:    #F43F5E;
+    --palette-slate:   #64748B;
+    --palette-amber:   #F59E0B;
+    --palette-ocean:   #06B6D4;
+}
+
+/* ---- Smooth transitions when the user swaps palette ---- */
+:root.palette-transitioning,
+:root.palette-transitioning * {
+    transition: background-color .25s ease, border-color .25s ease,
+                color .25s ease, fill .25s ease, box-shadow .25s ease !important;
+}

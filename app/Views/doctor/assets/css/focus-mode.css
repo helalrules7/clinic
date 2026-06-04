@@ -1,0 +1,398 @@
+/* ==========================================================================
+   focus-mode.css
+   Edit Consultation "Focus mode" — strips the chrome and presents a centered
+   editing surface with a thin glass top-bar.
+
+   Scope: every selector is qualified by either `body[data-focus-mode]`,
+   `body.focus-mode-leaving`, or the `.focus-` feature classes.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Header toggle button
+   -------------------------------------------------------------------------- */
+.focus-toggle-btn {
+    --focus-toggle-bg: var(--glass-bg, rgba(255, 255, 255, 0.6));
+    --focus-toggle-border: var(--glass-border, rgba(15, 23, 42, 0.08));
+    --focus-toggle-fg: var(--text, #0f172a);
+
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 38px;
+    padding: 0 0.85rem;
+    border-radius: var(--r-pill, 999px);
+    border: 1px solid var(--focus-toggle-border);
+    background: var(--focus-toggle-bg);
+    color: var(--focus-toggle-fg);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1;
+    cursor: pointer;
+    -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
+    backdrop-filter: blur(var(--glass-blur, 12px));
+    box-shadow: var(--glass-shadow, 0 1px 2px rgba(15, 23, 42, 0.04));
+    transition: background-color 160ms ease, color 160ms ease,
+                border-color 160ms ease, transform 120ms ease, box-shadow 160ms ease;
+    white-space: nowrap;
+}
+
+.focus-toggle-btn:hover {
+    border-color: var(--accent, var(--ds-primary, #6366f1));
+    color: var(--accent, var(--ds-primary, #6366f1));
+    transform: translateY(-1px);
+}
+
+.focus-toggle-btn:focus-visible {
+    outline: none;
+    border-color: var(--accent, var(--ds-primary, #6366f1));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #6366f1) 25%, transparent);
+}
+
+.focus-toggle-btn i {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.focus-toggle-btn.is-active {
+    background: color-mix(in srgb, var(--accent, #6366f1) 14%, transparent);
+    border-color: color-mix(in srgb, var(--accent, #6366f1) 40%, transparent);
+    color: var(--accent, var(--ds-primary, #6366f1));
+}
+
+.focus-toggle-btn.is-active:hover {
+    background: color-mix(in srgb, var(--accent, #6366f1) 22%, transparent);
+}
+
+/* Dark theme */
+.dark .focus-toggle-btn {
+    --focus-toggle-bg: var(--glass-bg, rgba(15, 23, 42, 0.55));
+    --focus-toggle-border: var(--glass-border, rgba(255, 255, 255, 0.08));
+    --focus-toggle-fg: var(--text, #e2e8f0);
+}
+
+.dark .focus-toggle-btn:focus-visible {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #818cf8) 40%, transparent);
+}
+
+/* Hide the label below tiny screens — keep the icon only. */
+@media (max-width: 575.98px) {
+    .focus-toggle-btn {
+        padding: 0 0.6rem;
+        height: 36px;
+    }
+    .focus-toggle-btn__label {
+        display: none;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Focus top-bar (only visible when focus mode is active)
+   -------------------------------------------------------------------------- */
+.focus-topbar {
+    display: none;
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 1080;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.55rem 1.1rem;
+    min-height: 48px;
+    background: var(--glass-bg-strong, rgba(255, 255, 255, 0.85));
+    border-bottom: 1px solid var(--glass-border, rgba(15, 23, 42, 0.08));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 14px)) saturate(140%);
+    backdrop-filter: blur(var(--glass-blur, 14px)) saturate(140%);
+    box-shadow: 0 4px 18px -12px rgba(15, 23, 42, 0.18);
+    color: var(--text, #0f172a);
+    font-size: 0.9rem;
+    transform: translateY(-100%);
+    opacity: 0;
+    transition: transform 220ms ease, opacity 200ms ease;
+}
+
+body[data-focus-mode] .focus-topbar {
+    display: flex;
+    transform: translateY(0);
+    opacity: 1;
+}
+
+body.focus-mode-leaving .focus-topbar {
+    transform: translateY(-100%);
+    opacity: 0;
+}
+
+.dark .focus-topbar {
+    background: var(--glass-bg-strong, rgba(15, 23, 42, 0.78));
+    border-bottom-color: var(--glass-border, rgba(255, 255, 255, 0.08));
+    color: var(--text, #e2e8f0);
+    box-shadow: 0 4px 22px -12px rgba(0, 0, 0, 0.55);
+}
+
+.focus-topbar__exit {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    height: 34px;
+    padding: 0 0.85rem;
+    border-radius: var(--r-pill, 999px);
+    border: 1px solid var(--glass-border, rgba(15, 23, 42, 0.08));
+    background: var(--card, rgba(255, 255, 255, 0.9));
+    color: var(--text, #0f172a);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 160ms ease, color 160ms ease,
+                border-color 160ms ease, transform 120ms ease;
+}
+
+.focus-topbar__exit:hover {
+    border-color: var(--accent, var(--ds-primary, #6366f1));
+    color: var(--accent, var(--ds-primary, #6366f1));
+    transform: translateX(-1px);
+}
+
+.focus-topbar__exit:focus-visible {
+    outline: none;
+    border-color: var(--accent, var(--ds-primary, #6366f1));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #6366f1) 25%, transparent);
+}
+
+.focus-topbar__exit i {
+    font-size: 0.95rem;
+    line-height: 1;
+}
+
+.dark .focus-topbar__exit {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text, #e2e8f0);
+    border-color: var(--glass-border, rgba(255, 255, 255, 0.08));
+}
+
+.focus-topbar__meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 0 1 auto;
+}
+
+.focus-topbar__patient {
+    font-weight: 600;
+    color: var(--text, #0f172a);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 36ch;
+}
+
+.dark .focus-topbar__patient {
+    color: var(--text, #e2e8f0);
+}
+
+.focus-topbar__sep {
+    color: var(--muted, #64748b);
+    opacity: 0.7;
+    font-weight: 400;
+}
+
+.focus-topbar__appt {
+    color: var(--muted, #64748b);
+    font-weight: 500;
+}
+
+.focus-topbar__spacer {
+    flex: 1 1 auto;
+}
+
+.focus-topbar__hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--muted, #64748b);
+    font-size: 0.78rem;
+}
+
+.focus-topbar__hint kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5em;
+    height: 1.5em;
+    padding: 0 0.35em;
+    border-radius: var(--r-sm, 8px);
+    border: 1px solid var(--glass-border, rgba(15, 23, 42, 0.12));
+    background: var(--card, rgba(255, 255, 255, 0.9));
+    color: var(--text, #0f172a);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.dark .focus-topbar__hint kbd {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text, #e2e8f0);
+    border-color: var(--glass-border, rgba(255, 255, 255, 0.12));
+}
+
+/* Mobile: drop hint, tighten layout, keep exit + patient name always visible. */
+@media (max-width: 575.98px) {
+    .focus-topbar {
+        gap: 0.55rem;
+        padding: 0.5rem 0.75rem;
+        min-height: 44px;
+    }
+    .focus-topbar__exit-label {
+        display: none;
+    }
+    .focus-topbar__exit {
+        padding: 0 0.55rem;
+        height: 32px;
+    }
+    .focus-topbar__hint {
+        display: none;
+    }
+    .focus-topbar__patient {
+        max-width: 18ch;
+    }
+    .focus-topbar__appt {
+        font-size: 0.78rem;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Chrome hiding (sidebar, dock, FAB stack, breadcrumb, dashboard header)
+
+   We keep elements rendered through the leave animation by attaching a
+   precursor `.focus-mode-leaving` class that fades + slides them out. Once
+   `[data-focus-mode]` is removed they snap back to default layout.
+   -------------------------------------------------------------------------- */
+
+/* Animations */
+@keyframes focusModeFadeOutLeft {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(-16px); }
+}
+@keyframes focusModeFadeOutRight {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(16px); }
+}
+@keyframes focusModeFadeOutUp {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-12px); }
+}
+@keyframes focusModeFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Active state — hide chrome outright. */
+body[data-focus-mode] .sidebar,
+body[data-focus-mode] .app-dock,
+body[data-focus-mode] .fab-stack,
+body[data-focus-mode] .app-breadcrumb,
+body[data-focus-mode] .dashboard-header,
+body[data-focus-mode] .consultation-header,
+body[data-focus-mode] .sidebar-toggle,
+body[data-focus-mode] #sidebarToggle {
+    display: none !important;
+}
+
+/* Also hide the action row that contains the breadcrumb + Back button on
+   Edit Consultation, since the focus top-bar replaces it. */
+body[data-focus-mode] .d-flex.justify-content-between.align-items-center.mb-4:has(.app-breadcrumb) {
+    display: none !important;
+}
+
+/* Leave animation — keep elements visible while sliding them away. */
+body.focus-mode-leaving .sidebar {
+    animation: focusModeFadeOutLeft 220ms ease forwards;
+    pointer-events: none;
+}
+body.focus-mode-leaving .app-dock,
+body.focus-mode-leaving .fab-stack {
+    animation: focusModeFadeOutRight 220ms ease forwards;
+    pointer-events: none;
+}
+body.focus-mode-leaving .app-breadcrumb,
+body.focus-mode-leaving .dashboard-header,
+body.focus-mode-leaving .consultation-header {
+    animation: focusModeFadeOutUp 220ms ease forwards;
+    pointer-events: none;
+}
+
+/* Centered content surface. */
+body[data-focus-mode] .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding-top: 64px;
+    transition: padding-top 220ms ease;
+}
+
+body[data-focus-mode] .container-fluid,
+body[data-focus-mode] .main-content > .container-fluid {
+    max-width: 960px;
+    margin-inline: auto;
+    padding-top: 0;
+    padding-left: clamp(1rem, 3vw, 2rem);
+    padding-right: clamp(1rem, 3vw, 2rem);
+}
+
+/* Subtle fade-in on the centered surface when entering focus mode. */
+body[data-focus-mode]:not(.focus-mode-entering) .container-fluid {
+    animation: focusModeFadeIn 280ms ease both;
+}
+
+/* Cards feel a touch lighter without the surrounding chrome. */
+body[data-focus-mode] .card {
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04),
+                0 8px 28px -18px rgba(15, 23, 42, 0.12);
+}
+.dark body[data-focus-mode] .card {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25),
+                0 12px 32px -20px rgba(0, 0, 0, 0.55);
+}
+
+/* Mobile tweaks: tighter top padding, full-width container. */
+@media (max-width: 575.98px) {
+    body[data-focus-mode] .main-content {
+        padding-top: 56px;
+    }
+    body[data-focus-mode] .container-fluid {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+}
+
+/* Respect reduced-motion users. */
+@media (prefers-reduced-motion: reduce) {
+    .focus-topbar,
+    .focus-toggle-btn,
+    .focus-topbar__exit,
+    body[data-focus-mode] .main-content {
+        transition: none !important;
+    }
+    body.focus-mode-leaving .sidebar,
+    body.focus-mode-leaving .app-dock,
+    body.focus-mode-leaving .fab-stack,
+    body.focus-mode-leaving .app-breadcrumb,
+    body.focus-mode-leaving .dashboard-header,
+    body.focus-mode-leaving .consultation-header,
+    body[data-focus-mode]:not(.focus-mode-entering) .container-fluid {
+        animation: none !important;
+    }
+}
+
+/* Print: never show the focus top-bar or toggle button. */
+@media print {
+    .focus-topbar,
+    .focus-toggle-btn {
+        display: none !important;
+    }
+    body[data-focus-mode] .sidebar,
+    body[data-focus-mode] .app-dock,
+    body[data-focus-mode] .fab-stack {
+        display: none !important;
+    }
+}

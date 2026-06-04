@@ -302,6 +302,168 @@
                             </div>
                         </div>
 
+                        <!-- v11.0.0 — Appearance (Themes + Auto schedule) -->
+                        <div class="settings-section">
+                            <h5><i class="bi bi-palette-fill me-2"></i>Appearance</h5>
+                            <div class="form-text mb-3" style="margin-top:-6px">
+                                Pick the colour palette and how dark/light mode behaves.
+                                Your choice follows you across devices.
+                            </div>
+
+                            <!-- Palette grid (6 named accent palettes) -->
+                            <div class="setting-item">
+                                <div>
+                                    <label class="form-label mb-0">Colour palette</label>
+                                    <div class="form-text mb-2">Six named accents &mdash; tap any to switch instantly.</div>
+                                    <div class="appearance-grid" id="appearanceGrid">
+                                        <?php
+                                          $__paletteRows = [
+                                              ['indigo',  'Indigo',  'Calm professional blue-violet'],
+                                              ['emerald', 'Emerald', 'Clinical, refreshing green'],
+                                              ['rose',    'Rose',    'Warm, friendly pink-red'],
+                                              ['slate',   'Slate',   'Quiet monochrome'],
+                                              ['amber',   'Amber',   'Energetic warm gold'],
+                                              ['ocean',   'Ocean',   'Cool cyan-blue'],
+                                          ];
+                                          foreach ($__paletteRows as $__p):
+                                        ?>
+                                          <button type="button"
+                                                  class="appearance-card"
+                                                  data-palette-id="<?= $__p[0] ?>"
+                                                  onclick="window.setThemePalette &amp;&amp; window.setThemePalette('<?= $__p[0] ?>'); document.querySelectorAll('.appearance-card').forEach(function(c){c.removeAttribute('data-active');}); this.setAttribute('data-active','');">
+                                              <div class="appearance-card__swatch"></div>
+                                              <div class="appearance-card__preview">
+                                                  <div class="appearance-card__btn"></div>
+                                                  <div class="appearance-card__bar"></div>
+                                                  <div class="appearance-card__bar short"></div>
+                                              </div>
+                                              <div class="appearance-card__label"><?= $__p[1] ?></div>
+                                              <div class="appearance-card__hint"><?= $__p[2] ?></div>
+                                          </button>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <script>
+                                        // Mark the active card based on the current palette resolved by the pre-paint script.
+                                        (function () {
+                                            var current = document.documentElement.getAttribute('data-palette') || 'indigo';
+                                            var el = document.querySelector('.appearance-card[data-palette-id="' + current + '"]');
+                                            if (el) el.setAttribute('data-active', '');
+                                        })();
+                                    </script>
+                                </div>
+                            </div>
+
+                            <!-- Auto-switch theme by time of day — master toggle -->
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Auto-switch theme by time of day</label>
+                                        <div class="form-text">When enabled, the app picks dark or light automatically based on the times below. Your manual light/dark toggle still works for one-off overrides until the next page load.</div>
+                                    </div>
+                                    <div class="toggle-switch-wrapper">
+                                        <input type="checkbox" class="toggle-switch" id="themeAutoSchedule"
+                                               onchange="(function(el){
+                                                   localStorage.setItem('appThemeAutoSchedule', el.checked ? '1' : '0');
+                                                   var times = document.getElementById('themeScheduleTimes');
+                                                   if (times) times.hidden = !el.checked;
+                                                   fetch('/api/settings/theme-auto-schedule', {
+                                                       method: 'POST', credentials: 'same-origin',
+                                                       headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                                                       body: JSON.stringify({
+                                                           enabled: el.checked,
+                                                           dark_from:  (document.getElementById('themeDarkFrom')  || {}).value || '19:00',
+                                                           light_from: (document.getElementById('themeLightFrom') || {}).value || '07:00'
+                                                       })
+                                                   });
+                                                   if (window.applyThemeSchedule) window.applyThemeSchedule();
+                                               })(this)">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Schedule times — shown when auto-switch is ON -->
+                            <div class="setting-item theme-schedule-times" id="themeScheduleTimes" hidden>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label mb-0">Dark mode from</label>
+                                        <div class="form-text mb-2">Time of day when the UI switches to dark.</div>
+                                        <input type="time" class="form-control" id="themeDarkFrom" value="19:00"
+                                               onchange="(function(el){
+                                                   localStorage.setItem('appThemeDarkFrom', el.value);
+                                                   fetch('/api/settings/theme-auto-schedule', {
+                                                       method: 'POST', credentials: 'same-origin',
+                                                       headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                                                       body: JSON.stringify({
+                                                           enabled: document.getElementById('themeAutoSchedule').checked,
+                                                           dark_from: el.value,
+                                                           light_from: document.getElementById('themeLightFrom').value
+                                                       })
+                                                   });
+                                                   if (window.applyThemeSchedule) window.applyThemeSchedule();
+                                               })(this)">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label mb-0">Light mode from</label>
+                                        <div class="form-text mb-2">Time of day when the UI switches back to light.</div>
+                                        <input type="time" class="form-control" id="themeLightFrom" value="07:00"
+                                               onchange="(function(el){
+                                                   localStorage.setItem('appThemeLightFrom', el.value);
+                                                   fetch('/api/settings/theme-auto-schedule', {
+                                                       method: 'POST', credentials: 'same-origin',
+                                                       headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                                                       body: JSON.stringify({
+                                                           enabled: document.getElementById('themeAutoSchedule').checked,
+                                                           dark_from: document.getElementById('themeDarkFrom').value,
+                                                           light_from: el.value
+                                                       })
+                                                   });
+                                                   if (window.applyThemeSchedule) window.applyThemeSchedule();
+                                               })(this)">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <script>
+                                // Hydrate the appearance section from /api/settings/appearance.
+                                (function () {
+                                    fetch('/api/settings/appearance', {
+                                        credentials: 'same-origin',
+                                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                                    }).then(function (r) { return r.ok ? r.json() : null; })
+                                      .then(function (data) {
+                                          if (!data || !data.success) return;
+                                          var t  = document.getElementById('themeAutoSchedule');
+                                          var df = document.getElementById('themeDarkFrom');
+                                          var lf = document.getElementById('themeLightFrom');
+                                          var times = document.getElementById('themeScheduleTimes');
+                                          if (t) t.checked = !!data.theme_auto_schedule;
+                                          if (df && data.theme_dark_from)  df.value = String(data.theme_dark_from).substr(0,5);
+                                          if (lf && data.theme_light_from) lf.value = String(data.theme_light_from).substr(0,5);
+                                          if (times) times.hidden = !(t && t.checked);
+                                      })
+                                      .catch(function () {});
+                                })();
+                            </script>
+                        </div>
+
+                        <!-- v11.0.0 — Note Templates manager -->
+                        <div class="settings-section">
+                            <h5><i class="bi bi-stickies-fill me-2"></i>Note Templates</h5>
+                            <div class="form-text mb-3" style="margin-top:-6px">
+                                Save common consultation phrases. Insert them into the consultation
+                                textarea with one click from the &ldquo;Insert template&rdquo; dropdown.
+                            </div>
+                            <div id="noteTemplatesManager"></div>
+                            <script>
+                                // The manager is mounted by note-templates.js once it loads (defer).
+                                document.addEventListener('DOMContentLoaded', function () {
+                                    if (window.noteTemplates && window.noteTemplates.mountSettings) {
+                                        window.noteTemplates.mountSettings('#noteTemplatesManager');
+                                    }
+                                });
+                            </script>
+                        </div>
+
                         <!-- Auto Complete -->
                         <div class="settings-section">
                             <h5><i class="fas fa-magic me-2"></i>Auto Complete</h5>

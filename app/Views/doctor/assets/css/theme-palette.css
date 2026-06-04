@@ -1,0 +1,208 @@
+/* =====================================================================
+   v11.0.0 — Theme palette picker UI: header palette-dot + popover swatch
+   picker + Settings → Appearance grid. Driven by theme-palette.js.
+   ===================================================================== */
+
+/* ---- Header palette-dot button ---- */
+.palette-toggle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--glass-border, rgba(148,163,184,0.30));
+    background: var(--glass-bg-strong, rgba(255,255,255,0.78));
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    padding: 0;
+    margin-right: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    color: var(--text);
+}
+.palette-toggle:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+    border-color: color-mix(in srgb, var(--accent) 35%, var(--glass-border, rgba(148,163,184,0.30)));
+}
+.palette-toggle:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.palette-toggle .palette-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.30),
+                0 1px 4px rgba(0,0,0,0.20);
+    transition: background .25s ease;
+}
+.dark .palette-toggle {
+    background: rgba(30,41,59,0.72);
+    border-color: rgba(148,163,184,0.22);
+    color: var(--text);
+}
+[dir="rtl"] .palette-toggle { margin-right: 0; margin-left: 6px; }
+
+/* ---- Popover ---- */
+.palette-popover {
+    position: absolute;
+    z-index: 1080;
+    width: 260px;
+    background: var(--glass-bg-strong, rgba(255,255,255,0.92));
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--glass-border, rgba(148,163,184,0.30));
+    border-radius: 14px;
+    box-shadow: 0 20px 60px -10px rgba(0,0,0,0.35);
+    padding: 12px;
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease;
+}
+.palette-popover.is-open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+.dark .palette-popover {
+    background: rgba(15,21,38,0.85);
+    border-color: rgba(99,102,241,0.18);
+    box-shadow: 0 24px 64px -10px rgba(0,0,0,0.55);
+}
+.palette-popover__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+}
+.palette-swatch {
+    background: transparent;
+    border: 1px solid var(--glass-border, rgba(148,163,184,0.30));
+    border-radius: 10px;
+    padding: 8px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: transform .15s ease, border-color .15s ease, background .15s ease;
+    color: var(--text);
+}
+.palette-swatch:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--accent) 35%, var(--glass-border, rgba(148,163,184,0.30)));
+}
+.palette-swatch:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.palette-swatch[data-active] {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.palette-swatch__dot {
+    width: 40px;
+    height: 28px;
+    border-radius: 8px;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.30),
+                0 2px 6px rgba(0,0,0,0.18);
+}
+.palette-swatch__label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text);
+}
+.dark .palette-swatch {
+    border-color: rgba(99,102,241,0.18);
+}
+.dark .palette-swatch__label { color: #e2e8f0; }
+
+/* ---- Settings page Appearance grid ---- */
+.appearance-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 0.5rem;
+}
+@media (max-width: 575.98px) {
+    .appearance-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.appearance-card {
+    background: var(--card, #fff);
+    border: 1px solid var(--border, rgba(148,163,184,0.30));
+    border-radius: 14px;
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+    color: var(--text);
+}
+.appearance-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(15,23,42,0.10);
+    border-color: color-mix(in srgb, var(--accent) 35%, var(--border, rgba(148,163,184,0.30)));
+}
+.appearance-card[data-active] {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent) inset, 0 8px 20px rgba(15,23,42,0.10);
+}
+.appearance-card__swatch {
+    height: 56px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.20);
+}
+.appearance-card__preview {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 8px;
+    border-radius: 8px;
+    background: var(--bg-alt, #f1f5f9);
+}
+.dark .appearance-card__preview { background: rgba(255,255,255,0.04); }
+.appearance-card__btn {
+    height: 22px;
+    width: 64px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+.appearance-card__bar {
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(99,102,241,0.30);
+    width: 80%;
+}
+.appearance-card__bar.short { width: 50%; opacity: 0.6; }
+.appearance-card__label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+}
+.appearance-card__hint {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+/* Per-palette overrides for the swatch + mini-preview button — these set
+   the visible gradient on each Appearance card AND on each popover swatch.
+   Selectors are scoped to data-palette-id so they don't bleed. */
+[data-palette-id="indigo"]  .appearance-card__swatch,
+[data-palette-id="indigo"]  .appearance-card__btn { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+[data-palette-id="emerald"] .appearance-card__swatch,
+[data-palette-id="emerald"] .appearance-card__btn { background: linear-gradient(135deg, #10b981, #14b8a6); }
+[data-palette-id="rose"]    .appearance-card__swatch,
+[data-palette-id="rose"]    .appearance-card__btn { background: linear-gradient(135deg, #f43f5e, #ec4899); }
+[data-palette-id="slate"]   .appearance-card__swatch,
+[data-palette-id="slate"]   .appearance-card__btn { background: linear-gradient(135deg, #64748b, #334155); }
+[data-palette-id="amber"]   .appearance-card__swatch,
+[data-palette-id="amber"]   .appearance-card__btn { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+[data-palette-id="ocean"]   .appearance-card__swatch,
+[data-palette-id="ocean"]   .appearance-card__btn { background: linear-gradient(135deg, #06b6d4, #3b82f6); }
