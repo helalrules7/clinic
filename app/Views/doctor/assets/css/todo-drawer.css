@@ -1022,3 +1022,99 @@ body.td-no-scroll { overflow: hidden; }
     [dir="rtl"] .todo-drawer { transform: translateY(100%); }
     [dir="rtl"] .todo-drawer.open { transform: translateY(0); }
 }
+
+/* -------- Header trigger button -------- */
+/* Sits next to ⌘K, ?, palette dot. Hidden on mobile (< 768px) like
+   the other keyboard-driven header chips. */
+.todo-drawer-toggle {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--glass-border, rgba(148,163,184,0.30));
+    background: var(--glass-bg-strong, rgba(255,255,255,0.78));
+    -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+    padding: 0;
+    margin-right: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.todo-drawer-toggle > i { color: var(--accent); }
+.todo-drawer-toggle:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+    border-color: color-mix(in srgb, var(--accent) 35%, var(--glass-border, rgba(148,163,184,0.30)));
+}
+.todo-drawer-toggle:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.dark .todo-drawer-toggle {
+    background: rgba(30,41,59,0.72);
+    border-color: rgba(148,163,184,0.22);
+}
+.todo-drawer-toggle__badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+    box-shadow: 0 0 0 2px var(--card, #fff);
+    pointer-events: none;
+}
+.dark .todo-drawer-toggle__badge { box-shadow: 0 0 0 2px var(--card, #131A29); }
+[dir="rtl"] .todo-drawer-toggle { margin-right: 0; margin-left: 6px; }
+[dir="rtl"] .todo-drawer-toggle__badge { right: auto; left: -3px; }
+
+@media (max-width: 767.98px) {
+    .todo-drawer-toggle,
+    #todoDrawerToggle {
+        display: none !important;
+    }
+}
+
+/* =====================================================================
+   FAB-stack shift while the to-do drawer is open.
+
+   On desktop (≥ 576px the drawer is a 420 px right-side panel and the
+   bottom-right FAB triplet (back-to-top, AI chat, minimized dock) would
+   sit behind it. Shift them left by the drawer's width + a 16 px gap
+   so they end up just outside the drawer's left edge.
+
+   On mobile the drawer is a bottom-sheet, so this rule no-ops — the
+   media query takes care of it.
+
+   Uses :has() which is widely supported in the browsers v11 already
+   targets (color-mix, backdrop-filter saturate, etc.).
+   ===================================================================== */
+@media (min-width: 576px) {
+    body:has(.todo-drawer.open) .quick-access-dock.minimized,
+    body:has(.todo-drawer.open) .quick-access-dock.mobile-minimized,
+    body:has(.todo-drawer.open) .scroll-to-top,
+    body:has(.todo-drawer.open) #aiChatToggle,
+    body:has(.todo-drawer.open) #aiChatWidget.collapsed {
+        right: calc(2rem + 420px + 16px) !important;
+        transition: right .3s cubic-bezier(.22,1,.36,1);
+    }
+}
+[dir="rtl"] body:has(.todo-drawer.open) .quick-access-dock.minimized,
+[dir="rtl"] body:has(.todo-drawer.open) .scroll-to-top,
+[dir="rtl"] body:has(.todo-drawer.open) #aiChatToggle {
+    right: auto !important;
+    left: calc(2rem + 420px + 16px) !important;
+}

@@ -43,6 +43,7 @@
     <link href="/app/Views/doctor/assets/css/note-templates.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/note-templates.css') ? filemtime(__DIR__ . '/../doctor/assets/css/note-templates.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/theme-palette.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/theme-palette.css') ? filemtime(__DIR__ . '/../doctor/assets/css/theme-palette.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/celebration.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/celebration.css') ? filemtime(__DIR__ . '/../doctor/assets/css/celebration.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/notes-drawer.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/notes-drawer.css') ? filemtime(__DIR__ . '/../doctor/assets/css/notes-drawer.css') : time() ?>" rel="stylesheet">
 
     <!-- Theme + logo + favicon pre-paint. Runs synchronously in <head> so
          #clinicLogo and the favicon <link>s are rendered with the right
@@ -1046,6 +1047,7 @@
     <?php include __DIR__ . '/patient-hover-card.php'; ?>
     <?php include __DIR__ . '/keyboard-help.php'; ?>
     <?php include __DIR__ . '/quick-note-modal.php'; ?>
+    <?php include __DIR__ . '/notes-drawer.php'; ?>
 
     <!-- v11.0.0 feature JS bundle -->
     <script defer src="/app/Views/doctor/assets/js/patient-color.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/patient-color.js') ? filemtime(__DIR__ . '/../doctor/assets/js/patient-color.js') : time() ?>"></script>
@@ -1058,5 +1060,6 @@
     <script defer src="/app/Views/doctor/assets/js/quick-note.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/quick-note.js') ? filemtime(__DIR__ . '/../doctor/assets/js/quick-note.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/note-templates.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/note-templates.js') ? filemtime(__DIR__ . '/../doctor/assets/js/note-templates.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/focus-mode.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/focus-mode.js') ? filemtime(__DIR__ . '/../doctor/assets/js/focus-mode.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/notes-drawer.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notes-drawer.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notes-drawer.js') : time() ?>"></script>
 </body>
 </html>

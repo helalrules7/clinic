@@ -38,6 +38,8 @@
         activity: null,
         loading: false,
         pollTimer: null,
+        bgPollTimer: null,
+        unreadCount: 0,
         snoozePopover: null,
         snoozeAnchor: null,
         expandedStacks: new Set()
@@ -222,6 +224,34 @@
     }
 
     // --- Polling ------------------------------------------------------------
+    //
+    // Two-tier strategy so the bell badge stays current even when the panel
+    // is closed:
+    //
+    //   1. ALWAYS-ON background poll (every BG_POLL_MS, default 30s):
+    //      hits the lightweight /api/notifications/unread-count and refreshes
+    //      the bell badge. Runs whenever the document is visible, regardless
+    //      of whether the panel is open.
+    //
+    //   2. ACTIVE poll while the panel is open (every POLL_MS, default 60s):
+    //      hits /api/notifications/grouped and re-renders the active tab.
+    //      Replaces the background poll for the duration the panel is open.
+    //
+    // Both pause when the tab is hidden (visibilitychange handler resumes them).
+    var BG_POLL_MS = 30 * 1000;
+
+    function startBackgroundPolling() {
+        stopBackgroundPolling();
+        state.bgPollTimer = setInterval(function () {
+            if (document.visibilityState !== 'visible') return;
+            if (state.open) return; // active poll covers this case
+            loadUnreadCount();
+        }, BG_POLL_MS);
+    }
+    function stopBackgroundPolling() {
+        if (state.bgPollTimer) { clearInterval(state.bgPollTimer); state.bgPollTimer = null; }
+    }
+
     function startPolling() {
         stopPolling();
         state.pollTimer = setInterval(function () {
@@ -232,6 +262,46 @@
     }
     function stopPolling() {
         if (state.pollTimer) { clearInterval(state.pollTimer); state.pollTimer = null; }
+    }
+
+    /**
+     * Lightweight refresh: hits /api/notifications/unread-count and updates
+     * ONLY the bell badge. Used by background polling + by row actions that
+     * change unread state (we can't always trust the local cache after the
+     * server-side cron may have inserted new rows).
+     */
+    function loadUnreadCount() {
+        return api('/api/notifications/unread-count')
+            .then(function (data) {
+                if (!data) return;
+                var n = (data.unread_count != null) ? +data.unread_count
+                      : (data.count != null)        ? +data.count
+                      : (data.unread != null)       ? +data.unread
+                      : null;
+                if (n == null || isNaN(n)) return;
+                state.unreadCount = n;
+                applyBadgeNumber(n);
+            })
+            .catch(noop);
+    }
+
+    function applyBadgeNumber(n) {
+        if (!badge) return;
+        if (n > 0) {
+            badge.textContent = n > 99 ? '99+' : String(n);
+            badge.style.display = '';
+        } else {
+            badge.textContent = '0';
+            badge.style.display = 'none';
+        }
+        if (tabCountEl) {
+            if (n > 0) {
+                tabCountEl.hidden = false;
+                tabCountEl.textContent = n > 99 ? '99+' : String(n);
+            } else {
+                tabCountEl.hidden = true;
+            }
+        }
     }
 
     // --- Loaders ------------------------------------------------------------
@@ -575,8 +645,12 @@
         }
         if (act === 'read') {
             rowEl.classList.add('is-read');
-            api('/api/notifications/' + encodeURIComponent(id) + '/read', { method: 'POST' }).catch(noop);
+            // Mutate the cached row so updateBadge() recomputes correctly.
+            markCachedAsRead(id);
             updateBadge();
+            api('/api/notifications/' + encodeURIComponent(id) + '/read', { method: 'PUT' })
+                .then(loadUnreadCount)        // reconcile with server truth
+                .catch(noop);
             return;
         }
         if (act === 'delete') {
@@ -594,10 +668,12 @@
             };
             if (REDUCED_MOTION) removeNode();
             else setTimeout(removeNode, 220);
-            api('/api/notifications/' + encodeURIComponent(id), { method: 'DELETE' }).catch(function () {
-                // On error, refetch to restore truth
-                loadNotifications(false);
-            });
+            api('/api/notifications/' + encodeURIComponent(id), { method: 'DELETE' })
+                .then(loadUnreadCount)
+                .catch(function () {
+                    // On error, refetch to restore truth
+                    loadNotifications(false);
+                });
             return;
         }
     }
@@ -609,6 +685,29 @@
         };
         remove(grouped.pinned);
         Object.keys(grouped.buckets).forEach(function (k) { remove(grouped.buckets[k]); });
+    }
+
+    /**
+     * Find a notification in the cached `state.notifications` (pinned +
+     * every bucket) and set its `read` flag to true. Returns true if found.
+     * Without this, marking-as-read updates the DOM class but updateBadge()
+     * still counts the row as unread because it reads from the cache.
+     */
+    function markCachedAsRead(id) {
+        if (!state.notifications) return false;
+        var sId = String(id);
+        var hit = function (arr) {
+            for (var i = 0; i < arr.length; i++) {
+                if (arr[i] && arr[i].id === sId) { arr[i].read = true; return true; }
+            }
+            return false;
+        };
+        var found = hit(state.notifications.pinned);
+        if (!found) {
+            var b = state.notifications.buckets;
+            found = hit(b.today) || hit(b.yesterday) || hit(b.week) || hit(b.older);
+        }
+        return found;
     }
 
     function isStateEmpty() {
@@ -787,21 +886,25 @@
 
     // --- Wire up events -----------------------------------------------------
     function bindEvents() {
-        // v11 transition guard: aggressively neutralise the legacy
-        // #notificationsPanel that main.js opens via its own toggleNotifications.
-        // Three steps:
-        //   1. Yank the legacy panel + overlay OUT of the DOM. The legacy code
-        //      caches refs to them; they remain referenced but disconnected,
-        //      so classList.add('show') still runs without throwing — and is
-        //      simply invisible because the element isn't in the page.
-        //   2. cloneNode+replaceChild on the bell to strip every previously
-        //      attached click listener (main.js attached one at parse-time).
-        //   3. Re-attach OUR listener to the fresh bell. We use the bubble
-        //      phase here — a capture-phase document-level guard, even one
-        //      meant only to protect our own bell, would fire BEFORE our
-        //      bell's own listener and stopImmediatePropagation would block
-        //      both. After the cloneNode in step 2 there are no other
-        //      listeners on the bell anyway.
+        // v11 transition guard: neutralise the legacy #notificationsPanel
+        // that main.js opens via its own toggleNotifications. Two steps:
+        //
+        //   1. Yank the legacy panel + overlay OUT of the DOM. main.js still
+        //      holds references but they're now detached — classList writes
+        //      to them are invisible.
+        //
+        //   2. Attach OUR click handler in the CAPTURE phase with
+        //      stopImmediatePropagation. The bell already has a bubble
+        //      listener from main.js (registered at parse-time, before this
+        //      script runs). Capture-phase fires first on the target, and
+        //      stopImmediatePropagation kills every subsequent listener
+        //      regardless of phase — so main.js's toggleNotifications
+        //      never runs on this click.
+        //
+        // We deliberately do NOT cloneNode-replace the bell: the
+        // #notificationsBadge is a CHILD of the bell, so cloning would
+        // orphan the badge element AND every cached reference to it
+        // (mine + main.js's), leaving badge updates writing to nothing.
         ['notificationsPanel', 'notificationsOverlay'].forEach(function (id) {
             var el = document.getElementById(id);
             if (el && el.parentNode) {
@@ -809,19 +912,14 @@
             }
         });
 
-        if (bell && bell.parentNode) {
-            var fresh = bell.cloneNode(true);
-            bell.parentNode.replaceChild(fresh, bell);
-            bell = fresh;
-        }
-
         if (bell) {
             bell.setAttribute('aria-haspopup', 'dialog');
             bell.setAttribute('aria-expanded', 'false');
             bell.addEventListener('click', function (e) {
                 e.preventDefault();
+                e.stopImmediatePropagation();
                 toggle();
-            });
+            }, true); // capture phase — fires before main.js's bubble listener
         }
         if (closeBtn) closeBtn.addEventListener('click', close);
 
@@ -862,8 +960,11 @@
                 }
                 if (!rowEl.classList.contains('is-read')) {
                     rowEl.classList.add('is-read');
-                    api('/api/notifications/' + encodeURIComponent(id) + '/read', { method: 'POST' }).catch(noop);
+                    markCachedAsRead(id);
                     updateBadge();
+                    api('/api/notifications/' + encodeURIComponent(id) + '/read', { method: 'PUT' })
+                        .then(loadUnreadCount)
+                        .catch(noop);
                 }
             }
         });
@@ -875,9 +976,12 @@
         });
 
         document.addEventListener('visibilitychange', function () {
-            if (document.visibilityState === 'visible' && state.open) {
-                loadActiveTab(false);
-            }
+            if (document.visibilityState !== 'visible') return;
+            // Tab became visible again — get the truth from the server.
+            // If the panel is open, do the heavy grouped refresh; otherwise
+            // just the lightweight badge count.
+            if (state.open) loadActiveTab(false);
+            else loadUnreadCount();
         });
     }
 
@@ -899,17 +1003,19 @@
     }
 
     // --- Init ---------------------------------------------------------------
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function () {
-            bindEvents();
-            positionTabIndicator();
-            // Quietly fetch counts for badge on page load.
-            loadNotifications(false);
-        });
-    } else {
+    function bootstrap() {
         bindEvents();
         positionTabIndicator();
-        loadNotifications(false);
+        // Initial badge: lightweight count call, doesn't require the panel open.
+        loadUnreadCount();
+        // Always-on background poll keeps the badge fresh while the panel
+        // is closed — every 30s, fires only when the tab is visible.
+        startBackgroundPolling();
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootstrap);
+    } else {
+        bootstrap();
     }
 
     window.notifCenter = {

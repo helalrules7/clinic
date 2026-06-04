@@ -876,10 +876,74 @@
         });
     }
 
+    // -------------------------------------------------------- header button
+    // Mount a "To-Do" trigger next to the other v11 header chips
+    // (cmdk, keyboard-help, palette). Hidden on mobile via CSS.
+    function ensureHeaderButton() {
+        if (document.getElementById('todoDrawerToggle')) return;
+        var anchor =
+            document.getElementById('cmdkToggle') ||
+            document.getElementById('kbdHelpToggle') ||
+            document.getElementById('paletteToggle') ||
+            document.querySelector('label.switch[for="themeToggleInput"]');
+        if (!anchor || !anchor.parentNode) return;
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'todoDrawerToggle';
+        btn.className = 'todo-drawer-toggle';
+        btn.setAttribute('aria-label', 'Open to-do drawer');
+        btn.setAttribute('title', 'To-Do (T)');
+        btn.innerHTML =
+            '<i class="bi bi-check2-square" aria-hidden="true"></i>' +
+            '<span class="todo-drawer-toggle__badge" id="todoDrawerToggleBadge" hidden>0</span>';
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            open();
+        });
+        anchor.parentNode.insertBefore(btn, anchor);
+
+        // Light count fetch on init so the badge reflects open-task count.
+        refreshHeaderBadge();
+        // Refresh every 60s while document is visible.
+        setInterval(function () {
+            if (document.visibilityState === 'visible') refreshHeaderBadge();
+        }, 60 * 1000);
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'visible') refreshHeaderBadge();
+        });
+    }
+
+    function refreshHeaderBadge() {
+        var badge = document.getElementById('todoDrawerToggleBadge');
+        if (!badge) return;
+        fetch('/api/todos/counts', {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+        })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!data || !data.success) return;
+                var n = +(data.open || 0);
+                if (n > 0) {
+                    badge.hidden = false;
+                    badge.textContent = n > 99 ? '99+' : String(n);
+                } else {
+                    badge.hidden = true;
+                }
+            })
+            .catch(function () {});
+    }
+
+    // Expose so other modules (e.g. drawer close) can ping the badge.
+    window.__refreshTodoHeaderBadge = refreshHeaderBadge;
+
     // -------------------------------------------------------- init
     function init() {
         cacheRefs();
         if (!drawer) return;
+
+        ensureHeaderButton();
 
         // close button
         $('#todoDrawerClose', drawer).addEventListener('click', close);
