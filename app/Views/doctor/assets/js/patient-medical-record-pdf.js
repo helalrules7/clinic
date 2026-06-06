@@ -102,6 +102,30 @@
         }
     }
 
+    function formatGlassesRx(g) {
+        var od = 'OD SPH ' + (g.distance_sphere_r || '—') + ', CYL ' + (g.distance_cylinder_r || '—') + ', AXIS ' + (g.distance_axis_r || '—');
+        var os = 'OS SPH ' + (g.distance_sphere_l || '—') + ', CYL ' + (g.distance_cylinder_l || '—') + ', AXIS ' + (g.distance_axis_l || '—');
+        var line = 'Glasses Rx — ' + od + ' | ' + os;
+        if (g.near_sphere_r || g.near_sphere_l) {
+            line += ' · Near OD ' + (g.near_sphere_r || '—') + ' / OS ' + (g.near_sphere_l || '—');
+        }
+        if (g.lens_type) line += ' · Lens: ' + g.lens_type;
+        if (g.notes) line += ' · ' + g.notes;
+        return line;
+    }
+
+    function countVisitAttachments(appointments) {
+        var images = 0;
+        var files = 0;
+        (appointments || []).forEach(function (appt) {
+            (appt.attachments || []).forEach(function (att) {
+                if (att.is_image) images += 1;
+                else files += 1;
+            });
+        });
+        return { images: images, files: files };
+    }
+
     function fmtDateTime(d) {
         if (!d) return '—';
         try {
@@ -511,6 +535,7 @@
 
         this.newPage();
         this.sectionTitle('Executive Summary');
+        var visitAtt = countVisitAttachments(r.appointments || []);
         this.table(
             ['Metric', 'Value'],
             [70, this.contentW - 70],
@@ -519,7 +544,10 @@
                 ['Medication lines', stats.total_medications],
                 ['History entries', stats.total_history_entries],
                 ['Active alerts', (r.alerts || []).filter(function (a) { return a.is_active == 1; }).length],
-                ['Images / files', (r.images || []).length],
+                ['Visit attachments (images)', visitAtt.images],
+                ['Visit attachments (documents)', visitAtt.files],
+                ['Profile images (appendix)', (r.images || []).length],
+                ['Profile documents (appendix)', (r.profile_documents || []).length],
             ]
         );
 
@@ -580,13 +608,45 @@
             );
         }
 
-        if ((r.board_comments || []).length) {
-            this.sectionTitle('Patient Board Notes');
-            r.board_comments.forEach(function (c) {
-                this.subTitle(fmtDateTime(c.created_at) + ' — ' + (c.author_name || 'Staff'));
-                this.paragraph(c.body || '', 8);
-            }.bind(this));
-        }
+    };
+
+    PdfBuilder.prototype.buildBoardSection = function () {
+        var self = this;
+        var comments = (self.record.board_comments || []);
+        if (!comments.length) return Promise.resolve();
+
+        self.newPage();
+        self.sectionTitle('Patient Board Notes');
+
+        var chain = Promise.resolve();
+        comments.forEach(function (c) {
+            chain = chain.then(function () {
+                var pin = c.pinned ? ' [Pinned]' : '';
+                self.subTitle(fmtDateTime(c.created_at) + ' — ' + (c.author_name || 'Staff') + pin);
+                if (c.body) self.paragraph(c.body, 8);
+
+                var attChain = Promise.resolve();
+                (c.attachments || []).forEach(function (att) {
+                    attChain = attChain.then(function () {
+                        var name = att.name || 'Board attachment';
+                        if (att.is_image && att.view_url) {
+                            return loadImageDataUrl(att.view_url).then(function (dataUrl) {
+                                if (dataUrl && self.embedImageBlock(dataUrl, name, 50)) return;
+                                self.paragraph(name + ' (image — could not embed)', 8);
+                            });
+                        }
+                        if (att.kind === 'audio') {
+                            self.paragraph('Audio: ' + name + (att.duration_ms ? ' (' + Math.round(att.duration_ms / 1000) + 's)' : ''), 8);
+                            return Promise.resolve();
+                        }
+                        self.paragraph((att.kind === 'document' ? 'Document' : 'File') + ': ' + name, 8);
+                        return Promise.resolve();
+                    });
+                });
+                return attChain.then(function () { self.y += 2; });
+            });
+        });
+        return chain;
     };
 
     PdfBuilder.prototype.embedImageBlock = function (dataUrl, title, maxH) {
@@ -637,8 +697,13 @@
                     self.paragraph('Rx: ' + [m.drug_name, m.dose, m.frequency, m.duration].filter(Boolean).join(' · '), 8);
                 });
 
+                (appt.glasses || []).forEach(function (g) {
+                    self.paragraph(formatGlassesRx(g), 8);
+                });
+
                 (appt.lab_tests || []).forEach(function (l) {
-                    self.paragraph('Lab: ' + (l.test_name || l.test_type) + ' — ' + (l.status || '') + (l.results ? ' — ' + l.results : ''), 8);
+                    var kind = (l.test_type === 'radiology') ? 'Radiology' : 'Lab';
+                    self.paragraph(kind + ': ' + (l.test_name || l.test_type || 'Test') + ' — ' + (l.status || '') + (l.results ? ' — ' + l.results : ''), 8);
                 });
 
                 (appt.medical_instructions || []).forEach(function (mi) {
@@ -670,9 +735,11 @@
         return chain;
     };
 
-    PdfBuilder.prototype.buildImageAppendix = function (images, onProgress, skipFirstNewPage) {
+    PdfBuilder.prototype.buildProfileAppendix = function (images, documents, onProgress, skipFirstNewPage) {
         var self = this;
-        if (!images.length) return Promise.resolve();
+        images = images || [];
+        documents = documents || [];
+        if (!images.length && !documents.length) return Promise.resolve();
 
         if (skipFirstNewPage) {
             self.y = MARGIN + HEADER_H;
@@ -680,12 +747,24 @@
         } else {
             self.newPage();
         }
-        self.sectionTitle('Images & Attachments Appendix');
+        self.sectionTitle('Patient Profile Files & Images');
+
+        if (documents.length) {
+            self.subTitle('Documents uploaded from patient profile');
+            self.table(
+                ['Date', 'File', 'Type'],
+                [24, self.contentW - 54, 30],
+                documents.map(function (doc) {
+                    return [fmtDate(doc.date), doc.name || '—', doc.file_type || 'Document'];
+                })
+            );
+            self.y += 2;
+        }
 
         var chain = Promise.resolve();
         images.forEach(function (img, idx) {
             chain = chain.then(function () {
-                if (onProgress) onProgress('Embedding image ' + (idx + 1) + ' of ' + images.length);
+                if (onProgress) onProgress('Embedding profile image ' + (idx + 1) + ' of ' + images.length);
                 return loadImageDataUrl(img.url).then(function (dataUrl) {
                     if (!dataUrl) {
                         self.paragraph(img.name + ' (' + fmtDate(img.date) + ') — could not embed');
@@ -743,8 +822,10 @@
 
         var appointments = record.appointments || [];
         var visitChunks = chunkArray(appointments, VISITS_PER_PART);
-        var images = record.images || [];
-        var needsSplit = visitChunks.length > 1 || images.length > 30;
+        var profileImages = record.images || [];
+        var profileDocuments = record.profile_documents || [];
+        var appendixCount = profileImages.length + profileDocuments.length;
+        var needsSplit = visitChunks.length > 1 || profileImages.length > 30;
         var dateSlug = new Date().toISOString().split('T')[0];
         var baseName = 'Patient_' + patientId + '_' + (record.patient.full_name || 'record').replace(/\s+/g, '_') + '_' + dateSlug;
 
@@ -754,8 +835,9 @@
             var b = new PdfBuilder(record, logo);
             b.buildCover();
             b.buildSummarySections(charts);
+            await b.buildBoardSection();
             if (appointments.length) await b.buildVisitSection(appointments, null);
-            await b.buildImageAppendix(images, function (m) { updateOverlay(overlay, m); });
+            await b.buildProfileAppendix(profileImages, profileDocuments, function (m) { updateOverlay(overlay, m); });
             b.save(baseName + '.pdf');
             return { parts: 1 };
         }
@@ -765,25 +847,26 @@
         var part1 = new PdfBuilder(record, logo1);
         part1.buildCover();
         part1.buildSummarySections(charts);
+        await part1.buildBoardSection();
         part1.save(baseName + '_Part1_Summary.pdf');
 
         for (var c = 0; c < visitChunks.length; c++) {
             updateOverlay(overlay, 'Building visits part ' + (c + 2) + '…');
             var logoV = await loadImageDataUrl(logoUrl);
             var vb = new PdfBuilder(record, logoV);
-            await vb.buildVisitSection(visitChunks[c], 'Part ' + (c + 2) + ' of ' + (visitChunks.length + 1 + (images.length ? 1 : 0)), true);
+            await vb.buildVisitSection(visitChunks[c], 'Part ' + (c + 2) + ' of ' + (visitChunks.length + 1 + (appendixCount ? 1 : 0)), true);
             vb.save(baseName + '_Part' + (c + 2) + '_Visits.pdf');
         }
 
-        if (images.length) {
-            updateOverlay(overlay, 'Building images appendix…');
+        if (appendixCount) {
+            updateOverlay(overlay, 'Building profile files appendix…');
             var logoI = await loadImageDataUrl(logoUrl);
             var ib = new PdfBuilder(record, logoI);
-            await ib.buildImageAppendix(images, function (m) { updateOverlay(overlay, m); }, true);
-            ib.save(baseName + '_Part' + (visitChunks.length + 2) + '_Images.pdf');
+            await ib.buildProfileAppendix(profileImages, profileDocuments, function (m) { updateOverlay(overlay, m); }, true);
+            ib.save(baseName + '_Part' + (visitChunks.length + 2) + '_ProfileFiles.pdf');
         }
 
-        return { parts: 1 + visitChunks.length + (images.length ? 1 : 0) };
+        return { parts: 1 + visitChunks.length + (appendixCount ? 1 : 0) };
     }
 
     global.exportPatientMedicalRecordPDF = exportPatientMedicalRecordPDF;

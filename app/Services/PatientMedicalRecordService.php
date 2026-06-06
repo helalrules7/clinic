@@ -71,7 +71,9 @@ class PatientMedicalRecordService
             'board_comments' => $boardComments,
             'files' => $files,
             'attachments' => $attachments,
-            'images' => $this->buildImageManifest($files, $attachments),
+            // Profile-only appendix (visit attachments stay under each appointment)
+            'images' => $this->buildProfileImageManifest($files),
+            'profile_documents' => $this->buildProfileDocumentManifest($files),
         ];
     }
 
@@ -282,7 +284,54 @@ class PatientMedicalRecordService
             ORDER BY c.pinned DESC, c.created_at ASC
         ");
         $stmt->execute([$patientId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (!$comments) {
+            return [];
+        }
+
+        $attachmentsByComment = $this->getCommentAttachmentsForIds(array_column($comments, 'id'));
+        foreach ($comments as &$comment) {
+            $comment['attachments'] = $attachmentsByComment[(int) $comment['id']] ?? [];
+        }
+        unset($comment);
+
+        return $comments;
+    }
+
+    private function getCommentAttachmentsForIds(array $commentIds): array
+    {
+        $commentIds = array_values(array_filter(array_map('intval', $commentIds)));
+        if (!$commentIds) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($commentIds), '?'));
+        $stmt = $this->pdo->prepare("
+            SELECT id, comment_id, kind, mime_type, original_name, file_size, duration_ms
+            FROM comment_attachments
+            WHERE comment_id IN ($placeholders)
+            ORDER BY id ASC
+        ");
+        $stmt->execute($commentIds);
+
+        $out = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            $cid = (int) $row['comment_id'];
+            $mime = $row['mime_type'] ?? '';
+            $kind = $row['kind'] ?? '';
+            $out[$cid][] = [
+                'id' => (int) $row['id'],
+                'kind' => $kind,
+                'mime_type' => $mime,
+                'name' => $row['original_name'] ?? 'Attachment',
+                'file_size' => (int) ($row['file_size'] ?? 0),
+                'duration_ms' => $row['duration_ms'] !== null ? (int) $row['duration_ms'] : null,
+                'view_url' => '/api/comments/attachments/' . (int) $row['id'],
+                'is_image' => $kind === 'image' || ($mime && stripos($mime, 'image/') === 0),
+            ];
+        }
+
+        return $out;
     }
 
     private function getTags(int $patientId): array
@@ -498,34 +547,46 @@ class PatientMedicalRecordService
         return in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'], true);
     }
 
-    private function buildImageManifest(array $files, array $attachments): array
+    private function buildProfileImageManifest(array $files): array
     {
         $images = [];
-        $add = function (array $item, string $source) use (&$images) {
-            if (!$this->isImageItem($item) || empty($item['id'])) {
-                return;
+        foreach ($files as $file) {
+            if (!$this->isImageItem($file) || empty($file['id'])) {
+                continue;
             }
-            $viewUrl = $source === 'patient_file'
-                ? '/api/patients/files/view/' . (int) $item['id']
-                : '/api/attachments/view/' . (int) $item['id'];
-            $path = $item['file_path'] ?? $item['filepath'] ?? $item['path'] ?? '';
+            $path = $file['file_path'] ?? '';
             $images[] = [
-                'id' => (int) $item['id'],
-                'source' => $source,
-                'url' => $viewUrl,
-                'name' => $item['original_filename'] ?? $item['filename'] ?? $item['original_name'] ?? ($path ? basename($path) : 'Image'),
-                'date' => $item['created_at'] ?? $item['appointment_date'] ?? null,
-                'description' => $item['description'] ?? null,
+                'id' => (int) $file['id'],
+                'source' => 'patient_file',
+                'url' => '/api/patients/files/view/' . (int) $file['id'],
+                'name' => $file['original_filename'] ?? ($path ? basename($path) : 'Image'),
+                'date' => $file['created_at'] ?? null,
+                'description' => $file['description'] ?? null,
             ];
-        };
-
-        foreach ($attachments as $a) {
-            $add($a, 'appointment_attachment');
-        }
-        foreach ($files as $f) {
-            $add($f, 'patient_file');
         }
 
         return $images;
+    }
+
+    private function buildProfileDocumentManifest(array $files): array
+    {
+        $documents = [];
+        foreach ($files as $file) {
+            if ($this->isImageItem($file) || empty($file['id'])) {
+                continue;
+            }
+            $path = $file['file_path'] ?? '';
+            $documents[] = [
+                'id' => (int) $file['id'],
+                'source' => 'patient_file',
+                'url' => '/api/patients/files/view/' . (int) $file['id'],
+                'name' => $file['original_filename'] ?? ($path ? basename($path) : 'Document'),
+                'date' => $file['created_at'] ?? null,
+                'description' => $file['description'] ?? null,
+                'file_type' => $file['file_type'] ?? null,
+            ];
+        }
+
+        return $documents;
     }
 }
