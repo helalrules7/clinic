@@ -6,7 +6,7 @@
 // RESETS the timer / opt-out / session-shown for every browser so the
 // new wizard surfaces fresh after the v11 deploy.
 //
-// Slide track: 21 slides covering every v11 feature with pure-CSS animated
+// Slide track: 23 slides covering every v11 feature with pure-CSS animated
 // mockups. ALL v10 slides removed in this release.
 ?>
 <style>
@@ -2254,6 +2254,39 @@
     @keyframes wn-pmr-block{0%,25%{opacity:.45;transform:translateX(-4px);}40%,72%{opacity:1;transform:translateX(0);}85%,100%{opacity:.45;transform:translateX(-4px);}}
     @keyframes wn-pmr-pdf{0%,45%{box-shadow:none;}52%,68%{box-shadow:0 0 0 2px rgba(239,68,68,.35);}75%,100%{box-shadow:none;}}
 
+    /* ===== wn-mh — Medical History popover (shared) ===== */
+    .wn-mh-scene { position:absolute; inset:8px 10px; display:flex; gap:6px; align-items:stretch; }
+    .wn-mh-pop { flex:1; background:var(--wn-bg-card); border:1px solid var(--wn-border); border-radius:8px; padding:6px 7px; text-align:left; box-shadow:0 8px 22px rgba(99,102,241,.14); animation:wn-mh-pop 6.5s ease-in-out infinite; }
+    .wn-mh-pop-head { font-size:7px; font-weight:800; color:var(--wn-text); display:flex; align-items:center; gap:4px; margin-bottom:4px; }
+    .wn-mh-pop-head i { color:#f59e0b; }
+    .wn-mh-section { font-size:6px; font-weight:700; text-transform:uppercase; color:var(--wn-muted); margin:3px 0 2px; }
+    .wn-mh-visit { padding:3px 4px; border-radius:4px; border:1px solid var(--wn-border); background:var(--wn-bg-inset); margin-bottom:3px; animation:wn-mh-visit 6.5s ease-in-out infinite; }
+    .wn-mh-visit:nth-child(3) { animation-delay:.15s; }
+    .wn-mh-thumbs { display:flex; gap:2px; margin-top:3px; }
+    .wn-mh-thumb { width:10px; height:10px; border-radius:2px; background:linear-gradient(135deg,#6366f1,#a855f7); animation:wn-mh-thumb 6.5s ease-in-out infinite; }
+    .wn-mh-triggers { display:flex; flex-direction:column; gap:4px; justify-content:center; }
+    .wn-mh-btn { font-size:6px; font-weight:700; padding:4px 6px; border-radius:6px; border:1px solid var(--wn-border); color:var(--wn-text); background:var(--wn-bg-inset); white-space:nowrap; animation:wn-mh-btn 6.5s ease-in-out infinite; }
+    .wn-mh-btn:nth-child(2) { animation-delay:.2s; border-color:rgba(245,158,11,.45); color:#f59e0b; }
+    @keyframes wn-mh-pop{0%,22%{transform:translateY(6px) scale(.94);opacity:.55;}35%,78%{transform:translateY(0) scale(1);opacity:1;}90%,100%{transform:translateY(6px) scale(.94);opacity:.55;}}
+    @keyframes wn-mh-visit{0%,30%{border-color:var(--wn-border);}42%,72%{border-color:rgba(99,102,241,.55);box-shadow:0 0 0 1px rgba(99,102,241,.2);}84%,100%{border-color:var(--wn-border);}}
+    @keyframes wn-mh-thumb{0%,40%{transform:scale(.85);opacity:.5;}52%,70%{transform:scale(1.1);opacity:1;}82%,100%{transform:scale(.85);opacity:.5;}}
+    @keyframes wn-mh-btn{0%,25%{opacity:.5;}38%,68%{opacity:1;box-shadow:0 0 0 1px rgba(99,102,241,.25);}80%,100%{opacity:.5;}}
+
+    /* ===== wn-iv — Unified image viewer ===== */
+    .wn-iv-scene { position:absolute; inset:8px 12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; }
+    .wn-iv-frame { width:100%; max-width:200px; aspect-ratio:4/3; border-radius:8px; border:1px solid var(--wn-border); background:linear-gradient(145deg,var(--wn-bg-inset),var(--wn-bg-card)); position:relative; overflow:hidden; box-shadow:0 10px 28px rgba(15,23,42,.18); animation:wn-iv-frame 6s ease-in-out infinite; }
+    .wn-iv-frame::before { content:''; position:absolute; inset:12px; border-radius:4px; background:linear-gradient(135deg,rgba(99,102,241,.25),rgba(236,72,153,.2)); }
+    .wn-iv-zoom { display:flex; gap:4px; padding:4px 8px; border-radius:10px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.22); backdrop-filter:blur(8px); position:absolute; bottom:8px; left:50%; transform:translateX(-50%); animation:wn-iv-zoom 6s ease-in-out infinite; }
+    .wn-iv-zoom span { width:14px; height:14px; border-radius:4px; background:rgba(99,102,241,.35); display:inline-block; }
+    .wn-iv-zoom span:nth-child(2) { background:rgba(16,185,129,.4); animation:wn-iv-reset 6s ease-in-out infinite; }
+    .wn-iv-footer { display:flex; gap:3px; width:100%; max-width:200px; }
+    .wn-iv-foot-btn { flex:1; height:10px; border-radius:4px; background:var(--wn-bg-inset); border:1px solid var(--wn-border); animation:wn-iv-foot 6s ease-in-out infinite; }
+    .wn-iv-foot-btn:nth-child(3) { background:linear-gradient(90deg,#6366f1,#818cf8); animation-delay:.1s; }
+    @keyframes wn-iv-frame{0%,20%{transform:scale(.96);}35%,75%{transform:scale(1);}88%,100%{transform:scale(.96);}}
+    @keyframes wn-iv-zoom{0%,30%{opacity:.6;transform:translateX(-50%) translateY(4px);}42%,72%{opacity:1;transform:translateX(-50%) translateY(0);}84%,100%{opacity:.6;transform:translateX(-50%) translateY(4px);}}
+    @keyframes wn-iv-reset{0%,45%{box-shadow:none;}55%,68%{box-shadow:0 0 0 2px rgba(16,185,129,.5);}78%,100%{box-shadow:none;}}
+    @keyframes wn-iv-foot{0%,35%{opacity:.5;}48%,70%{opacity:1;}82%,100%{opacity:.5;}}
+
     /* ===== wn-fixes — Bug fixes & polish (static list) ===== */
     .wn-fixes-stage {
         height: auto;
@@ -3114,6 +3147,52 @@
               <p>Export a <strong>dated, comprehensive medical dossier</strong>: aggregated history, every visit with diagnosis &amp; plan, prescriptions, labs, instructions, notes, attachments, and <strong>IOP / visit charts</strong> — replacing the old Word export.</p>
             </div>
 
+            <!-- v11.0.0 — wn-mh (Medical History popover) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Patient &amp; calendar</span>
+              <div class="wn-stage">
+                <div class="wn-mh-scene">
+                  <div class="wn-mh-triggers">
+                    <span class="wn-mh-btn"><i class="bi bi-clipboard-heart"></i> Medical History</span>
+                    <span class="wn-mh-btn"><i class="bi bi-calendar3"></i> Calendar action</span>
+                  </div>
+                  <div class="wn-mh-pop">
+                    <div class="wn-mh-pop-head"><i class="bi bi-clipboard-heart-fill"></i> History &amp; visits</div>
+                    <div class="wn-mh-section">Chronic conditions</div>
+                    <div class="wn-mh-visit">DM · HTN · Allergy</div>
+                    <div class="wn-mh-section">Visit chronology</div>
+                    <div class="wn-mh-visit">2026-05-12 · Glaucoma · Dr. Helal
+                      <div class="wn-mh-thumbs"><span class="wn-mh-thumb"></span><span class="wn-mh-thumb"></span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h3>Medical History — one popover everywhere</h3>
+              <p>The same glass popover opens from <strong>calendar</strong> and <strong>patient Actions → Medical History</strong>: chronic conditions plus a compact visit timeline with meds, glasses, and tappable attachment thumbnails.</p>
+            </div>
+
+            <!-- v11.0.0 — wn-iv (Unified image viewer) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Imaging</span>
+              <div class="wn-stage">
+                <div class="wn-iv-scene">
+                  <div class="wn-iv-frame">
+                    <div class="wn-iv-zoom" aria-hidden="true">
+                      <span></span><span></span><span></span>
+                    </div>
+                  </div>
+                  <div class="wn-iv-footer" aria-hidden="true">
+                    <span class="wn-iv-foot-btn"></span>
+                    <span class="wn-iv-foot-btn"></span>
+                    <span class="wn-iv-foot-btn"></span>
+                    <span class="wn-iv-foot-btn"></span>
+                  </div>
+                </div>
+              </div>
+              <h3>Unified image viewer + zoom</h3>
+              <p>Every image modal and board lightbox shares a <strong>glass zoom toolbar</strong> (out · reset · in). On mobile the footer stays on <strong>one row</strong> and the quick-access dock hides so nothing covers your buttons.</p>
+            </div>
+
             <!-- v11.0.0 — wn-fixes (Bug fixes & polish) -->
             <div class="wn-slide wn-slide-fixes">
               <span class="wn-kicker">Fixes</span>
@@ -3147,9 +3226,15 @@
                   <li><i class="bi bi-check-circle-fill"></i><span>Medical Instructions: clinic-wide templates + edit/delete</span></li>
                   <li><i class="bi bi-check-circle-fill"></i><span>Rx print: instructions forced to page 2 (page-break)</span></li>
                   <li><i class="bi bi-check-circle-fill"></i><span>Instruction modals: dark/light theme-aware (mi-theme-modal)</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Medical History popover shared — calendar + patient profile</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Unified image viewer: glass zoom + mobile single-row footer</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Image modal stacks above mobile dock — dock hidden while viewing</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Patient Actions: 2-column gradient button grid</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Calendar desktop: no tooltips on actions column</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>AI chat widget: safe-area insets on mobile — header no longer clipped</span></li>
                 </ul>
               </div>
-              <h3>30+ fixes under the hood</h3>
+              <h3>35+ fixes under the hood</h3>
               <p>v11 isn't just features — we chased down <strong>silent failures, z-index traps, and API mismatches</strong> so the polish matches the headline upgrades.</p>
             </div>
           </div>

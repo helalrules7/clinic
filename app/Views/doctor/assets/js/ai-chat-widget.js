@@ -187,6 +187,7 @@ function toggleAIChatWidget() {
     if (aiChatWidget.isOpen) {
         chatWindow.style.display = 'flex';
         toggleBtn.classList.add('active');
+        document.body.classList.add('ai-chat-open');
         // Focus input after animation
         setTimeout(() => {
             aiChatWidget.messageInput?.focus();
@@ -194,6 +195,7 @@ function toggleAIChatWidget() {
     } else {
         chatWindow.style.display = 'none';
         toggleBtn.classList.remove('active');
+        document.body.classList.remove('ai-chat-open');
         // Reset expanded state when closing
         if (aiChatWidget.isExpanded) {
             toggleAIChatExpand();
