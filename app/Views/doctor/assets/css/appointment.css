@@ -1444,14 +1444,7 @@
     filter: invert(1) brightness(2.5);
 }
 
-/* Ensure image modal is above all other elements */
-#imageModal {
-    z-index: 1000001 !important;
-}
-
-#imageModal .modal-backdrop {
-    z-index: 9998 !important;
-}
+/* Image modal z-index: unified in image-viewer-modal.css (§3.51) */
 
 .appointment-history-popover .timeline-body .bg-outline-primary {
     border: 1px solid var(--primary) !important;

@@ -93,7 +93,11 @@
         bindZoomControls(stage, img);
 
         var modal = new bootstrap.Modal(modalEl);
+        modalEl.addEventListener("shown.bs.modal", function () {
+            document.body.classList.add("iv-image-modal-open");
+        });
         modalEl.addEventListener("hidden.bs.modal", function () {
+            document.body.classList.remove("iv-image-modal-open");
             modalEl.remove();
         });
         modal.show();

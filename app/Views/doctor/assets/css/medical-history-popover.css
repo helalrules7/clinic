@@ -311,16 +311,7 @@
     font-size: 0.875rem;
 }
 
-/* Image viewer must stack above the history popover (z-index 9999) */
-#imageModal.modal.show,
-.iv-image-modal.modal.show {
-    z-index: 10050 !important;
-}
-
-body:has(#medicalHistoryPopover) #imageModal.modal.show ~ .modal-backdrop,
-body:has(#medicalHistoryPopover) .modal-backdrop.show:last-of-type {
-    z-index: 10040 !important;
-}
+/* Image viewer stacking: see image-viewer-modal.css (above dock + popover) */
 
 @media (max-width: 767.98px) {
     .medical-history-popover-content {

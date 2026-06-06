@@ -319,10 +319,18 @@
    Image lightbox (comment attachments) + audio download fallback
    ===================================================================== */
 body.cm-lb-open { overflow: hidden; }
+
+/* Above quick-access-dock (1000002); hide dock while lightbox is open */
+body.cm-lb-open .quick-access-dock {
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+}
+
 .cm-lightbox {
     position: fixed;
     inset: 0;
-    z-index: 20000;                 /* above Bootstrap modals (~1055) */
+    z-index: 10000010;
     display: flex;
     align-items: center;
     justify-content: center;

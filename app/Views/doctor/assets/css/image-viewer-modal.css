@@ -1,5 +1,23 @@
 /* Unified image viewer modal + zoom glass panel — §3.51 */
 
+/* Stack above quick-access-dock (style.css → z-index: 1000002) */
+#imageModal.iv-image-modal.modal.show {
+    --bs-modal-zindex: 10000010;
+    z-index: 10000010 !important;
+}
+
+body.iv-image-modal-open .modal-backdrop.show {
+    z-index: 10000009 !important;
+}
+
+/* Mobile dock must never paint over the image viewer */
+body.iv-image-modal-open .quick-access-dock,
+body:has(#imageModal.iv-image-modal.show) .quick-access-dock {
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+}
+
 .iv-image-modal .iv-image-stage {
     position: relative;
     display: flex;
