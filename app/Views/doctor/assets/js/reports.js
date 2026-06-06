@@ -286,13 +286,20 @@ document.getElementById('reportForm').addEventListener('submit', function(e) {
 
 // Custom Select Menu Logic for Report Type
 document.addEventListener('DOMContentLoaded', function() {
-    const field = document.querySelector('.field.menu:has(#reportType)');
-    if (!field) return;
+    // The report-type <select> has id="type"; resolve its wrapping field via
+    // closest() (the previous `:has(#reportType)` selector never matched, which
+    // left this rich dropdown unwired and made initCustomSelects warn on it).
+    const select = document.getElementById('type');
+    const field = select ? select.closest('.field.menu') : null;
+    if (!field || !select) return;
 
-    const select = field.querySelector('select');
     const button = field.querySelector('#type-toggle');
     const menu = field.querySelector('menu');
-    const options = menu.querySelectorAll('li');
+    const options = menu ? menu.querySelectorAll('li') : [];
+    if (!button || !menu || options.length === 0) return;
+
+    // Keep the generic initialiser from double-wiring / warning on this field.
+    field.setAttribute('data-initialized', 'dedicated-type');
 
     // Toggle Menu
     function toggleMenu() {
@@ -617,7 +624,10 @@ window.chartInstances = {
     medicalPrescriptionsChart: null,
     topMedicationsChart: null,
     glassesPrescriptionsChart: null,
-    lensTypeChart: null
+    lensTypeChart: null,
+    drugsByCompanyChart: null,
+    topDrugsChart: null,
+    drugTrendChart: null
 };
 
 if (reportType === 'appointments') {
@@ -1072,6 +1082,101 @@ if (lensTypeCtx) {
         });
     }
 }
+}
+
+if (reportType === 'drugs') {
+    // Demand by company (horizontal bar)
+    const companyCtx = document.getElementById('drugsByCompanyChart');
+    const companyStats = (window.REPORTS_CONFIG.drugCompanyStats || []).slice(0, 12);
+    if (companyCtx && companyStats.length > 0) {
+        if (window.chartInstances.drugsByCompanyChart) {
+            window.chartInstances.drugsByCompanyChart.destroy();
+        }
+        const companyOpts = getCommonOptions();
+        companyOpts.indexAxis = 'y';
+        companyOpts.plugins.legend.display = false;
+        window.chartInstances.drugsByCompanyChart = new Chart(companyCtx, {
+            type: 'bar',
+            data: {
+                labels: companyStats.map(c => (c.company || '').length > 20 ? c.company.substring(0, 20) + '…' : (c.company || '')),
+                datasets: [{
+                    label: 'Prescription writes',
+                    data: companyStats.map(c => parseInt(c.total_count || 0)),
+                    backgroundColor: chartColors.info + 'cc',
+                    borderColor: chartColors.info,
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: companyOpts
+        });
+    }
+
+    // Most prescribed drugs — stacked new vs continuation (top 10)
+    const topDrugsCtx = document.getElementById('topDrugsChart');
+    const topDrugs = (reportData || []).slice(0, 10);
+    if (topDrugsCtx && topDrugs.length > 0) {
+        if (window.chartInstances.topDrugsChart) {
+            window.chartInstances.topDrugsChart.destroy();
+        }
+        const topOpts = getCommonOptions();
+        topOpts.scales.x.stacked = true;
+        topOpts.scales.y.stacked = true;
+        window.chartInstances.topDrugsChart = new Chart(topDrugsCtx, {
+            type: 'bar',
+            data: {
+                labels: topDrugs.map(d => (d.drug_name || '').length > 14 ? d.drug_name.substring(0, 14) + '…' : (d.drug_name || '')),
+                datasets: [
+                    {
+                        label: 'New starts',
+                        data: topDrugs.map(d => parseInt(d.new_count || 0)),
+                        backgroundColor: chartColors.success + 'cc',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Continuations',
+                        data: topDrugs.map(d => parseInt(d.continuation_count || 0)),
+                        backgroundColor: chartColors.warning + 'cc',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: topOpts
+        });
+    }
+
+    // Monthly trend — top 5 drugs
+    const trendCtx = document.getElementById('drugTrendChart');
+    const trendData = window.REPORTS_CONFIG.drugTrend || { labels: [], datasets: [] };
+    if (trendCtx && trendData.datasets && trendData.datasets.length > 0) {
+        if (window.chartInstances.drugTrendChart) {
+            window.chartInstances.drugTrendChart.destroy();
+        }
+        const trendColors = [
+            chartColors.primary, chartColors.success, chartColors.warning,
+            chartColors.info, chartColors.danger
+        ];
+        window.chartInstances.drugTrendChart = new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: (trendData.labels || []).map(m => {
+                    const [y, mo] = m.split('-');
+                    const d = new Date(parseInt(y), parseInt(mo) - 1, 1);
+                    return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+                }),
+                datasets: trendData.datasets.map((ds, i) => ({
+                    label: (ds.drug_name || '').length > 22 ? ds.drug_name.substring(0, 22) + '…' : (ds.drug_name || ''),
+                    data: ds.data || [],
+                    borderColor: trendColors[i % trendColors.length],
+                    backgroundColor: trendColors[i % trendColors.length] + '20',
+                    tension: 0.3,
+                    fill: false,
+                    pointRadius: 3
+                }))
+            },
+            options: getCommonOptions()
+        });
+    }
 }
 
 // Function to update charts when theme changes - same as dashboard.php
@@ -1600,7 +1705,7 @@ window.exportToPDF = async function exportToPDF() {
         // Add title
         pdf.setFontSize(18);
         pdf.setFont('helvetica', 'bold');
-        const reportTypeTitle = window.REPORTS_CONFIG.reportType === 'appointments' ? 'Appointments' : window.REPORTS_CONFIG.reportType === 'revenue' ? 'Revenue' : window.REPORTS_CONFIG.reportType === 'patients' ? 'Patients' : window.REPORTS_CONFIG.reportType === 'medical_prescriptions' ? 'Medical Prescriptions' : window.REPORTS_CONFIG.reportType === 'glasses_prescriptions' ? 'Glasses Prescriptions' : 'Report';
+        const reportTypeTitle = window.REPORTS_CONFIG.reportType === 'appointments' ? 'Appointments' : window.REPORTS_CONFIG.reportType === 'revenue' ? 'Revenue' : window.REPORTS_CONFIG.reportType === 'patients' ? 'Patients' : window.REPORTS_CONFIG.reportType === 'medical_prescriptions' ? 'Medical Prescriptions' : window.REPORTS_CONFIG.reportType === 'glasses_prescriptions' ? 'Glasses Prescriptions' : window.REPORTS_CONFIG.reportType === 'drugs' ? 'Drug' : 'Report';
         pdf.text(reportTypeTitle + ' Report', pageWidth / 2, yPosition, { align: 'center' });
         yPosition += 10;
         
@@ -1613,6 +1718,196 @@ window.exportToPDF = async function exportToPDF() {
         
         pdf.text('Generated: ' + new Date().toLocaleString(), pageWidth / 2, yPosition, { align: 'center' });
         yPosition += 15;
+
+        // ===== Drug Reports use a bespoke layout. The generic selectors below
+        // (.stats-grid summary, #chartsSection, #reportDataTable) intentionally
+        // don't match this report type, so without this branch the PDF came out
+        // empty (title + footer only). =====
+        if (window.REPORTS_CONFIG.reportType === 'drugs') {
+            const cfg = window.REPORTS_CONFIG;
+
+            // NOTE: html2canvas (1.4.1) throws on the theme's modern CSS color()
+            // function, so we deliberately avoid DOM capture here. KPIs are drawn
+            // as text, charts are exported via Chart.js' own toBase64Image(), and
+            // tables are rendered manually below.
+            const addChartImage = (chart, titleText) => {
+                if (!chart) return;
+                try {
+                    const data = chart.toBase64Image('image/png', 1);
+                    const w = chart.width || 600;
+                    const h = chart.height || 300;
+                    let imgW = contentWidth;
+                    let imgH = (h * imgW) / w;
+                    if (imgH > 95) { imgH = 95; imgW = (w * imgH) / h; }
+                    checkPageBreak(imgH + 10);
+                    pdf.setFontSize(12);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.text(titleText, margin, yPosition);
+                    yPosition += 6;
+                    pdf.addImage(data, 'PNG', margin, yPosition, imgW, imgH);
+                    yPosition += imgH + 8;
+                } catch (e) {
+                    // If a chart can't be serialised, skip it rather than aborting.
+                }
+            };
+
+            // Draw a paginated data table from arrays (manual = no clipping on long lists).
+            const drawDataTable = (headers, colWidths, rows) => {
+                const headerHeight = 9;
+                const rowHeight = 7;
+                const drawHeader = (y) => {
+                    pdf.setFillColor(51, 51, 51);
+                    pdf.rect(margin, y - 5, contentWidth, headerHeight, 'F');
+                    pdf.setTextColor(255, 255, 255);
+                    pdf.setFontSize(9);
+                    pdf.setFont('helvetica', 'bold');
+                    let x = margin + 1;
+                    headers.forEach((h, idx) => { pdf.text(String(h), x, y); x += colWidths[idx]; });
+                    pdf.setTextColor(0, 0, 0);
+                    return y + headerHeight;
+                };
+                checkPageBreak(headerHeight + rowHeight * 2);
+                yPosition = drawHeader(yPosition);
+                pdf.setFontSize(8);
+                pdf.setFont('helvetica', 'normal');
+                rows.forEach(cells => {
+                    if (yPosition + rowHeight > pageHeight - 15) {
+                        pdf.addPage();
+                        yPosition = margin;
+                        yPosition = drawHeader(yPosition);
+                        pdf.setFontSize(8);
+                        pdf.setFont('helvetica', 'normal');
+                    }
+                    let x = margin + 1;
+                    cells.forEach((c, idx) => {
+                        let txt = String(c ?? '');
+                        const maxChars = Math.max(4, Math.floor(colWidths[idx] / 1.7));
+                        if (txt.length > maxChars) txt = txt.substring(0, maxChars - 1) + '…';
+                        pdf.text(txt, x, yPosition);
+                        x += colWidths[idx];
+                    });
+                    pdf.setDrawColor(220, 220, 220);
+                    pdf.line(margin, yPosition + 2, pageWidth - margin, yPosition + 2);
+                    yPosition += rowHeight;
+                });
+                yPosition += 6;
+            };
+
+            const drugRows = cfg.reportData || [];
+            const companyStats = cfg.drugCompanyStats || [];
+            const appliedFilters = cfg.drugFilters || {};
+
+            // Active filters note
+            const filterParts = [];
+            if (appliedFilters.company) filterParts.push('Company: ' + appliedFilters.company);
+            if (appliedFilters.category) filterParts.push('Category: ' + appliedFilters.category);
+            if (appliedFilters.route) filterParts.push('Route: ' + appliedFilters.route);
+            if (appliedFilters.continuation_window && appliedFilters.continuation_window !== 90) {
+                filterParts.push('Continuation window: ' + appliedFilters.continuation_window + 'd');
+            }
+            if (filterParts.length) {
+                pdf.setFontSize(9); pdf.setFont('helvetica', 'italic');
+                pdf.text('Filters: ' + filterParts.join(' | '), margin, yPosition);
+                yPosition += 8;
+            }
+
+            // 1) KPI summary (computed + drawn as text)
+            const kTotal = drugRows.reduce((s, d) => s + parseInt(d.total_count || 0), 0);
+            const kCont = drugRows.reduce((s, d) => s + parseInt(d.continuation_count || 0), 0);
+            const kNew = drugRows.reduce((s, d) => s + parseInt(d.new_count || 0), 0);
+            const kEst = drugRows.reduce((s, d) => s + parseFloat(d.estimated_units || 0), 0);
+            const kEstRx = drugRows.reduce((s, d) => s + parseInt(d.estimated_units_rx_count || 0), 0);
+            const kEstTpl = drugRows.reduce((s, d) => s + parseInt(d.estimated_units_template_count || 0), 0);
+            const kRate = kTotal > 0 ? (kCont * 100 / kTotal).toFixed(1) : '0';
+            const kWindow = appliedFilters.continuation_window || 90;
+            pdf.setFontSize(14); pdf.setFont('helvetica', 'bold');
+            pdf.text('Summary', margin, yPosition); yPosition += 8;
+            pdf.setFontSize(11); pdf.setFont('helvetica', 'normal');
+            const summaryLines = [
+                ['Prescription writes', kTotal.toLocaleString()],
+                ['Unique drugs', drugRows.length.toLocaleString()],
+                ['Companies', companyStats.length.toLocaleString()],
+                ['Continuation rate (' + kWindow + 'd)', kRate + '%  (' + kNew.toLocaleString() + ' new starts)']
+            ];
+            if (kEst > 0) {
+                let estNote = kEst.toLocaleString(undefined, { maximumFractionDigits: 1 }) + ' (estimated)';
+                if (kEstRx > 0 || kEstTpl > 0) {
+                    estNote += ' — ' + kEstRx + ' Rx';
+                    if (kEstTpl > 0) estNote += ', ' + kEstTpl + ' template';
+                }
+                summaryLines.push(['Est. dispensed units', estNote]);
+            }
+            summaryLines.forEach(k => {
+                pdf.text(k[0] + ':', margin, yPosition);
+                pdf.text(String(k[1]), margin + 60, yPosition);
+                yPosition += 7;
+            });
+            yPosition += 6;
+
+            // 2) Charts via Chart.js native export
+            addChartImage(window.chartInstances && window.chartInstances.drugTrendChart, 'Monthly Trend — Top 5 Drugs');
+            addChartImage(window.chartInstances && window.chartInstances.drugsByCompanyChart, 'Demand by Company');
+            addChartImage(window.chartInstances && window.chartInstances.topDrugsChart, 'Most Prescribed Drugs (new vs continuation)');
+
+            // 3) Demand-by-company table
+            if (companyStats.length) {
+                checkPageBreak(20);
+                pdf.setFontSize(14); pdf.setFont('helvetica', 'bold');
+                pdf.text('Demand by Company', margin, yPosition); yPosition += 8;
+                drawDataTable(
+                    ['Company', 'Writes', 'Drugs'],
+                    [120, 35, 30],
+                    companyStats.map(c => [
+                        c.company,
+                        parseInt(c.total_count || 0).toLocaleString(),
+                        parseInt(c.drug_count || 0).toLocaleString()
+                    ])
+                );
+            }
+
+            // 4) Per-drug table
+            if (drugRows.length) {
+                checkPageBreak(20);
+                pdf.setFontSize(14); pdf.setFont('helvetica', 'bold');
+                pdf.text('Most Prescribed Drugs', margin, yPosition); yPosition += 8;
+                drawDataTable(
+                    ['#', 'Drug', 'Co.', 'Wr', 'Pt', 'New', 'Ct', 'Ct%', 'EstU'],
+                    [8, 42, 32, 14, 12, 12, 12, 12, 16],
+                    drugRows.map((d, i) => [
+                        i + 1,
+                        d.drug_name || '',
+                        d.company || '-',
+                        parseInt(d.total_count || 0).toLocaleString(),
+                        parseInt(d.patient_count || 0).toLocaleString(),
+                        parseInt(d.new_count || 0).toLocaleString(),
+                        parseInt(d.continuation_count || 0).toLocaleString(),
+                        (d.continuation_rate ?? 0) + '%',
+                        d.estimated_units != null ? parseFloat(d.estimated_units).toFixed(1) : '—'
+                    ])
+                );
+            }
+
+            // 5) Regimen breakdown (written dose combos)
+            const regimenRows = cfg.drugRegimenBreakdown || [];
+            if (regimenRows.length) {
+                checkPageBreak(20);
+                pdf.setFontSize(14); pdf.setFont('helvetica', 'bold');
+                pdf.text('Dose Regimen Breakdown', margin, yPosition); yPosition += 8;
+                drawDataTable(
+                    ['Drug', 'Dose', 'Freq', 'Dur', 'Wr', 'Est/Rx'],
+                    [38, 22, 28, 22, 12, 18],
+                    regimenRows.map(rb => [
+                        rb.drug_name || '',
+                        rb.dose || '—',
+                        rb.frequency || '—',
+                        rb.duration || '—',
+                        parseInt(rb.write_count || 0).toLocaleString(),
+                        rb.estimated_units != null ? parseFloat(rb.estimated_units).toFixed(1) : '—'
+                    ])
+                );
+            }
+        } else if (window.REPORTS_CONFIG.reportType !== 'drugs') {
+        // --- generic report types only (drugs handled above) ---
         
         // Export Summary Statistics Card
         const summaryCard = document.querySelector('.stats-grid')?.closest('.card');
@@ -1864,6 +2159,7 @@ window.exportToPDF = async function exportToPDF() {
                 addFooter();
             }
         }
+        } // end generic (non-drugs) PDF export
         
         // Ensure footer is added to all pages (in case some pages were added without footer)
         const totalPages = pdf.internal.getNumberOfPages();

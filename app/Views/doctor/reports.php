@@ -1,11 +1,28 @@
 <?php
 // Doctor Reports View
+$drugFilters = $drugFilters ?? ['company' => '', 'category' => '', 'route' => '', 'continuation_window' => 90];
+$drugFilterOptions = $drugFilterOptions ?? ['companies' => [], 'categories' => [], 'routes' => []];
+$drugTrend = $drugTrend ?? ['labels' => [], 'datasets' => []];
+$drugRegimenBreakdown = $drugRegimenBreakdown ?? [];
+$drugQueryExtra = '';
+if (($reportType ?? '') === 'drugs') {
+    $dq = [];
+    if (!empty($drugFilters['company'])) $dq['drug_company'] = $drugFilters['company'];
+    if (!empty($drugFilters['category'])) $dq['drug_category'] = $drugFilters['category'];
+    if (!empty($drugFilters['route'])) $dq['drug_route'] = $drugFilters['route'];
+    if ((int)($drugFilters['continuation_window'] ?? 90) !== 90) {
+        $dq['continuation_window'] = (int)$drugFilters['continuation_window'];
+    }
+    $drugQueryExtra = $dq ? '&' . http_build_query($dq) : '';
+}
+
 $reportTypes = [
     'appointments' => 'Appointments Reports',
     'patients' => 'Patients Reports', 
     'revenue' => 'Revenue Reports',
     'medical_prescriptions' => 'Medical Prescriptions Reports',
-    'glasses_prescriptions' => 'Glasses Prescriptions Reports'
+    'glasses_prescriptions' => 'Glasses Prescriptions Reports',
+    'drugs' => 'Drug Reports'
 ];
 ?>
 
@@ -53,7 +70,10 @@ $reportTypes = [
         <form method="GET" action="/doctor/reports" id="reportForm">
             <div class="row">
                 <div class="col-md-3 mb-3">
-                    <section class="field menu">
+                    <!-- data-initialized: this rich select is wired by its own dedicated
+                         handler in reports.js (it submits the form on change), so the
+                         generic initCustomSelects() must skip it. -->
+                    <section class="field menu" data-initialized="dedicated-type">
                         <label for="type" id="type-label" class="form-label">Report Type:</label>
                         <div class="control">
                             <select name="type" id="type" required class="d-none">
@@ -96,6 +116,11 @@ $reportTypes = [
                                     <h3>Glasses Prescriptions</h3>
                                     <p>View glasses prescriptions stats</p>
                                 </li>
+                                <li data-option="drugs" tabindex="0" role="button" class="<?= $reportType === 'drugs' ? 'selected' : '' ?>">
+                                    <i class="bi bi-capsule-pill fs-5"></i>
+                                    <h3>Drug Reports</h3>
+                                    <p>Per-drug usage & company demand</p>
+                                </li>
                             </menu>
                         </div>
                     </section>
@@ -120,7 +145,7 @@ $reportTypes = [
                             <i class="bi bi-search me-1"></i>
                             View Report
                         </button>
-                        <a href="/doctor/reports/export?type=<?= urlencode($reportType) ?>&start_date=<?= urlencode($startDate) ?>&end_date=<?= urlencode($endDate) ?>&format=csv" 
+                        <a href="/doctor/reports/export?type=<?= urlencode($reportType) ?>&start_date=<?= urlencode($startDate) ?>&end_date=<?= urlencode($endDate) ?><?= $drugQueryExtra ?>&format=csv" 
                            class="btn btn-success">
                             <i class="bi bi-download me-1"></i>
                             Export CSV
@@ -134,6 +159,51 @@ $reportTypes = [
                     </div>
                 </div>
             </div>
+
+            <?php if ($reportType === 'drugs'): ?>
+            <div class="row border-top pt-3 mt-1">
+                <div class="col-md-3 mb-3">
+                    <label for="drug_company" class="form-label">Company:</label>
+                    <select name="drug_company" id="drug_company" class="form-select">
+                        <option value="">All companies</option>
+                        <?php foreach ($drugFilterOptions['companies'] as $co): ?>
+                        <option value="<?= htmlspecialchars($co) ?>" <?= ($drugFilters['company'] === $co) ? 'selected' : '' ?>><?= htmlspecialchars($co) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="drug_category" class="form-label">Category:</label>
+                    <select name="drug_category" id="drug_category" class="form-select">
+                        <option value="">All categories</option>
+                        <?php foreach ($drugFilterOptions['categories'] as $cat): ?>
+                        <option value="<?= htmlspecialchars($cat) ?>" <?= ($drugFilters['category'] === $cat) ? 'selected' : '' ?>><?= htmlspecialchars($cat) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label for="drug_route" class="form-label">Route:</label>
+                    <select name="drug_route" id="drug_route" class="form-select">
+                        <option value="">All routes</option>
+                        <?php foreach ($drugFilterOptions['routes'] as $rt): ?>
+                        <option value="<?= htmlspecialchars($rt) ?>" <?= ($drugFilters['route'] === $rt) ? 'selected' : '' ?>><?= htmlspecialchars($rt) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label for="continuation_window" class="form-label">Continuation window:</label>
+                    <select name="continuation_window" id="continuation_window" class="form-select">
+                        <?php foreach ([30, 60, 90, 120, 180] as $w): ?>
+                        <option value="<?= $w ?>" <?= ((int)$drugFilters['continuation_window'] === $w) ? 'selected' : '' ?>><?= $w ?> days</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-2 mb-3 d-flex align-items-end">
+                    <a href="/doctor/reports?type=drugs&start_date=<?= urlencode($startDate) ?>&end_date=<?= urlencode($endDate) ?>" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-x-circle me-1"></i>Clear filters
+                    </a>
+                </div>
+            </div>
+            <?php endif; ?>
         </form>
     </div>
 </div>
@@ -638,8 +708,249 @@ $reportTypes = [
             </div>
         </div>
         <?php endif; ?>
+    <?php elseif ($reportType === 'drugs'): ?>
+        <?php
+        $drugTotalWrites    = array_sum(array_column($reportData, 'total_count'));
+        $drugUniqueCount    = count($reportData);
+        $drugContinuations  = array_sum(array_column($reportData, 'continuation_count'));
+        $drugNewStarts      = array_sum(array_column($reportData, 'new_count'));
+        $drugAvgContRate    = $drugTotalWrites > 0 ? round($drugContinuations * 100 / $drugTotalWrites, 1) : 0;
+        $drugCompaniesCount = count($drugCompanyStats);
+        $drugEstUnits       = array_sum(array_filter(array_column($reportData, 'estimated_units'), fn($v) => $v !== null));
+        $drugEstRxCount     = array_sum(array_column($reportData, 'estimated_units_rx_count'));
+        $drugEstTplCount    = array_sum(array_column($reportData, 'estimated_units_template_count'));
+        $drugEstCover       = $drugTotalWrites > 0
+            ? round(array_sum(array_column($reportData, 'estimated_units_parse_rate')) / max(1, count($reportData)), 0)
+            : 0;
+        $drugContWindow     = (int)($drugFilters['continuation_window'] ?? 90);
+        ?>
+
+        <!-- Drug Reports Summary -->
+        <div class="card mb-4">
+            <div class="card-header medical-prescriptions-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-capsule-pill me-2"></i>
+                    Drug Reports Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mini-stats-grid">
+                    <div class="mini-stat-card mini-stat-primary">
+                        <div class="mini-stat-icon"><i class="bi bi-pencil-square"></i></div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($drugTotalWrites) ?></span>
+                            <span class="mini-stat-label">Prescription Writes</span>
+                        </div>
+                        <div class="mini-stat-trend trend-up"><i class="bi bi-graph-up-arrow"></i><span>Demand</span></div>
+                    </div>
+                    <div class="mini-stat-card mini-stat-success">
+                        <div class="mini-stat-icon"><i class="bi bi-capsule"></i></div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($drugUniqueCount) ?></span>
+                            <span class="mini-stat-label">Unique Drugs</span>
+                        </div>
+                        <div class="mini-stat-trend trend-neutral"><i class="bi bi-list-ul"></i><span>Variety</span></div>
+                    </div>
+                    <div class="mini-stat-card mini-stat-info">
+                        <div class="mini-stat-icon"><i class="bi bi-building"></i></div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= number_format($drugCompaniesCount) ?></span>
+                            <span class="mini-stat-label">Companies</span>
+                        </div>
+                        <div class="mini-stat-trend trend-neutral"><i class="bi bi-diagram-3"></i><span>Suppliers</span></div>
+                    </div>
+                    <div class="mini-stat-card mini-stat-warning">
+                        <div class="mini-stat-icon"><i class="bi bi-arrow-repeat"></i></div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= $drugAvgContRate ?>%</span>
+                            <span class="mini-stat-label">Continuation Rate</span>
+                        </div>
+                        <div class="mini-stat-trend trend-neutral"><i class="bi bi-info-circle"></i><span><?= number_format($drugNewStarts) ?> new</span></div>
+                    </div>
+                </div>
+                <?php if ($drugEstUnits > 0): ?>
+                <div class="alert alert-info py-2 px-3 mt-3 mb-0 small">
+                    <i class="bi bi-calculator me-1"></i>
+                    <strong>Estimated dispensed units:</strong> <?= number_format($drugEstUnits, 1) ?>
+                    <span class="text-muted">
+                        (dose × freq/day × duration —
+                        <?php if ($drugEstRxCount > 0): ?><?= number_format($drugEstRxCount) ?> from Rx fields<?php endif; ?>
+                        <?php if ($drugEstTplCount > 0): ?><?= $drugEstRxCount > 0 ? ', ' : '' ?><?= number_format($drugEstTplCount) ?> from saved templates<?php endif; ?>;
+                        labelled <em>estimated</em>)
+                    </span>
+                </div>
+                <?php else: ?>
+                <div class="alert alert-secondary py-2 px-3 mt-3 mb-0 small">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <strong>Est. units:</strong> no regimens could be parsed yet.
+                    Fill <em>dose / frequency / duration</em> on prescriptions or save drug templates — the parser supports EN + AR patterns (BID, TTD, كل ٨ ساعات, اسبوعين…).
+                </div>
+                <?php endif; ?>
+                <p class="text-muted small mt-3 mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <strong>Writes</strong> counts every time a drug was prescribed (the most robust demand signal for suppliers).
+                    A write is flagged as a <strong>continuation</strong> when the same patient received the same drug within <?= $drugContWindow ?> days —
+                    i.e. a repeat/refill rather than a new start. Company &amp; ingredient data is matched against the drug catalogue by name.
+                </p>
+            </div>
+        </div>
+
+        <?php if (!empty($drugTrend['datasets'])): ?>
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-graph-up-arrow me-2"></i>Prescription Trend — Top 5 Drugs (monthly)</h6>
+            </div>
+            <div class="card-body">
+                <div style="position:relative;height:320px;">
+                    <canvas id="drugTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <div class="row">
+            <!-- Demand by Company -->
+            <div class="col-lg-5 mb-4">
+                <div class="card h-100">
+                    <div class="card-header"><h6 class="mb-0"><i class="bi bi-building me-2"></i>Demand by Company</h6></div>
+                    <div class="card-body">
+                        <?php if (!empty($drugCompanyStats)): ?>
+                        <div style="position:relative;height:300px;">
+                            <canvas id="drugsByCompanyChart"></canvas>
+                        </div>
+                        <div class="table-responsive mt-3">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead class="table-dark">
+                                    <tr><th>Company</th><th class="text-end">Writes</th><th class="text-end">Drugs</th></tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach (array_slice($drugCompanyStats, 0, 15) as $c): ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars($c['company']) ?></td>
+                                        <td class="text-end"><span class="badge bg-primary"><?= number_format($c['total_count']) ?></span></td>
+                                        <td class="text-end"><?= number_format($c['drug_count']) ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <?php else: ?>
+                        <p class="text-muted mb-0"><i class="bi bi-exclamation-circle me-1"></i>No company data could be matched for this period.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Drugs -->
+            <div class="col-lg-7 mb-4">
+                <div class="card h-100">
+                    <div class="card-header"><h6 class="mb-0"><i class="bi bi-trophy me-2"></i>Most Prescribed Drugs</h6></div>
+                    <div class="card-body">
+                        <div style="position:relative;height:260px;">
+                            <canvas id="topDrugsChart"></canvas>
+                        </div>
+                        <div class="table-responsive mt-3">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Drug</th>
+                                        <th>Company</th>
+                                        <th class="text-end">Writes</th>
+                                        <th class="text-end">Patients</th>
+                                        <th class="text-end">New</th>
+                                        <th class="text-end">Cont.</th>
+                                        <th class="text-end">Cont. %</th>
+                                        <th class="text-end" title="Estimated: dose × freq/day × duration">Est. units</th>
+                                        <th class="text-end">Src</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach (array_slice($reportData, 0, 25) as $i => $d): ?>
+                                    <tr>
+                                        <td><strong>#<?= $i + 1 ?></strong></td>
+                                        <td>
+                                            <strong><?= htmlspecialchars($d['drug_name']) ?></strong>
+                                            <?php if (!empty($d['active_ingredient'])): ?>
+                                            <br><small class="text-muted"><?= htmlspecialchars($d['active_ingredient']) ?></small>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><small><?= htmlspecialchars($d['company'] ?? '—') ?></small></td>
+                                        <td class="text-end"><span class="badge bg-primary"><?= number_format($d['total_count']) ?></span></td>
+                                        <td class="text-end"><?= number_format($d['patient_count']) ?></td>
+                                        <td class="text-end"><span class="badge bg-success"><?= number_format($d['new_count']) ?></span></td>
+                                        <td class="text-end"><span class="badge bg-warning text-dark"><?= number_format($d['continuation_count']) ?></span></td>
+                                        <td class="text-end"><?= $d['continuation_rate'] ?>%</td>
+                                        <td class="text-end">
+                                            <?php if (!empty($d['estimated_units'])): ?>
+                                            <span class="badge bg-info text-dark" title="Parsed <?= (int)($d['estimated_units_parse_rate'] ?? 0) ?>% of writes"><?= number_format($d['estimated_units'], 1) ?></span>
+                                            <?php else: ?>
+                                            <small class="text-muted">—</small>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="text-end">
+                                            <?php
+                                                $rxC = (int)($d['estimated_units_rx_count'] ?? 0);
+                                                $tplC = (int)($d['estimated_units_template_count'] ?? 0);
+                                            ?>
+                                            <?php if ($rxC > 0): ?><span class="badge bg-success" title="From prescription fields">Rx</span><?php endif; ?>
+                                            <?php if ($tplC > 0): ?><span class="badge bg-secondary" title="From drug template">Tpl</span><?php endif; ?>
+                                            <?php if ($rxC === 0 && $tplC === 0): ?><small class="text-muted">—</small><?php endif; ?>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <?php if (!empty($drugRegimenBreakdown)): ?>
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-list-check me-2"></i>Dose Regimen Breakdown <small class="text-muted fw-normal">(written combinations in period)</small></h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Drug</th>
+                                <th>Dose</th>
+                                <th>Frequency</th>
+                                <th>Duration</th>
+                                <th class="text-end">Writes</th>
+                                <th class="text-end">Est. units/Rx</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($drugRegimenBreakdown as $rb): ?>
+                            <tr>
+                                <td><strong><?= htmlspecialchars($rb['drug_name']) ?></strong></td>
+                                <td><?= htmlspecialchars($rb['dose']) ?></td>
+                                <td><?= htmlspecialchars($rb['frequency']) ?></td>
+                                <td><?= htmlspecialchars($rb['duration']) ?></td>
+                                <td class="text-end"><span class="badge bg-primary"><?= (int)$rb['write_count'] ?></span></td>
+                                <td class="text-end">
+                                    <?php if ($rb['estimated_units'] !== null): ?>
+                                    <?= number_format($rb['estimated_units'], 1) ?>
+                                    <?php else: ?>
+                                    <small class="text-muted">unparsed</small>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
     <?php endif; ?>
 
+    <?php if ($reportType !== 'drugs'): ?>
     <!-- Detailed Table Card -->
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
@@ -880,6 +1191,7 @@ $reportTypes = [
             </div>
         </div>
     </div>
+    <?php endif; /* end: hide generic table + charts for drugs report */ ?>
 
 <?php else: ?>
     <!-- Empty State Card -->
@@ -931,7 +1243,11 @@ $reportTypes = [
         withLensType: <?= isset($withLensType) ? (int)$withLensType : 0 ?>,
         // Additional data
         topMedications: <?= isset($topMedications) ? json_encode($topMedications) : '[]' ?>,
-        glassesLensTypeStats: <?= isset($glassesLensTypeStats) ? json_encode($glassesLensTypeStats) : '[]' ?>
+        glassesLensTypeStats: <?= isset($glassesLensTypeStats) ? json_encode($glassesLensTypeStats) : '[]' ?>,
+        drugCompanyStats: <?= isset($drugCompanyStats) ? json_encode($drugCompanyStats, JSON_UNESCAPED_UNICODE) : '[]' ?>,
+        drugTrend: <?= json_encode($drugTrend, JSON_UNESCAPED_UNICODE) ?>,
+        drugRegimenBreakdown: <?= json_encode($drugRegimenBreakdown, JSON_UNESCAPED_UNICODE) ?>,
+        drugFilters: <?= json_encode($drugFilters, JSON_UNESCAPED_UNICODE) ?>
     };
 </script>
 

@@ -1881,11 +1881,23 @@ class DoctorController
         // Get additional data for medical and glasses prescriptions
         $topMedications = [];
         $glassesLensTypeStats = [];
+        $drugCompanyStats = [];
+        $drugTrend = [];
+        $drugRegimenBreakdown = [];
+        $drugFilterOptions = ['companies' => [], 'categories' => [], 'routes' => []];
+        $drugFilters = $this->getDrugReportFilters();
         
         if ($reportType === 'medical_prescriptions') {
             $topMedications = $this->getTopMedications($doctorId, $startDate, $endDate, 10);
         } elseif ($reportType === 'glasses_prescriptions') {
             $glassesLensTypeStats = $this->getGlassesLensTypeStats($doctorId, $startDate, $endDate);
+        } elseif ($reportType === 'drugs') {
+            $drugReport = $this->buildFullDrugReport($doctorId, $startDate, $endDate, $drugFilters);
+            $reportData = $drugReport['reportData'];
+            $drugCompanyStats = $drugReport['drugCompanyStats'];
+            $drugTrend = $drugReport['drugTrend'];
+            $drugRegimenBreakdown = $drugReport['drugRegimenBreakdown'];
+            $drugFilterOptions = $drugReport['filterOptions'];
         }
         
         // Get clinic settings and doctor info for PDF export
@@ -1901,7 +1913,12 @@ class DoctorController
             'clinicName' => $settings['clinic_name'] ?? 'Clinic',
             'doctorName' => $doctorInfo['name'] ?? $user['name'] ?? 'Doctor',
             'topMedications' => $topMedications,
-            'glassesLensTypeStats' => $glassesLensTypeStats
+            'glassesLensTypeStats' => $glassesLensTypeStats,
+            'drugCompanyStats' => $drugCompanyStats,
+            'drugTrend' => $drugTrend,
+            'drugRegimenBreakdown' => $drugRegimenBreakdown,
+            'drugFilterOptions' => $drugFilterOptions,
+            'drugFilters' => $drugFilters
         ]);
         
         echo $this->view->render('layouts/main', [
@@ -2137,8 +2154,13 @@ class DoctorController
             $endDate = $_GET['end_date'] ?? date('Y-m-t');
             $format = $_GET['format'] ?? 'csv';
             
-            // Generate report data
-            $reportData = $this->generateDoctorReport($doctorId, $reportType, $startDate, $endDate);
+            // Generate report data (drugs report applies filters + enrichment)
+            if ($reportType === 'drugs') {
+                $drugFilters = $this->getDrugReportFilters();
+                $reportData = $this->buildFullDrugReport($doctorId, $startDate, $endDate, $drugFilters)['reportData'];
+            } else {
+                $reportData = $this->generateDoctorReport($doctorId, $reportType, $startDate, $endDate);
+            }
             
             // Export based on format
             if ($format === 'csv') {
@@ -2166,6 +2188,15 @@ class DoctorController
                 return $this->generateDoctorMedicalPrescriptionsReport($doctorId, $startDate, $endDate);
             case 'glasses_prescriptions':
                 return $this->generateDoctorGlassesPrescriptionsReport($doctorId, $startDate, $endDate);
+            case 'drugs':
+                $df = $this->getDrugReportFilters();
+                return $this->generateDoctorDrugsReport(
+                    $doctorId,
+                    $startDate,
+                    $endDate,
+                    $df['continuation_window'],
+                    $df['route']
+                );
             default:
                 return $this->generateDoctorAppointmentsReport($doctorId, $startDate, $endDate);
         }
@@ -2289,6 +2320,700 @@ class DoctorController
         ");
         $stmt->execute([$startDate, $endDate, $limit]);
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Drug Reports — per-drug prescription analytics.
+     *
+     * Returns one row per drug with:
+     *   - total_count        : how many times the drug was written (prescription events)
+     *   - patient_count      : distinct patients who received it
+     *   - new_count          : "new starts" (first time for that patient, or no recent prior)
+     *   - continuation_count : "continuations / refills" (same patient + drug within window)
+     *   - continuation_rate  : continuation_count / total_count (%)
+     *
+     * The new-vs-continuation split answers the real-world nuance: a doctor may
+     * re-prescribe a drug at a follow-up before the patient finished the first
+     * supply. Counting every write as a separate purchase over-states demand, so
+     * we surface both the raw write count AND how many of those were repeats of a
+     * recent prescription (within $continuationWindow days, default 90).
+     */
+    /** Read drug-report filter params from the query string. */
+    private function getDrugReportFilters(): array
+    {
+        $window = (int)($_GET['continuation_window'] ?? 90);
+        if (!in_array($window, [30, 60, 90, 120, 180], true)) {
+            $window = 90;
+        }
+        return [
+            'company' => trim($_GET['drug_company'] ?? ''),
+            'category' => trim($_GET['drug_category'] ?? ''),
+            'route' => trim($_GET['drug_route'] ?? ''),
+            'continuation_window' => $window,
+        ];
+    }
+
+    /**
+     * Orchestrate the full drug report: aggregate → enrich → filter → trend.
+     */
+    private function buildFullDrugReport($doctorId, $startDate, $endDate, array $filters): array
+    {
+        $rows = $this->generateDoctorDrugsReport(
+            $doctorId,
+            $startDate,
+            $endDate,
+            $filters['continuation_window'],
+            $filters['route']
+        );
+        list($rows, $companyStats) = $this->enrichDrugsWithCompany($rows);
+
+        if ($filters['company'] !== '') {
+            $rows = array_values(array_filter(
+                $rows,
+                fn($r) => ($r['company'] ?? 'Unmapped') === $filters['company']
+            ));
+            $companyStats = $this->rollupDrugCompanyStats($rows);
+        }
+        if ($filters['category'] !== '') {
+            $rows = array_values(array_filter(
+                $rows,
+                fn($r) => ($r['category'] ?? '') === $filters['category']
+            ));
+            $companyStats = $this->rollupDrugCompanyStats($rows);
+        }
+
+        $topNames = array_slice(array_column($rows, 'drug_name'), 0, 5);
+        $trend = $this->generateDrugTrendData(
+            $startDate,
+            $endDate,
+            $topNames,
+            $filters['route']
+        );
+        $regimenBreakdown = $this->getDrugRegimenBreakdown(
+            $startDate,
+            $endDate,
+            $filters['route']
+        );
+
+        return [
+            'reportData' => $rows,
+            'drugCompanyStats' => $companyStats,
+            'drugTrend' => $trend,
+            'drugRegimenBreakdown' => $regimenBreakdown,
+            'filterOptions' => $this->getDrugReportFilterOptions($startDate, $endDate),
+            'filters' => $filters,
+        ];
+    }
+
+    private function rollupDrugCompanyStats(array $drugRows): array
+    {
+        $totals = [];
+        foreach ($drugRows as $r) {
+            $company = (!empty($r['company'])) ? $r['company'] : 'Unmapped';
+            if (!isset($totals[$company])) {
+                $totals[$company] = ['company' => $company, 'total_count' => 0, 'drug_count' => 0];
+            }
+            $totals[$company]['total_count'] += (int)($r['total_count'] ?? 0);
+            $totals[$company]['drug_count'] += 1;
+        }
+        $stats = array_values($totals);
+        usort($stats, fn($a, $b) => $b['total_count'] <=> $a['total_count']);
+        return $stats;
+    }
+
+    /** Distinct companies / categories (drugs DB) + routes (prescriptions) for filter dropdowns. */
+    private function getDrugReportFilterOptions($startDate, $endDate): array
+    {
+        $options = ['companies' => [], 'categories' => [], 'routes' => []];
+        try {
+            $drugsPdo = $this->getDrugsDatabaseConnection();
+            $stmt = $drugsPdo->query(
+                "SELECT DISTINCT Company AS v FROM drugs
+                 WHERE Company IS NOT NULL AND Company <> '' ORDER BY Company"
+            );
+            $options['companies'] = array_column($stmt->fetchAll(), 'v');
+            $stmt = $drugsPdo->query(
+                "SELECT DISTINCT Pharmacology AS v FROM drugs
+                 WHERE Pharmacology IS NOT NULL AND Pharmacology <> '' ORDER BY Pharmacology"
+            );
+            $options['categories'] = array_column($stmt->fetchAll(), 'v');
+        } catch (\Throwable $e) {
+            // Degrade gracefully.
+        }
+        $stmt = $this->pdo->prepare("
+            SELECT DISTINCT p.route AS v
+            FROM prescriptions p
+            JOIN appointments a ON p.appointment_id = a.id
+            WHERE DATE(a.date) BETWEEN ? AND ?
+              AND p.route IS NOT NULL AND p.route <> ''
+            ORDER BY p.route
+        ");
+        $stmt->execute([$startDate, $endDate]);
+        $options['routes'] = array_column($stmt->fetchAll(), 'v');
+        return $options;
+    }
+
+    /**
+     * Monthly prescription-write counts for the top-N drugs (line-chart data).
+     */
+    private function generateDrugTrendData($startDate, $endDate, array $drugNames, $routeFilter = ''): array
+    {
+        if (empty($drugNames)) {
+            return ['labels' => [], 'datasets' => []];
+        }
+        $placeholders = implode(',', array_fill(0, count($drugNames), '?'));
+        $params = array_merge([$startDate, $endDate], $drugNames);
+        $routeSql = '';
+        if ($routeFilter !== '') {
+            $routeSql = ' AND p.route = ?';
+            $params[] = $routeFilter;
+        }
+        $stmt = $this->pdo->prepare("
+            SELECT DATE_FORMAT(a.date, '%Y-%m') AS month_key,
+                   p.drug_name,
+                   COUNT(*) AS write_count
+            FROM prescriptions p
+            JOIN appointments a ON p.appointment_id = a.id
+            WHERE DATE(a.date) BETWEEN ? AND ?
+              AND p.drug_name IN ($placeholders)
+              $routeSql
+            GROUP BY month_key, p.drug_name
+            ORDER BY month_key ASC
+        ");
+        $stmt->execute($params);
+        $raw = $stmt->fetchAll();
+
+        $labels = [];
+        $cursor = new \DateTime($startDate);
+        $cursor->modify('first day of this month');
+        $end = new \DateTime($endDate);
+        $end->modify('first day of this month');
+        while ($cursor <= $end) {
+            $labels[] = $cursor->format('Y-m');
+            $cursor->modify('+1 month');
+        }
+
+        $byDrug = [];
+        foreach ($drugNames as $name) {
+            $byDrug[$name] = array_fill_keys($labels, 0);
+        }
+        foreach ($raw as $row) {
+            $name = $row['drug_name'];
+            if (isset($byDrug[$name][$row['month_key']])) {
+                $byDrug[$name][$row['month_key']] = (int)$row['write_count'];
+            }
+        }
+
+        $datasets = [];
+        foreach ($drugNames as $name) {
+            $datasets[] = [
+                'drug_name' => $name,
+                'data' => array_values($byDrug[$name]),
+            ];
+        }
+        return ['labels' => $labels, 'datasets' => $datasets];
+    }
+
+    /** Normalize Arabic-Indic digits and common OCR typos in free-text regimen fields. */
+    private function normalizeRxText(?string $text): string
+    {
+        if ($text === null) {
+            return '';
+        }
+        $t = trim($text);
+        $arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+        foreach ($arabicDigits as $i => $digit) {
+            $t = str_replace($digit, (string)$i, $t);
+        }
+        $t = str_replace(['×', '＊', '✕'], '*', $t);
+        return $t;
+    }
+
+    /** Guess whether a free-text field is dose / frequency / duration (fields are often swapped). */
+    private function classifyRxField(?string $text): string
+    {
+        $t = mb_strtolower($this->normalizeRxText($text));
+        if ($t === '') {
+            return 'empty';
+        }
+        if (preg_match('/(?:forever|for ever|مستمر|دائم)/u', $t)) {
+            return 'duration';
+        }
+        if (preg_match('/(?:times?|daily|bid|tid|tds|qid|ttd|\bod\b|once|hour|ساعات|مرتين|مرات|يوميا|باليوم)/u', $t)) {
+            return 'frequency';
+        }
+        if (preg_match('/(?:week|month|day|أيام|ايام|اسبوع|أسبوع|شهر|moth)/u', $t)) {
+            return 'duration';
+        }
+        if (preg_match('/(?:tablet|tab|capsule|حباية|حبة|قرص|قرص)/u', $t)) {
+            return 'dose';
+        }
+        if (preg_match('/^\d+(?:\.\d+)?(?:\s*\*\s*\d+)?$/', $t)) {
+            return 'dose';
+        }
+        return 'unknown';
+    }
+
+    /**
+     * Re-assign dose/frequency/duration when doctors typed values in the wrong column
+     * (common in the live data: "3 times" in dose, "2 weeks" in frequency, etc.).
+     */
+    private function smartAssignRegimenFields(?string $dose, ?string $frequency, ?string $duration): array
+    {
+        $assigned = ['dose' => '', 'frequency' => '', 'duration' => ''];
+        $pool = [
+            ['role' => $this->classifyRxField($dose), 'val' => $this->normalizeRxText($dose)],
+            ['role' => $this->classifyRxField($frequency), 'val' => $this->normalizeRxText($frequency)],
+            ['role' => $this->classifyRxField($duration), 'val' => $this->normalizeRxText($duration)],
+        ];
+        foreach ($pool as $item) {
+            if ($item['val'] === '') {
+                continue;
+            }
+            $slot = $item['role'];
+            if ($slot === 'empty' || $slot === 'unknown') {
+                continue;
+            }
+            if ($assigned[$slot] === '') {
+                $assigned[$slot] = $item['val'];
+            }
+        }
+        // Whatever wasn't classified — fill remaining slots in original order.
+        $original = [
+            $this->normalizeRxText($dose),
+            $this->normalizeRxText($frequency),
+            $this->normalizeRxText($duration),
+        ];
+        $used = array_filter(array_values($assigned));
+        foreach ($original as $val) {
+            if ($val === '' || in_array($val, $used, true)) {
+                continue;
+            }
+            foreach (['dose', 'frequency', 'duration'] as $slot) {
+                if ($assigned[$slot] === '') {
+                    $assigned[$slot] = $val;
+                    $used[] = $val;
+                    break;
+                }
+            }
+        }
+        return $assigned;
+    }
+
+    /**
+     * Estimate dispensed units from dose × frequency/day × duration (days).
+     * Uses smart field assignment; returns null when any component can't parse.
+     */
+    private function estimatePrescriptionUnits(?string $dose, ?string $frequency, ?string $duration): ?float
+    {
+        $assigned = $this->smartAssignRegimenFields($dose, $frequency, $duration);
+        $d = $this->parseDoseUnits($assigned['dose']);
+        $f = $this->parseFrequencyPerDay($assigned['frequency']);
+        $days = $this->parseDurationDays($assigned['duration']);
+        if ($d === null || $f === null || $days === null) {
+            return null;
+        }
+        return round($d * $f * $days, 1);
+    }
+
+    /**
+     * Resolve regimen for unit estimation: prescription fields first, then per-doctor
+     * drug_defaults template filling any gaps.
+     *
+     * @return array{units: ?float, source: string} source = rx | template | none
+     */
+    private function resolveRegimenEstimate(
+        ?string $rxDose,
+        ?string $rxFreq,
+        ?string $rxDur,
+        ?array $template
+    ): array {
+        $hasRx = trim((string)$rxDose) !== '' || trim((string)$rxFreq) !== '' || trim((string)$rxDur) !== '';
+        $units = $this->estimatePrescriptionUnits($rxDose, $rxFreq, $rxDur);
+        if ($units !== null) {
+            return ['units' => $units, 'source' => 'rx'];
+        }
+        if ($template) {
+            $mergedDose = trim((string)$rxDose) !== '' ? $rxDose : ($template['dose'] ?? '');
+            $mergedFreq = trim((string)$rxFreq) !== '' ? $rxFreq : ($template['frequency'] ?? '');
+            $mergedDur = trim((string)$rxDur) !== '' ? $rxDur : ($template['duration'] ?? '');
+            $units = $this->estimatePrescriptionUnits($mergedDose, $mergedFreq, $mergedDur);
+            if ($units !== null) {
+                return ['units' => $units, 'source' => 'template'];
+            }
+        }
+        if ($hasRx) {
+            return ['units' => null, 'source' => 'unparsed'];
+        }
+        return ['units' => null, 'source' => 'none'];
+    }
+
+    private function parseDoseUnits(?string $dose): ?float
+    {
+        $dose = $this->normalizeRxText($dose);
+        if ($dose === '') {
+            return null;
+        }
+        $d = mb_strtolower($dose);
+        if (preg_match('/(?:حباية|حبة|tablet|tab|capsule|قرص)/u', $d)) {
+            return 1.0;
+        }
+        // "1*3" or "1×3" in dose column often means 1 unit taken 3×/day — freq handled separately.
+        if (preg_match('/^(\d+(?:\.\d+)?)\s*[\*\/]\s*(\d+)/', $d, $m)) {
+            return (float)$m[1];
+        }
+        if (preg_match('/(\d+(?:\.\d+)?)/', $d, $m)) {
+            return (float)$m[1];
+        }
+        return null;
+    }
+
+    private function parseFrequencyPerDay(?string $frequency): ?float
+    {
+        $frequency = $this->normalizeRxText($frequency);
+        if ($frequency === '') {
+            return null;
+        }
+        $f = mb_strtolower(trim($frequency));
+        $map = [
+            'once daily' => 1, 'once' => 1, 'od' => 1, 'qd' => 1, 'daily' => 1, 'once a day' => 1,
+            'twice daily' => 2, 'bid' => 2, 'twice a day' => 2, '2x daily' => 2,
+            'three times daily' => 3, 'tid' => 3, 'tds' => 3, 'ttd' => 3, '3x daily' => 3,
+            'four times daily' => 4, 'qid' => 4, '4x daily' => 4,
+            'five times' => 5, '5 times' => 5,
+            'every other day' => 0.5, 'alternate day' => 0.5,
+            'weekly' => 1 / 7, 'once weekly' => 1 / 7,
+        ];
+        foreach ($map as $pattern => $val) {
+            if (strpos($f, $pattern) !== false) {
+                return $val;
+            }
+        }
+        if (preg_match('/كل\s*(\d+)\s*ساعات/u', $f, $m) && (int)$m[1] > 0) {
+            return round(24 / (int)$m[1], 2);
+        }
+        if (preg_match('/every\s*(\d+)\s*h(?:ours?)?/i', $f, $m) && (int)$m[1] > 0) {
+            return round(24 / (int)$m[1], 2);
+        }
+        if (preg_match('/(\d+)\s*(?:x|\*|times?)(?:\s*(?:daily|day|per day))?/i', $f, $m)) {
+            return (float)$m[1];
+        }
+        if (preg_match('/^(\d+)\s*times?$/i', $f, $m)) {
+            return (float)$m[1];
+        }
+        if (preg_match('/مرتين/u', $f)) {
+            return 2.0;
+        }
+        if (preg_match('/ثلاث/u', $f)) {
+            return 3.0;
+        }
+        if (preg_match('/(\d+)\s*(?:مرات?|مرة)\s*(?:يوم|اليوم|فى اليوم|باليوم)/u', $f, $m)) {
+            return (float)$m[1];
+        }
+        if (preg_match('/مرة\s*(?:واحدة|باليوم|يوميا)/u', $f)) {
+            return 1.0;
+        }
+        return null;
+    }
+
+    private function parseDurationDays(?string $duration): ?int
+    {
+        $duration = $this->normalizeRxText($duration);
+        if ($duration === '') {
+            return null;
+        }
+        $d = mb_strtolower(trim($duration));
+        if (preg_match('/(?:forever|for ever|مستمر|دائم)/u', $d)) {
+            return 90;
+        }
+        if (preg_match('/^weeks?$/i', $d)) {
+            return 7;
+        }
+        if (preg_match('/(\d+)\s*(?:days?|d\b)/i', $d, $m)) {
+            return (int)$m[1];
+        }
+        if (preg_match('/(\d+)\s*(?:weeks?|wk|w\b)/i', $d, $m)) {
+            return (int)$m[1] * 7;
+        }
+        if (preg_match('/(\d+)\s*(?:months?|moths?|mo)/i', $d, $m)) {
+            return (int)$m[1] * 30;
+        }
+        if (preg_match('/(\d+)\s*(?:أيام?|ايام?|يوم)/u', $d, $m)) {
+            return (int)$m[1];
+        }
+        if (preg_match('/(?:لمدة\s*)?(?:اسبوعين|أسبوعين)/u', $d)) {
+            return 14;
+        }
+        if (preg_match('/(\d+)\s*(?:أسابيع?|اسبوع|أسبوع)/u', $d, $m)) {
+            return (int)$m[1] * 7;
+        }
+        if (preg_match('/(\d+)\s*(?:شهور?|شهر)/u', $d, $m)) {
+            return (int)$m[1] * 30;
+        }
+        if (preg_match('/^(\d+)$/', $d, $m)) {
+            $n = (int)$m[1];
+            return $n <= 14 ? $n : $n;
+        }
+        return null;
+    }
+
+    /**
+     * Load drug_defaults for template fallback.
+     * Returns [perDoctorIndex, perDrugIndex] — perDrug is clinic-wide (any doctor).
+     */
+    private function loadDrugDefaultsIndex(): array
+    {
+        $perDoctor = [];
+        $perDrug = [];
+        try {
+            $stmt = $this->pdo->query(
+                "SELECT doctor_id, drug_name, dose, frequency, duration
+                 FROM drug_defaults
+                 WHERE drug_name IS NOT NULL AND drug_name <> ''"
+            );
+            foreach ($stmt->fetchAll() as $row) {
+                $drugKey = mb_strtolower(trim($row['drug_name']));
+                $perDoctor[(int)$row['doctor_id'] . '|' . $drugKey] = $row;
+                if (!isset($perDrug[$drugKey])) {
+                    $perDrug[$drugKey] = $row;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Table may not exist on older installs.
+        }
+        return [$perDoctor, $perDrug];
+    }
+
+    /**
+     * Top dose/frequency/duration combinations actually written in the period
+     * (after smart field assignment), with estimated units per combo.
+     */
+    private function getDrugRegimenBreakdown($startDate, $endDate, $routeFilter = ''): array
+    {
+        $params = [$startDate, $endDate];
+        $routeSql = '';
+        if ($routeFilter !== '') {
+            $routeSql = ' AND p.route = ?';
+            $params[] = $routeFilter;
+        }
+        $stmt = $this->pdo->prepare("
+            SELECT p.drug_name, p.dose, p.frequency, p.duration, COUNT(*) AS write_count
+            FROM prescriptions p
+            JOIN appointments a ON p.appointment_id = a.id
+            WHERE DATE(a.date) BETWEEN ? AND ?
+              AND p.drug_name IS NOT NULL AND p.drug_name <> ''
+              AND (
+                  TRIM(p.dose) <> '' OR TRIM(p.frequency) <> '' OR TRIM(p.duration) <> ''
+              )
+              $routeSql
+            GROUP BY p.drug_name, p.dose, p.frequency, p.duration
+            ORDER BY write_count DESC
+            LIMIT 40
+        ");
+        $stmt->execute($params);
+        $rows = [];
+        foreach ($stmt->fetchAll() as $r) {
+            $assigned = $this->smartAssignRegimenFields($r['dose'], $r['frequency'], $r['duration']);
+            $units = $this->estimatePrescriptionUnits($assigned['dose'], $assigned['frequency'], $assigned['duration']);
+            $rows[] = [
+                'drug_name' => $r['drug_name'],
+                'dose' => $assigned['dose'] ?: ($r['dose'] ?: '—'),
+                'frequency' => $assigned['frequency'] ?: ($r['frequency'] ?: '—'),
+                'duration' => $assigned['duration'] ?: ($r['duration'] ?: '—'),
+                'write_count' => (int)$r['write_count'],
+                'estimated_units' => $units,
+            ];
+        }
+        return $rows;
+    }
+
+    private function generateDoctorDrugsReport(
+        $doctorId,
+        $startDate,
+        $endDate,
+        $continuationWindow = 90,
+        $routeFilter = ''
+    ) {
+        $params = [$startDate, (int)$continuationWindow, $endDate];
+        $routeSql = '';
+        if ($routeFilter !== '') {
+            $routeSql = ' AND p.route = ?';
+            $params[] = $routeFilter;
+        }
+
+        $stmt = $this->pdo->prepare("
+            SELECT p.drug_name, a.patient_id, a.doctor_id, DATE(a.date) AS d,
+                   p.dose, p.frequency, p.duration, p.route
+            FROM prescriptions p
+            JOIN appointments a ON p.appointment_id = a.id
+            WHERE p.drug_name IS NOT NULL AND p.drug_name <> ''
+              AND DATE(a.date) BETWEEN DATE_SUB(?, INTERVAL ? DAY) AND ?
+              $routeSql
+            ORDER BY p.drug_name, a.patient_id, a.date ASC
+        ");
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+        [$defaultsByDoctor, $defaultsByDrug] = $this->loadDrugDefaultsIndex();
+
+        $drugs = [];
+        $lastSeen = [];
+
+        foreach ($rows as $r) {
+            $name = trim($r['drug_name']);
+            $nameKey = mb_strtolower($name);
+            $pairKey = $nameKey . '|' . $r['patient_id'];
+            $d = $r['d'];
+
+            $prev = $lastSeen[$pairKey] ?? null;
+            $lastSeen[$pairKey] = $d;
+
+            if ($d < $startDate || $d > $endDate) {
+                continue;
+            }
+
+            if (!isset($drugs[$nameKey])) {
+                $drugs[$nameKey] = [
+                    'drug_name' => $name,
+                    'total_count' => 0,
+                    'new_count' => 0,
+                    'continuation_count' => 0,
+                    'estimated_units' => 0.0,
+                    'estimated_units_count' => 0,
+                    'estimated_units_rx_count' => 0,
+                    'estimated_units_template_count' => 0,
+                    'patients' => [],
+                    'routes' => [],
+                ];
+            }
+            $drugs[$nameKey]['total_count']++;
+            $drugs[$nameKey]['patients'][$r['patient_id']] = true;
+            if (!empty($r['route'])) {
+                $drugs[$nameKey]['routes'][$r['route']] = true;
+            }
+
+            $tplKey = (int)$r['doctor_id'] . '|' . $nameKey;
+            $template = $defaultsByDoctor[$tplKey] ?? $defaultsByDrug[$nameKey] ?? null;
+            $estimate = $this->resolveRegimenEstimate(
+                $r['dose'],
+                $r['frequency'],
+                $r['duration'],
+                $template
+            );
+            if ($estimate['units'] !== null) {
+                $drugs[$nameKey]['estimated_units'] += $estimate['units'];
+                $drugs[$nameKey]['estimated_units_count']++;
+                if ($estimate['source'] === 'rx') {
+                    $drugs[$nameKey]['estimated_units_rx_count']++;
+                } elseif ($estimate['source'] === 'template') {
+                    $drugs[$nameKey]['estimated_units_template_count']++;
+                }
+            }
+
+            $isContinuation = $prev !== null
+                && (strtotime($d) - strtotime($prev)) / 86400 <= $continuationWindow;
+            if ($isContinuation) {
+                $drugs[$nameKey]['continuation_count']++;
+            } else {
+                $drugs[$nameKey]['new_count']++;
+            }
+        }
+
+        $result = [];
+        foreach ($drugs as $row) {
+            $row['patient_count'] = count($row['patients']);
+            unset($row['patients']);
+            $row['routes'] = array_keys($row['routes']);
+            $row['continuation_rate'] = $row['total_count'] > 0
+                ? round($row['continuation_count'] * 100 / $row['total_count'], 1)
+                : 0;
+            $parsed = (int)$row['estimated_units_count'];
+            $row['estimated_units_parse_rate'] = $row['total_count'] > 0
+                ? round($parsed * 100 / $row['total_count'], 0)
+                : 0;
+            $row['estimated_units'] = $parsed > 0
+                ? round($row['estimated_units'], 1)
+                : null;
+            unset($row['estimated_units_count']);
+            $result[] = $row;
+        }
+        usort($result, fn($a, $b) => $b['total_count'] <=> $a['total_count']);
+        return $result;
+    }
+
+    /**
+     * Enrich per-drug rows with trade metadata from the separate hclinic_drugs DB
+     * (Company / active ingredient / category / price) and roll the counts up by
+     * manufacturer. Matching is by drug name (prescriptions.drug_name ≈
+     * drugs.FirstName, case-insensitive). Degrades gracefully if the drugs DB is
+     * unreachable. Returns [$drugRows (enriched), $companyStats].
+     */
+    private function enrichDrugsWithCompany(array $drugRows)
+    {
+        if (empty($drugRows)) {
+            return [$drugRows, []];
+        }
+
+        $meta = [];
+        try {
+            $drugsPdo = $this->getDrugsDatabaseConnection();
+            $names = array_values(array_unique(array_map(fn($r) => $r['drug_name'], $drugRows)));
+            $placeholders = implode(',', array_fill(0, count($names), '?'));
+            $stmt = $drugsPdo->prepare(
+                "SELECT FirstName AS drug_name, Company, LastName AS active_ingredient,
+                        price, Pharmacology AS category
+                 FROM drugs
+                 WHERE FirstName IN ($placeholders)"
+            );
+            $stmt->execute($names);
+            foreach ($stmt->fetchAll() as $m) {
+                $meta[mb_strtolower(trim($m['drug_name']))] = $m;
+            }
+        } catch (\Throwable $e) {
+            // No drug metadata available — return rows unenriched, no company stats.
+            return [$drugRows, []];
+        }
+
+        $companyTotals = [];
+        foreach ($drugRows as &$r) {
+            $info = $meta[mb_strtolower(trim($r['drug_name']))] ?? null;
+            $r['company'] = $info['Company'] ?? null;
+            $r['active_ingredient'] = $info['active_ingredient'] ?? null;
+            $r['category'] = $info['category'] ?? null;
+            $r['price'] = $info['price'] ?? null;
+
+            $company = (!empty($info['Company'])) ? $info['Company'] : 'Unmapped';
+            if (!isset($companyTotals[$company])) {
+                $companyTotals[$company] = ['company' => $company, 'total_count' => 0, 'drug_count' => 0];
+            }
+            $companyTotals[$company]['total_count'] += (int)$r['total_count'];
+            $companyTotals[$company]['drug_count'] += 1;
+        }
+        unset($r);
+
+        $companyStats = array_values($companyTotals);
+        usort($companyStats, fn($a, $b) => $b['total_count'] <=> $a['total_count']);
+        return [$drugRows, $companyStats];
+    }
+
+    /**
+     * Dedicated connection to the hclinic_drugs database (drug catalogue lives in
+     * its own DB, separate from the clinical data). Mirrors ApiController.
+     */
+    private function getDrugsDatabaseConnection()
+    {
+        $host = $_ENV['DB_HOST'] ?? 'db';
+        $username = $_ENV['DRUGS_DB_USER'] ?? 'hclinic_drugs';
+        $password = $_ENV['DRUGS_DB_PASS'] ?? 'Carmen@1230';
+        $dbname = $_ENV['DRUGS_DB_NAME'] ?? 'hclinic_drugs';
+
+        $dsn = "mysql:host={$host};dbname={$dbname};charset=utf8mb4";
+
+        return new \PDO($dsn, $username, $password, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+            \PDO::ATTR_EMULATE_PREPARES => false,
+            \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
+        ]);
     }
 
     private function getGlassesLensTypeStats($doctorId, $startDate, $endDate)
