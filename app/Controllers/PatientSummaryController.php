@@ -82,16 +82,14 @@ class PatientSummaryController
         // --- Last visit (best-effort) ---
         $lastVisit = null;
         try {
-            // Schema note: appointment.status values are Booked / Completed / NoShow / Closed.
-            // "Previous visit" includes any past appointment whose status is NOT a
-            // cancellation-style state (Cancelled/Rescheduled aren't present in this
-            // schema but the IN-list is the safer query shape). Matching the
-            // patients-list table behaviour which counts ALL past appointments.
-            $sql = "SELECT date, visit_type
+            // Match patients-list MAX(a.date): any past appointment regardless of
+            // status (Booked / Completed / NoShow / Closed / CheckedIn …).
+            // Exclude only Cancelled rows.
+            $sql = "SELECT date, visit_type, status
                     FROM appointments
                     WHERE patient_id = ?
                       AND (date < CURDATE() OR (date = CURDATE() AND end_time < NOW()))
-                      AND status IN ('Completed', 'NoShow', 'Closed')
+                      AND status != 'Cancelled'
                     ORDER BY date DESC, start_time DESC
                     LIMIT 1";
             $stmt = $this->pdo->prepare($sql);
@@ -108,13 +106,16 @@ class PatientSummaryController
         }
 
         // --- Next appointment (best-effort) ---
+        // Align with /api/upcoming-appointments: today+future Booked/CheckedIn
+        // (and InProgress) — do NOT require start_time > NOW(); overdue today's
+        // slots still count as the patient's next scheduled visit.
         $nextAppointment = null;
         try {
             $sql = "SELECT date, start_time, status
                     FROM appointments
                     WHERE patient_id = ?
-                      AND (date > CURDATE() OR (date = CURDATE() AND start_time > NOW()))
-                      AND status != 'Cancelled'
+                      AND date >= CURDATE()
+                      AND status IN ('Booked', 'CheckedIn', 'InProgress')
                     ORDER BY date ASC, start_time ASC
                     LIMIT 1";
             $stmt = $this->pdo->prepare($sql);

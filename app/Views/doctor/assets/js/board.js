@@ -542,7 +542,7 @@
             <div class="patient-card-head">
                 <span class="patient-avatar">${escapeHtml(initials(c.name))}</span>
                 <div class="patient-id-main">
-                    <h3 class="patient-name">${escapeHtml(c.name || 'Unnamed')}</h3>
+                    <h3 class="patient-name patient-hover-name" data-patient-id="${c.patient_id}">${escapeHtml(c.name || 'Unnamed')}</h3>
                     <div class="patient-sub">
                         ${sub.map((s) => `<span>${escapeHtml(s)}</span>`).join('<span class="sep">•</span>')}
                         ${recentFlag ? (sub.length ? '<span class="sep">•</span>' : '') + recentFlag : ''}

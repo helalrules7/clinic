@@ -504,13 +504,10 @@ body.kbd-help-open {
 }
 [dir="rtl"] .kbd-help-toggle { margin-right: 0; margin-left: 6px; }
 
-/* Mobile / small screens: hide both header chips. Both surfaces are
-   keyboard-driven enhancements that don't fit on phone headers — the
-   palette can still be changed via Settings → Appearance. */
+/* Mobile: hide "?" only — palette dot is in the quick-tools row. */
 @media (max-width: 767.98px) {
   .kbd-help-toggle,
-  #paletteToggle,
-  .palette-toggle {
+  #kbdHelpToggle {
     display: none !important;
   }
 }

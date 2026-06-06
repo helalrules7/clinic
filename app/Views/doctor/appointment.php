@@ -8,7 +8,7 @@
         </a>
         <a href="/doctor/patients" class="app-crumb-link">Patients</a>
         <i class="bi bi-chevron-right app-crumb-sep" aria-hidden="true"></i>
-        <a href="/doctor/patients/<?= (int)($appointment['patient_id'] ?? 0) ?>" class="app-crumb-link"><?= htmlspecialchars($appointment['patient_name'] ?? '') ?></a>
+        <a href="/doctor/patients/<?= (int)($appointment['patient_id'] ?? 0) ?>" class="app-crumb-link patient-name-link" data-patient-id="<?= (int)($appointment['patient_id'] ?? 0) ?>"><?= htmlspecialchars($appointment['patient_name'] ?? '') ?></a>
         <i class="bi bi-chevron-right app-crumb-sep" aria-hidden="true"></i>
         <span class="app-crumb-current">Appointment #<?= (int)$appointment['id'] ?></span>
     </nav>
@@ -99,7 +99,7 @@ if ($status === 'completed') {
             </h2>
             <p class="mb-2">
                 <i class="bi bi-person me-2"></i>
-                <strong><a href="/doctor/patients/<?= $patient['id'] ?? '' ?>"  style="color: white; font-weight: 600; text-decoration: none;"><?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></a></strong>
+                <strong><a href="/doctor/patients/<?= $patient['id'] ?? '' ?>" class="patient-name-link patient-hover-name" data-patient-id="<?= (int)($patient['id'] ?? 0) ?>" style="color: white; font-weight: 600; text-decoration: none;"><?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></a></strong>
                 (ID: #<?= $patient['id'] ?>)
             </p>
             <p class="mb-0">
@@ -370,7 +370,7 @@ if ($status === 'completed') {
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <p><strong>Name:</strong> <?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></p>
+                        <p><strong>Name:</strong> <span class="patient-hover-name" data-patient-id="<?= (int)($patient['id'] ?? 0) ?>"><?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></span></p>
                         <p><strong>Phone:</strong> <?= htmlspecialchars($patient['phone'] ?? 'N/A') ?></p>
                         <p><strong>Gender:</strong> <?= ucfirst($patient['gender'] ?? 'N/A') ?></p>
                     </div>

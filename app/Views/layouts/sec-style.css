@@ -491,41 +491,33 @@ body::before {
             color: var(--muted);
         }
         
+        .top-bar-cluster {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+
+        .top-actions-quick {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .top-actions-theme {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
         .top-actions {
             display: flex;
             gap: 1rem;
             align-items: center;
         }
         
-        /* Notifications Toggle Button - Bell icon without borders */
-        .notifications-toggle {
-            position: relative;
-            background: transparent;
-            border: none;
-            color: var(--text);
-            padding: 0.5rem;
-            border-radius: 50%;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-        }
-        
-        .notifications-toggle:hover {
-            background: rgba(0, 0, 0, 0.05);
-            color: var(--accent);
-            transform: scale(1.1);
-        }
-        
-        .dark .notifications-toggle:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        
-        .notifications-toggle i {
-            font-size: 1.25rem;
-        }
+        /* Notification bell surface styles → header-chips.css */
         
 .notifications-badge {
     position: absolute;
@@ -1637,11 +1629,50 @@ body::before {
         margin-top: -1rem;
         margin-right: -1rem; /* Changed from margin-left for RTL */
         margin-left: -1rem; /* Changed from margin-right for RTL */
-        padding-top: 1rem;
+        padding-top: 0.5rem;
         padding-right: 1rem; /* Changed from padding-left for RTL */
         padding-left: 1rem; /* Changed from padding-right for RTL */
-        padding-bottom: 1rem;
+        padding-bottom: 0.5rem;
         width: calc(100% + 2rem);
+        margin-bottom: 1rem;
+        align-items: flex-start;
+    }
+
+    .top-bar > .page-title {
+        margin-right: 0.5rem;
+        margin-left: auto;
+        min-width: 0;
+        flex: 1 1 auto;
+        overflow: hidden;
+        align-self: center;
+    }
+
+    .page-title h1 {
+        font-size: 1.28rem;
+        font-weight: 600;
+        line-height: 1.2;
+        white-space: normal;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        text-overflow: ellipsis;
+        word-break: break-word;
+    }
+
+    .page-title small {
+        display: none;
+    }
+
+    /* Mobile column grid for header chips → header-chips.css */
+
+    .top-bar-cluster {
+        flex-shrink: 0;
+        align-self: center;
+    }
+
+    .top-bar .switch {
+        --scale: 0.82;
     }
     
     .sidebar-toggle {
@@ -1649,7 +1680,11 @@ body::before {
         opacity: 1;
         pointer-events: auto;
         transform: scale(1);
-        margin-left: 1rem; /* Changed from margin-right for RTL */
+        margin-left: 0.35rem; /* Changed from margin-right for RTL */
+        min-width: 36px;
+        min-height: 36px;
+        padding: 0.45rem;
+        font-size: 1rem;
     }
     
     /* Ensure overlay covers everything */
@@ -1674,7 +1709,7 @@ body::before {
         opacity: 1;
         pointer-events: auto;
         transform: scale(1);
-        margin-left: 1rem; /* Changed from margin-right for RTL */
+        margin-left: 0.35rem; /* Changed from margin-right for RTL */
     }
     
     .sidebar {

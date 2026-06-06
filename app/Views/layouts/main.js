@@ -9178,7 +9178,7 @@
                 if (!pushToastContainer) {
                     pushToastContainer = document.createElement('div');
                     pushToastContainer.id = 'pushToastContainer';
-                    pushToastContainer.className = 'toast-container';
+                    pushToastContainer.className = 'toast-container push-toast-container';
                     document.body.appendChild(pushToastContainer);
                 }
                 const toastId = 'push-notification-toast';
@@ -11007,74 +11007,97 @@
             let isExpanding = false; // Flag to prevent immediate collapse when expanding
             let blurTimeout = null;
             
-            // Expand search on click/focus
+            function getSearchAnchorTop() {
+                const noticeBar = document.querySelector('.notice-bar');
+                const topBar = document.querySelector('.top-bar');
+                let bottom = 0;
+
+                if (noticeBar) {
+                    const rect = noticeBar.getBoundingClientRect();
+                    const style = window.getComputedStyle(noticeBar);
+                    const visible = rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+                    if (visible) {
+                        bottom = Math.max(bottom, rect.bottom);
+                    }
+                }
+
+                if (topBar) {
+                    bottom = Math.max(bottom, topBar.getBoundingClientRect().bottom);
+                }
+
+                return Math.max(0, Math.round(bottom));
+            }
+
+            function applySearchAnchor() {
+                searchContainer.style.setProperty('--global-search-anchor-top', getSearchAnchorTop() + 'px');
+            }
+
+            function onSearchOverlayLayout() {
+                if (searchContainer.classList.contains('expanded')) {
+                    applySearchAnchor();
+                }
+            }
+
+            window.addEventListener('resize', onSearchOverlayLayout);
+            window.addEventListener('scroll', onSearchOverlayLayout, { passive: true });
+
+            // Expand search on click/focus — unified mobile + desktop command palette
             function expandSearch(e) {
-                // Prevent event from bubbling up
                 if (e) {
                     e.stopPropagation();
                     e.preventDefault();
                 }
-                
-                if (window.innerWidth > 768) {
-                    // Don't expand if already expanded
-                    if (searchContainer.classList.contains('expanded')) {
-                        return;
-                    }
-                    
-                    isExpanding = true; // Set flag to prevent immediate collapse
-                    
-                    // Move container to body to break out of any parent constraints
-                    if (searchContainer.parentElement !== document.body) {
-                        originalParent = searchContainer.parentElement;
-                        document.body.appendChild(searchContainer);
-                    }
-                    
-                    // Remove collapsing class if present
-                    searchContainer.classList.remove('collapsing');
-                    
-                    // Ensure backdrop is visible and properly positioned
-                    if (searchBackdrop) {
-                        searchBackdrop.style.display = 'block';
-                        searchBackdrop.style.visibility = 'visible';
-                        searchBackdrop.style.zIndex = '999998';
-                    }
-                    
-                    // Force reflow to ensure CSS transition starts from closed state
-                    searchContainer.offsetHeight;
-                    
-                    searchContainer.classList.add('expanded');
-                    document.body.style.overflow = 'hidden'; // Prevent background scroll
-                    
-                    // Clear any pending blur timeout
-                    if (blurTimeout) {
-                        clearTimeout(blurTimeout);
-                        blurTimeout = null;
-                    }
-                    
-                    setTimeout(() => {
-                        searchInput.focus();
-                        if (searchInput.value.trim().length >= 2 && currentResults.length > 0) {
-                            searchResults.classList.add('show');
-                        }
-                        // Reset flag after a short delay
-                        setTimeout(() => {
-                            isExpanding = false;
-                        }, 300);
-                    }, 100);
-                } else {
-                    searchContainer.classList.add('show');
-                    setTimeout(() => searchInput.focus(), 100);
+
+                if (searchContainer.classList.contains('expanded')) {
+                    return;
                 }
+
+                isExpanding = true;
+                applySearchAnchor();
+
+                if (searchContainer.parentElement !== document.body) {
+                    originalParent = searchContainer.parentElement;
+                    document.body.appendChild(searchContainer);
+                }
+
+                searchContainer.classList.remove('collapsing', 'show');
+
+                if (searchBackdrop) {
+                    searchBackdrop.style.display = 'block';
+                    searchBackdrop.style.visibility = 'visible';
+                    searchBackdrop.style.zIndex = '999998';
+                }
+
+                searchContainer.offsetHeight;
+
+                searchContainer.classList.add('expanded');
+                document.body.style.overflow = 'hidden';
+                document.body.classList.add('global-search-open');
+
+                if (blurTimeout) {
+                    clearTimeout(blurTimeout);
+                    blurTimeout = null;
+                }
+
+                setTimeout(() => {
+                    searchInput.focus();
+                    if (searchInput.value.trim().length >= 2 && currentResults.length > 0) {
+                        searchResults.classList.add('show');
+                    }
+                    setTimeout(() => {
+                        isExpanding = false;
+                    }, 300);
+                }, 100);
             }
             
             // Collapse search - 3D perspective close animation
             function collapseSearch() {
-                // Hide results first
                 hideResults();
                 searchInput.blur();
 
-                // Ensure expanded class is still present before adding collapsing
                 if (!searchContainer.classList.contains('expanded')) {
+                    searchContainer.classList.remove('show');
+                    document.body.classList.remove('global-search-open');
                     return;
                 }
 
@@ -11090,8 +11113,8 @@
                     // Remove expanded and collapsing classes
                     searchContainer.classList.remove('expanded', 'show', 'collapsing');
 
-                    // Restore body scroll
                     document.body.style.overflow = '';
+                    document.body.classList.remove('global-search-open');
                     
                     // Remove backdrop completely to prevent interference with other elements
                     if (searchBackdrop) {
@@ -11144,7 +11167,7 @@
             if (searchToggle) {
                 searchToggle.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    if (searchContainer.classList.contains('show')) {
+                    if (searchContainer.classList.contains('expanded')) {
                         collapseSearch();
                     } else {
                         expandSearch();
@@ -11155,14 +11178,14 @@
             // Expand on input click/focus
             searchInput.addEventListener('click', function(e) {
                 e.stopPropagation();
-                if (window.innerWidth > 768 && !searchContainer.classList.contains('expanded')) {
+                if (!searchContainer.classList.contains('expanded')) {
                     expandSearch(e);
                 }
             });
             
             searchInput.addEventListener('focus', function(e) {
                 e.stopPropagation();
-                if (window.innerWidth > 768 && !searchContainer.classList.contains('expanded')) {
+                if (!searchContainer.classList.contains('expanded')) {
                     expandSearch(e);
                 }
                 if (this.value.trim().length >= 2 && currentResults.length > 0) {

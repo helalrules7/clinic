@@ -1119,8 +1119,8 @@ body.td-no-scroll { overflow: hidden; }
 }
 
 /* -------- Header trigger button -------- */
-/* Sits next to ⌘K, ?, palette dot. Hidden on mobile (< 768px) like
-   the other keyboard-driven header chips. */
+/* Sits next to ⌘K, ?, palette dot. Shrinks on mobile to fit the compact
+   top-bar without adding extra header height. */
 .todo-drawer-toggle {
     position: relative;
     width: 32px;
@@ -1179,7 +1179,12 @@ body.td-no-scroll { overflow: hidden; }
 @media (max-width: 767.98px) {
     .todo-drawer-toggle,
     #todoDrawerToggle {
-        display: none !important;
+        width: 30px;
+        height: 30px;
+        min-width: 30px;
+        margin-right: 0;
+        margin-left: 0;
+        font-size: 14px;
     }
 }
 

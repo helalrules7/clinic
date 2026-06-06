@@ -6,10 +6,44 @@
 // RESETS the timer / opt-out / session-shown for every browser so the
 // new wizard surfaces fresh after the v11 deploy.
 //
-// Slide track: 13 slides covering every v11 feature with pure-CSS animated
+// Slide track: 19 slides covering every v11 feature with pure-CSS animated
 // mockups. ALL v10 slides removed in this release.
 ?>
 <style>
+    /* ---- theme tokens (mockup stages follow html.dark / light) ---------- */
+    #whatsNewV9Modal {
+        --wn-bg-deep: #0f172a;
+        --wn-bg-card: #1e293b;
+        --wn-bg-surface: rgba(30,41,59,.85);
+        --wn-bg-row: rgba(30,41,59,.7);
+        --wn-bg-inset: rgba(15,23,42,.5);
+        --wn-text: #e2e8f0;
+        --wn-muted: #94a3b8;
+        --wn-border: rgba(148,163,184,.25);
+        --wn-stage-shadow: inset 0 0 40px rgba(0,0,0,.35);
+        --wn-glass: linear-gradient(160deg,rgba(30,41,59,.92),rgba(15,23,42,.88));
+        --wn-line: rgba(226,232,240,.55);
+        --wn-line-muted: rgba(148,163,184,.4);
+        --wn-accent-soft: #a5b4fc;
+        --wn-chip-bg: rgba(30,41,59,.95);
+    }
+    html:not(.dark) #whatsNewV9Modal {
+        --wn-bg-deep: #e8eef5;
+        --wn-bg-card: #ffffff;
+        --wn-bg-surface: rgba(255,255,255,.94);
+        --wn-bg-row: rgba(255,255,255,.92);
+        --wn-bg-inset: rgba(241,245,249,.9);
+        --wn-text: #1e293b;
+        --wn-muted: #64748b;
+        --wn-border: rgba(148,163,184,.42);
+        --wn-stage-shadow: inset 0 0 28px rgba(148,163,184,.14);
+        --wn-glass: linear-gradient(160deg,rgba(255,255,255,.98),rgba(248,250,252,.95));
+        --wn-line: rgba(30,41,59,.35);
+        --wn-line-muted: rgba(100,116,139,.35);
+        --wn-accent-soft: #4f46e5;
+        --wn-chip-bg: rgba(255,255,255,.98);
+    }
+
     /* ---- shell ----------------------------------------------------------- */
     #whatsNewV9Modal .modal-dialog { max-width: 640px; }
     #whatsNewV9Modal .modal-content { border: none; border-radius: 18px; overflow: hidden; background: var(--card); }
@@ -41,8 +75,56 @@
     .wn-stage {
         height: 210px; margin: 1rem auto 0; max-width: 480px;
         border-radius: 14px; position: relative; overflow: hidden;
-        background: #0f172a; border: 1px solid rgba(148,163,184,.25);
-        box-shadow: inset 0 0 40px rgba(0,0,0,.35);
+        background: var(--wn-bg-deep); border: 1px solid var(--wn-border);
+        box-shadow: var(--wn-stage-shadow);
+        transition: background .25s ease, border-color .25s ease, box-shadow .25s ease;
+    }
+
+    /* ---- prefetch slide (Speculation Rules) ---- */
+    .wn-prefetch-scene { position: relative; width: 100%; max-width: 340px; margin: 0 auto; }
+    .wn-prefetch-nav {
+        display: flex; flex-direction: column; gap: .45rem;
+        background: rgba(255,255,255,.06); border: 1px solid rgba(99,102,241,.25);
+        border-radius: 14px; padding: .75rem; text-align: left;
+    }
+    .wn-prefetch-link {
+        display: flex; align-items: center; gap: .55rem;
+        padding: .45rem .6rem; border-radius: 10px; font-size: .78rem; font-weight: 600;
+        color: #cbd5e1; background: rgba(15,23,42,.35);
+        animation: wn-prefetch-pulse 4s ease-in-out infinite;
+    }
+    .wn-prefetch-link i { color: #818cf8; }
+    .wn-prefetch-link.wn-prefetch-active {
+        background: linear-gradient(135deg, rgba(99,102,241,.35), rgba(59,130,246,.2));
+        color: #e0e7ff; box-shadow: 0 0 0 1px rgba(129,140,248,.45);
+    }
+    .wn-prefetch-badge {
+        margin-left: auto; font-size: .62rem; font-weight: 700; letter-spacing: .04em;
+        text-transform: uppercase; padding: .15rem .4rem; border-radius: 999px;
+        background: rgba(34,197,94,.2); color: #86efac;
+        animation: wn-prefetch-badge 4s ease-in-out infinite;
+    }
+    .wn-prefetch-orb {
+        position: absolute; right: -8px; top: 50%; width: 54px; height: 54px;
+        border-radius: 50%; transform: translateY(-50%);
+        background: radial-gradient(circle, rgba(99,102,241,.45) 0%, transparent 70%);
+        animation: wn-prefetch-orb 4s ease-in-out infinite;
+        pointer-events: none;
+    }
+    @keyframes wn-prefetch-pulse {
+        0%, 18% { background: rgba(15,23,42,.35); box-shadow: none; }
+        22%, 55% { background: linear-gradient(135deg, rgba(99,102,241,.35), rgba(59,130,246,.2)); box-shadow: 0 0 0 1px rgba(129,140,248,.45); }
+        60%, 100% { background: rgba(15,23,42,.35); box-shadow: none; }
+    }
+    @keyframes wn-prefetch-badge {
+        0%, 20% { opacity: 0; transform: scale(.85); }
+        28%, 52% { opacity: 1; transform: scale(1); }
+        58%, 100% { opacity: 0; transform: scale(.85); }
+    }
+    @keyframes wn-prefetch-orb {
+        0%, 20% { opacity: 0; transform: translateY(-50%) scale(.6); }
+        30%, 50% { opacity: 1; transform: translateY(-50%) scale(1); }
+        58%, 100% { opacity: 0; transform: translateY(-50%) scale(.6); }
     }
 
     /* ---- change-list slide (static, no animation) ---- */
@@ -50,9 +132,9 @@
        inner space (210px stage − 28px inset). Each row ~24px tall;
        6 × 24 + 16px padding = 160px — comfortable headroom. */
     .wn-cl-list {
-        position: absolute; inset: 14px; background: #1e293b;
-        border-radius: 10px; border: 1px solid rgba(148,163,184,.18);
-        padding: 8px 12px; text-align: left; font-size: .78rem; color: #e2e8f0;
+        position: absolute; inset: 14px; background: var(--wn-bg-card);
+        border-radius: 10px; border: 1px solid var(--wn-border);
+        padding: 8px 12px; text-align: left; font-size: .78rem; color: var(--wn-text);
         list-style: none; margin: 0;
         display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px;
         align-content: center;
@@ -103,7 +185,7 @@
       justify-content: center;
       background:
         radial-gradient(circle at 50% 50%, rgba(99,102,241,.22), transparent 60%),
-        #0f172a;
+        var(--wn-bg-deep);
     }
     
     /* Rotating radial starburst behind the number */
@@ -1903,6 +1985,161 @@
         38%, 100%{ opacity: 0; top: 21px; transform: scale(1); }
       }
     }
+
+    /* ====================================================================== */
+    /* Light-theme mockup overrides (stages follow selected app theme)         */
+    /* ====================================================================== */
+    html:not(.dark) #whatsNewV9Modal .wn-v11-stage {
+        background: radial-gradient(circle at 50% 50%, rgba(99,102,241,.14), transparent 60%), var(--wn-bg-deep);
+    }
+    html:not(.dark) #whatsNewV9Modal .wn-cl-list li i { color: #6366f1; }
+
+    html:not(.dark) #whatsNewV9Modal .wn-notif-bell { background: var(--wn-bg-surface); color: var(--wn-accent-soft); }
+    html:not(.dark) #whatsNewV9Modal .wn-notif-badge { border-color: var(--wn-bg-deep); }
+    html:not(.dark) #whatsNewV9Modal .wn-notif-panel { background: var(--wn-glass); box-shadow: 0 10px 30px rgba(15,23,42,.12), inset 0 1px 0 rgba(255,255,255,.8); }
+    html:not(.dark) #whatsNewV9Modal .wn-notif-title { color: var(--wn-text); }
+    html:not(.dark) #whatsNewV9Modal .wn-notif-row { background: var(--wn-bg-inset); }
+    html:not(.dark) #whatsNewV9Modal .wn-notif-line { background: linear-gradient(90deg, var(--wn-line), rgba(30,41,59,.08)); }
+    html:not(.dark) #whatsNewV9Modal .wn-notif-line-2 { background: linear-gradient(90deg, var(--wn-line-muted), rgba(100,116,139,.08)); }
+    html:not(.dark) #whatsNewV9Modal .wn-notif-chip { background: var(--wn-chip-bg); color: var(--wn-accent-soft); }
+    html:not(.dark) #whatsNewV9Modal .wn-notif-dock { background: linear-gradient(180deg, rgba(241,245,249,.9), rgba(248,250,252,.7)); }
+
+    html:not(.dark) #whatsNewV9Modal .wn-todo-chip { background: var(--wn-bg-surface); color: var(--wn-muted); }
+    html:not(.dark) #whatsNewV9Modal .wn-todo-badge { background: rgba(255,255,255,.75); }
+    html:not(.dark) #whatsNewV9Modal .wn-todo-bar { background: rgba(148,163,184,.25); }
+    html:not(.dark) #whatsNewV9Modal .wn-todo-row { background: var(--wn-bg-row); color: var(--wn-text); border-color: var(--wn-border); }
+
+    html:not(.dark) #whatsNewV9Modal .wn-pal-sw,
+    html:not(.dark) #whatsNewV9Modal .wn-pal-preview { background: var(--wn-bg-card); box-shadow: 0 4px 14px rgba(15,23,42,.08); }
+    html:not(.dark) #whatsNewV9Modal .wn-pal-lbl { color: var(--wn-muted); }
+    html:not(.dark) #whatsNewV9Modal .wn-pal-prev-l1 { background: #cbd5e1; }
+    html:not(.dark) #whatsNewV9Modal .wn-pal-prev-l2,
+    html:not(.dark) #whatsNewV9Modal .wn-pal-prev-bar { background: #e2e8f0; }
+
+    html:not(.dark) #whatsNewV9Modal .wn-cmdk-modal,
+    html:not(.dark) #whatsNewV9Modal .wn-kbd-modal { background: var(--wn-bg-card); border-color: var(--wn-border); box-shadow: 0 12px 32px rgba(15,23,42,.12); }
+    html:not(.dark) #whatsNewV9Modal .wn-cmdk-input { background: var(--wn-bg-inset); color: var(--wn-text); }
+    html:not(.dark) #whatsNewV9Modal .wn-cmdk-row { color: var(--wn-text); }
+    html:not(.dark) #whatsNewV9Modal .wn-kbd-row { color: var(--wn-text); }
+    html:not(.dark) #whatsNewV9Modal .wn-kbd-chip { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }
+
+    html:not(.dark) #whatsNewV9Modal .wn-pc-card { background: var(--wn-bg-card); border-color: var(--wn-border); box-shadow: 0 8px 24px rgba(15,23,42,.1); }
+    html:not(.dark) #whatsNewV9Modal .wn-pc-name { color: var(--wn-text); }
+    html:not(.dark) #whatsNewV9Modal .wn-pc-meta,
+    html:not(.dark) #whatsNewV9Modal .wn-pc-stat-k { color: var(--wn-muted); }
+
+    html:not(.dark) #whatsNewV9Modal .wn-snz-row { background: var(--wn-bg-row); border-color: var(--wn-border); }
+    html:not(.dark) #whatsNewV9Modal .wn-snz-title { color: var(--wn-text); }
+    html:not(.dark) #whatsNewV9Modal .wn-snz-menu { background: var(--wn-bg-card); border-color: var(--wn-border); box-shadow: 0 8px 24px rgba(15,23,42,.12); }
+
+    html:not(.dark) #whatsNewV9Modal .wn-mention-note { background: var(--wn-bg-card); border-color: var(--wn-border); }
+    html:not(.dark) #whatsNewV9Modal .wn-mention-activity { background: var(--wn-bg-card); border-color: var(--wn-border); }
+    html:not(.dark) #whatsNewV9Modal .wn-mention-text { color: var(--wn-text); }
+
+    html:not(.dark) #whatsNewV9Modal .wn-focus-app { background: var(--wn-bg-card); }
+    html:not(.dark) #whatsNewV9Modal .wn-focus-sidebar { background: #f1f5f9; }
+    html:not(.dark) #whatsNewV9Modal .wn-focus-header { background: #fff; border-color: var(--wn-border); }
+    html:not(.dark) #whatsNewV9Modal .wn-focus-line { background: #cbd5e1; }
+
+    html:not(.dark) #whatsNewV9Modal .wn-tpl-toolbar,
+    html:not(.dark) #whatsNewV9Modal .wn-tpl-textarea,
+    html:not(.dark) #whatsNewV9Modal .wn-tpl-menu { background: var(--wn-bg-card); border-color: var(--wn-border); }
+    html:not(.dark) #whatsNewV9Modal .wn-tpl-label,
+    html:not(.dark) #whatsNewV9Modal .wn-tpl-line { color: var(--wn-text); }
+
+    /* ===== wn-qnote — Quick Notes scratchpad ===== */
+    .wn-qnote-scene { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:14px; }
+    .wn-qnote-modal {
+        width:88%; max-width:320px; background:var(--wn-bg-card); border:1px solid var(--wn-border);
+        border-radius:12px; padding:10px 12px; box-shadow:0 10px 28px rgba(0,0,0,.28);
+        animation:wn-qnote-pop 5s ease-in-out infinite;
+    }
+    html:not(.dark) #whatsNewV9Modal .wn-qnote-modal { box-shadow:0 10px 28px rgba(15,23,42,.12); }
+    .wn-qnote-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+    .wn-qnote-title { font-size:10px; font-weight:700; color:var(--wn-text); display:flex; align-items:center; gap:5px; }
+    .wn-qnote-title i { color:var(--wn-accent-soft); }
+    .wn-qnote-pin { width:20px; height:20px; border-radius:6px; background:rgba(99,102,241,.15); color:var(--wn-accent-soft); display:flex; align-items:center; justify-content:center; font-size:10px; animation:wn-qnote-pin 5s ease-in-out infinite; }
+    .wn-qnote-body { background:var(--wn-bg-inset); border:1px solid var(--wn-border); border-radius:8px; padding:8px; min-height:52px; text-align:left; }
+    .wn-qnote-line { display:block; height:5px; border-radius:3px; background:var(--wn-line); margin-bottom:5px; }
+    .wn-qnote-line-1 { width:72%; animation:wn-qnote-type1 5s ease-in-out infinite; }
+    .wn-qnote-line-2 { width:55%; animation:wn-qnote-type2 5s ease-in-out infinite; }
+    .wn-qnote-caret { display:inline-block; width:2px; height:10px; background:var(--wn-accent-soft); vertical-align:middle; animation:wn-qnote-blink 1s step-end infinite; }
+    @keyframes wn-qnote-pop{0%,8%{opacity:0;transform:scale(.92) translateY(8px);}12%,88%{opacity:1;transform:scale(1) translateY(0);}100%{opacity:0;transform:scale(.92) translateY(8px);}}
+    @keyframes wn-qnote-pin{0%,40%{color:var(--wn-accent-soft);}50%,70%{color:#f59e0b;background:rgba(245,158,11,.2);}80%,100%{color:var(--wn-accent-soft);}}
+    @keyframes wn-qnote-type1{0%,20%{width:0;opacity:0;}30%,80%{width:72%;opacity:1;}90%,100%{width:0;opacity:0;}}
+    @keyframes wn-qnote-type2{0%,35%{width:0;opacity:0;}45%,80%{width:55%;opacity:1;}90%,100%{width:0;opacity:0;}}
+    @keyframes wn-qnote-blink{50%{opacity:0;}}
+
+    /* ===== wn-ndraw — Notes drawer ===== */
+    .wn-ndraw-scene { position:absolute; inset:0; overflow:hidden; }
+    .wn-ndraw-app { position:absolute; inset:0; background:var(--wn-bg-deep); opacity:.55; }
+    .wn-ndraw-panel {
+        position:absolute; top:0; right:0; width:72%; height:100%;
+        background:var(--wn-glass); border-left:1px solid var(--wn-border);
+        padding:10px; display:flex; flex-direction:column; gap:8px;
+        animation:wn-ndraw-slide 6s ease-in-out infinite;
+        box-shadow:-8px 0 24px rgba(0,0,0,.25);
+    }
+    html:not(.dark) #whatsNewV9Modal .wn-ndraw-panel { box-shadow:-8px 0 24px rgba(15,23,42,.1); }
+    .wn-ndraw-head { display:flex; align-items:center; justify-content:space-between; }
+    .wn-ndraw-head span { font-size:10px; font-weight:700; color:var(--wn-text); }
+    .wn-ndraw-filters { display:flex; gap:5px; }
+    .wn-ndraw-chip { font-size:8px; font-weight:600; padding:3px 7px; border-radius:999px; background:var(--wn-bg-inset); color:var(--wn-muted); border:1px solid var(--wn-border); }
+    .wn-ndraw-chip-on { background:rgba(99,102,241,.18); color:var(--wn-accent-soft); border-color:rgba(99,102,241,.35); animation:wn-ndraw-chip 6s ease-in-out infinite; }
+    .wn-ndraw-card { background:var(--wn-bg-row); border:1px solid var(--wn-border); border-radius:8px; padding:7px 8px; text-align:left; }
+    .wn-ndraw-card-pin { border-left:3px solid #f59e0b; }
+    .wn-ndraw-card-title { font-size:9px; font-weight:700; color:var(--wn-text); margin-bottom:4px; }
+    .wn-ndraw-card-line { height:4px; border-radius:2px; background:var(--wn-line-muted); width:80%; }
+    .wn-ndraw-fab { position:absolute; bottom:12px; right:14px; width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; box-shadow:0 4px 14px rgba(99,102,241,.45); animation:wn-ndraw-fab 6s ease-in-out infinite; }
+    @keyframes wn-ndraw-slide{0%,10%{transform:translateX(100%);opacity:0;}18%,85%{transform:translateX(0);opacity:1;}95%,100%{transform:translateX(100%);opacity:0;}}
+    @keyframes wn-ndraw-chip{0%,25%{background:var(--wn-bg-inset);color:var(--wn-muted);}35%,75%{background:rgba(99,102,241,.18);color:var(--wn-accent-soft);}85%,100%{background:var(--wn-bg-inset);color:var(--wn-muted);}}
+    @keyframes wn-ndraw-fab{0%,80%,100%{transform:scale(1);}45%{transform:scale(1.12);}}
+
+    /* ===== wn-rxtpl — Drug prescription templates ===== */
+    .wn-rxtpl-scene { position:absolute; inset:12px; display:flex; flex-direction:column; gap:7px; }
+    .wn-rxtpl-head { display:flex; align-items:center; gap:6px; }
+    .wn-rxtpl-drug { flex:1; font-size:10px; font-weight:800; color:var(--wn-text); background:var(--wn-bg-inset); border:1px solid var(--wn-border); border-radius:7px; padding:5px 8px; text-align:left; }
+    .wn-rxtpl-badge { font-size:8px; font-weight:700; padding:3px 6px; border-radius:999px; background:rgba(16,185,129,.15); color:#10b981; border:1px solid rgba(16,185,129,.35); animation:wn-rxtpl-badge 5.5s ease-in-out infinite; }
+    .wn-rxtpl-fields { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
+    .wn-rxtpl-field { background:var(--wn-bg-row); border:1px solid var(--wn-border); border-radius:6px; padding:5px 6px; text-align:left; }
+    .wn-rxtpl-field-k { font-size:7px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--wn-muted); display:block; margin-bottom:3px; }
+    .wn-rxtpl-field-v { font-size:9px; font-weight:600; color:var(--wn-text); display:block; min-height:10px; }
+    .wn-rxtpl-field-v-fill { animation:wn-rxtpl-fill 5.5s ease-in-out infinite; }
+    .wn-rxtpl-actions { display:flex; gap:6px; justify-content:flex-end; margin-top:auto; }
+    .wn-rxtpl-btn { font-size:8px; font-weight:700; padding:4px 8px; border-radius:6px; border:1px solid var(--wn-border); color:var(--wn-muted); background:var(--wn-bg-inset); }
+    .wn-rxtpl-btn-primary { background:linear-gradient(135deg,#6366f1,#4f46e5); color:#fff; border-color:transparent; box-shadow:0 4px 12px rgba(99,102,241,.4); animation:wn-rxtpl-save 5.5s ease-in-out infinite; }
+    @keyframes wn-rxtpl-badge{0%,30%{opacity:0;transform:scale(.9);}38%,75%{opacity:1;transform:scale(1);}85%,100%{opacity:0;}}
+    @keyframes wn-rxtpl-fill{0%,32%{opacity:0;}40%,78%{opacity:1;}88%,100%{opacity:0;}}
+    @keyframes wn-rxtpl-save{0%,42%{box-shadow:0 4px 12px rgba(99,102,241,.4);}48%,58%{box-shadow:0 6px 18px rgba(99,102,241,.7);transform:scale(1.04);}65%,100%{box-shadow:0 4px 12px rgba(99,102,241,.4);transform:scale(1);}}
+
+    /* ===== wn-drugs — Drug Reports ===== */
+    .wn-drugs-scene { position:absolute; inset:10px 12px; display:flex; flex-direction:column; gap:7px; }
+    .wn-drugs-head { display:flex; align-items:center; justify-content:space-between; }
+    .wn-drugs-title { font-size:10px; font-weight:800; color:var(--wn-text); display:flex; align-items:center; gap:5px; }
+    .wn-drugs-title i { color:var(--wn-accent-soft); }
+    .wn-drugs-filter { font-size:8px; font-weight:700; padding:3px 7px; border-radius:999px; background:rgba(99,102,241,.15); color:var(--wn-accent-soft); border:1px solid rgba(99,102,241,.3); animation:wn-drugs-filter 6s ease-in-out infinite; }
+    .wn-drugs-kpis { display:flex; gap:5px; }
+    .wn-drugs-kpi { flex:1; background:var(--wn-bg-row); border:1px solid var(--wn-border); border-radius:7px; padding:5px 6px; text-align:left; }
+    .wn-drugs-kpi-k { font-size:7px; font-weight:700; text-transform:uppercase; color:var(--wn-muted); display:block; }
+    .wn-drugs-kpi-v { font-size:11px; font-weight:800; color:var(--wn-text); display:block; animation:wn-drugs-count 6s ease-in-out infinite; }
+    .wn-drugs-chart { flex:1; background:var(--wn-bg-inset); border:1px solid var(--wn-border); border-radius:8px; padding:8px 10px 6px; display:flex; align-items:flex-end; gap:6px; }
+    .wn-drugs-bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; height:100%; justify-content:flex-end; }
+    .wn-drugs-bar { width:100%; border-radius:4px 4px 2px 2px; background:linear-gradient(180deg,#818cf8,#4f46e5); transform-origin:bottom; animation:wn-drugs-bar 6s ease-in-out infinite; }
+    .wn-drugs-bar-1 { height:42%; animation-delay:0s; }
+    .wn-drugs-bar-2 { height:68%; animation-delay:.1s; background:linear-gradient(180deg,#6ee7b7,#10b981); }
+    .wn-drugs-bar-3 { height:55%; animation-delay:.2s; background:linear-gradient(180deg,#fcd34d,#f59e0b); }
+    .wn-drugs-bar-4 { height:35%; animation-delay:.3s; }
+    .wn-drugs-bar-lbl { font-size:6.5px; font-weight:700; color:var(--wn-muted); }
+    @keyframes wn-drugs-filter{0%,15%{opacity:.6;}25%,70%{opacity:1;box-shadow:0 0 0 2px rgba(99,102,241,.25);}80%,100%{opacity:.6;}}
+    @keyframes wn-drugs-count{0%,20%{opacity:.5;}30%,75%{opacity:1;}85%,100%{opacity:.5;}}
+    @keyframes wn-drugs-bar{0%,18%{transform:scaleY(.3);opacity:.4;}28%,78%{transform:scaleY(1);opacity:1;}88%,100%{transform:scaleY(.3);opacity:.4;}}
+
+    /* ===== wn-fixes — Bug fixes & polish (static list) ===== */
+    .wn-fix-list { position:absolute; inset:12px; background:var(--wn-bg-card); border-radius:10px; border:1px solid var(--wn-border); padding:8px 10px; text-align:left; font-size:.72rem; color:var(--wn-text); list-style:none; margin:0; display:grid; grid-template-columns:1fr 1fr; gap:0 10px; align-content:center; overflow:hidden; }
+    .wn-fix-list li { display:flex; align-items:flex-start; gap:6px; padding:2px 0; line-height:1.2; min-width:0; }
+    .wn-fix-list li i { color:#10b981; font-size:.85rem; flex-shrink:0; margin-top:1px; }
+    .wn-fix-list li span { overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; min-width:0; font-size:.7rem; }
+    @media (max-width:575.98px){ .wn-fix-list { font-size:.64rem; inset:10px; padding:6px 8px; gap:0 6px; } .wn-fix-list li span { font-size:.62rem; } }
 </style>
 
 
@@ -1956,10 +2193,31 @@
                 </div>
               </div>
               <h3>Welcome to v11.0.0</h3>
-              <p>Our biggest release yet brings a <strong>redesigned notification center</strong>, multi-list to-do, theme palettes, Cmd+K, and more.</p>
+              <p>Our biggest release yet brings a <strong>redesigned notification center</strong>, drug reports, per-doctor Rx templates, notes drawer, theme palettes, Cmd+K, and more.</p>
             </div>
 
-            <!-- v11.0.0 #2 — change-list overview (static) -->
+            <!-- v11.0.0 #2 — wn-prefetch (Speculation Rules — safe navigation prefetch) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Performance</span>
+              <div class="wn-stage">
+                <div class="wn-prefetch-scene">
+                  <span class="wn-prefetch-orb" aria-hidden="true"></span>
+                  <div class="wn-prefetch-nav" aria-hidden="true">
+                    <div class="wn-prefetch-link wn-prefetch-active">
+                      <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+                      <span class="wn-prefetch-badge">prefetch</span>
+                    </div>
+                    <div class="wn-prefetch-link"><i class="bi bi-people"></i><span>Patients</span></div>
+                    <div class="wn-prefetch-link"><i class="bi bi-calendar3"></i><span>Calendar</span></div>
+                    <div class="wn-prefetch-link"><i class="bi bi-kanban"></i><span>Board</span></div>
+                  </div>
+                </div>
+              </div>
+              <h3>Faster navigation — safely</h3>
+              <p>Browser-level <strong>prefetch</strong> warms allowlisted pages (dashboard, lists, read-only views) when you hover sidebar links — never APIs, exports, prints, or edit forms.</p>
+            </div>
+
+            <!-- v11.0.0 #3 — change-list overview (static) -->
             <div class="wn-slide">
               <span class="wn-kicker">What's New</span>
               <div class="wn-stage">
@@ -1967,15 +2225,15 @@
                   <li><i class="bi bi-bell-fill"></i><span>iOS notification center</span></li>
                   <li><i class="bi bi-check2-square"></i><span>Multi-list To-Do</span></li>
                   <li><i class="bi bi-palette-fill"></i><span>Theme palettes (6)</span></li>
-                  <li><i class="bi bi-sun-fill"></i><span>Auto dark/light schedule</span></li>
+                  <li><i class="bi bi-journal-text"></i><span>Quick Notes + drawer</span></li>
+                  <li><i class="bi bi-capsule"></i><span>Drug Rx templates</span></li>
+                  <li><i class="bi bi-bar-chart-fill"></i><span>Drug Reports</span></li>
                   <li><i class="bi bi-command"></i><span>Cmd+K command palette</span></li>
                   <li><i class="bi bi-keyboard-fill"></i><span>Keyboard shortcuts (?)</span></li>
                   <li><i class="bi bi-person-vcard"></i><span>Patient hover-cards</span></li>
                   <li><i class="bi bi-pin-angle-fill"></i><span>Snooze &amp; Pin</span></li>
                   <li><i class="bi bi-at"></i><span>@mentions + Activity</span></li>
-                  <li><i class="bi bi-eye-fill"></i><span>Focus mode</span></li>
-                  <li><i class="bi bi-stickies-fill"></i><span>Note templates</span></li>
-                  <li><i class="bi bi-sparkles"></i><span>… and more</span></li>
+                  <li><i class="bi bi-wrench-adjustable-circle"></i><span>30+ fixes &amp; polish</span></li>
                 </ul>
               </div>
               <h3>v11.0.0 — change-list</h3>
@@ -2490,6 +2748,175 @@
               <h3>Your phrase library, one click away</h3>
               <p>Save common notes as <strong>templates</strong> and drop a full block into Edit Consultation with a single click — grouped by category and keyboard-friendly.</p>
             </div>
+
+            <!-- v11.0.0 — wn-qnote (Quick Notes scratchpad) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Quick Notes</span>
+              <div class="wn-stage">
+                <div class="wn-qnote-scene">
+                  <div class="wn-qnote-modal" aria-hidden="true">
+                    <div class="wn-qnote-head">
+                      <span class="wn-qnote-title"><i class="bi bi-journal-plus"></i> Quick note</span>
+                      <span class="wn-qnote-pin"><i class="bi bi-pin-angle-fill"></i></span>
+                    </div>
+                    <div class="wn-qnote-body">
+                      <span class="wn-qnote-line wn-qnote-line-1"></span>
+                      <span class="wn-qnote-line wn-qnote-line-2"></span>
+                      <span class="wn-qnote-caret"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h3>Jot it down in seconds</h3>
+              <p>A lightweight <strong>Quick Note</strong> modal for one-off reminders — pin important notes and reach them from the notification footer in one tap.</p>
+            </div>
+
+            <!-- v11.0.0 — wn-ndraw (Notes drawer) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Notes drawer</span>
+              <div class="wn-stage">
+                <div class="wn-ndraw-scene">
+                  <div class="wn-ndraw-app" aria-hidden="true"></div>
+                  <div class="wn-ndraw-panel" aria-hidden="true">
+                    <div class="wn-ndraw-head">
+                      <span><i class="bi bi-journal-text"></i> Notes</span>
+                      <div class="wn-ndraw-filters">
+                        <span class="wn-ndraw-chip wn-ndraw-chip-on">All</span>
+                        <span class="wn-ndraw-chip">Pinned</span>
+                        <span class="wn-ndraw-chip">Recent</span>
+                      </div>
+                    </div>
+                    <div class="wn-ndraw-card wn-ndraw-card-pin">
+                      <div class="wn-ndraw-card-title">Post-op follow-up call</div>
+                      <div class="wn-ndraw-card-line"></div>
+                    </div>
+                    <div class="wn-ndraw-card">
+                      <div class="wn-ndraw-card-title">Lab re-check in 2 weeks</div>
+                      <div class="wn-ndraw-card-line"></div>
+                    </div>
+                  </div>
+                  <span class="wn-ndraw-fab" aria-hidden="true"><i class="bi bi-plus-lg"></i></span>
+                </div>
+              </div>
+              <h3>All your notes, one drawer away</h3>
+              <p>The <strong>Notes drawer</strong> keeps every quick note in a persistent glass panel — filter by All, Pinned or Recent, search, and add new notes without leaving your workflow.</p>
+            </div>
+
+            <!-- v11.0.0 — wn-rxtpl (Per-doctor drug prescription templates) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Drug templates</span>
+              <div class="wn-stage">
+                <div class="wn-rxtpl-scene">
+                  <div class="wn-rxtpl-head">
+                    <div class="wn-rxtpl-drug">LACRITEARS</div>
+                    <span class="wn-rxtpl-badge"><i class="bi bi-magic"></i> Auto-fill</span>
+                  </div>
+                  <div class="wn-rxtpl-fields">
+                    <div class="wn-rxtpl-field">
+                      <span class="wn-rxtpl-field-k">Dose</span>
+                      <span class="wn-rxtpl-field-v wn-rxtpl-field-v-fill">1 drop</span>
+                    </div>
+                    <div class="wn-rxtpl-field">
+                      <span class="wn-rxtpl-field-k">Frequency</span>
+                      <span class="wn-rxtpl-field-v wn-rxtpl-field-v-fill">TDS</span>
+                    </div>
+                    <div class="wn-rxtpl-field">
+                      <span class="wn-rxtpl-field-k">Duration</span>
+                      <span class="wn-rxtpl-field-v wn-rxtpl-field-v-fill">2 weeks</span>
+                    </div>
+                  </div>
+                  <div class="wn-rxtpl-actions">
+                    <span class="wn-rxtpl-btn">Clear</span>
+                    <span class="wn-rxtpl-btn wn-rxtpl-btn-primary"><i class="bi bi-bookmark-plus"></i> Save as template</span>
+                  </div>
+                </div>
+              </div>
+              <h3>Your drug defaults, saved per doctor</h3>
+              <p>Save dose, frequency, duration and route as a <strong>per-doctor template</strong> — the next time you pick that drug, every field auto-fills instantly. Edit or clear before saving; templates work from Appointments and the Drugs page.</p>
+            </div>
+
+            <!-- v11.0.0 — wn-drugs (Drug Reports) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Drug Reports</span>
+              <div class="wn-stage">
+                <div class="wn-drugs-scene">
+                  <div class="wn-drugs-head">
+                    <span class="wn-drugs-title"><i class="bi bi-capsule"></i> Drug Reports</span>
+                    <span class="wn-drugs-filter"><i class="bi bi-funnel"></i> RAMEDA</span>
+                  </div>
+                  <div class="wn-drugs-kpis">
+                    <div class="wn-drugs-kpi">
+                      <span class="wn-drugs-kpi-k">Writes</span>
+                      <span class="wn-drugs-kpi-v">312</span>
+                    </div>
+                    <div class="wn-drugs-kpi">
+                      <span class="wn-drugs-kpi-k">New</span>
+                      <span class="wn-drugs-kpi-v">198</span>
+                    </div>
+                    <div class="wn-drugs-kpi">
+                      <span class="wn-drugs-kpi-k">Cont.</span>
+                      <span class="wn-drugs-kpi-v">114</span>
+                    </div>
+                  </div>
+                  <div class="wn-drugs-chart" aria-hidden="true">
+                    <div class="wn-drugs-bar-wrap">
+                      <div class="wn-drugs-bar wn-drugs-bar-1"></div>
+                      <span class="wn-drugs-bar-lbl">RAM</span>
+                    </div>
+                    <div class="wn-drugs-bar-wrap">
+                      <div class="wn-drugs-bar wn-drugs-bar-2"></div>
+                      <span class="wn-drugs-bar-lbl">PHR</span>
+                    </div>
+                    <div class="wn-drugs-bar-wrap">
+                      <div class="wn-drugs-bar wn-drugs-bar-3"></div>
+                      <span class="wn-drugs-bar-lbl">SIG</span>
+                    </div>
+                    <div class="wn-drugs-bar-wrap">
+                      <div class="wn-drugs-bar wn-drugs-bar-4"></div>
+                      <span class="wn-drugs-bar-lbl">NOV</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h3>Know what you prescribe — and who supplies it</h3>
+              <p>A new <strong>Drug Reports</strong> type shows prescription writes, new starts vs continuations, demand by company, monthly trends, regimen breakdown, and estimated units — with filters and PDF export.</p>
+            </div>
+
+            <!-- v11.0.0 — wn-fixes (Bug fixes & polish) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Fixes</span>
+              <div class="wn-stage">
+                <ul class="wn-fix-list">
+                  <li><i class="bi bi-check-circle-fill"></i><span>Mobile header: two-row cluster + dashboard subtitle removed</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Header chips unified — theme-aware glass on every control</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Patients page search/bell aligned — no .btn style leak</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Search↔notes &amp; bell↔to-do column grid on mobile</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Palette + icon-only ⌘K on mobile row 2</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Global search: command palette below header (mobile + desktop)</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Search overlay: frosted blur — not a solid white sheet</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Search panel: uniform glass corners + z-index above backdrop</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Push notification prompt centered at top</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Reports type select wired + warning gone</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Drug Reports PDF exports real data</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>To-Do delete modal above drawer</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>List popover no longer clipped</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>New / rename list uses modals</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Archived lists restore &amp; delete</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Notification badge counts correctly</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Patient hover-card: last visit from API root + date object</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Patient hover on every name — dashboard, calendar, appointment, board</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Hover card next appointment matches Upcoming list (today Booked)</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Hover card: smaller type + wrapped visit rows</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Hover card dates in 12-hour format (e.g. 2:00 PM)</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>FAB stack visible with drawers</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Notification row text no longer truncated</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Quick Note + To-Do API signatures fixed</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Wizard slides render correctly</span></li>
+                </ul>
+              </div>
+              <h3>30+ fixes under the hood</h3>
+              <p>v11 isn't just features — we chased down <strong>silent failures, z-index traps, and API mismatches</strong> so the polish matches the headline upgrades.</p>
+            </div>
           </div>
         </div>
         <div class="wn-dots" id="wnDots"></div>
@@ -2590,8 +3017,20 @@
             if (e.key === 'ArrowLeft')  go(idx - 1);
         });
 
+        // Keep animated mockup stages in sync with the app's light/dark theme.
+        function syncWizardTheme() {
+            const dark = document.documentElement.classList.contains('dark');
+            el.setAttribute('data-wn-theme', dark ? 'dark' : 'light');
+        }
+        syncWizardTheme();
+        try {
+            new MutationObserver(syncWizardTheme).observe(document.documentElement, {
+                attributes: true, attributeFilter: ['class']
+            });
+        } catch (e) {}
+
         // Reset to slide 1 whenever the modal opens (from any trigger).
-        el.addEventListener('show.bs.modal', () => { idx = 0; render(); });
+        el.addEventListener('show.bs.modal', () => { idx = 0; syncWizardTheme(); render(); });
 
         // Use getOrCreateInstance so the hide buttons work regardless of
         // whether the modal was opened by us or by a data-bs-toggle trigger

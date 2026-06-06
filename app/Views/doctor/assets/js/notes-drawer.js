@@ -525,13 +525,8 @@
     // -------------------------------------------------------- header trigger
     function ensureHeaderButton() {
         if (document.getElementById('notesDrawerToggle')) return;
-        var anchor =
-            document.getElementById('todoDrawerToggle') ||
-            document.getElementById('cmdkToggle') ||
-            document.getElementById('kbdHelpToggle') ||
-            document.getElementById('paletteToggle') ||
-            document.querySelector('label.switch[for="themeToggleInput"]');
-        if (!anchor || !anchor.parentNode) return;
+        var mount = document.getElementById('topActionsQuick');
+        if (!mount) return;
 
         var btn = document.createElement('button');
         btn.type = 'button';
@@ -546,7 +541,9 @@
             e.preventDefault();
             open();
         });
-        anchor.parentNode.insertBefore(btn, anchor);
+        var todo = document.getElementById('todoDrawerToggle');
+        if (todo) mount.insertBefore(btn, todo);
+        else mount.appendChild(btn);
 
         // Periodic light count refresh + immediate refresh on any quick-note
         // change (add / delete / edit / pin) from any surface, so the badge is

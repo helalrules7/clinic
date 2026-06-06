@@ -421,9 +421,8 @@
   // Hidden on mobile via CSS (see keyboard-help.css → @media max-width: 767.98px).
   function ensureHeaderButton() {
     if (document.getElementById('kbdHelpToggle')) return;
-    var anchor =
-        document.getElementById('paletteToggle') ||
-        document.querySelector('label.switch[for="themeToggleInput"]');
+    // Always mount next to the dark/light switch — palette lives in #topActionsQuick.
+    var anchor = document.querySelector('label.switch[for="themeToggleInput"]');
     if (!anchor || !anchor.parentNode) return;
 
     var btn = document.createElement('button');

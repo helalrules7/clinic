@@ -532,8 +532,8 @@
 }
 
 /* -------- Header trigger button -------- */
-/* Mirrors .todo-drawer-toggle's style for visual continuity. Hidden on
-   mobile (< 768px) like the other v11 header chips. */
+/* Mirrors .todo-drawer-toggle's style for visual continuity. Shrinks on
+   mobile to fit the compact top-bar without adding extra header height. */
 .notes-drawer-toggle {
     position: relative;
     width: 32px;
@@ -592,7 +592,12 @@
 @media (max-width: 767.98px) {
     .notes-drawer-toggle,
     #notesDrawerToggle {
-        display: none !important;
+        width: 30px;
+        height: 30px;
+        min-width: 30px;
+        margin-right: 0;
+        margin-left: 0;
+        font-size: 14px;
     }
 }
 

@@ -11,7 +11,7 @@
         <a href="/doctor/appointments/<?= (int)($appointment['id'] ?? 0) ?>" class="app-crumb-back" aria-label="Back to appointment">
             <i class="bi bi-arrow-left"></i>
         </a>
-        <a href="/doctor/patients/<?= (int)($appointment['patient_id'] ?? 0) ?>" class="app-crumb-link"><?= htmlspecialchars($appointment['patient_name'] ?? '') ?></a>
+        <a href="/doctor/patients/<?= (int)($appointment['patient_id'] ?? 0) ?>" class="app-crumb-link patient-name-link" data-patient-id="<?= (int)($appointment['patient_id'] ?? 0) ?>"><?= htmlspecialchars($appointment['patient_name'] ?? '') ?></a>
         <i class="bi bi-chevron-right app-crumb-sep" aria-hidden="true"></i>
         <a href="/doctor/appointments/<?= (int)($appointment['id'] ?? 0) ?>" class="app-crumb-link">Appointment #<?= (int)($appointment['id'] ?? 0) ?></a>
         <i class="bi bi-chevron-right app-crumb-sep" aria-hidden="true"></i>

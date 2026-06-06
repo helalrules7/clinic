@@ -2998,7 +2998,8 @@ kbd[lang="ar"] {
     box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
 }
 
-.btn {
+/* Scoped to page content — do not leak into the global top-bar header. */
+.patients-page .btn {
     padding: 10px 20px;
     border-radius: 8px;
     font-weight: 600;

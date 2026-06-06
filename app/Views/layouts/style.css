@@ -4772,6 +4772,7 @@
         }
         
         /* Top actions container - align below notice bar */
+        .top-bar > .top-bar-cluster,
         .top-bar > .top-actions,
         .top-bar > .sidebar-toggle,
         .top-bar > .page-title {
@@ -4794,10 +4795,32 @@
             text-align: right;
         }
         
+        .top-bar.notice-bar-hidden > .top-bar-cluster,
         .top-bar.notice-bar-hidden > .top-actions,
         .top-bar.notice-bar-hidden > .sidebar-toggle,
         .top-bar.notice-bar-hidden > .page-title {
             margin-top: 0;
+        }
+
+        /* Header action cluster: primary row + quick tools + theme */
+        .top-bar-cluster {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+
+        .top-actions-quick {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .top-actions-theme {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
         }
 
         .dark .top-bar {
@@ -4854,6 +4877,10 @@
         .global-search-toggle {
             display: none;
         }
+
+        /* Top-bar chip surfaces (glass + theme tint) live in header-chips.css.
+           Do NOT add Bootstrap .btn to #globalSearchToggle — page CSS can
+           redefine .btn and break alignment (see patients.css). */
         
         .global-search-container {
             position: relative;
@@ -5425,10 +5452,8 @@
 
         /* Mobile styles */
         @media (max-width: 768px) {
-            .global-search-toggle {
+            .top-bar .global-search-toggle {
                 display: flex;
-                align-items: center;
-                justify-content: center;
             }
             
             .global-search-container {
@@ -5456,6 +5481,78 @@
             .global-search-results {
                 max-height: calc(100vh - 80px);
             }
+
+            /* Compact mobile top-bar — two rows in the action cluster */
+            .top-bar {
+                padding-top: calc(0.5rem + 20px);
+                padding-bottom: 0.5rem;
+                margin-bottom: 1rem;
+                align-items: flex-start;
+            }
+
+            .top-bar > .page-title {
+                margin-left: 0.5rem;
+                min-width: 0;
+                flex: 1 1 auto;
+                overflow: hidden;
+                align-self: center;
+            }
+
+            [dir="rtl"] .top-bar > .page-title {
+                margin-right: 0.5rem;
+                margin-left: auto;
+            }
+
+            .page-title h1 {
+                font-size: 1.28rem;
+                font-weight: 600;
+                line-height: 1.2;
+                white-space: normal;
+                overflow: hidden;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                text-overflow: ellipsis;
+                word-break: break-word;
+            }
+
+            .page-title small {
+                display: none;
+            }
+
+            /* Mobile column grid for header chips → header-chips.css */
+
+            .top-bar-cluster {
+                flex-shrink: 0;
+                align-self: center;
+            }
+
+            .global-search-wrapper {
+                margin-right: 0;
+            }
+
+            [dir="rtl"] .global-search-wrapper {
+                margin-left: 0;
+            }
+
+            .top-bar .switch {
+                --scale: 0.82;
+            }
+
+            .sidebar-toggle {
+                min-width: 36px;
+                min-height: 36px;
+                padding: 0.45rem;
+                margin-right: 0.35rem;
+                font-size: 1rem;
+                border-radius: 8px;
+                align-self: center;
+            }
+
+            [dir="rtl"] .sidebar-toggle {
+                margin-right: 0;
+                margin-left: 0.35rem;
+            }
         }
         
         .top-actions {
@@ -5464,35 +5561,6 @@
             align-items: center;
         }
         
-        /* Notifications Toggle Button - Bell icon without borders */
-        .notifications-toggle {
-            position: relative;
-            background: transparent;
-            border: none;
-            color: var(--text);
-            padding: 0.5rem;
-            border-radius: 50%;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-        }
-        
-        .notifications-toggle:hover {
-            background: rgba(0, 0, 0, 0.05);
-            color: var(--accent);
-            transform: scale(1.1);
-        }
-        
-        .dark .notifications-toggle:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        
-        .notifications-toggle i {
-            font-size: 1.25rem;
-        }
         
         .notifications-badge {
             position: absolute;
@@ -6635,10 +6703,8 @@
                 margin-top: 0;
                 margin-left: -1rem;
                 margin-right: -1rem;
-                padding-top: calc(1rem + 20px); /* Space for notice-bar */
                 padding-left: 1rem;
                 padding-right: 1rem;
-                padding-bottom: 1rem;
                 width: calc(100% + 2rem);
                 top: 0;
             }

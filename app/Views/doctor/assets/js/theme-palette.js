@@ -208,10 +208,12 @@
     function resizeHandler() { positionPopover(document.getElementById('paletteToggle')); }
 
     function ensureHeaderToggle() {
-        // Mount #paletteToggle to the right of #themeToggleInput's wrapper if not already present.
         if (document.getElementById('paletteToggle')) return;
+        // Mount into #topActionsQuick (row 2 on mobile: notes · to-do · ⌘K · palette).
+        // Falls back to before the theme switch on layouts without the quick row.
+        var mount = document.getElementById('topActionsQuick');
         var themeLabel = document.querySelector('label.switch[for="themeToggleInput"]');
-        if (!themeLabel || !themeLabel.parentNode) return;
+        if (!mount && (!themeLabel || !themeLabel.parentNode)) return;
 
         var btn = document.createElement('button');
         btn.type = 'button';
@@ -220,8 +222,11 @@
         btn.setAttribute('aria-label', 'Theme palette');
         btn.setAttribute('title', 'Theme palette');
         btn.innerHTML = '<span class="palette-dot" aria-hidden="true"></span>';
-        // Insert before the theme switch so visual order is palette · dark/light toggle.
-        themeLabel.parentNode.insertBefore(btn, themeLabel);
+        if (mount) {
+            mount.appendChild(btn);
+        } else {
+            themeLabel.parentNode.insertBefore(btn, themeLabel);
+        }
 
         // Sync the dot to current palette.
         var current = safeGet(LS_PALETTE, 'indigo');

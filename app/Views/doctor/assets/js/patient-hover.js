@@ -7,6 +7,8 @@
      is recycled across every trigger.
    - Delegated mouseenter on [data-patient-id]: 400ms intent debounce, then
      fetch /api/patients/:id/summary and reveal.
+   - tagPatientHoverTriggers() + MutationObserver stamp data-patient-id on every
+     a[href*="/doctor/patient…"] site-wide; retag() exposed on window.patientHover.
    - 200ms grace timer between trigger ↔ card so the cursor can travel.
    - Touch: 600ms long-press on the trigger pops the card centered as a
      small dialog; tap outside dismisses.
@@ -96,10 +98,13 @@
         var d = (value instanceof Date) ? value : new Date(value);
         if (isNaN(d.getTime())) return null;
         try {
-            return d.toLocaleString(undefined, {
-                year: 'numeric', month: 'short', day: 'numeric',
-                hour: '2-digit', minute: '2-digit'
+            var datePart = d.toLocaleDateString(undefined, {
+                year: 'numeric', month: 'short', day: 'numeric'
             });
+            var timePart = d.toLocaleTimeString(undefined, {
+                hour: 'numeric', minute: '2-digit', hour12: true
+            });
+            return datePart + ' · ' + timePart;
         } catch (e) {
             return d.toString();
         }
@@ -120,6 +125,44 @@
             return days + 'd ' + (diff < 0 ? 'ago' : 'from now');
         }
         return null;
+    }
+
+    /** API returns last_visit / next_appointment at the JSON root, not inside patient. */
+    function visitDateValue(v) {
+        if (v == null || v === '') return null;
+        if (typeof v === 'string' || typeof v === 'number') return v;
+        if (v instanceof Date) return v;
+        if (typeof v === 'object') {
+            var d = v.date || v.at || v.datetime;
+            var t = v.time || v.start_time;
+            if (d && t) {
+                var ts = String(t);
+                if (ts.length <= 8 && ts.indexOf('T') === -1) return d + 'T' + ts;
+            }
+            return d || null;
+        }
+        return null;
+    }
+
+    function normalizeSummary(json) {
+        if (!json || typeof json !== 'object') return {};
+        var patient = json.patient || json.data || json;
+        var name = patient.name;
+        if (!name && (patient.first_name || patient.last_name)) {
+            name = [patient.first_name, patient.last_name].filter(Boolean).join(' ');
+        }
+        return {
+            id: patient.id,
+            name: name,
+            age: patient.age,
+            gender: patient.gender,
+            phone: patient.phone,
+            dob: patient.dob || patient.date_of_birth,
+            last_visit: json.last_visit != null ? json.last_visit : (patient.last_visit || patient.lastVisit || patient.last_visit_at),
+            next_appointment: json.next_appointment != null ? json.next_appointment : (patient.next_appointment || patient.nextAppointment || patient.next_appt),
+            active_alerts_count: json.active_alerts_count != null ? json.active_alerts_count : patient.active_alerts_count,
+            active_alerts: json.active_alerts || patient.active_alerts || patient.alerts
+        };
     }
 
     // -------------------------------------------------------------- network
@@ -158,8 +201,7 @@
             if (!res.ok) throw new Error('HTTP ' + res.status);
             return res.json();
         }).then(function (json) {
-            // Accept either { ok, patient } or a bare patient object.
-            var data = (json && (json.patient || json.data)) || json || {};
+            var data = normalizeSummary(json);
             cache[id] = { data: data, expiresAt: Date.now() + CACHE_TTL };
             return data;
         }).finally(function () {
@@ -256,11 +298,12 @@
 
         // Last visit row.
         var lastVisitText = '—';
-        var lv = p && (p.last_visit || p.lastVisit || p.last_visit_at);
+        var lvRaw = p && (p.last_visit || p.lastVisit || p.last_visit_at);
+        var lv = visitDateValue(lvRaw);
         if (lv) {
             var lvDate = fmtDate(lv);
             var lvRel  = relativeFromNow(lv);
-            lastVisitText = lvDate + (lvRel ? ' · ' + lvRel : '');
+            lastVisitText = (lvDate || '—') + (lvRel ? ' · ' + lvRel : '');
         } else {
             lastVisitText = 'No previous visits';
         }
@@ -268,11 +311,12 @@
 
         // Next appointment row.
         var nextText = '—';
-        var nx = p && (p.next_appointment || p.nextAppointment || p.next_appt);
+        var nxRaw = p && (p.next_appointment || p.nextAppointment || p.next_appt);
+        var nx = visitDateValue(nxRaw);
         if (nx) {
             var nxDate = fmtDateTime(nx);
             var nxRel  = relativeFromNow(nx);
-            nextText = nxDate + (nxRel ? ' · ' + nxRel : '');
+            nextText = (nxDate || '—') + (nxRel ? ' · ' + nxRel : '');
         } else {
             nextText = 'None scheduled';
         }
@@ -281,7 +325,9 @@
         // Alerts chip — hidden when count is 0.
         var alertsRow = card.querySelector('[data-pc-row="alerts"]');
         var alertCount = 0;
-        if (p && p.active_alerts != null) alertCount = parseInt(p.active_alerts, 10) || 0;
+        if (p && p.active_alerts_count != null) alertCount = parseInt(p.active_alerts_count, 10) || 0;
+        else if (p && p.active_alerts != null && !Array.isArray(p.active_alerts)) alertCount = parseInt(p.active_alerts, 10) || 0;
+        else if (p && Array.isArray(p.active_alerts)) alertCount = p.active_alerts.length;
         else if (p && Array.isArray(p.alerts)) alertCount = p.alerts.length;
 
         if (alertsRow) {
@@ -300,7 +346,7 @@
 
         // CTA link.
         var link = card.querySelector('[data-pc-link]');
-        if (link) link.setAttribute('href', '/doctor/patient/' + encodeURIComponent(id));
+        if (link) link.setAttribute('href', '/doctor/patients/' + encodeURIComponent(id));
 
         showBody();
     }
@@ -582,6 +628,66 @@
         }
     }
 
+    // ---------------------------------------- universal trigger tagging
+    var PATIENT_HREF_RE = /\/doctor\/patients?\/(\d+)/i;
+    var tagTimer = null;
+
+    function extractPatientIdFromHref(href) {
+        if (!href) return null;
+        var m = String(href).match(PATIENT_HREF_RE);
+        return m ? m[1] : null;
+    }
+
+    function shouldSkipTag(el) {
+        return !el || el.hasAttribute('data-no-hover') || el.closest('[data-no-hover]');
+    }
+
+    /** Stamp data-patient-id on any patient profile link / name hook site-wide. */
+    function tagPatientHoverTriggers(root) {
+        root = root || document;
+        if (!root.querySelectorAll) return;
+
+        root.querySelectorAll('a[href*="/doctor/patient"]').forEach(function (a) {
+            if (shouldSkipTag(a) || a.hasAttribute('data-patient-id')) return;
+            var id = extractPatientIdFromHref(a.getAttribute('href'));
+            if (id && id !== '0') a.setAttribute('data-patient-id', id);
+        });
+
+        root.querySelectorAll('[data-patient-id]').forEach(function (el) {
+            if (shouldSkipTag(el)) return;
+            var id = el.getAttribute('data-patient-id');
+            if (!id || id === '0') return;
+            el.querySelectorAll('.patient-name, .patient-name-link, .appt-name, .patient-hover-name, .card-title span, h6 .patient-name-link').forEach(function (nameEl) {
+                if (!nameEl.hasAttribute('data-patient-id')) {
+                    nameEl.setAttribute('data-patient-id', id);
+                }
+            });
+        });
+    }
+
+    function scheduleTag(root) {
+        if (tagTimer) clearTimeout(tagTimer);
+        tagTimer = setTimeout(function () {
+            tagPatientHoverTriggers(root || document);
+            if (typeof window.applyPatientColors === 'function') {
+                try { window.applyPatientColors(root || document); } catch (e) {}
+            }
+        }, 30);
+    }
+
+    function observePatientTriggers() {
+        if (typeof MutationObserver === 'undefined') return;
+        var obs = new MutationObserver(function (mutations) {
+            for (var i = 0; i < mutations.length; i++) {
+                if (mutations[i].addedNodes && mutations[i].addedNodes.length) {
+                    scheduleTag(document);
+                    return;
+                }
+            }
+        });
+        obs.observe(document.body, { childList: true, subtree: true });
+    }
+
     // ------------------------------------------------------------- bootstrap
     function init() {
         card = document.getElementById('patientCard');
@@ -618,6 +724,9 @@
         // Close immediately on route changes so the card doesn't linger.
         window.addEventListener('pagehide', function () { close(true); });
 
+        tagPatientHoverTriggers(document);
+        observePatientTriggers();
+
         // Public hooks.
         window.patientHover = {
             open: function (triggerEl, id) {
@@ -632,7 +741,8 @@
                 } else {
                     cache = Object.create(null);
                 }
-            }
+            },
+            retag: function (root) { tagPatientHoverTriggers(root || document); }
         };
     }
 

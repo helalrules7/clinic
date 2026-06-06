@@ -2404,7 +2404,8 @@ function renderPatientsTable() {
                                 <div>
                                     <h6 class="mb-1">
                                         <a href="/doctor/patients/${patient.id}" 
-                                           class="patient-name-link" 
+                                           class="patient-name-link patient-hover-name" 
+                                           data-patient-id="${patient.id}"
                                            style="text-decoration: none; color: var(--accent) !important; font-weight: 600; transition: all 0.2s ease;" 
                                            onmouseover="this.style.color='var(--text) !important'; this.style.fontWeight='800 !important'; this.style.textDecoration='none';" 
                                            onmouseout="this.style.color='var(--accent) !important'; this.style.fontWeight='600 !important'; this.style.textDecoration='none';">

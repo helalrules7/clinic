@@ -73,6 +73,9 @@
     <link href="/app/Views/doctor/assets/css/theme-palette.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/theme-palette.css') ? filemtime(__DIR__ . '/../doctor/assets/css/theme-palette.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/celebration.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/celebration.css') ? filemtime(__DIR__ . '/../doctor/assets/css/celebration.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/notes-drawer.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/notes-drawer.css') ? filemtime(__DIR__ . '/../doctor/assets/css/notes-drawer.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/layouts/header-chips.css?v=<?= file_exists(__DIR__ . '/header-chips.css') ? filemtime(__DIR__ . '/header-chips.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/layouts/global-search-panel.css?v=<?= file_exists(__DIR__ . '/global-search-panel.css') ? filemtime(__DIR__ . '/global-search-panel.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/layouts/push-toast-center.css?v=<?= file_exists(__DIR__ . '/push-toast-center.css') ? filemtime(__DIR__ . '/push-toast-center.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/note-bg.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/note-bg.css') ? filemtime(__DIR__ . '/../doctor/assets/css/note-bg.css') : time() ?>" rel="stylesheet">
     <!-- Timepicker UI CSS (Local) -->
     <link href="/app/Views/layouts/timepicker-ui-main/css/main.css?v=<?= file_exists(__DIR__ . '/timepicker-ui-main/css/main.css') ? filemtime(__DIR__ . '/timepicker-ui-main/css/main.css') : time() ?>" rel="stylesheet">
@@ -166,6 +169,8 @@
     <script>
         window.CLINICS_BOOTSTRAP = <?= json_encode($__clinicsBootstrap, JSON_UNESCAPED_UNICODE) ?>;
     </script>
+
+    <?php require __DIR__ . '/speculation-rules.php'; ?>
 </head>
 <body>
     <!-- Pre-paint sidebar mode restore — must run before the sidebar paints,
@@ -799,14 +804,17 @@
                         </span>
                     <?php endif; ?>
                 </h1>
-                <small><?= $pageSubtitle ?? 'Welcome to your dashboard' ?></small>
+                <?php if (!empty($pageSubtitle)): ?>
+                <small><?= $pageSubtitle ?></small>
+                <?php endif; ?>
             </div>
             
+            <div class="top-bar-cluster">
             <div class="top-actions">
                 <?php if ($this->getCurrentUser()['role'] === 'doctor'): ?>
                 <!-- Global Search Bar -->
                 <div class="global-search-wrapper">
-                    <button class="btn btn-outline-secondary global-search-toggle d-md-none" id="globalSearchToggle" title="Search">
+                    <button type="button" class="global-search-toggle d-md-none" id="globalSearchToggle" title="Search" aria-label="Search">
                         <i class="bi bi-search"></i>
                     </button>
                     <div class="global-search-container" id="globalSearchContainer">
@@ -862,7 +870,11 @@
                     <span class="notifications-badge" id="notificationsBadge" style="display: none;">0</span>
                 </button>
                 <?php endif; ?>
-                
+            </div>
+
+            <div class="top-actions-quick" id="topActionsQuick" aria-label="Quick tools"></div>
+
+            <div class="top-actions-theme">
                 <label class="switch" for="themeToggleInput">
                     <input id="themeToggleInput" type="checkbox" />
                     <div class="slider round">
@@ -920,6 +932,7 @@
                         </div>
                     </div>
                 </label>
+            </div>
             </div>
         </div>
         
@@ -1318,7 +1331,6 @@
     <script defer src="/app/Views/doctor/assets/js/notes-sync.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notes-sync.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notes-sync.js') : time() ?>"></script>
     <!-- Merged view over both note stores (quick_notes + notes) for cross-surface display -->
     <script defer src="/app/Views/doctor/assets/js/notes-bridge.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notes-bridge.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notes-bridge.js') : time() ?>"></script>
-    <script defer src="/app/Views/doctor/assets/js/theme-palette.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/theme-palette.js') ? filemtime(__DIR__ . '/../doctor/assets/js/theme-palette.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/notification-center.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notification-center.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notification-center.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/todo-drawer.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/todo-drawer.js') ? filemtime(__DIR__ . '/../doctor/assets/js/todo-drawer.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/cmdk.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/cmdk.js') ? filemtime(__DIR__ . '/../doctor/assets/js/cmdk.js') : time() ?>"></script>
@@ -1328,5 +1340,6 @@
     <script defer src="/app/Views/doctor/assets/js/note-templates.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/note-templates.js') ? filemtime(__DIR__ . '/../doctor/assets/js/note-templates.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/focus-mode.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/focus-mode.js') ? filemtime(__DIR__ . '/../doctor/assets/js/focus-mode.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/notes-drawer.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notes-drawer.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notes-drawer.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/theme-palette.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/theme-palette.js') ? filemtime(__DIR__ . '/../doctor/assets/js/theme-palette.js') : time() ?>"></script>
 </body>
 </html>

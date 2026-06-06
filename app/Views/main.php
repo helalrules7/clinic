@@ -389,14 +389,16 @@
                         </span>
                     <?php endif; ?>
                 </h1>
-                <small><?= $pageSubtitle ?? 'Welcome to your dashboard' ?></small>
+                <?php if (!empty($pageSubtitle)): ?>
+                <small><?= $pageSubtitle ?></small>
+                <?php endif; ?>
             </div>
             
             <div class="top-actions">
                 <?php if ($this->getCurrentUser()['role'] === 'doctor'): ?>
                 <!-- Global Search Bar -->
                 <div class="global-search-wrapper">
-                    <button class="btn btn-outline-secondary global-search-toggle d-md-none" id="globalSearchToggle" title="Search">
+                    <button type="button" class="global-search-toggle d-md-none" id="globalSearchToggle" title="Search" aria-label="Search">
                         <i class="bi bi-search"></i>
                     </button>
                     <div class="global-search-container" id="globalSearchContainer">

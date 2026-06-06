@@ -1,0 +1,300 @@
+/* =====================================================================
+   Unified top-bar action chips — theme-aware glass (desktop + mobile)
+   Loaded AFTER v11 feature CSS so these tokens win for every header
+   control: search · bell · notes · to-do · ⌘K · palette · ?
+   ===================================================================== */
+
+.top-bar {
+    --header-chip-size: 36px;
+    --header-chip-bg: color-mix(in srgb, var(--accent) 5%, var(--glass-bg-strong));
+    --header-chip-border: color-mix(in srgb, var(--accent) 14%, var(--glass-border));
+    --header-chip-shadow: var(--glass-shadow, 0 1px 4px rgba(15, 23, 42, 0.06));
+    --header-chip-hover-bg: color-mix(in srgb, var(--accent) 10%, var(--glass-bg-strong));
+    --header-chip-hover-border: color-mix(in srgb, var(--accent) 34%, var(--glass-border));
+    --header-chip-hover-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 16%, rgba(15, 23, 42, 0.10));
+    --header-chip-focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+/* ---- shared round / pill chip surface ---- */
+.top-bar .global-search-toggle,
+.top-bar .notifications-toggle,
+.top-bar .todo-drawer-toggle,
+.top-bar .notes-drawer-toggle,
+.top-bar .palette-toggle,
+.top-bar .kbd-help-toggle,
+.top-bar .cmdk-toggle,
+.top-bar #globalSearchToggle,
+.top-bar #notificationsToggle,
+.top-bar #todoDrawerToggle,
+.top-bar #notesDrawerToggle,
+.top-bar #paletteToggle,
+.top-bar #kbdHelpToggle,
+.top-bar #cmdkToggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--header-chip-border);
+    background: var(--header-chip-bg);
+    -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+    color: var(--text);
+    box-shadow: var(--header-chip-shadow);
+    cursor: pointer;
+    line-height: 1;
+    transition:
+        transform 0.15s var(--ds-ease, ease),
+        box-shadow 0.15s ease,
+        border-color 0.15s ease,
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+/* round chips */
+.top-bar .global-search-toggle,
+.top-bar .notifications-toggle,
+.top-bar .todo-drawer-toggle,
+.top-bar .notes-drawer-toggle,
+.top-bar .palette-toggle,
+.top-bar .kbd-help-toggle,
+.top-bar #globalSearchToggle,
+.top-bar #notificationsToggle,
+.top-bar #todoDrawerToggle,
+.top-bar #notesDrawerToggle,
+.top-bar #paletteToggle,
+.top-bar #kbdHelpToggle {
+    width: var(--header-chip-size);
+    height: var(--header-chip-size);
+    min-width: var(--header-chip-size);
+    min-height: var(--header-chip-size);
+    border-radius: 50%;
+}
+
+/* cmdk pill */
+.top-bar .cmdk-toggle,
+.top-bar #cmdkToggle {
+    height: var(--header-chip-size);
+    min-height: var(--header-chip-size);
+    width: auto;
+    min-width: var(--header-chip-size);
+    padding: 0 10px 0 9px;
+    border-radius: var(--r-pill, 999px);
+    gap: 6px;
+    font-size: 0.8rem;
+}
+
+/* icons & glyphs */
+.top-bar .global-search-toggle i,
+.top-bar .notifications-toggle i,
+.top-bar .todo-drawer-toggle i,
+.top-bar .notes-drawer-toggle i,
+.top-bar .palette-toggle i,
+.top-bar .kbd-help-toggle i,
+.top-bar .cmdk-toggle > i,
+.top-bar #globalSearchToggle i,
+.top-bar #notificationsToggle i,
+.top-bar #todoDrawerToggle i,
+.top-bar #notesDrawerToggle i,
+.top-bar #cmdkToggle > i {
+    color: var(--accent);
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
+.top-bar .kbd-help-toggle,
+.top-bar #kbdHelpToggle {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+/* cmdk shortcut hint */
+.top-bar .cmdk-toggle__hint {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    padding: 1px 5px;
+    border-radius: 5px;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+    line-height: 1;
+}
+
+/* hover / focus / active */
+.top-bar .global-search-toggle:hover,
+.top-bar .notifications-toggle:hover,
+.top-bar .todo-drawer-toggle:hover,
+.top-bar .notes-drawer-toggle:hover,
+.top-bar .palette-toggle:hover,
+.top-bar .kbd-help-toggle:hover,
+.top-bar .cmdk-toggle:hover,
+.top-bar #globalSearchToggle:hover,
+.top-bar #notificationsToggle:hover,
+.top-bar #todoDrawerToggle:hover,
+.top-bar #notesDrawerToggle:hover,
+.top-bar #paletteToggle:hover,
+.top-bar #kbdHelpToggle:hover,
+.top-bar #cmdkToggle:hover {
+    background: var(--header-chip-hover-bg);
+    border-color: var(--header-chip-hover-border);
+    box-shadow: var(--header-chip-hover-shadow);
+    transform: translateY(-1px);
+    color: var(--text);
+}
+
+.top-bar .global-search-toggle:focus-visible,
+.top-bar .notifications-toggle:focus-visible,
+.top-bar .todo-drawer-toggle:focus-visible,
+.top-bar .notes-drawer-toggle:focus-visible,
+.top-bar .palette-toggle:focus-visible,
+.top-bar .kbd-help-toggle:focus-visible,
+.top-bar .cmdk-toggle:focus-visible,
+.top-bar #globalSearchToggle:focus-visible,
+.top-bar #notificationsToggle:focus-visible,
+.top-bar #todoDrawerToggle:focus-visible,
+.top-bar #notesDrawerToggle:focus-visible,
+.top-bar #paletteToggle:focus-visible,
+.top-bar #kbdHelpToggle:focus-visible,
+.top-bar #cmdkToggle:focus-visible {
+    outline: none;
+    box-shadow: var(--header-chip-focus-ring), var(--header-chip-hover-shadow);
+}
+
+.top-bar .global-search-toggle:active,
+.top-bar .notifications-toggle:active,
+.top-bar .todo-drawer-toggle:active,
+.top-bar .notes-drawer-toggle:active,
+.top-bar .palette-toggle:active,
+.top-bar .kbd-help-toggle:active,
+.top-bar .cmdk-toggle:active,
+.top-bar #globalSearchToggle:active,
+.top-bar #notificationsToggle:active,
+.top-bar #todoDrawerToggle:active,
+.top-bar #notesDrawerToggle:active,
+.top-bar #paletteToggle:active,
+.top-bar #kbdHelpToggle:active,
+.top-bar #cmdkToggle:active {
+    transform: translateY(0) scale(0.97);
+}
+
+/* count badges */
+.top-bar .notifications-badge {
+    box-shadow: 0 0 0 2px var(--header-chip-bg);
+}
+
+.top-bar .todo-drawer-toggle__badge,
+.top-bar .notes-drawer-toggle__badge {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 0 2px var(--header-chip-bg);
+}
+
+/* palette inner dot keeps its own gradient */
+.top-bar .palette-toggle .palette-dot {
+    box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.30),
+        0 1px 4px color-mix(in srgb, var(--accent) 25%, rgba(0, 0, 0, 0.18));
+}
+
+/* mobile — 4-column grid so row 1/2 chips stack vertically:
+   col1 search ↔ notes · col2 bell ↔ to-do · cols3–4 theme / ⌘K · palette */
+@media (max-width: 767.98px) {
+    .top-bar {
+        --header-chip-size: 34px;
+    }
+
+    .top-bar .top-bar-cluster {
+        display: grid;
+        grid-template-columns:
+            var(--header-chip-size)
+            var(--header-chip-size)
+            var(--header-chip-size)
+            var(--header-chip-size);
+        grid-template-rows: auto auto;
+        column-gap: 0.55rem;
+        row-gap: 0.3rem;
+        align-items: center;
+        justify-items: center;
+    }
+
+    .top-bar .top-actions,
+    .top-bar .top-actions-quick {
+        display: contents;
+    }
+
+    .top-bar .global-search-wrapper {
+        grid-row: 1;
+        grid-column: 1;
+    }
+
+    .top-bar .notifications-toggle,
+    .top-bar #notificationsToggle {
+        grid-row: 1;
+        grid-column: 2;
+    }
+
+    .top-bar .top-actions-theme {
+        grid-row: 1;
+        grid-column: 3 / -1;
+        justify-self: end;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        width: 100%;
+    }
+
+    .top-bar #notesDrawerToggle,
+    .top-bar .notes-drawer-toggle {
+        grid-row: 2;
+        grid-column: 1;
+    }
+
+    .top-bar #todoDrawerToggle,
+    .top-bar .todo-drawer-toggle {
+        grid-row: 2;
+        grid-column: 2;
+    }
+
+    .top-bar #cmdkToggle,
+    .top-bar .cmdk-toggle {
+        grid-row: 2;
+        grid-column: 3;
+    }
+
+    .top-bar #paletteToggle,
+    .top-bar .palette-toggle {
+        grid-row: 2;
+        grid-column: 4;
+    }
+
+    /* Icon-only ⌘K */
+    .top-bar .cmdk-toggle__hint {
+        display: none !important;
+    }
+
+    .top-bar .cmdk-toggle,
+    .top-bar #cmdkToggle {
+        width: var(--header-chip-size);
+        min-width: var(--header-chip-size);
+        max-width: var(--header-chip-size);
+        padding: 0;
+        gap: 0;
+        border-radius: 50%;
+        justify-content: center;
+    }
+
+    .top-bar .cmdk-toggle > i,
+    .top-bar #cmdkToggle > i {
+        font-size: 0.95rem;
+    }
+}
+
+@media (min-width: 768px) {
+    [dir="rtl"] .top-bar .cmdk-toggle,
+    [dir="rtl"] .top-bar #cmdkToggle {
+        padding: 0 7px 0 8px;
+    }
+}

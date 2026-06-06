@@ -571,9 +571,9 @@ function renderAppointmentSlot(appointment) {
                 <div class="appointment-info" onclick="navigateToAppointment(${
                   appointment.id
                 })">
-                    <div class="info-line"><span class="label">Patient:</span> ${
+                    <div class="info-line"><span class="label">Patient:</span> <span class="patient-hover-name" data-patient-id="${appointment.patient_id}">${
                       appointment.patient_name
-                    }</div>
+                    }</span></div>
                     <div class="info-line"><span class="label">Doctor:</span> ${
                       appointment.doctor_display_name || "N/A"
                     }</div>

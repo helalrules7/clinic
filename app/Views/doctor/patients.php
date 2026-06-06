@@ -24,6 +24,7 @@
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 <link href="/app/Views/doctor/assets/css/filter-bar.css?v=<?= file_exists(__DIR__ . '/assets/css/filter-bar.css') ? filemtime(__DIR__ . '/assets/css/filter-bar.css') : time() ?>" rel="stylesheet">
 
+<div class="patients-page">
 <div class="row mb-4">
     <div class="col-md-8">
         <h4 class="text-primary">
@@ -1586,3 +1587,4 @@ color: white !important;
 margin-bottom: 5px !important;
 }
 </style>
+</div><!-- /.patients-page -->

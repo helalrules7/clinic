@@ -88,7 +88,6 @@ class DoctorController
         echo $this->view->render('layouts/main', [
             'title' => 'HClinic / Roaya | Dashboard',
             'pageTitle' => 'Dashboard',
-            'pageSubtitle' => 'Welcome back, ' . $user['name'],
             'content' => $content
         ]);
     }

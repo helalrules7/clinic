@@ -153,7 +153,7 @@ function loadTodayAlerts() {
                                     </h6>
                                     <p class="mb-1 text-muted">
                                         <i class="bi bi-clock me-1"></i>${timeStr}
-                                        ${alert.patient_id ? ` | <i class="bi bi-person me-1"></i>${escapeHtml(patientName)}` : ''}
+                                        ${alert.patient_id ? ` | <i class="bi bi-person me-1"></i><span class="patient-hover-name" data-patient-id="${alert.patient_id}">${escapeHtml(patientName)}</span>` : ''}
                                     </p>
                                 </div>
                                 ${alert.patient_id ? `

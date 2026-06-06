@@ -44,6 +44,9 @@
     <link href="/app/Views/doctor/assets/css/theme-palette.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/theme-palette.css') ? filemtime(__DIR__ . '/../doctor/assets/css/theme-palette.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/celebration.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/celebration.css') ? filemtime(__DIR__ . '/../doctor/assets/css/celebration.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/notes-drawer.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/notes-drawer.css') ? filemtime(__DIR__ . '/../doctor/assets/css/notes-drawer.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/layouts/header-chips.css?v=<?= file_exists(__DIR__ . '/header-chips.css') ? filemtime(__DIR__ . '/header-chips.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/layouts/global-search-panel.css?v=<?= file_exists(__DIR__ . '/global-search-panel.css') ? filemtime(__DIR__ . '/global-search-panel.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/layouts/push-toast-center.css?v=<?= file_exists(__DIR__ . '/push-toast-center.css') ? filemtime(__DIR__ . '/push-toast-center.css') : time() ?>" rel="stylesheet">
 
     <!-- Theme + logo + favicon pre-paint. Runs synchronously in <head> so
          #clinicLogo and the favicon <link>s are rendered with the right
@@ -196,6 +199,8 @@
     <script>
         window.CLINICS_BOOTSTRAP = <?= json_encode($__clinicsBootstrap, JSON_UNESCAPED_UNICODE) ?>;
     </script>
+
+    <?php require __DIR__ . '/speculation-rules.php'; ?>
 </head>
 <body>
     <!-- استرجاع حالة sidebar قبل العرض — لازم يشتغل قبل ما الـ sidebar
@@ -348,9 +353,12 @@
                         </span>
                     <?php endif; ?>
                 </h1>
-                <small><?= $pageSubtitle ?? 'مرحباً بك في لوحة تحكم السكرتارية' ?></small>
+                <?php if (!empty($pageSubtitle)): ?>
+                <small><?= $pageSubtitle ?></small>
+                <?php endif; ?>
             </div>
             
+            <div class="top-bar-cluster">
             <div class="top-actions">
                 <?php 
                 // Check if admin is in View As mode using session directly
@@ -373,7 +381,11 @@
                         الخروج من المعاينة
                     </a>
                 <?php endif; ?>
-                
+            </div>
+
+            <div class="top-actions-quick" id="topActionsQuick" aria-label="أدوات سريعة"></div>
+
+            <div class="top-actions-theme">
                 <!-- Sun/Moon Theme Toggle Switch -->
                 <label class="switch" title="تبديل المظهر">
                     <input type="checkbox" id="themeToggleInput">
@@ -409,6 +421,7 @@
                         </svg>
                     </span>
                 </label>
+            </div>
             </div>
         </div>
 
@@ -1051,7 +1064,6 @@
 
     <!-- v11.0.0 feature JS bundle -->
     <script defer src="/app/Views/doctor/assets/js/patient-color.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/patient-color.js') ? filemtime(__DIR__ . '/../doctor/assets/js/patient-color.js') : time() ?>"></script>
-    <script defer src="/app/Views/doctor/assets/js/theme-palette.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/theme-palette.js') ? filemtime(__DIR__ . '/../doctor/assets/js/theme-palette.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/notification-center.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notification-center.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notification-center.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/todo-drawer.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/todo-drawer.js') ? filemtime(__DIR__ . '/../doctor/assets/js/todo-drawer.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/cmdk.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/cmdk.js') ? filemtime(__DIR__ . '/../doctor/assets/js/cmdk.js') : time() ?>"></script>
@@ -1061,5 +1073,6 @@
     <script defer src="/app/Views/doctor/assets/js/note-templates.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/note-templates.js') ? filemtime(__DIR__ . '/../doctor/assets/js/note-templates.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/focus-mode.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/focus-mode.js') ? filemtime(__DIR__ . '/../doctor/assets/js/focus-mode.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/notes-drawer.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notes-drawer.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notes-drawer.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/theme-palette.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/theme-palette.js') ? filemtime(__DIR__ . '/../doctor/assets/js/theme-palette.js') : time() ?>"></script>
 </body>
 </html>

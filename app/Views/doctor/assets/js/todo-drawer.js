@@ -341,7 +341,15 @@
         const pat = row.querySelector('.td-row-patient');
         if (t.patient_name) {
             pat.hidden = false;
-            pat.querySelector('.td-row-patient-name').textContent = t.patient_name;
+            var patName = pat.querySelector('.td-row-patient-name');
+            patName.textContent = t.patient_name;
+            if (t.patient_id) {
+                patName.classList.add('patient-hover-name');
+                patName.setAttribute('data-patient-id', String(t.patient_id));
+            } else {
+                patName.classList.remove('patient-hover-name');
+                patName.removeAttribute('data-patient-id');
+            }
         }
 
         // checkbox
@@ -1129,16 +1137,11 @@
     }
 
     // -------------------------------------------------------- header button
-    // Mount a "To-Do" trigger next to the other v11 header chips
-    // (cmdk, keyboard-help, palette). Hidden on mobile via CSS.
+    // Mount into #topActionsQuick (notes · to-do · ⌘K row on mobile).
     function ensureHeaderButton() {
         if (document.getElementById('todoDrawerToggle')) return;
-        var anchor =
-            document.getElementById('cmdkToggle') ||
-            document.getElementById('kbdHelpToggle') ||
-            document.getElementById('paletteToggle') ||
-            document.querySelector('label.switch[for="themeToggleInput"]');
-        if (!anchor || !anchor.parentNode) return;
+        var mount = document.getElementById('topActionsQuick');
+        if (!mount) return;
 
         var btn = document.createElement('button');
         btn.type = 'button';
@@ -1153,7 +1156,9 @@
             e.preventDefault();
             open();
         });
-        anchor.parentNode.insertBefore(btn, anchor);
+        var cmdk = document.getElementById('cmdkToggle');
+        if (cmdk) mount.insertBefore(btn, cmdk);
+        else mount.appendChild(btn);
 
         // Light count fetch on init so the badge reflects open-task count.
         refreshHeaderBadge();

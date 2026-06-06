@@ -519,7 +519,7 @@ body.cmdk-lock {
 /* -------- Header trigger button -------- */
 /* Sits next to the keyboard-help "?" + palette dot. Slightly wider than
    the round chips because it shows the shortcut hint ("⌘K" / "Ctrl+K").
-   Hidden below 768px — keyboard shortcut still works via Cmd+K. */
+   On mobile the hint is hidden and the chip shrinks to an icon-only disc. */
 .cmdk-toggle {
     height: 32px;
     padding: 0 10px 0 9px;
@@ -565,9 +565,4 @@ body.cmdk-lock {
 .dark .cmdk-toggle__hint { color: #cbd5e1; }
 [dir="rtl"] .cmdk-toggle { margin-right: 0; margin-left: 6px; }
 
-@media (max-width: 767.98px) {
-    .cmdk-toggle,
-    #cmdkToggle {
-        display: none !important;
-    }
-}
+/* Mobile chip sizing + hint visibility → header-chips.css */

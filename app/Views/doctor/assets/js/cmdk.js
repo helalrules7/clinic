@@ -569,15 +569,11 @@
     panel.addEventListener('click', function (ev) { ev.stopPropagation(); });
 
     // ----- Header trigger -----
-    // Mount a header button next to the keyboard-help "?" + palette toggle.
-    // Hidden on mobile via cmdk.css (matches the kbd-help / palette pattern).
+    // Mount into #topActionsQuick (notes · to-do · ⌘K row on mobile).
     function ensureHeaderButton() {
         if (document.getElementById('cmdkToggle')) return;
-        var anchor =
-            document.getElementById('kbdHelpToggle') ||
-            document.getElementById('paletteToggle') ||
-            document.querySelector('label.switch[for="themeToggleInput"]');
-        if (!anchor || !anchor.parentNode) return;
+        var mount = document.getElementById('topActionsQuick');
+        if (!mount) return;
 
         var btn = document.createElement('button');
         btn.type = 'button';
@@ -593,7 +589,7 @@
             e.preventDefault();
             open();
         });
-        anchor.parentNode.insertBefore(btn, anchor);
+        mount.appendChild(btn);
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', ensureHeaderButton, { once: true });

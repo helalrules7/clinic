@@ -7,6 +7,14 @@
    adapts to palette switches and dark/light theme automatically.
    ===================================================================== */
 
+/* Hover triggers stamped by patient-hover.js tagPatientHoverTriggers() */
+[data-patient-id].patient-hover-name,
+[data-patient-id].patient-name-link,
+[data-patient-id].appt-name,
+h3.patient-name[data-patient-id] {
+    cursor: pointer;
+}
+
 .patient-card {
     /* Local tokens. The avatar custom props (--pt-bg, --pt-fg, --pt-color)
        are injected by patient-hover.js. */
@@ -37,8 +45,8 @@
     box-shadow: var(--pc-shadow);
     -webkit-backdrop-filter: blur(20px) saturate(160%);
     backdrop-filter: blur(20px) saturate(160%);
-    font-size: 0.875rem;
-    line-height: 1.4;
+    font-size: 0.8125rem;
+    line-height: 1.38;
     pointer-events: auto;
 
     /* Hidden state — show class triggers the transition. */
@@ -88,14 +96,14 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: var(--pt-bg, color-mix(in srgb, var(--pc-accent) 14%, transparent));
     color: var(--pt-fg, var(--pc-text));
     border: 1px solid color-mix(in srgb, var(--pt-color, var(--pc-accent)) 30%, transparent);
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     letter-spacing: 0.02em;
     user-select: none;
 }
@@ -103,8 +111,8 @@
 .patient-card .pc-ident { min-width: 0; flex: 1 1 auto; }
 .patient-card .pc-name {
     margin: 0;
-    font-size: 0.98rem;
-    font-weight: 700;
+    font-size: 0.9rem;
+    font-weight: 600;
     color: var(--pc-text);
     line-height: 1.25;
     overflow: hidden;
@@ -114,7 +122,7 @@
 .patient-card .pc-meta {
     margin: 2px 0 0;
     color: var(--pc-muted);
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     line-height: 1.3;
     display: flex;
     flex-wrap: wrap;
@@ -139,15 +147,15 @@
 }
 .patient-card .pc-stat {
     display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: center;
-    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    align-items: start;
+    gap: 8px 10px;
     margin: 0;
 }
 .patient-card .pc-stat-label {
     margin: 0;
     color: var(--pc-muted);
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 500;
     display: inline-flex;
     align-items: center;
@@ -155,19 +163,20 @@
     min-width: 0;
 }
 .patient-card .pc-stat-label i {
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     color: var(--pc-accent);
     flex: 0 0 auto;
 }
 .patient-card .pc-stat-value {
     margin: 0;
     color: var(--pc-text);
-    font-size: 0.82rem;
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 500;
     text-align: right;
+    line-height: 1.35;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
     min-width: 0;
 }
 
@@ -229,7 +238,7 @@
     background: color-mix(in srgb, var(--pc-accent) 8%, transparent);
     border: 1px solid color-mix(in srgb, var(--pc-accent) 22%, transparent);
     border-radius: var(--pc-radius-sm);
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     font-weight: 600;
     text-decoration: none;
     transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease;

@@ -52,7 +52,6 @@ class SecretaryController
         echo $this->view->render('layouts/secretary_main', [
             'title' => 'عيادة رؤية - لوحة تحكم السكرتارية',
             'pageTitle' => 'لوحة التحكم',
-            'pageSubtitle' => 'مرحباً بعودتك، ' . $user['name'],
             'content' => $content,
             'viewHelper' => $this->view
         ]);
