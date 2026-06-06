@@ -22,6 +22,7 @@ use App\Services\MacularThicknessTrendAnalyzerService;
 use App\Services\CataractSurgeryReadinessService;
 use App\Services\PostOperativeOutcomeAnalyzerService;
 use App\Services\ClinicalDataParserService;
+use App\Services\PatientMedicalRecordService;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Common\Entity\Row;
 
@@ -6234,6 +6235,16 @@ class ApiController
 
     public function checkExportAccess($patientId)
     {
+        $this->respondMedicalRecordAccessCheck($patientId);
+    }
+
+    public function checkMedicalRecordAccess($patientId)
+    {
+        $this->respondMedicalRecordAccessCheck($patientId);
+    }
+
+    private function respondMedicalRecordAccessCheck($patientId): void
+    {
         try {
             if (!$this->auth->check()) {
                 http_response_code(401);
@@ -6246,23 +6257,60 @@ class ApiController
                 exit;
             }
 
-            // Check if patient exists
             $stmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
             $stmt->execute([$patientId]);
-            $patient = $stmt->fetch();
-
-            if (!$patient) {
+            if (!$stmt->fetch()) {
                 http_response_code(404);
                 exit;
             }
 
-            // If we reach here, access is allowed
             http_response_code(200);
             exit;
-
         } catch (\Exception $e) {
             http_response_code(500);
             exit;
+        }
+    }
+
+    public function getPatientMedicalRecord($patientId)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['success' => false, 'error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                return $this->jsonResponse(['success' => false, 'error' => 'Permission denied'], 403);
+            }
+
+            $patientId = (int) $patientId;
+            $stmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
+            $stmt->execute([$patientId]);
+            if (!$stmt->fetch()) {
+                return $this->jsonResponse(['success' => false, 'error' => 'Patient not found'], 404);
+            }
+
+            $service = new PatientMedicalRecordService($this->pdo);
+            $record = $service->aggregate($patientId, [
+                'id' => $user['id'] ?? null,
+                'name' => $user['name'] ?? null,
+                'role' => $user['role'] ?? null,
+            ]);
+
+            if (!$record) {
+                return $this->jsonResponse(['success' => false, 'error' => 'Patient not found'], 404);
+            }
+
+            return $this->jsonResponse([
+                'success' => true,
+                'data' => $record,
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse([
+                'success' => false,
+                'error' => 'Internal server error: ' . $e->getMessage(),
+            ], 500);
         }
     }
 

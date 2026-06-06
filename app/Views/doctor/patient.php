@@ -189,8 +189,8 @@
                             onclick="exportPatientData()"
                             data-bs-toggle="tooltip"
                             data-bs-placement="bottom"
-                            data-bs-title="Export patient data to file">
-                        <i class="bi bi-download me-2"></i>Export
+                            data-bs-title="Export complete medical record as PDF">
+                        <i class="bi bi-file-earmark-pdf me-2"></i>Export PDF
                     </button>
                     <button class="btn btn-violet"
                             onclick="autoPlacePatientOnBoard(<?= (int)$patient['id'] ?>, this)"
@@ -2121,6 +2121,10 @@ window.PATIENT_CONFIG = {
     latest_attachment_id: <?= isset($patient['latest_attachment_id']) && $patient['latest_attachment_id'] ? (int)$patient['latest_attachment_id'] : 'null' ?>,
 };
 </script>
+<link rel="preload" href="/assets/fonts/Amiri-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="/app/Views/doctor/assets/js/patient-medical-record-pdf.js?v=<?= file_exists(__DIR__ . '/assets/js/patient-medical-record-pdf.js') ? filemtime(__DIR__ . '/assets/js/patient-medical-record-pdf.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/patients.js?v=<?= file_exists(__DIR__ . '/assets/js/patients.js') ? filemtime(__DIR__ . '/assets/js/patients.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/patient.js?v=<?= file_exists(__DIR__ . '/assets/js/patient.js') ? filemtime(__DIR__ . '/assets/js/patient.js') : time() ?>"></script>
 <link rel="stylesheet" href="/app/Views/doctor/assets/css/ai-chat-widget.css?v=<?= file_exists(__DIR__ . '/assets/css/ai-chat-widget.css') ? filemtime(__DIR__ . '/assets/css/ai-chat-widget.css') : time() ?>">

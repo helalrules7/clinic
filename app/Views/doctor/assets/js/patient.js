@@ -85,13 +85,15 @@ function printPatientSummary() {
 }
 
 function exportPatientData() {
-    // Get patient ID from URL
     const patientId = window.location.pathname.split('/').pop();
-    
-    // Show loading notification
-    showNotification('Preparing patient data export...', 'info');
-    
-    // Create a temporary loading overlay
+
+    if (typeof window.exportPatientMedicalRecordPDF !== 'function') {
+        showNotification('PDF export module not loaded. Please refresh the page.', 'error');
+        return;
+    }
+
+    showNotification('Preparing medical record PDF…', 'info');
+
     const loadingOverlay = document.createElement('div');
     loadingOverlay.id = 'exportLoadingOverlay';
     loadingOverlay.style.cssText = `
@@ -100,130 +102,73 @@ function exportPatientData() {
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: rgba(0, 0, 0, 0.55);
         display: flex;
         justify-content: center;
         align-items: center;
         z-index: 9999;
     `;
-    
+
     const loadingContent = document.createElement('div');
     loadingContent.style.cssText = `
         background: white;
-        padding: 30px;
-        border-radius: 8px;
+        padding: 30px 36px;
+        border-radius: 12px;
         text-align: center;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+        max-width: 360px;
     `;
-    
+
     loadingContent.innerHTML = `
         <div class="spinner-border text-primary mb-3" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
-        <h5>Exporting Patient Data</h5>
-        <p class="text-muted mb-0">Generating Word document with all patient information...</p>
+        <h5 class="mb-2">Exporting Medical Record</h5>
+        <p class="text-muted mb-0 pmr-export-status">Checking access…</p>
     `;
-    
+
     loadingOverlay.appendChild(loadingContent);
     document.body.appendChild(loadingOverlay);
-    
-    // First, test if the user is authenticated by making a fetch request
-    fetch(`/api/patients/${patientId}/export`, {
-        method: 'HEAD', // Use HEAD to test without downloading
-        credentials: 'same-origin' // Include cookies
+
+    fetch(`/api/patients/${patientId}/medical-record`, {
+        method: 'HEAD',
+        credentials: 'same-origin'
     })
     .then(response => {
         if (response.status === 401 || response.status === 403) {
-            // User not authenticated or not authorized
             document.body.removeChild(loadingOverlay);
-            showNotification('You must be logged in to export patient data. Please refresh the page and try again.', 'warning');
-            return;
+            showNotification('You must be logged in as a doctor or admin to export.', 'warning');
+            return null;
         }
-        
-        if (!response.ok && response.status !== 200) {
-            // Other error
+        if (!response.ok) {
             document.body.removeChild(loadingOverlay);
-            showNotification('Error accessing export function. Please try again.', 'error');
-            return;
+            showNotification('Error accessing export. Please try again.', 'error');
+            return null;
         }
-        
-        // User is authenticated, proceed with download
-        downloadPatientData(patientId, loadingOverlay);
+        return window.exportPatientMedicalRecordPDF(patientId, loadingOverlay);
+    })
+    .then(result => {
+        if (!result) return;
+        if (document.body.contains(loadingOverlay)) {
+            document.body.removeChild(loadingOverlay);
+        }
+        const msg = result.parts > 1
+            ? `Medical record exported in ${result.parts} PDF parts. Check your downloads folder.`
+            : 'Medical record PDF exported successfully.';
+        showNotification(msg, 'success');
     })
     .catch(error => {
-        console.error('Error testing export access:', error);
-        document.body.removeChild(loadingOverlay);
-        showNotification('Network error. Please check your connection and try again.', 'error');
+        console.error('PDF export error:', error);
+        if (document.body.contains(loadingOverlay)) {
+            document.body.removeChild(loadingOverlay);
+        }
+        showNotification(error.message || 'PDF export failed.', 'error');
     });
 }
 
-function downloadPatientData(patientId, loadingOverlay) {
-    // Create download link and trigger export
-    const downloadLink = document.createElement('a');
-    downloadLink.href = `/api/patients/${patientId}/export`;
-    downloadLink.download = `Patient_${patientId}_${new Date().toISOString().split('T')[0]}.docx`;
-    downloadLink.style.display = 'none';
-    document.body.appendChild(downloadLink);
-    
-    // Handle download completion/error
-    let downloadCompleted = false;
-    
-    // Set a timeout to remove loading overlay in case of issues
-    const timeoutId = setTimeout(() => {
-        if (!downloadCompleted) {
-            if (document.body.contains(loadingOverlay)) {
-                document.body.removeChild(loadingOverlay);
-            }
-            downloadCompleted = true;
-            showNotification('Export completed! Check your downloads folder.', 'success');
-        }
-    }, 8000); // 8 seconds timeout (increased for larger files)
-    
-    // Listen for window focus to detect download completion
-    const handleWindowFocus = () => {
-        if (!downloadCompleted) {
-            setTimeout(() => {
-                if (!downloadCompleted) {
-                    if (document.body.contains(loadingOverlay)) {
-                        document.body.removeChild(loadingOverlay);
-                    }
-                    downloadCompleted = true;
-                    clearTimeout(timeoutId);
-                    showNotification('Export completed! Check your downloads folder.', 'success');
-                }
-            }, 1500);
-        }
-        window.removeEventListener('focus', handleWindowFocus);
-    };
-    
-    window.addEventListener('focus', handleWindowFocus);
-    
-    // Trigger the download
-    try {
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-        
-        // For immediate feedback
-        setTimeout(() => {
-            if (!downloadCompleted) {
-                showNotification('Download started. Generating your document...', 'info');
-            }
-        }, 1000);
-        
-    } catch (error) {
-        console.error('Error triggering download:', error);
-        if (!downloadCompleted) {
-            if (document.body.contains(loadingOverlay)) {
-                document.body.removeChild(loadingOverlay);
-            }
-            downloadCompleted = true;
-            clearTimeout(timeoutId);
-        }
-        showNotification('Error starting export. Please try again.', 'error');
-        if (document.body.contains(downloadLink)) {
-            document.body.removeChild(downloadLink);
-        }
-    }
+/* Legacy Word download — retired v11 §2.17 */
+function downloadPatientData() {
+    exportPatientData();
 }
 
 function editPatient(patientId) {

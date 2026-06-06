@@ -390,6 +390,8 @@ try {
     $router->get('/api/patients/{id}/files', 'ApiController@getPatientFiles');
     $router->get('/api/patients/{id}/timeline', 'ApiController@getPatientTimeline');
     $router->get('/api/patients/{id}/appointments/check-active', 'ApiController@checkPatientActiveAppointments');
+    $router->get('/api/patients/{id}/medical-record', 'ApiController@getPatientMedicalRecord');
+    $router->head('/api/patients/{id}/medical-record', 'ApiController@checkMedicalRecordAccess');
     $router->get('/api/patients/{id}/export', 'ApiController@exportPatientData');
     $router->head('/api/patients/{id}/export', 'ApiController@checkExportAccess');
     $router->get('/api/patients/{id}', 'ApiController@getPatient');
