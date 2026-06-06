@@ -126,6 +126,70 @@
         30%, 50% { opacity: 1; transform: translateY(-50%) scale(1); }
         58%, 100% { opacity: 0; transform: translateY(-50%) scale(.6); }
     }
+    /* Prefetch: mockup stays in fixed stage; enable steps live BELOW it */
+    .wn-slide-prefetch .wn-prefetch-stage {
+        height: 128px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0;
+    }
+    .wn-slide-prefetch .wn-prefetch-scene { max-width: 300px; }
+    .wn-slide-prefetch .wn-prefetch-nav { padding: .5rem .6rem; gap: .3rem; }
+    .wn-slide-prefetch .wn-prefetch-link {
+        padding: .3rem .5rem;
+        font-size: .68rem;
+    }
+    .wn-slide-prefetch .wn-prefetch-tips {
+        width: 100%;
+        max-width: 100%;
+        margin: .55rem auto 0;
+        list-style: none;
+        padding: .45rem .55rem;
+        background: var(--wn-bg-inset);
+        border: 1px solid var(--wn-border);
+        border-radius: 10px;
+        text-align: left;
+        font-size: .62rem;
+        line-height: 1.35;
+        color: var(--wn-muted);
+    }
+    .wn-slide-prefetch .wn-prefetch-tips li {
+        display: flex;
+        align-items: flex-start;
+        gap: .4rem;
+        padding: .15rem 0;
+    }
+    .wn-slide-prefetch .wn-prefetch-tips li i {
+        color: #818cf8;
+        font-size: .72rem;
+        flex-shrink: 0;
+        margin-top: .05rem;
+    }
+    .wn-slide-prefetch .wn-prefetch-tips strong { color: var(--wn-text); font-weight: 700; }
+    .wn-slide-prefetch .wn-prefetch-tips code {
+        font-size: .88em;
+        color: var(--wn-accent-soft);
+        background: rgba(99,102,241,.1);
+        padding: .02rem .2rem;
+        border-radius: 3px;
+        word-break: break-all;
+    }
+    .wn-slide-prefetch .wn-prefetch-tips em {
+        color: var(--wn-accent-soft);
+        font-style: normal;
+        font-weight: 600;
+    }
+    .wn-slide-prefetch h3 { margin-top: .65rem; font-size: 1.1rem; }
+    .wn-slide-prefetch p { font-size: .82rem; max-width: 100%; }
+    @media (max-width: 575.98px) {
+        .wn-slide-prefetch .wn-prefetch-stage { height: 112px; }
+        .wn-slide-prefetch .wn-prefetch-link { font-size: .6rem; padding: .25rem .4rem; }
+        .wn-slide-prefetch .wn-prefetch-tips { font-size: .56rem; line-height: 1.3; padding: .4rem .45rem; }
+        .wn-slide-prefetch .wn-prefetch-tips li i { font-size: .65rem; }
+        .wn-slide-prefetch h3 { font-size: 1rem; margin-top: .5rem; }
+        .wn-slide-prefetch p { font-size: .76rem; }
+    }
 
     /* ---- change-list slide (static, no animation) ---- */
     /* Tight grid sized to fit 12 items (6 rows × 2 cols) inside the 182px
@@ -170,8 +234,14 @@
     .wn-foot-end.show { display:flex; }
 
     @media (max-width: 575.98px) {
+        #whatsNewV9Modal .modal-body {
+            max-height: calc(100dvh - 9.5rem);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
         #whatsNewV9Modal .wn-slide { padding: 1.2rem 1.1rem 1rem; }
-        #whatsNewV9Modal .wn-stage { height: 178px; }
+        /* Auto-height slides opt out of the global short stage */
+        #whatsNewV9Modal .wn-stage:not(.wn-fixes-stage):not(.wn-prefetch-stage) { height: 178px; }
     }
 
     /* ====================================================================== */
@@ -2135,11 +2205,65 @@
     @keyframes wn-drugs-bar{0%,18%{transform:scaleY(.3);opacity:.4;}28%,78%{transform:scaleY(1);opacity:1;}88%,100%{transform:scaleY(.3);opacity:.4;}}
 
     /* ===== wn-fixes — Bug fixes & polish (static list) ===== */
-    .wn-fix-list { position:absolute; inset:12px; background:var(--wn-bg-card); border-radius:10px; border:1px solid var(--wn-border); padding:8px 10px; text-align:left; font-size:.72rem; color:var(--wn-text); list-style:none; margin:0; display:grid; grid-template-columns:1fr 1fr; gap:0 10px; align-content:center; overflow:hidden; }
-    .wn-fix-list li { display:flex; align-items:flex-start; gap:6px; padding:2px 0; line-height:1.2; min-width:0; }
-    .wn-fix-list li i { color:#10b981; font-size:.85rem; flex-shrink:0; margin-top:1px; }
-    .wn-fix-list li span { overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; min-width:0; font-size:.7rem; }
-    @media (max-width:575.98px){ .wn-fix-list { font-size:.64rem; inset:10px; padding:6px 8px; gap:0 6px; } .wn-fix-list li span { font-size:.62rem; } }
+    .wn-fixes-stage {
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+        margin-top: .75rem;
+    }
+    .wn-slide-fixes h3 { margin-top: .6rem; font-size: 1.1rem; }
+    .wn-slide-fixes p { font-size: .82rem; max-width: 100%; }
+    .wn-fix-list {
+        position: relative;
+        inset: auto;
+        background: var(--wn-bg-card);
+        border-radius: 10px;
+        border: 1px solid var(--wn-border);
+        padding: 6px 8px;
+        text-align: left;
+        font-size: .58rem;
+        color: var(--wn-text);
+        list-style: none;
+        margin: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 8px;
+        align-content: start;
+        overflow: visible;
+    }
+    .wn-fix-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 4px;
+        padding: 1px 0;
+        line-height: 1.12;
+        min-width: 0;
+    }
+    .wn-fix-list li i {
+        color: #10b981;
+        font-size: .62rem;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+    .wn-fix-list li span {
+        min-width: 0;
+        font-size: .54rem;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+        display: block;
+    }
+    @media (max-width: 575.98px) {
+        .wn-fix-list {
+            padding: 5px 6px;
+            gap: 0 5px;
+            grid-template-columns: 1fr 1fr;
+        }
+        .wn-fix-list li span { font-size: .48rem; line-height: 1.1; }
+        .wn-fix-list li i { font-size: .56rem; }
+        .wn-slide-fixes h3 { font-size: 1rem; }
+        .wn-slide-fixes p { font-size: .76rem; }
+    }
 </style>
 
 
@@ -2197,9 +2321,9 @@
             </div>
 
             <!-- v11.0.0 #2 — wn-prefetch (Speculation Rules — safe navigation prefetch) -->
-            <div class="wn-slide">
+            <div class="wn-slide wn-slide-prefetch">
               <span class="wn-kicker">Performance</span>
-              <div class="wn-stage">
+              <div class="wn-stage wn-prefetch-stage">
                 <div class="wn-prefetch-scene">
                   <span class="wn-prefetch-orb" aria-hidden="true"></span>
                   <div class="wn-prefetch-nav" aria-hidden="true">
@@ -2213,8 +2337,14 @@
                   </div>
                 </div>
               </div>
+              <ul class="wn-prefetch-tips" aria-label="How to enable prefetch in your browser">
+                <li><i class="bi bi-laptop" aria-hidden="true"></i><span><strong>Desktop:</strong> <code>chrome://settings/performance</code> → <em>Preload pages</em> ON → restart browser. Optional: <code>chrome://flags/#prerender2</code></span></li>
+                <li><i class="bi bi-phone" aria-hidden="true"></i><span><strong>Android:</strong> Chrome ⋮ → Settings → Privacy → <em>Preload pages</em> ON. Turn off battery/data saver.</span></li>
+                <li><i class="bi bi-apple" aria-hidden="true"></i><span><strong>iPhone/iPad:</strong> Chrome 109+; Low Power Mode OFF. Safari support is limited.</span></li>
+                <li><i class="bi bi-shield-check" aria-hidden="true"></i><span><strong>Tip:</strong> uBlock and similar extensions block prefetch — test in a private window first.</span></li>
+              </ul>
               <h3>Faster navigation — safely</h3>
-              <p>Browser-level <strong>prefetch</strong> warms allowlisted pages (dashboard, lists, read-only views) when you hover sidebar links — never APIs, exports, prints, or edit forms.</p>
+              <p>Browser-level <strong>prefetch</strong> warms allowlisted pages when you hover sidebar links — never APIs, exports, prints, or edit forms.</p>
             </div>
 
             <!-- v11.0.0 #3 — change-list overview (static) -->
@@ -2883,9 +3013,9 @@
             </div>
 
             <!-- v11.0.0 — wn-fixes (Bug fixes & polish) -->
-            <div class="wn-slide">
+            <div class="wn-slide wn-slide-fixes">
               <span class="wn-kicker">Fixes</span>
-              <div class="wn-stage">
+              <div class="wn-stage wn-fixes-stage">
                 <ul class="wn-fix-list">
                   <li><i class="bi bi-check-circle-fill"></i><span>Mobile header: two-row cluster + dashboard subtitle removed</span></li>
                   <li><i class="bi bi-check-circle-fill"></i><span>Header chips unified — theme-aware glass on every control</span></li>

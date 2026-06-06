@@ -586,6 +586,12 @@
             opt.textContent = l.name || 'List';
             sel.appendChild(opt);
         });
+        // todoFmList starts empty in markup; build/sync custom menu once lists load
+        if (typeof ensureCustomSelectSynced === 'function') {
+            ensureCustomSelectSynced(sel);
+        } else if (typeof convertSelectsInContainer === 'function') {
+            convertSelectsInContainer(sel.parentElement);
+        }
     }
 
     function openFullModal(task) {

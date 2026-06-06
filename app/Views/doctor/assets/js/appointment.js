@@ -408,6 +408,10 @@ async function applyDrugTemplateToForm(drugName, form) {
 
 // Show prescription suggestions modal based on diagnosis
 async function showPrescriptionSuggestions(appointmentId, diagnosis, complaint) {
+    const dx = (diagnosis || '').trim();
+    const cc = (complaint || '').trim();
+    const hasDiagnosis = dx.length > 0;
+
     const modalHtml = `
         <div class="modal fade" id="prescriptionSuggestionsModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
@@ -419,9 +423,13 @@ async function showPrescriptionSuggestions(appointmentId, diagnosis, complaint) 
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="mb-3">
-                            <p class="mb-1"><strong>Diagnosis:</strong> <span id="suggestionDiagnosis">${escapeHtml(diagnosis)}</span></p>
-                            ${complaint ? `<p class="mb-0 text-muted"><small><strong>Complaint:</strong> ${escapeHtml(complaint)}</small></p>` : ''}
+                        <div class="mb-3" id="suggestionContext">
+                            ${hasDiagnosis
+                                ? `<p class="mb-1"><strong>Diagnosis:</strong> <span id="suggestionDiagnosis">${escapeHtml(dx)}</span></p>
+                                   ${cc ? `<p class="mb-0 text-muted"><small><strong>Complaint:</strong> ${escapeHtml(cc)}</small></p>` : ''}`
+                                : `<div class="alert alert-info mb-0 py-2">
+                                       <i class="bi bi-info-circle me-2"></i>No diagnosis yet — showing your <strong>most-used medications</strong>. Add consultation notes with a diagnosis for case-matched suggestions.
+                                   </div>`}
                         </div>
                         <div id="prescriptionSuggestionsLoading" class="text-center py-4">
                             <div class="spinner-border text-primary" role="status">
@@ -439,7 +447,7 @@ async function showPrescriptionSuggestions(appointmentId, diagnosis, complaint) 
                             </div>
                             <div id="prescriptionSuggestionsList" class="list-group"></div>
                             <div id="prescriptionSuggestionsEmpty" class="alert alert-info mt-3" style="display: none;">
-                                <i class="bi bi-info-circle me-2"></i>No prescription suggestions found for this diagnosis.
+                                <i class="bi bi-info-circle me-2"></i>No prescription suggestions found.
                             </div>
                         </div>
                         <div id="prescriptionSuggestionsError" class="alert alert-danger" style="display: none;">
@@ -465,26 +473,53 @@ async function showPrescriptionSuggestions(appointmentId, diagnosis, complaint) 
     // Store selected prescriptions
     window.selectedPrescriptions = [];
     
-    // Fetch suggestions
-    try {
-        const params = new URLSearchParams({
-            diagnosis: diagnosis,
-            complaint: complaint || ''
-        });
-        const response = await fetch(`/api/prescriptions/suggestions?${params}`);
-        const data = await response.json();
-        
+    const hideLoading = () => {
         document.getElementById('prescriptionSuggestionsLoading').style.display = 'none';
-        
-        if (data.ok && data.data && data.data.length > 0) {
-            displayPrescriptionSuggestions(data.data);
-            document.getElementById('prescriptionSuggestionsContent').style.display = 'block';
+    };
+    const showContent = () => {
+        document.getElementById('prescriptionSuggestionsContent').style.display = 'block';
+    };
+    const showEmpty = () => {
+        document.getElementById('prescriptionSuggestionsEmpty').style.display = 'block';
+        showContent();
+    };
+
+    // Fetch suggestions — diagnosis-based when available, else most-used drugs
+    try {
+        let suggestions = [];
+
+        if (hasDiagnosis) {
+            const params = new URLSearchParams({ diagnosis: dx, complaint: cc });
+            const response = await fetch(`/api/prescriptions/suggestions?${params}`);
+            const data = await response.json();
+            if (data.ok && data.data && data.data.length > 0) {
+                suggestions = data.data;
+            }
+        }
+
+        if (suggestions.length === 0) {
+            const fallback = await fetch('/api/getMostUsedDrugs?limit=10');
+            const fallbackData = await fallback.json();
+            if (fallbackData.drugs && fallbackData.drugs.length > 0) {
+                suggestions = fallbackData.drugs.map(drug => ({
+                    drug_name: drug.drug_name,
+                    notes: [drug.common_doses, drug.common_frequencies].filter(Boolean).join(' · ') || '',
+                    route: 'Topical',
+                    count: drug.usage_count
+                }));
+            }
+        }
+
+        hideLoading();
+
+        if (suggestions.length > 0) {
+            displayPrescriptionSuggestions(suggestions);
+            showContent();
         } else {
-            document.getElementById('prescriptionSuggestionsEmpty').style.display = 'block';
-            document.getElementById('prescriptionSuggestionsContent').style.display = 'block';
+            showEmpty();
         }
     } catch (error) {
-        document.getElementById('prescriptionSuggestionsLoading').style.display = 'none';
+        hideLoading();
         document.getElementById('prescriptionSuggestionsError').style.display = 'block';
         document.getElementById('suggestionsErrorMessage').textContent = 'Failed to load suggestions: ' + error.message;
     }
@@ -6968,7 +7003,7 @@ function escapeHtml(text) {
 
 // Update print buttons in headers and action area
 function updateMedicationsPrintButton(hasMedications) {
-    const medicationsCard = document.querySelector('.card.mb-4');
+    const medicationsCard = document.getElementById('medicationsCard');
     if (!medicationsCard) return;
     
     const header = medicationsCard.querySelector('.card-header');
@@ -7174,19 +7209,78 @@ function updateMoreActionsPopover() {
 // Custom Select Menu Functions
 // =========================================
 
+function getCustomSelectMenuEl(field) {
+    return field ? field.querySelector('menu.custom-select-menu, menu') : null;
+}
+
+function appendOptionsToCustomMenu(menu, selectElement, iconClass) {
+    const selectedValue = selectElement.value;
+    menu.innerHTML = '';
+    Array.from(selectElement.options).forEach(option => {
+        const li = document.createElement('li');
+        li.setAttribute('data-option', option.value);
+        li.setAttribute('tabindex', '0');
+        li.setAttribute('role', 'button');
+        if (option.value === selectedValue) {
+            li.classList.add('selected');
+        }
+        const icon = document.createElement('i');
+        icon.className = `${iconClass} fs-5`;
+        li.appendChild(icon);
+        const h3 = document.createElement('h3');
+        h3.textContent = option.textContent;
+        li.appendChild(h3);
+        menu.appendChild(li);
+    });
+}
+
+// Rebuild <menu> items when a native <select> is filled after first paint
+// (e.g. todoFmList populated via API). Safe to call repeatedly.
+function ensureCustomSelectSynced(selectElement, iconClass) {
+    if (!selectElement || selectElement.tagName !== 'SELECT') {
+        return null;
+    }
+    if (selectElement.options.length === 0) {
+        return null;
+    }
+    iconClass = iconClass || getIconForSelect(selectElement);
+    const existingField = selectElement.closest('.field.menu');
+    if (existingField) {
+        const menu = getCustomSelectMenuEl(existingField);
+        const button = existingField.querySelector('.custom-select-toggle');
+        if (menu) {
+            appendOptionsToCustomMenu(menu, selectElement, iconClass);
+            if (button) {
+                const selectedOption = selectElement.options[selectElement.selectedIndex];
+                button.textContent = selectedOption
+                    ? selectedOption.textContent
+                    : 'Select an option';
+            }
+            existingField.removeAttribute('data-initialized');
+            initCustomSelects();
+        }
+        return existingField;
+    }
+    return convertSelectToCustomMenu(selectElement, iconClass);
+}
+
 // Function to convert a select element to custom menu
 function convertSelectToCustomMenu(selectElement, iconClass = 'bi-list') {
     if (!selectElement || selectElement.tagName !== 'SELECT') {
         return null;
     }
-    
-    // Check if already converted
-    if (selectElement.closest('.field.menu')) {
-        return selectElement.closest('.field.menu');
-    }
-    
-    // Get select options and selected value
+
     const options = Array.from(selectElement.options);
+    if (options.length === 0) {
+        // Defer until options exist (async lists, lazy modals, etc.)
+        return null;
+    }
+
+    // Already wrapped — sync menu if options were added later
+    if (selectElement.closest('.field.menu')) {
+        return ensureCustomSelectSynced(selectElement, iconClass);
+    }
+
     const selectedValue = selectElement.value;
     const selectedOption = selectElement.options[selectElement.selectedIndex];
     const selectedText = selectedOption ? selectedOption.textContent : (options[0] ? options[0].textContent : 'Select an option');
@@ -7213,43 +7307,21 @@ function convertSelectToCustomMenu(selectElement, iconClass = 'bi-list') {
     const menu = document.createElement('menu');
     menu.className = 'custom-select-menu';
     
-    // Create menu items with icons
-    options.forEach(option => {
-        const li = document.createElement('li');
-        li.setAttribute('data-option', option.value);
-        li.setAttribute('tabindex', '0');
-        li.setAttribute('role', 'button');
-        
-        if (option.value === selectedValue) {
-            li.classList.add('selected');
-        }
-        
-        // Add icon
-        const icon = document.createElement('i');
-        icon.className = `${iconClass} fs-5`;
-        li.appendChild(icon);
-        
-        // Add text
-        const h3 = document.createElement('h3');
-        h3.textContent = option.textContent;
-        li.appendChild(h3);
-        
-        menu.appendChild(li);
-    });
+    appendOptionsToCustomMenu(menu, selectElement, iconClass);
     
-    // Assemble structure
-    control.appendChild(selectElement);
+    // Remember where the native <select> lives before we relocate it.
+    const originalParent = selectElement.parentNode;
+
+    // Build wrapper first — do NOT nest select inside fieldMenu yet, or
+    // insertBefore(fieldMenu, select) throws HierarchyRequestError because
+    // the new node would contain its own insertion reference.
     control.appendChild(button);
     control.appendChild(menu);
     fieldMenu.appendChild(control);
-    
-    // Replace select with custom menu
-    selectElement.parentNode.insertBefore(fieldMenu, selectElement);
-    selectElement.parentNode.removeChild(selectElement);
-    
-    // Move select inside control
+
+    originalParent.insertBefore(fieldMenu, selectElement);
     control.insertBefore(selectElement, button);
-    
+
     return fieldMenu;
 }
 
@@ -7295,11 +7367,20 @@ function initCustomSelects() {
     customSelects.forEach(field => {
         const select = field.querySelector('select');
         const button = field.querySelector('.custom-select-toggle');
-        const menu = field.querySelector('menu');
+        const menu = getCustomSelectMenuEl(field);
         const options = menu ? menu.querySelectorAll('li') : [];
 
+        // Empty <select> or menu not built yet — wait for async population
+        if (select && select.options.length === 0) {
+            field.setAttribute('data-initialized', 'deferred-empty');
+            return;
+        }
+
         if (!select || !button || !menu || options.length === 0) {
-            console.warn('Missing elements for custom select initialization:', field);
+            // Pre-wired fields (e.g. reports #type) manage their own listeners
+            if (field.getAttribute('data-initialized') === 'dedicated-type') {
+                return;
+            }
             return;
         }
         
@@ -7497,24 +7578,25 @@ function convertSelectsInContainer(container) {
     
     const selects = container.querySelectorAll('select:not(.d-none)');
     selects.forEach(select => {
-        // Skip if already converted
-        if (select.closest('.field.menu')) return;
-        
-        const iconClass = getIconForSelect(select);
-        convertSelectToCustomMenu(select, iconClass);
+        if (select.closest('.field.menu[data-initialized="dedicated-type"]')) {
+            return;
+        }
+        if (select.options.length === 0) {
+            return;
+        }
+        if (select.closest('.field.menu')) {
+            ensureCustomSelectSynced(select, getIconForSelect(select));
+            return;
+        }
+        convertSelectToCustomMenu(select, getIconForSelect(select));
     });
-    
-    // Initialize custom selects
-    setTimeout(() => {
-        initCustomSelects();
-    }, 100);
+
+    initCustomSelects();
 }
 
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', function() {
-    // Convert existing selects
     convertSelectsInContainer(document.body);
-    initCustomSelects();
 });
 
 // Also initialize when modals are shown

@@ -790,7 +790,7 @@ if ($status === 'completed') {
     <div class="col-lg-4">
         
         <!-- Medication Prescriptions -->
-        <div class="card mb-4">
+        <div class="card mb-4" id="medicationsCard">
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
@@ -799,19 +799,16 @@ if ($status === 'completed') {
                     </h5>
                     <?php 
                     $latestNote = !empty($consultationNotes) ? $consultationNotes[0] : null;
-                    $hasDiagnosis = !empty($latestNote['diagnosis']);
                     ?>
-                    <div class="btn-group btn-group-sm" role="group">
+                    <div class="btn-group btn-group-sm" role="group" id="medicationsBtnGroup">
                         <?php if (!empty($medications)): ?>
                         <button class="btn btn-sm btn-warning" onclick="printPrescription(<?= $appointment['id'] ?>)" title="Print Prescription">
                             <i class="bi bi-printer"></i>
                         </button>
                         <?php endif; ?>
-                        <?php if ($hasDiagnosis): ?>
-                        <button class="btn btn-sm btn-info" onclick="showPrescriptionSuggestions(<?= (int) $appointment['id'] ?>, <?= htmlspecialchars(json_encode($latestNote['diagnosis'] ?? ''), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($latestNote['chief_complaint'] ?? ''), ENT_QUOTES) ?>)" title="Get prescription suggestions based on diagnosis">
+                        <button class="btn btn-sm btn-info" id="suggestMedicationsBtn" onclick="showPrescriptionSuggestions(<?= (int) $appointment['id'] ?>, <?= htmlspecialchars(json_encode($latestNote['diagnosis'] ?? ''), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($latestNote['chief_complaint'] ?? ''), ENT_QUOTES) ?>)" title="Suggest medications from similar cases or your most-used drugs">
                             <i class="bi bi-lightbulb me-1"></i>Suggest
                         </button>
-                        <?php endif; ?>
                         <button class="btn btn-sm btn-primary" onclick="addPrescription(<?= $appointment['id'] ?>)">
                             <i class="bi bi-plus me-1"></i>Add Medication
                         </button>
