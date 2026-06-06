@@ -72,6 +72,7 @@
     <link href="/app/Views/doctor/assets/css/focus-mode.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/focus-mode.css') ? filemtime(__DIR__ . '/../doctor/assets/css/focus-mode.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/theme-palette.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/theme-palette.css') ? filemtime(__DIR__ . '/../doctor/assets/css/theme-palette.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/celebration.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/celebration.css') ? filemtime(__DIR__ . '/../doctor/assets/css/celebration.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/image-viewer-modal.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/image-viewer-modal.css') ? filemtime(__DIR__ . '/../doctor/assets/css/image-viewer-modal.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/notes-drawer.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/notes-drawer.css') ? filemtime(__DIR__ . '/../doctor/assets/css/notes-drawer.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/layouts/header-chips.css?v=<?= file_exists(__DIR__ . '/header-chips.css') ? filemtime(__DIR__ . '/header-chips.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/layouts/global-search-panel.css?v=<?= file_exists(__DIR__ . '/global-search-panel.css') ? filemtime(__DIR__ . '/global-search-panel.css') : time() ?>" rel="stylesheet">
@@ -1127,6 +1128,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Shared modal kit: unified pointer-drag + center + showConfirm/AlertModal (after Bootstrap) -->
     <script src="/app/Views/layouts/modal-kit.js?v=<?= file_exists(__DIR__ . '/modal-kit.js') ? filemtime(__DIR__ . '/modal-kit.js') : time() ?>"></script>
+    <script src="/app/Views/doctor/assets/js/image-viewer-modal.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/image-viewer-modal.js') ? filemtime(__DIR__ . '/../doctor/assets/js/image-viewer-modal.js') : time() ?>"></script>
     <!-- Timepicker UI JS -->
     <script type="module">
         // Load TimepickerUI from local files

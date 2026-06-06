@@ -1691,44 +1691,22 @@ function viewPatientAttachment(attachmentId, filePath, fileExt, isAppointmentAtt
 }
 
 function showImageModal(imageUrl, attachmentId, isAppointmentAttachment = false) {
-    const modalHtml = `
-        <div class="modal fade" id="imageModal" tabindex="-1">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">View Image</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body text-center">
-                        <img src="${imageUrl}" class="img-fluid" style="max-height: 80vh;" alt="Patient Image">
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" onclick="downloadPatientAttachment(${attachmentId}, null, ${isAppointmentAttachment})">
-                            <i class="bi bi-download me-2"></i>Download
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modalElement = document.getElementById('imageModal');
-    const modal = new bootstrap.Modal(modalElement);
-    modal.show();
-    
-    // Apply glass style and draggable
-    setTimeout(function() {
-        applyGlassStyleToModal('imageModal');
-        if (typeof initializeDraggableModals === 'function') {
-            initializeDraggableModals();
+    if (!window.ImageViewerModal) return;
+    const footerHtml =
+        '<button type="button" class="btn btn-secondary iv-footer-btn" data-bs-dismiss="modal">Close</button>' +
+        '<button type="button" class="btn btn-primary iv-footer-btn" onclick="downloadPatientAttachment(' + attachmentId + ', null, ' + isAppointmentAttachment + ')">' +
+        '<i class="bi bi-download me-2"></i>Download</button>';
+    window.ImageViewerModal.show({
+        imageUrl: imageUrl,
+        footerHtml: footerHtml,
+        onShown: function () {
+            if (typeof applyGlassStyleToModal === 'function') {
+                applyGlassStyleToModal('imageModal');
+            }
+            if (typeof initializeDraggableModals === 'function') {
+                initializeDraggableModals();
+            }
         }
-    }, 50);
-    
-    // Clean up modal on hide
-    document.getElementById('imageModal').addEventListener('hidden.bs.modal', function() {
-        this.remove();
     });
 }
 

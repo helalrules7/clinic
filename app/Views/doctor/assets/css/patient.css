@@ -2707,38 +2707,86 @@ div.form-text {
    PATIENT — Actions row (single-row horizontal scroll on narrow viewports)
    Replaces the legacy .btn-group-responsive grid for the actions toolbar.
    ===================================================================== */
+/* Patient Actions — 2-column gradient grid (§3.51) */
 .patient-actions-row {
-    display: flex;
-    flex-wrap: nowrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
     align-items: stretch;
-    gap: 0.5rem;
-    /* Horizontal scroll on narrow viewports. overflow-x: auto forces
-       overflow-y to also clip per CSS spec, which would chop the hover
-       glow off buttons — so we add generous vertical padding to absorb
-       the lift + shadow, and pull the row back into place with negative
-       margins so the visual top/bottom of the card-body stays the same. */
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: thin;
-    -webkit-overflow-scrolling: touch;
-    padding: 10px 2px 14px;
-    margin: -10px -2px -10px;
-}
-.patient-actions-row::-webkit-scrollbar { height: 6px; }
-.patient-actions-row::-webkit-scrollbar-thumb {
-    background: color-mix(in srgb, var(--accent, #4F46E5) 35%, transparent);
-    border-radius: 3px;
-}
-.patient-actions-row .btn {
-    flex: 0 0 auto;
-    white-space: nowrap;
-    font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-    padding: 0.45rem 0.95rem;
 }
 
-/* Desktop: contact card narrower; action buttons wrap on two rows */
+.patient-actions-row .pa-action-btn {
+    width: 100%;
+    border: none;
+    border-radius: 10px;
+    padding: 0.55rem 0.65rem;
+    font-weight: 600;
+    font-size: 0.78rem;
+    line-height: 1.25;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.18);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.patient-actions-row .pa-action-btn .bi {
+    font-size: 1em;
+    flex-shrink: 0;
+}
+
+.patient-actions-row .pa-action-btn:hover,
+.patient-actions-row .pa-action-btn:focus {
+    color: #fff;
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+}
+
+.patient-actions-row .pa-action-btn:active {
+    transform: translateY(0);
+    filter: brightness(0.96);
+}
+
+.patient-actions-row .pa-action-btn--book {
+    background: linear-gradient(135deg, #4338ca 0%, #6366f1 55%, #818cf8 100%);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+}
+.patient-actions-row .pa-action-btn--history {
+    background: linear-gradient(135deg, #b45309 0%, #f59e0b 50%, #fbbf24 100%);
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.32);
+}
+.patient-actions-row .pa-action-btn--print {
+    background: linear-gradient(135deg, #047857 0%, #10b981 55%, #34d399 100%);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.32);
+}
+.patient-actions-row .pa-action-btn--export {
+    background: linear-gradient(135deg, #0e7490 0%, #06b6d4 55%, #22d3ee 100%);
+    box-shadow: 0 4px 14px rgba(6, 182, 212, 0.32);
+}
+.patient-actions-row .pa-action-btn--board {
+    background: linear-gradient(135deg, #6366f1 0%, #a855f7 55%, #ec4899 100%);
+    box-shadow: 0 4px 14px rgba(168, 85, 247, 0.35);
+}
+.patient-actions-row .pa-action-btn--edit {
+    background: linear-gradient(135deg, #334155 0%, #64748b 55%, #94a3b8 100%);
+    box-shadow: 0 4px 14px rgba(100, 116, 139, 0.28);
+}
+.patient-actions-row .pa-action-btn--iop {
+    background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 55%, #60a5fa 100%);
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.32);
+}
+.patient-actions-row .pa-action-btn--alert {
+    background: linear-gradient(135deg, #ca8a04 0%, #f59e0b 45%, #fb923c 100%);
+    box-shadow: 0 4px 14px rgba(251, 146, 60, 0.32);
+}
+.patient-actions-row .pa-action-btn--clinical {
+    background: linear-gradient(135deg, #0f766e 0%, #14b8a6 55%, #2dd4bf 100%);
+    box-shadow: 0 4px 14px rgba(20, 184, 166, 0.32);
+}
+
 @media (min-width: 992px) {
     .patient-info-actions-row .patient-contact-col {
         flex: 0 0 38%;
@@ -2748,36 +2796,10 @@ div.form-text {
         flex: 0 0 62%;
         max-width: 62%;
     }
-    .patient-info-actions-row .patient-actions-col .patient-actions-row {
-        flex-wrap: wrap;
-        overflow-x: visible;
-        overflow-y: visible;
-        padding: 0;
-        margin: 0;
-        align-content: flex-start;
+    .patient-actions-row .pa-action-btn {
+        font-size: 0.82rem;
+        padding: 0.58rem 0.75rem;
     }
-}
-
-/* Violet variant for the Auto-place button — solid indigo→fuchsia gradient
-   so it visually pops against the indigo `btn-primary` (Book / IOP Trend)
-   while matching the SOLID style of every other button in this row. Icon
-   stays white. */
-.btn.btn-violet {
-    background: linear-gradient(135deg, #6366f1 0%, #a855f7 60%, #d946ef 100%);
-    border-color: transparent;
-    color: #fff;
-    box-shadow: 0 2px 10px rgba(168, 85, 247, 0.28);
-}
-.btn.btn-violet:hover,
-.btn.btn-violet:focus {
-    background: linear-gradient(135deg, #4f46e5 0%, #9333ea 60%, #c026d3 100%);
-    color: #fff;
-    box-shadow: 0 4px 16px rgba(168, 85, 247, 0.42);
-}
-.btn.btn-violet:active,
-.btn.btn-violet:focus-visible {
-    color: #fff;
-    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.32);
 }
 .btn.btn-violet:disabled,
 .btn.btn-violet[disabled] {

@@ -2183,49 +2183,30 @@ function viewAttachment(attachmentId, filePath, fileExt) {
 }
 
 function showImageModal(imageUrl, attachmentId, filename) {
+    if (!window.ImageViewerModal) return;
     filename = filename || 'View Image';
     const safeFilenameJs = String(filename).replace(/'/g, "\\'");
-    const modalHtml = `
-        <div class="modal fade" id="imageModal" tabindex="-1">
-            <div class="modal-dialog modal-xl modal-dialog-centered">
-                <div class="modal-content image-modal-glass">
-                    <div class="modal-header image-modal-header">
-                        <h5 class="modal-title"><i class="bi bi-image me-2"></i>${escapeHtml(filename)}</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body text-center image-modal-body">
-                        <img src="${imageUrl}" class="img-fluid" style="max-height: 80vh; border-radius: 8px;" alt="Medical Image">
-                    </div>
-                    <div class="modal-footer image-modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <!-- Edit + Delete added to the preview modal so the doctor
-                             doesn't have to close it and hunt for the card's
-                             overlay buttons. Edit closes this modal first so
-                             the drawing modal isn't stacked on top of it. -->
-                        <button type="button" class="btn btn-danger"
-                                onclick="(function(){ bootstrap.Modal.getInstance(document.getElementById('imageModal'))?.hide(); deleteAttachment(${attachmentId}); })();">
-                            <i class="bi bi-trash me-2"></i>Delete
-                        </button>
-                        <button type="button" class="btn btn-info text-white"
-                                onclick="(function(){ bootstrap.Modal.getInstance(document.getElementById('imageModal'))?.hide(); editAttachmentDrawing(${attachmentId}, '${String(imageUrl).replace(/'/g, "\\'")}', '${safeFilenameJs}'); })();">
-                            <i class="bi bi-pencil-square me-2"></i>Edit
-                        </button>
-                        <button type="button" class="btn btn-primary" onclick="downloadAttachment(${attachmentId}, '${safeFilenameJs}')">
-                            <i class="bi bi-download me-2"></i>Download
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('imageModal'));
-    modal.show();
-
-    // Clean up modal on hide
-    document.getElementById('imageModal').addEventListener('hidden.bs.modal', function() {
-        this.remove();
+    const safeImageUrl = String(imageUrl).replace(/'/g, "\\'");
+    const titleHtml = '<i class="bi bi-image me-2"></i>' + escapeHtml(filename);
+    const footerHtml =
+        '<button type="button" class="btn btn-secondary iv-footer-btn" data-bs-dismiss="modal">Close</button>' +
+        '<button type="button" class="btn btn-danger iv-footer-btn" onclick="(function(){ bootstrap.Modal.getInstance(document.getElementById(\'imageModal\'))?.hide(); deleteAttachment(' + attachmentId + '); })();">' +
+        '<i class="bi bi-trash me-2"></i>Delete</button>' +
+        '<button type="button" class="btn btn-info text-white iv-footer-btn" onclick="(function(){ bootstrap.Modal.getInstance(document.getElementById(\'imageModal\'))?.hide(); editAttachmentDrawing(' + attachmentId + ', \'' + safeImageUrl + '\', \'' + safeFilenameJs + '\'); })();">' +
+        '<i class="bi bi-pencil-square me-2"></i>Edit</button>' +
+        '<button type="button" class="btn btn-primary iv-footer-btn" onclick="downloadAttachment(' + attachmentId + ', \'' + safeFilenameJs + '\')">' +
+        '<i class="bi bi-download me-2"></i>Download</button>';
+    window.ImageViewerModal.show({
+        imageUrl: imageUrl,
+        titleHtml: titleHtml,
+        contentClass: 'image-modal-glass',
+        closeWhite: true,
+        footerHtml: footerHtml,
+        onShown: function (modalEl) {
+            if (typeof makeModalDraggable === 'function') {
+                makeModalDraggable(modalEl);
+            }
+        }
     });
 }
 
@@ -6980,21 +6961,6 @@ document.addEventListener('keydown', function(e) {
         closeDrugPopover();
     }
 });
-
-// Override showImageModal to make the modal draggable
-const originalShowImageModal = window.showImageModal;
-if (originalShowImageModal) {
-    window.showImageModal = function(imageUrl, attachmentId, filename) {
-        originalShowImageModal.call(this, imageUrl, attachmentId, filename);
-        // Wait a bit for modal to be added to DOM
-        setTimeout(function() {
-            const imageModal = document.getElementById('imageModal');
-            if (imageModal) {
-                makeModalDraggable(imageModal);
-            }
-        }, 100);
-    };
-}
 
 // Override showUploadModal to make the modal draggable
 const originalShowUploadModal = window.showUploadModal;

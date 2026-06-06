@@ -172,69 +172,69 @@
             </div>
             <div class="card-body">
                 <div class="patient-actions-row">
-                    <button class="btn btn-primary"
+                    <button class="btn pa-action-btn pa-action-btn--book"
                             onclick="bookNewAppointment(<?= $patient['id'] ?>)"
                             data-bs-toggle="tooltip"
                             data-bs-placement="bottom"
                             data-bs-title="Schedule a new appointment for this patient">
-                        <i class="bi bi-calendar-plus me-2"></i>Book Appointment
+                        <i class="bi bi-calendar-plus"></i>Book Appointment
                     </button>
-                    <button class="btn btn-outline-warning"
+                    <button class="btn pa-action-btn pa-action-btn--history"
                             onclick="showMedicalHistoryPopover(<?= (int)$patient['id'] ?>, this)"
                             data-bs-toggle="tooltip"
                             data-bs-placement="bottom"
                             data-bs-title="Medical history and visit chronology">
-                        <i class="bi bi-clipboard-heart me-2"></i>Medical History
+                        <i class="bi bi-clipboard-heart"></i>Medical History
                     </button>
-                    <button class="btn btn-success"
+                    <button class="btn pa-action-btn pa-action-btn--print"
                             onclick="printPatientSummary()"
                             data-bs-toggle="tooltip"
                             data-bs-placement="bottom"
                             data-bs-title="Print patient summary report">
-                        <i class="bi bi-printer me-2"></i>Print Summary
+                        <i class="bi bi-printer"></i>Print Summary
                     </button>
-                    <button class="btn btn-info"
+                    <button class="btn pa-action-btn pa-action-btn--export"
                             onclick="exportPatientData()"
                             data-bs-toggle="tooltip"
                             data-bs-placement="bottom"
                             data-bs-title="Export complete medical record as PDF">
-                        <i class="bi bi-file-earmark-pdf me-2"></i>Export History PDF
+                        <i class="bi bi-file-earmark-pdf"></i>Export History PDF
                     </button>
-                    <button class="btn btn-violet"
+                    <button class="btn pa-action-btn pa-action-btn--board"
                             onclick="autoPlacePatientOnBoard(<?= (int)$patient['id'] ?>, this)"
                             data-bs-toggle="tooltip"
                             data-bs-placement="bottom"
                             data-bs-title="Drop this patient into the most-fitting board column based on tags + recent activity">
-                        <i class="bi bi-magic me-2"></i>Auto-place to board
+                        <i class="bi bi-magic"></i>Auto-place to board
                     </button>
-                    <button class="btn btn-secondary"
+                    <button class="btn pa-action-btn pa-action-btn--edit"
                             onclick="editPatient(<?= $patient['id'] ?>)"
                             data-bs-toggle="tooltip"
                             data-bs-placement="bottom"
                             data-bs-title="Edit patient information and details">
-                        <i class="bi bi-pencil me-2"></i>Edit Patient
+                        <i class="bi bi-pencil"></i>Edit Patient
                     </button>
-                    <button class="btn btn-primary"
+                    <button class="btn pa-action-btn pa-action-btn--iop"
                             id="patientIOPTrendBtn"
                             data-patient-id="<?= htmlspecialchars($patient['id']) ?>"
                             data-bs-toggle="tooltip"
                             data-bs-placement="bottom"
                             data-bs-title="Analyze IOP trend for this patient">
-                        <i class="bi bi-graph-up me-2"></i>IOP Trend
+                        <i class="bi bi-graph-up"></i>IOP Trend
                     </button>
-                    <button class="btn btn-warning"
+                    <button class="btn pa-action-btn pa-action-btn--alert"
                             onclick="openAlertModal(<?= $patient['id'] ?>, null)"
                             data-bs-toggle="tooltip"
                             data-bs-placement="bottom"
                             data-bs-title="Create an alert for this patient">
-                        <i class="bi bi-bell me-2"></i>Set Alert
+                        <i class="bi bi-bell"></i>Set Alert
                     </button>
-                    <button class="btn btn-info"
+                    <button class="btn pa-action-btn pa-action-btn--clinical"
                             onclick="showUnifiedClinicalDashboardPopover(<?= $patient['id'] ?>)"
                             data-bs-toggle="tooltip"
                             data-bs-placement="bottom"
                             data-bs-title="View unified clinical dashboard for this patient">
-                        <i class="bi bi-clipboard-pulse me-2"></i>Clinical Dashboard
+                        <i class="bi bi-clipboard-pulse"></i>Clinical Dashboard
                     </button>
                 </div>
             </div>

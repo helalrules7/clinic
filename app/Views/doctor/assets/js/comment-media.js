@@ -259,21 +259,30 @@
 
         var ov = document.createElement('div');
         ov.className = 'cm-lightbox';
+        var zoomPanel = (window.ImageViewerModal && window.ImageViewerModal.zoomPanelHtml)
+            ? window.ImageViewerModal.zoomPanelHtml() : '';
         ov.innerHTML =
             '<button type="button" class="cm-lb-close" aria-label="Close"><i class="bi bi-x-lg"></i></button>' +
             (multi ? '<button type="button" class="cm-lb-nav cm-lb-prev" aria-label="Previous"><i class="bi bi-chevron-left"></i></button>' : '') +
+            '<div class="iv-image-wrap">' +
             '<img class="cm-lb-img" src="" alt="">' +
+            zoomPanel +
+            '</div>' +
             (multi ? '<button type="button" class="cm-lb-nav cm-lb-next" aria-label="Next"><i class="bi bi-chevron-right"></i></button>' : '') +
             (multi ? '<div class="cm-lb-count"></div>' : '');
         document.body.appendChild(ov);
         document.body.classList.add('cm-lb-open');
 
         var imgEl = ov.querySelector('.cm-lb-img');
+        var wrapEl = ov.querySelector('.iv-image-wrap');
         var countEl = ov.querySelector('.cm-lb-count');
+        var zoomCtl = (window.ImageViewerModal && wrapEl && imgEl)
+            ? window.ImageViewerModal.bindZoom(wrapEl, imgEl) : null;
         function show(i) {
             idx = (i + links.length) % links.length;
             imgEl.src = links[idx].getAttribute('href') || links[idx].querySelector('img').src;
             if (countEl) countEl.textContent = (idx + 1) + ' / ' + links.length;
+            if (zoomCtl && zoomCtl.reset) zoomCtl.reset();
         }
         function close() {
             document.removeEventListener('keydown', onKey);
