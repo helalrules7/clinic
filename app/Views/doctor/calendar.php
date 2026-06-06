@@ -23,6 +23,7 @@
     ];
 ?>
 <link href="/app/Views/doctor/assets/css/calendar.css?v=<?= file_exists(__DIR__ . '/assets/css/calendar.css') ? filemtime(__DIR__ . '/assets/css/calendar.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/doctor/assets/css/medical-history-popover.css?v=<?= file_exists(__DIR__ . '/assets/css/medical-history-popover.css') ? filemtime(__DIR__ . '/assets/css/medical-history-popover.css') : time() ?>" rel="stylesheet">
 
 <div class="row mb-4">
     <div class="col-md-6">
@@ -662,6 +663,7 @@ window.CALENDAR_CONFIG = {
 
 // Modals z-index is handled by main.js - no need for custom scripts here
 </script>
+<script src="/app/Views/doctor/assets/js/medical-history-popover.js?v=<?= file_exists(__DIR__ . '/assets/js/medical-history-popover.js') ? filemtime(__DIR__ . '/assets/js/medical-history-popover.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/calendar.js?v=<?= file_exists(__DIR__ . '/assets/js/calendar.js') ? filemtime(__DIR__ . '/assets/js/calendar.js') : time() ?>"></script>
 <!-- The clinic dropdowns are now rendered server-side in this view's modal
      markup, so they're ready before Bootstrap shows the modal. No JS populate

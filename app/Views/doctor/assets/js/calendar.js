@@ -70,6 +70,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   setupEventListeners();
+  setupCalendarActionsTooltipGuard();
   initCustomSelects(); // Initialize custom select menus
 
   // Check if we need to open add appointment modal
@@ -107,6 +108,18 @@ function fixModalPlacement() {
       document.body.appendChild(modal);
     }
   });
+}
+
+function setupCalendarActionsTooltipGuard() {
+  document.addEventListener(
+    "mouseenter",
+    function (e) {
+      if (e.target.closest(".appointment-actions")) {
+        hideCalendarTooltipsInActions();
+      }
+    },
+    true
+  );
 }
 
 function setupEventListeners() {
@@ -560,15 +573,16 @@ function renderAppointmentSlot(appointment) {
 
   return `
         <div class="appointment-card ${appointment.status.toLowerCase()} ${highlightClass}"
-             data-appointment-id="${appointment.id}"
-             data-bs-toggle="tooltip"
-             data-bs-placement="right"
-             data-bs-html="true"
-             data-bs-title="${tooltipContent.replace(/"/g, "&quot;")}">
+             data-appointment-id="${appointment.id}">
             <div class="appointment-header ${isMissed ? "missed" : ""} ${
     isCompleted ? "completed" : ""
   }">
-                <div class="appointment-info" onclick="navigateToAppointment(${
+                <div class="appointment-info"
+             data-bs-toggle="tooltip"
+             data-bs-placement="right"
+             data-bs-html="true"
+             data-bs-title="${tooltipContent.replace(/"/g, "&quot;")}"
+             onclick="navigateToAppointment(${
                   appointment.id
                 })">
                     <div class="info-line"><span class="label">Patient:</span> <span class="patient-hover-name" data-patient-id="${appointment.patient_id}">${
@@ -978,6 +992,25 @@ function calculateAge(dob) {
   }
 }
 
+function isCalendarDesktopViewport() {
+  return window.matchMedia("(min-width: 769px)").matches;
+}
+
+/** Desktop: no tooltips on .appointment-actions — they fought clicks and flickered with the card tip. */
+function shouldInitCalendarTooltip(el) {
+  if (!isCalendarDesktopViewport()) return true;
+  return !el.closest(".appointment-actions");
+}
+
+function hideCalendarTooltipsInActions() {
+  if (!isCalendarDesktopViewport()) return;
+  document.querySelectorAll(".tooltip.show").forEach((node) => node.remove());
+  document.querySelectorAll(".appointment-info[data-bs-toggle='tooltip']").forEach((info) => {
+    const tip = bootstrap.Tooltip.getInstance(info);
+    if (tip) tip.hide();
+  });
+}
+
 function initializeTooltips() {
   // Dispose existing tooltips first (any doctor can use tooltips)
   const existingTooltips = document.querySelectorAll(
@@ -991,9 +1024,9 @@ function initializeTooltips() {
   });
 
   // Initialize new tooltips
-  const tooltipTriggerList = [].slice.call(
-    document.querySelectorAll('[data-bs-toggle="tooltip"]')
-  );
+  const tooltipTriggerList = [].slice
+    .call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    .filter(shouldInitCalendarTooltip);
   tooltipTriggerList.map(function (tooltipTriggerEl) {
     return new bootstrap.Tooltip(tooltipTriggerEl, {
       html: true,
@@ -3301,210 +3334,7 @@ function updateAppointmentProgressBar(container) {
   progressText.textContent = timeText;
 }
 
-// Helper function to escape HTML
-function escapeHtml(text) {
-  if (!text) return "";
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// Show Medical History Popover
-function showMedicalHistoryPopover(patientId, buttonElement) {
-  // Close any existing popover
-  const existingPopover = document.getElementById("medicalHistoryPopover");
-  if (existingPopover) {
-    existingPopover.remove();
-  }
-
-  // Create popover container
-  const popover = document.createElement("div");
-  popover.id = "medicalHistoryPopover";
-  popover.className = "medical-history-popover";
-
-  // Create backdrop
-  const backdrop = document.createElement("div");
-  backdrop.className = "medical-history-popover-backdrop";
-  backdrop.onclick = () => closeMedicalHistoryPopover();
-
-  // Create popover content
-  const content = document.createElement("div");
-  content.className = "medical-history-popover-content";
-
-  // Create header
-  const header = document.createElement("div");
-  header.className = "medical-history-popover-header";
-  header.innerHTML = `
-        <h3><i class="bi bi-clipboard-heart me-2"></i>Medical History</h3>
-        <button class="btn-close-popover" onclick="closeMedicalHistoryPopover()" aria-label="Close">
-            <i class="bi bi-x-lg"></i>
-        </button>
-    `;
-
-  // Create body
-  const body = document.createElement("div");
-  body.className = "medical-history-popover-body";
-  body.innerHTML =
-    '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
-
-  content.appendChild(header);
-  content.appendChild(body);
-  popover.appendChild(backdrop);
-  popover.appendChild(content);
-
-  document.body.appendChild(popover);
-
-  // Calculate position
-  updatePopoverPosition(buttonElement, content);
-
-  // Fetch medical history
-  fetch(`/api/patients/${patientId}/medical-history`)
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success && data.data && data.data.length > 0) {
-        renderMedicalHistory(data.data, body);
-      } else {
-        body.innerHTML =
-          '<div class="text-center py-4 text-muted"><i class="bi bi-inbox me-2"></i>No medical history available</div>';
-      }
-    })
-    .catch((error) => {
-      console.error("Error loading medical history:", error);
-      body.innerHTML =
-        '<div class="text-center py-4 text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Error loading medical history</div>';
-    });
-
-  // Update position on scroll and resize
-  const updatePosition = () => updatePopoverPosition(buttonElement, content);
-  window.addEventListener("scroll", updatePosition, true);
-  window.addEventListener("resize", updatePosition);
-
-  // Store cleanup function
-  popover._cleanup = () => {
-    window.removeEventListener("scroll", updatePosition, true);
-    window.removeEventListener("resize", updatePosition);
-  };
-}
-
-function updatePopoverPosition(buttonElement, popoverContent) {
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
-  const popoverWidth = Math.min(400, viewportWidth - 40);
-  const popoverHeight = Math.min(600, viewportHeight - 40);
-
-  // Center the popover in the viewport using CSS transform
-  // CSS will handle the centering with left: 50%, top: 50%, transform: translate(-50%, -50%)
-  popoverContent.style.width = `${popoverWidth}px`;
-  popoverContent.style.maxHeight = `${popoverHeight}px`;
-}
-
-function renderMedicalHistory(history, container) {
-  if (!history || history.length === 0) {
-    container.innerHTML =
-      '<div class="text-center py-4 text-muted"><i class="bi bi-inbox me-2"></i>No medical history available</div>';
-    return;
-  }
-
-  let html = '<div class="medical-history-list">';
-
-  history.forEach((entry, index) => {
-    const date = entry.diagnosis_date || entry.created_at;
-    const formattedDate = date
-      ? new Date(date).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        })
-      : "N/A";
-    const doctorName = entry.doctor_name || "Unknown";
-
-    // Get notes text
-    let notesText = "";
-    if (entry.notes && entry.notes.trim() !== "") {
-      notesText = escapeHtml(entry.notes.replace(/\r\n|\r|\n/g, " "));
-    } else if (entry.entry_type !== "new_format") {
-      const oldFormatNotes = [];
-      if (entry.allergies)
-        oldFormatNotes.push("Allergies: " + escapeHtml(entry.allergies));
-      if (entry.medications)
-        oldFormatNotes.push("Medications: " + escapeHtml(entry.medications));
-      if (entry.systemic_history)
-        oldFormatNotes.push("Systemic: " + escapeHtml(entry.systemic_history));
-      if (entry.ocular_history)
-        oldFormatNotes.push("Ocular: " + escapeHtml(entry.ocular_history));
-      if (entry.prior_surgeries)
-        oldFormatNotes.push("Surgeries: " + escapeHtml(entry.prior_surgeries));
-      if (entry.family_history)
-        oldFormatNotes.push("Family: " + escapeHtml(entry.family_history));
-      if (oldFormatNotes.length > 0) {
-        notesText = oldFormatNotes.join(" | ");
-      }
-    }
-
-    // Highlight titles
-    const titles = [
-      "Chief Complaint",
-      "Plan",
-      "History of Present Illness",
-      "Allergies",
-      "Medications",
-      "Systemic",
-      "Ocular",
-      "Surgeries",
-      "Family",
-      "Diagnosis",
-      "Treatment",
-    ];
-    titles.forEach((title) => {
-      const pattern = new RegExp(
-        "\\b(" + title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "):\\s*",
-        "gi"
-      );
-      notesText = notesText.replace(
-        pattern,
-        '<strong style="color: dodgerblue;">$1:</strong> '
-      );
-    });
-
-    html += `
-            <div class="medical-history-item ${index === 0 ? "active" : ""}">
-                <div class="medical-history-item-header">
-                    <h4>${escapeHtml(
-                      entry.condition_name || `Medical Record #${entry.id}`
-                    )}</h4>
-                    <small class="text-muted">
-                        <i class="bi bi-calendar me-1"></i>${escapeHtml(
-                          formattedDate
-                        )}
-                        ${
-                          doctorName !== "Unknown"
-                            ? ` • by ${escapeHtml(doctorName)}`
-                            : ""
-                        }
-                    </small>
-                </div>
-                ${
-                  notesText
-                    ? `<div class="medical-history-item-content">${notesText}</div>`
-                    : ""
-                }
-            </div>
-        `;
-  });
-
-  html += "</div>";
-  container.innerHTML = html;
-}
-
-function closeMedicalHistoryPopover() {
-  const popover = document.getElementById("medicalHistoryPopover");
-  if (popover) {
-    if (popover._cleanup) {
-      popover._cleanup();
-    }
-    popover.remove();
-  }
-}
+// Medical history + visit history popover → medical-history-popover.js (§3.50)
 
 // Cleanup on page unload
 window.addEventListener("beforeunload", () => {
@@ -3514,5 +3344,7 @@ window.addEventListener("beforeunload", () => {
   if (window.appointmentProgressInterval) {
     clearInterval(window.appointmentProgressInterval);
   }
-  closeMedicalHistoryPopover();
+  if (typeof closeMedicalHistoryPopover === "function") {
+    closeMedicalHistoryPopover();
+  }
 });

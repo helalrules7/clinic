@@ -1,0 +1,331 @@
+/* Shared medical + visit history popover (calendar + patient profile) — §3.50 */
+.medical-history-popover {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.medical-history-popover-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    pointer-events: all;
+}
+
+.medical-history-popover-content {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(248, 250, 252, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    pointer-events: all;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: mhpPopoverFadeIn 0.3s ease-out;
+    width: min(520px, calc(100vw - 40px));
+    max-height: min(680px, calc(100vh - 40px));
+}
+
+.dark .medical-history-popover-content {
+    background: rgba(11, 18, 32, 0.95);
+    border-color: rgba(51, 65, 85, 0.5);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+@keyframes mhpPopoverFadeIn {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.medical-history-popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    flex-shrink: 0;
+}
+
+.dark .medical-history-popover-header {
+    border-bottom-color: rgba(51, 65, 85, 0.5);
+    background: rgba(30, 41, 59, 0.5);
+}
+
+.medical-history-popover-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+}
+
+.btn-close-popover {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-close-popover:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: var(--danger);
+}
+
+.dark .btn-close-popover:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.medical-history-popover-body {
+    padding: 1rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.mhp-section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin: 0 0 0.65rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.mhp-section-title:not(:first-child) {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.medical-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.medical-history-item {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.3);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.dark .medical-history-item {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(51, 65, 85, 0.3);
+}
+
+.medical-history-item:hover {
+    border-color: rgba(99, 102, 241, 0.35);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.medical-history-item-header h4 {
+    margin: 0 0 0.25rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.medical-history-item-header small {
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+
+.medical-history-item-content {
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    color: var(--text);
+    word-break: break-word;
+    margin-top: 0.35rem;
+}
+
+/* Visit cards — compact, clickable */
+.mhp-visits-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.mhp-visit-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(226, 232, 240, 0.45);
+    border-radius: 12px;
+    padding: 0.65rem 0.75rem;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+
+.dark .mhp-visit-card {
+    background: rgba(30, 41, 59, 0.55);
+    border-color: rgba(51, 65, 85, 0.45);
+}
+
+.mhp-visit-card:hover {
+    border-color: rgba(99, 102, 241, 0.45);
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.12);
+    transform: translateY(-1px);
+    color: inherit;
+}
+
+.mhp-visit-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+}
+
+.mhp-visit-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--accent, #6366f1);
+    margin: 0;
+}
+
+.mhp-visit-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.65rem;
+    font-size: 0.7rem;
+    color: var(--muted);
+}
+
+.mhp-visit-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.mhp-visit-badge.status-completed { background: rgba(16, 185, 129, 0.15); color: #059669; }
+.mhp-visit-badge.status-booked { background: rgba(99, 102, 241, 0.15); color: #4f46e5; }
+.mhp-visit-badge.status-noshow,
+.mhp-visit-badge.status-closed { background: rgba(100, 116, 139, 0.15); color: #64748b; }
+.mhp-visit-badge.status-cancelled { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
+
+.mhp-visit-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px dashed rgba(148, 163, 184, 0.35);
+}
+
+.mhp-mini-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.mhp-mini-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--muted);
+    min-width: 3.2rem;
+}
+
+.mhp-mini-chip {
+    font-size: 0.65rem;
+    padding: 0.12rem 0.4rem;
+    border-radius: 6px;
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mhp-mini-glasses {
+    font-size: 0.65rem;
+    color: var(--muted);
+    line-height: 1.35;
+}
+
+.mhp-mini-thumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.mhp-mini-thumb {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.mhp-mini-thumb:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+}
+
+.mhp-mini-more {
+    font-size: 0.65rem;
+    color: var(--muted);
+    padding: 0 0.25rem;
+}
+
+.mhp-empty {
+    text-align: center;
+    padding: 1.25rem 0.5rem;
+    color: var(--muted);
+    font-size: 0.875rem;
+}
+
+/* Image viewer must stack above the history popover (z-index 9999) */
+#imageModal.modal.show {
+    z-index: 10050 !important;
+}
+
+body:has(#medicalHistoryPopover) #imageModal.modal.show ~ .modal-backdrop,
+body:has(#medicalHistoryPopover) .modal-backdrop.show:last-of-type {
+    z-index: 10040 !important;
+}
+
+@media (max-width: 767.98px) {
+    .medical-history-popover-content {
+        width: calc(100vw - 20px) !important;
+        max-height: calc(100vh - 20px) !important;
+    }
+    .medical-history-popover-header { padding: 0.75rem 1rem; }
+    .medical-history-popover-body { padding: 0.75rem; }
+}

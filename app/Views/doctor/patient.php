@@ -1,4 +1,5 @@
 <link href="/app/Views/doctor/assets/css/patient.css?v=<?= file_exists(__DIR__ . '/assets/css/patient.css') ? filemtime(__DIR__ . '/assets/css/patient.css') : time() ?>" rel="stylesheet">
+<link href="/app/Views/doctor/assets/css/medical-history-popover.css?v=<?= file_exists(__DIR__ . '/assets/css/medical-history-popover.css') ? filemtime(__DIR__ . '/assets/css/medical-history-popover.css') : time() ?>" rel="stylesheet">
 
 <!-- Breadcrumb (unified .app-breadcrumb component, see design-system.css) -->
 <nav class="app-breadcrumb" aria-label="Breadcrumb">
@@ -104,10 +105,10 @@
     </div>
 </div>
 
-<!-- Patient Information Cards -->
-<div class="row mb-4">
+<!-- Patient Information Cards — contact ~35% / actions ~65% on desktop (§3.50) -->
+<div class="row mb-4 patient-info-actions-row">
     <!-- Contact Information -->
-    <div class="col-md-6">
+    <div class="col-12 col-lg-4 patient-contact-col">
         <div class="card h-100">
             <div class="card-header">
                 <h5 class="mb-0">
@@ -161,7 +162,7 @@
     </div>
 
     <!-- Action Buttons -->
-    <div class="col-md-6">
+    <div class="col-12 col-lg-8 patient-actions-col">
         <div class="card h-100">
             <div class="card-header">
                 <h5 class="mb-0">
@@ -176,35 +177,42 @@
                             data-bs-toggle="tooltip"
                             data-bs-placement="bottom"
                             data-bs-title="Schedule a new appointment for this patient">
-                        <i class="bi bi-calendar-plus me-2"></i>Book
+                        <i class="bi bi-calendar-plus me-2"></i>Book Appointment
+                    </button>
+                    <button class="btn btn-outline-warning"
+                            onclick="showMedicalHistoryPopover(<?= (int)$patient['id'] ?>, this)"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="bottom"
+                            data-bs-title="Medical history and visit chronology">
+                        <i class="bi bi-clipboard-heart me-2"></i>Medical History
                     </button>
                     <button class="btn btn-success"
                             onclick="printPatientSummary()"
                             data-bs-toggle="tooltip"
                             data-bs-placement="bottom"
                             data-bs-title="Print patient summary report">
-                        <i class="bi bi-printer me-2"></i>Print
+                        <i class="bi bi-printer me-2"></i>Print Summary
                     </button>
                     <button class="btn btn-info"
                             onclick="exportPatientData()"
                             data-bs-toggle="tooltip"
                             data-bs-placement="bottom"
                             data-bs-title="Export complete medical record as PDF">
-                        <i class="bi bi-file-earmark-pdf me-2"></i>Export PDF
+                        <i class="bi bi-file-earmark-pdf me-2"></i>Export History PDF
                     </button>
                     <button class="btn btn-violet"
                             onclick="autoPlacePatientOnBoard(<?= (int)$patient['id'] ?>, this)"
                             data-bs-toggle="tooltip"
                             data-bs-placement="bottom"
                             data-bs-title="Drop this patient into the most-fitting board column based on tags + recent activity">
-                        <i class="bi bi-magic me-2"></i>Auto-place
+                        <i class="bi bi-magic me-2"></i>Auto-place to board
                     </button>
                     <button class="btn btn-secondary"
                             onclick="editPatient(<?= $patient['id'] ?>)"
                             data-bs-toggle="tooltip"
                             data-bs-placement="bottom"
                             data-bs-title="Edit patient information and details">
-                        <i class="bi bi-pencil me-2"></i>Edit
+                        <i class="bi bi-pencil me-2"></i>Edit Patient
                     </button>
                     <button class="btn btn-primary"
                             id="patientIOPTrendBtn"
@@ -219,14 +227,14 @@
                             data-bs-toggle="tooltip"
                             data-bs-placement="bottom"
                             data-bs-title="Create an alert for this patient">
-                        <i class="bi bi-bell me-2"></i>Alert
+                        <i class="bi bi-bell me-2"></i>Set Alert
                     </button>
                     <button class="btn btn-info"
                             onclick="showUnifiedClinicalDashboardPopover(<?= $patient['id'] ?>)"
                             data-bs-toggle="tooltip"
                             data-bs-placement="bottom"
                             data-bs-title="View unified clinical dashboard for this patient">
-                        <i class="bi bi-clipboard-pulse me-2"></i>Dashboard
+                        <i class="bi bi-clipboard-pulse me-2"></i>Clinical Dashboard
                     </button>
                 </div>
             </div>
@@ -2124,6 +2132,7 @@ window.PATIENT_CONFIG = {
 <link rel="preload" href="/assets/fonts/Amiri-Regular.ttf" as="font" type="font/ttf" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="/app/Views/doctor/assets/js/medical-history-popover.js?v=<?= file_exists(__DIR__ . '/assets/js/medical-history-popover.js') ? filemtime(__DIR__ . '/assets/js/medical-history-popover.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/patient-medical-record-pdf.js?v=<?= file_exists(__DIR__ . '/assets/js/patient-medical-record-pdf.js') ? filemtime(__DIR__ . '/assets/js/patient-medical-record-pdf.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/patients.js?v=<?= file_exists(__DIR__ . '/assets/js/patients.js') ? filemtime(__DIR__ . '/assets/js/patients.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/patient.js?v=<?= file_exists(__DIR__ . '/assets/js/patient.js') ? filemtime(__DIR__ . '/assets/js/patient.js') : time() ?>"></script>

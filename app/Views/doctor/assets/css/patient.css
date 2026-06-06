@@ -2738,6 +2738,26 @@ div.form-text {
     padding: 0.45rem 0.95rem;
 }
 
+/* Desktop: contact card narrower; action buttons wrap on two rows */
+@media (min-width: 992px) {
+    .patient-info-actions-row .patient-contact-col {
+        flex: 0 0 38%;
+        max-width: 38%;
+    }
+    .patient-info-actions-row .patient-actions-col {
+        flex: 0 0 62%;
+        max-width: 62%;
+    }
+    .patient-info-actions-row .patient-actions-col .patient-actions-row {
+        flex-wrap: wrap;
+        overflow-x: visible;
+        overflow-y: visible;
+        padding: 0;
+        margin: 0;
+        align-content: flex-start;
+    }
+}
+
 /* Violet variant for the Auto-place button — solid indigo→fuchsia gradient
    so it visually pops against the indigo `btn-primary` (Book / IOP Trend)
    while matching the SOLID style of every other button in this row. Icon
