@@ -6,7 +6,7 @@
 // RESETS the timer / opt-out / session-shown for every browser so the
 // new wizard surfaces fresh after the v11 deploy.
 //
-// Slide track: 20 slides covering every v11 feature with pure-CSS animated
+// Slide track: 21 slides covering every v11 feature with pure-CSS animated
 // mockups. ALL v10 slides removed in this release.
 ?>
 <style>
@@ -2231,6 +2231,29 @@
     @keyframes wn-mi-pageinst{0%,48%{opacity:.4;transform:scale(.92);}55%,78%{opacity:1;transform:scale(1.06);box-shadow:0 4px 14px rgba(16,185,129,.35);}88%,100%{opacity:.4;transform:scale(.92);}}
     @keyframes wn-mi-break{0%,50%{opacity:0;}58%,75%{opacity:1;}85%,100%{opacity:0;}}
 
+    /* ===== wn-pmr — Patient Medical Record PDF ===== */
+    .wn-pmr-scene { position:absolute; inset:8px 10px; display:flex; gap:8px; align-items:stretch; }
+    .wn-pmr-doc { flex:1; background:var(--wn-bg-card); border:1px solid var(--wn-border); border-radius:6px; padding:6px 7px; display:flex; flex-direction:column; gap:4px; text-align:left; box-shadow:0 6px 18px rgba(99,102,241,.12); animation:wn-pmr-doc 7s ease-in-out infinite; }
+    .wn-pmr-doc-head { display:flex; align-items:center; gap:5px; font-size:7px; font-weight:800; color:var(--wn-text); }
+    .wn-pmr-doc-head i { color:#ef4444; font-size:9px; }
+    .wn-pmr-line { height:4px; border-radius:3px; background:var(--wn-bg-inset); border:1px solid var(--wn-border); }
+    .wn-pmr-line.w1 { width:88%; animation:wn-pmr-w1 7s ease-in-out infinite; }
+    .wn-pmr-line.w2 { width:72%; animation:wn-pmr-w2 7s ease-in-out infinite; }
+    .wn-pmr-line.w3 { width:60%; }
+    .wn-pmr-chart { height:28px; border-radius:5px; border:1px dashed rgba(99,102,241,.35); background:linear-gradient(180deg,rgba(99,102,241,.08),transparent); position:relative; overflow:hidden; }
+    .wn-pmr-chart::before { content:''; position:absolute; left:6px; right:6px; bottom:6px; height:2px; background:linear-gradient(90deg,#6366f1,#ec4899,#22d3ee); border-radius:2px; transform-origin:left; animation:wn-pmr-linechart 7s ease-in-out infinite; }
+    .wn-pmr-blocks { display:flex; flex-direction:column; gap:3px; margin-top:2px; }
+    .wn-pmr-block { font-size:6px; padding:3px 4px; border-radius:4px; border-left:2px solid var(--wn-accent-soft); background:var(--wn-bg-inset); color:var(--wn-muted); animation:wn-pmr-block 7s ease-in-out infinite; }
+    .wn-pmr-block:nth-child(2) { animation-delay:.2s; border-color:#10b981; }
+    .wn-pmr-block:nth-child(3) { animation-delay:.4s; border-color:#f59e0b; }
+    .wn-pmr-badge { position:absolute; top:8px; right:10px; font-size:6px; font-weight:800; padding:2px 5px; border-radius:4px; background:rgba(239,68,68,.12); color:#ef4444; border:1px solid rgba(239,68,68,.35); animation:wn-pmr-pdf 7s ease-in-out infinite; }
+    @keyframes wn-pmr-doc{0%,20%{transform:translateY(4px) scale(.96);opacity:.6;}35%,78%{transform:translateY(0) scale(1);opacity:1;}90%,100%{transform:translateY(4px) scale(.96);opacity:.6;}}
+    @keyframes wn-pmr-w1{0%,30%{width:40%;}45%,75%{width:88%;}88%,100%{width:40%;}}
+    @keyframes wn-pmr-w2{0%,35%{width:30%;}50%,70%{width:72%;}85%,100%{width:30%;}}
+    @keyframes wn-pmr-linechart{0%,40%{transform:scaleX(.2);opacity:.4;}55%,75%{transform:scaleX(1);opacity:1;}88%,100%{transform:scaleX(.2);opacity:.4;}}
+    @keyframes wn-pmr-block{0%,25%{opacity:.45;transform:translateX(-4px);}40%,72%{opacity:1;transform:translateX(0);}85%,100%{opacity:.45;transform:translateX(-4px);}}
+    @keyframes wn-pmr-pdf{0%,45%{box-shadow:none;}52%,68%{box-shadow:0 0 0 2px rgba(239,68,68,.35);}75%,100%{box-shadow:none;}}
+
     /* ===== wn-fixes — Bug fixes & polish (static list) ===== */
     .wn-fixes-stage {
         height: auto;
@@ -3066,6 +3089,29 @@
               </div>
               <h3>Medical instructions — on their own page</h3>
               <p><strong>Clinic-wide templates</strong> match diagnosis keywords. Copy suggestions, pick from the library, or add custom text — <strong>Save as template</strong> pulls diagnosis + ICD from the visit and confirms in a modal. Print from Medications: Rx only, or Rx + instructions on a separate A4 page.</p>
+            </div>
+
+            <!-- v11.0.0 — wn-pmr (Patient Medical Record PDF) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Patient records</span>
+              <div class="wn-stage">
+                <span class="wn-pmr-badge">PDF</span>
+                <div class="wn-pmr-scene">
+                  <div class="wn-pmr-doc">
+                    <div class="wn-pmr-doc-head"><i class="bi bi-file-earmark-pdf-fill"></i> Complete Medical Record</div>
+                    <div class="wn-pmr-line w1"></div>
+                    <div class="wn-pmr-line w2"></div>
+                    <div class="wn-pmr-chart" aria-hidden="true"></div>
+                    <div class="wn-pmr-blocks">
+                      <div class="wn-pmr-block">2026-05-12 · Glaucoma · IOP 18/19</div>
+                      <div class="wn-pmr-block">2026-04-03 · Cataract review · VA 6/9</div>
+                      <div class="wn-pmr-block">Meds · Labs · Images appendix</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h3>One PDF — the whole patient story</h3>
+              <p>Export a <strong>dated, comprehensive medical dossier</strong>: aggregated history, every visit with diagnosis &amp; plan, prescriptions, labs, instructions, notes, attachments, and <strong>IOP / visit charts</strong> — replacing the old Word export.</p>
             </div>
 
             <!-- v11.0.0 — wn-fixes (Bug fixes & polish) -->

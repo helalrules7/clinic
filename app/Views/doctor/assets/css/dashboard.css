@@ -6274,15 +6274,19 @@ canvas {
 }
 
 /* =====================================================================
-   v10.2.0 WHAT'S-NEW NOTICE BAR
-   Sits ABOVE the welcome hero on the dashboard for 24h after launch.
-   Glassmorphism + gradient accent + indigo→violet animated glow.
-   Dismissable (per-browser via localStorage). Click opens the wizard. */
+   WHAT'S-NEW NOTICE BAR — layout shell (dashboard)
+   Glass variant: .whatsnew-notice (no .whatsnew-celebrate)
+   Celebration variant: see celebration.css (.whatsnew-celebrate) */
 .whatsnew-notice {
     position: relative;
     display: flex;
     align-items: center;
     gap: 0.85rem;
+    flex-wrap: nowrap;
+}
+
+/* Glass fallback when celebrate class is absent */
+.whatsnew-notice:not(.whatsnew-celebrate) {
     padding: 0.85rem 1rem 0.85rem 1.1rem;
     border-radius: var(--r-xl);
     background: var(--glass-bg-strong);
@@ -6292,12 +6296,11 @@ canvas {
     backdrop-filter: blur(18px) saturate(165%);
     overflow: hidden;
     isolation: isolate;
-    contain: paint;
-    clip-path: inset(0 round var(--r-xl));
-    transition: opacity .25s ease;
     color: var(--text);
+    transition: opacity .25s ease;
 }
-.whatsnew-notice-glow {
+
+.whatsnew-notice:not(.whatsnew-celebrate) .whatsnew-notice-glow {
     position: absolute;
     inset-block-start: -60%;
     inset-inline-start: 18%;
@@ -6311,11 +6314,13 @@ canvas {
     z-index: -1;
     animation: whatsnewGlowDrift 8s ease-in-out infinite alternate;
 }
+
 @keyframes whatsnewGlowDrift {
     0%   { transform: translate(0, 0)      scale(1); opacity: .85; }
     100% { transform: translate(40px, 20px) scale(1.08); opacity: 1; }
 }
-.whatsnew-notice-pill {
+
+.whatsnew-notice:not(.whatsnew-celebrate) .whatsnew-notice-pill {
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
@@ -6327,19 +6332,22 @@ canvas {
     color: #fff;
     font-size: 0.78rem;
     font-weight: 700;
-    letter-spacing: .03em;
-    box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 35%, transparent);
 }
-.whatsnew-notice-pill i { font-size: 0.85rem; }
-.whatsnew-notice-text {
+
+.whatsnew-notice:not(.whatsnew-celebrate) .whatsnew-notice-text {
     flex: 1 1 auto;
     min-width: 0;
     font-size: 0.92rem;
     line-height: 1.45;
     color: var(--text);
 }
-.whatsnew-notice-text strong { color: var(--accent); margin-right: 4px; }
-.whatsnew-notice-cta {
+
+.whatsnew-notice:not(.whatsnew-celebrate) .whatsnew-notice-text strong {
+    color: var(--accent);
+    margin-right: 4px;
+}
+
+.whatsnew-notice:not(.whatsnew-celebrate) .whatsnew-notice-cta {
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
@@ -6352,16 +6360,9 @@ canvas {
     font-weight: 600;
     font-size: 0.85rem;
     cursor: pointer;
-    transition: background .15s ease, transform .15s ease;
 }
-.whatsnew-notice-cta:hover {
-    background: color-mix(in srgb, var(--accent) 28%, transparent);
-    transform: translateY(-1px);
-}
-.whatsnew-notice-cta i { font-size: 0.85rem; transition: transform .15s ease; }
-.whatsnew-notice-cta:hover i { transform: translateX(2px); }
-[dir="rtl"] .whatsnew-notice-cta:hover i { transform: translateX(-2px); }
-.whatsnew-notice-close {
+
+.whatsnew-notice:not(.whatsnew-celebrate) .whatsnew-notice-close {
     flex-shrink: 0;
     width: 30px; height: 30px;
     border-radius: 50%;
@@ -6372,14 +6373,14 @@ canvas {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: background .15s ease, color .15s ease;
 }
-.whatsnew-notice-close:hover {
-    background: color-mix(in srgb, var(--muted) 16%, transparent);
-    color: var(--text);
+
+.whatsnew-celebrate .whatsnew-notice-text {
+    flex: 1 1 auto;
+    min-width: 0;
 }
+
 @media (max-width: 768px) {
-    .whatsnew-notice { flex-wrap: wrap; padding: 0.75rem; }
-    .whatsnew-notice-text { width: 100%; }
-    .whatsnew-notice-cta { margin-inline-start: auto; }
+    .whatsnew-notice:not(.whatsnew-celebrate) { flex-wrap: wrap; padding: 0.75rem; }
+    .whatsnew-notice:not(.whatsnew-celebrate) .whatsnew-notice-text { width: 100%; }
 }

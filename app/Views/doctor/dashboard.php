@@ -1,11 +1,11 @@
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 
-<!-- v11.0.0 celebration notice bar — major-release fanfare. Three layered
-     animations: one-shot confetti burst (sessionStorage flag), continuous
-     CSS sparkle drift, and an animated indigo→violet→pink gradient sweep
-     on the bar surface. Dismissable; persists per browser. 3-day TTL from
-     the launch timestamp. Wizard auto-show stays disabled — this bar is
-     the only entry point. Respects prefers-reduced-motion. -->
+<!-- v11.0.0 celebration notice bar — major-release fanfare. Layered FX:
+     entrance reveal, aurora mesh, rotating border-beam, floating orbs,
+     shimmer sweep, sparkle drift, gradient sweep, pulsing pill + CTA,
+     one-shot confetti burst (sessionStorage). Dismissable per browser.
+     3-day TTL from launch timestamp. Wizard auto-show disabled — bar only.
+     Respects prefers-reduced-motion. -->
 <?php
     // Launch epoch — bump this when you launch a NEW release to extend the
     // visibility window. Pinning a constant (not time()) means the bar
@@ -20,20 +20,35 @@
 <div class="whatsnew-notice whatsnew-celebrate mb-4" id="whatsNewNotice"
      data-version="<?= htmlspecialchars($whatsNewVersion) ?>"
      data-visible-until="<?= (int)$whatsNewVisibleUntil ?>">
+    <span class="wn-aurora" aria-hidden="true"></span>
+    <span class="wn-border-beam" aria-hidden="true"></span>
     <span class="whatsnew-notice-glow" aria-hidden="true"></span>
+    <span class="wn-orbs" aria-hidden="true">
+        <span class="wn-orb wn-orb-1"></span>
+        <span class="wn-orb wn-orb-2"></span>
+        <span class="wn-orb wn-orb-3"></span>
+    </span>
     <span class="whatsnew-sparkles" aria-hidden="true"></span>
+    <span class="wn-shimmer-sweep" aria-hidden="true"></span>
     <span class="whatsnew-confetti" id="whatsNewConfetti" aria-hidden="true"></span>
-    <span class="whatsnew-notice-pill"><i class="bi bi-stars"></i> v11.0.0</span>
+    <span class="whatsnew-notice-pill">
+        <span class="wn-pill-ring" aria-hidden="true"></span>
+        <i class="bi bi-stars wn-pill-star" aria-hidden="true"></i>
+        <span class="wn-pill-label">v11.0.0</span>
+        <span class="wn-pill-spark" aria-hidden="true">NEW</span>
+    </span>
     <span class="whatsnew-notice-text">
-        <strong>The biggest release yet.</strong>
-        A re-designed iOS-style notification center, the new To-Do, theme
+        <strong class="wn-headline">The biggest release yet.</strong>
+        <span class="wn-subcopy">A re-designed iOS-style notification center, the new To-Do, theme
         palettes with auto dark/light schedule, a Cmd+K command palette,
         patient hover-cards, @mentions, focus mode, note templates &mdash;
-        and more.
+        and more.</span>
     </span>
     <button type="button" class="whatsnew-notice-cta"
             data-bs-toggle="modal" data-bs-target="#whatsNewV9Modal">
-        Tour what's new <i class="bi bi-arrow-right"></i>
+        <span class="wn-cta-shine" aria-hidden="true"></span>
+        <span class="wn-cta-label">Tour what's new</span>
+        <i class="bi bi-arrow-right" aria-hidden="true"></i>
     </button>
     <button type="button" class="whatsnew-notice-close" id="whatsNewNoticeClose"
             aria-label="Dismiss update notice">
@@ -52,16 +67,20 @@
             if (localStorage.getItem(dismissKey) === '1') { el.style.display = 'none'; return; }
         } catch (_) {}
         var btn = document.getElementById('whatsNewNoticeClose');
+        requestAnimationFrame(function () {
+            el.classList.add('is-visible');
+        });
         if (btn) btn.addEventListener('click', function () {
-            el.style.opacity = '0';
-            setTimeout(function () { el.style.display = 'none'; }, 250);
+            el.classList.add('is-dismissing');
+            setTimeout(function () { el.style.display = 'none'; }, 420);
             try { localStorage.setItem(dismissKey, '1'); } catch (_) {}
         });
-        // Confetti burst: once per browser session, only the first dashboard load.
+        // Confetti: dual-wave burst once per session on first dashboard load.
         try {
             var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             if (!reduced && sessionStorage.getItem(confettiKey) !== '1' && window.fireCelebrationConfetti) {
-                window.fireCelebrationConfetti(document.getElementById('whatsNewConfetti'));
+                var box = document.getElementById('whatsNewConfetti');
+                window.fireCelebrationConfetti(box, { waves: 2, count: 56 });
                 sessionStorage.setItem(confettiKey, '1');
             }
         } catch (_) {}
